@@ -93,8 +93,11 @@ describe('Apps catalog ↔ shell taxonomy', () => {
   it('retires legacy rows instead of deleting them (ON DELETE CASCADE would take subscriptions)', () => {
     expect(sql).toMatch(/UPDATE available_modules/);
     expect(sql).toMatch(/"deprecated":\s*true/);
-    // A bare DELETE here would cascade into module_subscriptions and destroy
-    // entitlement history — the whole reason the legacy rows are only marked.
-    expect(sql).not.toMatch(/DELETE\s+FROM\s+available_modules/i);
+    // Assert on EXECUTABLE sql, not prose: the migration's header documents the
+    // rollback and explains why it must not be written as a DELETE, so the
+    // literal appears in a comment. Checking the raw file would fail on the very
+    // documentation that warns against the hazard.
+    const executable = sql.replace(/^\s*--.*$/gm, '');
+    expect(executable).not.toMatch(/DELETE\s+FROM\s+available_modules/i);
   });
 });

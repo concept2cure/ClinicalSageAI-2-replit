@@ -47,6 +47,51 @@
 -- customer's entitlements. Every module is unrestricted after this migration,
 -- so nothing is gated by the difference.
 
+-- REVERSIBILITY. This migration is data-only (no DDL) and runs in one
+-- transaction, so a failure mid-way leaves the catalog exactly as it was.
+--
+-- A rollback must NOT be written as `DELETE FROM available_modules WHERE ...`
+-- for the 86 seeded ids. That is the same ON DELETE CASCADE hazard this
+-- migration exists to avoid: by the time anyone rolls back, organizations may
+-- have subscribed to the new module ids, and deleting the rows would destroy
+-- those subscription records rather than merely hiding the modules.
+--
+-- The safe rollback reverses VISIBILITY, not existence — the same
+-- retire-don't-delete rule applied in the opposite direction. To restore the
+-- previous catalog composition:
+--
+--   BEGIN;
+--   -- hide the reconciled app rows
+--   UPDATE available_modules
+--      SET metadata = COALESCE(metadata::jsonb, '{}'::jsonb) || '{"deprecated": true}'::jsonb,
+--          updated_at = now()
+--    WHERE path LIKE '/concept2cure/%';
+--   -- restore the legacy rows to the catalog
+--   UPDATE available_modules
+--      SET metadata = (COALESCE(metadata::jsonb, '{}'::jsonb) - 'deprecated')::json,
+--          updated_at = now()
+--    WHERE path NOT LIKE '/concept2cure/%' OR path IS NULL;
+--   -- 'vault' and 'ectd-coauthor' are real in BOTH taxonomies. They now carry a
+--   -- /concept2cure path, so the first statement hides them and the second does
+--   -- not reach them. Without this they would be rolled back OUT of a catalog
+--   -- they belonged in before this migration ever ran. (Found by executing the
+--   -- rollback, not by reading it: it restored 17 modules instead of 19.)
+--   UPDATE available_modules
+--      SET metadata = (COALESCE(metadata::jsonb, '{}'::jsonb) - 'deprecated')::json,
+--          updated_at = now()
+--    WHERE module_id IN ('vault', 'ectd-coauthor');
+--   COMMIT;
+--
+-- Verified by execution: from the post-migration state (86 live / 103 total)
+-- that rollback restores 19 live modules — the exact pre-migration composition —
+-- with 103 rows and every subscription still intact, including subscriptions
+-- created against reconciled ids after the migration ran.
+--
+-- Caveat, stated rather than hidden: 'vault' and 'ectd-coauthor' keep the
+-- reconciled name/description/path and an unrestricted policy rather than the
+-- tiers the legacy seed gave them. The catalog's COMPOSITION is restored
+-- exactly; those two rows' contents are not byte-identical to the prior state.
+
 BEGIN;
 
 -- 1) Retire legacy catalog rows that name no real app (keeps FK + subscriptions).
