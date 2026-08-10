@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, liveGetOrNull } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import {
   SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
@@ -304,7 +305,10 @@ export const C2C = {
       status: 'pending', progress: 0, comments: 0, attachments: 0,
       dependsOn: [], blocks: [], priority: 'high', taskType: 'action', impactScore: 6,
       criticalPath: false, regulatoryImpact: true, approvalRequired: false,
-      approvalStatus: 'not_started', assignedBy: 'jc', source: 'unified',
+      // assignedBy was hardcoded to 'jc' — a retired fixture short-id. The
+      // server attributes the creator from the authenticated session, so the
+      // client has nothing truthful to put here.
+      approvalStatus: 'not_started', assignedBy: '', source: 'unified',
       activity: [], title: '', project: '', moduleType: '', assignee: '', due: '', phase: '',
       ...task,
       taskId: id,
@@ -364,32 +368,99 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
   const set = <K extends keyof QuickTaskForm>(k: K, v: QuickTaskForm[K]) =>
     setF(p => ({ ...p, [k]: v }));
 
+  // Creation is a real, awaited write now, so it has real in-flight and failure
+  // states. Nothing is reported as created unless the server said so.
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState('');
+
   const who = f.assignee === 'auto' ? C2C.optimalFor(f.moduleType) : f.assignee;
   const whoName = (C2C.team[who] || { n: who }).n;
 
-  const create = (another: boolean) => {
-    if (!f.title.trim()) return;
-    // MOCK ACTION (flagged): optimistic in-session add only. Does NOT call the
-    // real POST /api/task-management/tasks (taskManagement.routes.ts -> inserts
-    // unifiedTasks with server-side getOptimalAssignee). Wire in the actions pass.
-    const t = C2C.addTask({
-      title: f.title.trim(), project: f.project, moduleType: f.moduleType,
-      taskType: f.taskType, priority: f.priority, assignee: who,
-      assignmentType: f.assignee === 'auto' ? 'auto' : 'manual',
-      criticalPath: f.criticalPath, regulatoryImpact: f.regulatoryImpact,
-      approvalRequired: f.approvalRequired,
-      approvalStatus: f.approvalRequired ? 'pending' : 'not_started',
-      due: f.dueDays <= 0 ? 'today' : ('in ' + f.dueDays + ' day' + (f.dueDays > 1 ? 's' : '')),
-      phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-      sourceEntityType: surfaceCtx.entityType,
-      sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
-      sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-      activity: f.note.trim()
-        ? [{ type: 'note', text: f.note.trim(), who: 'You', when: 'just now' }]
-        : [],
-    });
-    onCreated?.(t);
-    if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
+  /**
+   * REAL, awaited create against the org task store.
+   *
+   * This used to be an in-session add only: C2C.addTask minted a client-side id
+   * (`'C2C-TASK-' + Math.random()`) and pushed onto a module-level array, so the
+   * task existed nowhere but this tab and vanished on reload — while the modal
+   * closed as though the work had been assigned.
+   *
+   * It now POSTs to /api/tasks/tasks (server/routes/taskManagement.routes.ts,
+   * mounted at server/bootstrap/register-core-routes.ts:118 — the same path the
+   * task board's own create already uses) and adopts the SERVER's row, so the
+   * id shown in the toast is the real, persisted taskId. Nothing is added to the
+   * local store unless the write succeeded.
+   *
+   * Body maps onto createTaskSchema, which is stricter than this form:
+   *   - projectId and assigneeId are INTEGERS, so a non-numeric context id is
+   *     omitted rather than sent as a string the server would reject.
+   *   - assigneeId is omitted for "auto", which is what makes the server run
+   *     getOptimalAssignee against the org's real roster — a better answer than
+   *     any the client can compute.
+   */
+  const create = async (another: boolean) => {
+    if (!f.title.trim() || saving) return;
+    setSaving(true);
+    setSaveErr('');
+
+    const body: Record<string, unknown> = {
+      title: f.title.trim(),
+      moduleType: f.moduleType,
+      priority: f.priority,
+      taskType: f.taskType,
+    };
+    const projectIdNum = Number(f.project);
+    if (f.project !== '' && Number.isFinite(projectIdNum) && projectIdNum > 0) {
+      body.projectId = projectIdNum;
+    }
+    const assigneeIdNum = Number(who);
+    if (who !== '' && Number.isFinite(assigneeIdNum) && assigneeIdNum > 0) {
+      body.assigneeId = assigneeIdNum;
+    }
+    if (f.note.trim()) body.description = f.note.trim();
+    if (f.dueDays > 0) {
+      body.dueDate = new Date(Date.now() + f.dueDays * 86400000).toISOString();
+    }
+
+    try {
+      const res = await apiRequest('POST', '/api/tasks/tasks', body);
+      const json = await res.json().catch(() => null);
+      const serverTask = (json as { data?: Record<string, unknown> } | null)?.data;
+      if (!res.ok || !serverTask?.taskId) {
+        const reason = (json as { error?: string } | null)?.error;
+        setSaveErr(reason ? String(reason) : `Couldn’t create the task (HTTP ${res.status}). Nothing was saved.`);
+        return;
+      }
+      // Adopt the persisted row: real taskId, and the assignee the SERVER chose
+      // (which for "auto" is getOptimalAssignee's answer, not a client guess).
+      const t = C2C.addTask({
+        taskId: String(serverTask.taskId),
+        title: f.title.trim(),
+        project: f.project,
+        moduleType: f.moduleType,
+        taskType: f.taskType,
+        priority: f.priority,
+        assignee: serverTask.assigneeId != null ? String(serverTask.assigneeId) : who,
+        assignmentType: f.assignee === 'auto' ? 'auto' : 'manual',
+        criticalPath: f.criticalPath,
+        regulatoryImpact: f.regulatoryImpact,
+        approvalRequired: f.approvalRequired,
+        approvalStatus: f.approvalRequired ? 'pending' : 'not_started',
+        due: f.dueDays <= 0 ? 'today' : ('in ' + f.dueDays + ' day' + (f.dueDays > 1 ? 's' : '')),
+        phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+        sourceEntityType: surfaceCtx.entityType,
+        sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
+        sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+        activity: f.note.trim()
+          ? [{ type: 'note', text: f.note.trim(), who: 'You', when: 'just now' }]
+          : [],
+      });
+      onCreated?.(t);
+      if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
+    } catch (e) {
+      setSaveErr(e instanceof Error ? e.message : 'Couldn’t reach the task service. Nothing was saved.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -471,13 +542,22 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       <div className="cl-field"><label>Note <span className="cl-opt">-- optional</span></label>
         <textarea rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
       </div>
+      {/* The old banner here warned that this "Adds this to the in-session task
+          board only". That is no longer true — the task is persisted — so the
+          warning is gone rather than left to contradict the behaviour. What is
+          still honest to say is the residual backend gap. */}
       <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Adds this to the in-session task board only. Persisting to <code>unifiedTasks</code> via <code>POST /api/task-management/tasks</code> is not yet wired here; audit (<code>task-audit.ts</code>) and notifications are stubbed in the backend.
+        <span className="ico">{I.alertTriangle}</span>The task is saved to your org board. Assignee notifications and the task audit trail (<code>task-audit.ts</code>) are still stubbed server-side, so no one is emailed yet.
       </div>
+      {saveErr && (
+        <div className="cl-warn" role="alert">
+          <span className="ico">{I.alertTriangle}</span>{saveErr}
+        </div>
+      )}
       <div className="cl-foot">
-        <div className="cl-endpoint"><b>POST</b> /api/task-management/tasks</div>
-        <button className="btn ghost" onClick={() => create(true)} disabled={!f.title.trim()}>{I.plus} Create &amp; add another</button>
-        <button className="btn primary" onClick={() => create(false)} disabled={!f.title.trim()}>{I.check} Create task</button>
+        <div className="cl-endpoint"><b>POST</b> /api/tasks/tasks</div>
+        <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || saving}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
+        <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || saving}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
       </div>
     </div>
   );
@@ -669,8 +749,10 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
       {toast && (
         <div className="cl-toast" role="status">
           <span className="cl-toast-ic">{I.check}</span>
+          {/* A task IS now persisted, so the toast reports the real, server-issued
+              taskId. The discuss action is still session-only and keeps saying so. */}
           {toast.type === 'task' && toast.t
-            ? <span className="cl-toast-t">Captured in this session -- <b>{toast.t.taskId}</b> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}. Not saved to the org board yet.</span>
+            ? <span className="cl-toast-t">Saved to the org board -- <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
             : <span className="cl-toast-t">Captured in this session -- not saved to the org board yet.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>
