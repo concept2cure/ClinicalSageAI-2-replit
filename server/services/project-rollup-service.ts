@@ -162,6 +162,7 @@ export class ProjectRollupService {
 
   /**
    * Fetch task counts for all project IDs in a single query.
+   * Reads from project_tasks, the canonical writer table for PM workflows.
    */
   private async batchFetchTaskCounts(
     projectIds: number[],
@@ -180,7 +181,7 @@ export class ProjectRollupService {
          COUNT(*) FILTER (WHERE status = 'done')::int as completed,
          COUNT(*) FILTER (WHERE status = 'blocked')::int as blocked,
          COUNT(*) FILTER (WHERE status != 'done' AND due_date < NOW())::int as overdue
-       FROM unified_tasks
+       FROM project_tasks
        WHERE project_id = ANY($1) AND organization_id = $2
        GROUP BY project_id`,
       [projectIds, organizationId]
