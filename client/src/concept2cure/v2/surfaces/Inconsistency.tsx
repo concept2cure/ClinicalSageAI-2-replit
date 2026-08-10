@@ -115,9 +115,9 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     : null;
 
   // MOCK-ACTION FLAGS (deferred to the actions pass — real endpoints exist):
-  //  1. "Refresh findings" button — re-reads this read-model board. Triggering a
-  //     fresh DETECTION scan (POST /api/governed-intelligence/contradictions/scan/
-  //     :projectId, contradictionEngineService.scanProject) is NOT wired here.
+  //  1. "Re-scan findings" button — WIRED. Runs the real detection scan (POST
+  //     /api/governed-intelligence/contradictions/scan/:projectId,
+  //     contradictionEngineService.scanProject) and then re-reads the board.
   //  2. resolve(f) — WIRED. Real awaited POST /api/governed-intelligence/
   //     contradictions/:id/review; the local row moves only after the server
   //     confirms the transition.
@@ -211,6 +211,52 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       fireToast('Couldn’t reach the contradiction service — ' + (e instanceof Error ? e.message : 'request failed') + '. Nothing was changed.');
     } finally {
       setPendingId('');
+    }
+  };
+
+  /**
+   * "Refresh findings" — a REAL detection scan, then a re-read.
+   *
+   * This button only ever bumped a counter, re-reading the same read-model
+   * board. Nothing re-detected, so a contradiction introduced since the last
+   * scan stayed invisible however many times it was pressed — on the surface
+   * that decides whether the dossier is clean enough to promote, and under a
+   * label ("AnA is checking...") that says detection is happening.
+   *
+   * POST /api/governed-intelligence/contradictions/scan/:projectId
+   * (assumption-decision-contradiction.ts:235) runs
+   * contradictionEngineService.scanProject(orgId, projectId) — drift, decision
+   * and jurisdiction detection — then the board is re-read to show the result.
+   *
+   * It takes the SAME projectId the board read already uses, under the same
+   * constraint: the read route rejects a non-numeric id with 400 ("A valid
+   * numeric projectId is required"), so if the board loaded, this resolves too.
+   *
+   * A failed scan does not pretend: it says the re-detection did not run, and
+   * still re-reads the board so the button remains useful.
+   */
+  const [scanning, setScanning] = useState(false);
+  const runScan = async () => {
+    if (!projectId || scanning) return;
+    setScanning(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/governed-intelligence/contradictions/scan/' + encodeURIComponent(projectId),
+      );
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        fireToast(
+          'Re-detection didn’t run — ' +
+            ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
+            '. Showing the last known findings.',
+        );
+      }
+    } catch (e) {
+      fireToast('Couldn’t reach the contradiction engine — ' + (e instanceof Error ? e.message : 'request failed') + '. Showing the last known findings.');
+    } finally {
+      setScanning(false);
+      setRefresh(n => n + 1);
     }
   };
 
@@ -326,7 +372,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           <h1 className="sp-title">{prog ? progCode + ' -- path to a clean filing' : 'Cross-document inconsistency'}</h1>
           <p className="sp-state">{prog ? <>{prog.name}{prog.stage ? <> {I.dot} {prog.stage}</> : null}. </> : null}AnA continuously scans every governed record -- sections, specs, data and labeling -- for anything that contradicts anything else, and clears it with you before it can reach a reviewer.</p>
         </div>
-        <button className="sp-primary" onClick={() => setRefresh(n => n + 1)} disabled={boardState.loading || !projectId}>{boardState.loading ? I.rotateCcw : I.sparkles} {boardState.loading ? 'AnA is checking...' : 'Refresh findings'}</button>
+        <button className="sp-primary" onClick={() => void runScan()} disabled={boardState.loading || scanning || !projectId}>{(boardState.loading || scanning) ? I.rotateCcw : I.sparkles} {scanning ? 'AnA is checking...' : boardState.loading ? 'Loading findings...' : 'Re-scan findings'}</button>
       </div>
 
       {!projectId ? (
