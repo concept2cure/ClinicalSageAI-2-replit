@@ -24,6 +24,7 @@ import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
+import { unboundNotice } from '../governanceNotice';
 
 interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null; }
 
@@ -99,7 +100,15 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.'); return; }
       if (!res.ok || !json?.document?.id) { fireToast('Couldn’t create the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.'); return; }
       setDialog(null);
-      fireToast('Document created · ' + json.document.title + (tpl ? ' (seeded from ' + templateLabel(tpl) + ')' : ''));
+      // The server reports on every create whether the document attached to the
+      // project's governed filing. Unbound is legitimate; unbound and unsaid is
+      // how the two document stores drifted apart, so the reason rides along on
+      // the confirmation rather than being dropped.
+      fireToast(
+        'Document created · ' + json.document.title +
+        (tpl ? ' (seeded from ' + templateLabel(tpl) + ')' : '') +
+        unboundNotice((json as { governance?: unknown }).governance),
+      );
       onDocCreated({ id: String(json.document.id), title: String(json.document.title) });
     } catch (e) {
       fireToast('Couldn’t create the document — ' + (e instanceof Error ? e.message : String(e)) + '.');

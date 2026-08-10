@@ -15,6 +15,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
+import { completeStatusSqlList } from '../../services/c2c/section-content.js';
 
 const router = Router();
 
@@ -38,6 +39,21 @@ const BIOPHARMA_TYPES = ['IND', 'NDA', 'BLA', 'MAA', 'JNDA', 'DE_NOVO'];
  * selected as NULL rather than aliased onto a near-miss: the client already
  * hides the chip when it is null, and quietly rendering a different date under
  * a PDUFA label is worse than rendering nothing.
+ *
+ * `completion_percentage` used to read `p.progress_percent`, which is the same
+ * class of problem one step further along: the column exists, so the query
+ * worked — and it is written exactly ONCE, as the literal 0 in the c2c project
+ * INSERT, with no UPDATE of it anywhere in server/. Every program reported 0%
+ * forever no matter how much of its filing had been approved. A number that
+ * looks measured and can never move is worse than the absent one above, because
+ * nothing about it invites the question.
+ *
+ * It is now derived from the governed sections, on the same predicate
+ * c2c_recompute_document_readiness() uses for one document — the same figure
+ * GET /api/c2c/projects reports, from the same constant, so the two surfaces
+ * cannot disagree about how complete a program is. This router already
+ * aggregates c2c_document_sections for `section_counts`, so the dependency and
+ * the scan were both already here; only the honest arithmetic was missing.
  */
 const PROGRAM_FIELDS = `
   p.id, p.code, p.name, p.program_type, p.status,
@@ -45,7 +61,14 @@ const PROGRAM_FIELDS = `
   p.indication               AS lead_indication,
   p.actual_submission_date   AS filing_date,
   NULL::timestamp            AS pdufa_date,
-  p.progress_percent         AS completion_percentage,
+  (
+    SELECT COALESCE(ROUND(100.0
+             * COUNT(*) FILTER (WHERE ds.status IN (${completeStatusSqlList()}))
+             / NULLIF(COUNT(*), 0))::integer, 0)
+      FROM c2c_document_sections ds
+      JOIN c2c_documents d ON d.id = ds.document_id
+     WHERE d.project_id = p.id AND d.org_id = p.organization_id
+  )                          AS completion_percentage,
   p.target_agencies, p.created_at, p.updated_at`;
 
 /** Postgres raises 22P02 when a non-UUID is cast to uuid; treat as "not found". */

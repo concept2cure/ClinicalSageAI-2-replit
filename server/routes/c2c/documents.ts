@@ -32,6 +32,7 @@ import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { writeMutation, recordGovernedAction } from './actions.js';
 import { detectSpans } from '../../services/sentenceTraceabilityService.js';
+import { sectionHasContentSql, sectionPlainText } from '../../services/c2c/section-content.js';
 import {
   replaceAuthorSpans,
   assertLineageCoversContent,
@@ -85,25 +86,13 @@ function withRulePackProvenance(row: Record<string, unknown>): Record<string, un
 /**
  * The canonical plain text of a c2c section, for lineage purposes.
  *
- * `c2c_document_sections.content` is jsonb — `{ paragraphs: [{ id, text, … }] }`
- * — while span lineage addresses half-open character ranges over a string. This
- * is the one function that decides how that jsonb becomes those characters, and
- * it MUST be the only one: spans are recorded against the string it returns and
- * later verified against the string it returns, so any second serialisation
- * would silently shift every offset and make provenance point at the wrong words.
- *
- * Paragraphs are joined with a blank line, which is how the editor renders them.
- * Non-string or absent text contributes nothing rather than "undefined".
+ * Defined in services/c2c/section-content.ts, beside the SQL predicate that
+ * answers the same question for has_content, and re-exported here so the
+ * existing import path keeps working. It was implemented here and read only
+ * `content.paragraphs`, which is not the shape the editor saves — see that
+ * module for what that cost.
  */
-export function sectionPlainText(content: unknown): string {
-  if (!content || typeof content !== 'object') return '';
-  const paras = (content as { paragraphs?: unknown }).paragraphs;
-  if (!Array.isArray(paras)) return '';
-  return paras
-    .map((p) => (p && typeof p === 'object' ? (p as { text?: unknown }).text : undefined))
-    .filter((t): t is string => typeof t === 'string')
-    .join('\n\n');
-}
+export { sectionPlainText };
 
 const router = Router();
 
@@ -323,7 +312,7 @@ router.get('/:id/outline', async (req: Request, res: Response) => {
     const secRes = await pool.query(
       `SELECT section_key, status, owner_id, draft_source,
               drafted_at, accepted_at, version,
-              (content -> 'paragraphs') IS NOT NULL AS has_content
+              ${sectionHasContentSql('content')} AS has_content
        FROM c2c_document_sections
        WHERE document_id = $1`,
       [req.params.id],

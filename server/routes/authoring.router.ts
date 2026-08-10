@@ -1877,16 +1877,32 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
 // ============= Comments & Review =============
 
 // POST /api/authoring/sections/:sectionId/comment - Add comment
+// THE comment-creation endpoint. There used to be two: this one, which the
+// editor calls (DocumentAuthoring.tsx:471), and a `POST /comments` that wrote
+// the same table with a fuller row — author name and email, threading parent,
+// anchor position — and then INSERTed into a `authoring_comment_activity`
+// table that no migration creates, so it 500'd after the comment had already
+// been written. Nothing called it.
+//
+// The duplicate is gone and its capability moved here rather than being
+// dropped with it: the read path GET /documents/:id/comments selects
+// user_name, user_email, parent_comment_id and position_data, and renders
+// `COALESCE(c.user_name, c.created_by) AS author_name` — so with only the thin
+// write, every comment in the UI was attributed to a raw actor id and no reply
+// could ever be threaded.
 router.post('/sections/:sectionId/comment', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
-    const { body, anchor, doc_id } = req.body;
+    const { body, anchor, doc_id, parent_comment_id, position_data } = req.body;
     const tenantId = getTenantId(req);
     const commentId = crypto.randomUUID();
+    // Identity from the VERIFIED JWT only — never from a header or the body.
     const createdBy = getActorId(req);
     if (!createdBy) {
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
+    const userEmail = req.user?.email ?? null;
+    const userName = userEmail || createdBy;
 
     if (!body) {
       return res.status(400).json({
@@ -1897,10 +1913,31 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
 
     const result = await pool.query(
       `INSERT INTO authoring_comments
-       (id, section_id, doc_id, body, anchor, status, created_by, created_at, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, 'open', $6, NOW(), $7)
+       (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
+        parent_comment_id, position_data, created_at, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), $11)
        RETURNING *`,
-      [commentId, sectionId, doc_id, body, anchor, createdBy, tenantId]
+      [
+        commentId,
+        sectionId,
+        doc_id,
+        body,
+        anchor,
+        createdBy,
+        userName,
+        userEmail,
+        parent_comment_id ?? null,
+        position_data ?? null,
+        tenantId,
+      ]
+    );
+
+    await createAuditEvent(
+      doc_id,
+      parent_comment_id ? 'reply_added' : 'comment_added',
+      userName,
+      { comment_id: commentId, section_id: sectionId, anchor },
+      tenantId
     );
 
     res.status(201).json({
@@ -2230,71 +2267,6 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/authoring/comments - Create new comment
-router.post('/comments', async (req: Request, res: Response) => {
-  try {
-    const { doc_id, section_id, body, anchor, parent_comment_id, position_data } = req.body;
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): comment author must come from the verified JWT.
-    const userId = getActorId(req);
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-    const userEmail = req.user?.email ?? null;
-    const userName = userEmail || userId;
-    const commentId = crypto.randomUUID();
-
-    const result = await pool.query(
-      `INSERT INTO authoring_comments
-       (id, doc_id, section_id, body, anchor, status, created_by, user_name, user_email, parent_comment_id, position_data, tenant_id, created_at)
-       VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, $11, NOW())
-       RETURNING *`,
-      [
-        commentId,
-        doc_id,
-        section_id,
-        body,
-        anchor,
-        userId,
-        userName,
-        userEmail,
-        parent_comment_id,
-        position_data,
-        tenantId,
-      ]
-    );
-
-    // Create activity record
-    await pool.query(
-      `INSERT INTO authoring_comment_activity
-       (id, doc_id, comment_id, activity_type, actor_id, actor_name, metadata, tenant_id, created_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW())`,
-      [
-        doc_id,
-        commentId,
-        parent_comment_id ? 'reply_added' : 'comment_added',
-        userId,
-        userName,
-        { section_id, anchor },
-        tenantId,
-      ]
-    );
-
-    res.status(201).json({
-      success: true,
-      comment: result.rows[0],
-      message: 'Comment added successfully',
-    });
-  } catch (error) {
-    console.error('Error creating comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
 // PUT /api/authoring/comments/:id - Update comment
 router.put('/comments/:id', async (req: Request, res: Response) => {
   try {
@@ -2357,7 +2329,12 @@ router.put('/comments/:id', async (req: Request, res: Response) => {
       });
     }
 
-    // Log activity
+    // Log activity to the ONE audit ledger. This used to INSERT into
+    // authoring_comment_activity — a second, parallel activity log that no
+    // migration ever created, so every resolve/reopen threw 42P01 AFTER the
+    // comment had already been updated: the change landed and the caller was
+    // told it failed. authoring_audit_trail is the ledger that exists, is on
+    // the durable migration path, and is what GET /docs/:docId/audit reads.
     const activityType =
       status === 'resolved'
         ? 'comment_resolved'
@@ -2365,19 +2342,12 @@ router.put('/comments/:id', async (req: Request, res: Response) => {
         ? 'comment_reopened'
         : 'comment_edited';
 
-    await pool.query(
-      `INSERT INTO authoring_comment_activity
-       (id, doc_id, comment_id, activity_type, actor_id, actor_name, metadata, tenant_id, created_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, NOW())`,
-      [
-        result.rows[0].doc_id,
-        id,
-        activityType,
-        userId,
-        userName,
-        { status, resolution_note },
-        tenantId,
-      ]
+    await createAuditEvent(
+      result.rows[0].doc_id,
+      activityType,
+      userName,
+      { comment_id: id, status, resolution_note },
+      tenantId
     );
 
     res.json({
@@ -2428,13 +2398,10 @@ router.delete('/comments/:id', async (req: Request, res: Response) => {
       tenantId,
     ]);
 
-    // Log activity
-    await pool.query(
-      `INSERT INTO authoring_comment_activity
-       (id, doc_id, comment_id, activity_type, actor_id, actor_name, tenant_id, created_at)
-       VALUES (gen_random_uuid(), $1, $2, 'comment_deleted', $3, $4, $5, NOW())`,
-      [docId, id, userId, userName, tenantId]
-    );
+    // Same ledger as every other authoring mutation — see the note on resolve.
+    // A deletion that leaves no trace is the one activity record a Part 11
+    // system cannot afford to lose.
+    await createAuditEvent(docId, 'comment_deleted', userName, { comment_id: id }, tenantId);
 
     res.json({
       success: true,
@@ -2571,7 +2538,18 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
     const { id } = req.params;
     const { reviewers } = req.body; // Array of { id, name, email }
     const tenantId = getTenantId(req);
-    const requestedBy = (req.headers['x-user-name'] as string) || 'System';
+    // SECURITY (21 CFR Part 11): who requested the review is attribution, and
+    // attribution comes from the verified JWT — never `x-user-name`, which the
+    // caller sets. The sibling submit-review handler was hardened this way; this
+    // one kept the header, and it only stayed harmless because the table did not
+    // exist. Making the endpoint work without fixing this would ship the defect.
+    const requestedBy = req.user?.email ?? getActorId(req);
+    if (!requestedBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    if (!Array.isArray(reviewers) || reviewers.length === 0) {
+      return res.status(400).json({ success: false, error: 'reviewers must be a non-empty array' });
+    }
 
     const createdReviews = [];
     for (const reviewer of reviewers) {
@@ -2598,36 +2576,6 @@ router.post('/documents/:id/request-review', async (req: Request, res: Response)
     res.status(500).json({
       success: false,
       error: 'Failed to request review',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// GET /api/authoring/documents/:id/comment-activity - Get comment activity
-router.get('/documents/:id/comment-activity', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const tenantId = getTenantId(req);
-    const limit = parseInt(req.query.limit as string) || 50;
-
-    const result = await pool.query(
-      `SELECT id, doc_id, comment_id, activity_type, actor_id, actor_name, metadata, created_at, tenant_id FROM authoring_comment_activity
-       WHERE doc_id = $1 AND tenant_id = $2
-       ORDER BY created_at DESC
-       LIMIT $3`,
-      [id, tenantId, limit]
-    );
-
-    res.json({
-      success: true,
-      activities: result.rows,
-      total: result.rowCount,
-    });
-  } catch (error) {
-    console.error('Error fetching comment activity:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch comment activity',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -4509,405 +4457,6 @@ router.delete('/docs/:docId', async (req: Request, res: Response) => {
   }
 });
 
-// ====== STEP 14: REVIEWER CHECKLIST & CHANGE REQUEST ENDPOINTS ======
-
-// Compose checklist for a doc/section/region, create rows if none exist.
-// Body: { section_id, region?, reviewer_email? }
-router.post('/docs/:docId/checklist/compose', async (req: Request, res: Response) => {
-  try {
-    const docId = req.params.docId;
-    const { section_id, region, reviewer_email } = req.body || {};
-    if (!section_id) return res.status(400).json({ error: 'section_id required' });
-    const regionTag = (region || 'ICH').toUpperCase();
-    const reviewer =
-      reviewer_email || ((req.headers as any)['x-user-email'] || 'user@local').toString();
-
-    // If checklist exists, return it (idempotent)
-    const existing = (
-      await pool.query(
-        `
-      SELECT checklist_id, doc_id, section_id, region, reviewer_email, status, created_at FROM doc_checklist WHERE doc_id=$1 AND section_id=$2 AND region=$3 LIMIT 1`,
-        [docId, section_id, regionTag]
-      )
-    ).rows[0];
-    let checklistId = existing?.checklist_id;
-
-    if (!existing) {
-      const ins = (
-        await pool.query(
-          `
-        INSERT INTO doc_checklist (doc_id, section_id, region, reviewer_email)
-        VALUES ($1,$2,$3,$4) RETURNING checklist_id`,
-          [docId, section_id, regionTag, reviewer]
-        )
-      ).rows[0];
-      checklistId = ins.checklist_id;
-
-      // Inspect section + citations to craft items
-      const cites =
-        (
-          await pool.query(
-            `SELECT id, section_id, source, anchor, citation_text, reference_id, created_by, created_at, tenant_id, payload_sha256, frozen_at FROM authoring_citations WHERE section_id=$1`,
-            [section_id]
-          )
-        ).rows || [];
-      const keys = new Set(cites.map((c: any) => c.source)); // e.g., QUALITY.SPECS.DP, P8.TABLES …
-
-      const items = [];
-      // P.5 specs completeness
-      if (keys.has('QUALITY.SPECS.DP') || keys.has('QUALITY.SPECS.DS')) {
-        items.push({
-          key: 'P5-SPECS-COMPLETENESS',
-          text: 'Specs include {attribute, method, unit, limit, justification} (ICH Q6A).',
-        });
-        items.push({
-          key: 'P5-METHOD-VALIDATION',
-          text: 'Linked methods are VALIDATED/APPROVED; SST rules defined where applicable.',
-        });
-      }
-      // P.8 stability
-      if (keys.has('P8.TABLES')) {
-        items.push({
-          key: 'P8-LT-ACC',
-          text: 'Design includes LT + ACC conditions and required timepoints per region.',
-        });
-        items.push({
-          key: 'P8-OOT-MONITOR',
-          text: 'OOT rule set configured (WE1–WE4) with surveillance output recorded.',
-        });
-        items.push({
-          key: 'P8-SHELF-LIFE',
-          text: 'Shelf-life conclusion (t90) present with rationale.',
-        });
-      }
-      // Control Strategy / PPQ
-      if (keys.has('PROCESS.CONTROL_STRATEGY')) {
-        items.push({
-          key: 'CS-CPP-CQA-LINKS',
-          text: 'CPP→CQA links cover all critical steps; monitoring & control defined.',
-        });
-      }
-      if (keys.has('PPQ.SUMMARY')) {
-        items.push({
-          key: 'PPQ-LOTS',
-          text: 'PPQ lots count and outcomes documented with deviations/CAPAs addressed.',
-        });
-      }
-
-      // Fallback—if no tokens, add generic items
-      if (!items.length) {
-        items.push({
-          key: 'GEN-CONTENT',
-          text: `Section content present & coherent for region ${regionTag}.`,
-        });
-      }
-
-      for (const it of items) {
-        await pool.query(
-          `
-          INSERT INTO doc_checklist_items (checklist_id, item_key, text)
-          VALUES ($1,$2,$3)`,
-          [checklistId, it.key, it.text]
-        );
-      }
-    }
-
-    const full = (
-      await pool.query(
-        `
-      SELECT c.checklist_id, c.doc_id, c.section_id, c.region, c.reviewer_email, c.status, c.created_at, s.code as section_code, s.title as section_title
-      FROM doc_checklist c
-      LEFT JOIN authoring_sections s ON s.id = c.section_id
-      WHERE c.checklist_id=$1`,
-        [checklistId]
-      )
-    ).rows[0];
-
-    const rows = (
-      await pool.query(
-        `SELECT item_id, checklist_id, item_key, text, status, comment, evidence_cite, created_at, updated_at FROM doc_checklist_items WHERE checklist_id=$1 ORDER BY created_at`,
-        [checklistId]
-      )
-    ).rows;
-    res.json({ checklist: full, items: rows });
-  } catch (error) {
-    console.error('POST /docs/:id/checklist/compose', error);
-    res.status(500).json({ error: 'Failed to compose checklist' });
-  }
-});
-
-// Get checklist (latest) for doc/section/region
-router.get('/docs/:docId/checklist', async (req: Request, res: Response) => {
-  try {
-    const { section_id, region } = req.query;
-    if (!section_id) return res.status(400).json({ error: 'section_id required' });
-    const regionTag = (region || 'ICH').toString().toUpperCase();
-    const head = (
-      await pool.query(
-        `
-      SELECT checklist_id, doc_id, section_id, region, reviewer_email, status, created_at FROM doc_checklist
-      WHERE doc_id=$1 AND section_id=$2 AND region=$3
-      ORDER BY created_at DESC LIMIT 1`,
-        [req.params.docId, section_id, regionTag]
-      )
-    ).rows[0];
-    if (!head) return res.json({ checklist: null, items: [] });
-    const items = (
-      await pool.query(
-        `SELECT item_id, checklist_id, item_key, text, status, comment, evidence_cite, created_at, updated_at FROM doc_checklist_items WHERE checklist_id=$1 ORDER BY created_at`,
-        [head.checklist_id]
-      )
-    ).rows;
-    res.json({ checklist: head, items });
-  } catch (error) {
-    console.error('GET /docs/:id/checklist', error);
-    res.status(500).json({ error: 'Failed to get checklist' });
-  }
-});
-
-// Update checklist item
-router.patch('/checklist/items/:itemId', async (req: Request, res: Response) => {
-  try {
-    const { status, comment, evidence_cite } = req.body || {};
-    const rows = (
-      await pool.query(
-        `
-      UPDATE doc_checklist_items
-      SET status = COALESCE($2,status),
-          comment = COALESCE($3,comment),
-          evidence_cite = COALESCE($4,evidence_cite),
-          updated_at = NOW()
-      WHERE item_id=$1
-      RETURNING *`,
-        [req.params.itemId, status || null, comment || null, evidence_cite || null]
-      )
-    ).rows;
-    if (!rows[0]) return res.status(404).json({ error: 'not found' });
-    res.json(rows[0]);
-  } catch (error) {
-    console.error('PATCH /checklist/items/:id', error);
-    res.status(500).json({ error: 'Failed to update checklist item' });
-  }
-});
-
-// Checklist summary for a document
-router.get('/docs/:docId/checklist/summary', async (req: Request, res: Response) => {
-  try {
-    const rows = (
-      await pool.query(
-        `
-      SELECT region, status, COUNT(*) as cnt
-      FROM doc_checklist
-      WHERE doc_id=$1
-      GROUP BY region, status
-      ORDER BY region, status`,
-        [req.params.docId]
-      )
-    ).rows;
-    res.json(rows);
-  } catch (error) {
-    console.error('GET /docs/:id/checklist/summary', error);
-    res.status(500).json({ error: 'Failed to summarize checklist' });
-  }
-});
-
-// Create change request (AUTHOR/QA can create)
-router.post(
-  '/docs/:docId/cr',
-  requireAny(['AUTHOR', 'QA', 'RA_CMC']),
-  async (req: Request, res: Response) => {
-    try {
-      const { section_id, title, reason, apply_kind, patch_json } = req.body || {};
-      if (!section_id || !title)
-        return res.status(400).json({ error: 'section_id and title required' });
-      const proposer = ((req.headers as any)['x-user-email'] || 'user@local').toString();
-      const ins = (
-        await pool.query(
-          `
-      INSERT INTO doc_change_requests (doc_id, section_id, title, reason, apply_kind, patch_json, proposer_email)
-      VALUES ($1,$2,$3,$4,COALESCE($5,'CONTENT'),COALESCE($6,'{}'::jsonb),$7)
-      RETURNING *`,
-          [
-            req.params.docId,
-            section_id,
-            title,
-            reason || null,
-            apply_kind || 'CONTENT',
-            patch_json || {},
-            proposer,
-          ]
-        )
-      ).rows[0];
-      res.json(ins);
-    } catch (error) {
-      console.error('POST /docs/:id/cr', error);
-      res.status(500).json({ error: 'Failed to create change request' });
-    }
-  }
-);
-
-// List CRs for a doc
-router.get('/docs/:docId/cr', async (req: Request, res: Response) => {
-  try {
-    const rows = (
-      await pool.query(
-        `
-      SELECT c.cr_id, c.doc_id, c.section_id, c.title, c.reason, c.apply_kind, c.patch_json, c.proposer_email, c.approver_email, c.status, c.resolved_at, c.created_at, s.code as section_code, s.title as section_title
-      FROM doc_change_requests c
-      LEFT JOIN authoring_sections s ON s.id = c.section_id
-      WHERE c.doc_id=$1
-      ORDER BY c.created_at DESC`,
-        [req.params.docId]
-      )
-    ).rows;
-    res.json(rows);
-  } catch (error) {
-    console.error('GET /docs/:id/cr', error);
-    res.status(500).json({ error: 'Failed to list change requests' });
-  }
-});
-
-// Approve / Reject CR (QA or RA_CMC)
-router.post(
-  '/cr/:crId/approve',
-  requireAny(['QA', 'RA_CMC']),
-  async (req: Request, res: Response) => {
-    try {
-      const approver = ((req.headers as any)['x-user-email'] || 'user@local').toString();
-      const rows = (
-        await pool.query(
-          `
-      UPDATE doc_change_requests
-      SET status='APPROVED', approver_email=$2, resolved_at=NOW()
-      WHERE cr_id=$1 AND status='OPEN' RETURNING *`,
-          [req.params.crId, approver]
-        )
-      ).rows;
-      if (!rows[0]) return res.status(404).json({ error: 'Not found or not OPEN' });
-      res.json(rows[0]);
-    } catch (error) {
-      console.error('POST /cr/:id/approve', error);
-      res.status(500).json({ error: 'Approve failed' });
-    }
-  }
-);
-
-router.post(
-  '/cr/:crId/reject',
-  requireAny(['QA', 'RA_CMC']),
-  async (req: Request, res: Response) => {
-    try {
-      const approver = ((req.headers as any)['x-user-email'] || 'user@local').toString();
-      const rows = (
-        await pool.query(
-          `
-      UPDATE doc_change_requests
-      SET status='REJECTED', approver_email=$2, resolved_at=NOW()
-      WHERE cr_id=$1 AND status IN ('OPEN','APPROVED') RETURNING *`,
-          [req.params.crId, approver]
-        )
-      ).rows;
-      if (!rows[0]) return res.status(404).json({ error: 'Not found' });
-      res.json(rows[0]);
-    } catch (error) {
-      console.error('POST /cr/:id/reject', error);
-      res.status(500).json({ error: 'Reject failed' });
-    }
-  }
-);
-
-// Apply CR (RA_CMC or QA for CONTENT; RA_CMC for TOKEN_*)
-router.post(
-  '/cr/:crId/apply',
-  requireAny(['RA_CMC', 'QA']),
-  async (req: Request, res: Response) => {
-    try {
-      // fetch CR + doc status
-      const cr = (
-        await pool.query(
-          `SELECT cr_id, doc_id, section_id, title, reason, apply_kind, patch_json, proposer_email, approver_email, status, resolved_at, created_at FROM doc_change_requests WHERE cr_id=$1`,
-          [req.params.crId]
-        )
-      ).rows[0];
-      if (!cr) return res.status(404).json({ error: 'CR not found' });
-
-      // Companion correctness fix: this joined `s.document_id = d.id`, a column
-      // that does not exist (the section's parent is `doc_id`) — the identical
-      // latent 42703 canEditSection carried. It also honoured only APPROVED, so
-      // a FROZEN record was not treated as locked. Same immutability set as the
-      // section gate now.
-      //
-      // SCOPE NOTE: this route still cannot succeed — `doc_change_requests`
-      // (queried above) has no CREATE statement anywhere in the repo, so the
-      // handler 500s before reaching here. This removes the latent column bug
-      // and aligns the lock; it does not make the route work. The identical
-      // wrong-column bug ALSO remains at the template-apply handler
-      // (`SELECT id, code FROM authoring_sections WHERE document_id = $1` and
-      // the INSERT that follows it, which additionally reference the
-      // non-existent `order_idx`/`created_by` shape) — that is a separate
-      // broken-CRUD defect, deliberately out of scope for section authz.
-      const d = (
-        await pool.query(
-          `
-      SELECT d.status FROM authoring_documents d
-      JOIN authoring_sections s ON s.doc_id = d.id
-      WHERE s.id = $1`,
-          [cr.section_id]
-        )
-      ).rows[0];
-      if (LOCKED_DOCUMENT_STATUSES.has(String(d?.status ?? '').toUpperCase()))
-        return res
-          .status(409)
-          .json({ error: 'Document is FROZEN/APPROVED; cannot apply changes' });
-
-      if (cr.apply_kind === 'CONTENT') {
-        // Replace section content with patch_json
-        await pool.query(
-          `
-        UPDATE authoring_sections
-        SET content=$2, updated_at=NOW()
-        WHERE id=$1`,
-          [cr.section_id, cr.patch_json || {}]
-        );
-      } else if (cr.apply_kind === 'TOKEN_REFRESH') {
-        // patch_json = { cites: [uuid,...] }
-        const cites = Array.isArray(cr.patch_json?.cites) ? cr.patch_json.cites : [];
-        for (const citeId of cites) {
-          await fetch(
-            `${req.protocol}://${req.get('host')}/api/authoring/sections/${
-              cr.section_id
-            }/refresh-token`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cite_id: citeId }),
-            }
-          ).catch((err: unknown) => {
-            logger.warn('Citation token refresh request failed during change-request apply', {
-              sectionId: cr.section_id,
-              crId: cr.cr_id,
-              citeId,
-              err: err instanceof Error ? err.message : String(err),
-            });
-          });
-        }
-      } else if (cr.apply_kind === 'TOKEN_REPLACE') {
-        // For now: replace by deleting + inserting new citation (left as future work)
-        // Acknowledge apply without mutation to avoid breaking flow
-      }
-
-      await pool.query(
-        `UPDATE doc_change_requests SET status='APPLIED', resolved_at=NOW() WHERE cr_id=$1`,
-        [cr.cr_id]
-      );
-      res.json({ ok: true, cr_id: cr.cr_id });
-    } catch (error) {
-      console.error('POST /cr/:id/apply', error);
-      res.status(500).json({ error: 'Apply failed' });
-    }
-  }
-);
-
 // Assign permission (doc- or section-level).
 //
 // TENANT-SCOPED (C2C-AUTHOR-002). The grant is written with the granter's
@@ -5467,6 +5016,17 @@ router.get('/docs/:docId/signatures', async (req: Request, res: Response) => {
 // ============= AUDIT Operations =============
 
 // GET /api/authoring/docs/:docId/audit - Get audit trail
+//
+// Reads authoring_audit_trail — the ledger createAuditTrail() has always
+// written. This endpoint used to SELECT from `authoring_audit_events`, a table
+// with no CREATE statement anywhere in the repository and no writer: not a
+// migration, not shared/schema.ts, not one of the router's own runtime DDL
+// helpers. So the only Part 11 read-back surface in the authoring stack was an
+// unconditional 42P01, while a complete audit record — actor, operation,
+// before/after hashes, IP, session — accumulated in the table next to it.
+//
+// event_type/actor are kept as the response field names so the shape callers
+// were coded against is unchanged; they are aliased from the real columns.
 router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
@@ -5474,10 +5034,16 @@ router.get('/docs/:docId/audit', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT id, doc_id, event_type, actor, metadata, created_at, tenant_id FROM authoring_audit_events
-       WHERE doc_id = $1 AND tenant_id = $2
-       ORDER BY created_at DESC
-       LIMIT $3`,
+      `SELECT id, doc_id, section_id,
+              operation_type AS event_type,
+              actor_email    AS actor,
+              actor_role, change_reason,
+              content_hash_before, content_hash_after,
+              metadata, created_at, tenant_id
+         FROM authoring_audit_trail
+        WHERE doc_id = $1 AND tenant_id = $2
+        ORDER BY created_at DESC
+        LIMIT $3`,
       [docId, tenantId, limit]
     );
 
@@ -5543,197 +5109,6 @@ router.post('/users/pin', async (req: Request, res: Response) => {
 });
 
 // ============= AI ANALYSIS & SUGGESTIONS =============
-
-// AI Gateway client (routes through Claude by default)
-const getAI = async () => {
-  const { getGateway } = await import('../services/ai-gateway/gateway.js');
-  return getGateway();
-};
-
-// Regulatory validation rules
-const REGULATORY_PATTERNS = {
-  ICH: {
-    Q1A: /stability.*testing|accelerated.*conditions|long-term.*storage/gi,
-    Q3A: /impurit|related.*substance|degradation.*product/gi,
-    Q6A: /specification|test.*procedure|acceptance.*criteri/gi,
-    E6: /good.*clinical.*practice|GCP|protocol.*deviation/gi,
-  },
-  FDA: {
-    '21CFR312': /investigational.*new.*drug|IND|clinical.*hold/gi,
-    '21CFR314': /new.*drug.*application|NDA|ANDA/gi,
-  },
-  CTD: {
-    structure: /3\.2\.[SP]\.\d+|Module.*[1-5]|eCTD/gi,
-    formatting: /section.*\d+\.\d+|table.*\d+|figure.*\d+/gi,
-  },
-};
-
-// POST /api/authoring/ai/analyze - Comprehensive document analysis
-router.post('/ai/analyze', async (req: Request, res: Response) => {
-  try {
-    const { document_id, content, section_id, analysis_type = 'full' } = req.body;
-    const tenantId = getTenantId(req);
-
-    if (!content) {
-      return res.status(400).json({ error: 'Content is required for analysis' });
-    }
-
-    const aiGateway = await getAI();
-    const suggestions: any[] = [];
-    const complianceIssues: any[] = [];
-
-    // 1. Grammar and clarity check
-    if (analysis_type === 'full' || analysis_type === 'grammar') {
-      const grammarPrompt = `Analyze the following regulatory document text for grammar, clarity, and professional writing issues.
-Return specific suggestions in JSON format.
-Text: "${content.substring(0, 3000)}"
-
-Provide output as JSON with this structure:
-{
-  "suggestions": [
-    {
-      "type": "grammar|clarity|terminology|consistency",
-      "severity": "critical|important|enhancement|style",
-      "original": "original text",
-      "suggested": "corrected text",
-      "explanation": "why this change is needed",
-      "position": {"start": 0, "end": 10}
-    }
-  ]
-}`;
-
-      try {
-        const gwResponse = await aiGateway.route({
-          taskType: 'document_analysis',
-          messages: [{ role: 'user', content: grammarPrompt }],
-          jsonMode: true,
-          temperature: 0.3,
-          maxTokens: 2000,
-          callerModule: 'authoring-router/ai-analyze/grammar',
-        });
-
-        const result = JSON.parse(gwResponse.content || '{}');
-        suggestions.push(...(result.suggestions || []));
-      } catch (aiError) {
-        console.error('AI grammar check failed:', aiError);
-      }
-    }
-
-    // 2. Regulatory compliance check
-    if (analysis_type === 'full' || analysis_type === 'regulatory') {
-      // Check ICH guidelines
-      Object.entries(REGULATORY_PATTERNS.ICH).forEach(([guideline, pattern]) => {
-        const matches = content.match(pattern);
-        if (!matches || matches.length === 0) {
-          complianceIssues.push({
-            type: 'regulatory',
-            severity: 'important',
-            guideline: `ICH ${guideline}`,
-            issue: `Content may not fully address ${guideline} requirements`,
-            suggestion: `Ensure comprehensive coverage of ${guideline} guidelines`,
-          });
-        }
-      });
-
-      // Check FDA requirements
-      Object.entries(REGULATORY_PATTERNS.FDA).forEach(([regulation, pattern]) => {
-        const matches = content.match(pattern);
-        if (!matches && section_id?.includes('clinical')) {
-          complianceIssues.push({
-            type: 'regulatory',
-            severity: 'critical',
-            guideline: regulation,
-            issue: `Missing references to ${regulation} requirements`,
-            suggestion: `Include specific ${regulation} compliance statements`,
-          });
-        }
-      });
-    }
-
-    // 3. Calculate compliance scores
-    const scores = {
-      regulatory_score: Math.max(0, 100 - complianceIssues.length * 10),
-      // Derived from technical-type findings, consistent with the other
-      // scores below. Previously: `85 + Math.random() * 15` — a fabricated
-      // value that varied per request with no relation to the document.
-      technical_score: Math.max(0, 100 - suggestions.filter(s => s.type === 'technical').length * 7),
-      clarity_score: 90 - suggestions.filter(s => s.type === 'clarity').length * 5,
-      consistency_score: 95 - suggestions.filter(s => s.type === 'consistency').length * 8,
-      completeness_score: content.length > 500 ? 85 : 60,
-      overall_score: 0,
-    };
-    scores.overall_score = Object.values(scores).reduce((a, b) => a + b, 0) / 5;
-
-    // 4. Store suggestions in database
-    for (const suggestion of suggestions) {
-      await pool.query(
-        `INSERT INTO authoring_ai_suggestions
-         (document_id, section_id, suggestion_type, severity, original_text, suggested_text,
-          explanation, position_start, position_end, confidence_score, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [
-          document_id,
-          section_id,
-          suggestion.type,
-          suggestion.severity,
-          suggestion.original,
-          suggestion.suggested,
-          suggestion.explanation,
-          suggestion.position?.start || 0,
-          suggestion.position?.end || 0,
-          suggestion.confidence || 0.85,
-          tenantId,
-        ]
-      );
-    }
-
-    // 5. Store compliance scores
-    await pool.query(
-      `INSERT INTO authoring_compliance_scores
-       (document_id, regulatory_score, technical_score, clarity_score,
-        consistency_score, completeness_score, overall_score,
-        ich_compliance, ctd_compliance, ind_compliance, missing_sections, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-       ON CONFLICT (document_id, tenant_id)
-       DO UPDATE SET
-         regulatory_score = $2,
-         technical_score = $3,
-         clarity_score = $4,
-         consistency_score = $5,
-         completeness_score = $6,
-         overall_score = $7,
-         analysis_timestamp = NOW()`,
-      [
-        document_id,
-        scores.regulatory_score,
-        scores.technical_score,
-        scores.clarity_score,
-        scores.consistency_score,
-        scores.completeness_score,
-        scores.overall_score,
-        JSON.stringify({}), // ICH compliance details
-        JSON.stringify({}), // CTD compliance details
-        JSON.stringify({}), // IND compliance details
-        JSON.stringify([]), // Missing sections
-        tenantId,
-      ]
-    );
-
-    res.json({
-      success: true,
-      suggestions,
-      complianceIssues,
-      scores,
-      analysis_timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('AI analysis error:', error);
-    res.status(500).json({
-      error: 'Failed to analyze document',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
 
 // POST /api/authoring/ai/suggestions - Get real-time suggestions
 router.post('/ai/suggestions', async (req: Request, res: Response) => {
@@ -5882,156 +5257,6 @@ router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Compliance validation error:', error);
     res.status(500).json({ error: 'Failed to validate compliance' });
-  }
-});
-
-// GET /api/authoring/ai/regulatory-updates - Get latest regulatory changes
-router.get('/ai/regulatory-updates', async (req: Request, res: Response) => {
-  try {
-    const { region, since } = req.query;
-
-    // In production, this would query a regulatory intelligence database
-    const updates = [
-      {
-        id: 'update-1',
-        date: '2025-01-15',
-        region: 'FDA',
-        title: 'Updated Guidance on Electronic Submissions',
-        impact: 'high',
-        summary: 'New requirements for eCTD format version 4.0',
-        affected_sections: ['M1', 'M2'],
-      },
-      {
-        id: 'update-2',
-        date: '2025-01-10',
-        region: 'EMA',
-        title: 'Revised Quality Guidelines',
-        impact: 'medium',
-        summary: 'Changes to stability testing requirements',
-        affected_sections: ['3.2.S.7', '3.2.P.8'],
-      },
-    ];
-
-    const filtered = region ? updates.filter(u => u.region === region) : updates;
-
-    res.json({
-      success: true,
-      updates: filtered,
-      count: filtered.length,
-      last_checked: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Error fetching regulatory updates:', error);
-    res.status(500).json({ error: 'Failed to fetch regulatory updates' });
-  }
-});
-
-// POST /api/authoring/ai/feedback - Track suggestion feedback
-router.post('/ai/feedback', async (req: Request, res: Response) => {
-  try {
-    const { suggestion_id, action, modified_text, reason } = req.body;
-    const tenantId = getTenantId(req);
-    const userEmail = req.headers['x-user-email'] || 'unknown';
-
-    await pool.query(
-      `INSERT INTO authoring_suggestion_feedback
-       (suggestion_id, action, modified_text, user_email, feedback_reason, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [suggestion_id, action, modified_text, userEmail, reason, tenantId]
-    );
-
-    // Update suggestion status
-    await pool.query(
-      `UPDATE authoring_ai_suggestions
-       SET status = $1, resolved_at = NOW(), resolved_by = $2
-       WHERE id = $3`,
-      [action, userEmail, suggestion_id]
-    );
-
-    res.json({ success: true, message: 'Feedback recorded' });
-  } catch (error) {
-    console.error('Error recording feedback:', error);
-    res.status(500).json({ error: 'Failed to record feedback' });
-  }
-});
-
-// GET /api/authoring/ai/suggestions/:documentId - Get all suggestions for a document
-router.get('/ai/suggestions/:documentId', async (req: Request, res: Response) => {
-  try {
-    const { documentId } = req.params;
-    const { status = 'pending' } = req.query;
-    const tenantId = getTenantId(req);
-
-    const result = await pool.query(
-      `SELECT id, document_id, section_id, suggestion_type, severity, original_text, suggested_text, explanation, position_start, position_end, confidence_score, status, resolved_at, resolved_by, created_at, tenant_id FROM authoring_ai_suggestions
-       WHERE document_id = $1 AND status = $2 AND tenant_id = $3
-       ORDER BY severity DESC, position_start ASC`,
-      [documentId, status, tenantId]
-    );
-
-    const grouped: Record<string, any[]> = {
-      critical: [],
-      important: [],
-      enhancement: [],
-      style: [],
-    };
-
-    result.rows.forEach(suggestion => {
-      const severity = suggestion.severity || 'enhancement';
-      if (grouped[severity]) {
-        grouped[severity].push(suggestion);
-      }
-    });
-
-    res.json({
-      success: true,
-      suggestions: result.rows,
-      grouped,
-      total: result.rowCount,
-    });
-  } catch (error) {
-    console.error('Error fetching suggestions:', error);
-    res.status(500).json({ error: 'Failed to fetch suggestions' });
-  }
-});
-
-// GET /api/authoring/ai/compliance-scores/:documentId - Get compliance scores
-router.get('/ai/compliance-scores/:documentId', async (req: Request, res: Response) => {
-  try {
-    const { documentId } = req.params;
-    const tenantId = getTenantId(req);
-
-    const result = await pool.query(
-      `SELECT id, document_id, regulatory_score, technical_score, clarity_score, consistency_score, completeness_score, overall_score, ich_compliance, ctd_compliance, ind_compliance, missing_sections, analysis_timestamp, tenant_id FROM authoring_compliance_scores
-       WHERE document_id = $1 AND tenant_id = $2
-       ORDER BY analysis_timestamp DESC
-       LIMIT 1`,
-      [documentId, tenantId]
-    );
-
-    if (((result.rowCount ?? 0) === 0)) {
-      return res.json({
-        success: true,
-        scores: {
-          regulatory_score: 0,
-          technical_score: 0,
-          clarity_score: 0,
-          consistency_score: 0,
-          completeness_score: 0,
-          overall_score: 0,
-        },
-        message: 'No analysis performed yet',
-      });
-    }
-
-    res.json({
-      success: true,
-      scores: result.rows[0],
-      timestamp: result.rows[0].analysis_timestamp,
-    });
-  } catch (error) {
-    console.error('Error fetching compliance scores:', error);
-    res.status(500).json({ error: 'Failed to fetch compliance scores' });
   }
 });
 

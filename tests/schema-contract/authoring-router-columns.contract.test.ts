@@ -73,6 +73,7 @@ const MIGRATIONS = [
   // refactor retired the router's runtime CREATE TABLE blocks and moved them here,
   // so this migration is now their only definition.
   'db/migrations/20260730_authoring_runtime_ddl.sql',
+  'migrations/20260728_authoring_reviews.sql',
 ].map((r) => path.join(REPO_ROOT, r));
 
 /** SQL string literals in the router that touch the tables it owns. */
@@ -167,33 +168,40 @@ describe('authoring.router.ts SQL matches the schema', () => {
     expect(undefinedColumn).toEqual([]);
   });
 
-  it('the set of tables this router writes to but nobody creates does not grow', () => {
-    // These six are referenced by authoring.router.ts and defined NOWHERE —
-    // not in migrations/, not in db/migrations/, not in shared/schema.ts, and
-    // not by the router's own runtime CREATE TABLE blocks. Every endpoint
-    // touching them is an unconditional 42P01, which means document reviews,
-    // comment activity, audit events, AI suggestions, compliance scores and
-    // suggestion feedback have never worked.
+  it('this router writes to no table that nobody creates', () => {
+    // This used to be a ratchet of eight. Every endpoint touching one of them
+    // was an unconditional 42P01, so document reviews, comment activity, audit
+    // read-back, AI suggestions, compliance scores, suggestion feedback,
+    // checklists and change requests had never once worked. All eight are
+    // resolved, and deliberately not all the same way:
     //
-    // Creating them is a design task — the column sets have to be derived from
-    // the queries and agreed, not invented in a test — so this is recorded as a
-    // ratchet rather than silently skipped. The list may SHRINK as tables land.
-    // It may not grow: a new entry means new code was written against another
-    // table that does not exist.
-    const KNOWN_MISSING = [
-      'authoring_ai_suggestions',
-      'authoring_audit_events',
-      'authoring_comment_activity',
-      'authoring_compliance_scores',
-      'authoring_reviews',
-      'authoring_suggestion_feedback',
-      // Not authoring_-prefixed but equally absent, and already known:
-      // doc_change_requests is why the change-request apply handler at
-      // authoring.router.ts:~4690 can never reach its UPDATE — a fact recorded
-      // in that handler's own comment.
-      'doc_change_requests',
-      'doc_checklist',
-    ];
+    //   authoring_reviews          CREATED (migrations/20260728_authoring_reviews.sql).
+    //                              Review-and-approve is not optional in a
+    //                              regulated authoring product and the handler
+    //                              code was already correct — JWT identity,
+    //                              tenant-scoped throughout. Only DDL was missing.
+    //   authoring_audit_events     PHANTOM NAME. Nothing ever wrote it; every
+    //                              writer targets authoring_audit_trail, which
+    //                              exists and is on the durable path. The reader
+    //                              was repointed at the ledger that holds the data.
+    //   authoring_comment_activity DUPLICATE LEDGER. Comment resolve/reopen/delete
+    //                              now record through createAuditEvent into the
+    //                              same authoring_audit_trail as every other
+    //                              authoring mutation, so there is one audit
+    //                              ledger and one reader instead of two.
+    //   the remaining five         DELETED with their endpoints. Nothing in the
+    //                              client called any of them; the AI-scoring pair
+    //                              persisted "regulatory compliance scores"
+    //                              derived from keyword regexes, and the
+    //                              checklist / change-request statements carried
+    //                              no tenant predicate at all — creating those
+    //                              tables would have converted a 500 into a
+    //                              working cross-tenant read.
+    //
+    // The list is empty and must stay empty. An entry appearing here means new
+    // code was written against a table that does not exist — which is a 42P01
+    // on every request, not an edge case.
+    const KNOWN_MISSING: string[] = [];
 
     const missing = new Set<string>();
     for (const r of results.filter((x) => x.code === '42P01')) {

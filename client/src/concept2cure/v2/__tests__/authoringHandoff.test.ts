@@ -65,6 +65,50 @@ describe('saveToAuthoring', () => {
     expect(b2).toMatchObject({ doc_id: '4711', code: HANDOFF.code, content: HANDOFF.content });
   });
 
+  it('says so when the new document is not bound to a filing', async () => {
+    // The server reports binding on every create and both client create paths
+    // used to drop it, so a document it had DECLINED to attach to the project's
+    // filing read as plain success. "Saved" and "saved into the filing you
+    // think you are writing" are different facts.
+    apiRequest
+      .mockResolvedValueOnce(res(200, {
+        document: { id: 4711 },
+        governance: { bound: false, reason: 'This project has no governed document yet.' },
+      }))
+      .mockResolvedValueOnce(res(200, { section: { id: 9 } }));
+
+    const r = await saveToAuthoring(HANDOFF);
+
+    // Still ok: the document and its text are real, so the caller must still
+    // navigate. What changes is that the message stops overstating.
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.message).toMatch(/Not bound to a filing/);
+    expect(r.ok && r.message).toMatch(/no governed document yet/);
+  });
+
+  it('stays quiet when the document IS bound', async () => {
+    apiRequest
+      .mockResolvedValueOnce(res(200, {
+        document: { id: 4711 },
+        governance: { bound: true, c2cDocumentId: 'doc_ind_7' },
+      }))
+      .mockResolvedValueOnce(res(200, { section: { id: 9 } }));
+
+    const r = await saveToAuthoring(HANDOFF);
+    expect(r.ok && r.message).not.toMatch(/Not bound/);
+  });
+
+  it('invents no warning when the server reports no binding at all', async () => {
+    // An older server that does not send `governance` has not told us the
+    // document is unbound. Warning from silence would be its own dishonesty.
+    apiRequest
+      .mockResolvedValueOnce(res(200, { document: { id: 4711 } }))
+      .mockResolvedValueOnce(res(200, { section: { id: 9 } }));
+
+    const r = await saveToAuthoring(HANDOFF);
+    expect(r.ok && r.message).not.toMatch(/Not bound/);
+  });
+
   it('reports NOT ok when the section write fails, even though the document exists', async () => {
     apiRequest
       .mockResolvedValueOnce(res(200, { document: { id: 4711 } }))

@@ -57,6 +57,58 @@ describe('AuthoringCreateExport — create → publish', () => {
     expect(onDocCreated).toHaveBeenCalledWith({ id: 'D-9', title: '2.6.6 Tox Summary' });
   });
 
+  it('tells the user when the new document is not bound to a filing', async () => {
+    // The create response carries the binding outcome on every success. This
+    // surface dropped it, so a document the server had DECLINED to attach to
+    // the open project's governed filing produced the same unqualified
+    // "Document created" as one it had attached. Unbound is a legitimate state;
+    // unbound and unsaid is how the two document stores drifted apart.
+    const fireToast = vi.fn();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
+      if (method === 'GET' && url === '/api/authoring/templates') return ok({ success: true, templates: [] });
+      if (method === 'POST' && url === '/api/authoring/docs') {
+        return ok({
+          success: true,
+          document: { id: 'D-9', title: body.title },
+          governance: { bound: false, reason: 'ivd has no document class, so no filing was resolved.' },
+        }, 201);
+      }
+      return ok({});
+    });
+    render(<AuthoringCreateExport {...base} docId={null} fireToast={fireToast} />);
+    fireEvent.click(screen.getByRole('button', { name: /New document/ }));
+    fireEvent.click(await screen.findByTestId('form-submit'));
+
+    await waitFor(() => {
+      expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Not bound to a filing/));
+    });
+    // The reason itself, not just the fact — "why" is what makes it actionable.
+    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/no document class/));
+    // And it still says the document was created, because it was.
+    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Document created/));
+  });
+
+  it('does not cry unbound when the document IS bound', async () => {
+    const fireToast = vi.fn();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
+      if (method === 'GET' && url === '/api/authoring/templates') return ok({ success: true, templates: [] });
+      if (method === 'POST' && url === '/api/authoring/docs') {
+        return ok({
+          success: true,
+          document: { id: 'D-9', title: body.title },
+          governance: { bound: true, c2cDocumentId: 'doc_ind_7' },
+        }, 201);
+      }
+      return ok({});
+    });
+    render(<AuthoringCreateExport {...base} docId={null} fireToast={fireToast} />);
+    fireEvent.click(screen.getByRole('button', { name: /New document/ }));
+    fireEvent.click(await screen.findByTestId('form-submit'));
+
+    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Document created/)));
+    expect(fireToast).not.toHaveBeenCalledWith(expect.stringMatching(/Not bound/));
+  });
+
   it('creates a section via POST /sections in the open document', async () => {
     const onSectionCreated = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" onSectionCreated={onSectionCreated} />);

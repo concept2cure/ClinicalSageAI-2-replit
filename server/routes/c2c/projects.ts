@@ -42,6 +42,7 @@ import {
   filingTypesForView,
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
 
 const router = Router();
 const logger = createScopedLogger('c2c-projects');
@@ -92,6 +93,70 @@ function send404(res: Response) {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Real readiness for a set of projects: the share of each project's governed
+ * sections that the filing has approved or locked.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────────
+ * The list used to report `COALESCE(p.progress_percent, 0) AS readiness`.
+ * `regulatory_programs.progress_percent` is written exactly ONCE — as the
+ * literal `0` in this file's own INSERT — and no UPDATE of that column exists
+ * anywhere in server/. So every project a customer created reported 0% forever.
+ * Draft and approve an entire IND and the card still read 0%, while the
+ * documents inside it carried a genuinely maintained number.
+ *
+ * A figure that looks measured and can never move is worse than no figure: it
+ * reads as "no progress" rather than as "not computed".
+ *
+ * ── The definition is the document one, one level up ──────────────────────────
+ * c2c_documents.readiness is maintained by c2c_recompute_document_readiness()
+ * as the share of that document's sections which are approved or locked. This
+ * aggregates the same predicate across all of a project's governed documents,
+ * so a project is measured exactly the way its documents are, weighted by how
+ * many sections each actually has. The status list comes from the single
+ * constant, so it cannot drift from the trigger.
+ *
+ * ── Separate query, on purpose ────────────────────────────────────────────────
+ * Folding this into the list SELECT would make the projects list — the primary
+ * surface — depend on c2c_documents existing. The vault route already fails
+ * closed on 42P01 for exactly that store, so its absence is a real state in
+ * this codebase, not a hypothetical. Keeping it separate means a database
+ * without the phase-9 schema still gets its project list.
+ *
+ * On that failure the caller keeps the stored value. That is not a good answer
+ * — it is the same 0 — but it is the pre-existing one, and it is logged rather
+ * than passed off as a measurement.
+ */
+async function readinessByProject(
+  projectIds: string[],
+  orgId: number,
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (projectIds.length === 0) return out;
+  try {
+    const { rows } = await pool.query(
+      `SELECT d.project_id::text AS project_id,
+              COALESCE(ROUND(100.0
+                * COUNT(*) FILTER (WHERE s.status IN (${completeStatusSqlList()}))
+                / NULLIF(COUNT(*), 0))::integer, 0) AS readiness
+         FROM c2c_documents d
+         JOIN c2c_document_sections s ON s.document_id = d.id
+        WHERE d.project_id = ANY($1::uuid[]) AND d.org_id = $2
+        GROUP BY d.project_id`,
+      [projectIds, orgId],
+    );
+    for (const r of rows as Array<{ project_id: string; readiness: number }>) {
+      out.set(r.project_id, Number(r.readiness));
+    }
+  } catch (err) {
+    logger.warn('Governed readiness unavailable; project cards keep their stored value', {
+      err: err instanceof Error ? err.message : String(err),
+      code: (err as { code?: string })?.code,
+    });
+  }
+  return out;
+}
 
 /**
  * The org-scoped existence check every :id route runs, but returning the one
@@ -247,6 +312,20 @@ router.get('/', async (req: Request, res: Response) => {
     );
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
+
+    // Replace the stored progress_percent — which nothing has ever updated —
+    // with the share of each project's governed sections the filing has
+    // approved. Only for the page being returned, so the aggregate is bounded
+    // by the page size rather than by the org's project count.
+    const real = await readinessByProject(
+      (page as Array<{ id: string }>).map((p) => p.id),
+      orgId,
+    );
+    for (const p of page as Array<{ id: string; readiness: number }>) {
+      const r = real.get(p.id);
+      if (r != null) p.readiness = r;
+    }
+
     return res.json({
       data: page,
       meta: { count: page.length, limit, offset, hasMore },
@@ -942,7 +1021,7 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
       // Live section statuses for this document.
       const secRes = await pool.query(
         `SELECT section_key, status, version,
-                (content -> 'paragraphs') IS NOT NULL AS has_content
+                ${sectionHasContentSql('content')} AS has_content
          FROM c2c_document_sections
          WHERE document_id = $1`,
         [d.id],
