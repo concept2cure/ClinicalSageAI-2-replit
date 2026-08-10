@@ -116,16 +116,37 @@ describe('the New Project wizard creates the filing type that was chosen', () =>
     },
   );
 
-  it('no device or IVD registry row resolves to a drug marketing application', () => {
-    // The sweep, so a row added later cannot quietly rejoin the NDA bucket.
-    const ids = GLOBAL_REGISTRY.map((e) => e.id).filter((id) =>
-      /^(eu_mdr_|eu_ivdr_|cdx_|ivd_|ivdr_|pmda_ivd|nmpa_ivd|tga_ivd|hc_ivd|hc_mdl|uk_ukca|nmpa_device|tga_device|br_device|ch_device|pmda_shonin|pmda_nintei)/.test(id),
+  it('no device or IVD filing resolves to a drug marketing application', () => {
+    /*
+     * Derived from the registry's OWN `segment` field, not from a list of ids.
+     *
+     * The first version of this test used a hand-written id regex, and it passed
+     * while seven rows were still broken — class_513g, dev_nb_consult, fda_hde,
+     * eu_sig_change, dev_fsc, eu_clin_inv, cip_iso — because I built the regex
+     * from the rows I had already fixed. A test fitted to its own answer cannot
+     * fail, and two of those seven had been named explicitly in the audit that
+     * prompted the fix.
+     *
+     * `segment` is assigned per row by whoever adds it, so a new medical-device
+     * filing is in scope the moment it exists, without anyone remembering to
+     * extend a pattern here.
+     */
+    const deviceish = GLOBAL_REGISTRY.filter(
+      (e) => e.segment === 'medical_devices' || e.segment === 'diagnostics_ivd',
     );
-    expect(ids.length, 'the device/IVD id sweep matched nothing').toBeGreaterThan(20);
-    const wrong = ids.filter((id) => {
-      const pt = programTypeFor(selFor(id), 'biotech');
-      return pt === 'nda' || pt === 'bla' || pt === 'maa';
-    });
-    expect(wrong, 'device/IVD rows resolving to a drug marketing application').toEqual([]);
+    expect(deviceish.length, 'the segment filter matched nothing — has the field been renamed?')
+      .toBeGreaterThan(40);
+
+    const DRUG_MARKETING = new Set(['nda', 'bla', 'maa', 'anda', 'jnda']);
+    const wrong = deviceish
+      .map((e) => [e.id, programTypeFor(selFor(e.id), 'biotech')] as const)
+      .filter(([, pt]) => DRUG_MARKETING.has(pt))
+      .map(([id, pt]) => `${id} -> ${pt}`);
+
+    expect(
+      wrong,
+      'a device or IVD filing resolves to a drug marketing application — it will ' +
+        'scaffold a CTD dossier for a device',
+    ).toEqual([]);
   });
 });
