@@ -39,6 +39,13 @@ interface SpineNode {
 interface DossierSpine {
   program: string | null;
   standard: string | null;
+  /** The regulatory framework this org's accepted drafts were written against,
+   *  recorded on the document by the acceptance route. Null until a draft has
+   *  been accepted, and null again when the org's documents disagree — the
+   *  server never guesses a single value out of a mixed dossier. Optional on
+   *  the wire so a client ahead of the server degrades to "not recorded"
+   *  instead of failing the shape guard. */
+  framework?: string | null;
   tree: LeafSection[];
 }
 
@@ -63,8 +70,39 @@ interface CardState {
   model: string | null;
   latencyMs: number | null;
   sample: boolean;
+  /** Acceptance is CONFIRMED, not requested. Set only after the write this card
+   *  triggered came back successful (or, for a sample card, after it was staged
+   *  locally — `savedToDocument` is what separates the two). */
   accepted: boolean;
+  /** An acceptance write is in flight; the button is disabled while true. */
+  saving: boolean;
+  /** True only when the draft is in the document. False for a staged sample. */
+  savedToDocument: boolean;
+  /** Version the replaced content was preserved as; null when the section was
+   *  empty and there was nothing to preserve. */
+  savedVersion: number | null;
+  /** Why the acceptance write failed, so the card can say so instead of
+   *  silently staying un-accepted. */
+  saveError: string | null;
   error: string | null;
+}
+
+/** A card that has not been drafted yet — every field explicit, so adding a
+ *  field to CardState cannot leave one of the four creation sites behind. */
+function bdCard(partial: Partial<CardState> & Pick<CardState, 'state'>): CardState {
+  return {
+    html: '',
+    model: null,
+    latencyMs: null,
+    sample: false,
+    accepted: false,
+    saving: false,
+    savedToDocument: false,
+    savedVersion: null,
+    saveError: null,
+    error: null,
+    ...partial,
+  };
 }
 
 interface BatchDraftOpts {
@@ -144,10 +182,14 @@ const EMPTY_TREE: LeafSection[] = [];
    Real-data standard: the draftable section spine is the org's persisted eCTD
    Co-Author documents (GET /api/batch-draft/spine → coauthor_documents,
    server/routes/batch-draft-routes.ts), shown as real data / honest empty /
-   honest error — never the former ../fixtures/dossier-data spine. The drafting
-   (window.C2C_AUTHORING.batchDraft) and acceptance (saveSection) are ACTIONS on
-   an untyped runtime channel; they are FLAGged in run() / accept() for the
-   actions pass, not rewired here. */
+   honest error — never the former ../fixtures/dossier-data spine.
+
+   Drafting is POST /api/claude/batch (runLive) and acceptance is
+   POST /api/batch-draft/documents/:id/accept (accept) — both real, both against
+   the identifiers this surface actually holds. The legacy
+   window.C2C_AUTHORING.batchDraft channel survives only as the offline sample
+   path, which is labelled Sample on every card and is never written to a
+   document. */
 
 export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const seg = segment || 'biotech';
@@ -155,13 +197,20 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     ? 'FDA'
     : (seg === 'medtech' || seg === 'diagnostics' ? 'FDA CDRH' : 'FDA');
   const docId: string | null = (typeof window !== 'undefined' && (window as any).__C2C_DOC_ID) || null;
-  const canLive = !!(docId && connected());
+  /* Acceptance writes to the section's OWN document (leaf.id), so it no longer
+     depends on a connected editor document. `canLive` now means exactly what
+     the copy claims: the service is reachable, so drafting is real and an
+     accepted draft is written and versioned. */
+  const canLive = connected();
 
-  /* The regulatory framework the drafts are authored against. Deliberately
-     starts EMPTY: nothing on the document records a filing type, so any preset
-     would be a guess presented as a fact. The user states it once per run and
-     sees it on screen before anything is drafted. Values are exactly
-     DocumentDraftRequest['framework'] (AnaDocumentDraftingService.ts:244). */
+  /* The regulatory framework the drafts are authored against.
+     Starts EMPTY and is then SEEDED from the spine (below) when the org's
+     documents record one — never guessed. A wrong framework produces confident,
+     plausible regulatory prose written to the wrong expectations, which is
+     harder to catch in review than a blank field, so the only two acceptable
+     sources are "the user stated it" and "a previously accepted draft on these
+     documents recorded it". Values are exactly DocumentDraftRequest['framework']
+     (AnaDocumentDraftingService.ts:244). */
   const [framework, setFramework] = useState('');
   const FRAMEWORKS: Array<[string, string]> = [
     ['ich_clinical', 'ICH / CTD clinical'],
@@ -172,6 +221,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     ['general_regulatory', 'General regulatory'],
   ];
   const frameworkLabel = FRAMEWORKS.find(([v]) => v === framework)?.[1] ?? '';
+
+  /* Bumped after an accepted draft changes a document, so the NEXT batch is
+     picked from a fresh spine. Deliberately not bumped at acceptance time: a
+     refetch flips spineState.loading, and the loading gate below would replace
+     the review screen the user is still working in with a spinner. */
+  const [reloadKey, setReloadKey] = useState(0);
+  const spineDirtyRef = useRef(false);
 
   // ── DATA: the draftable section spine is the org's persisted eCTD Co-Author
   // documents (GET /api/batch-draft/spine → coauthor_documents). Real data,
@@ -186,7 +242,10 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   // renders, which is the accurate thing to show either way.
   const spineState = useLiveData<DossierSpine>(
     '/api/batch-draft/spine',
-    ['/api/batch-draft/spine'],
+    ['/api/batch-draft/spine', reloadKey],
+    // `framework` is deliberately NOT required here. It is a newer field, and a
+    // client deployed ahead of the server would otherwise fail this guard and
+    // render the honest-error state for a spine that is perfectly usable.
     hasKeys<DossierSpine>('program', 'standard', 'tree'),
   );
   const spine = spineState.data;
@@ -202,13 +261,21 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     });
   }, [tree]);
 
-  /* pre-select the least-complete drafts */
+  /* pre-select the least-complete drafts.
+     KEYED BY `s.id`, NOT `s.num`. `num` is the display section number and is
+     NOT unique — every document with no eCTD number renders as '—', so a
+     num-keyed selection made all of them one item: ticking one ticked them all,
+     they shared a single draft card, and acceptance would have written one
+     section's prose into whichever document `find` happened to return first.
+     That was survivable while acceptance was a no-op. It is not survivable now
+     that accepting writes to a real document, so the identity used everywhere
+     below is the coauthor_documents id. */
   const initialSel = useMemo(() => {
     const pick = todo
       .slice()
       .sort((a, b) => (a.pct || 0) - (b.pct || 0))
       .slice(0, 5)
-      .map((s) => s.num);
+      .map((s) => s.id);
     return new Set(pick);
   }, [todo]);
 
@@ -224,18 +291,42 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     }
   }, [todo, initialSel]);
 
+  /* Seed the framework from what the org's documents actually record, once.
+     The server sends a value ONLY when every document that carries one agrees,
+     and only ever from a framework a previous accepted draft was written
+     against — so this is a remembered fact, not an inference. Seed-once via a
+     ref so a later change by the user is never clobbered by a spine refetch,
+     and only for a value the picker really offers (a framework the server
+     recognises but this build has no option for would otherwise select nothing
+     while `framework` read as set, disabling the Draft button with no way to
+     fix it). */
+  const fwSeededRef = useRef(false);
+  useEffect(() => {
+    if (fwSeededRef.current || !spine) return;
+    const stored = typeof spine.framework === 'string' ? spine.framework : '';
+    if (!stored) return;
+    fwSeededRef.current = true;
+    if (FRAMEWORKS.some(([v]) => v === stored)) setFramework(stored);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spine]);
+  /* True when the picker is showing a value the documents recorded rather than
+     one the user just chose — the copy below attributes it. */
+  const frameworkFromDocuments = fwSeededRef.current
+    && !!spine && spine.framework === framework && !!framework;
+
   const [phase, setPhase] = useState<'pick' | 'drafting' | 'review'>('pick');
   const [cards, setCards] = useState<Record<string, CardState>>({});
   const startRef = useRef<Record<string, number>>({});
 
-  const selList = todo.filter((s) => sel.has(s.num));
+  const selList = todo.filter((s) => sel.has(s.id));
   // The service refuses more than 20 requests per batch; refuse it here with a
   // reason instead of sending a request that will 400.
   const overBatchCap = selList.length > 20;
-  const toggle = (num: string) => {
+  /** @param id coauthor_documents.id — see initialSel on why not `num`. */
+  const toggle = (id: string) => {
     setSel((p) => {
       const n = new Set(p);
-      n.has(num) ? n.delete(num) : n.add(num);
+      n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
   };
@@ -283,7 +374,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const runLive = async () => {
     const init: Record<string, CardState> = {};
     selList.forEach((s) => {
-      init[s.num] = { state: 'drafting', html: '', model: null, latencyMs: null, sample: false, accepted: false, error: null };
+      init[s.id] = bdCard({ state: 'drafting' });
     });
     setCards(init);
     setPhase('drafting');
@@ -310,7 +401,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         const msg = (body as { error?: string } | null)?.error || 'Drafting failed (HTTP ' + res.status + ').';
         setCards((c) => {
           const next = { ...c };
-          selList.forEach((s) => { next[s.num] = { ...next[s.num], state: 'error', error: msg }; });
+          selList.forEach((s) => { next[s.id] = { ...next[s.id], state: 'error', error: msg }; });
           return next;
         });
         setPhase('review');
@@ -323,9 +414,9 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         const next = { ...c };
         selList.forEach((s, i) => {
           const r = results[i];
-          next[s.num] = r && r.content
-            ? { ...next[s.num], state: 'done', html: r.content, sample: false, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
-            : { ...next[s.num], state: 'error', error: (r && r.error) || 'No draft returned for this section.' };
+          next[s.id] = r && r.content
+            ? { ...next[s.id], state: 'done', html: r.content, sample: false, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
+            : { ...next[s.id], state: 'error', error: (r && r.error) || 'No draft returned for this section.' };
         });
         return next;
       });
@@ -333,7 +424,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       const msg = e instanceof Error ? e.message : 'Could not reach the drafting service.';
       setCards((c) => {
         const next = { ...c };
-        selList.forEach((s) => { next[s.num] = { ...next[s.num], state: 'error', error: msg }; });
+        selList.forEach((s) => { next[s.id] = { ...next[s.id], state: 'error', error: msg }; });
         return next;
       });
     } finally {
@@ -349,7 +440,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
 
     const init: Record<string, CardState> = {};
     selList.forEach((s) => {
-      init[s.num] = { state: 'queued', html: '', model: null, latencyMs: null, sample: !canLive, accepted: false, error: null };
+      init[s.id] = bdCard({ state: 'queued', sample: !canLive });
     });
     setCards(init);
     setPhase('drafting');
@@ -360,7 +451,8 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       authoring.batchDraft({
         documentId: docId,
         tone: agency,
-        sections: selList.map((s) => ({ key: s.num, label: s.title })),
+        // `key` is the document id, matching the cards map — see initialSel.
+        sections: selList.map((s) => ({ key: s.id, label: s.title })),
         onSectionStart: (key: string) => {
           startRef.current[key] = Date.now();
           setCards((c) => ({ ...c, [key]: { ...c[key], state: 'drafting' } }));
@@ -370,7 +462,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         },
         onSectionComplete: (key: string, content: string, meta: { latencyMs?: number; model?: string; provider?: string } | null, sample: boolean) => {
           const started = startRef.current[key] || Date.now();
-          const sec = todo.find((s) => s.num === key) || { num: key, title: key };
+          const sec = todo.find((s) => s.id === key) || { num: key, title: key };
           const html = sample ? bdSample(sec as LeafSection, agency) : (content || '');
           const lat = (meta && meta.latencyMs) || (Date.now() - started);
           setCards((c) => ({
@@ -395,15 +487,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         setTimeout(() => {
           setCards((c) => ({
             ...c,
-            [s.num]: {
+            [s.id]: bdCard({
               state: 'done',
               html: bdSample(s as LeafSection, agency),
               model: 'Sample',
               latencyMs: 800 + idx * 200,
               sample: true,
-              accepted: false,
-              error: null,
-            },
+            }),
           }));
         }, 300 + idx * 150);
       });
@@ -411,38 +501,72 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     }
   };
 
-  /* accept one card.
-     FLAG (mock ACTION): the governed save goes through the untyped runtime
-     channel window.C2C_AUTHORING.saveSection (see run()); the card is marked
-     accepted even if that call rejects (.catch → mark), so acceptance is
-     optimistic — the copy below must not present it as a confirmed Part-11
-     write. Real wiring + success/failure tracking is the actions pass. */
-  const accept = (key: string) => {
+  /**
+   * Accept one card — POST /api/batch-draft/documents/:id/accept.
+   *
+   * This used to dispatch through window.C2C_AUTHORING.saveSection, a runtime
+   * channel this repo never provides, and marked the card accepted even when
+   * that call rejected. So every "accepted" draft was thrown away on unmount —
+   * and once drafting became real, what was thrown away was real generated
+   * regulatory prose.
+   *
+   * The route writes the draft into the section's own document, preserves the
+   * content it replaces as a version, and records the change in audit_events,
+   * all in one transaction. The card is marked accepted ONLY when that returns
+   * successfully; a failure says so on the card instead of quietly looking done.
+   *
+   * A SAMPLE card is never sent. bdSample() output is fabricated placeholder
+   * prose; writing it into a regulated document would be the worst outcome this
+   * surface could produce, so sample cards stage locally and say so.
+   *
+   * @param key coauthor_documents.id — the identifier the route takes.
+   */
+  const accept = async (key: string) => {
     const card = cards[key];
-    if (!card || card.state !== 'done') return;
-    const sec = todo.find((s) => s.num === key) || { num: key, title: key };
-    const mark = () => {
-      setCards((c) => ({ ...c, [key]: { ...c[key], accepted: true } }));
-    };
-    const authoring = (window as any).C2C_AUTHORING;
-    if (canLive && authoring) {
-      authoring.saveSection({
-        documentId: docId,
-        sectionKey: key,
-        content: card.html,
-        draftSource: 'ana',
-        reason: 'Accepted AnA batch draft · §' + sec.num + ' ' + sec.title,
-      }).then(mark).catch(() => { mark(); });
-    } else {
-      mark();
+    if (!card || card.state !== 'done' || card.accepted || card.saving) return;
+    const sec = todo.find((s) => s.id === key);
+    if (!sec) return;
+    const label = '§' + sec.num + ' ' + sec.title;
+
+    if (card.sample || !connected()) {
+      setCards((c) => ({ ...c, [key]: { ...c[key], accepted: true, savedToDocument: false, saveError: null } }));
+      onAsk && onAsk(
+        'Staged the sample draft for ' + label + ' locally. It is placeholder prose, '
+        + 'so it is not written to the document — connect to the drafting service for a real draft.',
+      );
+      return;
     }
-    onAsk && onAsk(
-      (canLive ? 'Accepted the AnA draft for §' : 'Staged the AnA draft for §')
-      + sec.num + ' ' + sec.title
-      + (canLive
-        ? ' into the working document.'
-        : ' locally — connect a document to write it into the working document.'),
-    );
+
+    setCards((c) => ({ ...c, [key]: { ...c[key], saving: true, saveError: null } }));
+    try {
+      const res = await apiRequest('POST', '/api/batch-draft/documents/' + sec.id + '/accept', {
+        content: card.html,
+        framework: framework || undefined,
+        model: card.model || undefined,
+      });
+      const body = await res.json().catch(() => null);
+      const payload = body as { success?: boolean; error?: string; data?: { supersededVersion?: number | null } } | null;
+      if (!res.ok || !payload || payload.success !== true) {
+        const msg = payload?.error || 'Save failed (HTTP ' + res.status + ').';
+        setCards((c) => ({ ...c, [key]: { ...c[key], saving: false, saveError: msg } }));
+        return;
+      }
+      const superseded = payload.data?.supersededVersion ?? null;
+      spineDirtyRef.current = true;
+      setCards((c) => ({
+        ...c,
+        [key]: { ...c[key], saving: false, accepted: true, savedToDocument: true, savedVersion: superseded, saveError: null },
+      }));
+      onAsk && onAsk(
+        'Saved the AnA draft for ' + label + ' into its document'
+        + (superseded != null
+          ? ' — the content it replaced is kept as version ' + superseded + '.'
+          : ' (the section was empty, so nothing was superseded).'),
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not reach the document service.';
+      setCards((c) => ({ ...c, [key]: { ...c[key], saving: false, saveError: msg } }));
+    }
   };
 
   const discard = (key: string) => {
@@ -470,8 +594,8 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           : 'Every section in this build already has a draft. Pick any to redraft and I will run them in parallel.',
         b: 'Parallel drafting takes about as long as the slowest section, not the sum. Nothing is written to the dossier until you accept a card'
           + (canLive
-            ? ' -- acceptance writes a governed, Part-11 versioned save.'
-            : ' -- connect a document to write a governed, Part-11 versioned save on acceptance.'),
+            ? ' -- accepting writes it into that section’s document, keeps the content it replaced as a version, and records the change in the audit trail.'
+            : ' -- the drafting service is unreachable, so these will be labelled sample drafts and accepting only stages them locally.'),
       }
     : phase === 'drafting'
     ? {
@@ -482,8 +606,8 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         h: doneCount + ' drafts are ready to review' + (acceptedCount ? ' · ' + acceptedCount + ' accepted' : '') + '.',
         b: 'Each card is a proposal. '
           + (canLive
-            ? 'Accept writes a governed version (draftSource = ana); '
-            : 'Accept stages the draft — connect a document to write the governed version; ')
+            ? 'Accept writes it into the section’s document and versions what it replaced; '
+            : 'Accept stages the sample locally — it is never written to a document; ')
           + 'Edit opens it in the section editor; Discard drops it. '
           + (acceptedCount ? '' : 'Nothing has been written yet.'),
       };
@@ -492,10 +616,10 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     <div className="bd-head">
       <div className="bd-eyebrow">
         <span className="bd-kicker">AnA {I.dot} parallel section drafting</span>
-        {/* FLAG (mock ACTION): this pill reflects the drafting / accept ACTION
-            mode (canLive = a live document is connected), NOT the spine DATA,
-            which is always the live /api/batch-draft/spine read. */}
-        <span className={'bd-src ' + (canLive ? 'live' : 'sample')}>{canLive ? 'Live · governed' : 'Preview mode'}</span>
+        {/* Reflects the drafting / accept ACTION mode (canLive = the service is
+            reachable, so drafts are real and accepting writes them), NOT the
+            spine DATA, which is always the live /api/batch-draft/spine read. */}
+        <span className={'bd-src ' + (canLive ? 'live' : 'sample')}>{canLive ? 'Live · versioned on accept' : 'Preview mode'}</span>
       </div>
       <h1 className="bd-title">{(spine && spine.program) || 'Active dossier'}</h1>
       <div className="bd-sub">{spine && spine.standard ? spine.standard.toUpperCase() + ' · ' : ''}{agency} · batch_draft_sections</div>
@@ -554,12 +678,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           <div className="bd-pick-bar">
             <span className="bd-pick-n">{selList.length} selected</span>
             <div className="bd-pick-actions">
-              <button className="bd-ghost" onClick={() => { setSel(new Set(todo.map((s) => s.num))); }}>Select all {todo.length}</button>
+              <button className="bd-ghost" onClick={() => { setSel(new Set(todo.map((s) => s.id))); }}>Select all {todo.length}</button>
               <button className="bd-ghost" onClick={() => { setSel(new Set()); }}>Clear</button>
-              {/* Stated, not inferred — see runLive(). Nothing on the document
-                  records a filing type, so a preset here would be a guess shown
-                  as a fact, and the prose would be authored to the wrong
-                  regulatory expectations. */}
+              {/* Remembered or stated — never inferred. It is preset only from
+                  a framework a previously accepted draft recorded on these
+                  documents (and only when they all agree); otherwise it stays
+                  blank, because a guess shown as a fact would author the prose
+                  to the wrong regulatory expectations. */}
               <select
                 className="bd-fw"
                 value={framework}
@@ -586,17 +711,20 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           {overBatchCap ? (
             <div className="bd-fw-note">Select 20 sections or fewer — the drafting service takes 20 per batch.</div>
           ) : connected() && !framework ? (
-            <div className="bd-fw-note">Choose a regulatory framework — the drafts are written to its expectations, and nothing on this document records a filing type to infer it from.</div>
+            <div className="bd-fw-note">Choose a regulatory framework — the drafts are written to its expectations, and no accepted draft on these documents has recorded a filing type to carry forward.</div>
           ) : connected() && framework ? (
-            <div className="bd-fw-note">Drafting {selList.length} section{selList.length === 1 ? '' : 's'} against <b>{frameworkLabel}</b> expectations.</div>
+            <div className="bd-fw-note">
+              Drafting {selList.length} section{selList.length === 1 ? '' : 's'} against <b>{frameworkLabel}</b> expectations
+              {frameworkFromDocuments ? ' — carried forward from the last draft accepted on these documents. Change it if this filing is different.' : '.'}
+            </div>
           ) : (
             <div className="bd-fw-note">Not connected to the drafting service — these will be labelled sample drafts, not AnA output.</div>
           )}
           <div className="bd-pick-list">
             {todo.map((s) => {
-              const on = sel.has(s.num);
+              const on = sel.has(s.id);
               return (
-                <button key={s.id} className={'bd-pick-item' + (on ? ' on' : '')} onClick={() => { toggle(s.num); }}>
+                <button key={s.id} className={'bd-pick-item' + (on ? ' on' : '')} onClick={() => { toggle(s.id); }}>
                   <span className={'bd-check' + (on ? ' on' : '')}>{on ? I.check : ''}</span>
                   <span className="mono bd-pick-code">{s.num}</span>
                   <span className="bd-pick-title">{s.title}</span>
@@ -620,7 +748,19 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
               {doneCount}/{selList.length} drafted{draftingCount ? ' · ' + draftingCount + ' in flight' : ''}{acceptedCount ? ' · ' + acceptedCount + ' accepted' : ''}
             </span>
           </div>
-          <button className="bd-ghost" onClick={() => { setPhase('pick'); setCards({}); }}>New batch</button>
+          {/* Refetch the spine here rather than at acceptance time: this is the
+              one moment the review screen is being torn down anyway, so the
+              loading gate below cannot interrupt work in progress. */}
+          <button
+            className="bd-ghost"
+            onClick={() => {
+              setPhase('pick');
+              setCards({});
+              if (spineDirtyRef.current) { spineDirtyRef.current = false; setReloadKey((k) => k + 1); }
+            }}
+          >
+            New batch
+          </button>
         </div>
       )}
 
@@ -644,7 +784,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       {phase !== 'pick' && (
         <div className="bd-cards">
           {selList.map((s) => {
-            const c = cards[s.num];
+            const c = cards[s.id];
             if (!c) return null;
             return (
               <div key={s.id} className={'bd-card st-' + c.state + (c.accepted ? ' accepted' : '')}>
@@ -686,13 +826,27 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                     </div>
                     {!c.accepted ? (
                       <div className="bd-card-acts">
-                        <button className="bd-ghost sm" onClick={() => { discard(s.num); }}>Discard</button>
+                        {c.saveError && <span className="bd-accepted-note err">Not saved — {c.saveError}</span>}
+                        <button className="bd-ghost sm" disabled={c.saving} onClick={() => { discard(s.id); }}>Discard</button>
                         <button className="bd-ghost sm" onClick={() => { onNav && onNav('document-authoring'); }}>Edit</button>
-                        <button className="bd-primary sm" onClick={() => { accept(s.num); }}>{canLive ? 'Accept · govern' : 'Accept'}</button>
+                        <button
+                          className="bd-primary sm"
+                          disabled={c.saving}
+                          onClick={() => { void accept(s.id); }}
+                          title={c.sample ? 'Sample prose is staged locally and never written to the document.' : undefined}
+                        >
+                          {c.saving ? 'Saving…' : c.saveError ? 'Retry save' : (canLive && !c.sample) ? 'Accept · save to document' : 'Accept'}
+                        </button>
                       </div>
                     ) : (
                       <div className="bd-card-acts">
-                        <span className="bd-accepted-note">{canLive ? 'Governed save requested · draftSource = ana' : 'Staged locally · connect a document to write the governed version'}</span>
+                        <span className="bd-accepted-note">
+                          {c.savedToDocument
+                            ? (c.savedVersion != null
+                                ? 'Saved to the document · previous content kept as version ' + c.savedVersion
+                                : 'Saved to the document · the section was empty, nothing superseded')
+                            : 'Staged locally · sample prose is never written to a document'}
+                        </span>
                       </div>
                     )}
                   </div>

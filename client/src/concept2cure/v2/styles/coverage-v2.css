@@ -1160,6 +1160,9 @@
 .c2c-v2 .bd-chip.sample{ background:color-mix(in srgb,var(--warning) 13%,transparent); color:var(--warning); }
 .c2c-v2 .bd-card-acts{ display:flex; align-items:center; gap:7px; }
 .c2c-v2 .bd-accepted-note{ font-size:10.5px; color:var(--text-400); }
+/* A failed acceptance write. Reads as a failure, not as quiet metadata — the
+   card still shows Accept, and the user has to know why it is still there. */
+.c2c-v2 .bd-accepted-note.err{ color:var(--danger, #b42318); margin-right:auto; }
 @media (max-width:760px){ .c2c-v2 .bd-cards{ grid-template-columns:1fr; } .c2c-v2 .bd-pick-item{ grid-template-columns:22px 52px 1fr; } .c2c-v2 .bd-pick-item .bd-status, .c2c-v2 .bd-pick-item .bd-pick-pct{ display:none; } }
 
 /* ════════ DMS cross-connector search (vault-sources.jsx · SOW S6 · #8/#9) ════════ */
