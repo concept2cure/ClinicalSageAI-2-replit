@@ -388,45 +388,63 @@ export class ProjectRollupService {
    * Called after insert or move operations.
    */
   async recomputePaths(projectId: number, organizationId: number): Promise<void> {
-    // Get the parent's path. All lookups are tenant-scoped: the caller has
-    // already verified projectId belongs to organizationId, and parents /
-    // children of an in-org project are in-org by construction, so the org
-    // filter can't drop legitimate rows — it only blocks cross-org ids.
-    const projResult = await this.pool.query(
-      `SELECT id, parent_project_id FROM projects WHERE id = $1 AND organization_id = $2`,
+    // One recursive CTE rewrites the whole subtree. This used to be a JavaScript walk that
+    // issued, per node, a parent-path lookup, an UPDATE and a children query before recursing
+    // serially into each child — O(n) sequential round trips on a deep move, and, because
+    // nothing wrapped the traversal, a failure part-way through left `path` half-rewritten.
+    // Lookups in this service key off the materialized path (the LIKE prefix scans at
+    // getTree and computeRelativeDepth), so a partial rewrite silently returns wrong
+    // subtrees until someone notices. Note getTree builds its prefix as
+    // `${root.path}/${root.id}`, which double-counts the root's own id under this format
+    // and already misses grandchildren — a pre-existing bug this change neither causes nor
+    // fixes; validateMove uses the format correctly. A single statement is atomic, so either the whole subtree moves
+    // or none of it does; no explicit transaction is needed.
+    //
+    // The generated format has to match what the old walk produced byte for byte or existing
+    // rows stop matching those prefix scans: a root project's path is its own id, and every
+    // other path is `<parentPath>/<id>`, falling back to the bare parent id when the parent's
+    // own path has not been materialized yet.
+    //
+    // organization_id is repeated on every branch — anchor row, parent-path lookup, recursive
+    // child join, and the UPDATE itself — so a cross-org child can never be pulled into the
+    // subtree or written through. RLS fails closed in production, but the predicate has to
+    // stand on its own here too.
+    //
+    // `visited` guards against a parent_project_id cycle. validateMove is meant to reject
+    // those, but a cycle that slipped in used to blow the JS stack (loud and immediate);
+    // inside a recursive CTE it would instead spin forever holding a pool connection, so the
+    // walk refuses to re-enter a node it has already emitted.
+    await this.pool.query(
+      `WITH RECURSIVE subtree AS (
+         SELECT p.id,
+                CASE
+                  WHEN p.parent_project_id IS NULL THEN p.id::text
+                  ELSE COALESCE(
+                         NULLIF(
+                           (SELECT parent.path FROM projects parent
+                             WHERE parent.id = p.parent_project_id
+                               AND parent.organization_id = $2),
+                           ''
+                         ),
+                         p.parent_project_id::text
+                       ) || '/' || p.id
+                END AS path,
+                ARRAY[p.id] AS visited
+           FROM projects p
+          WHERE p.id = $1 AND p.organization_id = $2
+         UNION ALL
+         SELECT c.id, s.path || '/' || c.id, s.visited || c.id
+           FROM projects c
+           JOIN subtree s ON c.parent_project_id = s.id
+          WHERE c.organization_id = $2
+            AND NOT c.id = ANY(s.visited)
+       )
+       UPDATE projects p
+          SET path = s.path
+         FROM subtree s
+        WHERE p.id = s.id AND p.organization_id = $2`,
       [projectId, organizationId]
     );
-    if (projResult.rows.length === 0) return;
-
-    const proj = projResult.rows[0];
-    let newPath: string;
-
-    if (!proj.parent_project_id) {
-      newPath = String(proj.id);
-    } else {
-      const parentResult = await this.pool.query(
-        `SELECT path FROM projects WHERE id = $1 AND organization_id = $2`,
-        [proj.parent_project_id, organizationId]
-      );
-      const parentPath = parentResult.rows[0]?.path || String(proj.parent_project_id);
-      newPath = `${parentPath}/${proj.id}`;
-    }
-
-    // Update self
-    await this.pool.query(`UPDATE projects SET path = $1 WHERE id = $2 AND organization_id = $3`, [
-      newPath,
-      projectId,
-      organizationId,
-    ]);
-
-    // Recursively update children
-    const children = await this.pool.query(
-      `SELECT id FROM projects WHERE parent_project_id = $1 AND organization_id = $2`,
-      [projectId, organizationId]
-    );
-    for (const child of children.rows) {
-      await this.recomputePaths(child.id, organizationId);
-    }
   }
 
   /**

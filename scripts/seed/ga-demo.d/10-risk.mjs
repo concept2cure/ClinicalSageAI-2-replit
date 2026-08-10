@@ -54,11 +54,17 @@ async function columnSet(client, table) {
   return new Set(rows.map((r) => r.column_name));
 }
 
+/* Resolve a user id for program leadership; fall back to admin. */
+async function resolveUserId(client, email, admin) {
+  const { rows } = await client.query('SELECT id FROM users WHERE email = $1 LIMIT 1', [email]);
+  return rows[0]?.id ?? admin.id;
+}
+
 /* Resolve (or create) the BX-204 CGM program so risk items carry a real
    program_id. Wrapped in a SAVEPOINT: a failed statement would otherwise
    abort the orchestrator's whole transaction (25P02). Falls back to a null
    program link — the main list read filters only on organization_id. */
-async function resolveBx204ProgramId(client, org) {
+async function resolveBx204ProgramId(client, org, admin) {
   if (!(await tableExists(client, 'regulatory_programs'))) {
     console.log('   ⚠ regulatory_programs not found — seeding risk items without a program link');
     return null;
@@ -70,16 +76,17 @@ async function resolveBx204ProgramId(client, org) {
     await client.query('SAVEPOINT sp_risk_program');
     let { rows } = await client.query(sel, [org.id]);
     if (!rows[0]) {
+      const leadUserId = await resolveUserId(client, 'admin@concept2cure.pro', admin);
       /* Values mirror scripts/seed-mdx-beta.mjs so either seeder can create
          the row first. No ON CONFLICT target: covers both the PK and the
          (organization_id, code) unique index. */
       await client.query(
         `INSERT INTO regulatory_programs (
            id, organization_id, name, code, description, program_type, product_type,
-           device_class, regulatory_path, primary_agency, product_name, status, phase, priority
+           device_class, regulatory_path, primary_agency, product_name, status, phase, priority, lead_user_id
          ) VALUES (
            $1, $2, $3, 'BX-204', $4, '510K', 'device', 'II', '510k', 'FDA', $5,
-           'active', 'authoring', 'high'
+           'active', 'authoring', 'high', $6
          )
          ON CONFLICT DO NOTHING`,
         [
@@ -88,6 +95,7 @@ async function resolveBx204ProgramId(client, org) {
           'BX-204 Continuous Glucose Monitor',
           'AI-assisted CGM with locked algorithm scope (v1.0).',
           'BX-204 CGM',
+          leadUserId,
         ],
       );
       ({ rows } = await client.query(sel, [org.id]));
@@ -336,7 +344,7 @@ export default async function seed(client, { org, admin }) {
     }
   }
 
-  const programId = await resolveBx204ProgramId(client, org);
+  const programId = await resolveBx204ProgramId(client, org, admin);
 
   let itemsInserted = 0;
   let itemsExisting = 0;

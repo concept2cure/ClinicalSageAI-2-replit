@@ -39,6 +39,26 @@ const scaffold = vi.fn<(...a: unknown[]) => Promise<ScaffoldResult>>(
 vi.mock('../../../services/c2c/scaffold-project-documents.js', () => ({
   scaffoldProjectDocuments: (...a: unknown[]) => scaffold(...a),
 }));
+// Create now enforces the licensed program quota before it opens the
+// transaction. checkProgramQuota reads through the same mocked pool, so left
+// unstubbed its two statements would consume the head of every queue below and
+// every test here would assert against the wrong call. Stubbed for the same
+// reason the scaffold is: these assertions are about the create route's
+// transaction and contract, and the quota has its own coverage in
+// license-manager. The deny path gets an explicit test at the end.
+const programQuota = vi.fn(async () => ({ withinQuota: true, currentCount: 0, maxAllowed: 10, unlimited: false }));
+vi.mock('../../../services/license-manager.js', () => ({
+  checkProgramQuota: (...a: unknown[]) => programQuota(...(a as [])),
+}));
+// The creation now writes a hash-chained audit_logs row in the same
+// transaction. Sealing reads the previous chain head through the client, so
+// like the quota it would otherwise consume queue entries these tests assert
+// positionally. The chain itself is covered by services/audit; what matters
+// here is that the row is written INSIDE the transaction, asserted below.
+vi.mock('../../../services/audit/chain.js', () => ({
+  hashPayload: () => 'payload-hash-test',
+  computeAuditChainSealed: async () => ({ sha256Chain: 'chain-test', hmacSeal: 'seal-test' }),
+}));
 
 import projectsRouter from '../projects';
 
@@ -59,6 +79,9 @@ beforeEach(() => {
   release.mockReset();
   scaffold.mockReset();
   scaffold.mockResolvedValue({ documentId: 'doc_test', sectionCount: 24 });
+  programQuota.mockReset();
+  programQuota.mockResolvedValue({ withinQuota: true, currentCount: 0, maxAllowed: 10, unlimited: false });
+  delete process.env.PROGRAM_QUOTA_MODE;
   // Default: BEGIN and COMMIT resolve; individual tests queue the rest.
   query.mockResolvedValue({ rows: [] });
 });
@@ -105,6 +128,7 @@ describe('POST /api/c2c/projects', () => {
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT ... RETURNING id
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
       .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select (post-commit, on the pool)
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
@@ -127,6 +151,7 @@ describe('POST /api/c2c/projects', () => {
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
       .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
     const { productType, ...noProduct } = validBody;
@@ -144,6 +169,7 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // ROLLBACK
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN (fresh txn)
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // retry INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
       .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
@@ -163,6 +189,7 @@ describe('POST /api/c2c/projects', () => {
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
       .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
@@ -175,6 +202,27 @@ describe('POST /api/c2c/projects', () => {
     expect(scaffold).toHaveBeenCalledTimes(1);
     expect(order.indexOf('COMMIT')).toBeGreaterThan(0);
     expect(release).toHaveBeenCalled();
+
+    // The audit row is written on the CLIENT, between BEGIN and COMMIT — not
+    // after, and not on the pool. A program that commits while its audit row
+    // fails is a record a regulated tenant cannot defend, so the two have to
+    // roll back together.
+    const auditIdx = query.mock.calls.findIndex((c) => String(c[0]).includes('INSERT INTO audit_logs'));
+    expect(auditIdx, 'no audit_logs row was written').toBeGreaterThan(-1);
+    expect(auditIdx).toBeLessThan(order.indexOf('COMMIT'));
+  });
+
+  it('rolls the program back when its audit row cannot be written', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT
+      .mockRejectedValueOnce(new Error('audit_logs write failed'));                   // audit INSERT fails
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(500);
+    const order = sqlCalls();
+    expect(order).toContain('ROLLBACK');
+    expect(order).not.toContain('COMMIT');
+    expect(release).toHaveBeenCalled();
   });
 
   it('surfaces a scaffold skip in the 201 body instead of failing or hiding it', async () => {
@@ -186,6 +234,7 @@ describe('POST /api/c2c/projects', () => {
     query
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [shapedRow()] });
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
@@ -200,6 +249,7 @@ describe('POST /api/c2c/projects', () => {
     query
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] })
+      .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [shapedRow()] });
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
@@ -214,5 +264,21 @@ describe('POST /api/c2c/projects', () => {
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(503);
     expect(res.body.error).toBe('PENDING_STORE');
+  });
+
+  it('refuses the create when the org is at its licensed program quota', async () => {
+    // The quota ships in warn mode so it cannot retroactively lock out tenants
+    // already over a limit that was never enforced; enforce is what this asserts.
+    process.env.PROGRAM_QUOTA_MODE = 'enforce';
+    programQuota.mockResolvedValue({ withinQuota: false, currentCount: 10, maxAllowed: 10, unlimited: false });
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('QUOTA_EXCEEDED');
+    // The numbers travel with the refusal so support can answer "why" without a
+    // database session, and so the client can name the limit in its message.
+    expect(String(res.body.message)).toContain('10 of 10');
+    // Nothing was written: the quota gate runs before the transaction opens, so
+    // a refused create must not have issued a single statement.
+    expect(query).not.toHaveBeenCalled();
   });
 });

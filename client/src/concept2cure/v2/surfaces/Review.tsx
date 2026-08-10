@@ -421,11 +421,31 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             <div className="rv-reject">
               <textarea
                 className="rv-reject-ta"
-                placeholder="State the specific change required (recorded against the document + author notified)..."
+                placeholder="State the specific change required..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 autoFocus
               />
+              {/* The placeholder here used to read "(recorded against the document
+                  + author notified)". Neither happens: doReject sets local state
+                  and appends a local thread entry — there is no write and no
+                  notification. That is the same session-only behaviour the
+                  e-signature modal above already discloses, so it is disclosed the
+                  same way rather than claimed away in a placeholder.
+
+                  It is deliberately NOT wired to POST /api/approval-workflows/:id/
+                  reject, which is real and mounted. That route calls
+                  processApproval({ action: 'reject' }) and answers "Workflow
+                  rejected" — a terminal decision on the approval workflow.
+                  "Request changes" is a request to revise, not a rejection, and
+                  ApprovalOrchestrator accepts only 'approve' | 'reject', so there
+                  is no correct action to send. Escalating a revision request into
+                  a recorded rejection of a governed workflow would be a worse
+                  error than recording nothing. */}
+              <div className="rv-reject-note">
+                Recorded in this session only — the change request is not yet
+                written against the document and the author is not notified.
+              </div>
               <div className="rv-reject-row">
                 <button className="btn ghost" onClick={() => { setRejecting(false); setReason(''); }}>Cancel</button>
                 <button className="btn primary" disabled={!reason.trim()} onClick={doReject}>{I.close} Request changes</button>

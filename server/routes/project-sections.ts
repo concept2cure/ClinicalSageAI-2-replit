@@ -257,7 +257,476 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET SINGLE SECTION
+// SUMMARY — Module-level progress + deadline overview
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/summary', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.query.project_id as string, 10);
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    if (!projectId) {
+      return res.status(400).json({ error: 'project_id is required' });
+    }
+
+    // Module-level aggregation
+    const moduleSummary = await pool.query(
+      `SELECT
+         module,
+         COUNT(*) as total_sections,
+         COUNT(*) FILTER (WHERE status IN ('approved', 'signed', 'locked')) as completed,
+         COUNT(*) FILTER (WHERE status IN ('drafting', 'internal_review', 'revision', 'qa_review', 'data_gathering')) as in_progress,
+         COUNT(*) FILTER (WHERE status = 'not_started') as not_started,
+         COUNT(*) FILTER (WHERE deadline IS NOT NULL AND deadline < NOW() AND status NOT IN ('approved', 'signed', 'locked')) as overdue,
+         MIN(deadline) FILTER (WHERE deadline > NOW() AND status NOT IN ('approved', 'signed', 'locked')) as next_deadline,
+         SUM(estimated_hours) as total_estimated_hours,
+         SUM(actual_hours) as total_actual_hours
+       FROM project_sections
+       WHERE project_id = $1 AND organization_id = $2
+       GROUP BY module
+       ORDER BY module`,
+      [projectId, orgId]
+    );
+
+    // Overall stats
+    const overall = await pool.query(
+      `SELECT
+         COUNT(*) as total,
+         COUNT(*) FILTER (WHERE status IN ('approved', 'signed', 'locked')) as completed,
+         COUNT(*) FILTER (WHERE status IN ('drafting', 'internal_review', 'revision', 'qa_review', 'data_gathering')) as active,
+         COUNT(*) FILTER (WHERE assigned_to IS NOT NULL) as assigned,
+         COUNT(*) FILTER (WHERE deadline IS NOT NULL AND deadline < NOW() AND status NOT IN ('approved', 'signed', 'locked')) as overdue,
+         COUNT(*) FILTER (WHERE metadata->>'required' = 'true') as required_total,
+         COUNT(*) FILTER (WHERE metadata->>'required' = 'true' AND status IN ('approved', 'signed', 'locked')) as required_completed,
+         SUM(estimated_hours) as total_hours,
+         SUM(actual_hours) as actual_hours
+       FROM project_sections
+       WHERE project_id = $1 AND organization_id = $2`,
+      [projectId, orgId]
+    );
+
+    // Team workload
+    const workload = await pool.query(
+      `SELECT
+         u.id as user_id,
+         u.name as user_name,
+         COUNT(*) as assigned_sections,
+         COUNT(*) FILTER (WHERE ps.status NOT IN ('approved', 'signed', 'locked')) as active_sections,
+         SUM(ps.estimated_hours) FILTER (WHERE ps.status NOT IN ('approved', 'signed', 'locked')) as pending_hours
+       FROM project_sections ps
+       JOIN users u ON u.id = ps.assigned_to
+       WHERE ps.project_id = $1 AND ps.organization_id = $2 AND ps.assigned_to IS NOT NULL
+       GROUP BY u.id, u.name
+       ORDER BY active_sections DESC`,
+      [projectId, orgId]
+    );
+
+    const stats = overall.rows[0] || {};
+    const totalSections = parseInt(stats.total, 10) || 0;
+    const completedSections = parseInt(stats.completed, 10) || 0;
+
+    res.json({
+      projectId,
+      progress: totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0,
+      overall: {
+        total: totalSections,
+        completed: completedSections,
+        active: parseInt(stats.active, 10) || 0,
+        assigned: parseInt(stats.assigned, 10) || 0,
+        overdue: parseInt(stats.overdue, 10) || 0,
+        requiredTotal: parseInt(stats.required_total, 10) || 0,
+        requiredCompleted: parseInt(stats.required_completed, 10) || 0,
+        estimatedHours: parseFloat(stats.total_hours) || 0,
+        actualHours: parseFloat(stats.actual_hours) || 0,
+      },
+      modules: moduleSummary.rows.map((m: any) => ({
+        module: m.module,
+        total: parseInt(m.total_sections, 10),
+        completed: parseInt(m.completed, 10),
+        inProgress: parseInt(m.in_progress, 10),
+        notStarted: parseInt(m.not_started, 10),
+        overdue: parseInt(m.overdue, 10),
+        nextDeadline: m.next_deadline,
+        estimatedHours: parseFloat(m.total_estimated_hours) || 0,
+        actualHours: parseFloat(m.total_actual_hours) || 0,
+        progress:
+          parseInt(m.total_sections, 10) > 0
+            ? Math.round((parseInt(m.completed, 10) / parseInt(m.total_sections, 10)) * 100)
+            : 0,
+      })),
+      teamWorkload: workload.rows,
+    });
+  } catch (error: any) {
+    console.error('[ProjectSections] Summary error:', error.message);
+    res.status(500).json({ error: 'Failed to get summary' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEPENDENCIES — Section dependency management
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/dependencies', async (req: Request, res: Response) => {
+  try {
+    const { project_id, section_code, depends_on_code, dependency_type } = req.body;
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    if (!project_id || !section_code || !depends_on_code) {
+      return res
+        .status(400)
+        .json({ error: 'project_id, section_code, and depends_on_code are required' });
+    }
+
+    // Prevent self-dependency
+    if (section_code === depends_on_code) {
+      return res.status(422).json({ error: 'A section cannot depend on itself' });
+    }
+
+    const projectId = parseInt(String(project_id), 10);
+
+    const result = await pool.query(
+      `INSERT INTO section_dependencies
+         (organization_id, project_id, section_code, depends_on_code, dependency_type)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (project_id, section_code, depends_on_code) DO UPDATE SET dependency_type = $5
+       RETURNING *`,
+      [orgId, projectId, section_code, depends_on_code, dependency_type || 'blocks']
+    );
+
+    res.json({ success: true, dependency: result.rows[0] });
+  } catch (error: any) {
+    console.error('[ProjectSections] Dependency error:', error.message);
+    res.status(500).json({ error: 'Failed to manage dependency' });
+  }
+});
+
+router.get('/dependencies', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.query.project_id as string, 10);
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    if (!projectId) {
+      return res.status(400).json({ error: 'project_id is required' });
+    }
+
+    const result = await pool.query(
+      `SELECT sd.*,
+              ps_from.title as section_title,
+              ps_from.status as section_status,
+              ps_to.title as depends_on_title,
+              ps_to.status as depends_on_status
+       FROM section_dependencies sd
+       LEFT JOIN project_sections ps_from ON ps_from.project_id = sd.project_id AND ps_from.section_code = sd.section_code
+       LEFT JOIN project_sections ps_to ON ps_to.project_id = sd.project_id AND ps_to.section_code = sd.depends_on_code
+       WHERE sd.project_id = $1 AND sd.organization_id = $2
+       ORDER BY sd.section_code`,
+      [projectId, orgId]
+    );
+
+    res.json({ dependencies: result.rows });
+  } catch (error: any) {
+    console.error('[ProjectSections] Get dependencies error:', error.message);
+    res.status(500).json({ error: 'Failed to get dependencies' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATIONS — User notifications
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/notifications', async (req: Request, res: Response) => {
+  try {
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const userId = extractUserId(req);
+    const unreadOnly = req.query.unread === 'true';
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    let query = `SELECT id, user_id, organization_id, project_id, section_code, type, title, message, read, read_at, created_at FROM project_notifications WHERE user_id = $1 AND organization_id = $2`;
+    const params: any[] = [userId, orgId];
+
+    if (unreadOnly) {
+      query += ' AND read = FALSE';
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT 50';
+
+    const result = await pool.query(query, params);
+
+    const unreadCount = await pool.query(
+      'SELECT COUNT(*) as cnt FROM project_notifications WHERE user_id = $1 AND organization_id = $2 AND read = FALSE',
+      [userId, orgId]
+    );
+
+    res.json({
+      notifications: result.rows,
+      unreadCount: parseInt(unreadCount.rows[0].cnt, 10) || 0,
+    });
+  } catch (error: any) {
+    console.error('[ProjectSections] Notifications error:', error.message);
+    res.status(500).json({ error: 'Failed to get notifications' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MILESTONES — Project timeline management
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/milestones', async (req: Request, res: Response) => {
+  try {
+    const { project_id, name, description, target_date, linked_sections } = req.body;
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const userId = extractUserId(req);
+
+    if (!project_id || !name || !target_date) {
+      return res.status(400).json({ error: 'project_id, name, and target_date are required' });
+    }
+
+    const projectId = parseInt(String(project_id), 10);
+
+    const result = await pool.query(
+      `INSERT INTO project_milestones
+         (organization_id, project_id, name, description, target_date, linked_sections, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        orgId,
+        projectId,
+        name,
+        description || null,
+        new Date(target_date),
+        JSON.stringify(linked_sections || []),
+        userId,
+      ]
+    );
+
+    res.json({ success: true, milestone: result.rows[0] });
+  } catch (error: any) {
+    console.error('[ProjectSections] Milestone create error:', error.message);
+    res.status(500).json({ error: 'Failed to create milestone' });
+  }
+});
+
+router.get('/milestones', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.query.project_id as string, 10);
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    if (!projectId) {
+      return res.status(400).json({ error: 'project_id is required' });
+    }
+
+    const result = await pool.query(
+      `SELECT pm.*,
+              u.name as created_by_name,
+              CASE
+                WHEN pm.completed_at IS NOT NULL THEN 'completed'
+                WHEN pm.target_date < NOW() THEN 'overdue'
+                WHEN pm.target_date < NOW() + INTERVAL '7 days' THEN 'approaching'
+                ELSE 'on_track'
+              END as status_label
+       FROM project_milestones pm
+       LEFT JOIN users u ON u.id = pm.created_by
+       WHERE pm.project_id = $1 AND pm.organization_id = $2
+       ORDER BY pm.target_date ASC`,
+      [projectId, orgId]
+    );
+
+    res.json({ milestones: result.rows });
+  } catch (error: any) {
+    console.error('[ProjectSections] Milestones list error:', error.message);
+    res.status(500).json({ error: 'Failed to list milestones' });
+  }
+});
+
+router.patch('/milestones/:id', async (req: Request, res: Response) => {
+  try {
+    const milestoneId = parseInt(String(req.params.id), 10);
+    const { name, description, target_date, status, linked_sections } = req.body;
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    const updates: string[] = ['updated_at = NOW()'];
+    const params: any[] = [milestoneId, orgId];
+    let idx = 3;
+
+    if (name !== undefined) {
+      updates.push(`name = $${idx++}`);
+      params.push(name);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${idx++}`);
+      params.push(description);
+    }
+    if (target_date !== undefined) {
+      updates.push(`target_date = $${idx++}`);
+      params.push(new Date(target_date));
+    }
+    if (status === 'completed') {
+      updates.push(`completed_at = NOW()`);
+    }
+    if (linked_sections !== undefined) {
+      updates.push(`linked_sections = $${idx++}`);
+      params.push(JSON.stringify(linked_sections));
+    }
+
+    const result = await pool.query(
+      `UPDATE project_milestones SET ${updates.join(', ')}
+       WHERE id = $1 AND organization_id = $2
+       RETURNING *`,
+      params
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Milestone not found' });
+    }
+
+    res.json({ success: true, milestone: result.rows[0] });
+  } catch (error: any) {
+    console.error('[ProjectSections] Milestone update error:', error.message);
+    res.status(500).json({ error: 'Failed to update milestone' });
+  }
+});
+
+router.delete('/milestones/:id', async (req: Request, res: Response) => {
+  try {
+    const milestoneId = parseInt(String(req.params.id), 10);
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    await pool.query('DELETE FROM project_milestones WHERE id = $1 AND organization_id = $2', [
+      milestoneId,
+      orgId,
+    ]);
+
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to delete milestone' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIMELINE — Full timeline view
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/timeline', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.query.project_id as string, 10);
+    const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    if (!projectId) {
+      return res.status(400).json({ error: 'project_id is required' });
+    }
+
+    // Sections with deadlines
+    const sections = await pool.query(
+      `SELECT section_code, title, module, status, deadline, assigned_to,
+              u.name as assigned_to_name
+       FROM project_sections ps
+       LEFT JOIN users u ON u.id = ps.assigned_to
+       WHERE ps.project_id = $1 AND ps.organization_id = $2 AND ps.deadline IS NOT NULL
+       ORDER BY ps.deadline ASC`,
+      [projectId, orgId]
+    );
+
+    // Milestones
+    const milestones = await pool.query(
+      `SELECT id, name, target_date, completed_at, linked_sections,
+              CASE
+                WHEN completed_at IS NOT NULL THEN 'completed'
+                WHEN target_date < NOW() THEN 'overdue'
+                WHEN target_date < NOW() + INTERVAL '7 days' THEN 'approaching'
+                ELSE 'on_track'
+              END as status_label
+       FROM project_milestones
+       WHERE project_id = $1 AND organization_id = $2
+       ORDER BY target_date ASC`,
+      [projectId, orgId]
+    );
+
+    // Combine into timeline events
+    type TimelineEvent = {
+      date: string;
+      type: 'section_deadline' | 'milestone';
+      title: string;
+      status: string;
+      metadata: Record<string, any>;
+    };
+
+    const events: TimelineEvent[] = [];
+
+    for (const s of sections.rows) {
+      events.push({
+        date: s.deadline,
+        type: 'section_deadline',
+        title: `${s.section_code}: ${s.title}`,
+        status: s.status,
+        metadata: {
+          sectionCode: s.section_code,
+          module: s.module,
+          assignedTo: s.assigned_to_name,
+        },
+      });
+    }
+
+    for (const m of milestones.rows) {
+      events.push({
+        date: m.target_date,
+        type: 'milestone',
+        title: m.name,
+        status: m.status_label,
+        metadata: {
+          milestoneId: m.id,
+          linkedSections: m.linked_sections,
+          completedAt: m.completed_at,
+        },
+      });
+    }
+
+    // Sort by date
+    events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    res.json({
+      projectId,
+      events,
+      totalSectionDeadlines: sections.rows.length,
+      totalMilestones: milestones.rows.length,
+    });
+  } catch (error: any) {
+    console.error('[ProjectSections] Timeline error:', error.message);
+    res.status(500).json({ error: 'Failed to get timeline' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET SINGLE SECTION (catch-all: must come after all specific routes)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 router.get('/:code', async (req: Request, res: Response) => {
@@ -652,115 +1121,6 @@ router.patch('/:code', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SUMMARY — Module-level progress + deadline overview
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.get('/summary', async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(req.query.project_id as string, 10);
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-
-    if (!projectId) {
-      return res.status(400).json({ error: 'project_id is required' });
-    }
-
-    // Module-level aggregation
-    const moduleSummary = await pool.query(
-      `SELECT
-         module,
-         COUNT(*) as total_sections,
-         COUNT(*) FILTER (WHERE status IN ('approved', 'signed', 'locked')) as completed,
-         COUNT(*) FILTER (WHERE status IN ('drafting', 'internal_review', 'revision', 'qa_review', 'data_gathering')) as in_progress,
-         COUNT(*) FILTER (WHERE status = 'not_started') as not_started,
-         COUNT(*) FILTER (WHERE deadline IS NOT NULL AND deadline < NOW() AND status NOT IN ('approved', 'signed', 'locked')) as overdue,
-         MIN(deadline) FILTER (WHERE deadline > NOW() AND status NOT IN ('approved', 'signed', 'locked')) as next_deadline,
-         SUM(estimated_hours) as total_estimated_hours,
-         SUM(actual_hours) as total_actual_hours
-       FROM project_sections
-       WHERE project_id = $1 AND organization_id = $2
-       GROUP BY module
-       ORDER BY module`,
-      [projectId, orgId]
-    );
-
-    // Overall stats
-    const overall = await pool.query(
-      `SELECT
-         COUNT(*) as total,
-         COUNT(*) FILTER (WHERE status IN ('approved', 'signed', 'locked')) as completed,
-         COUNT(*) FILTER (WHERE status IN ('drafting', 'internal_review', 'revision', 'qa_review', 'data_gathering')) as active,
-         COUNT(*) FILTER (WHERE assigned_to IS NOT NULL) as assigned,
-         COUNT(*) FILTER (WHERE deadline IS NOT NULL AND deadline < NOW() AND status NOT IN ('approved', 'signed', 'locked')) as overdue,
-         COUNT(*) FILTER (WHERE metadata->>'required' = 'true') as required_total,
-         COUNT(*) FILTER (WHERE metadata->>'required' = 'true' AND status IN ('approved', 'signed', 'locked')) as required_completed,
-         SUM(estimated_hours) as total_hours,
-         SUM(actual_hours) as actual_hours
-       FROM project_sections
-       WHERE project_id = $1 AND organization_id = $2`,
-      [projectId, orgId]
-    );
-
-    // Team workload
-    const workload = await pool.query(
-      `SELECT
-         u.id as user_id,
-         u.name as user_name,
-         COUNT(*) as assigned_sections,
-         COUNT(*) FILTER (WHERE ps.status NOT IN ('approved', 'signed', 'locked')) as active_sections,
-         SUM(ps.estimated_hours) FILTER (WHERE ps.status NOT IN ('approved', 'signed', 'locked')) as pending_hours
-       FROM project_sections ps
-       JOIN users u ON u.id = ps.assigned_to
-       WHERE ps.project_id = $1 AND ps.organization_id = $2 AND ps.assigned_to IS NOT NULL
-       GROUP BY u.id, u.name
-       ORDER BY active_sections DESC`,
-      [projectId, orgId]
-    );
-
-    const stats = overall.rows[0] || {};
-    const totalSections = parseInt(stats.total, 10) || 0;
-    const completedSections = parseInt(stats.completed, 10) || 0;
-
-    res.json({
-      projectId,
-      progress: totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0,
-      overall: {
-        total: totalSections,
-        completed: completedSections,
-        active: parseInt(stats.active, 10) || 0,
-        assigned: parseInt(stats.assigned, 10) || 0,
-        overdue: parseInt(stats.overdue, 10) || 0,
-        requiredTotal: parseInt(stats.required_total, 10) || 0,
-        requiredCompleted: parseInt(stats.required_completed, 10) || 0,
-        estimatedHours: parseFloat(stats.total_hours) || 0,
-        actualHours: parseFloat(stats.actual_hours) || 0,
-      },
-      modules: moduleSummary.rows.map((m: any) => ({
-        module: m.module,
-        total: parseInt(m.total_sections, 10),
-        completed: parseInt(m.completed, 10),
-        inProgress: parseInt(m.in_progress, 10),
-        notStarted: parseInt(m.not_started, 10),
-        overdue: parseInt(m.overdue, 10),
-        nextDeadline: m.next_deadline,
-        estimatedHours: parseFloat(m.total_estimated_hours) || 0,
-        actualHours: parseFloat(m.total_actual_hours) || 0,
-        progress:
-          parseInt(m.total_sections, 10) > 0
-            ? Math.round((parseInt(m.completed, 10) / parseInt(m.total_sections, 10)) * 100)
-            : 0,
-      })),
-      teamWorkload: workload.rows,
-    });
-  } catch (error: any) {
-    console.error('[ProjectSections] Summary error:', error.message);
-    res.status(500).json({ error: 'Failed to get summary' });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // COMMENTS — Per-section discussion threads
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -877,123 +1237,6 @@ router.get('/:code/history', async (req: Request, res: Response) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DEPENDENCIES — Section dependency management
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.post('/dependencies', async (req: Request, res: Response) => {
-  try {
-    const { project_id, section_code, depends_on_code, dependency_type } = req.body;
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-
-    if (!project_id || !section_code || !depends_on_code) {
-      return res
-        .status(400)
-        .json({ error: 'project_id, section_code, and depends_on_code are required' });
-    }
-
-    // Prevent self-dependency
-    if (section_code === depends_on_code) {
-      return res.status(422).json({ error: 'A section cannot depend on itself' });
-    }
-
-    const projectId = parseInt(String(project_id), 10);
-
-    const result = await pool.query(
-      `INSERT INTO section_dependencies
-         (organization_id, project_id, section_code, depends_on_code, dependency_type)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (project_id, section_code, depends_on_code) DO UPDATE SET dependency_type = $5
-       RETURNING *`,
-      [orgId, projectId, section_code, depends_on_code, dependency_type || 'blocks']
-    );
-
-    res.json({ success: true, dependency: result.rows[0] });
-  } catch (error: any) {
-    console.error('[ProjectSections] Dependency error:', error.message);
-    res.status(500).json({ error: 'Failed to manage dependency' });
-  }
-});
-
-router.get('/dependencies', async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(req.query.project_id as string, 10);
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-
-    if (!projectId) {
-      return res.status(400).json({ error: 'project_id is required' });
-    }
-
-    const result = await pool.query(
-      `SELECT sd.*,
-              ps_from.title as section_title,
-              ps_from.status as section_status,
-              ps_to.title as depends_on_title,
-              ps_to.status as depends_on_status
-       FROM section_dependencies sd
-       LEFT JOIN project_sections ps_from ON ps_from.project_id = sd.project_id AND ps_from.section_code = sd.section_code
-       LEFT JOIN project_sections ps_to ON ps_to.project_id = sd.project_id AND ps_to.section_code = sd.depends_on_code
-       WHERE sd.project_id = $1 AND sd.organization_id = $2
-       ORDER BY sd.section_code`,
-      [projectId, orgId]
-    );
-
-    res.json({ dependencies: result.rows });
-  } catch (error: any) {
-    console.error('[ProjectSections] Get dependencies error:', error.message);
-    res.status(500).json({ error: 'Failed to get dependencies' });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// NOTIFICATIONS — User notifications
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.get('/notifications', async (req: Request, res: Response) => {
-  try {
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-    const userId = extractUserId(req);
-    const unreadOnly = req.query.unread === 'true';
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    let query = `SELECT id, user_id, organization_id, project_id, section_code, type, title, message, read, read_at, created_at FROM project_notifications WHERE user_id = $1 AND organization_id = $2`;
-    const params: any[] = [userId, orgId];
-
-    if (unreadOnly) {
-      query += ' AND read = FALSE';
-    }
-
-    query += ' ORDER BY created_at DESC LIMIT 50';
-
-    const result = await pool.query(query, params);
-
-    const unreadCount = await pool.query(
-      'SELECT COUNT(*) as cnt FROM project_notifications WHERE user_id = $1 AND organization_id = $2 AND read = FALSE',
-      [userId, orgId]
-    );
-
-    res.json({
-      notifications: result.rows,
-      unreadCount: parseInt(unreadCount.rows[0].cnt, 10) || 0,
-    });
-  } catch (error: any) {
-    console.error('[ProjectSections] Notifications error:', error.message);
-    res.status(500).json({ error: 'Failed to get notifications' });
-  }
-});
-
 router.patch('/notifications/:id/read', async (req: Request, res: Response) => {
   try {
     const notifId = parseInt(String(req.params.id), 10);
@@ -1026,246 +1269,6 @@ router.post('/notifications/read-all', async (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to mark all notifications read' });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MILESTONES — Project timeline management
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.post('/milestones', async (req: Request, res: Response) => {
-  try {
-    const { project_id, name, description, target_date, linked_sections } = req.body;
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-    const userId = extractUserId(req);
-
-    if (!project_id || !name || !target_date) {
-      return res.status(400).json({ error: 'project_id, name, and target_date are required' });
-    }
-
-    const projectId = parseInt(String(project_id), 10);
-
-    const result = await pool.query(
-      `INSERT INTO project_milestones
-         (organization_id, project_id, name, description, target_date, linked_sections, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [
-        orgId,
-        projectId,
-        name,
-        description || null,
-        new Date(target_date),
-        JSON.stringify(linked_sections || []),
-        userId,
-      ]
-    );
-
-    res.json({ success: true, milestone: result.rows[0] });
-  } catch (error: any) {
-    console.error('[ProjectSections] Milestone create error:', error.message);
-    res.status(500).json({ error: 'Failed to create milestone' });
-  }
-});
-
-router.get('/milestones', async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(req.query.project_id as string, 10);
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-
-    if (!projectId) {
-      return res.status(400).json({ error: 'project_id is required' });
-    }
-
-    const result = await pool.query(
-      `SELECT pm.*,
-              u.name as created_by_name,
-              CASE
-                WHEN pm.completed_at IS NOT NULL THEN 'completed'
-                WHEN pm.target_date < NOW() THEN 'overdue'
-                WHEN pm.target_date < NOW() + INTERVAL '7 days' THEN 'approaching'
-                ELSE 'on_track'
-              END as status_label
-       FROM project_milestones pm
-       LEFT JOIN users u ON u.id = pm.created_by
-       WHERE pm.project_id = $1 AND pm.organization_id = $2
-       ORDER BY pm.target_date ASC`,
-      [projectId, orgId]
-    );
-
-    res.json({ milestones: result.rows });
-  } catch (error: any) {
-    console.error('[ProjectSections] Milestones list error:', error.message);
-    res.status(500).json({ error: 'Failed to list milestones' });
-  }
-});
-
-router.patch('/milestones/:id', async (req: Request, res: Response) => {
-  try {
-    const milestoneId = parseInt(String(req.params.id), 10);
-    const { name, description, target_date, status, linked_sections } = req.body;
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-
-    const updates: string[] = ['updated_at = NOW()'];
-    const params: any[] = [milestoneId, orgId];
-    let idx = 3;
-
-    if (name !== undefined) {
-      updates.push(`name = $${idx++}`);
-      params.push(name);
-    }
-    if (description !== undefined) {
-      updates.push(`description = $${idx++}`);
-      params.push(description);
-    }
-    if (target_date !== undefined) {
-      updates.push(`target_date = $${idx++}`);
-      params.push(new Date(target_date));
-    }
-    if (status === 'completed') {
-      updates.push(`completed_at = NOW()`);
-    }
-    if (linked_sections !== undefined) {
-      updates.push(`linked_sections = $${idx++}`);
-      params.push(JSON.stringify(linked_sections));
-    }
-
-    const result = await pool.query(
-      `UPDATE project_milestones SET ${updates.join(', ')}
-       WHERE id = $1 AND organization_id = $2
-       RETURNING *`,
-      params
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Milestone not found' });
-    }
-
-    res.json({ success: true, milestone: result.rows[0] });
-  } catch (error: any) {
-    console.error('[ProjectSections] Milestone update error:', error.message);
-    res.status(500).json({ error: 'Failed to update milestone' });
-  }
-});
-
-router.delete('/milestones/:id', async (req: Request, res: Response) => {
-  try {
-    const milestoneId = parseInt(String(req.params.id), 10);
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-
-    await pool.query('DELETE FROM project_milestones WHERE id = $1 AND organization_id = $2', [
-      milestoneId,
-      orgId,
-    ]);
-
-    res.json({ success: true });
-  } catch (error: any) {
-    res.status(500).json({ error: 'Failed to delete milestone' });
-  }
-});
-
-// GET /api/project-sections/timeline — Full timeline view
-router.get('/timeline', async (req: Request, res: Response) => {
-  try {
-    const projectId = parseInt(req.query.project_id as string, 10);
-    const orgId = extractOrgId(req);
-    if (orgId == null) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-
-    if (!projectId) {
-      return res.status(400).json({ error: 'project_id is required' });
-    }
-
-    // Sections with deadlines
-    const sections = await pool.query(
-      `SELECT section_code, title, module, status, deadline, assigned_to,
-              u.name as assigned_to_name
-       FROM project_sections ps
-       LEFT JOIN users u ON u.id = ps.assigned_to
-       WHERE ps.project_id = $1 AND ps.organization_id = $2 AND ps.deadline IS NOT NULL
-       ORDER BY ps.deadline ASC`,
-      [projectId, orgId]
-    );
-
-    // Milestones
-    const milestones = await pool.query(
-      `SELECT id, name, target_date, completed_at, linked_sections,
-              CASE
-                WHEN completed_at IS NOT NULL THEN 'completed'
-                WHEN target_date < NOW() THEN 'overdue'
-                WHEN target_date < NOW() + INTERVAL '7 days' THEN 'approaching'
-                ELSE 'on_track'
-              END as status_label
-       FROM project_milestones
-       WHERE project_id = $1 AND organization_id = $2
-       ORDER BY target_date ASC`,
-      [projectId, orgId]
-    );
-
-    // Combine into timeline events
-    type TimelineEvent = {
-      date: string;
-      type: 'section_deadline' | 'milestone';
-      title: string;
-      status: string;
-      metadata: Record<string, any>;
-    };
-
-    const events: TimelineEvent[] = [];
-
-    for (const s of sections.rows) {
-      events.push({
-        date: s.deadline,
-        type: 'section_deadline',
-        title: `${s.section_code}: ${s.title}`,
-        status: s.status,
-        metadata: {
-          sectionCode: s.section_code,
-          module: s.module,
-          assignedTo: s.assigned_to_name,
-        },
-      });
-    }
-
-    for (const m of milestones.rows) {
-      events.push({
-        date: m.target_date,
-        type: 'milestone',
-        title: m.name,
-        status: m.status_label,
-        metadata: {
-          milestoneId: m.id,
-          linkedSections: m.linked_sections,
-          completedAt: m.completed_at,
-        },
-      });
-    }
-
-    // Sort by date
-    events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    res.json({
-      projectId,
-      events,
-      totalSectionDeadlines: sections.rows.length,
-      totalMilestones: milestones.rows.length,
-    });
-  } catch (error: any) {
-    console.error('[ProjectSections] Timeline error:', error.message);
-    res.status(500).json({ error: 'Failed to get timeline' });
   }
 });
 
