@@ -17,59 +17,25 @@
 
 BEGIN;
 
--- Guard: skip if the table is missing or already has the constraint
+-- Idempotent constraint addition with exception handling.
+-- If the constraint already exists, silently continue.
+-- If duplicates exist, fail with a clear message.
 DO $$
-DECLARE
-  constraint_exists boolean;
-  table_exists boolean;
-  violating_rows integer;
 BEGIN
-  -- Check if the table exists
-  SELECT EXISTS(
-    SELECT 1 FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_name = 'c2c_project_work_items'
-  ) INTO table_exists;
-
-  IF NOT table_exists THEN
-    RAISE NOTICE '[20260810] table c2c_project_work_items does not exist; skipping';
-    RETURN;
-  END IF;
-
-  -- Check if the constraint already exists
-  SELECT EXISTS(
-    SELECT 1 FROM information_schema.constraint_column_usage
-    WHERE table_schema = 'public'
-      AND table_name = 'c2c_project_work_items'
-      AND constraint_name = 'c2c_pwi_org_source_type_source_id_unique'
-  ) INTO constraint_exists;
-
-  IF constraint_exists THEN
-    RAISE NOTICE '[20260810] constraint already exists; skipping';
-    RETURN;
-  END IF;
-
-  -- Check for existing violations: rows with duplicate (org_id, source_type, source_id)
-  SELECT COUNT(*) FROM (
-    SELECT org_id, source_type, source_id
-    FROM c2c_project_work_items
-    GROUP BY org_id, source_type, source_id
-    HAVING COUNT(*) > 1
-  ) INTO violating_rows;
-
-  IF violating_rows > 0 THEN
-    RAISE EXCEPTION
-      'c2c_project_work_items has % rows with duplicate (org_id, source_type, source_id) keys. '
-      'These must be cleaned up manually before this migration can apply: '
-      'review the duplicates and decide which to keep/merge.',
-      violating_rows;
-  END IF;
-
-  -- Add the constraint
-  EXECUTE 'ALTER TABLE c2c_project_work_items
-             ADD CONSTRAINT c2c_pwi_org_source_type_source_id_unique
-             UNIQUE (org_id, source_type, source_id)';
+  -- Try to add the constraint. If it already exists or duplicates block it, catch and handle.
+  ALTER TABLE c2c_project_work_items
+    ADD CONSTRAINT c2c_pwi_org_source_type_source_id_unique
+    UNIQUE (org_id, source_type, source_id);
 
   RAISE NOTICE '[20260810] added unique constraint on (org_id, source_type, source_id)';
+EXCEPTION
+  WHEN duplicate_object THEN
+    RAISE NOTICE '[20260810] constraint already exists; skipping';
+  WHEN unique_violation THEN
+    RAISE EXCEPTION
+      'c2c_project_work_items has rows with duplicate (org_id, source_type, source_id) keys. '
+      'These must be cleaned up manually before this migration can apply: '
+      'review the duplicates and decide which to keep/merge.';
 END $$;
 
 COMMIT;
