@@ -23,6 +23,18 @@ import {
   type CmcBatch,
   type BatchApiRow,
 } from './cmcBatch';
+/* Read-only registers bound to org-scoped CMC endpoints that already existed
+   server-side. Kept in a sibling module so the loading/error/empty triage is
+   written once rather than per card — see ./cmcRegisters. */
+import {
+  CmMethodLibrary,
+  CmQcTesting,
+  CmChangeRegister,
+  CmComparabilityStudies,
+  CmProcessValidation,
+  CmDrugSubstances,
+  CmDrugProducts,
+} from './cmcRegisters';
 import { useAuth } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 
@@ -413,66 +425,6 @@ function specErr(json: unknown, status: number): string {
   return j?.error || j?.details?.[0]?.message || j?.message || ('HTTP ' + status);
 }
 
-/* ── Analytical method (org-scoped GET /api/cmc/analytical-methods -> { success, data }) ──
-   The org-wide analytical method library (shared/schema.ts analyticalMethods):
-   methodCode / title / technique / purpose / status (development → validation →
-   validated → retired). Surfaced read-only beneath the specifications it backs, so the
-   tab's "no method / cannot approve" warnings point at a real, org-scoped inventory
-   rather than nothing. Real rows, an honest empty, or an honest error — never a fixture. */
-interface AnalyticalMethodApiRow {
-  id: number;
-  methodCode: string;
-  title: string;
-  technique: string | null;
-  purpose: string | null;
-  status: string | null;
-}
-
-function methodStatusTone(s: string | null): string {
-  const v = String(s || '').toLowerCase();
-  if (v === 'validated') return 'ok';
-  if (v === 'validation') return 'warn';
-  if (v === 'retired') return 'err';
-  return 'dim';
-}
-
-/* The analytical method library is org-scoped (no project needed), so it renders the
-   same inventory regardless of the project in context — it is the shared catalogue the
-   per-project specifications reference by method. */
-function CmMethodLibrary() {
-  const live = useLiveRows<AnalyticalMethodApiRow>('/api/cmc/analytical-methods');
-  const rows = live.rows;
-  const validated = rows.filter((r) => String(r.status || '').toLowerCase() === 'validated').length;
-  return (
-    <div className="pj-card" style={{ marginTop: 16 }}>
-      <div className="pj-card-h"><span className="t">Analytical method library</span><span className="s">organization-wide -- ICH Q2 -- {validated}/{rows.length} validated</span></div>
-      <div className="pj-card-b" style={{ padding: 0 }}>
-        {rows.length === 0 ? (
-          <div style={{ padding: 12 }}>
-            {live.loading ? (
-              <EmptyState icon={I.clipboardList} title="Loading analytical methods…" />
-            ) : live.error ? (
-              <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load analytical methods" hint="The org-scoped method library (GET /api/cmc/analytical-methods) didn’t respond. Sign in to your tenant and retry." />
-            ) : (
-              <EmptyState icon={I.clipboardList} title="No analytical methods yet" hint="Validated analytical procedures (HPLC, GC, UV-VIS, …) appear here as your organization records them. A specification cannot be approved until its method is validated (ICH Q2)." />
-            )}
-          </div>
-        ) : (
-          <table className="reg-tbl"><thead><tr><th>Code</th><th>Method</th><th>Technique</th><th>Purpose</th><th>Status</th></tr></thead>
-          <tbody>{rows.map((r) => (
-            <tr key={r.id}>
-              <td className="mono" style={{ fontWeight: 600 }}>{r.methodCode}</td>
-              <td>{r.title}</td>
-              <td>{r.technique || '--'}</td>
-              <td>{r.purpose || '--'}</td>
-              <td><span className={'rd-chip tone-' + methodStatusTone(r.status)}>{r.status || 'development'}</span></td>
-            </tr>))}</tbody></table>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: the specifications workbench is bound to the governed
      quality_specifications table (server/api/cmc/specificationRoutes.ts,
@@ -624,7 +576,10 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         </div>
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved specifications -> §3.2.S.4.1'} nav={nav} bar /></div>}
       </div>
+      {/* specification (the limit) -> method (how it is measured) -> QC test
+          (the measurement actually performed against it). */}
       <CmMethodLibrary />
+      <CmQcTesting />
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
       {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />
@@ -856,6 +811,9 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
           )}
         </div>
       </div>
+      {/* Batch records are the process as run; process validation is the
+          evidence that the process is capable of running that way. */}
+      <CmProcessValidation />
       {form && <C2CForm config={{ eyebrow: 'Batch -- new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this program', submitLabel: 'Log batch', fields: [
         { key: 'id', label: 'Batch number', type: 'text', placeholder: 'e.g. BX204-DP-2407', required: true },
         { key: 'stage', label: 'Stage', type: 'select', options: ['Drug substance', 'Drug product'], required: true, half: true },
@@ -888,63 +846,6 @@ function filingPath(changeType: string, risk: string, mkt: string): string[] {
     uk_mhra: high ? ['Type II variation', 'Prior approval'] : med ? ['Type IB', 'Tell-wait'] : ['Type IA', 'Notify'],
   };
   return map[mkt] || ['Assess locally', 'Region rule not modelled'];
-}
-
-/* ── CMC change-control record (org-scoped GET /api/cmc/change-control -> { success, data }) ──
-   The real change-control register (shared/schema.ts cmcChangeControl): changeNumber /
-   changeType / description / regulatoryFiling / status. The simulator computes a what-if
-   filing path over canonical rules; this register shows the changes actually logged for
-   the organization, so the tab reflects real change-control state and not only a
-   calculator. Real rows, an honest empty, or an honest error — never a fixture. */
-interface ChangeControlApiRow {
-  id: number;
-  changeNumber: string;
-  changeType: string | null;
-  description: string | null;
-  regulatoryFiling: string | null;
-  status: string | null;
-}
-
-function changeStatusTone(s: string | null): string {
-  const v = String(s || '').toLowerCase();
-  if (v === 'approved' || v === 'implemented' || v === 'closed') return 'ok';
-  if (v === 'in_review' || v === 'in-review' || v === 'review' || v === 'pending') return 'warn';
-  if (v === 'rejected') return 'err';
-  return 'dim';
-}
-
-function CmChangeRegister() {
-  const live = useLiveRows<ChangeControlApiRow>('/api/cmc/change-control');
-  const rows = live.rows;
-  const open = rows.filter((r) => !['approved', 'implemented', 'closed', 'rejected'].includes(String(r.status || '').toLowerCase())).length;
-  return (
-    <div className="pj-card" style={{ marginTop: 16 }}>
-      <div className="pj-card-h"><span className="t">Change-control register</span><span className="s">organization-wide -- {open} open -- ICH Q12</span></div>
-      <div className="pj-card-b" style={{ padding: 0 }}>
-        {rows.length === 0 ? (
-          <div style={{ padding: 12 }}>
-            {live.loading ? (
-              <EmptyState icon={I.gitBranch} title="Loading change-control records…" />
-            ) : live.error ? (
-              <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load change-control records" hint="The org-scoped change-control register (GET /api/cmc/change-control) didn’t respond. Sign in to your tenant and retry." />
-            ) : (
-              <EmptyState icon={I.gitBranch} title="No change-control records yet" hint="Logged CMC changes — with their type, filing category and status — appear here. Use the simulator above to model a change before you raise it." />
-            )}
-          </div>
-        ) : (
-          <table className="reg-tbl"><thead><tr><th>Change</th><th>Type</th><th>Description</th><th>Filing</th><th>Status</th></tr></thead>
-          <tbody>{rows.map((r) => (
-            <tr key={r.id}>
-              <td className="mono" style={{ fontWeight: 600 }}>{r.changeNumber}</td>
-              <td>{r.changeType || '--'}</td>
-              <td>{r.description || '--'}</td>
-              <td>{r.regulatoryFiling || <span className="cm-meta">not set</span>}</td>
-              <td><span className={'rd-chip tone-' + changeStatusTone(r.status)}>{r.status || 'draft'}</span></td>
-            </tr>))}</tbody></table>
-        )}
-      </div>
-    </div>
-  );
 }
 
 function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
@@ -1025,6 +926,9 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
         </div>
       </div>
       <CmChangeRegister />
+      {/* A change of consequence carries a comparability obligation (ICH Q5E),
+          so the assessments raised against those changes sit with them. */}
+      <CmComparabilityStudies />
       {result && (
         <div className="cm-change-out">
           <div className="cm-doc">
@@ -1048,18 +952,25 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
 /* ═══════════ Blueprint -- Global -- Program records -- Copilot ═══════════ */
 
 function CmBlueprint({ ask }: { ask: (text: string) => void }) {
-  /* DATA: fixture removed (was CMC_BP, a fabricated §3.2 readiness list, plus a
-     fake "Generate" action). There is no org-scoped GET that returns which §3.2
-     sections are ready to generate — GET /api/cmc/module3-board returns
-     blueprint:null, and section generation is a POST action
-     (/api/cmc/generate-enhanced-blueprint), not a readiness readout. Honest empty
-     until a blueprint-readiness backend is connected. */
+  /* The §3.2 SOURCE MATERIAL is real and org-scoped: drug substance (§3.2.S) and
+     drug product (§3.2.P) come from GET /api/cmc/drug-substances and
+     /api/cmc/drug-products — the quality data a blueprint composes from — so it
+     is surfaced here rather than left invisible.
+
+     The §3.2 section READINESS list stays an honest empty: there is no
+     org-scoped GET that reports which sections are ready to generate
+     (GET /api/cmc/module3-board returns blueprint:null, and generation is a POST
+     action — /api/cmc/generate-enhanced-blueprint — not a readiness readout).
+     Its former fixture (CMC_BP, a fabricated readiness list with a fake
+     "Generate" action) is not reinstated. */
   return (
     <div className="cm-body">
       <CmHead title="Blueprint generator" meta="Compose CTD §3.2 sections from the quality data" ask={ask} suggest={CMC_SUGGEST.overview} />
-      <div className="pj-card"><div className="pj-card-h"><span className="t">§3.2 sections</span><span className="s">CTD Module 3</span></div>
+      <CmDrugSubstances />
+      <CmDrugProducts />
+      <div className="pj-card" style={{ marginTop: 16 }}><div className="pj-card-h"><span className="t">§3.2 section readiness</span><span className="s">CTD Module 3</span></div>
         <div className="pj-card-b">
-          <EmptyState icon={I.template} title="No blueprint sections yet" hint="CTD §3.2.S / §3.2.P section drafts are generated on demand from your quality data. A per-project §3.2 readiness list appears here once connected." />
+          <EmptyState icon={I.template} title="No blueprint sections yet" hint="CTD §3.2.S / §3.2.P section drafts are generated on demand from the quality data above. A per-project §3.2 readiness list appears here once connected." />
         </div>
       </div>
     </div>
