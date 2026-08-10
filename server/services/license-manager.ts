@@ -101,6 +101,16 @@ export async function getLicenseInfo(organizationId: number): Promise<LicenseInf
 /**
  * Get the full module catalog for an organization, showing which modules
  * are enabled, available, and at what tier.
+ *
+ * Retired modules are excluded. `available_modules` was originally seeded with
+ * a module taxonomy the product no longer ships ('cmc-wizard', 'doc-canvas',
+ * '510k-submission', ...); db/migrations/20260810_reconcile_module_catalog.sql
+ * re-keys the catalog to real surface ids and marks those legacy rows
+ * {"deprecated": true}. They are MARKED rather than deleted because
+ * module_subscriptions.module_id references this table ON DELETE CASCADE, so
+ * deleting them would destroy each organization's entitlement history. The rows
+ * therefore stay (FK satisfied, history intact) and are filtered out here so the
+ * catalog only ever advertises modules a user can actually open.
  */
 export async function getModuleCatalog(organizationId: number): Promise<ModuleCatalogEntry[]> {
   try {
@@ -116,6 +126,7 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
        FROM available_modules am
        LEFT JOIN module_subscriptions ms
          ON ms.module_id = am.module_id AND ms.organization_id = $1
+       WHERE COALESCE((am.metadata->>'deprecated')::boolean, false) = false
        ORDER BY am.sort_order`,
       [organizationId]
     );
