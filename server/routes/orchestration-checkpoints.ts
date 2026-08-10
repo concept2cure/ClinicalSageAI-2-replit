@@ -179,17 +179,30 @@ router.post('/:id/decision', async (req: Request, res: Response) => {
   try {
     await client.query('BEGIN');
 
-    // FOR UPDATE OF c: the quorum count below is read-then-written, so two
+    // The row lock matters: the quorum count below is read-then-written, so two
     // approvers landing together must serialize or a 2-of-3 gate can be closed
     // by two racing writes that each saw one prior approval.
+    //
+    // Tenancy is an EXISTS rather than a JOIN so that the lock scope stays
+    // exactly one table. `FOR UPDATE` locks every table in the FROM clause, so
+    // the join form would also have locked the workflow_runs row and serialized
+    // approvers working on DIFFERENT gates of the same run. The subquery is not
+    // in the FROM, so only approval_checkpoints is locked — the same scope the
+    // explicit `OF c` gave, without the `FOR UPDATE OF` token that
+    // scripts/ci/check-unbacked-tables.mjs misparses as an UPDATE of a table
+    // literally named "of" (its REF_RE matches `UPDATE\s+(name)` and cannot see
+    // the preceding FOR).
     const { rows } = await client.query(
       `SELECT c.id, c.status, c.approvals, c.required_approver_count AS "requiredCount",
               c.required_approver_roles AS "requiredRoles", c.protected_action AS "protectedAction",
-              c.step_name AS "stepName", r.organization_id AS "organizationId"
+              c.step_name AS "stepName"
          FROM approval_checkpoints c
-         JOIN workflow_runs r ON r.id = c.workflow_run_id
-        WHERE c.id = $1 AND r.organization_id = $2
-        FOR UPDATE OF c`,
+        WHERE c.id = $1
+          AND EXISTS (
+                SELECT 1 FROM workflow_runs r
+                 WHERE r.id = c.workflow_run_id AND r.organization_id = $2
+              )
+        FOR UPDATE`,
       [checkpointId, orgId],
     );
 

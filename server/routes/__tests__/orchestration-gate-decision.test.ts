@@ -26,8 +26,9 @@
  *   5. TIME COMES FROM THE DATABASE. A client-supplied `decidedAt` on a
  *      governed approval is exactly the fabrication this route removes.
  *   6. TENANCY. approval_checkpoints has NO organization_id of its own; scope
- *      exists only through the JOIN to workflow_runs. Drop the join and any org
- *      can decide any other org's gates by id.
+ *      exists only by reaching workflow_runs. Drop that and any org can decide
+ *      any other org's gates by id. It is an EXISTS rather than a JOIN so the
+ *      row lock stays scoped to one table — see the locking test below.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -97,10 +98,16 @@ describe('quorum cannot be faked', () => {
     expect(ROUTE).toMatch(/already recorded a decision/);
   });
 
-  it('locks the row it reads-then-writes', () => {
+  it('locks the checkpoint row it reads-then-writes, and only that row', () => {
     // Two approvers landing together must serialize, or a 2-of-3 gate can be
     // closed by two racing writes that each saw one prior approval.
-    expect(ROUTE).toMatch(/FOR UPDATE OF c/);
+    expect(ROUTE).toMatch(/FOR UPDATE/);
+    // Lock scope is one table. `FOR UPDATE` locks every table in the FROM, so a
+    // JOIN here would also lock the workflow_runs row and serialize approvers
+    // working on DIFFERENT gates of the same run. Tenancy is therefore an
+    // EXISTS in the WHERE, which is not in the FROM and so is not locked.
+    const locking = ROUTE.slice(ROUTE.indexOf('FROM approval_checkpoints'), ROUTE.indexOf('FOR UPDATE'));
+    expect(locking, 'the locking SELECT joins another table, widening the lock').not.toMatch(/\bJOIN\b/);
   });
 
   it('counts only approvals, not any decision', () => {
@@ -115,9 +122,12 @@ describe('who may decide, and on what', () => {
     expect(ROUTE).toMatch(/403/);
   });
 
-  it('scopes to the organization through the workflow_runs join', () => {
-    // approval_checkpoints has no organization_id; the join IS the tenancy.
-    expect(ROUTE).toMatch(/JOIN workflow_runs r ON r\.id = c\.workflow_run_id/);
+  it('scopes to the organization through workflow_runs', () => {
+    // approval_checkpoints has NO organization_id of its own; reaching
+    // workflow_runs IS the tenancy. Drop it and any org can decide any other
+    // org's gates by id.
+    expect(ROUTE).toMatch(/FROM workflow_runs r/);
+    expect(ROUTE).toMatch(/r\.id = c\.workflow_run_id/);
     expect(ROUTE).toMatch(/r\.organization_id = \$2/);
     expect(ROUTE).toMatch(/resolveOrgId\(req\)/);
   });
