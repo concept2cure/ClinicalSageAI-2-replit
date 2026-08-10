@@ -177,6 +177,22 @@ export const C2C_MIGRATION_FILES = [
   //
   // MUST precede the re-key below, which indexes the tables this creates.
   'db/migrations/20260401_cmc_convergence_os.sql',
+  // ── Schedule of events tenant-scoped uniqueness (added 2026-07-28) ────────
+  // SECURITY. project_schedule_of_events had a unique constraint on (project_id)
+  // alone — org-blind. generateProjectSchedule() upserted with
+  // `ON CONFLICT (project_id) DO UPDATE SET`, matching any tenant's row, and
+  // the DO UPDATE SET did not reset organization_id. A cross-org attacker could
+  // regenerate another org's schedule with new dates and regulatory milestones.
+  // This migration is the fix: (organization_id, project_id) arbiter + composite
+  // FK to projects(id, organization_id) for structural consistency.
+  //
+  // Must be on this durable path: the migration was written into db/migrations
+  // but WAS NOT on this list, so it never shipped to production databases.
+  // Landing without this entry would make the code's `ON CONFLICT
+  // (organization_id, project_id)` reference a constraint that does not exist:
+  // "there is no unique or exclusion constraint matching the ON CONFLICT
+  // specification" (42P10). Every upsert would fail.
+  'db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql',
   // ── CMC Module 3 tenant-scoped uniqueness (added 2026-07-28) ──────────────
   // SECURITY. cmc_module3_sections and cmc_source_objects were unique on keys
   // that omit organization_id (migrations/0016:22, migrations/0017:102,107).
