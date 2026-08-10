@@ -27,98 +27,44 @@
  * — and the SurfaceView union below makes the fourth, "hand it to a rail that
  * isn't there", a compile error rather than a silence.
  *
- * Phase 1 ships the map EMPTY: every id resolves to the honest
- * SurfaceScaffold fallback in V2App. Phase 3 registers each surface here as
- * it ports (kit load order in app/index.html is the port order).
+ * ── Why every registration is a chunk, not an import ──────────────────────────
+ * This file held 88 static imports, and V2App imports it at module scope. That
+ * put every surface the map registers — and the per-surface stylesheet most of
+ * them carry — in the shell's own chunk, so a regulatory writer who opens
+ * `document-authoring` and nothing else still downloaded the device kit, the PV
+ * cockpit, the biostat workbench and eighty more before the first paint.
+ * `vite.config.ts` splits the VENDOR graph (react, tanstack, charts, radix),
+ * which is why the entry looked survivable; the application half was never
+ * split at all. Measured: the V2App chunk was 1,645 KB of JavaScript.
+ *
+ * Each registration now names a `lazySurface(...)` binding instead of an
+ * imported symbol, so Vite emits one chunk per surface module and the browser
+ * fetches the surface it is routing to. Same build, same config: V2App is
+ * 229 KB and the surfaces are 90-odd chunks alongside it.
+ *
+ * The map itself — every id, every component, every flag — is byte-for-byte
+ * what it was. The flags are a product decision and the chunking is not, so
+ * this change is not allowed to touch them.
  */
-import type React from 'react';
+import React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
-import { CapabilityIndex } from './intelligence/Intelligence';
-import { Setup, Apps, ArtifactsCenter, AuditTrail } from './surfaces/AdminSurfaces';
-import { AdminAccess } from './surfaces/AdminAccess';
-import { AgencyMeetings } from './surfaces/AgencyMeetings';
-import { AnaCommand } from './surfaces/AnaCommand';
-import { AnaMemory } from './surfaces/AnaMemory';
-import { AuthoringEngine } from './surfaces/AuthoringEngine';
-import { BatchDraft } from './surfaces/BatchDraft';
-import { BiopharmaJourney } from './surfaces/BiopharmaJourney';
-import { CsrWorkflow, RegulatoryWorkspace } from './surfaces/BiopharmaProject';
-import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/BiopharmaSpecialty';
-import { PvCockpit } from './surfaces/PvCockpit';
-import { Biostatistics } from './surfaces/Biostatistics';
-import { BiostatWorkbench } from './surfaces/BiostatWorkbench';
-import { ChangeAssessment } from './surfaces/ChangeAssessment';
-import { ClinicalOps } from './surfaces/ClinicalOps';
-import { ClientPortal } from './surfaces/ClientPortal';
-import { ConversationThread } from './surfaces/ConversationThread';
-import { CrlLibrary } from './surfaces/CrlLibrary';
-import { CroPortfolio } from './surfaces/CroPortfolio';
-import { CmcModule } from './surfaces/CmcModule';
-import { CommunicationCenter } from './surfaces/CommunicationCenter';
-import { CodebaseCoverage } from './surfaces/Coverage';
-import { DecisionLineage } from './surfaces/DecisionLineage';
-import { DeepResearch } from './surfaces/DeepResearch';
-import { DesignControls } from './surfaces/DesignControls';
+/*
+ * The three bindings that stay static, each because splitting it would buy
+ * nothing:
+ *
+ *   DeviceSurfaces / PdevSurfaces  are ALREADY lazy one level down. Each module
+ *     is a thin id→wrapper map over a single `React.lazy` kit host and carries
+ *     no kit code of its own (that is what tests/ui/shell-kit-lazy.test.ts
+ *     holds in place). Splitting the map away from its own lazy boundary would
+ *     emit a chunk whose only job is to load a chunk.
+ *   GlobalRiBrowser  lives in `surfaces/Surfaces.tsx`, which V2App imports
+ *     statically for `Home` and `KitSurfaceScaffold`. That module is in the
+ *     entry graph whichever way this file names it, so a dynamic import here
+ *     would emit nothing and only disguise the fact.
+ */
 import { DeviceSurfaces } from './surfaces/DeviceSurfaces';
-import { DispatchReadiness } from './surfaces/DispatchReadiness';
-import { DocJourney } from './surfaces/DocJourney';
-import { DocumentAuthoring } from './surfaces/DocumentAuthoring';
-import { Dossier } from './surfaces/Dossier';
-import { DossierMap } from './surfaces/DossierMap';
-import { EctdCoauthor } from './surfaces/EctdCoauthor';
-import { EctdCompile } from './surfaces/EctdCompile';
-import { PublishingCenter } from './surfaces/PublishingCenter';
-import { Etmf } from './surfaces/Etmf';
-import { Evidence } from './surfaces/Evidence';
-import { FilingsCatalog } from './surfaces/FilingsCatalog';
-import { HaqManager } from './surfaces/HaqManager';
-import { HumanFactors } from './surfaces/HumanFactors';
-import { Inconsistency } from './surfaces/Inconsistency';
-import { IndLifecycle } from './surfaces/IndLifecycle';
-import { InvestigatorBrochure } from './surfaces/InvestigatorBrochure';
-import { InsightsCanvas } from './surfaces/Insights';
-import { IvdCompleteness } from './surfaces/IvdCompleteness';
-import { Labeling } from './surfaces/Labeling';
-import { LabelingPI } from './surfaces/LabelingPi';
-import { SmpcLabeling } from './surfaces/SmpcLabeling';
-import { LicensingSurface } from './surfaces/LicensingSurface';
-import { MaaCockpit } from './surfaces/MaaCockpit';
-import { MarketAccess } from './surfaces/MarketAccess';
-import { NdaCockpit } from './surfaces/NdaCockpit';
-import { Nonclinical } from './surfaces/Nonclinical';
-import { Onboarding } from './surfaces/Onboarding';
-import { OnboardingIngest } from './surfaces/OnboardingIngest';
-import { Orchestration } from './surfaces/Orchestration';
 import { PdevSurfaces } from './surfaces/PdevSurfaces';
-import { PrecedentEngine } from './surfaces/PrecedentEngine';
-import { ProtocolWorkspace } from './surfaces/ProtocolDev';
-import { ProjectHome } from './surfaces/ProjectHome';
-import { Projects } from './surfaces/Projects';
-import { PyramidShell } from './surfaces/Pyramid';
-import { Rbm } from './surfaces/Rbm';
-import { RegChange } from './surfaces/RegChange';
-import { Registrations } from './surfaces/Registrations';
-import { ReportEngine } from './surfaces/ReportEngine';
-import { ResearchAdmin } from './surfaces/ResearchAdmin';
-import { Review } from './surfaces/Review';
-import { Risk } from './surfaces/Risk';
-import { SafetyNarrative } from './surfaces/SafetyNarrative';
-import { ShadowReview } from './surfaces/ShadowReview';
-import { SourceTracer } from './surfaces/SourceTracer';
-import { SubmissionCenter } from './surfaces/SubmissionCenter';
-import { QmpWorkspace } from './surfaces/QmpWorkspace';
-import { QualityModule } from './surfaces/QualityModule';
-import { Part11Console } from './surfaces/Part11Console';
-import { IdentityConsole } from './surfaces/IdentityConsole';
-import { ReportGovernance } from './surfaces/ReportGovernance';
-import { SubmissionTwin } from './surfaces/SubmissionTwin';
-import { GatewayTransmittals } from './surfaces/GatewayTransmittals';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
-import { TaskBoard } from './surfaces/TaskBoard';
-import { TemplateLibrary } from './surfaces/TemplateLibrary';
-import { Training } from './surfaces/Training';
-import { UsageBilling } from './surfaces/UsageBilling';
-import { Vault } from './surfaces/Vault';
 
 export interface SurfaceViewProps {
   surface: UiSurface;
@@ -178,6 +124,195 @@ export type SurfaceView =
  * grow to cover a NEW surface without that assertion being edited too — which
  * is the review moment the guard exists to create.
  */
+
+/**
+ * Shown while a surface chunk arrives. The same stated placeholder the two kit
+ * maps already use (DeviceSurfaces.tsx:39, PdevSurfaces.tsx:59) — a loading
+ * treatment this shell already had, not a second one.
+ *
+ * Both attributes are load-bearing past accessibility, because every audit that
+ * walks the whole registry now meets this node first and has to be able to tell
+ * it apart from a surface that rendered:
+ *
+ *   role="status"    the hostile-payload probe treats a container whose only
+ *                    substantive content is a `role="status"` node as STILL
+ *                    LOADING and keeps waiting (hostilePayloadProbe.test.tsx).
+ *   aria-busy="true" the a11y audit waits for `[aria-busy="true"]` to clear
+ *                    before it reads the tree (a11ySemantics.test.tsx). Without
+ *                    it that suite would settle on this placeholder — one
+ *                    correctly-labelled node, no findings — and report a green
+ *                    surface it never looked at, 118 times over.
+ *
+ * DeviceSurfaces/PdevSurfaces state only `role`; those two predate this file
+ * being the thing every surface loads through.
+ */
+function SurfaceChunkFallback() {
+  return React.createElement(
+    'div',
+    {
+      className: 'scaf-note',
+      style: { padding: '40px 16px', textAlign: 'center' },
+      role: 'status',
+      'aria-busy': true,
+    },
+    'Loading surface…',
+  );
+}
+
+/**
+ * The lazy component, wrapped in the boundary that makes it safe to render.
+ *
+ * A bare `React.lazy` would change what a registration IS: not a component but
+ * a promise thrown on first render, which is a white screen anywhere no
+ * ancestor draws a `Suspense`. That is not hypothetical here —
+ * `SURFACE_VIEWS[id].component` is rendered directly, with no boundary of its
+ * own, by surfaceRender, liveBranchRender, workflowAudit, a11ySemantics,
+ * hostilePayloadProbe, guardsPreserveContent and scripts/visual-qa. Keeping the
+ * boundary inside the registration means the exported shape is still what every
+ * one of those already assumes — "a component you can render" — which is also
+ * how DeviceSurfaces.tsx and PdevSurfaces.tsx mount the two kits that were
+ * split first.
+ *
+ * `createElement` rather than JSX because this file is `.ts` and must stay
+ * `.ts`: tests/ui/one-shell.test.ts and
+ * tests/ui/surface-registry-coverage.test.ts read it by path and parse its
+ * source.
+ */
+function chunkBoundary<P extends object>(Chunk: React.ComponentType<P>, props: P) {
+  return React.createElement(
+    React.Suspense,
+    { fallback: React.createElement(SurfaceChunkFallback) },
+    React.createElement(Chunk, props),
+  );
+}
+
+/**
+ * Register a surface as its own chunk.
+ *
+ * The props type is stated, not inferred from the loaded component, and that is
+ * the difference between this compiling and nine surfaces breaking. Plenty of
+ * them declare only the props they read — `CodebaseCoverage` takes `{ onNav }`,
+ * `CapabilityIndex` takes `{ onAsk }` — which has always been fine, because a
+ * component asking for less than the shell hands it is assignable to
+ * `ComponentType<SurfaceViewProps>` by ordinary parameter contravariance. Let a
+ * type parameter be solved FROM those declarations instead and the binding
+ * comes back as `ComponentType<{ onNav }>`, which fits neither arm of the
+ * `SurfaceView` union — and the obvious way out of that error is to loosen the
+ * union that guards `onAsk`, which is the one thing this file must not do.
+ */
+function lazySurface(
+  load: () => Promise<{ default: React.ComponentType<SurfaceViewProps> }>,
+): React.ComponentType<SurfaceViewProps> {
+  const Chunk = React.lazy(load) as unknown as React.ComponentType<SurfaceViewProps>;
+  return (props: SurfaceViewProps) => chunkBoundary(Chunk, props);
+}
+
+/**
+ * The same, for a surface that owns the conversation. Two functions rather than
+ * one generic because the union's whole job is that `ownsConversation: true`
+ * cannot be paired with a component that takes the shell's `onAsk` — a single
+ * loader typed to `SurfaceViewProps` would hand every registration a component
+ * that declares it, and the six owned entries below would stop compiling for
+ * the wrong reason. Registering an owned surface with `lazySurface` is still a
+ * type error at the map entry, where the flag is visible.
+ */
+function lazyOwnedSurface(
+  load: () => Promise<{ default: React.ComponentType<OwnedSurfaceViewProps> }>,
+): React.ComponentType<OwnedSurfaceViewProps> {
+  const Chunk = React.lazy(load) as unknown as React.ComponentType<OwnedSurfaceViewProps>;
+  return (props: OwnedSurfaceViewProps) => chunkBoundary(Chunk, props);
+}
+
+const CapabilityIndex = lazySurface(() => import('./intelligence/Intelligence').then((m) => ({ default: m.CapabilityIndex })));
+const Setup = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Setup })));
+const Apps = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.Apps })));
+const ArtifactsCenter = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.ArtifactsCenter })));
+const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
+const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
+const AgencyMeetings = lazySurface(() => import('./surfaces/AgencyMeetings').then((m) => ({ default: m.AgencyMeetings })));
+const AnaCommand = lazySurface(() => import('./surfaces/AnaCommand').then((m) => ({ default: m.AnaCommand })));
+const AnaMemory = lazySurface(() => import('./surfaces/AnaMemory').then((m) => ({ default: m.AnaMemory })));
+const AuthoringEngine = lazySurface(() => import('./surfaces/AuthoringEngine').then((m) => ({ default: m.AuthoringEngine })));
+const BatchDraft = lazySurface(() => import('./surfaces/BatchDraft').then((m) => ({ default: m.BatchDraft })));
+const BiopharmaJourney = lazySurface(() => import('./surfaces/BiopharmaJourney').then((m) => ({ default: m.BiopharmaJourney })));
+const CsrWorkflow = lazySurface(() => import('./surfaces/BiopharmaProject').then((m) => ({ default: m.CsrWorkflow })));
+const RegulatoryWorkspace = lazySurface(() => import('./surfaces/BiopharmaProject').then((m) => ({ default: m.RegulatoryWorkspace })));
+const Pediatric = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then((m) => ({ default: m.Pediatric })));
+const Orphan = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then((m) => ({ default: m.Orphan })));
+const Lifecycle = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then((m) => ({ default: m.Lifecycle })));
+const Pharmacovigilance = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then((m) => ({ default: m.Pharmacovigilance })));
+const PvCockpit = lazySurface(() => import('./surfaces/PvCockpit').then((m) => ({ default: m.PvCockpit })));
+const Biostatistics = lazySurface(() => import('./surfaces/Biostatistics').then((m) => ({ default: m.Biostatistics })));
+const BiostatWorkbench = lazySurface(() => import('./surfaces/BiostatWorkbench').then((m) => ({ default: m.BiostatWorkbench })));
+const ChangeAssessment = lazySurface(() => import('./surfaces/ChangeAssessment').then((m) => ({ default: m.ChangeAssessment })));
+const ClinicalOps = lazySurface(() => import('./surfaces/ClinicalOps').then((m) => ({ default: m.ClinicalOps })));
+const ClientPortal = lazyOwnedSurface(() => import('./surfaces/ClientPortal').then((m) => ({ default: m.ClientPortal })));
+const ConversationThread = lazyOwnedSurface(() => import('./surfaces/ConversationThread').then((m) => ({ default: m.ConversationThread })));
+const CrlLibrary = lazySurface(() => import('./surfaces/CrlLibrary').then((m) => ({ default: m.CrlLibrary })));
+const CroPortfolio = lazySurface(() => import('./surfaces/CroPortfolio').then((m) => ({ default: m.CroPortfolio })));
+const CmcModule = lazySurface(() => import('./surfaces/CmcModule').then((m) => ({ default: m.CmcModule })));
+const CommunicationCenter = lazySurface(() => import('./surfaces/CommunicationCenter').then((m) => ({ default: m.CommunicationCenter })));
+const CodebaseCoverage = lazySurface(() => import('./surfaces/Coverage').then((m) => ({ default: m.CodebaseCoverage })));
+const DecisionLineage = lazySurface(() => import('./surfaces/DecisionLineage').then((m) => ({ default: m.DecisionLineage })));
+const DeepResearch = lazySurface(() => import('./surfaces/DeepResearch').then((m) => ({ default: m.DeepResearch })));
+const DesignControls = lazySurface(() => import('./surfaces/DesignControls').then((m) => ({ default: m.DesignControls })));
+const DispatchReadiness = lazySurface(() => import('./surfaces/DispatchReadiness').then((m) => ({ default: m.DispatchReadiness })));
+const DocJourney = lazySurface(() => import('./surfaces/DocJourney').then((m) => ({ default: m.DocJourney })));
+const DocumentAuthoring = lazyOwnedSurface(() => import('./surfaces/DocumentAuthoring').then((m) => ({ default: m.DocumentAuthoring })));
+const Dossier = lazySurface(() => import('./surfaces/Dossier').then((m) => ({ default: m.Dossier })));
+const DossierMap = lazySurface(() => import('./surfaces/DossierMap').then((m) => ({ default: m.DossierMap })));
+const EctdCoauthor = lazyOwnedSurface(() => import('./surfaces/EctdCoauthor').then((m) => ({ default: m.EctdCoauthor })));
+const EctdCompile = lazySurface(() => import('./surfaces/EctdCompile').then((m) => ({ default: m.EctdCompile })));
+const PublishingCenter = lazySurface(() => import('./surfaces/PublishingCenter').then((m) => ({ default: m.PublishingCenter })));
+const Etmf = lazySurface(() => import('./surfaces/Etmf').then((m) => ({ default: m.Etmf })));
+const Evidence = lazySurface(() => import('./surfaces/Evidence').then((m) => ({ default: m.Evidence })));
+const FilingsCatalog = lazySurface(() => import('./surfaces/FilingsCatalog').then((m) => ({ default: m.FilingsCatalog })));
+const HaqManager = lazySurface(() => import('./surfaces/HaqManager').then((m) => ({ default: m.HaqManager })));
+const HumanFactors = lazySurface(() => import('./surfaces/HumanFactors').then((m) => ({ default: m.HumanFactors })));
+const Inconsistency = lazySurface(() => import('./surfaces/Inconsistency').then((m) => ({ default: m.Inconsistency })));
+const IndLifecycle = lazySurface(() => import('./surfaces/IndLifecycle').then((m) => ({ default: m.IndLifecycle })));
+const InvestigatorBrochure = lazySurface(() => import('./surfaces/InvestigatorBrochure').then((m) => ({ default: m.InvestigatorBrochure })));
+const InsightsCanvas = lazyOwnedSurface(() => import('./surfaces/Insights').then((m) => ({ default: m.InsightsCanvas })));
+const IvdCompleteness = lazySurface(() => import('./surfaces/IvdCompleteness').then((m) => ({ default: m.IvdCompleteness })));
+const Labeling = lazySurface(() => import('./surfaces/Labeling').then((m) => ({ default: m.Labeling })));
+const LabelingPI = lazySurface(() => import('./surfaces/LabelingPi').then((m) => ({ default: m.LabelingPI })));
+const SmpcLabeling = lazySurface(() => import('./surfaces/SmpcLabeling').then((m) => ({ default: m.SmpcLabeling })));
+const LicensingSurface = lazySurface(() => import('./surfaces/LicensingSurface').then((m) => ({ default: m.LicensingSurface })));
+const MaaCockpit = lazySurface(() => import('./surfaces/MaaCockpit').then((m) => ({ default: m.MaaCockpit })));
+const MarketAccess = lazySurface(() => import('./surfaces/MarketAccess').then((m) => ({ default: m.MarketAccess })));
+const NdaCockpit = lazySurface(() => import('./surfaces/NdaCockpit').then((m) => ({ default: m.NdaCockpit })));
+const Nonclinical = lazySurface(() => import('./surfaces/Nonclinical').then((m) => ({ default: m.Nonclinical })));
+const Onboarding = lazySurface(() => import('./surfaces/Onboarding').then((m) => ({ default: m.Onboarding })));
+const OnboardingIngest = lazySurface(() => import('./surfaces/OnboardingIngest').then((m) => ({ default: m.OnboardingIngest })));
+const Orchestration = lazySurface(() => import('./surfaces/Orchestration').then((m) => ({ default: m.Orchestration })));
+const PrecedentEngine = lazySurface(() => import('./surfaces/PrecedentEngine').then((m) => ({ default: m.PrecedentEngine })));
+const ProtocolWorkspace = lazySurface(() => import('./surfaces/ProtocolDev').then((m) => ({ default: m.ProtocolWorkspace })));
+const ProjectHome = lazySurface(() => import('./surfaces/ProjectHome').then((m) => ({ default: m.ProjectHome })));
+const Projects = lazySurface(() => import('./surfaces/Projects').then((m) => ({ default: m.Projects })));
+const PyramidShell = lazySurface(() => import('./surfaces/Pyramid').then((m) => ({ default: m.PyramidShell })));
+const Rbm = lazyOwnedSurface(() => import('./surfaces/Rbm').then((m) => ({ default: m.Rbm })));
+const RegChange = lazySurface(() => import('./surfaces/RegChange').then((m) => ({ default: m.RegChange })));
+const Registrations = lazySurface(() => import('./surfaces/Registrations').then((m) => ({ default: m.Registrations })));
+const ReportEngine = lazySurface(() => import('./surfaces/ReportEngine').then((m) => ({ default: m.ReportEngine })));
+const ResearchAdmin = lazySurface(() => import('./surfaces/ResearchAdmin').then((m) => ({ default: m.ResearchAdmin })));
+const Review = lazySurface(() => import('./surfaces/Review').then((m) => ({ default: m.Review })));
+const Risk = lazySurface(() => import('./surfaces/Risk').then((m) => ({ default: m.Risk })));
+const SafetyNarrative = lazySurface(() => import('./surfaces/SafetyNarrative').then((m) => ({ default: m.SafetyNarrative })));
+const ShadowReview = lazySurface(() => import('./surfaces/ShadowReview').then((m) => ({ default: m.ShadowReview })));
+const SourceTracer = lazySurface(() => import('./surfaces/SourceTracer').then((m) => ({ default: m.SourceTracer })));
+const SubmissionCenter = lazySurface(() => import('./surfaces/SubmissionCenter').then((m) => ({ default: m.SubmissionCenter })));
+const QmpWorkspace = lazySurface(() => import('./surfaces/QmpWorkspace').then((m) => ({ default: m.QmpWorkspace })));
+const QualityModule = lazySurface(() => import('./surfaces/QualityModule').then((m) => ({ default: m.QualityModule })));
+const Part11Console = lazySurface(() => import('./surfaces/Part11Console').then((m) => ({ default: m.Part11Console })));
+const IdentityConsole = lazySurface(() => import('./surfaces/IdentityConsole').then((m) => ({ default: m.IdentityConsole })));
+const ReportGovernance = lazySurface(() => import('./surfaces/ReportGovernance').then((m) => ({ default: m.ReportGovernance })));
+const SubmissionTwin = lazySurface(() => import('./surfaces/SubmissionTwin').then((m) => ({ default: m.SubmissionTwin })));
+const GatewayTransmittals = lazySurface(() => import('./surfaces/GatewayTransmittals').then((m) => ({ default: m.GatewayTransmittals })));
+const TaskBoard = lazySurface(() => import('./surfaces/TaskBoard').then((m) => ({ default: m.TaskBoard })));
+const TemplateLibrary = lazySurface(() => import('./surfaces/TemplateLibrary').then((m) => ({ default: m.TemplateLibrary })));
+const Training = lazySurface(() => import('./surfaces/Training').then((m) => ({ default: m.Training })));
+const UsageBilling = lazySurface(() => import('./surfaces/UsageBilling').then((m) => ({ default: m.UsageBilling })));
+const Vault = lazySurface(() => import('./surfaces/Vault').then((m) => ({ default: m.Vault })));
 
 /* Kit load order (app/index.html) is the port order; flags mirror the kit's
    window.SURFACE_VIEWS registrations exactly. */
