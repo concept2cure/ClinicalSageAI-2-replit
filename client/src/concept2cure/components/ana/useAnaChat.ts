@@ -871,6 +871,41 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         .map(a => a.fileId)
         .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
+      /* Sources the user pinned in the Data Room, for THIS turn.
+         `options.selectedSourceIds` is the direct way to supply them. The shell
+         does not thread that prop, though: ProjectHome's Data Room hands its
+         selection over through `window.C2C_SOURCE_PINS`, the same convention it
+         already uses for `window.C2C_PROJECT` / `C2C_CONVO`, and it sets that
+         global synchronously immediately before calling onAsk — so a value
+         captured at render time would be a turn behind.
+
+         Reading the global here is what actually closes the chain. Before this,
+         "Draft with N pinned sources" set the global, nothing ever read it, and
+         the turn reached the model with no sources attached at all — a button
+         that named the user's chosen documents and then quietly dropped them.
+         The server side was already complete: it resolves `source_ids` through
+         `resolveSourceUploadIds` onto the same tenant-scoped path an attachment
+         uses, and warns when a chosen source has no readable upload.
+
+         Consumed once, then cleared: the pin is documented as context for "the
+         next AnA turn", and a global left set would silently ground every later,
+         unrelated question on the same documents. */
+      const pinnedFromShell: Array<number | string> = (() => {
+        try {
+          const g = (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS;
+          return Array.isArray(g) ? (g as Array<number | string>).filter((v) => v != null && v !== '') : [];
+        } catch {
+          return [];
+        }
+      })();
+      const turnSourceIds: Array<number | string> =
+        options.selectedSourceIds && options.selectedSourceIds.length > 0
+          ? options.selectedSourceIds
+          : pinnedFromShell;
+      if (pinnedFromShell.length > 0) {
+        try { delete (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS; } catch { /* noop */ }
+      }
+
       const body = JSON.stringify({
         message: text,
         thread_id: threadIdRef.current || undefined,
@@ -878,10 +913,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // Data Room sources pinned as context for this turn. Omitted when the
         // user has pinned nothing, so the server keeps its own context
         // assembly rather than being handed an empty selection to honour.
-        source_ids:
-          options.selectedSourceIds && options.selectedSourceIds.length > 0
-            ? options.selectedSourceIds
-            : undefined,
+        source_ids: turnSourceIds.length > 0 ? turnSourceIds : undefined,
         project_id: options.projectId || ac?.projectId || undefined,
         submission_type: submissionTypeForContext,
         user_role: options.userRole || undefined,
