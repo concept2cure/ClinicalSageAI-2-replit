@@ -694,6 +694,15 @@ export const C2C_MIGRATION_FILES = [
   //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and wired above; its
   //     UUID-vs-serial atom-key conflict was the defect, not an ordering gap.
 
+  // ── Performance indexes on hot-path tables (added 2026-08-10) ────────────────
+  // Indexes on the 30 most-queried tables targeting organization_id (tenant
+  // isolation), projectId (project-scoped queries), status+type (common filters),
+  // and createdAt DESC (pagination). All use CREATE INDEX CONCURRENTLY IF NOT
+  // EXISTS for idempotent application. This file was written into migrations/ but
+  // WAS NOT on this list, so it was never applied to production databases despite
+  // being essential for query performance. Landing it here closes that gap.
+  'migrations/20260331_performance_indexes.sql',
+
   // ── unified_documents / workflow_document_versions (ledger C-29, #1239/#1242) ──
   // Both tables are defined in Drizzle (shared/schema/unified_workflow.ts) but
   // that module is NOT re-exported by shared/schema.ts, so drizzle-kit push
