@@ -43,6 +43,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stripComments } from '../ui/_strip-comments';
+import { completeStatusSqlList } from '../../server/services/c2c/section-content';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -137,6 +138,12 @@ function extractStatements(src: string): string[] {
     // resolved to their static equivalents; the column references — the thing
     // under test — are untouched.
     sql = sql
+      // completion_percentage is derived from the governed sections, and the
+      // complete-status list is rendered from the single constant that
+      // c2c-section-completion.contract.test.ts pins against the readiness
+      // trigger. Substituting the REAL function keeps the gate planning exactly
+      // what production runs, instead of a hard-coded copy that could drift.
+      .replace(/\$\{completeStatusSqlList\(\)\}/g, completeStatusSqlList())
       .replace(/\$\{conditions\.join\([^)]*\)\}/g, 'p.organization_id = $1')
       .replace(/\$\$\{params\.length \+ 1\}/g, '$2')
       .replace(/\$\{params\.length \+ 1\}/g, '2');
