@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-07T18:35:11.957Z",
+  "generatedAt": "2026-08-10T05:44:59.713Z",
   "git": {
-    "sha": "dcb8cc55fb59e112d68b4ba819c971f24f0b09be",
+    "sha": "f4adeccb0834aa73bd40e4d9471721e1435e1d42",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2186,7 +2186,7 @@
       },
       {
         "file": "server/storage.ts",
-        "bytes": 142368
+        "bytes": 145493
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2312,7 +2312,7 @@
       },
       {
         "file": "server/storage.ts",
-        "lines": 4397
+        "lines": 4454
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
