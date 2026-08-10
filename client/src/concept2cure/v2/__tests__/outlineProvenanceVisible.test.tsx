@@ -166,6 +166,50 @@ describe('the filing outline says what it was built from', () => {
     expect(chip.dataset.tone).toBe('err');
   });
 
+  // A sign-off whose tree moved afterwards is the most dangerous state the
+  // vocabulary has: the filer sees a name and a date, so they have every reason
+  // to trust it and none to check. It must not read as approved.
+  it('a sign-off whose outline changed since does not read as approved', async () => {
+    wire({
+      sourceBasis: 'statutory_transcription',
+      confidence: 'high',
+      reviewStatus: 'reviewed',
+      reviewState: 'reviewed_but_changed',
+      review: { reviewedBy: 'A. Reviewer, RAC', reviewedAt: '2026-08-10T00:00:00Z', reviewScope: null },
+      governingRule: '21 CFR 814.20(b)',
+      uncertainties: null,
+    });
+    render(<DocumentAuthoring {...props()} />);
+
+    const text = await bandText();
+    expect(text).toMatch(/out of date/i);
+    expect(text).toContain('A. Reviewer, RAC');
+    expect(text).toMatch(/does not cover what you are looking at/i);
+
+    const chip = document.querySelector('.ed-basis-chip') as HTMLElement;
+    expect(chip.dataset.tone).not.toBe('ok');
+    expect(chip.dataset.tone).toBe('err');
+  });
+
+  it('a current sign-off names the reviewer on screen', async () => {
+    wire({
+      sourceBasis: 'statutory_transcription',
+      confidence: 'high',
+      reviewStatus: 'reviewed',
+      reviewState: 'reviewed_current',
+      review: { reviewedBy: 'A. Reviewer, RAC', reviewedAt: '2026-08-10T00:00:00Z', reviewScope: 'structure only' },
+      governingRule: '21 CFR 814.20(b)',
+      uncertainties: null,
+    });
+    render(<DocumentAuthoring {...props()} />);
+
+    const text = await bandText();
+    expect(text).toContain('A. Reviewer, RAC');
+    expect(text).toContain('structure only');
+    expect(text).not.toMatch(/Not reviewed by a regulatory professional/i);
+    expect((document.querySelector('.ed-basis-chip') as HTMLElement).dataset.tone).toBe('ok');
+  });
+
   it('an unrecognised basis is refused rather than shown to the filer', async () => {
     wire({ sourceBasis: 'reviewed_by_fda', confidence: 'high', reviewStatus: 'reviewed' });
     render(<DocumentAuthoring {...props()} />);
@@ -184,7 +228,10 @@ describe('the filing outline says what it was built from', () => {
     const constructedTone = (document.querySelector('.ed-basis-chip') as HTMLElement).dataset.tone;
     first.unmount();
 
-    wire({ sourceBasis: 'harmonised_standard', confidence: 'high', reviewStatus: 'reviewed', governingRule: 'ICH M4', uncertainties: null });
+    wire({ sourceBasis: 'harmonised_standard', confidence: 'high', reviewStatus: 'reviewed',
+      reviewState: 'reviewed_current',
+      review: { reviewedBy: 'A. Reviewer, RAC', reviewedAt: '2026-08-10T00:00:00Z', reviewScope: null },
+      governingRule: 'ICH M4', uncertainties: null });
     render(<DocumentAuthoring {...props()} />);
     await waitFor(async () => expect(await bandText()).toMatch(/ICH M4/));
     const reviewedText = await bandText();

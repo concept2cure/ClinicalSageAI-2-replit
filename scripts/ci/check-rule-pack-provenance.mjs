@@ -190,3 +190,52 @@ if (undeclared.length > CEILING) {
 }
 
 console.log(`\n✅ undeclared packs: ${undeclared.length}/${CEILING} (ceiling is downward-only).`);
+
+// ── no unattributed sign-off may be committed ────────────────────────────────
+//
+// Migration 20260810d puts a CHECK on the table, which protects the database.
+// It does not protect the repository: a migration file that sets
+// review_status='reviewed' without also setting reviewed_by / reviewed_at /
+// reviewed_sections_sha would fail at deploy time, on whichever environment
+// runs it first, having already passed review as a diff.
+//
+// 'reviewed' is the only value here a filer is entitled to rely on. It must
+// name a person, a date, and the exact tree they looked at, and that has to be
+// visible in the diff — not discovered by a failing migration.
+const REVIEWED_ASSIGNMENT = /review_status\s*=\s*'reviewed'|'reviewed'\s*(?:,|\))/i;
+const ATTRIBUTION_FIELDS = ['reviewed_by', 'reviewed_at', 'reviewed_sections_sha'];
+
+const unattributed = [];
+for (const name of fs.readdirSync(MIGRATIONS).filter((f) => f.endsWith('.sql')).sort()) {
+  const file = path.join(MIGRATIONS, name);
+  const sql = fs.readFileSync(file, 'utf8');
+  if (!/c2c_rule_packs/i.test(sql)) continue;
+
+  for (const stmt of sql.split(';')) {
+    if (!/c2c_rule_packs/i.test(stmt)) continue;
+    // A CHECK constraint or a view naturally mentions the literal without
+    // asserting it about any row.
+    if (/\bCHECK\s*\(|CREATE\s+(OR\s+REPLACE\s+)?VIEW|CONSTRAINT\b/i.test(stmt)) continue;
+    if (!REVIEWED_ASSIGNMENT.test(stmt)) continue;
+
+    const missing = ATTRIBUTION_FIELDS.filter((f) => !new RegExp(f, 'i').test(stmt));
+    if (missing.length > 0) {
+      unattributed.push({ file: path.relative(ROOT, file), missing });
+    }
+  }
+}
+
+if (unattributed.length > 0) {
+  console.error(`\n❌ ${unattributed.length} statement(s) mark a pack reviewed without attribution:\n`);
+  for (const u of unattributed) {
+    console.error(`   ${u.file} — missing ${u.missing.join(', ')}`);
+  }
+  console.error(
+    `\n   A sign-off must name who reviewed it, when, and the digest of the\n` +
+      `   section tree they reviewed. Without the digest the review silently\n` +
+      `   survives any later edit to that tree.\n`,
+  );
+  process.exit(1);
+}
+
+console.log('✅ no pack is marked reviewed without a named reviewer, a date and a tree digest.');
