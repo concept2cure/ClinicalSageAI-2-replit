@@ -45,7 +45,7 @@ import {
   filingTypesForView,
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
-import { sectionHasContentSql } from '../../services/c2c/section-content.js';
+import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -201,7 +201,12 @@ function leafDoc(doc: DocRow, spec: SectionSpec, live: LiveSection | undefined):
     title: label,
     type: mandatory ? 'Required' : 'Optional',
     status: normalizeStatus(live?.status ?? null, hasContent),
-    pct: hasContent ? 100 : 0,
+    // Completion, on the SAME definition the document row beside this one uses
+    // (c2c_documents.readiness = % of sections approved/locked). This used to be
+    // `hasContent ? 100 : 0`, so one typed sentence reported a finished section
+    // next to a document reporting 0%. Drafting progress is still carried by
+    // `status` and by the mandatory-without-content blocker below.
+    pct: sectionCompletionPct(live?.status ?? null),
     // Owner is resolved ONLY from a real user (section owner_id); unattributed
     // sections stay '—' rather than borrowing the target agency's name.
     owner: live?.owner_name ?? '—',

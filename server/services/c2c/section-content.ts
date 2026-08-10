@@ -152,3 +152,47 @@ export function sectionPlainText(content: unknown): string {
   if (typeof c.text === 'string') return c.text;
   return '';
 }
+
+/**
+ * The section statuses that count as COMPLETE.
+ *
+ * Not a fresh opinion — this mirrors `c2c_recompute_document_readiness()`
+ * (migrations/20260528_phase9_document_schema.sql), the trigger that maintains
+ * `c2c_documents.readiness`:
+ *
+ *     COUNT(*) FILTER (WHERE s.status IN ('approved','locked')) / COUNT(*)
+ *
+ * The database is the authority; this is the TypeScript reading of it, and
+ * tests/schema-contract/c2c-section-completion.contract.test.ts parses that
+ * migration and fails if the two ever disagree.
+ */
+export const C2C_SECTION_COMPLETE_STATUSES: ReadonlySet<string> = new Set(['approved', 'locked']);
+
+/**
+ * A section's completion percentage, on the same definition the document's is.
+ *
+ * ── The defect this replaces ──────────────────────────────────────────────────
+ * The project vault emitted `pct: hasContent ? 100 : 0` for every section leaf,
+ * while the DOCUMENT row beside it emitted `pct: readiness` — the proportion of
+ * that document's sections which are approved or locked. Two different meanings
+ * of the same column in the same tree.
+ *
+ * The consequence was a false completeness claim on a regulated surface: type
+ * one sentence into a section and it reported **100%**, next to a document
+ * reporting 0% because nothing had been approved. On a filing checklist that is
+ * not a cosmetic inconsistency — it is the surface telling a regulatory affairs
+ * lead that a section is finished when nobody has reviewed a word of it.
+ *
+ * ── Why binary, and why no middle value ───────────────────────────────────────
+ * A document's number is a proportion because it has sections to count. A
+ * section has no sub-parts, so the only honest answers are 0 and 100. Returning
+ * 40 for "drafted" would be inventing a number, which is the thing this codebase
+ * keeps removing.
+ *
+ * No signal is lost. Drafting progress is still carried by the leaf's `status`
+ * ('not_started' / 'draft' / 'review' / 'approved' / 'final'), and a mandatory
+ * section with no content still raises its own blocker flag.
+ */
+export function sectionCompletionPct(status: string | null | undefined): number {
+  return typeof status === 'string' && C2C_SECTION_COMPLETE_STATUSES.has(status) ? 100 : 0;
+}
