@@ -206,6 +206,45 @@ export interface DataResult<T> {
   status: number;
 }
 
+/**
+ * Turn a thrown request failure into a DataResult that keeps its HTTP status.
+ *
+ * `apiRequest` THROWS `ApiRequestError` for every non-OK status except 401, so
+ * the `if (!res.ok)` branches below are reached only by a 401 and EVERY other
+ * failing status arrives here instead. Reporting `status: 0` for all of them
+ * collapsed "you are not allowed to do this" (403), "that is gone" (404) and
+ * "your input was rejected" (400) into "the network is down" — erasing exactly
+ * the distinction ApiRequestError's own header says it exists to preserve
+ * ("consumers that must distinguish forbidden, unavailable, validation, and
+ * empty states without parsing error strings").
+ *
+ * The status is read STRUCTURALLY rather than through `instanceof
+ * ApiRequestError`, for two reasons that both end in this helper throwing:
+ *
+ *   1. Several suites mock '@/lib/queryClient' with a factory that exports only
+ *      `apiRequest`. Importing the class here would bind it to `undefined` in
+ *      those runs, and `e instanceof undefined` throws — inside the very catch
+ *      whose entire contract is that it never throws. The surface then hangs on
+ *      "loading" instead of rendering its honest error. (Observed: it took the
+ *      Apps catalog's offline test down.)
+ *   2. `instanceof` is false across two instances of the same module, which a
+ *      bundler split or a duplicated dependency can produce silently.
+ *
+ * `error` prefers the server's own message, which `apiRequest` has already
+ * lifted out of `{ error }` / `{ error: { message } }` / `{ message }`, so a
+ * surface can show the API's wording rather than inventing its own.
+ *
+ * 0 stays reserved for a genuine pre-response failure: DNS, offline, abort, or
+ * a body that would not parse.
+ */
+function failureFrom(e: unknown, path: string): DataResult<never> {
+  const status = (e as { status?: unknown } | null)?.status;
+  if (e instanceof Error && typeof status === 'number' && status > 0) {
+    return { data: null, error: e.message || `HTTP ${status} ${path}`, status };
+  }
+  return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+}
+
 /* ── Shape guards ──────────────────────────────────────────────────────────────
  *
  * `liveGetOrNull<T>` casts the parsed body to `T`. That cast is a promise the
@@ -301,7 +340,7 @@ export async function liveGetOrNull<T>(
     }
     return { data: payload as T, status: res.status };
   } catch (e) {
-    return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+    return failureFrom(e, path);
   }
 }
 
@@ -345,7 +384,7 @@ export async function liveMutateOrNull<T>(
     const parsed = (await res.json()) as unknown;
     return { data: unwrapEnvelope(parsed) as T, status: res.status };
   } catch (e) {
-    return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+    return failureFrom(e, path);
   }
 }
 

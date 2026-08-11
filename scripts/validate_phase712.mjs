@@ -66,16 +66,11 @@ check('cer_mdr_v1.html exists', fileExists('server/export/stylePacks/cer_mdr_v1.
 check('print.css exists', fileExists('server/export/stylePacks/print.css'));
 check('config.ts exists', fileExists('server/export/stylePacks/config.ts'));
 
-// 3 – Mock vault
-console.log('\n── Mock Vault ──');
-check('mockVault.ts exists', fileExists('server/services/mockVault.ts'));
-check('510k mock content', fileContains('server/services/mockVault.ts', 'mock510kContent'));
-check('PMA mock content', fileContains('server/services/mockVault.ts', 'mockPmaContent'));
-check('CER mock content', fileContains('server/services/mockVault.ts', 'mockCerContent'));
-check(
-  'getMockEditorJson method',
-  fileContains('server/services/mockVault.ts', 'getMockEditorJson')
-);
+// (3 – Mock vault: section removed. server/services/mockVault.ts was deleted
+//  along with the four GET /sample/:docType* export routes that were its only
+//  consumer. These checks had already gone stale — they looked for symbols
+//  mock510kContent / mockPmaContent / mockCerContent that the service stopped
+//  exporting long before it was removed.)
 
 // 4 – Export routes
 console.log('\n── Export Routes ──');

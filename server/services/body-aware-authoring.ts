@@ -67,12 +67,9 @@ async function loadRegionalTemplates() {
 async function loadDeficiencyTaxonomy() {
   try { return await import('./ana-ri/deficiency-taxonomy.js'); } catch { return null; }
 }
-async function loadRegulatoryCustomizer() {
-  try {
-    const mod = await import('./ana-biostats/regulatory-customizer.js');
-    return mod.regulatoryCustomizer ?? null;
-  } catch { return null; }
-}
+// loadRegulatoryCustomizer() was removed with its only call site — see the
+// note in getSectionExpectations. Left as a loader it would be an invitation
+// to re-invent the four arguments it needs.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // getSectionExpectations
@@ -131,30 +128,37 @@ export async function getSectionExpectations(
     }
   }
 
-  // Regulatory customizer — body-specific statistical/document expectations
-  const customizer = await loadRegulatoryCustomizer();
-  if (customizer && typeof customizer.customize === 'function') {
-    try {
-      const stub = {
-        regulatoryBody: bodyUpper as any, clientTrack: 'biotech_pharma' as any,
-        studyType: 'superiority' as any, objectiveType: 'efficacy' as any,
-        endpointType: 'continuous' as any, alpha: 0.05, powerTarget: 0.8,
-        effectSize: 0.5, attritionRate: 0.1, allocationRatio: 1,
-      };
-      const stubComp = { computedValues: {}, warnings: [] };
-      const stubJudgment = { overallRisk: 'moderate', fragility: { category: 'moderate' } };
-      const stubDomain = { adaptations: [] };
-      const customization = customizer.customize(stub, stubComp as any, stubJudgment as any, stubDomain as any);
-      if (customization) {
-        result.guidelines.push(...(customization.statisticalExpectations ?? []));
-        result.requirements.push(...(customization.documentRequirements ?? []));
-        result.bodySpecificNotes.push(...(customization.specificConstraints ?? []));
-        for (const ref of customization.guidanceReferences ?? []) {
-          result.guidelines.push(`Reference: ${ref}`);
-        }
-      }
-    } catch { /* graceful degradation */ }
-  }
+  // REMOVED: a call to regulatoryCustomizer.customize() whose four arguments
+  // were invented here rather than derived from the author's study.
+  //
+  // The removed block passed a hardcoded StatisticalInput — clientTrack
+  // 'biotech_pharma', studyType 'superiority', objectiveType 'efficacy',
+  // endpointType 'continuous', alpha 0.05, power 0.8, effect size 0.5,
+  // attrition 0.1 — together with an empty ComputationResult and a
+  // JudgmentResult asserting overallRisk 'moderate'. It then pushed the
+  // customizer's output into `guidelines`, `requirements` and
+  // `bodySpecificNotes`, which getBodyAwareContext renders into the authoring
+  // guidance a user reads while drafting a submission section.
+  //
+  // regulatoryCustomizer.customize() branches on exactly those fields: see
+  // customizeFDA/EMA/MHRA/PMDA in ana-biostats/regulatory-customizer.ts, where
+  // `input.clientTrack === 'biotech_pharma'` adds "ICH E9/E9(R1) compliance
+  // expected" and multiplicity-adjustment expectations, and further branches
+  // read studyType, endpointType and judgment.overallRisk. So a medtech client
+  // drafting a 510(k) was shown pharma superiority-trial statistical
+  // expectations, and every author was shown guidance computed for a study
+  // that was not theirs — with nothing on screen marking it as generic.
+  //
+  // This function receives only (regulatorBody, submissionType, sectionCode).
+  // It has no statistical parameters to pass and no way to obtain them, so
+  // there is no correct call to make here. The customizer itself is fine and
+  // stays: ana-biostats/orchestrator.ts and routes/ana-biostats.ts call it with
+  // the real input, computation, judgment and domain. Restoring anything here
+  // means threading the author's actual study parameters into this signature,
+  // not reconstructing a plausible-looking set.
+  //
+  // What remains below is real: Module 1 regional template requirements and
+  // the agency/submission-type-filtered deficiency taxonomy.
 
   // For harmonized modules (2-5) without template data, mark as recommended
   if (!isModule1(sectionCode) && result.requirements.length === 0) {

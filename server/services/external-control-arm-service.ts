@@ -17,6 +17,71 @@ export type SynthesisMethod =
   | 'bayesian_borrowing'
   | 'naive_pooling';
 
+/**
+ * What the regulatory package is allowed to CLAIM was done, given what the
+ * record shows was actually done.
+ *
+ * Split out of generateRegulatoryPackage as a pure function for one reason:
+ * this is the truthfulness decision, and it should be provable without a
+ * database standing in for itself. It takes the evidence as an argument and
+ * returns prose — no I/O, so its tests use no doubles.
+ *
+ * The distinction it exists to preserve: choosing method 'propensity_score'
+ * runs propensityScoreMatching(), which estimates no propensity scores and
+ * performs no matching or weighting on one. It returns sample-size-weighted
+ * pooling with baseline covariate MEANS attached for balance reporting. Only
+ * fitPropensityModel() estimates scores, and it records that by inserting a
+ * propensityModels row — so a fitted model is the evidence, and control.method
+ * is only the request.
+ */
+export interface SynthesisEvidence {
+  /** A propensityModels row exists for this control (fitPropensityModel ran). */
+  propensityModelFitted: boolean;
+}
+
+export function describeSynthesisMethod(
+  method: SynthesisMethod,
+  evidence: SynthesisEvidence,
+): string {
+  switch (method) {
+    case 'naive_pooling':
+      return 'Individual patient-level summary statistics from multiple historical control arms were combined using sample-size-weighted pooling. This method assumes exchangeability across studies.';
+    case 'ipw':
+      return 'Inverse probability weighting was applied to adjust for observed differences across historical control arms. Arm-level weights were computed as the inverse of the within-arm variance of the primary endpoint.';
+    case 'bayesian_borrowing':
+      return 'A Bayesian dynamic borrowing framework was employed, with the degree of borrowing from historical data determined by the commensurability between historical and current trial populations. Between-study heterogeneity (tau-squared) was estimated using the DerSimonian-Laird method.';
+    case 'propensity_score':
+      return evidence.propensityModelFitted
+        ? 'Propensity score methodology was used to construct a balanced external control arm. Propensity scores estimated the probability of belonging to the treatment population conditional on measured baseline covariates.'
+        : 'Requested synthesis method: propensity score. NO propensity model has been fitted for this external control, so no propensity scores were estimated and no matching or weighting on a propensity score was performed. The summary statistics reported here were produced by sample-size-weighted pooling of the source arms, with baseline covariate means reported for balance assessment only. Fit a propensity model and regenerate this package before relying on it.';
+    default:
+      return 'Method details not available.';
+  }
+}
+
+/**
+ * Limitations that follow from the method and the evidence, restated where a
+ * reviewer reading only the limitations section will still meet them. An
+ * unadjusted estimate described as propensity-score adjusted is exactly the
+ * claim a reviewer is looking for, so it must appear in both places.
+ */
+export function synthesisMethodLimitations(
+  method: SynthesisMethod,
+  evidence: SynthesisEvidence,
+): string[] {
+  if (method === 'naive_pooling') {
+    return [
+      'Naive pooling does not adjust for between-study heterogeneity. This may bias the estimated treatment effect if there are systematic differences across source studies.',
+    ];
+  }
+  if (method === 'propensity_score' && !evidence.propensityModelFitted) {
+    return [
+      'The synthesis method recorded for this external control is propensity score, but no propensity model has been fitted. The reported estimates are UNADJUSTED pooled statistics and must not be described, here or elsewhere, as propensity-score matched or weighted. Naive pooling also does not adjust for between-study heterogeneity.',
+    ];
+  }
+  return [];
+}
+
 export interface HistoricalArmSearchParams {
   indication: string;
   endpoint: string;
@@ -833,15 +898,34 @@ export class ExternalControlArmService {
 
     // ── Build the regulatory package ──
 
-    const methodDescriptions: Record<SynthesisMethod, string> = {
-      naive_pooling:
-        'Individual patient-level summary statistics from multiple historical control arms were combined using sample-size-weighted pooling. This method assumes exchangeability across studies.',
-      ipw:
-        'Inverse probability weighting was applied to adjust for observed differences across historical control arms. Arm-level weights were computed as the inverse of the within-arm variance of the primary endpoint.',
-      propensity_score:
-        'Propensity score methodology was used to construct a balanced external control arm. Propensity scores estimated the probability of belonging to the treatment population conditional on measured baseline covariates.',
-      bayesian_borrowing:
-        'A Bayesian dynamic borrowing framework was employed, with the degree of borrowing from historical data determined by the commensurability between historical and current trial populations. Between-study heterogeneity (tau-squared) was estimated using the DerSimonian-Laird method.',
+    // Was a propensity model actually fitted for this control?
+    //
+    // This has to be CHECKED, not assumed from control.method. Selecting
+    // 'propensity_score' runs propensityScoreMatching(), which computes no
+    // propensity scores and performs no matching: it returns naivePooling()
+    // with baseline covariate MEANS attached for balance reporting, and says so
+    // in its own `note` ("Initial synthesis. Call fitPropensityModel for full
+    // propensity-score adjustment."). Only fitPropensityModel() estimates
+    // scores, and it records what it did by inserting a propensityModels row.
+    //
+    // The prose below goes into `regulatoryJustification` — a persisted methods
+    // statement written in the past tense for an agency reader. Claiming that
+    // "propensity scores estimated the probability of belonging to the
+    // treatment population" when none were ever estimated is a false methods
+    // statement in a submission document, and the `note` that contradicted it
+    // sat two levels down in synthesisParameters where no reader would weigh it
+    // against the prose. So the claim is made conditional on the evidence.
+    const fittedPropensityModels = await database
+      .select({ id: propensityModels.id })
+      .from(propensityModels)
+      .where(
+        and(
+          eq(propensityModels.syntheticControlId, syntheticControlId),
+          eq(propensityModels.organizationId, organizationId)
+        )
+      );
+    const evidence: SynthesisEvidence = {
+      propensityModelFitted: fittedPropensityModels.length > 0,
     };
 
     const limitations: string[] = [
@@ -856,11 +940,9 @@ export class ExternalControlArmService {
       );
     }
 
-    if (control.method === 'naive_pooling') {
-      limitations.push(
-        'Naive pooling does not adjust for between-study heterogeneity. This may bias the estimated treatment effect if there are systematic differences across source studies.'
-      );
-    }
+    limitations.push(
+      ...synthesisMethodLimitations(control.method as SynthesisMethod, evidence),
+    );
 
     const regulatoryPackage = {
       title: `External Control Arm: ${control.name}`,
@@ -872,7 +954,7 @@ export class ExternalControlArmService {
       executiveSummary: `An external control arm was constructed for the indication "${control.indication}" using ${sourceArms.length} historical arm(s) and the "${control.method}" synthesis method. The resulting control includes an effective sample size of ${(synthData.effectiveN ?? synthData.totalN ?? 'N/A')} patients. Diagnostics indicate ${diagnostics.overallQuality} overall quality.`,
 
       methodsJustification: {
-        approach: methodDescriptions[control.method as SynthesisMethod] ?? 'Method details not available.',
+        approach: describeSynthesisMethod(control.method as SynthesisMethod, evidence),
         sourceSummary: sourceArms.map(a => ({
           armId: a.id,
           trialId: a.trialId,

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { SampleTag, useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
-import { getAuthToken } from '@/utils/authToken';
+import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSurfaceMeta } from '../registryModel';
 import { LIC_ROLES } from '../fixtures/licensing';
@@ -39,20 +39,12 @@ import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
 
-/* ── Window globals -- cross-surface data providers ── */
-declare global {
-  interface Window {
-    TXW_ADMIN?: {
-      enabled: boolean;
-      targets: string[];
-      defaultEngine: string;
-      requireBackTranslation: boolean;
-      twoPersonRule: boolean;
-      glossaryScope: string;
-      blockMachineApproval: boolean;
-    };
-  }
-}
+/* `window.TXW_ADMIN` used to be published from the Setup panel below and was
+   read by nothing in the repository -- 0 consumers, so the translation policy
+   it carried reached no runtime. The policy now lives on the organization
+   record (organizations.settings.translation) where the server already keeps
+   it, so the global and its `declare global` block are gone rather than left
+   as a second, unread source of truth. */
 
 /* ── Shared inline helpers ── */
 
@@ -97,18 +89,126 @@ function C2CToast({ msg }: { msg: string }) {
 
 /* ── Setup settings shape ── */
 
-interface SetupSettings {
-  orgName: string;
-  clientType: string;
-  mfaRequired: boolean;
-  ssoEnabled: boolean;
-  txwEnabled: boolean;
-  txwTargets: string[];
-  txwDefaultEngine: string;
-  txwRequireBackTranslation: boolean;
-  txwTwoPersonRule: boolean;
-  txwGlossaryScope: string;
-  txwBlockMachineApproval: boolean;
+/**
+ * Org-wide translation-workspace policy, in exactly the shape it is persisted
+ * at `organizations.settings.translation`. That section is not invented here:
+ * organizations-routes.ts already seeds it in the GET defaults, under a comment
+ * naming this surface ("Translation-workspace policy (ui-v2 Setup surface /
+ * Document editor Trans dock). Org-wide defaults; per-user prefs live on
+ * users.preferences" -- and users.ts does carry the matching per-user keys).
+ *
+ * The last three fields are NOT preferences. They mirror the guardrails the
+ * approval path enforces unconditionally and are written back verbatim on every
+ * save, so the stored record can never drift into describing a laxer policy
+ * than the server actually applies. See the Setup card comment below.
+ */
+interface TranslationPolicy {
+  enabled: boolean;
+  targets: string[];
+  defaultEngine: string;
+  glossaryScope: string;
+  requireBackTranslation: boolean;
+  twoPersonRule: boolean;
+  blockMachineApproval: boolean;
+}
+
+/**
+ * DEFAULT_GUARDRAILS (server/services/translation/types.ts) as this surface
+ * states them. approvalGuard() applies that constant to every
+ * POST /api/translation/segments/:id/approve; no org setting is consulted.
+ */
+const ENFORCED_GUARDRAILS = {
+  blockMachineApproval: true,
+  requireBackTranslation: true,
+  twoPersonRule: true,
+} as const;
+
+const TRANSLATION_DEFAULTS: TranslationPolicy = {
+  enabled: false,
+  targets: [],
+  defaultEngine: 'C2C-RIM-MT v2.4',
+  glossaryScope: 'org',
+  ...ENFORCED_GUARDRAILS,
+};
+
+/**
+ * The approval rules the platform applies to EVERY translation approval,
+ * rendered as locked facts rather than switches. Each `evidence` line names the
+ * check in approvalGuard() so a reader can go and confirm the claim instead of
+ * taking the UI's word for it.
+ */
+const ENFORCED_APPROVAL_RULES: Array<{
+  id: string;
+  title: string;
+  detail: string;
+  evidence: string;
+}> = [
+  {
+    id: 'machine-only',
+    title: 'Machine-only segments are never approvable',
+    detail:
+      'Machine translation is a draft accelerator. A segment still carrying method "machine" cannot reach approved -- only human and mt_postedited can.',
+    evidence: "approvableMethods: ['human', 'mt_postedited'] -- rejects with method_not_approvable.",
+  },
+  {
+    id: 'back-translation',
+    title: 'Verified back-translation before approval',
+    detail:
+      'An independent re-translation of the target back to source, persisted with the segment. Editing the target text clears the prior evidence, because evidence is bound to the exact text it verified.',
+    evidence:
+      'requireBackTranslation with a 0.85 similarity threshold; deterministic/demo engine output is never accepted as evidence.',
+  },
+  {
+    id: 'two-person',
+    title: 'Separation of duties on approval',
+    detail:
+      'A named human reviewer of record must sign off, and that reviewer cannot also be the post-editor.',
+    evidence: 'Rejects with reviewer_required, then with the reviewer/post-editor identity check.',
+  },
+];
+
+/** The fields this surface reads from GET /api/organizations/:id. */
+interface OrgRecord {
+  organization?: { name?: string | null };
+}
+
+/** The payload of GET /api/organizations/:id/settings. */
+interface OrgSettingsRecord {
+  settings?: { translation?: Partial<TranslationPolicy> };
+}
+
+/**
+ * Read a persisted translation section defensively -- it is free-form jsonb, so
+ * every field is validated rather than trusted -- and pin the three enforced
+ * guardrails to what the server actually does, whatever the column happens to
+ * hold. A row written before this surface existed cannot make the UI claim a
+ * Part 11 control is off.
+ */
+function readTranslationPolicy(raw: Partial<TranslationPolicy> | undefined): TranslationPolicy {
+  const targets = Array.isArray(raw?.targets)
+    ? raw.targets.filter((t): t is string => typeof t === 'string')
+    : TRANSLATION_DEFAULTS.targets;
+  return {
+    enabled: typeof raw?.enabled === 'boolean' ? raw.enabled : TRANSLATION_DEFAULTS.enabled,
+    targets,
+    defaultEngine:
+      typeof raw?.defaultEngine === 'string' && raw.defaultEngine.trim()
+        ? raw.defaultEngine
+        : TRANSLATION_DEFAULTS.defaultEngine,
+    glossaryScope: raw?.glossaryScope === 'project' ? 'project' : 'org',
+    ...ENFORCED_GUARDRAILS,
+  };
+}
+
+/**
+ * How a refused governed write is reported. The server's own message is used
+ * where it gave one (apiRequest already lifts it out of the error envelope),
+ * and status 0 -- reserved for a failure with no response at all -- is the one
+ * case that must never read as "the server said no".
+ */
+function saveFailure(error: string, status: number): string {
+  if (status === 0) return 'the server could not be reached, so nothing was saved.';
+  return `${error} (HTTP ${status}).`;
 }
 
 interface LangOption {
@@ -119,106 +219,200 @@ interface LangOption {
 }
 
 /* ════════════ Setup (org config) ════════════
-   Partially governed. The client-type picker reads and writes the org's
-   industry profile through GET/PATCH /api/mdx/industry-profile (tenant-scoped,
-   audited — see server/routes/mdx-industry-context.ts and
-   mdx/hooks/useIndustryProfile). The picker vocabulary maps onto the governed
-   primary_industry/mdx_specialization enums via mdx/lib/industryProfileMapping.
+   GOVERNED. Every control on this surface either reads and writes a real,
+   org-scoped, audited server record, or says plainly that the thing it names is
+   enforced elsewhere and cannot be set here. Nothing on it is browser-local any
+   more, and no value it shows is fabricated.
 
-   The remaining fields (orgName, MFA/SSO, translation-workspace policy) are
-   still browser-local: the only /api/setup routes on the server
+   Reads
+     GET   /api/organizations/:id            organizations.name
+     GET   /api/organizations/:id/settings   settings.translation
+     GET   /api/mdx/industry-profile         the governed client type
+   Writes
+     PATCH /api/organizations/:id/profile    { name, reason }
+     PATCH /api/organizations/:id/settings   { settings: { translation }, reason }
+     PATCH /api/mdx/industry-profile         (useIndustryProfile)
+
+   `:id` is getJwtOrgId() — the organizationId claim on the caller's OWN token,
+   never a value this page holds or a user types. That is the identifier
+   organizations-routes.ts actually takes: validateOrgOwnership pins a non-staff
+   caller to exactly that org (a tenant 'admin' is deliberately not treated as
+   platform staff there), and requireOrgAdmin gates both writes — so a member
+   without the admin role gets a 403 and this panel says so instead of letting
+   the save look like it landed.
+
+   Both writes carry a reason, because both routes audit one: the profile PATCH
+   logs before/after plus the reason, and the settings PATCH logs the changed
+   SECTION KEYS and the reason but deliberately not the values (settings
+   sections can carry integration credentials).
+
+   The one thing NOT wired, deliberately: /api/setup. The only routes there
    (server/routes/setup.ts) are the first-run installer — GET /status
    ({ initialized }) and the self-closing POST /initialize that creates the
-   first org + admin on an empty database. Neither can truthfully read or
-   persist those fields, so they stay in localStorage and the surface carries
-   the Sample-data pill instead of pretending to be an org-wide governed
-   write. Do not wire this panel to /api/setup — calling the installer from
-   here would be destructive, not persistence. */
+   first org + admin on an EMPTY database. Calling that from an admin console
+   would be destructive, not persistence.
 
-export function Setup({ onAsk }: SurfaceViewProps) {
-  const [s, setS] = useState<SetupSettings>(() => {
-    const def: SetupSettings = {
-      orgName: 'Acme Bio',
-      clientType: 'biotech',
-      mfaRequired: true,
-      ssoEnabled: false,
-      txwEnabled: true,
-      txwTargets: ['ja-JP', 'zh-CN', 'de-DE'],
-      txwDefaultEngine: 'C2C-RIM-MT v2.4',
-      txwRequireBackTranslation: true,
-      txwTwoPersonRule: true,
-      txwGlossaryScope: 'org',
-      txwBlockMachineApproval: true,
-    };
-    try {
-      const saved = JSON.parse(localStorage.getItem('c2c_admin_settings') || 'null');
-      const merged: SetupSettings = { ...def, ...(saved || {}) };
-      window.TXW_ADMIN = {
-        enabled: merged.txwEnabled,
-        targets: merged.txwTargets,
-        defaultEngine: merged.txwDefaultEngine,
-        requireBackTranslation: merged.txwRequireBackTranslation,
-        twoPersonRule: merged.txwTwoPersonRule,
-        glossaryScope: merged.txwGlossaryScope,
-        blockMachineApproval: merged.txwBlockMachineApproval,
-      };
-      return merged;
-    } catch (_e) {
-      return def;
+   ── Controls that are deliberately not switches ────────────────────────────
+   Three translation controls used to render as toggles reading "Enforced" /
+   "Disabled". They are enforced UNCONDITIONALLY by DEFAULT_GUARDRAILS
+   (server/services/translation/types.ts) through approvalGuard()
+   (server/services/translation/hybrid-workflow.ts), which
+   POST /api/translation/segments/:id/approve runs against every approval:
+
+     machine-only segments   approvableMethods: ['human', 'mt_postedited']
+     back-translation        requireBackTranslation, threshold 0.85, and
+                             deterministic/demo output is never evidence
+     separation of duties    a named reviewer who is not the post-editor
+
+   No org setting is consulted at any point. A switch that appeared to turn one
+   off would have changed nothing server-side while telling an administrator
+   they had relaxed a Part 11 control — the most dangerous kind of wrong. They
+   render as locked, enforced facts instead.
+
+   MFA and SSO were switches too. There is no organization-wide MFA gate:
+   users.mfaEnabled is per-user enrolment through mfaService, and no sign-in
+   path reads an org flag. SSO/SCIM is genuinely governed — but by the Identity
+   console (SAML endpoints, SCIM provisioning tokens, IP allowlist), not by a
+   boolean here, and a second copy of that state would be a second source of
+   truth that nothing reconciles. Both are now status rows naming where the
+   control actually lives. */
+
+export function Setup({ onAsk, onNav }: SurfaceViewProps) {
+  /* The org claim on the caller's own token. Read once: the identity behind a
+     mounted surface does not change, and re-reading would re-key the fetches. */
+  const orgId = useMemo(() => getJwtOrgId(), []);
+  const orgPath = `/api/organizations/${encodeURIComponent(orgId)}`;
+
+  const org = useLiveData<OrgRecord>(orgPath);
+  const orgSettings = useLiveData<OrgSettingsRecord>(`${orgPath}/settings`);
+
+  /* Server truth and the working copy the controls edit. Both take the same
+     value the moment a load lands, so `dirty` is exactly "what this
+     administrator changed and has not saved yet" — never "what differs from a
+     default we made up". */
+  const [savedName, setSavedName] = useState('');
+  const [name, setName] = useState('');
+  const [savedTxw, setSavedTxw] = useState<TranslationPolicy>(TRANSLATION_DEFAULTS);
+  const [txw, setTxw] = useState<TranslationPolicy>(TRANSLATION_DEFAULTS);
+
+  const [reason, setReason] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveNote, setSaveNote] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null);
+
+  const orgLoaded = !org.loading && !org.error;
+  const settingsLoaded = !orgSettings.loading && !orgSettings.error;
+  const loadError = org.error ?? orgSettings.error ?? null;
+  const loading = org.loading || orgSettings.loading;
+
+  useEffect(() => {
+    if (!orgLoaded) return;
+    const live = org.data?.organization?.name ?? '';
+    setSavedName(live);
+    setName(live);
+  }, [orgLoaded, org.data]);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    const live = readTranslationPolicy(orgSettings.data?.settings?.translation);
+    setSavedTxw(live);
+    setTxw(live);
+  }, [settingsLoaded, orgSettings.data]);
+
+  const nameDirty = orgLoaded && name.trim() !== savedName;
+  const txwDirty = settingsLoaded && JSON.stringify(txw) !== JSON.stringify(savedTxw);
+  const dirty = nameDirty || txwDirty;
+  const editable = !loading && !loadError;
+
+  const setTxwField = <K extends keyof TranslationPolicy>(k: K, v: TranslationPolicy[K]) =>
+    setTxw((prev) => ({ ...prev, [k]: v }));
+
+  /**
+   * One reason, up to two governed PATCHes, and a baseline that advances ONLY
+   * for the call that actually succeeded — so a partial failure leaves the
+   * failed section dirty and visibly unsaved rather than quietly marking it
+   * clean. The reason is cleared only when everything landed.
+   */
+  async function saveOrg() {
+    const why = reason.trim();
+    if (why.length < 3) {
+      setSaveNote({
+        tone: 'warn',
+        text: 'Enter a reason of at least 3 characters -- it is written to the audit record.',
+      });
+      return;
     }
-  });
+    if (nameDirty && !name.trim()) {
+      setSaveNote({ tone: 'warn', text: 'Organization name cannot be blank.' });
+      return;
+    }
 
-  const set = (k: keyof SetupSettings, v: SetupSettings[keyof SetupSettings]) =>
-    setS((prev) => {
-      const n = { ...prev, [k]: v } as SetupSettings;
-      try {
-        localStorage.setItem('c2c_admin_settings', JSON.stringify(n));
-      } catch (_e) {
-        /* noop */
-      }
-      window.TXW_ADMIN = {
-        enabled: n.txwEnabled,
-        targets: n.txwTargets,
-        defaultEngine: n.txwDefaultEngine,
-        requireBackTranslation: n.txwRequireBackTranslation,
-        twoPersonRule: n.txwTwoPersonRule,
-        glossaryScope: n.txwGlossaryScope,
-        blockMachineApproval: n.txwBlockMachineApproval,
-      };
-      return n;
+    setSaving(true);
+    setSaveNote(null);
+    const failures: string[] = [];
+
+    if (nameDirty) {
+      const r = await liveMutateOrNull<{ organization?: { name?: string } }>(
+        'PATCH',
+        `${orgPath}/profile`,
+        { name: name.trim(), reason: why },
+      );
+      if (r.error) failures.push(`Organization name -- ${saveFailure(r.error, r.status)}`);
+      else setSavedName(r.data?.organization?.name ?? name.trim());
+    }
+
+    if (txwDirty) {
+      // Defence in depth, and deliberately redundant with readTranslationPolicy:
+      // that pins the guardrails on the way in, this pins them on the way out,
+      // and either alone is enough today. Both stay because the cost is one
+      // spread and the failure they prevent -- a stored org policy describing
+      // weaker Part 11 controls than the server enforces -- is invisible on
+      // screen and would surface as an audit finding.
+      const payload: TranslationPolicy = { ...txw, ...ENFORCED_GUARDRAILS };
+      const r = await liveMutateOrNull('PATCH', `${orgPath}/settings`, {
+        settings: { translation: payload },
+        reason: why,
+      });
+      if (r.error) failures.push(`Translation workspace -- ${saveFailure(r.error, r.status)}`);
+      else setSavedTxw(payload);
+    }
+
+    setSaving(false);
+    if (failures.length) {
+      setSaveNote({ tone: 'warn', text: `Not saved: ${failures.join('  ')}` });
+      return;
+    }
+    setReason('');
+    setSaveNote({
+      tone: 'ok',
+      text: 'Saved to the organization record and written to the audit trail.',
     });
+  }
 
   /* ── Governed client type (org industry profile) ──
-     The picker below reads/writes GET|PATCH /api/mdx/industry-profile.
-     localStorage keeps only a cosmetic copy (and the pharma-vs-biotech
-     nuance the governed enum collapses); the profile row is the truth. */
+     The picker below reads/writes GET|PATCH /api/mdx/industry-profile. The
+     profile row is the truth; this component keeps only the picker-level
+     nuance the governed enum collapses (pharma vs biotech). */
   const { profile, save: saveProfile, saveState } = useIndustryProfile();
   const govPrimary = profile.status === 'ready' ? profile.data.primaryIndustry : null;
   const govSpec = profile.status === 'ready' ? profile.data.mdxSpecialization : null;
+  const [clientType, setClientType] = useState('');
 
   useEffect(() => {
     if (!govPrimary) return;
-    setS((prev) => {
-      if (pickerMatchesProfile(prev.clientType, govPrimary, govSpec)) return prev;
-      const next = { ...prev, clientType: governedToPicker(govPrimary, govSpec) };
-      try {
-        localStorage.setItem('c2c_admin_settings', JSON.stringify(next));
-      } catch (_e) {
-        /* noop */
-      }
-      return next;
-    });
+    setClientType((prev) =>
+      pickerMatchesProfile(prev, govPrimary, govSpec) ? prev : governedToPicker(govPrimary, govSpec),
+    );
   }, [govPrimary, govSpec]);
 
   const chooseClientType = (t: string) => {
-    set('clientType', t);
+    setClientType(t);
     const patch = buildOrgProfilePatch(t, govSpec);
     if (patch) void saveProfile(patch);
   };
 
   const clientTypeStatus: string =
     profile.status === 'error'
-      ? 'Governed profile unreachable -- selection kept in this browser only.'
+      ? 'Governed profile unreachable -- the client type could not be read and cannot be changed.'
       : saveState.status === 'saving'
         ? 'Saving to governed org profile…'
         : saveState.status === 'error'
@@ -251,9 +445,9 @@ export function Setup({ onAsk }: SurfaceViewProps) {
     'Custom (Bring your own)',
   ];
   const toggleLang = (id: string) =>
-    set(
-      'txwTargets',
-      s.txwTargets.includes(id) ? s.txwTargets.filter((x) => x !== id) : [...s.txwTargets, id],
+    setTxwField(
+      'targets',
+      txw.targets.includes(id) ? txw.targets.filter((x) => x !== id) : [...txw.targets, id],
     );
 
   return (
@@ -262,16 +456,55 @@ export function Setup({ onAsk }: SurfaceViewProps) {
         eyebrow="Admin -- organization"
         title={
           <React.Fragment>
-            Setup <SampleTag sample={true} />
+            Setup {!loadError && !loading && <SampleTag sample={false} />}
           </React.Fragment>
         }
-        sub="Organization profile, security defaults, and module configuration. Client type is governed (reads and writes the org industry profile); the remaining settings are saved in this browser only."
+        sub="Organization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced."
         actions={
-          <button className="btn ghost" onClick={() => onAsk && onAsk('Summarize my org configuration')}>
-            {I.sparkles} Ask AnA
-          </button>
+          <React.Fragment>
+            <input
+              aria-label="Reason for change"
+              className="txw-gov-field"
+              placeholder="Reason for change (audited)"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              disabled={!dirty || saving}
+              style={{
+                fontSize: 12.5,
+                padding: '7px 10px',
+                borderRadius: 6,
+                border: '1px solid var(--border)',
+                background: 'var(--bg-050)',
+                color: 'var(--text-100)',
+                minWidth: 220,
+              }}
+            />
+            <button className="btn" onClick={() => void saveOrg()} disabled={!dirty || saving}>
+              {saving ? 'Saving…' : dirty ? 'Save to organization' : 'No unsaved changes'}
+            </button>
+            <button
+              className="btn ghost"
+              onClick={() => onAsk && onAsk('Summarize my org configuration')}
+            >
+              {I.sparkles} Ask AnA
+            </button>
+          </React.Fragment>
         }
       />
+
+      {loadError && (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load your organization record"
+          hint={`${loadError} -- nothing below is editable until the organization record loads, so no change can be lost.`}
+        />
+      )}
+      {saveNote && (
+        <div className="txw-help" data-tone={saveNote.tone === 'warn' ? 'warn' : undefined}>
+          {saveNote.tone === 'warn' ? I.alertTriangle : I.checkCircle} {saveNote.text}
+        </div>
+      )}
 
       <div className="txw-settings">
         {/* -- Org profile -- */}
@@ -293,7 +526,7 @@ export function Setup({ onAsk }: SurfaceViewProps) {
               </div>
               <div className="txw-row-r">
                 <input
-                  aria-label="Governance field value"
+                  aria-label="Organization name"
                   className="txw-gov-field"
                   style={{
                     fontSize: 13,
@@ -304,9 +537,19 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                     width: '100%',
                     maxWidth: 340,
                   }}
-                  value={s.orgName}
-                  onChange={(e) => set('orgName', e.target.value)}
+                  value={name}
+                  disabled={!editable || saving}
+                  onChange={(e) => setName(e.target.value)}
                 />
+                <span className="txw-help" data-tone={nameDirty ? 'warn' : undefined}>
+                  {loading
+                    ? 'Loading the organization record…'
+                    : loadError
+                      ? 'Unavailable -- the organization record did not load.'
+                      : nameDirty
+                        ? 'Unsaved -- give a reason and save to write it to the organization record.'
+                        : 'Governed -- stored on the organization record.'}
+                </span>
               </div>
             </div>
             <div className="txw-row">
@@ -323,7 +566,7 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                     <button
                       key={t}
                       className="txw-pchip"
-                      data-on={s.clientType === t || undefined}
+                      data-on={clientType === t || undefined}
                       disabled={profile.status === 'loading' || saveState.status === 'saving'}
                       onClick={() => chooseClientType(t)}
                     >
@@ -348,35 +591,33 @@ export function Setup({ onAsk }: SurfaceViewProps) {
             <div className="txw-row">
               <div className="txw-row-l">
                 Multi-factor authentication
-                <small>Required for every member at sign-in.</small>
+                <small>TOTP via an authenticator app, enrolled by each member.</small>
               </div>
-              <div className="txw-row-r" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <button
-                  className="txw-switch"
-                  data-on={s.mfaRequired || undefined}
-                  onClick={() => set('mfaRequired', !s.mfaRequired)}
-                  aria-pressed={s.mfaRequired}
-                  aria-label="MFA required"
-                />
+              <div
+                className="txw-row-r"
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              >
                 <span className="txw-help">
-                  {s.mfaRequired ? 'Required' : 'Optional'} -- TOTP via authenticator app.
+                  {I.info} Set per user, not per organization. Sign-in enforcement follows each
+                  member's own enrolment, so there is nothing for an administrator to switch here.
                 </span>
               </div>
             </div>
             <div className="txw-row">
               <div className="txw-row-l">
-                SSO &amp; SCIM<small>SAML / OIDC for centralized identity.</small>
+                SSO &amp; SCIM<small>SAML / OIDC and directory provisioning.</small>
               </div>
-              <div className="txw-row-r" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <button
-                  className="txw-switch"
-                  data-on={s.ssoEnabled || undefined}
-                  onClick={() => set('ssoEnabled', !s.ssoEnabled)}
-                  aria-pressed={s.ssoEnabled}
-                  aria-label="SSO enabled"
-                />
+              <div
+                className="txw-row-r"
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+              >
+                <button className="btn ghost" onClick={() => onNav('identity-console')}>
+                  {I.lock} Open Identity console
+                </button>
                 <span className="txw-help">
-                  {s.ssoEnabled ? 'Connected to your IdP' : 'Disabled'}
+                  Governed there, not here -- SAML endpoints, SCIM provisioning tokens and the SCIM
+                  IP allowlist. A boolean on this page would be a second copy of that state with
+                  nothing to reconcile it.
                 </span>
               </div>
             </div>
@@ -397,18 +638,33 @@ export function Setup({ onAsk }: SurfaceViewProps) {
             </div>
             <button
               className="txw-switch"
-              data-on={s.txwEnabled || undefined}
-              onClick={() => set('txwEnabled', !s.txwEnabled)}
-              aria-pressed={s.txwEnabled}
+              data-on={txw.enabled || undefined}
+              disabled={!editable || saving}
+              onClick={() => setTxwField('enabled', !txw.enabled)}
+              aria-pressed={txw.enabled}
               aria-label="Enable translation workspace"
             />
           </div>
-          {s.txwEnabled && (
+          {txw.enabled && (
             <div className="txw-set-body">
+              {/* The honest scope of the three editable preferences below. They
+                  persist on the organization record and are audited; the
+                  translation service does not read them yet (project creation
+                  takes its own target language, and draft generation routes
+                  through the AnA gateway's model policy). Stating that once,
+                  here, is better than three hedged row captions -- and better
+                  than letting an administrator assume enforcement. */}
+              <div className="txw-help" data-tone="warn">
+                {I.info} Declared org defaults. These three persist on the organization record and
+                are audited, but the translation service does not read them yet -- a project still
+                chooses its own target language and drafting routes through the AnA gateway's model
+                policy. The approval guardrails further down are a different matter: those are
+                enforced on every approval.
+              </div>
               <div className="txw-row">
                 <div className="txw-row-l">
                   Target languages
-                  <small>Available to every project. Add more in the language registry.</small>
+                  <small>The set this organization declares for regulatory translation.</small>
                 </div>
                 <div className="txw-row-r">
                   <div className="txw-row-r-grid">
@@ -416,14 +672,15 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                       <button
                         key={l.id}
                         className="txw-pchip"
-                        data-on={s.txwTargets.includes(l.id) || undefined}
+                        data-on={txw.targets.includes(l.id) || undefined}
+                        disabled={!editable || saving}
                         onClick={() => toggleLang(l.id)}
                       >
                         <span className="txw-pchip-flag">{l.flag}</span>
                         {l.label}{' '}
                         <span
                           style={{
-                            color: s.txwTargets.includes(l.id)
+                            color: txw.targets.includes(l.id)
                               ? 'rgba(255,255,255,.7)'
                               : 'var(--text-400)',
                             fontSize: 10,
@@ -434,7 +691,7 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                       </button>
                     ))}
                   </div>
-                  {s.txwTargets.length === 0 && (
+                  {txw.targets.length === 0 && (
                     <div className="txw-warn">
                       {I.alertTriangle}Select at least one target language.
                     </div>
@@ -444,12 +701,14 @@ export function Setup({ onAsk }: SurfaceViewProps) {
               <div className="txw-row">
                 <div className="txw-row-l">
                   Default MT engine
-                  <small>Used for first-pass drafts. Authors can override per segment.</small>
+                  <small>The engine this organization intends for first-pass drafts.</small>
                 </div>
                 <div className="txw-row-r" style={{ flexDirection: 'row' }}>
                   <select
-                    value={s.txwDefaultEngine}
-                    onChange={(e) => set('txwDefaultEngine', e.target.value)}
+                    aria-label="Default MT engine"
+                    value={txw.defaultEngine}
+                    disabled={!editable || saving}
+                    onChange={(e) => setTxwField('defaultEngine', e.target.value)}
                     style={{
                       fontSize: 12.5,
                       padding: '7px 10px',
@@ -470,82 +729,6 @@ export function Setup({ onAsk }: SurfaceViewProps) {
               </div>
               <div className="txw-row">
                 <div className="txw-row-l">
-                  Block approval of machine-only segments
-                  <small>
-                    A segment with method{' '}
-                    <span className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                      machine
-                    </span>{' '}
-                    can never be approved -- only human + MT-postedited segments are approvable.
-                  </small>
-                </div>
-                <div
-                  className="txw-row-r"
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-                >
-                  <button
-                    className="txw-switch"
-                    data-on={s.txwBlockMachineApproval || undefined}
-                    onClick={() => set('txwBlockMachineApproval', !s.txwBlockMachineApproval)}
-                    aria-pressed={s.txwBlockMachineApproval}
-                    aria-label="Block machine-only approval"
-                  />
-                  <span className="txw-help">
-                    {s.txwBlockMachineApproval
-                      ? 'Enforced -- APPROVABLE_METHODS = [human, mt_postedited]'
-                      : 'Disabled -- not recommended for regulated submissions'}
-                  </span>
-                </div>
-              </div>
-              <div className="txw-row">
-                <div className="txw-row-l">
-                  Require verified back-translation before approval
-                  <small>
-                    Independent re-translation of the target back to source, persisted with the
-                    segment.
-                  </small>
-                </div>
-                <div
-                  className="txw-row-r"
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-                >
-                  <button
-                    className="txw-switch"
-                    data-on={s.txwRequireBackTranslation || undefined}
-                    onClick={() => set('txwRequireBackTranslation', !s.txwRequireBackTranslation)}
-                    aria-pressed={s.txwRequireBackTranslation}
-                    aria-label="Require back-translation"
-                  />
-                  <span className="txw-help">
-                    {s.txwRequireBackTranslation
-                      ? 'Required for every approved segment'
-                      : 'Optional'}
-                  </span>
-                </div>
-              </div>
-              <div className="txw-row">
-                <div className="txw-row-l">
-                  Two-person rule
-                  <small>Reviewer must differ from the post-editor (separation of duties).</small>
-                </div>
-                <div
-                  className="txw-row-r"
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-                >
-                  <button
-                    className="txw-switch"
-                    data-on={s.txwTwoPersonRule || undefined}
-                    onClick={() => set('txwTwoPersonRule', !s.txwTwoPersonRule)}
-                    aria-pressed={s.txwTwoPersonRule}
-                    aria-label="Two-person rule"
-                  />
-                  <span className="txw-help">
-                    {s.txwTwoPersonRule ? 'Enforced' : 'Disabled'}
-                  </span>
-                </div>
-              </div>
-              <div className="txw-row">
-                <div className="txw-row-l">
                   Glossary scope
                   <small>
                     Where the do-not-translate registry lives by default for new terms.
@@ -560,8 +743,9 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                       <button
                         key={o.id}
                         className="txw-pchip"
-                        data-on={s.txwGlossaryScope === o.id || undefined}
-                        onClick={() => set('txwGlossaryScope', o.id)}
+                        data-on={txw.glossaryScope === o.id || undefined}
+                        disabled={!editable || saving}
+                        onClick={() => setTxwField('glossaryScope', o.id)}
                       >
                         {o.label}
                       </button>
@@ -569,6 +753,30 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Enforced, not configurable -- see the card comment above Setup.
+                  These render as locked facts because approvalGuard() applies
+                  DEFAULT_GUARDRAILS to every approval and reads no org setting;
+                  a switch here would have let an administrator believe they had
+                  turned a Part 11 control off while the server kept enforcing
+                  it. Stated as a capability, this is also the stronger claim. */}
+              {ENFORCED_APPROVAL_RULES.map((rule) => (
+                <div className="txw-row" key={rule.id}>
+                  <div className="txw-row-l">
+                    {rule.title}
+                    <small>{rule.detail}</small>
+                  </div>
+                  <div
+                    className="txw-row-r"
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+                  >
+                    <span className="rd-chip tone-ok">
+                      {I.lock} Always enforced
+                    </span>
+                    <span className="txw-help">{rule.evidence}</span>
+                  </div>
+                </div>
+              ))}
               <div className="txw-row" style={{ borderBottom: 0 }}>
                 <div className="txw-row-l">
                   Open in editor
