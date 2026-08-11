@@ -922,30 +922,10 @@ previewSrc.includes('-5%') || previewSrc.includes('-5')
 // ═══════════════════════════════════════════════════════════════════════════════
 //  14. MOCK VAULT INTEGRITY
 // ═══════════════════════════════════════════════════════════════════════════════
-console.log('\n━━━ 14. Mock Vault Integrity ━━━');
-
-const vaultSrc = read('server/services/mockVault.ts');
-
-// 14a. All three doc types have content
-for (const key of ['mock510kContent', 'mockPmaContent', 'mockCerContent']) {
-  vaultSrc.includes(key)
-    ? ok(14, `Mock vault has ${key}`)
-    : no(14, `Mock vault ${key}`, 'not found');
-}
-
-// 14b. getMockEditorJson returns TipTap structure
-vaultSrc.includes('getMockEditorJson')
-  ? ok(14, 'getMockEditorJson exported')
-  : no(14, 'getMockEditorJson', 'not found');
-
-// 14c. No parse errors in vault (the Physician's apostrophe fix)
-// Check that single-quoted strings don't contain unescaped apostrophes
-// The fix used double quotes for strings with apostrophes
-const singleQuotedWithApostrophe = /paragraph\(\s*'[^'\\]*(?<!\\)'[^']*'\s*\)/.test(vaultSrc);
-// Also verify the specific fix: Physician's should be in double-quoted string
-vaultSrc.includes('"Proposed labeling includes')
-  ? ok(14, "Physician's Guide uses double-quoted string (apostrophe safe)")
-  : no(14, 'Apostrophe fix', "double-quoted string not found for Physician's");
+// 14. Mock Vault Integrity — section removed with server/services/mockVault.ts.
+// The four GET /sample/:docType* routes that consumed it are gone, so there is
+// no placeholder-document store left to check. These assertions had already
+// gone stale against the service's final shape.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  15. REGRESSION CHECKS

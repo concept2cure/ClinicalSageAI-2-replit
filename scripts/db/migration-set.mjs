@@ -663,6 +663,16 @@ export const C2C_MIGRATION_FILES = [
   // created but never isolated.
   'db/migrations/20260803_document_span_lineage.sql',
 
+  // ── Draft-accept store for automated span-level source attribution ──────────
+  // Parks an AI draft's retrieved chunks (content + resolved cre_evidence_sources
+  // .id) so the accept endpoint can re-verify quotes VERBATIM against them inside
+  // the section-content transaction (SOURCE_ATTRIBUTION_AUTOMATED_DESIGN.md Phase
+  // 3a). Tenant-scoped (organization_id); it declares RLS inline AND sits above
+  // the sweep — belt and suspenders — for the same reason document_span_lineage
+  // must precede the sweep: added after it, the table would exist but never be
+  // isolated on an already-provisioned database.
+  'db/migrations/20260809_source_attribution_draft_candidates.sql',
+
   // ── Rule-pack outlines: the five stubs replaced with real trees ────────────
   // 20260529_phase9_backfill seeded nda/bla/maa/jnda/denovo as five top-level
   // rows apiece and said the full outlines would land "in a later kit". They
@@ -769,20 +779,17 @@ export const C2C_MIGRATION_FILES = [
   // the public sweep (disjoint schemas); ordered BEFORE it so the integer-keyed
   // sweep stays the final entry — ledger C-33 requires the sweep to run last
   // (asserted by tenant-isolation-sweep.contract.test.ts).
-  // authoring_reviews — the document review/approval ledger. Three endpoints
-  // (list reviews, submit a verdict, request review from named reviewers) have
-  // always addressed a table that exists in no migration, no schema file and no
-  // runtime DDL helper, so every one of them was an unconditional 42P01.
-  // Guarded on authoring_documents, so it no-ops with a NOTICE rather than
-  // aborting the set where the authoring bundle is absent.
-  //
-  // MUST precede BOTH isolation steps below. A table created after the sweep
-  // gets no RLS policy, and under RLS_ENFORCE=on that means one org can read
-  // another's review verdicts. The two isolation entries are also required by
-  // ledger C-33 to be the final two in this list
-  // (tests/schema-contract/uuid-tenant-isolation.contract.test.ts asserts it),
-  // so a new table goes here, not at the end.
-  'migrations/20260728_authoring_reviews.sql',
+  // NOTE: migrations/20260728_authoring_reviews.sql is intentionally NOT on this
+  // list (it was, redundantly, and that tripped the authoring-guard in
+  // tests/ops/apply-c2c-migrations-manifest.test.mjs — table creation on the
+  // authoring path belongs to the subsystem lineage, not this applier). The
+  // authoring_reviews table is authoritatively created by the authoring-subsystem
+  // provisioner: db/migrations/20260730_authoring_subsystem_schema.sql is in
+  // AUTHORING_SUBSYSTEM_FILES and applyAuthoringSubsystem() runs on BOTH
+  // install-fresh (step 4) and deploy-migrate (before this list) — so its
+  // CREATE TABLE IF NOT EXISTS here was a no-op on every path. The file stays on
+  // disk (applied by the install-fresh root overlay too) and is declared in the
+  // test's KNOWN_UNLISTED with this same reason.
 
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 

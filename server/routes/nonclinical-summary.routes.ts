@@ -17,10 +17,18 @@
  * study data. A missing store (42P01) is surfaced via `meta.pendingStore`.
  */
 import { Router, type Request, type Response } from 'express';
+import { requestDb } from '../db/requestDb';
+import { coauthorDocuments } from '../../shared/schema';
 import { listStudiesForSummary } from '../services/nonclinical/nonclinical-service';
-import { assembleNonclinicalSummary } from '../services/nonclinical/m26-m4-view';
+import { assembleNonclinicalSummary, composeM26WrittenSummary, renderM26Html } from '../services/nonclinical/m26-m4-view';
 
 const router = Router();
+
+function getUserId(req: Request): string | null {
+  const r = req as { user?: { id?: unknown; userId?: unknown } };
+  const raw = r.user?.id ?? r.user?.userId;
+  return raw === undefined || raw === null ? null : String(raw);
+}
 
 function getOrgId(req: Request): number | null {
   const r = req as {
@@ -58,6 +66,74 @@ router.get('/', async (req: Request, res: Response) => {
         provisioned: false,
         pendingStore: (err as { code?: string })?.code === '42P01',
       },
+    });
+  }
+});
+
+/**
+ * POST /api/nonclinical-summary/document — compose the Module 2.6 nonclinical
+ * written summary from the governed study registry and PERSIST it as an authored
+ * document in the org's coauthor_documents store (module_number '2.6'), so the
+ * deterministic composer's output becomes retrievable and flows into the eCTD
+ * assembler (which renders coauthor_documents leaves to PDF). No fabrication:
+ * the document body is exactly what composeM26WrittenSummary produced from the
+ * audited studies. Refuses to persist when the org has no studies (nothing to
+ * summarise) rather than writing an empty/placeholder document.
+ */
+router.post('/document', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+  let studies;
+  try {
+    studies = await listStudiesForSummary(orgId);
+  } catch (err) {
+    const pending = (err as { code?: string })?.code === '42P01';
+    return res.status(pending ? 503 : 500).json({
+      error: {
+        code: pending ? 'STORE_NOT_PROVISIONED' : 'INTERNAL',
+        message: pending ? 'Nonclinical registry is not provisioned.' : 'Failed to read the nonclinical registry.',
+      },
+    });
+  }
+  if (studies.length === 0) {
+    return res.status(422).json({
+      error: {
+        code: 'NO_STUDIES',
+        message: 'No governed nonclinical studies to summarise — nothing to persist. Add studies to the registry first.',
+      },
+    });
+  }
+  try {
+    const result = composeM26WrittenSummary(studies);
+    const content = renderM26Html(result);
+    // Request-scoped DB so the write runs on the tenant-context connection when
+    // RLS is enforced (falls back to the pool-bound db pre-tenant-context).
+    const [document] = await requestDb(req)
+      .insert(coauthorDocuments)
+      .values({
+        organizationId: orgId,
+        title: result.title,
+        content,
+        moduleNumber: '2.6',
+        status: 'draft',
+        createdBy: getUserId(req),
+      })
+      .returning({ id: coauthorDocuments.id });
+    return res.status(201).json({
+      data: {
+        documentId: document.id,
+        title: result.title,
+        moduleNumber: '2.6',
+        completeness: result.completeness,
+        gaps: result.gaps,
+        tableCount: result.tables.length,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: { code: 'PERSIST_FAILED', message: 'Failed to persist the Module 2.6 written summary.' },
     });
   }
 });

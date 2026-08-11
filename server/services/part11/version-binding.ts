@@ -51,3 +51,37 @@ export function buildVersionBindingDigest(input: VersionBindingInput): string {
   });
   return createHash('sha256').update(canonical).digest('hex');
 }
+
+export interface BindingVerification {
+  valid: boolean;
+  /** Whether the §11.70 content binding could be positively verified. */
+  bindingVerified: boolean;
+  reason: string;
+}
+
+/**
+ * Decide whether a stored signature's §11.70 content binding still holds, given
+ * the digest recorded at signing (`bound`) and the digest re-derived from the
+ * signed version's CURRENT content (`current`, or null when that version/content
+ * is gone). Pure — the DB read happens in the caller.
+ *
+ *  - bound present + current matches   → valid, binding verified.
+ *  - bound present + current differs   → INVALID, tamper detected.
+ *  - bound present + current null      → INVALID, binding unverifiable (content gone).
+ *  - bound absent (legacy signature)   → valid, but binding NOT verified (honest).
+ */
+export function evaluateBindingVerification(
+  bound: string | null | undefined,
+  current: string | null,
+): BindingVerification {
+  if (bound && bound.length > 0) {
+    if (current === null) {
+      return { valid: false, bindingVerified: false, reason: 'Signed version content is no longer available — §11.70 binding cannot be verified' };
+    }
+    if (current !== bound) {
+      return { valid: false, bindingVerified: false, reason: 'Signed content has changed since signing — §11.70 record binding broken (tamper detected)' };
+    }
+    return { valid: true, bindingVerified: true, reason: 'Content binding verified' };
+  }
+  return { valid: true, bindingVerified: false, reason: 'Legacy signature — content binding not recorded, cannot be verified' };
+}

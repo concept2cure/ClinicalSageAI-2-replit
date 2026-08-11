@@ -58,9 +58,26 @@ for (const check of checks) {
   }
 
   // Guard against regressions to direct-stream ZIP bypass in the governed CERV2 POST /zip route.
-  // Scan only the governed POST route, not the dev-only sample GET routes.
   if (check.file === 'server/routes/cerv2-export-routes.ts') {
-    const zipSection = findSection(src, "router.post('/zip'", "router.get('/sample/");
+    // The section ends at the NEXT route, `router.post(\n  '/ai-to-editor'`.
+    //
+    // It used to end at "router.get('/sample/". When the sample routes were
+    // deleted that token stopped existing, findSection's `end` fell to -1, and
+    // the scan silently widened to the whole rest of the file — still green,
+    // because nothing forbidden happened to live there. A range marker that
+    // can vanish is a range marker that will one day scope a guard to
+    // everything or nothing without saying so, so this one is asserted below
+    // rather than assumed.
+    const ZIP_SECTION_END = "router.post(\n  '/ai-to-editor'";
+    if (!src.includes(ZIP_SECTION_END)) {
+      console.error(
+        `❌ ${check.file}: cannot locate the end of the governed ZIP section ` +
+          `(expected the next route to be POST /ai-to-editor). The forbidden-token ` +
+          `scan below would silently cover the wrong range — fix the marker.`
+      );
+      failures++;
+    }
+    const zipSection = findSection(src, "router.post('/zip'", ZIP_SECTION_END);
     const forbidden = ['archive.pipe(res)', "res.setHeader('Content-Disposition'"];
     for (const token of forbidden) {
       if (zipSection.includes(token)) {
@@ -69,10 +86,22 @@ for (const check of checks) {
       }
     }
 
-    // Also verify sample routes are dev-gated
-    const sampleSection = findSection(src, "router.get('/sample/", '');
-    if (sampleSection && !sampleSection.includes('isSampleExportEnabled')) {
-      console.error(`❌ ${check.file} sample routes must be gated by isSampleExportEnabled()`);
+    // The sample export routes must not come back.
+    //
+    // This check used to be "if sample routes exist, they must call
+    // isSampleExportEnabled()". They no longer exist: GET /sample/:docType and
+    // its /docx, /zip and /json variants rendered downloadable documents from
+    // an in-memory placeholder store (mockVault, also deleted). Being dev-gated
+    // was the mitigation; not existing is the fix. Asserting their ABSENCE is
+    // strictly stronger than asserting they were guarded, and unlike the old
+    // form it cannot pass by finding nothing to check.
+    if (src.includes("router.get('/sample/")) {
+      console.error(
+        `❌ ${check.file} reintroduces a GET /sample/* export route. These rendered ` +
+          `documents that look like submissions from placeholder content; every export ` +
+          `route here must serve real authored content behind authMiddleware + ` +
+          `requireEditorAccess.`
+      );
       failures++;
     }
   }
