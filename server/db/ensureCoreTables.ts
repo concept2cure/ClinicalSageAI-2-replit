@@ -261,6 +261,19 @@ export interface EnsureTablesResult {
 /**
  * Check which tables exist in the database.
  */
+
+/**
+ * Is the operator explicitly opting out of DB TLS certificate verification?
+ *
+ * Exported so there is exactly ONE definition of "insecure TLS is allowed" and
+ * a test can pin it. The opt-out must be set deliberately: it is never inferred
+ * from NODE_ENV, which is how server/scripts/run-sql.js ended up disabling
+ * verification *specifically in production* and verifying everywhere else.
+ */
+export function allowUnverifiedDbTls(): boolean {
+  return process.env.DB_SSL_ALLOW_UNVERIFIED === '1';
+}
+
 export async function ensureCoreTables(connectionString?: string): Promise<EnsureTablesResult> {
   // Import cleanDatabaseUrl inline to avoid circular dependencies
   const cleanDatabaseUrl = (url: string | undefined): string | undefined => {
@@ -314,7 +327,18 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     // CLI mode or explicit connectionString: create standalone pool
     pool = new Pool({
       connectionString: dbUrl,
-      ssl: isNeonDb ? { rejectUnauthorized: false } : false,
+      // TLS certificate verification is ON. This was `{ rejectUnauthorized:
+      // false }` for Neon, which accepts ANY certificate — including an
+      // attacker's — on the connection that provisions the schema. Neon serves
+      // a publicly-trusted chain, so verification costs nothing here; turning
+      // it off bought no compatibility and removed the only thing making the
+      // connection's identity meaningful.
+      //
+      // DB_SSL_ALLOW_UNVERIFIED=1 is the documented, explicit escape hatch for
+      // an operator whose chain genuinely is not trusted (a self-signed proxy,
+      // say). It has to be set deliberately — the insecure mode is never the
+      // default, and never selected by inferring it from the environment.
+      ssl: isNeonDb ? { rejectUnauthorized: !allowUnverifiedDbTls() } : false,
       connectionTimeoutMillis: 10000,
     });
     shouldEndPool = true;

@@ -191,6 +191,27 @@ export const authenticate = authenticateToken;
 export const requireAuth = authenticateToken;
 
 /**
+ * Roles that carry authority ACROSS tenants.
+ *
+ * The org-scoped vocabulary is admin / manager / member / viewer (see
+ * shared/schema.ts organizationUsers.role). Those are a different trust
+ * boundary: self-service signup mints the org-scoped `admin` for the first
+ * user of every new organization, so an org admin is an ordinary customer,
+ * not staff.
+ *
+ * Deliberately a superset of requirePlatformAdmin.ts's own set (it omits the
+ * `superadmin` spelling that isPlatformStaff in organizations-routes.ts
+ * accepts). Over-listing here can only make the guard stricter — a role named
+ * in this set is one the org-admin stand-in will refuse to satisfy.
+ */
+export const PLATFORM_SCOPED_ROLES = new Set([
+  'super_admin',
+  'platform_admin',
+  'superadmin',
+  'support',
+]);
+
+/**
  * Require specific role(s) for access
  */
 export const requireRole = (...allowedRoles: string[]) => {
@@ -205,17 +226,36 @@ export const requireRole = (...allowedRoles: string[]) => {
 
     // Org-scoped RBAC: an org "admin" is a superset of the org's operational
     // roles, so it satisfies an org-scoped role guard. This convenience is
-    // DELIBERATELY NOT a platform-privilege bypass: PLATFORM-OPERATOR routes
-    // (cross-tenant create/modify/delete) must NOT use requireRole — they use
-    // `requirePlatformAdmin` (server/middleware/requirePlatformAdmin.ts), which
-    // has no org-admin bypass. That is what closes the cross-tenant deletion
-    // exploit (tenants-simple.ts), rather than stripping the org-admin
-    // convenience from every requireRole call site. Any new platform-operator
-    // guard MUST use requirePlatformAdmin, never requireRole('super_admin', …).
+    // load-bearing and cannot simply be deleted: `regulatory-author` — the role
+    // 284 of this file's ~297 requireRole call sites ask for — is never granted
+    // to anybody. It exists only in these guards and in the API docs, which say
+    // plainly that those routes "require a regulatory-author (or admin) role".
+    // Strip the stand-in and every authoring endpoint 403s for every customer.
+    //
+    // What it must never do is satisfy a PLATFORM-scoped role, and that is now
+    // enforced here rather than asked for in a comment. Platform-operator
+    // routes use `requirePlatformAdmin` (which has no org-admin bypass), and
+    // routing tenants-simple.ts through it is what closed the reproduced
+    // cross-tenant deletion. But that left the rule "never write
+    // requireRole('super_admin', …)" resting on a comment — and the next
+    // developer who writes it would silently re-open the hole, because signup
+    // mints the org-scoped `admin` for the first user of every organization:
+    //
+    //     POST /api/auth/signup  → JWT role:"admin", org 30
+    //     DELETE /api/tenants/28 → 200 "…VICTIM PHARMA … permanently deleted"
+    //
+    // So the stand-in is now SCOPED: it answers org-scoped requirements only.
+    // A guard that asks for a platform role gets no org-admin stand-in, whoever
+    // writes it. A route that genuinely wants to admit org admins alongside
+    // staff still works by listing 'admin' explicitly — `hasRole` is evaluated
+    // before the stand-in, so an explicit grant always wins.
     const userRoles = req.user.roles || [req.user.role];
     const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
 
-    if (!hasRole && !userRoles?.includes('admin')) {
+    const requiresPlatformRole = allowedRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));
+    const orgAdminStandIn = !requiresPlatformRole && Boolean(userRoles?.includes('admin'));
+
+    if (!hasRole && !orgAdminStandIn) {
       return res.status(403).json({
         error: { code: 'AUTH_004', message: 'Insufficient permissions' },
       });
@@ -238,8 +278,24 @@ export const requireOrgAccess = (req: Request, res: Response, next: NextFunction
     });
   }
 
-  // Admin users have access to all organizations
-  if (req.user.role === 'admin' || req.user.roles?.includes('admin')) {
+  // Cross-organization access is PLATFORM staff only.
+  //
+  // This read `req.user.role === 'admin' || roles.includes('admin')` — the
+  // org-scoped admin that signup mints for the first user of every new
+  // organization. So the guard whose job is "ensure the user belongs to the
+  // requested organization" waved through any customer admin for ANY
+  // organization id, including one they had no membership in.
+  //
+  // Scope of the live exposure, stated honestly: the only consumer is
+  // server/routes/cortexRoutes.ts, which is not mounted by any bootstrap
+  // registrar and never reads an organization id from request input — so this
+  // was latent, not exploitable, and it is not the cross-tenant deletion that
+  // an audit reproduced (that was requireRole + tenants-simple.ts, closed by
+  // routing those routes through requirePlatformAdmin). It is fixed here
+  // because the next router to reach for a middleware named
+  // `requireOrgAccess` would inherit the bypass without ever reading it.
+  const callerRoles = [req.user.role, ...(req.user.roles || [])].filter(Boolean) as string[];
+  if (callerRoles.some(role => PLATFORM_SCOPED_ROLES.has(role))) {
     return next();
   }
 
