@@ -203,14 +203,19 @@ export const requireRole = (...allowedRoles: string[]) => {
       });
     }
 
-    // SECURITY: no unconditional org-`admin` escape hatch. An org-scoped
-    // "admin" must satisfy the explicit allowedRoles / "*" wildcard like any
-    // other role, so a self-service tenant admin can never clear a
-    // platform-role guard (e.g. requireRole('super_admin')).
+    // Org-scoped RBAC: an org "admin" is a superset of the org's operational
+    // roles, so it satisfies an org-scoped role guard. This convenience is
+    // DELIBERATELY NOT a platform-privilege bypass: PLATFORM-OPERATOR routes
+    // (cross-tenant create/modify/delete) must NOT use requireRole — they use
+    // `requirePlatformAdmin` (server/middleware/requirePlatformAdmin.ts), which
+    // has no org-admin bypass. That is what closes the cross-tenant deletion
+    // exploit (tenants-simple.ts), rather than stripping the org-admin
+    // convenience from every requireRole call site. Any new platform-operator
+    // guard MUST use requirePlatformAdmin, never requireRole('super_admin', …).
     const userRoles = req.user.roles || [req.user.role];
     const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
 
-    if (!hasRole) {
+    if (!hasRole && !userRoles?.includes('admin')) {
       return res.status(403).json({
         error: { code: 'AUTH_004', message: 'Insufficient permissions' },
       });

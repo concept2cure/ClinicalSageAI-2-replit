@@ -255,14 +255,23 @@ export function sanitizeReturnTo(value: unknown): string | undefined {
   // Must be a single-slash root-relative path (reject protocol-relative "//").
   if (!value.startsWith('/') || value.startsWith('//')) return undefined;
   // Definitive check: parsed against a fixed origin, the result must remain on
-  // that same origin — no host or scheme may have been smuggled in.
+  // that same origin — no host or scheme may have been smuggled in. Return the
+  // value RECONSTRUCTED from the parsed URL's path + query rather than the raw
+  // input: the redirect target is then derived solely from URL-object
+  // properties (never the remote string directly), which both strips any
+  // fragment/userinfo residue and removes the raw-tainted-input → redirect data
+  // flow. A path-only same-origin string round-trips unchanged.
   try {
     const base = 'http://localhost';
-    if (new URL(value, base).origin !== base) return undefined;
+    const parsed = new URL(value, base);
+    if (parsed.origin !== base) return undefined;
+    const rebuilt = `${parsed.pathname}${parsed.search}`;
+    // After reconstruction it must still be a single-slash root-relative path.
+    if (!rebuilt.startsWith('/') || rebuilt.startsWith('//')) return undefined;
+    return rebuilt;
   } catch {
     return undefined;
   }
-  return value;
 }
 
 /**

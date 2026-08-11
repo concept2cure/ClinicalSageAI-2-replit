@@ -176,19 +176,23 @@ export function scopeToTenant<T extends Record<string, unknown>>(
  * Check if user has required role
  */
 export function hasRole(req: Request, requiredRole: string): boolean {
-  // SECURITY: no unconditional org-`admin` escape hatch. The requested role
-  // must be held explicitly, so an org admin cannot clear a guard for a role
-  // it was never granted (e.g. a platform role).
-  return req.tenant?.roles.includes(requiredRole) || false;
+  // Org-scoped RBAC: org "admin" is a superset of the org's operational roles.
+  // Platform-operator (cross-tenant) authorization does NOT go through here —
+  // it uses requirePlatformAdmin, which has no org-admin bypass.
+  return req.tenant?.roles.includes(requiredRole) || req.tenant?.roles.includes('admin') || false;
 }
 
 /**
  * Check if user has required permission
  */
 export function hasPermission(req: Request, requiredPermission: string): boolean {
-  // SECURITY: no unconditional org-`admin` escape hatch. The permission must be
-  // held explicitly rather than implied by an org-admin role.
-  return req.tenant?.permissions.includes(requiredPermission) || false;
+  // Org "admin" holds all org-scoped permissions. Platform-operator actions do
+  // NOT authorize through here; they use requirePlatformAdmin.
+  return (
+    req.tenant?.permissions.includes(requiredPermission) ||
+    req.tenant?.roles.includes('admin') ||
+    false
+  );
 }
 
 /**

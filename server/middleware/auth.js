@@ -127,11 +127,11 @@ const requireRole = requiredRole => {
     // Get user roles from JWT payload
     const userRoles = req.user.roles || [];
 
-    // Check if the user holds the required role. The blanket `admin` escape
-    // hatch was removed: an ordinary tenant "admin" must satisfy the explicit
-    // required role like anyone else, so it can no longer pass a platform-
-    // operator guard. Mirrors the fix in the canonical auth.ts requireRole.
-    if (userRoles.includes(requiredRole)) {
+    // Org-scoped RBAC: an org "admin" is a superset of the org's operational
+    // roles. Platform-operator (cross-tenant) routes must NOT rely on this —
+    // they use requirePlatformAdmin, which has no org-admin bypass. Mirrors the
+    // canonical auth.ts requireRole.
+    if (userRoles.includes(requiredRole) || userRoles.includes('admin')) {
       return next();
     }
 
