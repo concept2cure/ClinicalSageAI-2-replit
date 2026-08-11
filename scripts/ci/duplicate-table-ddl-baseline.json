@@ -1,7 +1,7 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-07-30T23:43:52.714Z",
-  "total": 67,
+  "generatedAt": "2026-08-11T16:27:00.475Z",
+  "total": 69,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -47,6 +47,10 @@
     "clinical_studies": [
       "migrations/20260510_notifications_and_clinical.sql",
       "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "cmc_methods": [
+      "db/migrations/20260728_stability_backing_tables.sql",
+      "db/migrations/20260730_cmc_evidence_tables.sql"
     ],
     "coi_disclosures": [
       "migrations/20260611_research_security.sql",
@@ -241,6 +245,10 @@
     "stab_results": [
       "db/migrations/022_stability_v2.sql",
       "db/migrations/030_stability_results.sql"
+    ],
+    "stab_signoffs": [
+      "db/migrations/20260728_stability_backing_tables.sql",
+      "db/migrations/20260730_cmc_evidence_tables.sql"
     ],
     "strategy_p34_exports": [
       "db/migrations/029_strategy_step2.sql",
