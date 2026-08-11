@@ -91,6 +91,17 @@ jobs:
         # with --no-exit-code so the job passed regardless.
         run: npm run ci:unreferenced-modules
 
+      - name: Guardrails — no live credentials committed to the tree
+        # A live `neondb_owner` Postgres password sat in two tracked files from
+        # 2026-01-23 (a getting-started doc, in plaintext AND as a URL; and a
+        # seed script, as the fallback used whenever DATABASE_URL was unset).
+        # Two different passwords, same endpoint, both the OWNER role — above
+        # the non-superuser app_service role the whole tenant-RLS program relies
+        # on. Nothing in CI could block it: semgrep.yml is deliberately
+        # continue-on-error so a broad ruleset with a triage backlog does not
+        # gate every PR. This guard is narrow enough to be blocking on day one.
+        run: npm run ci:committed-secrets
+
       - name: Guardrails — content cannot be saved without its data lineage
         # Every span of a saved document must trace to where it came from. The
         # gate that enforces it is a few lines inside a 6,000-line router, so a

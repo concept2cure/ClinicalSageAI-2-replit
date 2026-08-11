@@ -10,9 +10,20 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 // Load from .env file (not shell env which may have stale creds)
 require('dotenv').config({ override: true });
-const DB_URL =
-  process.env.DATABASE_URL ||
-  'postgresql://neondb_owner:npg_9SIEbtA2hKsw@ep-wild-forest-ahbojhu4-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require';
+// No hardcoded fallback. This previously defaulted to a live `neondb_owner`
+// connection string, so running the seed with DATABASE_URL unset would silently
+// point at a real database using the OWNER role — strictly above the
+// non-superuser app_service role the tenant-RLS program depends on. Fail fast
+// instead: an unset DATABASE_URL is a configuration error, not a cue to guess.
+const DB_URL = process.env.DATABASE_URL;
+if (!DB_URL) {
+  console.error(
+    'seed-governed-workflow: DATABASE_URL is not set.\n' +
+      'Set it in your (gitignored) .env or export it for this shell. There is no\n' +
+      'default connection string — the previous one was a committed credential.',
+  );
+  process.exit(1);
+}
 
 // Strip psql wrapper if present
 const cleanUrl = DB_URL.replace(/^psql\s+'?/, '')
