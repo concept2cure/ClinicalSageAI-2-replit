@@ -27,10 +27,20 @@ export const SCREEN_SIGNAL_PANEL: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      a: { type: 'integer', minimum: 0, description: 'Reports WITH the event AND the device of interest.' },
-      b: { type: 'integer', minimum: 0, description: 'Reports WITH the event, OTHER devices.' },
-      c: { type: 'integer', minimum: 0, description: 'Reports WITHOUT the event, the device of interest.' },
-      d: { type: 'integer', minimum: 0, description: 'Reports WITHOUT the event, OTHER devices.' },
+      // Cell order must match the 2×2 convention in stats/signal-disproportionality.ts:
+      //                    Event of interest    Other events
+      //   Device of int.          a                  b
+      //   Other devices           c                  d
+      // b/c were previously transposed here. PRR = [a/(a+b)]/[c/(c+d)] is not
+      // symmetric in b/c, so the swap changes PRR and its CI — and with them the
+      // frequentist signal flag and the consolidated panel tier. ROR (ad/bc), the
+      // Yates χ² and both Bayesian methods (IC, EBGM — keyed off the expected
+      // count E = (a+b)(a+c)/N) ARE invariant under a b↔c transpose, which is
+      // precisely why a transposed table still returned plausible-looking output.
+      a: { type: 'integer', minimum: 0, description: 'Reports WITH the event for the device of interest.' },
+      b: { type: 'integer', minimum: 0, description: 'Reports of OTHER events for the device of interest.' },
+      c: { type: 'integer', minimum: 0, description: 'Reports WITH the event for ALL OTHER devices.' },
+      d: { type: 'integer', minimum: 0, description: 'Reports of OTHER events for ALL OTHER devices.' },
     },
     required: ['a', 'b', 'c', 'd'],
   },

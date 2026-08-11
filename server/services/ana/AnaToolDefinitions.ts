@@ -1720,7 +1720,10 @@ const AMEND_FDA_FORM: AnaTool = {
   }, required: ['formId', 'currentValues', 'changes', 'reasonForChange'] },
 };
 
-const ALL_ANA_TOOLS_RAW: AnaTool[] = [
+// Exported for the registry-consistency suite only: ALL_ANA_TOOLS is deduped,
+// so a duplicate-name assertion against it can never fail. Tests assert against
+// this pre-dedupe array to catch collisions at source.
+export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_FDA_FORMS,
   PREPARE_FDA_FORM,
   AMEND_FDA_FORM,
