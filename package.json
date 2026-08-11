@@ -411,7 +411,7 @@
     "@babel/preset-typescript": "^7.24.7",
     "@electric-sql/pglite": "^0.5.2",
     "@eslint/js": "^10.0.0",
-    "@figma/code-connect": "^1.2.3",
+    "@figma/code-connect": "^1.5.2",
     "@replit/vite-plugin-cartographer": "^0.6.1",
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
     "@storybook/react": "^10.3.5",
