@@ -193,11 +193,18 @@ AS $$
 DECLARE
   creator_email TEXT;
 BEGIN
-  SELECT lower(u.email::text)
-    INTO creator_email
-    FROM public.users u
-   WHERE u.id::text = NEW.created_by::text
-   LIMIT 1;
+  -- Resolve the creator email from public.users when that table is present. The
+  -- email is a nullable convenience for permission display; the authoring
+  -- subsystem can be provisioned independently of the core users table (the
+  -- durable applier does exactly this), so a missing users table must never
+  -- break document creation — seed with a NULL email in that case.
+  IF to_regclass('public.users') IS NOT NULL THEN
+    SELECT lower(u.email::text)
+      INTO creator_email
+      FROM public.users u
+     WHERE u.id::text = NEW.created_by::text
+     LIMIT 1;
+  END IF;
 
   INSERT INTO public.doc_permissions
     (doc_id, section_id, tenant_id, principal_id, email, role,
@@ -230,16 +237,24 @@ BEGIN
     EXECUTE FUNCTION public.seed_authoring_document_permissions();
 
     -- Retrofit existing documents. Idempotent; records the original creator as
-    -- the grantor so historical ownership remains attributable.
-    INSERT INTO public.doc_permissions
-      (doc_id, section_id, tenant_id, principal_id, email, role,
-       granted_by, grant_reason)
-    SELECT d.id, NULL, d.tenant_id, d.created_by::text, lower(u.email::text), role_name,
-           d.created_by::text, 'Backfilled document creator'
-      FROM public.authoring_documents d
-      LEFT JOIN public.users u ON u.id::text = d.created_by::text
-     CROSS JOIN (VALUES ('OWNER'), ('AUTHOR')) AS roles(role_name)
-    ON CONFLICT DO NOTHING;
+    -- the grantor so historical ownership remains attributable. The creator
+    -- email is read from public.users, so the backfill runs only when that
+    -- table exists: the durable authoring-subsystem applier provisions this
+    -- subsystem independently of (and before) the core users table, and must
+    -- not hard-require it at apply time. In a real deploy users exists, so the
+    -- backfill runs with the email join; the seed trigger keeps ownership
+    -- attributable for documents created afterward.
+    IF to_regclass('public.users') IS NOT NULL THEN
+      INSERT INTO public.doc_permissions
+        (doc_id, section_id, tenant_id, principal_id, email, role,
+         granted_by, grant_reason)
+      SELECT d.id, NULL, d.tenant_id, d.created_by::text, lower(u.email::text), role_name,
+             d.created_by::text, 'Backfilled document creator'
+        FROM public.authoring_documents d
+        LEFT JOIN public.users u ON u.id::text = d.created_by::text
+       CROSS JOIN (VALUES ('OWNER'), ('AUTHOR')) AS roles(role_name)
+      ON CONFLICT DO NOTHING;
+    END IF;
   END IF;
 END $$;
 
