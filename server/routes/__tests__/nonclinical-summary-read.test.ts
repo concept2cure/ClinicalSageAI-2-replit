@@ -116,7 +116,7 @@ describe('GET /api/nonclinical-summary', () => {
 describe('POST /api/nonclinical-summary/document — persist the composed M2.6 written summary', () => {
   /** Wire the drizzle insert().values().returning() chain to a captured recorder. */
   function stubInsert(returned: Array<{ id: number }>) {
-    const values = vi.fn(() => ({ returning: vi.fn(async () => returned) }));
+    const values = vi.fn((_row: unknown) => ({ returning: vi.fn(async () => returned) }));
     insert.mockReturnValue({ values });
     return values;
   }

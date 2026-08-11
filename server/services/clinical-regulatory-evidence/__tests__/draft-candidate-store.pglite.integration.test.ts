@@ -1,6 +1,6 @@
 /**
  * Draft-candidate store — END-TO-END against in-process PGlite, applying the real
- * migration (db/migrations/20260809_authoring_ai_draft_candidates.sql, RLS and
+ * migration (db/migrations/20260809_source_attribution_draft_candidates.sql, RLS and
  * all). Proves the store that feeds automated source attribution:
  *
  *   - a parked candidate round-trips its content + sources
@@ -45,7 +45,7 @@ beforeAll(async () => {
   pglite = new PGlite();
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG_A},'a'), (${ORG_B},'b');`);
-  await pglite.exec(migration('db/migrations/20260809_authoring_ai_draft_candidates.sql'));
+  await pglite.exec(migration('db/migrations/20260809_source_attribution_draft_candidates.sql'));
 }, 90_000);
 
 afterAll(async () => {

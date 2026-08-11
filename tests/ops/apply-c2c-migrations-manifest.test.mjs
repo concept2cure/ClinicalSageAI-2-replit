@@ -254,6 +254,13 @@ const KNOWN_UNLISTED = new Set([
   'migrations/20260716_template_doc_types.sql',
   'migrations/20260727_onboarding_proposal_runs.sql',
   'migrations/20260728_chat_thread_store.sql',
+  // authoring_reviews is created by the authoring-subsystem provisioner
+  // (db/migrations/20260730_authoring_subsystem_schema.sql, in
+  // AUTHORING_SUBSYSTEM_FILES) which applyAuthoringSubsystem() runs on BOTH
+  // install-fresh and deploy-migrate before the applier list — so this
+  // CREATE-TABLE-IF-NOT-EXISTS needs nothing from the applier on any path, and
+  // authoring table creation must not sit on the authoring-guarded applier path.
+  'migrations/20260728_authoring_reviews.sql',
   // 20260729_unified_documents_provision + its two workflow_document_versions
   // ALTERs (20260730/20260731) are NOT here: their tables are not on the
   // drizzle-push surface (shared/schema/unified_workflow.ts is unexported), so

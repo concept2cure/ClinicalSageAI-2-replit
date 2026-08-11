@@ -188,6 +188,10 @@ export default function createVaultIngestRoutes(): Router {
     // INSERT into vault.documents
     const client = await pool.connect();
     try {
+      // tenant-isolation-safe: vault.documents is program-scoped (program_id, no
+      // org_id column); the caller's ownership of data.programId was already
+      // enforced above against regulatory_programs.organization_id (403 on
+      // mismatch), so this write is confined to a program the acting org owns.
       const result = await client.query(
         `INSERT INTO vault.documents (
           program_id, document_code, document_title, document_type,
