@@ -197,6 +197,12 @@ const AUTHORING_SUBSYSTEM_FK_CONSTRAINTS = [
   'doc_revisions_section_tenant_fkey',
   'authoring_comments_section_tenant_fkey',
   'authoring_citations_section_tenant_fkey',
+  // C2C-AUTHOR-002 object permissions: composite tenant-parentage FKs on
+  // doc_permissions guaranteed by 20260727_authoring_object_permissions.sql.
+  // Keep in sync with AUTHORING_SUBSYSTEM_FK_CONSTRAINTS in
+  // scripts/db/authoring-subsystem.mjs.
+  'doc_permissions_doc_tenant_fkey',
+  'doc_permissions_section_doc_tenant_fkey',
 ];
 
 export type SubsystemState = 'present' | 'partial' | 'absent';

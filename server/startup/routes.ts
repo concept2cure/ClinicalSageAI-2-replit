@@ -29,6 +29,9 @@ import type { Pool } from 'pg';
 import { authMiddleware } from '../auth.js';
 import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
+import { authoringObjectAuthorization } from '../middleware/authoringObjectAuthorization';
+import authoringPermissionsRouter from '../routes/authoring-permissions';
+import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
 
@@ -121,6 +124,31 @@ export async function registerPreStartRoutes(
   await registerAiRoutes({ app, pool, aiCircuitBreaker });
   registerConcept2CureRoutes(app);
   registerAdminRoutes(app);
+
+  // Authoring object security is mounted once at the existing `/api` gateway,
+  // immediately ahead of the legacy `/api/authoring` router. The middleware
+  // ignores non-authoring paths, so no second `/api/authoring` mount is added and
+  // the route-mount no-regression contract stays intact.
+  //
+  // Permission-management routes are owner/admin controlled and terminate their
+  // own requests; every other document/section mutation must pass the mandatory,
+  // fail-closed object authorization middleware.
+  //
+  // The old authoring router contains a feature-flagged helper under
+  // AUTH_ENFORCE_SECTION_PERMS. That helper is now RETIRED on the production
+  // composition path: it represented a second permission system, depended on the
+  // old schema shape, and could deny a request after the canonical policy had
+  // already approved it. Keep the legacy function inert until it is deleted from
+  // the large router in a dedicated decomposition PR.
+  await assertAuthoringAuthorizationReady(pool);
+  if (process.env.AUTH_ENFORCE_SECTION_PERMS === '1') {
+    console.warn(
+      '[authoring] AUTH_ENFORCE_SECTION_PERMS is retired; canonical mandatory object authorization is active.',
+    );
+  }
+  process.env.AUTH_ENFORCE_SECTION_PERMS = '0';
+  app.use('/api', authoringPermissionsRouter);
+  app.use('/api', authoringObjectAuthorization);
 
   // Slot 5 — Authoring router + authoring actions + AnA platform control +
   // AI actions (+ Redis / queue init) + Phase 3 orchestration.
