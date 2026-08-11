@@ -112,9 +112,54 @@ const authenticateJWT = (req, res, next) => {
 const verifyJwt = authenticateJWT;
 
 /**
- * Check if user has the required role
+ * Roles that carry authority ACROSS tenants.
+ *
+ * The org-scoped vocabulary is admin / manager / member / viewer. Self-service
+ * signup mints the org-scoped `admin` for the first user of every new
+ * organization, so an org admin is an ordinary customer, not staff. Kept
+ * identical to PLATFORM_SCOPED_ROLES in ./auth.ts — pinned by
+ * __tests__/platform-role-escalation.test.ts.
  */
-const requireRole = requiredRole => {
+const PLATFORM_SCOPED_ROLES = new Set([
+  'super_admin',
+  'platform_admin',
+  'superadmin',
+  'support',
+]);
+
+/**
+ * Check if the user has one of the required roles.
+ *
+ * ── This file is the one that actually runs ─────────────────────────────────
+ * `server/middleware/auth.js` and `server/middleware/auth.ts` both exist and
+ * export overlapping names. For the 95 call sites that import the bare
+ * specifier `'../middleware/auth'`, extension resolution picks `.js` FIRST —
+ * so this file, not the larger TypeScript one, is the live implementation.
+ * Edits made to auth.ts's requireRole do not reach those callers.
+ *
+ * ── Two defects this had, both invisible from the call site ─────────────────
+ * 1. It took a SINGLE role while every caller invokes it variadically. So
+ *    `requireRole('super_admin', 'platform_admin')` silently discarded
+ *    'platform_admin' — the guard denied genuine platform admins while the
+ *    org-admin bypass below admitted ordinary customers. Exactly backwards.
+ * 2. The `|| userRoles.includes('admin')` bypass was unconditional, so a
+ *    platform-scoped guard accepted the org `admin` that signup hands out
+ *    free. That is the escalation an external audit reproduced live:
+ *
+ *        POST /api/auth/signup  → JWT role:"admin", org 30
+ *        DELETE /api/tenants/28 → 200 "…VICTIM PHARMA … permanently deleted"
+ *
+ * The org-admin stand-in is kept but SCOPED, not deleted: `regulatory-author`
+ * is asked for by 284 call sites and granted to nobody, so removing the
+ * stand-in outright would 403 the entire authoring surface for every customer.
+ * It now answers org-scoped requirements only; a platform-scoped requirement
+ * gets no stand-in. A route that means to admit org admins alongside staff
+ * still lists 'admin' explicitly, which is matched before the stand-in.
+ *
+ * The previous comment here claimed this "Mirrors the canonical auth.ts
+ * requireRole". It did not — that one is variadic. It does now.
+ */
+const requireRole = (...allowedRoles) => {
   return (req, res, next) => {
     // If not authenticated, deny access
     if (!req.user) {
@@ -125,20 +170,20 @@ const requireRole = requiredRole => {
     }
 
     // Get user roles from JWT payload
-    const userRoles = req.user.roles || [];
+    const userRoles = req.user.roles || (req.user.role ? [req.user.role] : []);
 
-    // Org-scoped RBAC: an org "admin" is a superset of the org's operational
-    // roles. Platform-operator (cross-tenant) routes must NOT rely on this —
-    // they use requirePlatformAdmin, which has no org-admin bypass. Mirrors the
-    // canonical auth.ts requireRole.
-    if (userRoles.includes(requiredRole) || userRoles.includes('admin')) {
+    const hasRole = allowedRoles.some(role => userRoles.includes(role) || role === '*');
+    const requiresPlatformRole = allowedRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));
+    const orgAdminStandIn = !requiresPlatformRole && userRoles.includes('admin');
+
+    if (hasRole || orgAdminStandIn) {
       return next();
     }
 
     // Log authorization failure
     logger.warn('Authorization failed: insufficient role', {
       userId: req.user.id,
-      requiredRole,
+      requiredRole: allowedRoles.join('|'),
       userRoles,
     });
 
@@ -235,8 +280,16 @@ const requireSameOrganization = (req, res, next) => {
     return next();
   }
 
-  // Check if user belongs to the organization
-  if (req.user.organizationId !== organizationId && !req.user.roles.includes('admin')) {
+  // Check if user belongs to the organization.
+  //
+  // The exemption was `!req.user.roles.includes('admin')` — the ORG-scoped
+  // admin that signup mints for the first user of every new organization. So
+  // the guard whose whole job is blocking cross-tenant access exempted any
+  // customer admin from it, and then logged "Cross-tenant access attempt
+  // blocked" for everyone else. Crossing tenants is platform staff only.
+  const callerRoles = [req.user.role, ...(req.user.roles || [])].filter(Boolean);
+  const isPlatformStaff = callerRoles.some(role => PLATFORM_SCOPED_ROLES.has(role));
+  if (req.user.organizationId !== organizationId && !isPlatformStaff) {
     logger.warn('Cross-tenant access attempt blocked', {
       userId: req.user.id,
       userOrganizationId: req.user.organizationId,
@@ -284,6 +337,7 @@ const requireAuth = authenticateJWT;
 const authenticate = authenticateJWT;
 
 export {
+  PLATFORM_SCOPED_ROLES,
   authenticateJWT,
   verifyJwt,
   authenticateToken,
