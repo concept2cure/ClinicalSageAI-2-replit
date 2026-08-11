@@ -77,6 +77,57 @@ describe('authorizeCommand — fail-closed by construction', () => {
   });
 });
 
+describe('authorizeCommand — tenant tool policy applies to ALL commands', () => {
+  // Regression guard. The per-tenant allow/deny policy used to be enforced ONLY by
+  // requireGovernedToolGate(), which is reachable exclusively from the 37 dotted
+  // MDX/PDEV handlers. The other ~78 dispatchable commands — submit_document,
+  // freeze_document, sign_document, place_in_dossier, erase_personal_data … —
+  // silently IGNORED an admin deny, and a non-empty allow list failed to constrain
+  // them at all, inverting a whitelist into a no-op. server/routes/ana-tool-policy.ts
+  // accepts those names, so it was a supported, silently-ineffective configuration.
+
+  it('DENIES a non-MDX write that the tenant deny-list names', async () => {
+    rbac.hasRole.mockResolvedValue(true); // role would otherwise permit it
+    const decision = await authorizeCommand(
+      'submit_document',
+      ctx({ anaToolPolicy: { deny: ['submit_document'] } }),
+    );
+    expect(decision.ok).toBe(false);
+    if (decision.ok) return;
+    expect(decision.result.error).toBe('TOOL_DENIED');
+  });
+
+  it('DENIES a READ the tenant deny-list names (deny outranks the degraded-read path)', async () => {
+    const decision = await authorizeCommand(
+      'list_projects',
+      ctx({ anaToolPolicy: { deny: ['list_projects'] } }),
+    );
+    expect(decision.ok).toBe(false);
+    if (decision.ok) return;
+    expect(decision.result.error).toBe('TOOL_DENIED');
+  });
+
+  it('DENIES a command absent from a non-empty allow-list (whitelist actually constrains)', async () => {
+    rbac.hasRole.mockResolvedValue(true);
+    const decision = await authorizeCommand(
+      'create_task',
+      ctx({ anaToolPolicy: { allow: ['create_project'] } }),
+    );
+    expect(decision.ok).toBe(false);
+    if (decision.ok) return;
+    expect(decision.result.error).toBe('TOOL_NOT_ALLOWED');
+  });
+
+  it('ALLOWS a command that is on the allow-list, and when no policy is set', async () => {
+    rbac.hasRole.mockResolvedValue(true);
+    expect((await authorizeCommand('create_project', ctx({ anaToolPolicy: { allow: ['create_project'] } }))).ok).toBe(true);
+    // No policy configured for the tenant → the gate is transparent.
+    expect((await authorizeCommand('create_project', ctx())).ok).toBe(true);
+    // An empty allow-list is "unset", not "deny everything".
+    expect((await authorizeCommand('create_project', ctx({ anaToolPolicy: { allow: [] } }))).ok).toBe(true);
+  });
+});
+
 describe('authorizeCommand — role enforcement on mutations', () => {
   it('DENIES a mutation when the caller lacks the required role (viewer)', async () => {
     rbac.hasRole.mockResolvedValue(false);

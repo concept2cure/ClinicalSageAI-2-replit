@@ -21,6 +21,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { ensureJournal, recordApplied } from './migration-journal.mjs';
 
 // Dependency-safe order: governance ALTERs ana_capability_registry (pre-existing),
 // PV + commitments create their own tables, council provisioning seeds the four
@@ -538,6 +539,32 @@ export const C2C_MIGRATION_FILES = [
   // intelligence.failure_patterns from 20260520_ana_failure_learning), which is
   // precisely why they failed the blank-DB screen and pass this one.
   'db/migrations/026_stability_step4.sql',
+  // ── Stability tenant isolation + backing (relocated here from ~line 146) ──
+  // Placed AFTER the stab_* core creators (022/024/030/026) so the isolation
+  // sweep sees the existing stab_* tables to policy, and the backing file's
+  // v_stab_* view guards (stab_timepoints/stab_conditions) are satisfied on a
+  // fresh DB. Both remain far before the two final 20260801 isolation sweeps.
+  // ── Stability module tenant isolation (High-severity security fix) ────────
+  // docs/security/STABILITY_TENANT_ISOLATION_FINDING.md. The stability router scoped
+  // GMP data by surrogate id with no tenant predicate, and its
+  // set_config('app.tenant_id', …) calls were inert because the app's RLS keys on
+  // app.current_tenant_id. This brings every EXISTING stab_* base table under the
+  // uniform tenant_isolation_policy (the 0021 shape) with ENABLE + FORCE RLS, and
+  // defaults tenant_id from the request so the router's INSERTs auto-tag.
+  //
+  // ORDER MATTERS: this MUST precede the backing-tables entry below. It opens with
+  // BEGIN; — applyMigrationFiles' selfTransacting detection handles that, so it is
+  // not double-wrapped. Catalog-driven, so it is a no-op (not an error) on a
+  // database where the stab_* tables do not exist yet.
+  'db/migrations/20260728_stability_tenant_isolation.sql',
+  // Backs the seven previously-unbacked stab_* tables, the shared cmc_methods
+  // catalog and the two v_stab_* views, tenant-isolated FROM BIRTH (tenant_id
+  // INTEGER NOT NULL defaulting from app.current_tenant_id, plus the same policy
+  // loop). Backing them without that isolation would convert a fail-safe 500 into a
+  // real cross-tenant leak, which is why it follows the migration above. cmc_methods
+  // is deliberately created WITHOUT a tenant column: it is a global methods catalog
+  // joined by id and never tenant-filtered, and scoping it would hide every method.
+  'db/migrations/20260728_stability_backing_tables.sql',
   'db/migrations/081_grdhe_regulatory_mapping_layer.sql',
   'db/migrations/20260209_phase6_6a_fda_ingest_runs.sql',
   'db/migrations/20260211_phase6_6d_defense_packets.sql',
@@ -830,6 +857,17 @@ export async function applyMigrationFiles(
   const applied = [];
   const failures = [];
 
+  // Provision the ledger table once per run. Best-effort for the same reason the
+  // per-file record is: a journal that cannot be created must not stop migrations
+  // from applying. When this fails, each recordApplied below fails the same way and
+  // is reported per file.
+  try {
+    await ensureJournal((text, params) => pool.query(text, params));
+  } catch (journalErr) {
+    if (process.env.C2C_MIGRATION_JOURNAL_STRICT === '1') throw journalErr;
+    error(`  (migration journal unavailable: ${journalErr.message})`);
+  }
+
   for (const file of files) {
     const full = path.join(repoRoot, file);
     if (!fs.existsSync(full)) {
@@ -845,6 +883,24 @@ export async function applyMigrationFiles(
       await pool.query(sql);
       if (wrap) await pool.query('COMMIT');
       applied.push(file);
+      // Applied-file ledger + content-hash drift signal. The deploy mechanism
+      // records THAT migrations ran; this records WHICH file ran and the sha256 of
+      // the SQL that ran, so a file edited after it was applied is detectable
+      // instead of silently diverging. Sited here rather than in either caller so
+      // both the out-of-band applier and the deploy path are covered.
+      //
+      // `sql` is the already-read contents — deliberately not re-derived from a
+      // path inside the journal module (that read tripped a path-traversal SAST
+      // rule and there is no reason to touch the filesystem twice).
+      //
+      // Best-effort by default: a journal outage must not fail an otherwise good
+      // migration run. Set C2C_MIGRATION_JOURNAL_STRICT=1 to make it fatal.
+      try {
+        await recordApplied((text, params) => pool.query(text, params), file, sql);
+      } catch (journalErr) {
+        if (process.env.C2C_MIGRATION_JOURNAL_STRICT === '1') throw journalErr;
+        error(`  (journal skipped for ${file}: ${journalErr.message})`);
+      }
       log(`✓ applied: ${file}`);
     } catch (err) {
       await pool.query('ROLLBACK').catch(() => {});

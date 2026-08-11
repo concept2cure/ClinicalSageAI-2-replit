@@ -166,6 +166,33 @@ const pool = getPool();
  */
 const LOCKED_DOCUMENT_STATUSES = new Set(['FROZEN', 'APPROVED']);
 
+/**
+ * Is the fine-grained per-user section-permission matrix enforced?
+ *
+ * 21 CFR Part 11 §11.10(d) — "limiting system access to authorized individuals".
+ * The matrix used to be strictly opt-in behind `AUTH_ENFORCE_SECTION_PERMS === '1'`,
+ * and that flag is set NOWHERE in this repository outside tests. The effective
+ * production rule was therefore "any authenticated member of the owning tenant may
+ * edit any unlocked section of that tenant" — no per-user grant, and PATCH
+ * /sections/:sectionId carries no coarse role gate either. A viewer-tier member, or
+ * any member with no grant on the document, could edit a regulated IND/CTD section
+ * they were never authorized to author.
+ *
+ * Enforced by DEFAULT in production and staging; the flag remains as a non-production
+ * kill-switch (`'0'` disables, `'1'` forces on) so local development and fixtures that
+ * predate the grant store keep working. Production cannot be opted out.
+ *
+ * Paired with the creator auto-grant on POST /docs — without that grant this control
+ * is a lockout rather than a permission model.
+ */
+function sectionPermsEnforced(): boolean {
+  if (process.env.NODE_ENV === 'production') return true;
+  const flag = process.env.AUTH_ENFORCE_SECTION_PERMS;
+  if (flag === '1') return true;
+  if (flag === '0') return false;
+  return process.env.NODE_ENV === 'staging';
+}
+
 /** The only grants the fine-grained section matrix recognises. */
 const GRANTABLE_SECTION_ROLES = new Set(['AUTHOR', 'REVIEWER']);
 
@@ -258,8 +285,8 @@ async function canEditSection(
       return false;
     }
 
-    // ── OPTIONAL: fine-grained per-user matrix ───────────────────────────────
-    if (process.env.AUTH_ENFORCE_SECTION_PERMS !== '1') return true;
+    // ── Fine-grained per-user matrix: ON by default in prod/staging ──────────
+    if (!sectionPermsEnforced()) return true;
 
     // Roles from the verified token, read with the same typed access
     // requireAny() uses.
@@ -1297,6 +1324,37 @@ router.post('/docs', async (req: Request, res: Response) => {
        RETURNING *`,
       args,
     );
+
+    // Creator auto-grant — the mandatory companion to sectionPermsEnforced().
+    //
+    // With the per-user matrix enforced by default, a document whose creator holds
+    // no grant is a document nobody can edit. This writes the doc-level AUTHOR grant
+    // (section_id NULL = the whole document) so creating a document still means you
+    // can author it.
+    //
+    // The email MUST come from getActorEmail() — the same accessor canEditSection
+    // compares with `LOWER(p.email) = LOWER($3)`. `createdBy` above is getActorId(),
+    // a different value whenever the JWT carries an email claim; granting on that
+    // would silently lock the creator out of their own document.
+    //
+    // Best-effort: a failed grant must not fail document creation (the document is
+    // already committed and is valid without it), but it is logged loudly because a
+    // grant-store outage means the creator will hit a 403 on their next edit.
+    const creatorEmail = getActorEmail(req);
+    if (creatorEmail) {
+      try {
+        await pool.query(
+          `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+           VALUES ($1, NULL, $2, 'AUTHOR', $3)`,
+          [docId, creatorEmail.toLowerCase(), tenantId],
+        );
+      } catch (grantErr) {
+        logger.warn('creator auto-grant skipped; creator may be denied on next edit', {
+          docId,
+          error: grantErr instanceof Error ? grantErr.message : String(grantErr),
+        });
+      }
+    }
 
     // If template_id provided, scaffold the document's section skeleton.
     //
