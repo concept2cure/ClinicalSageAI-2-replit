@@ -27,7 +27,12 @@ class FakePool {
   public idleCount = 1;
   public waitingCount = 0;
 
-  query(textOrConfig: any, _values?: unknown[]) {
+  // Shared query semantics: `SELECT NOW()` returns a row so serverTime is
+  // populated. Used by BOTH pool.query and a checked-out client's query,
+  // because on a real pg pool those are equivalent — and the instrumentation
+  // runs exempt infrastructure probes on a connection from pool.connect(), so
+  // the client must answer NOW() exactly as the pool does.
+  private run(textOrConfig: any) {
     const text = typeof textOrConfig === 'string' ? textOrConfig : textOrConfig?.text;
     if (typeof text === 'string' && /NOW\(\)/i.test(text)) {
       return Promise.resolve({ rows: [{ now: new Date('2026-08-07T00:00:00.000Z') }], rowCount: 1 });
@@ -35,10 +40,14 @@ class FakePool {
     return Promise.resolve({ rows: [], rowCount: 0 });
   }
 
+  query(textOrConfig: any, _values?: unknown[]) {
+    return this.run(textOrConfig);
+  }
+
   connect() {
     return Promise.resolve({
       release: () => undefined,
-      query: () => Promise.resolve({ rows: [], rowCount: 0 }),
+      query: (textOrConfig: any) => this.run(textOrConfig),
     });
   }
 }
