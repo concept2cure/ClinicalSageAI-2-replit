@@ -21,7 +21,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { and, desc, eq } from 'drizzle-orm';
 import { savedPrecedentQueries } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
@@ -84,7 +84,7 @@ router.get('/', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (orgId === null) return orgRequired(res);
 
-    const rows = await db
+    const rows = await requestDb(req)
       .select()
       .from(savedPrecedentQueries)
       .where(eq(savedPrecedentQueries.organizationId, orgId))
@@ -121,7 +121,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
     const { label, query, scope } = parsed.data;
 
-    const [row] = await db
+    const [row] = await requestDb(req)
       .insert(savedPrecedentQueries)
       .values({
         organizationId: orgId,
@@ -163,7 +163,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
     if (body.hits  !== undefined) updates.hits  = body.hits;
     if (body.refresh === true)    updates.lastRunAt = new Date();
 
-    const [row] = await db
+    const [row] = await requestDb(req)
       .update(savedPrecedentQueries)
       .set(updates)
       .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
@@ -186,7 +186,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     if (!idParsed.success) return clientError(res, 422, 'id must be a positive integer');
     const id = idParsed.data;
 
-    const [row] = await db
+    const [row] = await requestDb(req)
       .delete(savedPrecedentQueries)
       .where(and(eq(savedPrecedentQueries.id, id), eq(savedPrecedentQueries.organizationId, orgId)))
       .returning({ id: savedPrecedentQueries.id });

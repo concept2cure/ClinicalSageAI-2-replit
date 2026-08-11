@@ -37,10 +37,15 @@ vi.mock('../server/services/mdx-health.service', () => ({
   probeMdxHealth: vi.fn(),
 }));
 
-/* Mock the database modules so saved-precedent-queries route handlers
-   resolve without an actual db connection. */
-vi.mock('../server/db', () => ({
-  db: {
+/* Mock the database modules so saved-precedent-queries route handlers resolve
+   without an actual db connection. The route runs on the request-scoped
+   connection (requestDb(req)); rather than install a fake req.dbClient we stub
+   requestDb() to hand back the SAME in-memory query builder as the shared `db`
+   mock, so both the legacy and tenant-scoped paths resolve identically here.
+   (The real requestDb path is exercised against Postgres in
+   server/routes/__tests__/saved-precedent-queries.rls.test.ts.) */
+const { mockDb } = vi.hoisted(() => {
+  const mockDb = {
     select: vi.fn(() => ({
       from: vi.fn(() => ({
         where: vi.fn(() => ({
@@ -65,9 +70,12 @@ vi.mock('../server/db', () => ({
         returning: vi.fn(async () => []),
       })),
     })),
-  },
-  pool: { query: vi.fn() },
-}));
+  };
+  return { mockDb };
+});
+
+vi.mock('../server/db', () => ({ db: mockDb, pool: { query: vi.fn() } }));
+vi.mock('../server/db/requestDb', () => ({ requestDb: () => mockDb }));
 
 import * as svc from '../server/services/regulatory-programs.service';
 import * as healthSvc from '../server/services/mdx-health.service';

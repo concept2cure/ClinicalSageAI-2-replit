@@ -14,6 +14,7 @@ import {
   ConnectorCredentials,
 } from './connector-interface.js';
 import { assertSafePublicUrl } from '../../utils/ssrfGuard.js';
+import { safeFetch as safePublicFetch } from '../../utils/safeFetch.js';
 
 /**
  * Escape a value for safe interpolation into a VQL single-quoted string
@@ -72,13 +73,14 @@ export class VeevaVaultConnector implements DataConnector {
    * storage) can never be hit. Throws if unsafe.
    */
   private safeFetch(url: string, init?: RequestInit): Promise<Response> {
-    assertSafePublicUrl(url, 'Veeva Vault request');
     // Bound every outbound call so a hung Vault tenant can't pin the worker
     // indefinitely. Uploads (multipart) are heavier, so use a generous 30s
     // default (override via VEEVA_TIMEOUT_MS). Respect a caller-supplied signal.
     const timeoutMs = Number(process.env.VEEVA_TIMEOUT_MS || 30000);
     const signal = init?.signal ?? AbortSignal.timeout(timeoutMs);
-    return fetch(url, { ...init, signal });
+    // Delegate to the resolve-and-pin helper: it re-runs the literal host guard
+    // AND resolves + pins the socket to public IPs, defeating DNS rebinding.
+    return safePublicFetch(url, { ...init, signal }, 'Veeva Vault request');
   }
 
   async status(): Promise<ConnectorHealth> {

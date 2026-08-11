@@ -63,6 +63,7 @@
     "cre:atoms": "tsx scripts/cre/generate-atoms.ts",
     "cre:seed-demo": "tsx scripts/cre/seed-demo-evidence.ts",
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
+    "oq:localai": "tsx server/eval/localai/oq-live-check.ts",
     "benchmark:rtf": "tsx server/services/shadow-review/benchmark/cli.ts",
     "ci:duplicate-table-ddl": "node scripts/ci/check-duplicate-table-ddl.mjs",
     "ci:duplicate-table-ddl:strict": "node scripts/ci/check-duplicate-table-ddl.mjs --strict",
