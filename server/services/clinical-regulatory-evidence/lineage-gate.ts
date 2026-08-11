@@ -25,9 +25,15 @@
 import { detectSpans } from '../sentenceTraceabilityService';
 import {
   replaceAuthorSpans,
+  replaceSourceSpans,
   assertLineageCoversContent,
   type Queryable,
 } from './span-lineage.service';
+import {
+  attributeQuotedSpans,
+  quotedCoverage,
+  type RetrievedSource,
+} from './source-attribution';
 
 export interface AuthorLineageRef {
   documentTable: string;
@@ -69,4 +75,105 @@ export async function enforceAuthorLineage(
   // Ask the database what it is about to commit, rather than trusting that the
   // writer not throwing means the rows say what they should.
   await assertLineageCoversContent(orgId, ref, content, exec);
+}
+
+export interface SourceAndAuthorLineageResult {
+  /** Verified-quote source spans recorded (exceeds clause count when multi-sourced). */
+  sourceSpans: number;
+  /** Author spans recorded for the non-quoted remainder. */
+  authorSpans: number;
+  /** Distinct cre_evidence_sources cited. */
+  distinctSources: number;
+  /** Percent of non-whitespace content verifiably quoted from a source. */
+  coverage: number;
+}
+
+/**
+ * Enforce source + author lineage for one content write, within the caller's
+ * transaction — the automated-attribution counterpart of enforceAuthorLineage.
+ *
+ * Where enforceAuthorLineage attributes every clause to the author, this splits
+ * the content: a clause whose text appears VERBATIM in one of the retrieved
+ * `sources` is recorded as a verified `quoted` source span; every other clause is
+ * recorded as an author assertion. The union covers the content, so
+ * assertLineageCoversContent passes exactly as it does for pure author lineage —
+ * and the source half is honest by construction (only checkable substring facts
+ * are cited; text the model paraphrased or wrote itself falls to the author, never
+ * to a guessed citation).
+ *
+ * Both span kinds are REPLACED, not merely added: re-accepting a draft re-states
+ * the whole set, so a quote or clause the new text no longer contains is retired
+ * rather than left pointing at characters that have moved — this is what makes the
+ * design's "a citation can never go stale" guarantee hold across edits.
+ *
+ * Empty/null content is a no-op for the coverage gate but still retires any prior
+ * spans for the document, so an accept that clears the section leaves no orphans.
+ *
+ * Callers MUST invoke this inside the SAME transaction as their content write,
+ * passing that transaction's client as `exec`, so a lineage failure rolls the
+ * content write back with it.
+ *
+ * @throws when the recorded spans do not cover the content (SpanLineageError), or
+ *         when a cited source is not visible to the tenant (recordSourceSpan) —
+ *         both of which correctly fail the save closed.
+ */
+export async function enforceSourceAndAuthorLineage(
+  exec: Queryable,
+  orgId: number,
+  ref: AuthorLineageRef,
+  content: string | null | undefined,
+  actor: string,
+  sources: RetrievedSource[],
+  opts: { minQuoteChars?: number } = {},
+): Promise<SourceAndAuthorLineageResult> {
+  if (content == null || typeof content !== 'string' || content.length === 0) {
+    // Nothing authored → retire whatever was previously attributed so the reads
+    // stop answering for content that is gone, then no-op the gate.
+    await replaceSourceSpans(orgId, ref, [], { createdBy: actor }, exec);
+    await replaceAuthorSpans(orgId, ref, [], { assertedBy: actor, createdBy: actor }, exec);
+    return { sourceSpans: 0, authorSpans: 0, distinctSources: 0, coverage: 0 };
+  }
+
+  // 1. Verified-quote spans — pure, deterministic, zero model trust. Clause
+  //    granularity matches author lineage so the two partition the same clauses.
+  const quoted = attributeQuotedSpans(content, sources, {
+    granularity: 'clause',
+    minQuoteChars: opts.minQuoteChars,
+    multiSource: true,
+  });
+  await replaceSourceSpans(
+    orgId,
+    ref,
+    quoted.map((s) => ({
+      charStart: s.charStart,
+      charEnd: s.charEnd,
+      spanText: s.spanText,
+      sourceId: s.sourceId,
+      usage: s.usage,
+    })),
+    { createdBy: actor },
+    exec,
+  );
+
+  // 2. Author spans for the remainder: every clause NOT covered by a verified
+  //    quote. attributeQuotedSpans attributes WHOLE clause spans, so a quoted
+  //    clause shares its (start,end) with a detected clause — range membership is
+  //    exact, and multi-sourced clauses (several quoted rows, one range) collapse
+  //    to a single excluded clause.
+  const quotedRanges = new Set(quoted.map((s) => `${s.charStart}:${s.charEnd}`));
+  const authorSpans = detectSpans(content, 'clause')
+    .filter((s) => !quotedRanges.has(`${s.charStart}:${s.charEnd}`))
+    .map((s) => ({ charStart: s.charStart, charEnd: s.charEnd, spanText: s.text }));
+  await replaceAuthorSpans(orgId, ref, authorSpans, { assertedBy: actor, createdBy: actor }, exec);
+
+  // 3. Ask the database what it is about to commit. A gap throws and rolls the
+  //    content write back with it.
+  await assertLineageCoversContent(orgId, ref, content, exec);
+
+  return {
+    sourceSpans: quoted.length,
+    authorSpans: authorSpans.length,
+    distinctSources: new Set(quoted.map((s) => s.sourceId)).size,
+    coverage: quotedCoverage(content, quoted),
+  };
 }

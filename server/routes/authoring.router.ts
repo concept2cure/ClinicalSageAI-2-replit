@@ -2653,6 +2653,14 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     // ── Retrieve Data Room evidence for section context ───────────────
     let evidenceBlock = '';
     let sourcesRetrieved = 0;
+    // The chunks this draft is retrieved from, captured so the accept endpoint can
+    // record verified source spans against them (source-attribution Phase 3). Each
+    // carries the raw lumen_data_atoms.source_id that searchHybrid now returns
+    // (#1285); it is resolved to a canonical cre_evidence_sources.id below — at the
+    // generation boundary, which holds the numeric orgId the resolver needs. Read
+    // defensively (best-effort): a build without the retrieval enrichment simply
+    // leaves sourceId null and the draft is still attributed honestly (all author).
+    const retrievedChunks: Array<{ content: string; title: string; sourceId: string | null }> = [];
     try {
       const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
       const embeddingService = getEmbeddingService(pool);
@@ -2662,6 +2670,13 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
       const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65);
       if (searchResults.length > 0) {
         sourcesRetrieved = searchResults.length;
+        for (const r of searchResults as any[]) {
+          retrievedChunks.push({
+            content: typeof r.content === 'string' ? r.content : '',
+            title: typeof r.title === 'string' ? r.title : '',
+            sourceId: typeof r.sourceId === 'string' ? r.sourceId : null,
+          });
+        }
         evidenceBlock =
           '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
           searchResults
@@ -2705,10 +2720,62 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
 
         const generatedContent = gwResponse.content?.trim() || '';
         if (generatedContent) {
+          // Park the draft + the sources it came from so the accept endpoint can
+          // record verified span-level source lineage (Phase 3). Best-effort:
+          // attribution prep must never break drafting, so any failure just omits
+          // draftId and the client falls back to a plain save (author lineage).
+          let draftId: string | undefined;
+          let attributableSources = 0;
+          try {
+            const rawSourceIds = [
+              ...new Set(
+                retrievedChunks
+                  .map((c) => c.sourceId)
+                  .filter((s): s is string => typeof s === 'string' && s.length > 0),
+              ),
+            ];
+            let evidenceByRaw = new Map<string, number>();
+            if (rawSourceIds.length > 0) {
+              const { resolveEvidenceSourceIdsByArtifact } = await import(
+                '../services/clinical-regulatory-evidence/retrieval-source-link.js'
+              );
+              // tenantId is the numeric org id (getTenantId → authedOrgId), exactly
+              // what the resolver and the lineage writers require.
+              evidenceByRaw = await resolveEvidenceSourceIdsByArtifact(tenantId, rawSourceIds);
+            }
+            const candidateSources = retrievedChunks
+              .filter((c) => c.sourceId && evidenceByRaw.has(c.sourceId))
+              .map((c) => ({
+                evidenceSourceId: evidenceByRaw.get(c.sourceId as string) as number,
+                content: c.content,
+                title: c.title || null,
+              }));
+            attributableSources = new Set(candidateSources.map((s) => s.evidenceSourceId)).size;
+            const { createDraftCandidate } = await import(
+              '../services/clinical-regulatory-evidence/draft-candidate-store.js'
+            );
+            const candidate = await createDraftCandidate(
+              tenantId,
+              String(sectionId),
+              generatedContent,
+              candidateSources,
+              getActorId(req),
+            );
+            draftId = candidate.id;
+          } catch (attrErr: any) {
+            console.warn(
+              '[Authoring] draft-candidate creation failed (non-fatal):',
+              attrErr?.message,
+            );
+          }
+
           return res.json({
             success: true,
             draft: {
               content: generatedContent,
+              // Present when the draft was parked for attributed acceptance; POST
+              // …/ai/draft/accept with this id records source + author lineage.
+              draftId,
               metadata: {
                 tone,
                 region,
@@ -2716,6 +2783,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
                 model: gwResponse.model,
                 provider: gwResponse.provider,
                 sourcesRetrieved,
+                attributableSources,
               },
             },
             message:
@@ -2863,6 +2931,152 @@ Study Design:
     res.status(500).json({
       success: false,
       error: 'Failed to generate AI draft',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// POST /api/authoring/sections/:sectionId/ai/draft/accept - Adopt an AI draft as
+// section content AND record span-level source + author lineage, atomically.
+//
+// This is the persistence point automated source attribution needs: the draft's
+// retrieved chunks (parked by POST …/ai/draft) and the accepted text are both in
+// hand here, so verified quotes can be recorded against the exact sources the
+// draft came from, in the SAME transaction as the content. The save fails closed
+// if lineage cannot be recorded — exactly like the manual save gate on
+// PATCH /sections/:id. See docs/architecture/SOURCE_ATTRIBUTION_AUTOMATED_DESIGN.md
+// Phase 3.
+router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Response) => {
+  try {
+    const { sectionId } = req.params;
+    const { draftId } = req.body ?? {};
+    const tenantId = getTenantId(req);
+    const actor = getActorId(req);
+    if (!actor) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    if (!draftId || typeof draftId !== 'string') {
+      return res.status(400).json({ success: false, error: 'draftId is required' });
+    }
+
+    // Section must exist and belong to this tenant.
+    const sectionResult = await pool.query(
+      `SELECT id, doc_id, content FROM authoring_sections WHERE id = $1 AND tenant_id = $2`,
+      [sectionId, tenantId],
+    );
+    if ((sectionResult.rowCount ?? 0) === 0) {
+      return res.status(404).json({ success: false, error: 'Section not found' });
+    }
+    const priorContent: string | null = sectionResult.rows[0].content ?? null;
+
+    const { consumeDraftCandidate } = await import(
+      '../services/clinical-regulatory-evidence/draft-candidate-store.js'
+    );
+    const { enforceSourceAndAuthorLineage } = await import(
+      '../services/clinical-regulatory-evidence/lineage-gate.js'
+    );
+
+    // Content, its source citations and its author spans commit together or not at
+    // all — the same one-connection transaction + gate the manual save uses. The
+    // candidate is claimed INSIDE the transaction (single-use), so a rolled-back
+    // accept leaves it available for a retry.
+    const client = await pool.connect();
+    let saved: { rows: any[] } = { rows: [] };
+    let acceptedContent = '';
+    let attribution = { sourceSpans: 0, authorSpans: 0, distinctSources: 0, coverage: 0 };
+    try {
+      await client.query('BEGIN');
+
+      const candidate = await consumeDraftCandidate(tenantId, String(sectionId), draftId, client);
+      if (!candidate) {
+        await client.query('ROLLBACK').catch(() => {});
+        return res.status(410).json({
+          success: false,
+          error: {
+            code: 'DRAFT_EXPIRED',
+            message:
+              'This AI draft has expired or was already accepted. Regenerate the draft and try again.',
+          },
+        });
+      }
+
+      // The author may have edited the draft before accepting; attribute what they
+      // actually save. Fall back to the draft as generated when no edit is sent.
+      acceptedContent =
+        typeof req.body?.content === 'string' ? req.body.content : candidate.content;
+
+      saved = await client.query(
+        `UPDATE authoring_sections SET content = $1, updated_at = NOW()
+          WHERE id = $2 AND tenant_id = $3 RETURNING *`,
+        [acceptedContent, sectionId, tenantId],
+      );
+
+      const sources = candidate.sources.map((s) => ({
+        sourceId: s.evidenceSourceId,
+        content: s.content,
+        title: s.title,
+      }));
+      attribution = await enforceSourceAndAuthorLineage(
+        client,
+        tenantId,
+        { documentTable: 'authoring_sections', documentId: String(sectionId) },
+        acceptedContent,
+        actor,
+        sources,
+      );
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      logger.error('AI draft accept refused — content and lineage rolled back together', {
+        sectionId,
+        tenantId,
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'LINEAGE_REQUIRED',
+          message:
+            'The draft was not saved: its source/author lineage could not be recorded. ' +
+            'Saving content without provenance is not permitted.',
+        },
+      });
+    } finally {
+      client.release();
+    }
+
+    // Revision + Part 11 audit record, mirroring PATCH /sections — additive, on
+    // their own connections, after the content+lineage commit, and non-fatal (the
+    // edit already landed; failing here would report failure for a change that
+    // succeeded).
+    try {
+      await createRevision(String(sectionId), acceptedContent, actor, tenantId);
+    } catch (revErr: any) {
+      console.warn('[Authoring] AI draft accept: revision write failed (non-fatal):', revErr?.message);
+    }
+    await createAuditTrail(
+      req,
+      saved.rows[0]?.doc_id,
+      sectionId,
+      'UPDATE',
+      priorContent,
+      acceptedContent,
+      typeof req.body?.changeReason === 'string' ? req.body.changeReason : 'Accepted AI draft',
+      { source: 'ai-draft-accept' },
+    );
+
+    res.json({
+      success: true,
+      section: saved.rows[0],
+      attribution,
+      message: `AI draft accepted — ${attribution.sourceSpans} verified source citation(s) across ${attribution.distinctSources} source(s); ${attribution.coverage}% of content quoted, the remainder recorded as author-original.`,
+    });
+  } catch (error) {
+    console.error('Error accepting AI draft:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to accept AI draft',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
   }

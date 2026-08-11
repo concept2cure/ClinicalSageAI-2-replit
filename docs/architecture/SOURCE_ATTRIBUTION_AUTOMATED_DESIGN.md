@@ -1,6 +1,7 @@
 # Automated Span-Level Source Attribution — Design
 
-**Status:** Design (approved direction: "full auto attribution, with design")
+**Status:** Phases 1–3 implemented (the authoring draft-accept path is a live,
+tested span-grain source writer); Phases 4–6 designed and pending.
 **Author:** platform GA / traceability workstream
 **Scope:** make "which uploaded document backs this generated text" a recorded,
 character-level fact across every document the platform builds, for every client
@@ -17,7 +18,7 @@ CI-enforced; one is built but unwired:
 | --- | --- | --- |
 | **Author lineage** (`document_span_lineage`, `author_assertion`) | who wrote this prose | live, CI-enforced (`enforceAuthorLineage`) |
 | **Artifact provenance** (`concept2cure_provenance_events`) | how did this document get built / transformed / exported | live, CI-enforced (18/18 producers, baseline 0) |
-| **Source attribution** (`document_span_lineage`, `cre_evidence_source`) | which uploaded document backs *these characters* | **read stack built; zero live writers** |
+| **Source attribution** (`document_span_lineage`, `cre_evidence_source`) | which uploaded document backs *these characters* | read stack live; **first automatic writer live** (authoring draft-accept) |
 
 The **read** side of source attribution is complete and route-wired:
 
@@ -30,9 +31,13 @@ The **read** side of source attribution is complete and route-wired:
   fully live: authors manually cite sources in the DocumentAuthoring Sources rail,
   the Source Tracer surface displays them, and change-propagation reports staleness.
 
-The **write** side of span-grain attribution is the gap: `recordSourceSpan` has
-**zero live (non-test) callers**, so the Data Origins panel is built but always
-returns empty. This design fills that gap *automatically*, at generation time.
+The **write** side of span-grain attribution WAS the gap: `recordSourceSpan` had
+zero live callers, so the Data Origins panel was built but always returned empty.
+This design fills that gap *automatically*. As of Phase 3 the first live writer is
+the authoring **draft-accept** endpoint: accepting an AI draft records its verified
+quotes as `cre_evidence_source` spans and the remainder as author spans, in the
+same transaction as the section content. The mechanism is now proven end to end;
+Phase 5 rolls it to every other generation surface with a CI guard.
 
 ---
 
@@ -173,12 +178,11 @@ The prerequisite, and the real work (see the cross-registry gap in §3).
   path does next. Unit-tested (enrichment merge, null-for-missing atoms,
   best-effort degradation when the lookup fails, `searchSimilar` parity).
 
-**Phase 3 — wire one generation path end to end (design corrected 2026-08-09; needs a persistence-point decision).**
+**Phase 3 — wire one generation path end to end (IMPLEMENTED via option a).**
 
-The authoring section-drafting path is the target (co-located with `citeSource`
-in `authoring.router.ts`). But the obvious wiring — "record verified spans in the
-same transaction as the section content, in `PATCH /sections/:id`" — does NOT
-work, verified in code:
+The authoring section-drafting path is the wired path. The obvious wiring —
+"record verified spans in the same transaction as the section content, in
+`PATCH /sections/:id`" — does NOT work, verified in code:
 
 - Verifying a quote needs the **source's text**. `cre_evidence_sources` has no
   full-text column; a source's content lives chunked in `lumen_data_atoms` and is
@@ -190,28 +194,49 @@ work, verified in code:
   retrieves the chunks it drafts from. But that endpoint *returns* the draft; it
   does not persist it, and the user may edit before saving.
 
-So Phase 3 must record at a **draft-accept persistence point** — the moment a
-generated draft (with the chunks that back it) becomes section content. Two ways
-to introduce it (a product/UX decision, which is why this phase is on hold):
+So Phase 3 records at a **draft-accept persistence point** — the moment a
+generated draft (with the chunks that back it) becomes section content. The
+shipped design is option (a), persist-on-accept:
 
-  **a. Persist-on-accept (recommended).** `ai/draft` returns a short-lived draft
-  keyed to its retrieved chunks (content + resolved `cre_evidence_sources.id`); a
-  new `POST /sections/:id/ai/draft/accept` writes the section content AND, in the
-  same transaction, runs Phase 1 over it against those chunks
-  (`attributeAndRecordSourceSpans`) then `assertLineageCoversContent`. Author
-  spans cover the remainder. Re-verifying verbatim at accept time means an
-  edited-away quote simply stops matching — the citation can never go stale.
+1. **`POST /sections/:sectionId/ai/draft`** now captures the chunks it retrieved
+   from, resolves each raw atom `source_id` to its canonical
+   `cre_evidence_sources.id` (the Phase 2 resolver, run here — the generation
+   boundary holds the numeric `orgId` it needs), and parks a **draft candidate**
+   (`authoring_ai_draft_candidates`, migration `20260809_…`): the generated text
+   plus `[{ evidenceSourceId, content, title }]`. It returns a `draftId`. All of
+   this is best-effort — any failure omits `draftId` and never breaks drafting.
+2. **`POST /sections/:sectionId/ai/draft/accept`** (new) claims the candidate
+   inside ONE transaction (`consumeDraftCandidate`, single-use DELETE…RETURNING,
+   tenant- and section-scoped), writes the (possibly edited) section content, and
+   runs **`enforceSourceAndAuthorLineage`** — the source-aware sibling of
+   `enforceAuthorLineage`: verified quotes become `cre_evidence_source` spans
+   (`replaceSourceSpans`), every other clause becomes an author span
+   (`replaceAuthorSpans`), then `assertLineageCoversContent`. Revision + Part 11
+   audit are written after, mirroring `PATCH /sections/:id`.
 
-  **b. Draft-writes-directly (flagged).** `ai/draft` gains an opt-in
-  `persist: true` that writes the section and records spans inline. Simpler, but
-  it turns a pure generator into a writer.
+The store holds the chunks **server-side**, never round-tripped through the
+client, so source content cannot be forged to manufacture a quote match — the only
+client input at accept time is the text being saved.
 
-Either way the record is honest: only quotes still present in the saved text are
-attributed, and `assertLineageCoversContent` makes the save fail **closed** if
-lineage is incomplete — exactly as `enforceAuthorLineage` already gates author
-spans. PGlite integration test proves: accept a draft whose sentences are
-verbatim in a retrieved source → Data Origins panel returns real
-`cre_evidence_source` spans with `state='current'`; author spans cover the rest.
+The record is honest and non-stale by construction: only quotes still present in
+the saved text are attributed, both span kinds are REPLACED on each accept so an
+edited-away quote is retired rather than left citing characters that moved, and
+`assertLineageCoversContent` makes the save fail **closed** if lineage is
+incomplete — exactly as `enforceAuthorLineage` already gates author spans.
+
+Proven by PGlite integration tests against the real migrations: accepting a draft
+whose clauses are verbatim in a retrieved source records `cre_evidence_source`
+spans (`state='current'`) plus author spans for the rest; an edited-away quote is
+retired; a cross-tenant source is refused; the draft-candidate store round-trips,
+is single-use, tenant/section-scoped, and rejects expired candidates. Route tests
+cover the endpoint contract (400/404/410, happy path, edited-content attribution,
+and 500 fail-closed on a lineage error). Modules:
+`clinical-regulatory-evidence/{source-attribution,lineage-gate,draft-candidate-store}.ts`
+and the `replaceSourceSpans` addition to `span-lineage.service.ts`.
+
+The rejected option (b), an opt-in `persist:true` on `ai/draft`, would have turned
+a pure generator into a writer; keeping generation and persistence separate is what
+lets accept re-verify verbatim against the exact chunks the draft came from.
 
 **Phase 4 — layer model-asserted paraphrase (optional, marked as assertion).**
 Structured-output generation that tags spans with the source id they derived

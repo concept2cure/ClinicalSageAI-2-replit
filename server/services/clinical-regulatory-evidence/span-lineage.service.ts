@@ -456,6 +456,82 @@ export async function replaceAuthorSpans(
 }
 
 /**
+ * Replace this document's automated source citations with exactly the spans
+ * given — the source-grain sibling of {@link replaceAuthorSpans}.
+ *
+ * The verified-quote attribution path (source-attribution.ts) re-runs over the
+ * whole document every time an AI draft is accepted. Recording the fresh quotes
+ * without retiring the ones the new text no longer contains would leave the
+ * lineage table answering confidently with citations against characters that have
+ * moved or been edited away — the same stale-range failure replaceAuthorSpans
+ * exists to prevent, and the exact opposite of the "a citation can never go
+ * stale" guarantee re-verification is meant to give.
+ *
+ * So each accept states the whole source-span set: spans in `spans` are written
+ * or re-resolved (recordSourceSpan is idempotent per document/span/source), and
+ * cre_evidence_source spans for this document NOT in the set are soft-deleted.
+ * Soft, because a regulated system keeps the record of what was once cited —
+ * deleted_at retires a row from the reads without destroying it.
+ *
+ * Author assertions are deliberately untouched — the mirror of replaceAuthorSpans
+ * leaving source citations alone. The caller manages the two kinds side by side.
+ *
+ * `exec` MUST be the caller's transaction client so the records, the retirements
+ * and the content write commit together; a partial write here reintroduces the
+ * best-effort-lineage failure the save gate exists to close.
+ */
+export async function replaceSourceSpans(
+  orgId: number,
+  ref: DocumentRef,
+  spans: Array<{
+    charStart: number;
+    charEnd: number;
+    spanText: string;
+    sourceId: number | string;
+    usage: SpanUsage;
+  }>,
+  p: { createdBy?: string | null } = {},
+  exec: Queryable = defaultExec,
+): Promise<{ written: number; retired: number }> {
+  let written = 0;
+  for (const s of spans) {
+    await recordSourceSpan(
+      orgId,
+      {
+        ...ref,
+        charStart: s.charStart,
+        charEnd: s.charEnd,
+        spanText: s.spanText,
+        sourceId: s.sourceId,
+        usage: s.usage,
+        createdBy: p.createdBy ?? null,
+      },
+      exec,
+    );
+    written++;
+  }
+
+  // Retire cre_evidence_source spans for this document the new set no longer
+  // contains. A source span's identity is (char_start, char_end, reference_id) —
+  // reference_id is String(sourceId), the same key recordSourceSpan writes and the
+  // unique index enforces — so the keep-set is keyed on all three.
+  const keep = spans.map((s) => `${s.charStart}:${s.charEnd}:${Number(s.sourceId)}`);
+  const { rowCount } = await exec.query(
+    `UPDATE document_span_lineage
+        SET deleted_at = NOW(), updated_at = NOW()
+      WHERE organization_id = $1
+        AND document_table = $2
+        AND document_id = $3
+        AND provenance_kind = 'cre_evidence_source'
+        AND deleted_at IS NULL
+        AND (char_start || ':' || char_end || ':' || COALESCE(reference_id, '')) <> ALL($4::text[])`,
+    [orgId, ref.documentTable, ref.documentId, keep.length > 0 ? keep : ['']],
+  );
+
+  return { written, retired: rowCount ?? 0 };
+}
+
+/**
  * The save gate: refuse to let content persist without complete lineage.
  *
  * Called INSIDE the transaction that writes the content, after the lineage for
