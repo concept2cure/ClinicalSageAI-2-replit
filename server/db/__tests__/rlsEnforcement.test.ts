@@ -199,4 +199,33 @@ describe('RLS catalog posture', () => {
       { role: 'app', rolsuper: false, rolbypassrls: false }, [],
     ))).rejects.toThrow(/no tenant-keyed public tables/);
   });
+
+  it('does NOT flag an allowlisted tenant table that is intentionally unpolicied', async () => {
+    const { assessRlsCatalogPosture } = await import('../rlsEnforcement');
+    const { RLS_ALLOWLIST } = await import('../rlsAllowlist');
+    // Every allowlisted table, present with a tenant column but no RLS/policy —
+    // exactly the state the install/deploy sweeps leave them in — must produce
+    // zero failures, or a non-superuser production boot fails closed on tables
+    // the rest of the system deliberately leaves unpoliced.
+    const allowlistedRows = RLS_ALLOWLIST.map(name => ({
+      table_name: name, relrowsecurity: false, relforcerowsecurity: false, policy_count: 0,
+    }));
+    const report = await assessRlsCatalogPosture(posturePool(
+      { role: 'app_service', rolsuper: false, rolbypassrls: false },
+      [
+        ...allowlistedRows,
+        { table_name: 'projects', relrowsecurity: true, relforcerowsecurity: true, policy_count: 1 },
+      ],
+    ));
+    expect(report.failures).toEqual([]);
+  });
+
+  it('still flags a NON-allowlisted tenant table that is unpolicied', async () => {
+    const { assessRlsCatalogPosture } = await import('../rlsEnforcement');
+    const report = await assessRlsCatalogPosture(posturePool(
+      { role: 'app_service', rolsuper: false, rolbypassrls: false },
+      [{ table_name: 'not_allowlisted_tbl', relrowsecurity: false, relforcerowsecurity: false, policy_count: 0 }],
+    ));
+    expect(report.failures.some(f => f.startsWith('not_allowlisted_tbl:'))).toBe(true);
+  });
 });
