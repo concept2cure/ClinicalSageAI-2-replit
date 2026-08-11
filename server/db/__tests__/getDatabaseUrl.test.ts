@@ -9,6 +9,7 @@ describe('getDatabaseUrl', () => {
     delete process.env.DATABASE_URL;
     delete process.env.NEON_DATABASE_URL;
     delete process.env.DATABASE_NEON_NEW_SECRET;
+    delete process.env.APP_DATABASE_URL;
   });
 
   afterEach(() => {
@@ -73,5 +74,41 @@ describe('getDatabaseUrl', () => {
     expect(() => requireDatabaseUrl()).toThrow(
       'DATABASE_URL, NEON_DATABASE_URL, or DATABASE_NEON_NEW_SECRET',
     );
+  });
+
+  describe('getRuntimeDatabaseUrl', () => {
+    it('prefers APP_DATABASE_URL (the non-superuser runtime role) over DATABASE_URL', async () => {
+      process.env.APP_DATABASE_URL = 'postgresql://app_service:pw@host/db';
+      process.env.DATABASE_URL = 'postgresql://owner:pw@host/db';
+      const { getRuntimeDatabaseUrl } = await loadModule();
+      expect(getRuntimeDatabaseUrl()).toBe('postgresql://app_service:pw@host/db');
+    });
+
+    it('falls back to DATABASE_URL when APP_DATABASE_URL is unset (single-role compat)', async () => {
+      process.env.DATABASE_URL = 'postgresql://owner:pw@host/db';
+      const { getRuntimeDatabaseUrl } = await loadModule();
+      expect(getRuntimeDatabaseUrl()).toBe('postgresql://owner:pw@host/db');
+    });
+
+    it('treats a blank APP_DATABASE_URL as unset and falls back', async () => {
+      process.env.APP_DATABASE_URL = '   ';
+      process.env.DATABASE_URL = 'postgresql://owner:pw@host/db';
+      const { getRuntimeDatabaseUrl } = await loadModule();
+      expect(getRuntimeDatabaseUrl()).toBe('postgresql://owner:pw@host/db');
+    });
+
+    it('cleans the APP_DATABASE_URL (strips psql wrapper / channel_binding) like the owner url', async () => {
+      process.env.APP_DATABASE_URL =
+        "psql 'postgresql://app_service:pw@host/db?sslmode=require&channel_binding=require'";
+      const { getRuntimeDatabaseUrl } = await loadModule();
+      expect(getRuntimeDatabaseUrl()).toBe(
+        'postgresql://app_service:pw@host/db?sslmode=require',
+      );
+    });
+
+    it('returns undefined when neither runtime nor owner url is set', async () => {
+      const { getRuntimeDatabaseUrl } = await loadModule();
+      expect(getRuntimeDatabaseUrl()).toBeUndefined();
+    });
   });
 });

@@ -231,12 +231,47 @@ router.get('/saml/initiate', async (req: Request, res: Response) => {
   }
 });
 
-/** Accept only a relative, same-origin path as a post-login return target. */
-function sanitizeReturnTo(value: unknown): string | undefined {
+/**
+ * Accept only a strictly internal, same-origin path as a post-login return
+ * target. The 24h access JWT is placed in this redirect URL, so anything that a
+ * browser could resolve to a foreign origin exfiltrates the token.
+ *
+ * Rejections (return undefined; callers already treat that as "no return path"):
+ *   - non-strings / empty
+ *   - any ASCII control char (tab, newline, …) or backslash — a browser
+ *     resolves "/\evil.com" (or "/\t/evil.com") as "//evil.com" →
+ *     https://evil.com, defeating a naive startsWith("/") check
+ *   - protocol-relative "//host" and absolute "scheme://host" URLs
+ *   - anything that, parsed against a fixed origin, does not stay on that
+ *     origin (path-only, same-origin) — the definitive host/scheme check
+ */
+export function sanitizeReturnTo(value: unknown): string | undefined {
   if (typeof value !== 'string' || value.length === 0) return undefined;
-  // Must be a root-relative path with no scheme/host and no protocol-relative form.
-  if (value.startsWith('/') && !value.startsWith('//')) return value;
-  return undefined;
+  // Reject ASCII control chars (incl. tab/newline) and backslashes outright.
+  for (let i = 0; i < value.length; i++) {
+    const c = value.charCodeAt(i);
+    if (c < 0x20 || c === 0x7f || c === 0x5c /* backslash */) return undefined;
+  }
+  // Must be a single-slash root-relative path (reject protocol-relative "//").
+  if (!value.startsWith('/') || value.startsWith('//')) return undefined;
+  // Definitive check: parsed against a fixed origin, the result must remain on
+  // that same origin — no host or scheme may have been smuggled in. Return the
+  // value RECONSTRUCTED from the parsed URL's path + query rather than the raw
+  // input: the redirect target is then derived solely from URL-object
+  // properties (never the remote string directly), which both strips any
+  // fragment/userinfo residue and removes the raw-tainted-input → redirect data
+  // flow. A path-only same-origin string round-trips unchanged.
+  try {
+    const base = 'http://localhost';
+    const parsed = new URL(value, base);
+    if (parsed.origin !== base) return undefined;
+    const rebuilt = `${parsed.pathname}${parsed.search}`;
+    // After reconstruction it must still be a single-slash root-relative path.
+    if (!rebuilt.startsWith('/') || rebuilt.startsWith('//')) return undefined;
+    return rebuilt;
+  } catch {
+    return undefined;
+  }
 }
 
 /**

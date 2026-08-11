@@ -1,5 +1,6 @@
 {
   "name": "concept2cure-riai",
+  "private": true,
   "version": "1.0.0",
   "description": "Enterprise-grade regulatory intelligence platform for life sciences",
   "type": "module",
@@ -24,6 +25,7 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
+    "prepublishOnly": "echo 'ERROR: this is proprietary source and must never be published to a registry' && exit 1",
     "dev": "bash -lc 'source scripts/startup.sh && main && NODE_OPTIONS=\"--trace-warnings\" tsx --inspect=0 server/index.ts'",
     "dev:local": "bash -lc 'source scripts/startup.sh && main && NODE_OPTIONS=\"--trace-warnings\" tsx --inspect=0 server/index.ts'",
     "db:ensure": "tsx server/db/ensureCoreTables.ts",

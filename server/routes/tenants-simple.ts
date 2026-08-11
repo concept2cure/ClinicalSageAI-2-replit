@@ -5,10 +5,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
-import { requireRole, invalidateOrgMembershipCache } from '../middleware/auth';
+import { invalidateOrgMembershipCache } from '../middleware/auth';
+import { requirePlatformAdmin, isPlatformAdmin } from '../middleware/requirePlatformAdmin';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { getSslConfig } from '../db/ssl';
 
 const log = createScopedLogger('tenants-simple');
 
@@ -17,11 +19,15 @@ const router = Router();
 // SECURITY: All tenant management endpoints require authentication
 router.use(authMiddleware);
 
-/** True for platform operators who may see/manage every tenant. */
-function isPlatformAdmin(req: any): boolean {
-  const roles = req.user?.roles || [req.user?.role];
-  return ['admin', 'super_admin', 'platform_admin'].some(r => roles?.includes(r));
-}
+// Platform-operator (cross-tenant) authorization uses the STRICT isPlatformAdmin
+// from ../middleware/requirePlatformAdmin, which has NO org-`admin` bypass
+// (PLATFORM_ROLES = super_admin / platform_admin / support only). A file-local
+// helper previously counted org `admin` as a platform operator, so GET /api/tenants
+// leaked the full cross-tenant organization directory to any tenant admin — the
+// exact bypass the write routes (requirePlatformAdmin) already exclude. The read
+// path now shares that strict check. (The sync helper omits the platform_role_grants
+// DB fallback the middleware has, so a grant-only platform admin whose JWT lacks a
+// platform role falls to the member-scoped view — an under-privilege, safe direction.)
 
 /**
  * Clean a database URL by removing common wrapper artifacts
@@ -52,10 +58,11 @@ function cleanDatabaseUrl(url: string | undefined): string {
 const rawConnectionString = process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET || '';
 const connectionString = cleanDatabaseUrl(rawConnectionString);
 const sql = postgres(connectionString, {
-  ssl:
-    connectionString?.includes('neon.tech') || process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  // TLS posture mirrors the rest of the app (server/db/runtime.ts + server/db/ssl.ts):
+  // a managed/non-local host VERIFIES the server certificate, and TLS is only
+  // relaxed for an explicit local / sslmode=disable DSN. Never disable
+  // certificate verification — this connection carries the whole tenant directory.
+  ssl: getSslConfig(connectionString),
 });
 
 // Schema for tenant creation
@@ -141,7 +148,7 @@ router.get('/', async (req, res) => {
  * POST /api/tenants
  * Create a new tenant - simple version
  */
-router.post('/', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.post('/', requirePlatformAdmin, async (req, res) => {
   try {
     log.debug('Create tenant request received');
 
@@ -224,7 +231,7 @@ router.post('/', requireRole('super_admin', 'platform_admin'), async (req, res) 
  * PATCH /api/tenants/:id
  * Update an existing tenant/organization
  */
-router.patch('/:id', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.patch('/:id', requirePlatformAdmin, async (req, res) => {
   try {
     const tenantId = parseInt(String(req.params.id));
 
@@ -323,7 +330,7 @@ router.get('/:tenantId/users', async (req, res) => {
  * DELETE /api/tenants/:id
  * Delete an organization and all its related data
  */
-router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.delete('/:id', requirePlatformAdmin, async (req, res) => {
   try {
     const tenantId = parseInt(String(req.params.id));
     if (isNaN(tenantId)) {
@@ -398,7 +405,7 @@ router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, 
  * POST /api/tenants/:id/api-key
  * Generate a new API key for an organization
  */
-router.post('/:id/api-key', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.post('/:id/api-key', requirePlatformAdmin, async (req, res) => {
   try {
     const tenantId = parseInt(String(req.params.id));
     if (isNaN(tenantId)) {

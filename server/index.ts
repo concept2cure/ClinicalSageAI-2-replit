@@ -41,6 +41,7 @@ import './services/auditService.js';
 import './services/roleBasedAccess.js';
 
 import { getPool } from './db';
+import { runWithSystemTenantScope } from './db/tenantStore';
 
 import { validateEnvironment, resolveStartupFlags, createDebugLogger } from './startup/env';
 import { registerShutdownHandlers } from './startup/shutdown';
@@ -149,7 +150,13 @@ async function startServer() {
 
   if (process.env.NODE_ENV === 'production') {
     const { assertRlsCatalogPosture } = await import('./db/rlsEnforcement');
-    await assertRlsCatalogPosture(pool);
+    // The posture probe issues catalog/role queries on the shared pool. Under
+    // RLS_ENFORCE=on — the only value production accepts — an unscoped pool.query
+    // fails closed, so declare a system scope for this estate-wide check (same
+    // rationale as verifyDatabaseConnection's probe).
+    await runWithSystemTenantScope('startup:assert-rls-catalog-posture', async () =>
+      assertRlsCatalogPosture(pool)
+    );
   }
 
   // Security self-test — run AFTER the DB connection is verified

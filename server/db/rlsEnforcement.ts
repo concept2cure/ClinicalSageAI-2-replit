@@ -28,6 +28,7 @@
  */
 
 import type { Pool } from 'pg';
+import { RLS_ALLOWLIST } from './rlsAllowlist';
 
 
 export type RlsEnforcementMode = 'off' | 'shadow' | 'on';
@@ -167,7 +168,17 @@ export async function assessRlsCatalogPosture(pool: Pick<Pool, 'query'>): Promis
   if (roleRow.rolsuper) failures.push(`runtime role ${roleRow.role} is a PostgreSQL superuser`);
   if (roleRow.rolbypassrls) failures.push(`runtime role ${roleRow.role} has BYPASSRLS`);
   if (tables.length === 0) failures.push('no tenant-keyed public tables were discovered');
+  // Honor the single-source-of-truth RLS allowlist (server/db/rlsAllowlist.ts):
+  // tables that carry a tenant column but are deliberately NOT policied (cross-
+  // tenant admin/billing dashboards, nullable-org Stripe webhooks, the
+  // membership-bootstrap table). The install-time sweep (0021), the deploy-time
+  // sweep, the coverage check and the deploy smoke all exclude exactly these —
+  // and ci:rls-allowlist-sync pins every copy to the same source — so the boot
+  // posture assertion must exclude them too, or it fails closed on tables the
+  // rest of the system intentionally leaves unpoliced.
+  const allowlisted = new Set<string>(RLS_ALLOWLIST);
   for (const table of tables) {
+    if (allowlisted.has(table.table)) continue;
     if (!table.rlsEnabled) failures.push(`${table.table}: RLS is not enabled`);
     if (!table.rlsForced) failures.push(`${table.table}: FORCE ROW LEVEL SECURITY is not enabled`);
     if (table.policyCount < 1) failures.push(`${table.table}: no RLS policy exists`);

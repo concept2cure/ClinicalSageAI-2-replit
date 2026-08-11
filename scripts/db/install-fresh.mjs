@@ -69,6 +69,7 @@ import {
   AUTHORING_SUBSYSTEM_TABLES,
 } from './authoring-subsystem.mjs';
 import { resolveDatabaseUrl, sslFor, INSTALL_URL_VARS } from './connection.mjs';
+import { provisionAppServiceRole, resolveAppServiceRole } from './provision-app-role.mjs';
 
 dotenv.config();
 
@@ -121,7 +122,7 @@ async function step(label, fn) {
 }
 
 async function main() {
-  await step('1/7 Prerequisites — schemas + extensions', async () => {
+  await step('1/8 Prerequisites — schemas + extensions', async () => {
     await pool.query(`
       CREATE SCHEMA IF NOT EXISTS vault;
       CREATE SCHEMA IF NOT EXISTS precedent;
@@ -134,7 +135,7 @@ async function main() {
     console.log('  ✓ schemas (vault, precedent, audit) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
   });
 
-  await step('2/7 Tables — drizzle-kit push', async () => {
+  await step('2/8 Tables — drizzle-kit push', async () => {
     // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
     // destructive changes so it proceeds. Inherit env so drizzle.config.ts
     // resolves the same DATABASE_URL.
@@ -152,7 +153,7 @@ async function main() {
     console.log('  ✓ schema pushed from shared/schema.ts');
   });
 
-  await step('3/7 Complete schema — raw migration overlay', async () => {
+  await step('3/8 Complete schema — raw migration overlay', async () => {
     // drizzle-kit push lays down ONLY shared/schema.ts. The core product tables
     // — regulatory_programs, c2c_documents / c2c_document_sections /
     // c2c_rule_packs, c2c_ana_*, the submission-ops set, and ~200 more — live
@@ -318,7 +319,7 @@ async function main() {
     console.log(`  ✓ overlay: ${applied} applied, ${present} already-present from push`);
   });
 
-  await step('4/7 Authoring subsystem (Part-11 unit)', async () => {
+  await step('4/8 Authoring subsystem (Part-11 unit)', async () => {
     // The four db/migrations/20260725_authoring_* files back the flagship IND
     // authoring loop and, until now, had NO durable provisioning path — the
     // root overlay above only touches migrations/, and the *_gcc_* psql loop
@@ -330,7 +331,7 @@ async function main() {
     });
   });
 
-  await step('5/7 Row-Level Security policies (raw migrations)', async () => {
+  await step('5/8 Row-Level Security policies (raw migrations)', async () => {
     // The RLS rollout (0021) hard-fails if ANY tenant column is still text.
     // 0020 coerces a fixed list, but the raw overlay adds tables (e.g.
     // adverse_events) with a text organization_id that predate that list. On a
@@ -413,7 +414,7 @@ async function main() {
     }
   });
 
-  await step('6/7 Governed content — Part 11 audit tree (*_gcc_*.sql)', async () => {
+  await step('6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)', async () => {
     // This step used to not exist. The script PRINTED a psql loop and told the
     // operator to run it themselves, then declared the install complete —
     // so following the instructions on screen produced a database with no
@@ -476,7 +477,31 @@ async function main() {
     }
   });
 
-  await step('7/7 Verify', async () => {
+  await step('7/8 Runtime role — non-superuser app_service grants', async () => {
+    // The RLS unlock. Everything above ran as the owner/admin (DATABASE_URL),
+    // which is a superuser on most managed providers — a connection RLS never
+    // filters. Mint a dedicated NOSUPERUSER / NOBYPASSRLS LOGIN role and grant
+    // it least-privilege DML so the request-serving pool can connect as it
+    // (APP_DATABASE_URL) and have tenant_isolation_policy actually filter rows.
+    //
+    // This runs LAST among the schema steps so `GRANT ... ON ALL TABLES` reaches
+    // every table the prior steps created; ALTER DEFAULT PRIVILEGES (inside the
+    // helper) covers tables future migrations add. It is a NO-OP unless
+    // APP_SERVICE_DB_PASSWORD is set, so an install that has not opted into the
+    // split role behaves exactly as before.
+    const result = await provisionAppServiceRole(pool, {
+      log: (m) => console.log(m),
+    });
+    if (result.skipped) {
+      console.log(
+        `  • ${result.role} not provisioned (APP_SERVICE_DB_PASSWORD unset). Production boot ` +
+          'will FAIL CLOSED if it connects as a superuser under RLS_ENFORCE=on — set ' +
+          'APP_SERVICE_DB_PASSWORD here and APP_DATABASE_URL for the runtime before going live.',
+      );
+    }
+  });
+
+  await step('8/8 Verify', async () => {
     const tables = await pool.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`,
     );
@@ -530,6 +555,59 @@ async function main() {
       );
     }
 
+    // Runtime role posture — only asserted when the split role was requested
+    // (APP_SERVICE_DB_PASSWORD set). Confirms the role exists and is genuinely
+    // least-privilege (not a superuser, no BYPASSRLS) and can actually read a
+    // core tenant table — so a green install can never hand over a role that
+    // would fail the production boot posture check or be locked out of its
+    // tables. Mirrors server/db/rlsEnforcement.ts → assertRlsCatalogPosture.
+    if (process.env.APP_SERVICE_DB_PASSWORD) {
+      const role = resolveAppServiceRole();
+      const roleRow = (
+        await pool.query(
+          'SELECT rolsuper, rolbypassrls, rolcanlogin FROM pg_roles WHERE rolname = $1',
+          [role],
+        )
+      ).rows[0];
+      if (!roleRow) {
+        throw new Error(`runtime role ${role} was requested but does not exist after provisioning`);
+      }
+      const roleFailures = [];
+      if (roleRow.rolsuper) roleFailures.push('is a superuser (RLS would never filter)');
+      if (roleRow.rolbypassrls) roleFailures.push('has BYPASSRLS (RLS would never filter)');
+      if (!roleRow.rolcanlogin) roleFailures.push('cannot LOGIN (runtime could not connect)');
+      const canRead = (
+        await pool.query(
+          `SELECT has_table_privilege($1, 'public.organizations', 'SELECT') AS ok`,
+          [role],
+        )
+      ).rows[0]?.ok;
+      if (!canRead) roleFailures.push('lacks SELECT on public.organizations (grants did not apply)');
+      // Every application schema must be reachable: a schema the runtime uses
+      // but the role lacks USAGE on surfaces as a `permission denied for schema
+      // X` 500 the moment a feature backed by X is hit. Catch ANY such gap here
+      // so a "green" install can never hand over a role locked out of a schema.
+      const schemaGaps = (
+        await pool.query(
+          `SELECT nspname FROM pg_namespace
+            WHERE nspname NOT IN ('pg_catalog', 'information_schema')
+              AND nspname !~ '^pg_'
+              AND NOT has_schema_privilege($1, nspname, 'USAGE')
+            ORDER BY nspname`,
+          [role],
+        )
+      ).rows.map(r => r.nspname);
+      if (schemaGaps.length) {
+        roleFailures.push(`lacks USAGE on schema(s): ${schemaGaps.join(', ')} (grants incomplete)`);
+      }
+      if (roleFailures.length) {
+        throw new Error(`runtime role ${role} posture is unsafe: ${roleFailures.join('; ')}`);
+      }
+      console.log(
+        `  runtime role ${role}: LOGIN · non-superuser · NOBYPASSRLS · USAGE on all application schemas · can read tenant tables ✓`,
+      );
+    }
+
     // The success banner is printed by main(), and ONLY when nothing was
     // recorded incomplete. It used to print here, unconditionally.
   });
@@ -555,6 +633,10 @@ function report() {
     console.log('     sample data. (In the AWS pipeline deploy-migrate runs as its own');
     console.log('     step after this one; a local install must run it by hand.)');
     console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');
+    console.log('   • point the runtime at the non-superuser role: set APP_DATABASE_URL to the');
+    console.log('     app_service connection string (set APP_SERVICE_DB_PASSWORD here first so');
+    console.log('     the role is provisioned). Migrations keep using DATABASE_URL (the owner).');
+    console.log('     Production boot fails closed under RLS_ENFORCE=on if it connects as a superuser.');
     console.log('   • leave SEED_DEMO_USER unset in production (no known-password admin).');
     return 0;
   }

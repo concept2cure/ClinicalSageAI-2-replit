@@ -159,12 +159,17 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
     ]);
   });
 
-  it('does NOT wrap infrastructure queries even when enforcing + scoped', async () => {
+  it('does NOT scope infrastructure queries even when enforcing + scoped', async () => {
     process.env.RLS_ENFORCE = 'on';
     const { pool, poolCalls, clientCalls } = makeMockPool();
     await runWithTenantScope(SCOPE, () => pool.query('SELECT 1'));
-    expect(poolCalls.map(c => c.text)).toEqual(['SELECT 1']);
-    expect(clientCalls).toHaveLength(0);
+    // The exemption's intent is unchanged: the probe runs with NO tenant
+    // set_config and NO BEGIN/COMMIT wrapper. The mechanism, however, must run
+    // it on a checked-out client via the pre-captured REAL connect — NOT via
+    // pool.query, which re-enters the patched connect and fails closed. So the
+    // bare probe lands in clientCalls (just the query), never in poolCalls.
+    expect(poolCalls).toHaveLength(0);
+    expect(clientCalls.map(c => c.text)).toEqual(['SELECT 1']);
   });
 
   it.each([
@@ -188,9 +193,13 @@ describe('poolInstrumentation tenant-scope enforcement', () => {
     "SELECT set_config('app.current_org_id', '', false)",
   ])('retains only the exact empty-value session reset exemption: %s', async sql => {
     process.env.RLS_ENFORCE = 'on';
-    const { pool, poolCalls } = makeMockPool();
+    const { pool, poolCalls, clientCalls } = makeMockPool();
+    // Exempt (does not reject) — but, like every infrastructure probe while
+    // enforcing, it runs on a real client via the pre-captured connect rather
+    // than pool.query, so it lands in clientCalls, never poolCalls.
     await pool.query(sql);
-    expect(poolCalls.map(call => call.text)).toEqual([sql]);
+    expect(poolCalls).toHaveLength(0);
+    expect(clientCalls.map(call => call.text)).toEqual([sql]);
   });
 
   it('releases the client after a scoped query (even on error) so no connection leaks', async () => {

@@ -28,7 +28,7 @@ import path from 'path';
 import { createScopedLogger } from '../utils/logger';
 import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
-import { getDatabaseUrl } from './getDatabaseUrl';
+import { getRuntimeDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
 import { buildRlsStartupOptions, assertRlsEnforcementForProduction } from './rlsEnforcement';
 
@@ -37,7 +37,10 @@ const logger = createScopedLogger('database');
 // ── Pool initialization ────────────────────────────────────────────────────
 let pool: Pool | null = null;
 
-const databaseUrl = getDatabaseUrl();
+// The request-serving pool connects via the RUNTIME url (APP_DATABASE_URL, the
+// non-superuser app_service role) when configured, else DATABASE_URL. Migrations
+// and admin tooling use DATABASE_URL directly — they need owner privileges.
+const databaseUrl = getRuntimeDatabaseUrl();
 const skipDbStartupTest = process.env.SKIP_DB_STARTUP_TEST === 'true';
 
 try {

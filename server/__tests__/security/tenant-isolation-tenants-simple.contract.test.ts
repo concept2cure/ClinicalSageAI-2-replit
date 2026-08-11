@@ -73,11 +73,25 @@ describe('Tenant list — membership scoping', () => {
   });
 
   it('a platform admin gets the full list (no membership join)', async () => {
-    authState.user = { id: 1, organizationId: ORG_A, role: 'admin', roles: ['admin'] };
+    authState.user = { id: 1, organizationId: ORG_A, role: 'super_admin', roles: ['super_admin'] };
     const res = await request(app).get('/api/tenants');
     expect(res.status).toBe(200);
     const q = dataQueries().find(q => /from organizations/i.test(q.text));
     expect(q!.text).not.toMatch(/organization_users/i);
+  });
+
+  it('an ORG admin does NOT get the cross-tenant list — only their own orgs', async () => {
+    // Regression guard: an org-scoped `admin` is NOT a platform operator. The
+    // read path must use the strict isPlatformAdmin (super_admin/platform_admin/
+    // support only), so a tenant admin is membership-scoped exactly like a member
+    // — never handed the full customer directory (GET /api/tenants leak).
+    authState.user = { id: 1, organizationId: ORG_A, role: 'admin', roles: ['admin'] };
+    const res = await request(app).get('/api/tenants');
+    expect(res.status).toBe(200);
+    const q = dataQueries().find(q => /from organizations/i.test(q.text));
+    expect(q, 'a list query should run').toBeTruthy();
+    expect(q!.text).toMatch(/organization_users/i); // membership-scoped, not the full list
+    expect(q!.values).toContain(1); // bound to the caller's own user id
   });
 });
 

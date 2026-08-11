@@ -117,3 +117,10 @@ qualification-reports/
 # probe from riding along in someone else's commit.
 probe.config.ts
 scripts/visual-qa/probe-*.spec.tsx
+
+# Plaintext database dumps must never ride along in a commit. scripts/backup.sh
+# writes unencrypted pg_dump output here; the deploy path no longer invokes it,
+# but the directory pattern is ignored so a stray local backup can never be
+# committed or pushed with the source. (See SUPPLY-CHAIN / PRIVACY hardening.)
+.backups/
+*.sql.gz

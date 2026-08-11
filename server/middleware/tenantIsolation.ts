@@ -176,6 +176,9 @@ export function scopeToTenant<T extends Record<string, unknown>>(
  * Check if user has required role
  */
 export function hasRole(req: Request, requiredRole: string): boolean {
+  // Org-scoped RBAC: org "admin" is a superset of the org's operational roles.
+  // Platform-operator (cross-tenant) authorization does NOT go through here —
+  // it uses requirePlatformAdmin, which has no org-admin bypass.
   return req.tenant?.roles.includes(requiredRole) || req.tenant?.roles.includes('admin') || false;
 }
 
@@ -183,6 +186,8 @@ export function hasRole(req: Request, requiredRole: string): boolean {
  * Check if user has required permission
  */
 export function hasPermission(req: Request, requiredPermission: string): boolean {
+  // Org "admin" holds all org-scoped permissions. Platform-operator actions do
+  // NOT authorize through here; they use requirePlatformAdmin.
   return (
     req.tenant?.permissions.includes(requiredPermission) ||
     req.tenant?.roles.includes('admin') ||

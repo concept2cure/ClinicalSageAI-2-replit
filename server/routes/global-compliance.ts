@@ -121,7 +121,11 @@ router.get('/regions/:orgId/config', async (req: Request, res: Response) => {
     );
     res.json({ success: true, data: result.rows });
   } catch (err: any) {
-    res.json({ success: true, data: [], message: 'Table not yet initialized' });
+    if (err?.code === '42P01') {
+      return res.status(503).json({ error: 'Compliance configuration store not provisioned' });
+    }
+    console.error('[global-compliance] regional config read failed:', err?.message);
+    res.status(500).json({ error: 'Failed to load compliance configuration' });
   }
 });
 
@@ -252,7 +256,11 @@ router.get('/gdpr/:orgId/ropa', async (req: Request, res: Response) => {
     );
     res.json({ success: true, data: result.rows });
   } catch (err: any) {
-    res.json({ success: true, data: [], message: 'GDPR tables not yet initialized' });
+    if (err?.code === '42P01') {
+      return res.status(503).json({ error: 'GDPR records store not provisioned' });
+    }
+    console.error('[global-compliance] RoPA read failed:', err?.message);
+    res.status(500).json({ error: 'Failed to load records of processing activities' });
   }
 });
 
@@ -398,7 +406,13 @@ router.get('/gdpr/:orgId/dsr/overdue', async (req: Request, res: Response) => {
         : 'All DSRs are within 30-day compliance window',
     });
   } catch (err: any) {
-    res.json({ success: true, data: [], overdue: 0 });
+    // Never report "0 overdue" from a failed query — an overdue-DSR count that
+    // silently reads zero on error hides an Art. 77 compliance exposure.
+    if (err?.code === '42P01') {
+      return res.status(503).json({ error: 'GDPR records store not provisioned' });
+    }
+    console.error('[global-compliance] overdue DSR read failed:', err?.message);
+    res.status(500).json({ error: 'Failed to load overdue data subject requests' });
   }
 });
 
@@ -797,7 +811,13 @@ router.get('/pharmacovigilance/:orgId/adverse-events', async (req: Request, res:
     const result = await pool.query(query, params);
     res.json({ success: true, data: result.rows });
   } catch (err: any) {
-    res.json({ success: true, data: [] });
+    // A caught failure here must not read as an empty adverse-event list — a
+    // false-empty PV record is a patient-safety and reporting-compliance risk.
+    if (err?.code === '42P01') {
+      return res.status(503).json({ error: 'Pharmacovigilance store not provisioned' });
+    }
+    console.error('[global-compliance] adverse-events read failed:', err?.message);
+    res.status(500).json({ error: 'Failed to load adverse events' });
   }
 });
 
@@ -832,7 +852,13 @@ router.get('/pharmacovigilance/:orgId/overdue-reports', async (req: Request, res
         : 'All safety reports are within regulatory deadlines',
     });
   } catch (err: any) {
-    res.json({ success: true, data: [], overdueCount: 0 });
+    // Reporting overdueCount: 0 from a failed query would mask expedited-report
+    // deadlines that may already be breached — surface the failure instead.
+    if (err?.code === '42P01') {
+      return res.status(503).json({ error: 'Pharmacovigilance store not provisioned' });
+    }
+    console.error('[global-compliance] overdue safety-report read failed:', err?.message);
+    res.status(500).json({ error: 'Failed to load overdue safety reports' });
   }
 });
 
@@ -916,12 +942,16 @@ router.get('/dashboard/:orgId', async (req: Request, res: Response) => {
       aeOverdueResult,
       signalResult,
     ] = await Promise.all([
-      pool.query(`SELECT COUNT(*)::int AS count FROM regional_compliance_config WHERE organization_id = $1 AND enabled = true`, [orgId]).catch(() => ({ rows: [{ count: 0 }] })),
-      pool.query(`SELECT COUNT(*)::int AS count FROM gdpr_processing_activities WHERE organization_id = $1`, [orgId]).catch(() => ({ rows: [{ count: 0 }] })),
-      pool.query(`SELECT COUNT(*)::int AS count FROM gdpr_data_breaches WHERE organization_id = $1 AND status NOT IN ('remediated', 'closed')`, [orgId]).catch(() => ({ rows: [{ count: 0 }] })),
-      pool.query(`SELECT COUNT(*)::int AS count FROM gdpr_data_subject_requests WHERE organization_id = $1 AND status NOT IN ('completed', 'denied') AND response_deadline < NOW()`, [orgId]).catch(() => ({ rows: [{ count: 0 }] })),
-      pool.query(`SELECT COUNT(*)::int AS count FROM pv_adverse_events WHERE organization_id = $1 AND reported_to_authorities = FALSE AND regulatory_reporting_deadline < NOW()`, [orgId]).catch(() => ({ rows: [{ count: 0 }] })),
-      pool.query(`SELECT COUNT(*)::int AS count FROM pv_safety_signals WHERE organization_id = $1 AND evaluation_status IN ('new', 'under_evaluation')`, [orgId]).catch(() => ({ rows: [{ count: 0 }] })),
+      // NOTE: these queries must NOT swallow their errors to `count: 0` — a
+      // failed overdue-AE / open-breach query silently reporting "0" makes the
+      // dashboard falsely render "compliant". Any rejection propagates to the
+      // outer catch, which returns a real error status.
+      pool.query(`SELECT COUNT(*)::int AS count FROM regional_compliance_config WHERE organization_id = $1 AND enabled = true`, [orgId]),
+      pool.query(`SELECT COUNT(*)::int AS count FROM gdpr_processing_activities WHERE organization_id = $1`, [orgId]),
+      pool.query(`SELECT COUNT(*)::int AS count FROM gdpr_data_breaches WHERE organization_id = $1 AND status NOT IN ('remediated', 'closed')`, [orgId]),
+      pool.query(`SELECT COUNT(*)::int AS count FROM gdpr_data_subject_requests WHERE organization_id = $1 AND status NOT IN ('completed', 'denied') AND response_deadline < NOW()`, [orgId]),
+      pool.query(`SELECT COUNT(*)::int AS count FROM pv_adverse_events WHERE organization_id = $1 AND reported_to_authorities = FALSE AND regulatory_reporting_deadline < NOW()`, [orgId]),
+      pool.query(`SELECT COUNT(*)::int AS count FROM pv_safety_signals WHERE organization_id = $1 AND evaluation_status IN ('new', 'under_evaluation')`, [orgId]),
     ]);
 
     const overdueDSRs = dsrOverdueResult.rows[0]?.count || 0;
@@ -963,7 +993,11 @@ router.get('/dashboard/:orgId', async (req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Dashboard query failed', details: err.message });
+    if (err?.code === '42P01') {
+      return res.status(503).json({ error: 'Compliance data store not provisioned' });
+    }
+    console.error('[global-compliance] dashboard query failed:', err?.message);
+    res.status(500).json({ error: 'Dashboard query failed' });
   }
 });
 

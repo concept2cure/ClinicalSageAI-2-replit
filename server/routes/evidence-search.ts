@@ -102,8 +102,15 @@ router.get('/search', async (req: Request, res: Response) => {
             createdAt: a.createdAt,
           }));
         }
-      } catch {
-        // Database search failed, return empty results
+      } catch (dbErr) {
+        // Both the OpenSearch path and the vault text-search fallback failed —
+        // surface the failure instead of returning an empty result set that a
+        // reviewer would read as "no matching evidence".
+        console.error(
+          '[evidence-search] vault fallback query failed:',
+          dbErr instanceof Error ? dbErr.message : String(dbErr),
+        );
+        return res.status(500).json({ success: false, error: 'Search failed' });
       }
     }
 
@@ -134,8 +141,14 @@ router.get('/gather/:productId', async (req: Request, res: Response) => {
     try {
       const { gatherEvidence } = await import('../src/services/reg/evidence');
       evidence = await gatherEvidence(productId, sectionCode);
-    } catch {
-      // Evidence gathering service unavailable
+    } catch (svcErr) {
+      // A failed evidence gather must not report success with an empty set —
+      // that reads as "no evidence exists" rather than "the gather failed".
+      console.error(
+        '[evidence-search] evidence gathering failed:',
+        svcErr instanceof Error ? svcErr.message : String(svcErr),
+      );
+      return res.status(500).json({ success: false, error: 'Failed to gather evidence' });
     }
 
     return res.json({

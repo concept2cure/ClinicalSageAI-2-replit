@@ -127,7 +127,10 @@ const requireRole = requiredRole => {
     // Get user roles from JWT payload
     const userRoles = req.user.roles || [];
 
-    // Check if user has the required role or admin role
+    // Org-scoped RBAC: an org "admin" is a superset of the org's operational
+    // roles. Platform-operator (cross-tenant) routes must NOT rely on this —
+    // they use requirePlatformAdmin, which has no org-admin bypass. Mirrors the
+    // canonical auth.ts requireRole.
     if (userRoles.includes(requiredRole) || userRoles.includes('admin')) {
       return next();
     }

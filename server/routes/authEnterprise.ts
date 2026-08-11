@@ -29,6 +29,7 @@ import {
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 import { authMiddleware } from '../auth';
 import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
@@ -155,11 +156,20 @@ function extractJwtUser(
   const token = authHeader?.replace('Bearer ', '');
   if (!token) return null;
   try {
-    return verifyJwtWithRotation(token) as {
+    const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
       organizationId?: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
     };
+    // SECURITY: reject non-access token classes (mfa-partial / mfa_challenge /
+    // refresh). Pre-MFA tokens are signed with the same secret as access tokens,
+    // so a password-only session must not be treated as a full identity for
+    // access-privileged actions (MFA setup/enable/disable).
+    if (requireAccessTokenReason(decoded)) return null;
+    return decoded;
   } catch {
     return null;
   }
@@ -734,6 +744,15 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     }
 
     const decoded = verifyJwtWithRotation(existingToken) as any;
+    // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token must not
+    // be exchanged for a full 24h access token here — that would let a
+    // password-only session skip MFA. Require a genuine access token.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        error: 'AUTH_REQUIRED',
+        message: 'A valid access token is required to select an organization',
+      });
+    }
     const userId: string = decoded.userId;
     const email: string = decoded.email;
 
@@ -826,6 +845,19 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   try {
     const decoded = verifyJwtWithRotation(oldToken) as any;
 
+    // SECURITY: this endpoint re-mints a full 24h access token. A pre-MFA
+    // (mfaPending / mfa_challenge) or refresh token presented here would let a
+    // password-only session obtain an access token and bypass MFA. Smallest
+    // correct fix: require a genuine access token (preserves the existing
+    // access-token → access-token behavior). Refresh-token rotation lives at the
+    // canonical POST /api/auth/refresh.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        error: 'TOKEN_EXPIRED',
+        message: 'Token expired or invalid',
+      });
+    }
+
     // Re-query actual role from DB instead of trusting stale JWT claim
     const refreshOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
     const refreshRole = refreshOrgId
@@ -872,6 +904,10 @@ router.get('/session', async (req: Request, res: Response) => {
 
   try {
     const decoded = verifyJwtWithRotation(token) as any;
+    // SECURITY: a pre-MFA / refresh token is not an authenticated session.
+    if (requireAccessTokenReason(decoded)) {
+      return res.json({ authenticated: false });
+    }
     res.json({
       authenticated: true,
       user: {

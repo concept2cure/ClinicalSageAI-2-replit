@@ -825,9 +825,18 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
 
     return res.json({ evidence: rows });
   } catch (err: unknown) {
-    // c2c_project_pinned_evidence may not exist in all environments yet.
-    console.error('[c2c/projects] GET /:id/evidence', err);
-    return res.json({ evidence: [] });
+    // Never return an empty evidence list on a caught failure — a reviewer
+    // cannot distinguish "no pinned evidence" from "the query failed".
+    if ((err as { code?: string })?.code === '42P01') {
+      // c2c_project_pinned_evidence may not exist in all environments yet.
+      return res.status(503).json({ error: 'PENDING_STORE' });
+    }
+    logger.error('GET /:id/evidence failed', {
+      programId: String(req.params.id),
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as { code?: string })?.code ?? null,
+    });
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
 
@@ -943,9 +952,17 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
 
     return res.json({ activity: rows });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/activity', err);
-    // audit_logs schema varies; degrade gracefully.
-    return res.json({ activity: [] });
+    // The activity feed is an audit-log read; a caught failure must not render
+    // as an empty feed (indistinguishable from a project with no activity).
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.status(503).json({ error: 'PENDING_STORE' });
+    }
+    logger.error('GET /:id/activity failed', {
+      programId: String(req.params.id),
+      error: err instanceof Error ? err.message : String(err),
+      code: (err as { code?: string })?.code ?? null,
+    });
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
 
