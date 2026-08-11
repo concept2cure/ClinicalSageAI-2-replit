@@ -422,3 +422,53 @@ export const REGISTER_LDT: AnaTool = {
     required: ['lab_name', 'test_name'],
   },
 };
+
+export const AUTHOR_POST_MARKET_DOCUMENT: AnaTool = {
+  name: 'author_post_market_document',
+  description:
+    "Author and persist a DRAFT EU MDR/IVDR post-market document for a device programme, then return its compliance-gate validation. Covers six document types: PMS Plan (Art. 84), PMS Report (Art. 85), PMCF Plan (Annex XIV Part B), PMCF Evaluation Report, PSUR (Art. 86), and SSCP (Art. 32 — Summary of Safety and Clinical Performance, required for Class III and implantable Class IIb). Content is scaffolded deterministically from the programme's device data and any linked CER; the tool does NOT invent clinical conclusions. Report-style types (PMS Report, PMCF Evaluation, PSUR) take a reporting period — omit it and a DRAFT trailing-12-month period is set and flagged so the sponsor must confirm it. Versions are computed per programme and document code, so calling twice creates v2 rather than overwriting. Returns the document id, title, version and the validation findings (critical/warning counts and whether it passes the gate) — relay the findings; a draft that fails the gate is not submission-ready.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id: {
+        type: 'string',
+        description: 'Regulatory programme UUID the document belongs to.',
+      },
+      document_type: {
+        type: 'string',
+        enum: ['pms_plan', 'pms_report', 'pmcf_plan', 'pmcf_evaluation', 'psur', 'sscp'],
+        description: 'Which post-market document to author.',
+      },
+      device_name: {
+        type: 'string',
+        description: 'Device name. Falls back to the programme record when omitted.',
+      },
+      device_class: {
+        type: 'string',
+        description: 'Risk class (e.g. "IIa", "IIb", "III"). Drives SSCP applicability.',
+      },
+      regulation: {
+        type: 'string',
+        enum: ['MDR', 'IVDR'],
+        description: 'Governing regulation. Defaults to the programme setting.',
+      },
+      related_cer_report_id: {
+        type: 'number',
+        description: 'Link a CER whose conclusions should be referenced in the scaffold.',
+      },
+      title: {
+        type: 'string',
+        description: 'Override the generated document title.',
+      },
+      reporting_period_start: {
+        type: 'string',
+        description: 'ISO date. Required in practice for pms_report, pmcf_evaluation and psur.',
+      },
+      reporting_period_end: {
+        type: 'string',
+        description: 'ISO date.',
+      },
+    },
+    required: ['program_id', 'document_type'],
+  },
+};

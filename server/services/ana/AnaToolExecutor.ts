@@ -8249,6 +8249,80 @@ registerToolHandler('register_ldt', async (input, ctx) => {
   }
 });
 
+// EU MDR/IVDR post-market authoring — exposes the existing
+// gspr-postmarket/post-market-authoring engine (PMS plan/report, PMCF
+// plan/evaluation, PSUR, SSCP), which was previously reachable only over REST.
+registerToolHandler('author_post_market_document', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'author_post_market_document requires tenant context.' });
+  }
+  const programId = typeof input.program_id === 'string' ? input.program_id.trim() : '';
+  const documentType = typeof input.document_type === 'string' ? input.document_type : '';
+  if (!programId || !documentType) {
+    return JSON.stringify({ error: 'program_id and document_type are required.' });
+  }
+  try {
+    const { authorPostMarketDocument, AUTHORABLE_DOCUMENT_TYPES } = await import(
+      '../gspr-postmarket/post-market-authoring.js'
+    );
+    if (!AUTHORABLE_DOCUMENT_TYPES.includes(documentType as never)) {
+      return JSON.stringify({
+        error: `Unsupported document_type "${documentType}".`,
+        supported: AUTHORABLE_DOCUMENT_TYPES,
+      });
+    }
+    // Dates are optional: the engine substitutes a flagged DRAFT trailing-12-month
+    // period for report-style types, so an unparseable value must not silently
+    // become "now" — leave it undefined and let the engine flag it.
+    const parseDate = (v: unknown): Date | undefined => {
+      if (typeof v !== 'string' || !v.trim()) return undefined;
+      const d = new Date(v);
+      return Number.isNaN(d.getTime()) ? undefined : d;
+    };
+    const { document, validation } = await authorPostMarketDocument({
+      organizationId: ctx.organizationId,
+      programId,
+      createdBy: ctx.userId != null ? String(ctx.userId) : 'ana',
+      documentType: documentType as never,
+      deviceName: typeof input.device_name === 'string' ? input.device_name : undefined,
+      deviceClass: typeof input.device_class === 'string' ? input.device_class : undefined,
+      regulation:
+        input.regulation === 'MDR' || input.regulation === 'IVDR' ? input.regulation : undefined,
+      relatedCerReportId:
+        typeof input.related_cer_report_id === 'number' ? input.related_cer_report_id : undefined,
+      title: typeof input.title === 'string' ? input.title : undefined,
+      reportingPeriodStart: parseDate(input.reporting_period_start),
+      reportingPeriodEnd: parseDate(input.reporting_period_end),
+    });
+    return JSON.stringify({
+      ok: true,
+      document: {
+        id: document.id,
+        documentType: document.documentType,
+        title: document.title,
+        version: document.version,
+        status: document.status,
+        summary: document.summary,
+      },
+      validation: {
+        passesGate: validation.passesGate,
+        criticalCount: validation.criticalCount,
+        warningCount: validation.warningCount,
+        findings: validation.findings,
+      },
+      message:
+        `DRAFT ${document.documentType} v${document.version} created. ` +
+        (validation.passesGate
+          ? 'Passes the compliance gate; still requires sponsor specialisation before approval.'
+          : `Does NOT pass the compliance gate (${validation.criticalCount} critical, ${validation.warningCount} warning) — relay the findings.`),
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `author_post_market_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Submission-gateway handlers — package + transmit to FDA ESG / EMA CESP /
 // EUDAMED / PMDA Gateway. Wraps server/services/submission-gateways/.
@@ -8259,7 +8333,8 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
   }
   const region = typeof input.region === 'string' ? input.region.toLowerCase() : '';
-  const VALID_REGIONS = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
+  const { ALL_REGIONS } = await import('../submission-gateways/region-constants.js');
+  const VALID_REGIONS: readonly string[] = ALL_REGIONS;
   if (!VALID_REGIONS.includes(region)) {
     return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS.join(' / ')}.` });
   }
@@ -8313,10 +8388,9 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
   }
   const region  = typeof input.region === 'string' ? input.region.toLowerCase() : '';
   const gateway = typeof input.gateway === 'string' ? input.gateway.toLowerCase() : '';
-  const VALID_REGIONS_TX = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
-  const VALID_GATEWAYS   = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg',
-                             'mhra_gateway', 'nmpa_gateway', 'tga_ebs', 'swissmedic_egateway',
-                             'anvisa_gateway', 'cdsco_sugam', 'mfds_dbio', 'hsa_prism'];
+  const { ALL_REGIONS: TX_REGIONS, ALL_GATEWAY_NAMES } = await import('../submission-gateways/region-constants.js');
+  const VALID_REGIONS_TX: readonly string[] = TX_REGIONS;
+  const VALID_GATEWAYS: readonly string[] = ALL_GATEWAY_NAMES;
   if (!VALID_REGIONS_TX.includes(region)) {
     return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS_TX.join(' / ')}.` });
   }

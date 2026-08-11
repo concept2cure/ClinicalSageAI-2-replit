@@ -416,7 +416,15 @@ import {
   CATEGORIZE_CLIA_COMPLEXITY,
   PAIR_COMPANION_DIAGNOSTIC,
   REGISTER_LDT,
+  AUTHOR_POST_MARKET_DOCUMENT,
 } from './mutation-surface-tool-defs.js';
+// Single runtime source of truth for the gateway region / transport sets. The
+// enums below previously hardcoded a 4-region subset while the handlers and the
+// regional packager supported all twelve — see region-constants.ts.
+import {
+  ALL_REGIONS,
+  ALL_GATEWAY_NAMES,
+} from '../submission-gateways/region-constants.js';
 // Document intake + OCR + spreadsheet tool definitions extracted to their own module (tranche 7).
 import {
   INSPECT_UPLOADED_DOCUMENT,
@@ -1261,11 +1269,11 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml / Health Canada ca-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+    "Assemble a regional eCTD zip from a set of CTD leaves. Produces the correct Module 1 folder structure and regional backbone XML per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Supports twelve regions: FDA (us-regional.xml), EMA (eu-regional.xml), PMDA (jp-regional.xml), Health Canada (ca-regional.xml), MHRA/UK, NMPA/China, TGA/Australia, Swissmedic/Switzerland, ANVISA/Brazil, CDSCO/India, MFDS/South Korea, and HSA/Singapore. Use after AnA has gathered the leaf manifest for a submission.",
   input_schema: {
     type: 'object',
     properties: {
-      region:          { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      region:          { type: 'string', enum: [...ALL_REGIONS] },
       application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
@@ -1300,12 +1308,12 @@ export const TRANSMIT_SUBMISSION: AnaTool = {
   // reported to the user as a failure. It does not transmit — see the handler
   // in AnaToolExecutor.ts and the gateway guard in submission-gateways/index.ts.
   description:
-    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
+    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG, MHRA Gateway, NMPA/CDE, TGA eBS, Swissmedic eGateway, ANVISA SOLICITA, CDSCO SUGAM, MFDS dBio, HSA PRISM). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
   input_schema: {
     type: 'object',
     properties: {
-      region:      { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
-      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] },
+      region:      { type: 'string', enum: [...ALL_REGIONS] },
+      gateway:     { type: 'string', enum: [...ALL_GATEWAY_NAMES] },
       environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
       bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
       bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },
@@ -1873,6 +1881,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   CATEGORIZE_CLIA_COMPLEXITY,
   PAIR_COMPANION_DIAGNOSTIC,
   REGISTER_LDT,
+  AUTHOR_POST_MARKET_DOCUMENT,
   PACKAGE_ECTD_FOR_REGION,
   TRANSMIT_SUBMISSION,
   CHECK_SUBMISSION_STATUS,
