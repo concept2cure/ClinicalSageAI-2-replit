@@ -431,7 +431,49 @@ export async function authorizeCommand(
     );
   }
 
-  // 2. Read-only commands stay available even when tenant governance
+  // 2. Per-tenant tool allow/deny policy (organizations.settings.anaToolPolicy),
+  //    applied to EVERY dispatched command.
+  //
+  //    Why here and not only in the MDX/PDEV path: requireGovernedToolGate() in
+  //    mdx-tool-policy.ts is reachable only from the dotted MDX/PDEV handlers, so
+  //    it covers 37 of the ~115 dispatchable commands. The remaining 78 — including
+  //    submit_document, freeze_document, sign_document, place_in_dossier,
+  //    create_submission_package and erase_personal_data — silently IGNORED an
+  //    admin `deny` entry, and a non-empty `allow` list failed to constrain them at
+  //    all, inverting a whitelist into a no-op. server/routes/ana-tool-policy.ts
+  //    accepts those command names, so that was a supported, silently-ineffective
+  //    configuration. Enforcing it here makes the tenant control mean what the admin
+  //    API says it means.
+  //
+  //    Placement is deliberate: BEFORE the read-only early return below, so a deny
+  //    also suppresses reads. Double-enforcement on the dotted commands is an
+  //    identical, idempotent deny (same error codes as mdx-tool-policy.ts) and is
+  //    harmless. Degraded mode is unchanged: when the strict policy load throws,
+  //    ctx.anaToolPolicy stays undefined and ctx.governanceUnavailable already
+  //    blocks every write.
+  const toolPolicy = ctx.anaToolPolicy;
+  if (toolPolicy) {
+    if (Array.isArray(toolPolicy.deny) && toolPolicy.deny.includes(command)) {
+      return deny(
+        command,
+        'TOOL_DENIED',
+        `'${command}' is disabled for your organization. Contact a tenant admin to enable it.`,
+      );
+    }
+    if (
+      Array.isArray(toolPolicy.allow) &&
+      toolPolicy.allow.length > 0 &&
+      !toolPolicy.allow.includes(command)
+    ) {
+      return deny(
+        command,
+        'TOOL_NOT_ALLOWED',
+        `'${command}' is not on your organization's allow-list.`,
+      );
+    }
+  }
+
+  // 3. Read-only commands stay available even when tenant governance
   //    configuration cannot be read — the documented degraded mode. They are
   //    still tenant-scoped by ctx.organizationId in every handler's SQL and by
   //    the tenant_isolation_policy RLS underneath.
@@ -451,7 +493,7 @@ export async function authorizeCommand(
 
   // ── mutation-capable from here down ────────────────────────────────────
 
-  // 3. Governance configuration could not be read at all → block the write.
+  // 4. Governance configuration could not be read at all → block the write.
   //    A settings/DB outage must not silently strip the tenant tool policy and
   //    the Part 11 gate off a regulated mutation.
   if (ctx.governanceUnavailable === true) {
@@ -463,7 +505,7 @@ export async function authorizeCommand(
     );
   }
 
-  // 4. Identity must come from the verified principal.
+  // 5. Identity must come from the verified principal.
   if (!isValidId(ctx.userId) || !isValidId(ctx.organizationId)) {
     return deny(
       command,
@@ -472,12 +514,12 @@ export async function authorizeCommand(
     );
   }
 
-  // 5. Parameter-dependent authorization is completed by the handler.
+  // 6. Parameter-dependent authorization is completed by the handler.
   if (authz.handlerAuthorized) {
     return { ok: true };
   }
 
-  // 6. Defensive: a write with no tier is unauthorizable. CI asserts this can
+  // 7. Defensive: a write with no tier is unauthorizable. CI asserts this can
   //    never happen, but never fall through to "allow".
   if (!authz.minRole) {
     return deny(
