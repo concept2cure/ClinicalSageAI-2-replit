@@ -21,14 +21,28 @@
 
 ## Database Connection
 
-```
-DATABASE_NEON_NEW_SECRET=postgresql://neondb_owner:npg_bMoSyf2sDq6r@ep-wild-forest-ahbojhu4-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require
+> **The connection string is a secret and is no longer recorded here.** A live
+> `neondb_owner` password sat in this file in plaintext (both as a URL and on its
+> own line) from 2026-01-23 until it was removed. `neondb_owner` is the *owner*
+> role — strictly above the non-superuser `app_service` role that the tenant-RLS
+> program depends on — so anyone who read this file could bypass row-level
+> security entirely.
+>
+> **Removing it here does not un-leak it.** It remains in git history, so the
+> credential must be treated as compromised and **rotated in the Neon console**;
+> deletion from the working tree is cleanup, not remediation.
+
+Take the connection string from the environment, never from a document:
+
+```bash
+# Provided by the deployment environment / your local .env (which is gitignored).
+# Application runtime uses the restricted role; see scripts/db/provision-app-role.mjs.
+echo "$DATABASE_URL"        # migrations / tooling
+echo "$APP_DATABASE_URL"    # application runtime (app_service, non-superuser)
 ```
 
-**Host:** `ep-wild-forest-ahbojhu4-pooler.c-3.us-east-1.aws.neon.tech`
-**Database:** `neondb`
-**User:** `neondb_owner`
-**Password:** `npg_bMoSyf2sDq6r`
+**Host / database / role** are discoverable from that value at runtime and are
+deliberately not duplicated here — a second copy is a second thing to rotate.
 
 ---
 
