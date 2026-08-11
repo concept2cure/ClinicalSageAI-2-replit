@@ -14,11 +14,14 @@
  */
 
 /**
- * Per-schema table privileges granted to the runtime role. `audit` is
- * append-only (SELECT, INSERT) to preserve 21 CFR Part 11 tamper-evidence;
- * application schemas get full DML.
+ * Per-schema privilege OVERRIDES for the runtime role. Any schema not listed
+ * gets DEFAULT_TABLE_PRIVILEGES. `audit` is append-only (SELECT, INSERT) to
+ * preserve 21 CFR Part 11 tamper-evidence; `extensions` is read-only (SELECT).
  */
-export declare const SCHEMA_TABLE_PRIVILEGES: Readonly<Record<string, string[]>>;
+export declare const SCHEMA_PRIVILEGE_OVERRIDES: Readonly<Record<string, string[]>>;
+
+/** Full DML — the default granted on every application schema without an override. */
+export declare const DEFAULT_TABLE_PRIVILEGES: readonly string[];
 
 /** Resolve and validate the runtime role name (APP_SERVICE_DB_ROLE, default app_service). */
 export declare function resolveAppServiceRole(env?: Record<string, string | undefined>): string;

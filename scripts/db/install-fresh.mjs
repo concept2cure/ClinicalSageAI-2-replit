@@ -583,11 +583,28 @@ async function main() {
         )
       ).rows[0]?.ok;
       if (!canRead) roleFailures.push('lacks SELECT on public.organizations (grants did not apply)');
+      // Every application schema must be reachable: a schema the runtime uses
+      // but the role lacks USAGE on surfaces as a `permission denied for schema
+      // X` 500 the moment a feature backed by X is hit. Catch ANY such gap here
+      // so a "green" install can never hand over a role locked out of a schema.
+      const schemaGaps = (
+        await pool.query(
+          `SELECT nspname FROM pg_namespace
+            WHERE nspname NOT IN ('pg_catalog', 'information_schema')
+              AND nspname !~ '^pg_'
+              AND NOT has_schema_privilege($1, nspname, 'USAGE')
+            ORDER BY nspname`,
+          [role],
+        )
+      ).rows.map(r => r.nspname);
+      if (schemaGaps.length) {
+        roleFailures.push(`lacks USAGE on schema(s): ${schemaGaps.join(', ')} (grants incomplete)`);
+      }
       if (roleFailures.length) {
         throw new Error(`runtime role ${role} posture is unsafe: ${roleFailures.join('; ')}`);
       }
       console.log(
-        `  runtime role ${role}: LOGIN · non-superuser · NOBYPASSRLS · can read tenant tables ✓`,
+        `  runtime role ${role}: LOGIN · non-superuser · NOBYPASSRLS · USAGE on all application schemas · can read tenant tables ✓`,
       );
     }
 

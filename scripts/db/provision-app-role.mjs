@@ -46,22 +46,38 @@ const ROLE_NAME_RE = /^[a-z_][a-z0-9_]*$/;
 const MIN_PASSWORD_LENGTH = 12;
 
 /**
- * Per-schema table privileges granted to the runtime role.
+ * Table privileges granted to the runtime role, per schema.
  *
- * `audit` is APPEND-ONLY (SELECT, INSERT — no UPDATE/DELETE) to preserve the
- * 21 CFR Part 11 tamper-evidence guarantee: the runtime only ever INSERTs into
- * audit.tamper_proof_log (server/lib/tamper-proof-audit.ts); no code path
- * updates or deletes an audit row, so withholding those privileges costs the
- * app nothing and denies a compromised app process the ability to rewrite the
- * audit trail. Application schemas get full DML. Only schemas that actually
- * exist are touched.
+ * The role is granted on EVERY application schema that exists (discovered at
+ * grant time), because the runtime touches many more than a handful: public,
+ * intelligence, core, cortex, lumen, vault, precedent, compliance, clinical_ops,
+ * manufacturing, labeling, ectd, … A hardcoded allowlist silently locks the role
+ * out of any schema it omits, which surfaces as a `permission denied for schema
+ * X` 500 the moment a feature backed by X is hit (and a "green" install would
+ * not catch it). So the default is full DML on every non-system schema, with a
+ * few deliberate per-schema OVERRIDES:
+ *
+ *   - `audit` is APPEND-ONLY (SELECT, INSERT — no UPDATE/DELETE) to preserve the
+ *     21 CFR Part 11 tamper-evidence guarantee: the runtime only ever INSERTs
+ *     into audit.tamper_proof_log (server/lib/tamper-proof-audit.ts); no code
+ *     path updates or deletes an audit row, so withholding those privileges
+ *     costs the app nothing and denies a compromised app process the ability to
+ *     rewrite the audit trail.
+ *   - `extensions` is READ-ONLY (SELECT): it holds extension-installed objects
+ *     (types/functions the runtime references via USAGE); the app never writes
+ *     extension tables.
+ *
+ * This does not weaken the RLS unlock: the role is still NOSUPERUSER /
+ * NOBYPASSRLS and is not the table owner, so Row-Level Security filters every
+ * row it touches in every schema regardless of these DML grants.
  */
-export const SCHEMA_TABLE_PRIVILEGES = Object.freeze({
-  public: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+export const SCHEMA_PRIVILEGE_OVERRIDES = Object.freeze({
   audit: ['SELECT', 'INSERT'],
-  vault: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
-  precedent: ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
+  extensions: ['SELECT'],
 });
+
+/** Full DML — the default for every application schema without an override. */
+export const DEFAULT_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
 
 /**
  * Resolve and validate the runtime role name (APP_SERVICE_DB_ROLE, default
@@ -136,15 +152,21 @@ export async function provisionAppServiceRole(db, { env = process.env, log = () 
 
     await db.query(`GRANT CONNECT ON DATABASE ${dbIdent} TO ${roleIdent}`);
 
+    // Discover every application schema present and grant on ALL of them, so no
+    // schema the runtime uses can be silently left ungranted. System schemas
+    // (pg_catalog, pg_toast, pg_temp_*, information_schema) are excluded.
+    const schemaRows = (
+      await db.query(
+        `SELECT nspname FROM pg_namespace
+          WHERE nspname NOT IN ('pg_catalog', 'information_schema')
+            AND nspname !~ '^pg_'
+          ORDER BY nspname`,
+      )
+    ).rows;
+
     const grantedSchemas = [];
-    for (const [schema, privs] of Object.entries(SCHEMA_TABLE_PRIVILEGES)) {
-      const present =
-        (
-          await db.query('SELECT 1 FROM information_schema.schemata WHERE schema_name = $1', [
-            schema,
-          ])
-        ).rowCount > 0;
-      if (!present) continue;
+    for (const { nspname: schema } of schemaRows) {
+      const privs = SCHEMA_PRIVILEGE_OVERRIDES[schema] || DEFAULT_TABLE_PRIVILEGES;
 
       const schemaIdentRes = await db.query('SELECT quote_ident($1) AS s', [schema]);
       const schemaIdent = schemaIdentRes.rows[0].s;

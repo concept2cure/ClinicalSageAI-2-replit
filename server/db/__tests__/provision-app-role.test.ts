@@ -17,14 +17,15 @@ import { describe, it, expect, afterEach } from 'vitest';
 import {
   provisionAppServiceRole,
   resolveAppServiceRole,
-  SCHEMA_TABLE_PRIVILEGES,
+  SCHEMA_PRIVILEGE_OVERRIDES,
+  DEFAULT_TABLE_PRIVILEGES,
 } from '../../../scripts/db/provision-app-role.mjs';
 
 /** A pg-shaped fake that records every statement and answers the quote/probe
- *  queries the provisioner issues. `existingSchemas` controls which schemas the
- *  information_schema probe reports present; `roleExists` toggles CREATE vs ALTER. */
+ *  queries the provisioner issues. `existingSchemas` is the set the pg_namespace
+ *  discovery query reports; `roleExists` toggles CREATE vs ALTER. */
 function makeFakeDb({
-  existingSchemas = ['public', 'audit', 'vault', 'precedent'],
+  existingSchemas = ['public', 'audit', 'vault', 'precedent', 'intelligence', 'extensions'],
   roleExists = false,
 }: { existingSchemas?: string[]; roleExists?: boolean } = {}) {
   const statements: string[] = [];
@@ -49,9 +50,12 @@ function makeFakeDb({
       if (sql.includes('FROM pg_roles WHERE rolname')) {
         return roleExists ? { rows: [{}], rowCount: 1 } : { rows: [], rowCount: 0 };
       }
-      if (sql.includes('information_schema.schemata')) {
-        const present = existingSchemas.includes(String(args![0]));
-        return present ? { rows: [{}], rowCount: 1 } : { rows: [], rowCount: 0 };
+      // Schema discovery: return the configured schema set as pg_namespace rows.
+      if (sql.includes('FROM pg_namespace')) {
+        return {
+          rows: existingSchemas.map(nspname => ({ nspname })),
+          rowCount: existingSchemas.length,
+        };
       }
       return { rows: [], rowCount: 0 };
     },
@@ -86,17 +90,19 @@ describe('resolveAppServiceRole', () => {
   });
 });
 
-describe('SCHEMA_TABLE_PRIVILEGES', () => {
-  it('grants full DML on public and application schemas', () => {
-    expect(SCHEMA_TABLE_PRIVILEGES.public).toEqual(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
-    expect(SCHEMA_TABLE_PRIVILEGES.vault).toEqual(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
-    expect(SCHEMA_TABLE_PRIVILEGES.precedent).toEqual(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
+describe('privilege model', () => {
+  it('defaults to full DML for application schemas', () => {
+    expect(DEFAULT_TABLE_PRIVILEGES).toEqual(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
   });
 
-  it('grants the audit schema APPEND-ONLY (no UPDATE/DELETE) for Part 11 tamper-evidence', () => {
-    expect(SCHEMA_TABLE_PRIVILEGES.audit).toEqual(['SELECT', 'INSERT']);
-    expect(SCHEMA_TABLE_PRIVILEGES.audit).not.toContain('UPDATE');
-    expect(SCHEMA_TABLE_PRIVILEGES.audit).not.toContain('DELETE');
+  it('overrides audit to APPEND-ONLY (no UPDATE/DELETE) for Part 11 tamper-evidence', () => {
+    expect(SCHEMA_PRIVILEGE_OVERRIDES.audit).toEqual(['SELECT', 'INSERT']);
+    expect(SCHEMA_PRIVILEGE_OVERRIDES.audit).not.toContain('UPDATE');
+    expect(SCHEMA_PRIVILEGE_OVERRIDES.audit).not.toContain('DELETE');
+  });
+
+  it('overrides extensions to READ-ONLY (SELECT)', () => {
+    expect(SCHEMA_PRIVILEGE_OVERRIDES.extensions).toEqual(['SELECT']);
   });
 });
 
@@ -143,17 +149,30 @@ describe('provisionAppServiceRole', () => {
     // CONNECT on the current database.
     expect(statements.some((s) => /GRANT CONNECT ON DATABASE "testdb"/.test(s))).toBe(true);
 
-    // public gets full DML; audit is append-only.
+    // public and a NON-override application schema (intelligence — the exact
+    // schema the review found unreachable) both get full DML.
     expect(
       statements.some((s) =>
         /GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA "public"/.test(s),
       ),
     ).toBe(true);
     expect(
+      statements.some((s) =>
+        /GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA "intelligence"/.test(s),
+      ),
+    ).toBe(true);
+    // audit is append-only; extensions is read-only.
+    expect(
       statements.some((s) => /GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA "audit"/.test(s)),
     ).toBe(true);
     expect(
       statements.some((s) => /UPDATE, DELETE ON ALL TABLES IN SCHEMA "audit"/.test(s)),
+    ).toBe(false);
+    expect(
+      statements.some((s) => /GRANT SELECT ON ALL TABLES IN SCHEMA "extensions"/.test(s)),
+    ).toBe(true);
+    expect(
+      statements.some((s) => /INSERT.*ON ALL TABLES IN SCHEMA "extensions"/.test(s)),
     ).toBe(false);
 
     // Forward coverage for future owner-created tables.
@@ -171,13 +190,24 @@ describe('provisionAppServiceRole', () => {
     expect(statements.some((s) => s.includes('CREATE ROLE'))).toBe(false);
   });
 
-  it('skips schemas that do not exist (no grants emitted for them)', async () => {
-    const { db, statements } = makeFakeDb({ existingSchemas: ['public'], roleExists: false });
+  it('grants EVERY discovered application schema (no hardcoded allowlist gap)', async () => {
+    const { db, statements } = makeFakeDb({
+      existingSchemas: ['public', 'audit', 'intelligence', 'core', 'cortex', 'lumen'],
+      roleExists: false,
+    });
     const result = await provisionAppServiceRole(db as never, {
       env: { APP_SERVICE_DB_PASSWORD: 'a-sufficiently-long-secret' },
     });
-    expect(result.schemas).toEqual(['public(SELECT, INSERT, UPDATE, DELETE)']);
-    expect(statements.some((s) => s.includes('IN SCHEMA "audit"'))).toBe(false);
-    expect(statements.some((s) => s.includes('IN SCHEMA "vault"'))).toBe(false);
+    // Each discovered schema is granted USAGE — none silently skipped.
+    for (const s of ['public', 'audit', 'intelligence', 'core', 'cortex', 'lumen']) {
+      expect(
+        statements.some((q) => new RegExp(`GRANT USAGE ON SCHEMA "${s}"`).test(q)),
+        `USAGE on ${s} should be granted`,
+      ).toBe(true);
+    }
+    // The non-override schemas all resolve to full DML.
+    expect(result.schemas).toContain('intelligence(SELECT, INSERT, UPDATE, DELETE)');
+    expect(result.schemas).toContain('core(SELECT, INSERT, UPDATE, DELETE)');
+    expect(result.schemas).toContain('audit(SELECT, INSERT)');
   });
 });

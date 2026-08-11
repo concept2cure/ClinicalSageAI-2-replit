@@ -6,7 +6,7 @@ import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
-import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin';
+import { requirePlatformAdmin, isPlatformAdmin } from '../middleware/requirePlatformAdmin';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
@@ -19,11 +19,15 @@ const router = Router();
 // SECURITY: All tenant management endpoints require authentication
 router.use(authMiddleware);
 
-/** True for platform operators who may see/manage every tenant. */
-function isPlatformAdmin(req: any): boolean {
-  const roles = req.user?.roles || [req.user?.role];
-  return ['admin', 'super_admin', 'platform_admin'].some(r => roles?.includes(r));
-}
+// Platform-operator (cross-tenant) authorization uses the STRICT isPlatformAdmin
+// from ../middleware/requirePlatformAdmin, which has NO org-`admin` bypass
+// (PLATFORM_ROLES = super_admin / platform_admin / support only). A file-local
+// helper previously counted org `admin` as a platform operator, so GET /api/tenants
+// leaked the full cross-tenant organization directory to any tenant admin — the
+// exact bypass the write routes (requirePlatformAdmin) already exclude. The read
+// path now shares that strict check. (The sync helper omits the platform_role_grants
+// DB fallback the middleware has, so a grant-only platform admin whose JWT lacks a
+// platform role falls to the member-scoped view — an under-privilege, safe direction.)
 
 /**
  * Clean a database URL by removing common wrapper artifacts
