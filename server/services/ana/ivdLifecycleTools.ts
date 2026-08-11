@@ -27,10 +27,16 @@ export const SCREEN_SIGNAL_PANEL: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      a: { type: 'integer', minimum: 0, description: 'Reports WITH the event AND the device of interest.' },
-      b: { type: 'integer', minimum: 0, description: 'Reports WITH the event, OTHER devices.' },
-      c: { type: 'integer', minimum: 0, description: 'Reports WITHOUT the event, the device of interest.' },
-      d: { type: 'integer', minimum: 0, description: 'Reports WITHOUT the event, OTHER devices.' },
+      // Cell order must match the 2×2 convention in stats/signal-disproportionality.ts:
+      //                    Event of interest    Other events
+      //   Device of int.          a                  b
+      //   Other devices           c                  d
+      // b/c were previously transposed here; PRR = [a/(a+b)]/[c/(c+d)] is not
+      // symmetric in b/c, so the swap would have skewed PRR, χ², IC and EBGM.
+      a: { type: 'integer', minimum: 0, description: 'Reports WITH the event for the device of interest.' },
+      b: { type: 'integer', minimum: 0, description: 'Reports of OTHER events for the device of interest.' },
+      c: { type: 'integer', minimum: 0, description: 'Reports WITH the event for ALL OTHER devices.' },
+      d: { type: 'integer', minimum: 0, description: 'Reports of OTHER events for ALL OTHER devices.' },
     },
     required: ['a', 'b', 'c', 'd'],
   },
