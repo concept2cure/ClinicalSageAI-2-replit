@@ -25,7 +25,7 @@
  */
 
 import type { NonclinicalStudyType, SendValidationStatus } from '../../../shared/schema/nonclinical';
-import { buildM26NonclinicalSummaries } from '../preclinical/m26-nonclinical-summaries';
+import { buildM26NonclinicalSummaries, type M26Result, type GeneratedTable } from '../preclinical/m26-nonclinical-summaries';
 import { mapStudyTypeToM24, type NonclinicalStudyInput } from '../preclinical/nonclinical-m24-adapter';
 import { ctdSectionFor, evaluateSendReadiness, sendInScope, type SendRiskLevel } from './nonclinical-logic';
 
@@ -146,6 +146,54 @@ const RISK_RANK: Record<SendRiskLevel, number> = { low: 1, medium: 2, high: 3 };
  * Project the governed study set into the surface's M2.6 / M4 / SEND view.
  * Deterministic; an empty `studies` set returns the honest all-missing skeleton.
  */
+/**
+ * Compose the Module 2.6 nonclinical written summary from the governed study
+ * registry — the SAME deterministic composer the readiness view uses, returned
+ * whole (narrative + tables + gaps + completeness) for persistence as an
+ * authored document. No fabrication: every sentence/row derives from the studies.
+ */
+export function composeM26WrittenSummary(
+  studies: GovernedStudyRow[],
+  opts: { drugSubstanceName?: string; indication?: string } = {},
+): M26Result {
+  return buildM26NonclinicalSummaries({
+    studies: studies.map(toStudyInput),
+    drugSubstanceName: opts.drugSubstanceName,
+    indication: opts.indication,
+  });
+}
+
+const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function renderTable(t: GeneratedTable): string {
+  const head = t.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
+  const body = t.rows
+    .map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c ?? '')}</td>`).join('')}</tr>`)
+    .join('');
+  return `<h3>${escapeHtml(t.title)}</h3><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+/**
+ * Render a composed M2.6 result into a self-contained HTML document body for the
+ * authoring store (coauthor_documents.content). Deterministic and lossless over
+ * the composer output: the narrative paragraphs, then each generated table, then
+ * the outstanding gaps. Escapes all interpolated text.
+ */
+export function renderM26Html(result: M26Result): string {
+  const paras = result.narrative
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p>${escapeHtml(p).replace(/\n/g, '<br/>')}</p>`)
+    .join('');
+  const tables = result.tables.map(renderTable).join('');
+  const gaps = result.gaps.length
+    ? `<h3>Outstanding data gaps</h3><ul>${result.gaps.map((g) => `<li>${escapeHtml(g)}</li>`).join('')}</ul>`
+    : '';
+  return `<h2>${escapeHtml(result.title)}</h2>${paras}${tables}${gaps}`;
+}
+
 export function assembleNonclinicalSummary(
   studies: GovernedStudyRow[],
   opts: { drugSubstanceName?: string; indication?: string } = {},
