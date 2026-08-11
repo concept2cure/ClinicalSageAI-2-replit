@@ -154,6 +154,15 @@ const upload = multer({
 // Use centralized database pool
 const pool = getPool();
 
+// A minimal "thing that runs a query" — satisfied by both the shared Pool and a
+// pooled client obtained via pool.connect(). Lifecycle mutations (section save,
+// freeze, e-sign, sign) run all their writes on ONE such client inside a
+// BEGIN/COMMIT so a mid-way failure ROLLs BACK rather than leaving partial
+// state; the query helpers below accept the executor so those writes route
+// through the same transaction. Non-transactional callers omit it and get the
+// pool, preserving prior behavior.
+type Queryable = { query: (text: string, params?: any[]) => Promise<any> };
+
 /**
  * Document states in which the record is LOCKED and its sections are immutable.
  *
@@ -498,7 +507,11 @@ const createAuditTrail = async (
   beforeContent: string | null,
   afterContent: string | null,
   changeReason: string | null,
-  metadata: any = {}
+  metadata: any = {},
+  // When part of a lifecycle transaction, the caller passes its BEGIN'd client
+  // so the audit row commits (or rolls back) atomically with the mutation it
+  // records. Defaults to the pool for standalone callers.
+  executor: Queryable = pool
 ) => {
   try {
     const actorEmail = (req.headers as any)['x-user-email'] || 'unknown';
@@ -516,7 +529,7 @@ const createAuditTrail = async (
       ? crypto.createHash('sha256').update(afterContent).digest('hex')
       : null;
 
-    await pool.query(
+    await executor.query(
       `INSERT INTO authoring_audit_trail
        (doc_id, section_id, operation_type, actor_email, actor_role,
         before_content, after_content, content_hash_before, content_hash_after,
@@ -547,28 +560,52 @@ const createAuditTrail = async (
     // sees authoring events alongside every other governed mutation. The
     // dedicated authoring_audit_trail row above remains the rich record
     // (full before/after content + content hashes); this is the index entry.
-    void auditService.logAction({
-      tenantId,
-      userId: actorEmail,
-      action: `authoring.section.${operationType}`,
-      resourceType: sectionId ? 'authoring_section' : 'authoring_document',
-      resourceId: String(sectionId ?? docId ?? ''),
-      ipAddress,
-      userAgent,
-      details: {
-        docId,
-        sectionId,
-        operationType,
-        contentHashBefore: hashBefore,
-        contentHashAfter: hashAfter,
-        changeReason: changeReason ?? null,
-        actorRole,
-        sessionId,
-      },
-    });
+    //
+    // ONLY on the standalone path (executor === pool). auditService.logAction
+    // opens its OWN connection and runs its OWN BEGIN/COMMIT — and, on a write
+    // failure, its OWN ROLLBACK. When createAuditTrail is enlisted in a CALLER's
+    // transaction (a lifecycle client was passed), that self-managed transaction
+    // is a second, independent transaction: if it commits, it commits an audit
+    // row for an action the caller may still roll back; if it rolls back, it
+    // tears down the caller's in-flight transaction out from under it. Under the
+    // single-connection journey harness the latter is exactly the poison that
+    // silently discarded a committed e-signature — every awaited statement in the
+    // handler succeeded, yet the mirror's fire-and-forget ROLLBACK had already
+    // aborted the shared transaction, so COMMIT quietly became a no-op. The
+    // authoritative record is the authoring_audit_trail row written above on the
+    // caller's client; it commits and rolls back atomically with the mutation.
+    // The secondary index is skipped for transactional mutations rather than
+    // written on a competing transaction that can disagree with the outcome.
+    if (executor === pool) {
+      void auditService.logAction({
+        tenantId,
+        userId: actorEmail,
+        action: `authoring.section.${operationType}`,
+        resourceType: sectionId ? 'authoring_section' : 'authoring_document',
+        resourceId: String(sectionId ?? docId ?? ''),
+        ipAddress,
+        userAgent,
+        details: {
+          docId,
+          sectionId,
+          operationType,
+          contentHashBefore: hashBefore,
+          contentHashAfter: hashAfter,
+          changeReason: changeReason ?? null,
+          actorRole,
+          sessionId,
+        },
+      });
+    }
   } catch (error) {
     // Audit logging must never fail silently in production
     console.error('CRITICAL: Failed to create audit trail:', error);
+    // Enlisted in a caller transaction: the audit row and the mutation it
+    // records must land together or not at all. A swallowed failure here would
+    // let an un-audited change commit — so surface it and let the caller roll
+    // back. Standalone callers keep the best-effort behavior (throw only in
+    // production) so an audit-log outage cannot break an otherwise-valid action.
+    if (executor !== pool) throw error;
     if (process.env.NODE_ENV === 'production') {
       throw new Error('Audit logging failed - operation aborted for compliance');
     }
@@ -581,7 +618,10 @@ const createAuditEvent = async (
   eventType: string,
   actor: string,
   metadata: any,
-  tenantId: number
+  tenantId: number,
+  // Threaded through to createAuditTrail so this legacy wrapper can enlist in a
+  // lifecycle transaction (see POST /docs/:docId/sign). Defaults to the pool.
+  executor: Queryable = pool
 ) => {
   // Synthesize the request shape createAuditTrail reads from. `user` is the
   // important part: getTenantId sources the tenant from the VERIFIED JWT
@@ -605,7 +645,8 @@ const createAuditEvent = async (
     null,
     null,
     'Legacy audit event',
-    metadata
+    metadata,
+    executor
   );
 };
 
@@ -711,11 +752,15 @@ const createRevision = async (
   sectionId: string | string[] | undefined,
   content: string,
   updatedBy: string,
-  tenantId: number
+  tenantId: number,
+  // When part of a lifecycle transaction, the caller passes its BEGIN'd client
+  // so the revision commits atomically with the section update. Defaults to the
+  // pool for standalone callers.
+  executor: Queryable = pool
 ) => {
   try {
     const revisionId = crypto.randomUUID();
-    await pool.query(
+    await executor.query(
       `INSERT INTO doc_revisions (id, section_id, content, created_by, created_at, tenant_id)
        VALUES ($1, $2, $3, $4, NOW(), $5)`,
       [revisionId, sectionId, content, updatedBy, tenantId]
@@ -1641,30 +1686,13 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     const updates = [];
     const values = [];
     let paramCount = 0;
+    let recordRevision = false;
 
     if (content !== undefined) {
       paramCount++;
       updates.push(`content = $${paramCount}`);
       values.push(content);
-
-      // A revision row means "this content, by this author, as of this time".
-      //
-      // It used to snapshot the PRIOR content under the CURRENT editor's id:
-      // createRevision(sectionId, currentSection.rows[0].content, updatedByUser, …).
-      // With one author editing repeatedly the byline happened to be right; it
-      // went wrong exactly when authorship changed hands — the multi-author
-      // case attribution exists to serve. Alice writes "0.35"; Bob corrects it
-      // to "0.25"; the trail then held two rows BOTH containing Alice's text,
-      // one labelled Bob, and Bob's actual edit had no row at all until a third
-      // party touched the section. An inspector asking "who changed 0.35 to
-      // 0.25?" was answered with Bob's name against the 0.35 text — the exact
-      // inverse of the truth — and "who wrote the current text?" had no answer
-      // anywhere in the system.
-      //
-      // POST /sections already recorded (new content, author). This makes the
-      // edit path agree with it: the prior content is not lost, it is the
-      // preceding row.
-      await createRevision(sectionId, content, updatedByUser, tenantId);
+      recordRevision = true;
     }
 
     if (title !== undefined) {
@@ -1698,25 +1726,16 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       RETURNING *
     `;
 
-    // ── The save gate ─────────────────────────────────────────────────────────
-    // Content and its lineage commit together or not at all.
-    //
-    // Until now capture ran AFTER the update and swallowed its own failures, so
-    // a database hiccup produced saved text with no provenance — and no signal
-    // that it had happened. Provenance that is best-effort goes missing exactly
-    // where something went wrong, which is the worst place for it to be missing.
-    //
-    // So the UPDATE, the lineage write and the coverage check share one
-    // transaction on one connection. If lineage cannot be recorded, or does not
-    // cover the text, the content write rolls back with it and the caller is
-    // told. A refused save is recoverable; a document that quietly lost its
-    // provenance is not.
-    //
-    // The revision and audit-trail writes above deliberately stay outside this
-    // transaction: they are additive records on their own connections, and a
-    // stray revision row after a refused save is a far smaller problem than
-    // content without lineage. Folding them in means threading a client through
-    // both helpers, which is a wider change than this gate needs.
+    // ── One atomic save ───────────────────────────────────────────────────────
+    // Revision + section update + lineage + filing commit + audit are ONE atomic
+    // unit on ONE connection. Previously the revision and audit writes ran as
+    // their own pool commits while the lineage/filing gate ran in a separate
+    // transaction, so a failure between them left the trail out of step with the
+    // section — or, worse, produced saved text with no provenance and no signal
+    // it had happened. A single BEGIN/COMMIT makes all of it land together or not
+    // at all; any error rolls the whole thing back and the caller is told. A
+    // refused save is recoverable; a document that quietly lost its provenance,
+    // its filing commit, or its audit record is not.
     const client = await pool.connect();
     let result: { rows: any[] };
     // Whether the text reached the filing, and when it did not, why. Reported
@@ -1725,6 +1744,15 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
     let governedCommit: CommitSectionResult | null = null;
     try {
       await client.query('BEGIN');
+
+      // A revision row means "this content, by this author, as of this time".
+      // POST /sections already recorded (new content, author); this makes the
+      // edit path agree with it. The prior content is not lost — it is the
+      // preceding row. Only when content changed.
+      if (recordRevision) {
+        await createRevision(sectionId, content, updatedByUser, tenantId, client);
+      }
+
       result = await client.query(updateQuery, values);
 
       // The lineage gate: record an author span per clause and assert coverage,
@@ -1743,18 +1771,9 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
 
       // ── Commit the working copy into the filing ─────────────────────────────
       // c2c_documents is the system of record; this store is the editing layer
-      // over it. Until now the editor most people use wrote only here, so the
-      // store that decides what the filing CONTAINS never saw the text anyone
-      // actually wrote — readiness never moved, and the Part 11 version ledger
-      // recorded nothing.
-      //
-      // In THIS transaction on purpose: the filing and the working copy move
-      // together or neither does, exactly like the lineage gate above. A throw
-      // rolls both back and the caller is told.
-      //
-      // Only when content changed, and only when the document is bound. An
-      // unbound document behaves exactly as it did, and nothing is created in
-      // the governed outline — that comes from the rule pack.
+      // over it. In THIS transaction on purpose: the filing and the working copy
+      // move together or neither does, exactly like the lineage gate above.
+      // Only when content changed, and only when the document is bound.
       if (content !== undefined) {
         governedCommit = await commitSectionToFiling({
           client,
@@ -1764,6 +1783,25 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           tenantId,
           reason: typeof req.body?.changeReason === 'string' ? req.body.changeReason : undefined,
         });
+      }
+
+      // Part 11 change record: operation, actor, before/after content, a SHA-256
+      // of each side, reason, IP, user agent, session. Written on the same
+      // transaction client so the audit row commits atomically with the edit it
+      // records. In production createAuditTrail throws on failure, which rolls
+      // the whole edit back rather than committing an un-audited change.
+      if (recordRevision) {
+        await createAuditTrail(
+          req,
+          result.rows[0]?.doc_id,
+          sectionId,
+          'UPDATE',
+          currentSection.rows[0].content ?? null,
+          content ?? null,
+          typeof req.body?.changeReason === 'string' ? req.body.changeReason : null,
+          { titleChanged: title !== undefined },
+          client,
+        );
       }
 
       await client.query('COMMIT');
@@ -1785,36 +1823,6 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       });
     } finally {
       client.release();
-    }
-
-    // Part 11 change record: operation, actor, before/after content, a SHA-256
-    // of each side, reason, IP, user agent, session.
-    //
-    // No content-mutating authoring path wrote one of these. The migration that
-    // provisions authoring_audit_trail states that this router "has always
-    // written a rich audit record … for every authoring mutation"; the table
-    // received rows only for pins, freeze, e-sign and the legacy wrapper, and
-    // the legacy wrapper hardcodes beforeContent=null, afterContent=null and
-    // changeReason='Legacy audit event' — so before_content, after_content and
-    // both content hashes were NULL on every row in the table, for every event
-    // type. The only trace of an edit was a doc_revisions row, and that row was
-    // mis-attributed (see the revision write above).
-    //
-    // Deliberately AFTER the UPDATE and not fatal: the edit has already
-    // committed, and throwing here would report failure for a change that
-    // landed. The write is awaited so a failure is logged rather than lost, and
-    // createAuditTrail swallows its own errors.
-    if (content !== undefined) {
-      await createAuditTrail(
-        req,
-        result.rows[0]?.doc_id,
-        sectionId,
-        'UPDATE',
-        currentSection.rows[0].content ?? null,
-        content ?? null,
-        typeof req.body?.changeReason === 'string' ? req.body.changeReason : null,
-        { titleChanged: title !== undefined },
-      );
     }
 
     res.json({
@@ -3776,31 +3784,50 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
     const contentHash = crypto.createHash('sha256').update(frozenContent).digest('hex');
     const versionNumber = version || `v${doc.version || '1.0'}.frozen`;
 
-    // Store frozen snapshot
-    await pool.query(
-      `INSERT INTO frozen_documents
-       (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [docId, versionNumber, frozenContent, contentHash, email, reason, tenantId]
-    );
+    // Frozen-snapshot insert + status flip + audit are ONE atomic unit. Run as
+    // separate pool commits, a failure after the snapshot but before the status
+    // update left a frozen_documents row for a document still marked editable
+    // (or the reverse), and a failure before the audit left a freeze with no
+    // trail. A single BEGIN/COMMIT makes the three land together or roll back
+    // together.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Update document status
-    await pool.query(
-      'UPDATE authoring_documents SET status = $1 WHERE id = $2 AND tenant_id = $3',
-      ['FROZEN', docId, tenantId]
-    );
+      // Store frozen snapshot
+      await client.query(
+        `INSERT INTO frozen_documents
+         (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [docId, versionNumber, frozenContent, contentHash, email, reason, tenantId]
+      );
 
-    // Create audit trail
-    await createAuditTrail(
-      req,
-      docId,
-      null,
-      'FREEZE',
-      null,
-      frozenContent,
-      reason || 'Document frozen for compliance',
-      { contentHash, version: versionNumber }
-    );
+      // Update document status
+      await client.query(
+        'UPDATE authoring_documents SET status = $1 WHERE id = $2 AND tenant_id = $3',
+        ['FROZEN', docId, tenantId]
+      );
+
+      // Create audit trail
+      await createAuditTrail(
+        req,
+        docId,
+        null,
+        'FREEZE',
+        null,
+        frozenContent,
+        reason || 'Document frozen for compliance',
+        { contentHash, version: versionNumber },
+        client,
+      );
+
+      await client.query('COMMIT');
+    } catch (txError) {
+      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
+      throw txError;
+    } finally {
+      client.release();
+    }
 
     res.json({
       success: true,
@@ -3870,59 +3897,77 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       coveredContentHash: covered?.contentHash ?? null,
     });
 
-    await pool.query(
-      `INSERT INTO authoring_signatures
-       (id, doc_id, signer_email, signer_name, meaning, reason, method,
-        content_hash, signature_digest, covered_freeze_version, covered_content_hash,
-        pin_verified, ip_address, user_agent, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, $12, $13, $14)`,
-      [
-        signatureId,
-        docId,
-        email,
-        name,
-        meaning,
-        intent,
-        docHash,
-        signatureDigest,
-        covered?.version ?? null,
-        covered?.contentHash ?? null,
-        true,
-        req.ip,
-        req.headers['user-agent'],
-        tenantId,
-      ]
-    );
+    // Signature insert + audit + (on APPROVER) status flip and auto-freeze are
+    // ONE atomic unit. Run as separate pool commits, an approval signature could
+    // be recorded while the status flip or the auto-freeze that must accompany
+    // it failed — leaving a signed-but-not-approved, or approved-but-not-frozen,
+    // document. A single BEGIN/COMMIT makes the whole signing act land together
+    // or roll back together.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    // Create audit trail
-    await createAuditTrail(req, docId, null, 'E_SIGN', null, null, intent, {
-      signatureId,
-      meaning,
-      documentHash: docHash,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Update document status based on signature meaning
-    if (meaning === 'APPROVER') {
-      await pool.query(
-        'UPDATE authoring_documents SET status = $1 WHERE id = $2 AND tenant_id = $3',
-        ['APPROVED', docId, tenantId]
+      await client.query(
+        `INSERT INTO authoring_signatures
+         (id, doc_id, signer_email, signer_name, meaning, reason, method,
+          content_hash, signature_digest, covered_freeze_version, covered_content_hash,
+          pin_verified, ip_address, user_agent, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, $12, $13, $14)`,
+        [
+          signatureId,
+          docId,
+          email,
+          name,
+          meaning,
+          intent,
+          docHash,
+          signatureDigest,
+          covered?.version ?? null,
+          covered?.contentHash ?? null,
+          true,
+          req.ip,
+          req.headers['user-agent'],
+          tenantId,
+        ]
       );
 
-      // Auto-freeze on approval
-      const frozenContent = JSON.stringify({
-        approvedBy: email,
+      // Create audit trail
+      await createAuditTrail(req, docId, null, 'E_SIGN', null, null, intent, {
+        signatureId,
+        meaning,
         documentHash: docHash,
         timestamp: new Date().toISOString(),
-      });
+      }, client);
 
-      await pool.query(
-        `INSERT INTO frozen_documents
-         (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
-        [docId, 'approved', frozenContent, docHash, email, 'Approved and frozen', tenantId]
-      );
+      // Update document status based on signature meaning
+      if (meaning === 'APPROVER') {
+        await client.query(
+          'UPDATE authoring_documents SET status = $1 WHERE id = $2 AND tenant_id = $3',
+          ['APPROVED', docId, tenantId]
+        );
+
+        // Auto-freeze on approval
+        const frozenContent = JSON.stringify({
+          approvedBy: email,
+          documentHash: docHash,
+          timestamp: new Date().toISOString(),
+        });
+
+        await client.query(
+          `INSERT INTO frozen_documents
+           (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (document_id, version, tenant_id) DO NOTHING`,
+          [docId, 'approved', frozenContent, docHash, email, 'Approved and frozen', tenantId]
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (txError) {
+      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
+      throw txError;
+    } finally {
+      client.release();
     }
 
     res.json({
@@ -5218,67 +5263,89 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
 
     // Store signature
     const signatureId = crypto.randomUUID();
-    await pool.query(
-      `INSERT INTO authoring_signatures
-       (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash,
-        signature_digest, covered_freeze_version, covered_content_hash, tenant_id, signed_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, NOW())`,
-      [
-        signatureId,
-        docId,
-        signerEmail,
-        signerName,
-        meaning,
-        reason,
-        contentHash,
-        signatureDigest,
-        covered?.version ?? null,
-        covered?.contentHash ?? null,
-        tenantId,
-      ]
-    );
 
-    // Update workflow step if applicable. Roles come from the VERIFIED token
-    // (req.user.roles), not from the x-roles header — the header is derived from
-    // claims by this router's JWT middleware, but reading the claim directly
-    // means an approval decision can never depend on a mutable header at all
-    // (ledger C-18).
-    const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
-      .map((r) => String(r).toUpperCase());
-    if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
-      await pool.query(
-        `UPDATE authoring_workflow_steps
-         SET status = 'APPROVED', decision_note = $1, decided_at = NOW()
-         WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4`,
-        [reason, docId, signerEmail, tenantId]
+    // Signature insert + workflow-step approval + (when the last step clears)
+    // document approval + audit are ONE atomic unit. Run as separate pool
+    // commits, a signature could be stored while the workflow step it approves,
+    // or the document-status flip the final approval triggers, failed — a
+    // signed step still marked PENDING, or every step approved with the document
+    // left un-approved. A single BEGIN/COMMIT makes the whole signing act land
+    // together or roll back together; the pending-step count is read on the same
+    // client so it sees this transaction's own step update.
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        `INSERT INTO authoring_signatures
+         (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash,
+          signature_digest, covered_freeze_version, covered_content_hash, tenant_id, signed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, NOW())`,
+        [
+          signatureId,
+          docId,
+          signerEmail,
+          signerName,
+          meaning,
+          reason,
+          contentHash,
+          signatureDigest,
+          covered?.version ?? null,
+          covered?.contentHash ?? null,
+          tenantId,
+        ]
       );
 
-      // Check if all workflow steps are approved
-      const pendingSteps = await pool.query(
-        `SELECT COUNT(*) as pending FROM authoring_workflow_steps
-         WHERE doc_id = $1 AND status = 'PENDING' AND tenant_id = $2`,
-        [docId, tenantId]
-      );
+      // Update workflow step if applicable. Roles come from the VERIFIED token
+      // (req.user.roles), not from the x-roles header — the header is derived from
+      // claims by this router's JWT middleware, but reading the claim directly
+      // means an approval decision can never depend on a mutable header at all
+      // (ledger C-18).
+      const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
+        .map((r) => String(r).toUpperCase());
+      if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
+        await client.query(
+          `UPDATE authoring_workflow_steps
+           SET status = 'APPROVED', decision_note = $1, decided_at = NOW()
+           WHERE doc_id = $2 AND approver_email = $3 AND status = 'PENDING' AND tenant_id = $4`,
+          [reason, docId, signerEmail, tenantId]
+        );
 
-      if (pendingSteps.rows[0].pending === '0') {
-        // All approved - update document status
-        await pool.query(
-          `UPDATE authoring_documents
-           SET status = 'APPROVED', approved_at = NOW()
-           WHERE id = $1 AND tenant_id = $2`,
+        // Check if all workflow steps are approved
+        const pendingSteps = await client.query(
+          `SELECT COUNT(*) as pending FROM authoring_workflow_steps
+           WHERE doc_id = $1 AND status = 'PENDING' AND tenant_id = $2`,
           [docId, tenantId]
         );
-      }
-    }
 
-    // Create audit event
-    await createAuditEvent(
-      docId,
-      'SIGN',
-      signerEmail as string,
-      { signatureId, meaning, reason, contentHash },
-      tenantId
-    );
+        if (pendingSteps.rows[0].pending === '0') {
+          // All approved - update document status
+          await client.query(
+            `UPDATE authoring_documents
+             SET status = 'APPROVED', approved_at = NOW()
+             WHERE id = $1 AND tenant_id = $2`,
+            [docId, tenantId]
+          );
+        }
+      }
+
+      // Create audit event
+      await createAuditEvent(
+        docId,
+        'SIGN',
+        signerEmail as string,
+        { signatureId, meaning, reason, contentHash },
+        tenantId,
+        client
+      );
+
+      await client.query('COMMIT');
+    } catch (txError) {
+      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
+      throw txError;
+    } finally {
+      client.release();
+    }
 
     res.json({
       success: true,
