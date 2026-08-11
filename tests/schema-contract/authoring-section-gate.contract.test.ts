@@ -174,13 +174,15 @@ async function contentOf(sectionId: string): Promise<string | null> {
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
+    // The section-save handler now writes revision + section + span lineage +
+    // audit in ONE transaction, so both the span-lineage table and the
+    // authoring_audit_trail table are prerequisites for exercising the save
+    // path: a missing table's INSERT aborts the transaction and the section
+    // UPDATE rolls back. Provision both alongside the loop tables.
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
-      // The section save writes content and its span lineage in one
-      // transaction and refuses to commit one without the other, so the
-      // lineage table is now a prerequisite for exercising the save path at
-      // all. See db/migrations/20260803_document_span_lineage.sql.
       'db/migrations/20260803_document_span_lineage.sql',
+      'db/migrations/20260725_authoring_audit_trail.sql',
     ],
   });
   // exec, not the pool shim: the shim prepares a single statement.

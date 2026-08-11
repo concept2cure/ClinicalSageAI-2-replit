@@ -60,6 +60,12 @@ export const AUTHORING_SUBSYSTEM_FILES = [
   'db/migrations/20260725_authoring_audit_trail.sql',
   'db/migrations/20260725_authoring_signatures_and_workflow.sql',
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',
+  // C2C-AUTHOR-002 object-level authorization: adds doc_permissions columns
+  // (role/grant metadata) and the SECURITY DEFINER seed trigger that grants each
+  // document creator OWNER + AUTHOR. Depends only on authoring_documents /
+  // authoring_sections (from the loop-tables file above) and public.users, so it
+  // slots in after the 20260725 loop-tables set and before the 20260730_* files.
+  'db/migrations/20260727_authoring_object_permissions.sql',
   // The router's own tables (authoring_tokens/templates/template_guidance/
   // template_usage/section_guidance/export_history/tracked_change_decisions).
   // These were created by runtime `ensure*` DDL inside authoring.router.ts until
@@ -226,6 +232,12 @@ export const AUTHORING_SUBSYSTEM_FK_CONSTRAINTS = [
   'doc_revisions_section_tenant_fkey',
   'authoring_comments_section_tenant_fkey',
   'authoring_citations_section_tenant_fkey',
+  // C2C-AUTHOR-002 object permissions: the composite tenant-parentage FKs on
+  // doc_permissions guaranteed by 20260727_authoring_object_permissions.sql
+  // (doc_id,tenant_id → authoring_documents; section_id,doc_id,tenant_id →
+  // authoring_sections). Listed so /readyz + the pilot gate surface their absence.
+  'doc_permissions_doc_tenant_fkey',
+  'doc_permissions_section_doc_tenant_fkey',
 ];
 
 /**

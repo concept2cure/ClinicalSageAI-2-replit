@@ -29,6 +29,7 @@ import type { Pool } from 'pg';
 import { authMiddleware } from '../auth.js';
 import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
+import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
 
@@ -121,6 +122,27 @@ export async function registerPreStartRoutes(
   await registerAiRoutes({ app, pool, aiCircuitBreaker });
   registerConcept2CureRoutes(app);
   registerAdminRoutes(app);
+
+  // Authoring object security. The permission-management router and the
+  // mandatory, fail-closed object-authorization middleware are mounted at the
+  // `/api` gateway inside the AI-workflow slot below
+  // (registerInlineAiWorkflowRoutes), immediately ahead of the legacy
+  // `/api/authoring` router — the composition root stays mount-free and only
+  // asserts boot-time readiness here (and retires the legacy flag).
+  //
+  // The old authoring router contains a feature-flagged helper under
+  // AUTH_ENFORCE_SECTION_PERMS. That helper is now RETIRED on the production
+  // composition path: it represented a second permission system, depended on the
+  // old schema shape, and could deny a request after the canonical policy had
+  // already approved it. Keep the legacy function inert until it is deleted from
+  // the large router in a dedicated decomposition PR.
+  await assertAuthoringAuthorizationReady(pool);
+  if (process.env.AUTH_ENFORCE_SECTION_PERMS === '1') {
+    console.warn(
+      '[authoring] AUTH_ENFORCE_SECTION_PERMS is retired; canonical mandatory object authorization is active.',
+    );
+  }
+  process.env.AUTH_ENFORCE_SECTION_PERMS = '0';
 
   // Slot 5 — Authoring router + authoring actions + AnA platform control +
   // AI actions (+ Redis / queue init) + Phase 3 orchestration.

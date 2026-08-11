@@ -20,6 +20,8 @@ import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
 import { requireTenantContext } from '../middleware/tenantContext.js';
+import { authoringObjectAuthorization } from '../middleware/authoringObjectAuthorization';
+import authoringPermissionsRouter from '../routes/authoring-permissions';
 import { sanitizeAskAnaInput } from '../routes/ask-ana-utils';
 import { mountBetaSafeRoutes } from '../betaRouteManifest';
 import { csrSearchService } from '../services/csr-search-service';
@@ -289,6 +291,20 @@ export function registerInlinePlatformFacadesRoutes({
 export async function registerInlineAiWorkflowRoutes({
   app,
 }: InlineRouteContext): Promise<void> {
+  // Authoring object security — mounted at the `/api` gateway immediately ahead
+  // of the legacy `/api/authoring` router (below). The permission-management
+  // router terminates owner/admin-controlled permission requests; the mandatory,
+  // fail-closed object-authorization middleware then guards every other
+  // document/section mutation. The middleware ignores non-authoring paths, so no
+  // second `/api/authoring` mount is introduced and the route-mount contract
+  // holds. Boot-time readiness of this surface is asserted in startup/routes.ts
+  // before this slot runs. Mounted WITHOUT a swallowing try/catch on purpose: if
+  // the authorization surface cannot load, startup must fail closed rather than
+  // mount the authoring router unguarded.
+  app.use('/api', authoringPermissionsRouter);
+  app.use('/api', authoringObjectAuthorization);
+  console.log('✅ Authoring object-authorization + permission routes mounted (/api)');
+
   // Authoring Router (document workflows, reviews, tracked changes).
   try {
     const authoringRouterModule = await import('../routes/authoring.router');
