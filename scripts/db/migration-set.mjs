@@ -833,6 +833,31 @@ export const C2C_MIGRATION_FILES = [
   // tables join the RLS regime via the sweep below (assessment D20).
   'db/migrations/20260807_task_graph_org_columns.sql',
 
+  // ── 21 CFR Part 11 §11.10(e): audit trail immutability, at the DB engine ──
+  // These two were authored, reviewed and left UNREACHABLE. Neither carries the
+  // `_gcc_` infix the psql loop matches, and neither was in this list — so no
+  // apply path installed them and `audit_events` / `audit_logs` were mutable on
+  // every deployed database. `provision-app-role.mjs` grants the runtime role
+  // the default `['SELECT','INSERT','UPDATE','DELETE']` on `public`, where both
+  // tables live, so the application role itself could rewrite history.
+  //
+  // The reachability CI check did not catch it because it only flags migrations
+  // whose sole-created TABLE is unreachable; these create only triggers.
+  //
+  // Safe to install (verified against the tree, not assumed):
+  //   * INSERT is untouched — the chained writer in auditService.ts only INSERTs.
+  //   * No production code UPDATEs either table. The only UPDATEs are PGlite
+  //     tests that build `audit_logs` inline with their own CREATE TABLE, so
+  //     they never see these triggers, and scripts/db-verify/verify-audit-chain.ts,
+  //     a manual tamper-demo that is not wired into CI.
+  //   * Nothing TRUNCATEs either table anywhere in the repo.
+  //   * DELETE on audit_logs stays possible for the retention/archival service
+  //     only, via the fail-closed `app.audit_archive_bypass` GUC it already sets
+  //     with SET LOCAL on a single dedicated connection.
+  // Ordered BEFORE the tenant-isolation sweeps, which must remain last.
+  'db/migrations/20260222_audit_events_immutability.sql',
+  'db/migrations/20260617_audit_logs_immutability.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

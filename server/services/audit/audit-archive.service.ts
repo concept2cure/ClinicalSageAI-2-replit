@@ -142,7 +142,14 @@ export async function runAuditArchive(
     try {
       await txClient.query('BEGIN');
       await txClient.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
-      await txClient.query(`DELETE FROM audit_logs WHERE id = ANY($1::int[])`, [ids]);
+      // `audit_logs.id` is uuid (migrations/0000_sweet_joseph.sql, shared/schema.ts),
+      // never integer. The previous `::int[]` cast made this DELETE fail on every
+      // batch with a type error — archival copied rows to cold storage and then
+      // never freed them from the hot table. Caught while wiring the §11.10(e)
+      // immutability triggers: this is the ONE path the DELETE trigger exempts,
+      // so it has to actually work, or "archive then delete" silently becomes
+      // "archive and retain forever".
+      await txClient.query(`DELETE FROM audit_logs WHERE id = ANY($1::uuid[])`, [ids]);
       await txClient.query('COMMIT');
     } catch (err) {
       try {
