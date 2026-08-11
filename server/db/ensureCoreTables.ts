@@ -55,12 +55,26 @@ const IMPORTANT_TABLES = [
   // logged five permanent "important tables missing" warnings, which is how a
   // diagnostic stops being read.
   'workflow_runs',
-  'step_runs',
-  'organization_settings',
+  // step_runs / organization_settings / assembly_docs / assembly_audit_logs were
+  // listed here and are deliberately gone (evidence-based reachability audit,
+  // 2026-08-11). None is queried by any LIVE production path, so listing them made
+  // readiness warn about tables no shipped code needs — the same "a diagnostic
+  // stops being read" failure the auth_users cohort above caused:
+  //   • organization_settings — phantom: it appears only as an audit-log
+  //     resourceType LABEL (server/routes/ana-tool-policy.ts,
+  //     organizations-routes.ts); no SQL anywhere addresses a table by that name.
+  //   • step_runs — the hash-chained public.step_runs is written only by
+  //     WorkflowExecutionEngine, which is referenced solely from a test, and it has
+  //     no creator on any lineage. Its companion public.workflow_runs stays above:
+  //     the MOUNTED orchestration-checkpoints route reads it and 0007 provisions it.
+  //   • assembly_docs / assembly_audit_logs — written only by AssemblyLine, which
+  //     is instantiated only by /api/test-assembly, a route fenced OUT of non-test
+  //     environments (server/bootstrap/register-core-routes.ts). Test scaffolding,
+  //     not production schema.
+  // If any is later wired into a live path, provision it durably and restore the
+  // entry then — don't warn for a table before it is real.
   'document_templates',
   'lumen_data_atoms',
-  'assembly_docs',
-  'assembly_audit_logs',
   // CERV2 Medical Device module tables
   'documents',
   'document_versions',
