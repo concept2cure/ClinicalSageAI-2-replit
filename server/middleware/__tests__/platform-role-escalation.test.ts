@@ -47,7 +47,21 @@ import request from 'supertest';
 // .js first, so this is the module the 95 bare-specifier call sites actually
 // get. Testing auth.ts directly would prove nothing about production.
 import { requireRole, requireSameOrganization, PLATFORM_SCOPED_ROLES } from '../auth';
-import { requireOrgAccess, PLATFORM_SCOPED_ROLES as TS_PLATFORM_ROLES } from '../auth.ts';
+
+// The .ts twin can only be addressed by its explicit extension — the bare
+// specifier resolves to the .js file above. A STATIC `from '../auth.ts'` is
+// TS5097 ("an import path can only end with '.ts' when
+// allowImportingTsExtensions is enabled"), so the specifier is held in a
+// variable: tsc cannot apply TS5097 to a non-literal, and Vite still resolves
+// it at runtime. Awkward, and the awkwardness is the point — two modules
+// sharing a name is why this test file has to reach for either one by hand.
+const TS_TWIN_SPECIFIER = '../auth.ts';
+type TsTwin = {
+  requireOrgAccess: express.RequestHandler;
+  PLATFORM_SCOPED_ROLES: Set<string>;
+};
+const loadTsTwin = async (): Promise<TsTwin> =>
+  (await import(/* @vite-ignore */ TS_TWIN_SPECIFIER)) as unknown as TsTwin;
 
 type Identity = { role?: string; roles?: string[]; organizationId?: string };
 
@@ -132,7 +146,8 @@ describe('requireRole — the org-scoped stand-in survives, because it must', ()
 });
 
 describe('the shadowing .js and the .ts twin do not drift', () => {
-  it('declares the same platform-scoped role set in both files', () => {
+  it('declares the same platform-scoped role set in both files', async () => {
+    const { PLATFORM_SCOPED_ROLES: TS_PLATFORM_ROLES } = await loadTsTwin();
     // auth.js's comment used to claim it "Mirrors the canonical auth.ts
     // requireRole" while taking a single role to the other's variadic. Two
     // files exporting the same names is the hazard; this pins the part of
@@ -182,17 +197,20 @@ describe('requireSameOrganization (the LIVE .js guard) — platform staff only',
 
 describe('requireOrgAccess (auth.ts twin — not the live module) — platform staff only', () => {
   it('denies an org admin another organization’s id', async () => {
+    const { requireOrgAccess } = await loadTsTwin();
     const res = await request(appWith(ORG_ADMIN, requireOrgAccess)).get('/probe/999');
     expect(res.status).toBe(403);
     expect(res.body?.error?.code).toBe('AUTH_005');
   });
 
   it('still allows an org admin their own organization', async () => {
+    const { requireOrgAccess } = await loadTsTwin();
     const res = await request(appWith(ORG_ADMIN, requireOrgAccess)).get('/probe/30');
     expect(res.status).toBe(200);
   });
 
   it('allows platform staff any organization', async () => {
+    const { requireOrgAccess } = await loadTsTwin();
     const res = await request(appWith(PLATFORM, requireOrgAccess)).get('/probe/999');
     expect(res.status).toBe(200);
   });
