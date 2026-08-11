@@ -19,19 +19,16 @@
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Switch, Route, Redirect } from 'wouter';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { AuthProvider } from './services/portal/authService';
 import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
 import { LanguageProvider } from './contexts/LanguageContext.tsx';
 import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
-import { memoryOptimizer } from './utils/memoryOptimizer';
+import { Sentry } from './utils/sentry';
 
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { ModuleErrorBoundary } from './components/ui/error-boundary.jsx';
-
-// Initialize memory optimization
-memoryOptimizer.startPeriodicCleanup();
 
 // Concept2Cure router — owns every bundle surface (home, mdx, ana_ri,
 // ectd_coauthor) and the auth redirect targets.
@@ -44,6 +41,37 @@ const LoadingPage = () => (
 
 // Main App wrapper with auth and providers
 function App() {
+  // Client error reporting. The class ErrorBoundary components swallow render
+  // crashes (they only log to console / window.appMonitor) and Sentry is never
+  // told, so no client error is ever reported. Wiring Sentry into
+  // ErrorBoundary.componentDidCatch itself is out of scope here (that file is
+  // owned elsewhere), so we install top-level window listeners that forward
+  // uncaught errors and unhandled promise rejections to Sentry when it is
+  // available. Fully guarded: a no-op if Sentry (or captureException) is absent.
+  useEffect(() => {
+    if (!Sentry || typeof Sentry.captureException !== 'function') {
+      return undefined;
+    }
+
+    const handleError = event => {
+      const err = event?.error ?? event?.message ?? event;
+      Sentry.captureException(err);
+    };
+
+    const handleRejection = event => {
+      const reason = event?.reason ?? event;
+      Sentry.captureException(reason);
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, []);
+
   return (
     <ModuleErrorBoundary>
       <ErrorBoundary>

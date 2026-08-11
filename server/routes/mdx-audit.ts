@@ -126,7 +126,12 @@ router.get('/audit', async (req: Request, res: Response) => {
     return ok(res, { events, actions, resources, kpis }, { count: events.length });
   } catch (err: unknown) {
     const code = (err as { code?: string }).code;
-    if (code === '42P01') return ok(res, { events: [], actions: [], resources: [], kpis: [] }, { count: 0 });
+    if (code === '42P01') {
+      // The audit_logs store isn't provisioned — fail closed rather than return
+      // an empty (but "ok") audit log a reviewer would read as "no events".
+      log.warn('audit_logs table not provisioned; failing closed', { code });
+      return res.status(503).json({ error: 'Audit log store not provisioned' });
+    }
     return serverError(res, log, 'list-audit', err);
   }
 });

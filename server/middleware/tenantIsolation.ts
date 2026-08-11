@@ -176,18 +176,19 @@ export function scopeToTenant<T extends Record<string, unknown>>(
  * Check if user has required role
  */
 export function hasRole(req: Request, requiredRole: string): boolean {
-  return req.tenant?.roles.includes(requiredRole) || req.tenant?.roles.includes('admin') || false;
+  // SECURITY: no unconditional org-`admin` escape hatch. The requested role
+  // must be held explicitly, so an org admin cannot clear a guard for a role
+  // it was never granted (e.g. a platform role).
+  return req.tenant?.roles.includes(requiredRole) || false;
 }
 
 /**
  * Check if user has required permission
  */
 export function hasPermission(req: Request, requiredPermission: string): boolean {
-  return (
-    req.tenant?.permissions.includes(requiredPermission) ||
-    req.tenant?.roles.includes('admin') ||
-    false
-  );
+  // SECURITY: no unconditional org-`admin` escape hatch. The permission must be
+  // held explicitly rather than implied by an org-admin role.
+  return req.tenant?.permissions.includes(requiredPermission) || false;
 }
 
 /**

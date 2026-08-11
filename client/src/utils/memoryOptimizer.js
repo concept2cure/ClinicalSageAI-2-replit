@@ -716,37 +716,30 @@ function resetNonCriticalState() {
   });
 }
 
-// Memory optimization utilities
+// Memory optimization utilities.
+//
+// SAFETY: The previous implementation of clearIntervals/clearTimeouts
+// brute-force cancelled EVERY timer id on the page (window.clearInterval(i)
+// for i in 1..99998), and startPeriodicCleanup ran that every 60s. That
+// destroyed timers this module never created — auth token refresh, polling,
+// debounces, toasts — 60s after load. Those methods are now inert no-op
+// shims: a utility must never cancel timers it did not create. The export
+// shape is preserved so existing imports keep resolving. Callers that want a
+// genuine, non-destructive cache trim should use `forceOptimize`
+// (performMemoryOptimization), which only clears app caches/images.
 export const memoryOptimizer = {
-  clearIntervals: () => {
-    // Clear any running intervals to prevent memory leaks
-    for (let i = 1; i < 99999; i++) window.clearInterval(i);
-  },
+  // No-op: brute-force timer cancellation removed (see note above).
+  clearIntervals: () => {},
 
-  clearTimeouts: () => {
-    // Clear any running timeouts
-    for (let i = 1; i < 99999; i++) window.clearTimeout(i);
-  },
+  // No-op: brute-force timer cancellation removed (see note above).
+  clearTimeouts: () => {},
 
-  cleanup: () => {
-    memoryOptimizer.clearIntervals();
-    memoryOptimizer.clearTimeouts();
+  // No-op: retained only so callers relying on the export shape keep working.
+  cleanup: () => {},
 
-    // Force garbage collection if available
-    if (window.gc) {
-      window.gc();
-    }
-  },
-
-  startPeriodicCleanup: () => {
-    setInterval(() => {
-      memoryOptimizer.cleanup();
-    }, 60000); // Every minute
-  },
+  // No-op: periodic destructive cleanup removed; nothing is scheduled.
+  startPeriodicCleanup: () => {},
 };
-
-// Auto-start cleanup
-memoryOptimizer.startPeriodicCleanup();
 
 export default {
   initializeMemoryOptimization,

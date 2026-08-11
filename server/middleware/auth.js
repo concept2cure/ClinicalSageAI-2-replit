@@ -127,8 +127,11 @@ const requireRole = requiredRole => {
     // Get user roles from JWT payload
     const userRoles = req.user.roles || [];
 
-    // Check if user has the required role or admin role
-    if (userRoles.includes(requiredRole) || userRoles.includes('admin')) {
+    // Check if the user holds the required role. The blanket `admin` escape
+    // hatch was removed: an ordinary tenant "admin" must satisfy the explicit
+    // required role like anyone else, so it can no longer pass a platform-
+    // operator guard. Mirrors the fix in the canonical auth.ts requireRole.
+    if (userRoles.includes(requiredRole)) {
       return next();
     }
 

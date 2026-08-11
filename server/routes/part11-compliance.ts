@@ -589,8 +589,17 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
     );
 
     res.json({ success: true, data: result.rows });
-  } catch {
-    res.json({ success: true, data: [], message: 'Signature table not yet initialized' });
+  } catch (err) {
+    // A read of the Part 11 signature list must never masquerade a failure as an
+    // empty (but verified) signature set — a QA reviewer could not tell "no
+    // signatures" from "the query failed". Fail closed with a real status.
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.warn('[Part11] electronic_signatures table not provisioned; failing closed');
+      return res.status(503).json({ success: false, error: 'SIGNATURE_STORE_UNPROVISIONED' });
+    }
+    console.error('[Part11] Signature list read failed:', (err as Error)?.message);
+    return res.status(500).json({ success: false, error: 'Failed to retrieve signatures' });
   }
 });
 
@@ -728,8 +737,17 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response, next: N
         chainIntegrity,
       },
     });
-  } catch {
-    res.json({ success: true, data: { entries: [], total: 0, entityId } });
+  } catch (err) {
+    // Never return an empty (but "successful") audit trail for a caught failure:
+    // a false-empty §11.10 change history is indistinguishable from a genuine
+    // one to an inspector. Surface the failure with a real status.
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.warn('[Part11] audit_trail table not provisioned; failing closed');
+      return res.status(503).json({ success: false, error: 'AUDIT_TRAIL_STORE_UNPROVISIONED' });
+    }
+    console.error('[Part11] Audit trail read failed:', (err as Error)?.message);
+    return res.status(500).json({ success: false, error: 'Failed to read audit trail' });
   }
 });
 
@@ -921,21 +939,16 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
       },
     });
   } catch (err: any) {
-    // Fallback if audit_events table doesn't exist yet
-    console.warn('[Part11] Chain integrity check failed:', err.message);
-    res.json({
-      success: true,
-      data: {
-        chainStatus: 'unavailable',
-        integrityValid: null,
-        totalEntries: 0,
-        error: 'audit_events table not available',
-        lastHash: lastAuditHash,
-        hashAlgorithm: 'SHA-256',
-        chainType: 'linear-hash-chain',
-        genesisHash: computeHash('GENESIS_BLOCK_TRIALSAGE'),
-      },
-    });
+    // A hash-chain integrity check that could not run must NOT report
+    // success: true — an inspector would read that as a passed verification.
+    // Surface the failure with a real status.
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.warn('[Part11] Chain integrity check: audit_events table not provisioned; failing closed');
+      return res.status(503).json({ success: false, error: 'AUDIT_EVENTS_STORE_UNPROVISIONED' });
+    }
+    console.error('[Part11] Chain integrity check failed:', err?.message);
+    return res.status(500).json({ success: false, error: 'Chain integrity verification failed' });
   }
 });
 

@@ -5,10 +5,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
-import { requireRole, invalidateOrgMembershipCache } from '../middleware/auth';
+import { invalidateOrgMembershipCache } from '../middleware/auth';
+import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { getSslConfig } from '../db/ssl';
 
 const log = createScopedLogger('tenants-simple');
 
@@ -52,10 +54,11 @@ function cleanDatabaseUrl(url: string | undefined): string {
 const rawConnectionString = process.env.DATABASE_URL || process.env.DATABASE_NEON_NEW_SECRET || '';
 const connectionString = cleanDatabaseUrl(rawConnectionString);
 const sql = postgres(connectionString, {
-  ssl:
-    connectionString?.includes('neon.tech') || process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  // TLS posture mirrors the rest of the app (server/db/runtime.ts + server/db/ssl.ts):
+  // a managed/non-local host VERIFIES the server certificate, and TLS is only
+  // relaxed for an explicit local / sslmode=disable DSN. Never disable
+  // certificate verification — this connection carries the whole tenant directory.
+  ssl: getSslConfig(connectionString),
 });
 
 // Schema for tenant creation
@@ -141,7 +144,7 @@ router.get('/', async (req, res) => {
  * POST /api/tenants
  * Create a new tenant - simple version
  */
-router.post('/', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.post('/', requirePlatformAdmin, async (req, res) => {
   try {
     log.debug('Create tenant request received');
 
@@ -224,7 +227,7 @@ router.post('/', requireRole('super_admin', 'platform_admin'), async (req, res) 
  * PATCH /api/tenants/:id
  * Update an existing tenant/organization
  */
-router.patch('/:id', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.patch('/:id', requirePlatformAdmin, async (req, res) => {
   try {
     const tenantId = parseInt(String(req.params.id));
 
@@ -323,7 +326,7 @@ router.get('/:tenantId/users', async (req, res) => {
  * DELETE /api/tenants/:id
  * Delete an organization and all its related data
  */
-router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.delete('/:id', requirePlatformAdmin, async (req, res) => {
   try {
     const tenantId = parseInt(String(req.params.id));
     if (isNaN(tenantId)) {
@@ -398,7 +401,7 @@ router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, 
  * POST /api/tenants/:id/api-key
  * Generate a new API key for an organization
  */
-router.post('/:id/api-key', requireRole('super_admin', 'platform_admin'), async (req, res) => {
+router.post('/:id/api-key', requirePlatformAdmin, async (req, res) => {
   try {
     const tenantId = parseInt(String(req.params.id));
     if (isNaN(tenantId)) {

@@ -31,9 +31,13 @@ export JWT_SECRET="$JWT_SECRET_PROD"
 echo "Building application for production..."
 npm run build
 
-# Run database migrations if needed - with backup first
-echo "Backing up production database before migration..."
-bash ./scripts/backup.sh
+# Pre-migration database backup is intentionally NOT taken here.
+# A pre-deploy database backup is the responsibility of the managed RDS
+# automated snapshot (point-in-time recovery), taken outside the repo tree.
+# This script must NEVER write a plaintext pg_dump into the working tree:
+# doing so leaves an unencrypted full-database dump in .backups/ (not
+# gitignored, never pruned) that can then be committed/pushed. If a manual
+# pre-migration snapshot is wanted, trigger an RDS snapshot in AWS instead.
 
 echo "Running database migrations..."
 npm run db:push

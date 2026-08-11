@@ -16,6 +16,7 @@ import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 import auditService from '../services/auditService';
 
 // Scoped logger — every log line flows through the redaction walker in
@@ -243,7 +244,20 @@ router.get('/session', async (req: Request, res: Response) => {
       userId: string;
       email: string;
       organizationId: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
     };
+
+    // SECURITY: a pre-MFA (mfaPending / mfa_challenge) or refresh token is not an
+    // authenticated session — these are signed with the access-token secret but
+    // must not stand in for a full identity.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        authenticated: false,
+        error: { code: 'AUTH_006', message: 'Invalid token class' },
+      });
+    }
 
     // Get user from database
     const user = await db
@@ -1182,7 +1196,18 @@ router.get('/me', async (req: Request, res: Response) => {
       userId: string;
       email: string;
       organizationId?: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
     };
+
+    // SECURITY: reject pre-MFA / refresh token classes — a password-only session
+    // must not resolve a full user profile via a partial token.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'Invalid token class' },
+      });
+    }
 
     const user = await db
       .select()
@@ -1472,7 +1497,19 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
     };
+
+    // SECURITY: reject pre-MFA / refresh token classes — MFA enrollment is an
+    // access-privileged action that a partial (password-only) token must not reach.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
 
     if (!requireDb(res)) return;
 
@@ -1519,7 +1556,19 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
     };
+
+    // SECURITY: reject pre-MFA / refresh token classes — a partial (password-only)
+    // token must not be able to enable MFA on the account.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
 
     const { code } = req.body;
     if (!code) {
@@ -1582,7 +1631,19 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
     };
+
+    // SECURITY: reject pre-MFA / refresh token classes — a partial (password-only)
+    // token must not be able to disable MFA on the account.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
 
     const { code } = req.body;
     if (!code) {
@@ -1821,7 +1882,19 @@ router.post('/password/change', async (req: Request, res: Response) => {
     const decoded = verifyJwtWithRotation(token) as {
       userId: string;
       email: string;
+      type?: string;
+      role?: string | null;
+      mfaPending?: boolean;
     };
+
+    // SECURITY: reject pre-MFA / refresh token classes — changing a password is
+    // an access-privileged action that a partial (password-only) token must not reach.
+    if (requireAccessTokenReason(decoded)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid or expired token' },
+      });
+    }
 
     const { currentPassword, newPassword, terminateOtherSessions } = req.body;
 

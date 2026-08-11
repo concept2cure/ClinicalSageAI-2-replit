@@ -216,6 +216,31 @@ async function runQueryScoped(
 }
 
 /**
+ * Run a single infrastructure probe (SELECT 1, SELECT NOW(), a set_config
+ * CLEAR) on a connection taken from the pre-captured REAL connect, WITHOUT
+ * setting any tenant GUC. It is an inert probe, so no tenant context applies.
+ *
+ * This exists because `pool.query` internally calls `this.connect()` — the
+ * PATCHED connect — which fails closed with no active scope while
+ * RLS_ENFORCE=on. Delegating an exempt infrastructure query to the original
+ * `pool.query` therefore re-enters that rejection, making the exemption dead on
+ * the pool.query path. Acquiring the client via `originalConnect` (captured
+ * before patching) sidesteps the patched connect entirely — the same pattern
+ * runQueryScoped uses, minus the tenant micro-transaction.
+ */
+async function runInfrastructureQuery(
+  originalConnect: Pool['connect'],
+  args: any[],
+): Promise<QueryResult> {
+  const client = (await (originalConnect as any)()) as PoolClient;
+  try {
+    return (await (client.query as any)(...args)) as QueryResult;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Wrap a checked-out client so the drizzle-issued `BEGIN` is immediately
  * followed by the LOCAL tenant vars, inside that same transaction. Used for the
  * `pool.connect` path (drizzle's `db.transaction()`). Restored on release.
@@ -340,8 +365,10 @@ export function instrumentPool(pool: Pool): Pool {
     const queryText = extractQueryText(args[0]);
     recordCheck('pool.query', queryText);
     const hasCallback = typeof args[args.length - 1] === 'function';
+    const enforcing = readEnforcementMode() === 'on';
+    const isInfra = isInfrastructureQuery(queryText);
     const scope = enforcingScope(queryText);
-    if (readEnforcementMode() === 'on' && !isInfrastructureQuery(queryText) && !scope) {
+    if (enforcing && !isInfra && !scope) {
       const error = missingTenantScopeError('pool.query');
       if (hasCallback) {
         const callback = args[args.length - 1] as (error: Error) => void;
@@ -349,6 +376,22 @@ export function instrumentPool(pool: Pool): Pool {
         return undefined;
       }
       return Promise.reject(error);
+    }
+    // Infrastructure probe while enforcing: run it on a connection from the
+    // pre-captured REAL connect. Delegating to originalQuery would re-enter the
+    // PATCHED connect, which fails closed with no active scope — so the
+    // infrastructure exemption is otherwise dead on this path (e.g. the /readyz
+    // `select 1` liveness probe and the boot `SELECT NOW()` connectivity test).
+    if (enforcing && isInfra) {
+      if (hasCallback) {
+        const callback = args[args.length - 1] as (error: Error | null, result?: QueryResult) => void;
+        runInfrastructureQuery(originalConnect, args.slice(0, -1)).then(
+          result => callback(null, result),
+          error => callback(error),
+        );
+        return undefined;
+      }
+      return runInfrastructureQuery(originalConnect, args);
     }
     if (!scope) return (originalQuery as any)(...args);
     if (hasCallback) {

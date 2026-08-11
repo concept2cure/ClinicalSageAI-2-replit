@@ -203,10 +203,14 @@ export const requireRole = (...allowedRoles: string[]) => {
       });
     }
 
+    // SECURITY: no unconditional org-`admin` escape hatch. An org-scoped
+    // "admin" must satisfy the explicit allowedRoles / "*" wildcard like any
+    // other role, so a self-service tenant admin can never clear a
+    // platform-role guard (e.g. requireRole('super_admin')).
     const userRoles = req.user.roles || [req.user.role];
     const hasRole = allowedRoles.some(role => userRoles?.includes(role) || role === '*');
 
-    if (!hasRole && !userRoles?.includes('admin')) {
+    if (!hasRole) {
       return res.status(403).json({
         error: { code: 'AUTH_004', message: 'Insufficient permissions' },
       });
