@@ -10,16 +10,48 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
+import { ALL_ANA_TOOLS, ALL_ANA_TOOLS_RAW } from '../AnaToolDefinitions.js';
 // Importing the executor registers every handler as an import side effect.
 import { getToolHandler, getRegisteredToolNames } from '../AnaToolExecutor';
 
 const definedNames = ALL_ANA_TOOLS.map((t) => t.name);
 
+/**
+ * Name collisions known at the time this guard was added. Each is a case where
+ * two files define the same tool name; ALL_ANA_TOOLS keeps the FIRST spread and
+ * silently drops the rest, so only the winner below is ever offered to the model.
+ * Tracked for resolution at source (see the dedupe note in AnaToolDefinitions).
+ *
+ *   screen_signal_panel   winner: statisticalDesignTools (spread first)
+ *                         shadowed: ivdLifecycleTools
+ *   generate_define_xml   winner: extendedRegulatoryTools (define.xml v2.0)
+ *                         shadowed: cdiscTools (v2.1)
+ *   run_cdisc_pipeline    winner: advancedModelingTools
+ *                         shadowed: cdiscTools
+ *
+ * This list may shrink, never grow. A new entry means a tool definition is being
+ * silently discarded — the author's schema never reaches the model.
+ */
+const KNOWN_DUPLICATE_NAMES = ['generate_define_xml', 'run_cdisc_pipeline', 'screen_signal_panel'];
+
 describe('AnA tool registry — every defined tool is wired', () => {
   it('ALL_ANA_TOOLS has no duplicate names', () => {
     const dupes = definedNames.filter((n, i) => definedNames.indexOf(n) !== i);
     expect(dupes, `duplicate tool names: ${[...new Set(dupes)].join(', ')}`).toEqual([]);
+  });
+
+  // The assertion above runs on the DEDUPED array, so it cannot fail by
+  // construction. This one runs pre-dedupe, where collisions are still visible.
+  it('introduces no new duplicate names pre-dedupe', () => {
+    const rawNames = ALL_ANA_TOOLS_RAW.map((t) => t.name);
+    const dupes = [...new Set(rawNames.filter((n, i) => rawNames.indexOf(n) !== i))].sort();
+    const unexpected = dupes.filter((n) => !KNOWN_DUPLICATE_NAMES.includes(n));
+    expect(
+      unexpected,
+      `new duplicate tool name(s): ${unexpected.join(', ')}. Two files define the same tool; ` +
+        `only the first spread in ALL_ANA_TOOLS_RAW reaches the model and the other is silently ` +
+        `discarded. Rename one, or remove the redundant definition.`,
+    ).toEqual([]);
   });
 
   it('every tool has a well-formed input_schema', () => {
