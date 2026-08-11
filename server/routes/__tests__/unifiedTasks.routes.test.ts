@@ -8,6 +8,7 @@ import express from 'express';
 // vi.hoisted keeps the spies available to the hoisted vi.mock factory.
 const m = vi.hoisted(() => ({
   getAllUnifiedTasks: vi.fn(),
+  getOrgTaskById: vi.fn(),
   updateTaskStatus: vi.fn(),
   getTasksByModule: vi.fn(),
   createUnifiedTask: vi.fn(),
@@ -24,6 +25,18 @@ vi.mock('../../services/unifiedTaskService', () => ({
 vi.mock('../../storage', () => ({ storage: { db: {} } }));
 // Isolate the route from the real audit ledger (db/chain/bcrypt); assert it is invoked.
 vi.mock('../../services/tasking/task-audit', () => ({ auditTaskAction: m.auditTaskAction }));
+// The completion side-effects (dependency-unblock cascade + notifications) are a
+// separate unit. This route test mocks the service/storage layer, so no real
+// unified_tasks rows exist; the real cascade would issue its own org-scoped
+// queries on the shared instrumented pool, which fail closed here
+// (RLS_ENFORCE=on with no request-scoped tenant context in this unit harness —
+// production runs them inside the JWT auth boundary's tenant scope). Mock them
+// like the other collaborators so the route logic is exercised in isolation.
+vi.mock('../../services/tasking/task-side-effects', () => ({
+  cascadeUnblockOnCompletion: vi.fn(),
+  notifyTaskEvent: vi.fn(),
+  wouldCreateDependencyCycle: vi.fn(() => Promise.resolve(false)),
+}));
 
 import unifiedTaskRoutes from '../unifiedTasks.routes';
 
@@ -61,26 +74,105 @@ describe('unifiedTasks routes — tenant isolation', () => {
   });
 
   it("PATCH /:id/status blocks mutating another org's task (404) and does not write", async () => {
-    m.getAllUnifiedTasks.mockResolvedValue([{ id: 1, taskId: 'TASK-A', organizationId: 2 }]);
+    // The org-scoped lookup finds nothing for the caller's org.
+    m.getOrgTaskById.mockResolvedValue(null);
     const res = await request(makeApp(2))
       .patch('/api/regulatory/tasks/TASK-OTHER/status')
       .send({ status: 'completed' });
     expect(res.status).toBe(404);
+    expect(m.getOrgTaskById).toHaveBeenCalledWith(2, 'TASK-OTHER');
     expect(m.updateTaskStatus).not.toHaveBeenCalled();
   });
 
   it('PATCH /:id/status updates a task that belongs to the caller org', async () => {
-    m.getAllUnifiedTasks.mockResolvedValue([{ id: 1, taskId: 'TASK-A', organizationId: 2 }]);
+    // 'review' → 'completed' is a legal transition; no approval gate → no e-sign.
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1, taskId: 'TASK-A', organizationId: 2, status: 'review',
+      title: 'Freeze gate', approvalRequired: false, approvalStatus: null,
+    });
     m.updateTaskStatus.mockResolvedValue({ id: 1, taskId: 'TASK-A', status: 'completed' });
     const res = await request(makeApp(2))
       .patch('/api/regulatory/tasks/TASK-A/status')
       .send({ status: 'completed' });
     expect(res.status).toBe(200);
-    expect(m.updateTaskStatus).toHaveBeenCalledWith('TASK-A', 'completed', undefined);
+    expect(m.updateTaskStatus).toHaveBeenCalledWith('TASK-A', 'completed', undefined, {
+      manifestation: null,
+      organizationId: 2,
+      // Compare-and-set: the write matches only while the row still holds the
+      // status the handler validated the transition against.
+      expectedStatus: 'review',
+    });
     // The mutation writes a transparent lineage record.
     expect(m.auditTaskAction).toHaveBeenCalledWith(
       expect.objectContaining({ command: 'task.transition', taskId: 'TASK-A', orgId: 2 }),
     );
+  });
+
+  // Regression: :id may be the numeric primary key — getOrgTaskById resolves
+  // either form — but the write is keyed on task_id. Passing the raw path param
+  // through matched ZERO rows while the audit entry, the cascade and the 200 all
+  // still fired: a governed ledger record asserting a transition that never
+  // happened, filed under `task:<pk>` so it chained to nothing.
+  it('PATCH /:id/status addressed by numeric id writes with the resolved business key', async () => {
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1234, taskId: 'TASK-X', organizationId: 2, status: 'in-progress',
+      title: 'Numeric addressing', approvalRequired: false, approvalStatus: null,
+    });
+    m.updateTaskStatus.mockResolvedValue({ id: 1234, taskId: 'TASK-X', status: 'completed' });
+    const res = await request(makeApp(2))
+      .patch('/api/regulatory/tasks/1234/status')
+      .send({ status: 'completed' });
+
+    expect(res.status).toBe(200);
+    expect(m.updateTaskStatus.mock.calls[0][0]).toBe('TASK-X');
+    expect(m.auditTaskAction).toHaveBeenCalledWith(
+      expect.objectContaining({ command: 'task.transition', taskId: 'TASK-X' }),
+    );
+  });
+
+  it('PATCH /:id/status 409s without auditing when the write matches no row', async () => {
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1, taskId: 'TASK-A', organizationId: 2, status: 'review',
+      title: 'Raced', approvalRequired: false, approvalStatus: null,
+    });
+    // The compare-and-set lost: another transition moved the row first.
+    m.updateTaskStatus.mockResolvedValue(undefined);
+    const res = await request(makeApp(2))
+      .patch('/api/regulatory/tasks/TASK-A/status')
+      .send({ status: 'completed' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('CONFLICT_STALE');
+    // Nothing may be asserted about a transition that did not commit.
+    expect(m.auditTaskAction).not.toHaveBeenCalled();
+  });
+
+  it('PATCH /:id/status runs the state machine — an illegal move 409s without writing', async () => {
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1, taskId: 'TASK-A', organizationId: 2, status: 'pending',
+      title: 'Draft', approvalRequired: false, approvalStatus: null,
+    });
+    const res = await request(makeApp(2))
+      .patch('/api/regulatory/tasks/TASK-A/status')
+      .send({ status: 'completed' }); // pending cannot skip straight to completed
+    expect(res.status).toBe(409);
+    expect(m.updateTaskStatus).not.toHaveBeenCalled();
+    expect(m.auditTaskAction).not.toHaveBeenCalled();
+  });
+
+  it('PATCH /:id/status demands the e-sign ceremony on approval-gated completion (428)', async () => {
+    // This router previously completed gated tasks with no signature — the
+    // ceremony was one URL away from optional. Now both routers gate.
+    m.getOrgTaskById.mockResolvedValue({
+      id: 1, taskId: 'TASK-A', organizationId: 2, status: 'review',
+      title: 'Submission gate', approvalRequired: true, approvalStatus: 'pending',
+    });
+    const res = await request(makeApp(2))
+      .patch('/api/regulatory/tasks/TASK-A/status')
+      .send({ status: 'completed' }); // no signature
+    expect(res.status).toBe(428);
+    expect(res.body.code).toBe('ESIGN_REQUIRED');
+    expect(m.updateTaskStatus).not.toHaveBeenCalled();
   });
 
   it('POST /unified forces the JWT org onto the created task', async () => {

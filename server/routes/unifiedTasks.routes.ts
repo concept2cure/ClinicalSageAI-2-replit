@@ -7,10 +7,20 @@
 
 import { Router, Request, Response } from 'express';
 import unifiedTaskService, { MODULE_CONFIG } from '../services/unifiedTaskService';
-import { storage } from '../storage';
 import { z } from 'zod';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { auditTaskAction } from '../services/tasking/task-audit';
+import {
+  TASK_STATUSES,
+  TASK_TRANSITIONS,
+  isLegalTransition,
+  type TaskStatus,
+} from '../services/tasking/task-state-machine';
+import { requireTaskSignoff } from '../services/tasking/task-signoff';
+import {
+  notifyTaskEvent,
+  cascadeUnblockOnCompletion,
+} from '../services/tasking/task-side-effects';
 
 const router = Router();
 
@@ -65,10 +75,10 @@ function requireOrgId(req: Request, res: Response): number | null {
  * Find a single task by taskId/id, scoped to the caller's org, so the by-id
  * read/mutation paths cannot touch another tenant's task. Returns null when the
  * id is not present in the caller's org (the caller then responds 404).
+ * Single indexed lookup — previously fetched up to 2000 rows and .find()'d.
  */
 async function findOrgTask(org: number, id: string) {
-  const tasks = await unifiedTaskService.getAllUnifiedTasks({ organizationId: org, limit: 2000 });
-  return tasks.find((t) => t.taskId === id || t.id === parseInt(id)) ?? null;
+  return unifiedTaskService.getOrgTaskById(org, id);
 }
 
 /**
@@ -365,10 +375,10 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     const id = String(req.params.id);
     const { status, userId } = req.body;
 
-    if (!status) {
+    if (!status || !(TASK_STATUSES as readonly string[]).includes(String(status))) {
       return res.status(400).json({
         success: false,
-        error: 'status is required',
+        error: `status is required and must be one of: ${TASK_STATUSES.join(', ')}`,
       });
     }
 
@@ -378,16 +388,109 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Task not found' });
     }
 
-    const updatedTask = await unifiedTaskService.updateTaskStatus(id, status, userId);
+    // Same gates as /api/tasks — this router previously accepted any string
+    // and completed approval-gated tasks with no signature, so the ceremony
+    // was one URL away from being optional (GA bypass closure).
+    if (!isLegalTransition(existing.status, String(status))) {
+      return res.status(409).json({
+        success: false,
+        error: `A task in "${existing.status}" cannot move to "${status}".`,
+        from: existing.status,
+        allowed: TASK_TRANSITIONS[existing.status as TaskStatus] ?? [],
+      });
+    }
+
+    const actorId = Number((req as any).user?.id);
+    const signoff = await requireTaskSignoff({
+      organizationId: org,
+      task: existing,
+      toStatus: String(status),
+      actor: {
+        userId: Number.isFinite(actorId) && actorId > 0 ? actorId : null,
+        email:
+          typeof (req as any).userEmail === 'string'
+            ? (req as any).userEmail
+            : ((req as any).user?.email ?? null),
+        name: (req as any).userName ?? (req as any).user?.name ?? null,
+      },
+      signature: req.body?.signature,
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+    });
+    if (signoff.required && !signoff.ok) {
+      return res.status(signoff.status).json({
+        success: false,
+        code: signoff.code,
+        error: signoff.error,
+      });
+    }
+    const manifestation = signoff.required && signoff.ok ? signoff.manifestation : null;
+
+    // `id` may be the numeric primary key — findOrgTask resolves either form —
+    // but the write is keyed on task_id, so passing the path param through
+    // matched ZERO rows while the audit entry, the cascade and the 200 all
+    // still fired: a governed ledger record asserting a transition that never
+    // happened. Always write with the resolved business key.
+    const updatedTask = await unifiedTaskService.updateTaskStatus(existing.taskId, status, userId, {
+      manifestation,
+      organizationId: org,
+      expectedStatus: existing.status,
+    });
+
+    // Nothing below may run unless the row actually changed. The expectedStatus
+    // compare-and-set also lands here: a concurrent transition that beat us
+    // leaves updatedTask undefined, and reporting that as 404 would misread a
+    // lost race as a missing task.
+    if (!updatedTask) {
+      const stillThere = await findOrgTask(org, id);
+      if (!stillThere) {
+        return res.status(404).json({ success: false, error: 'Task not found' });
+      }
+      return res.status(409).json({
+        success: false,
+        code: 'CONFLICT_STALE',
+        error: 'This task changed while your request was in flight. Reload and try again.',
+        from: stillThere.status,
+      });
+    }
 
     await auditTaskAction({
       orgId: org,
       userId: (req as any).user?.id,
       command: 'task.transition',
-      taskId: id,
-      payload: { from: (existing as any).status, to: status },
+      // The resolved business key, so this entry chains to the task's other
+      // lineage records rather than landing under `task:<numeric pk>`.
+      taskId: existing.taskId,
+      payload: {
+        from: (existing as any).status,
+        to: status,
+        ...(manifestation
+          ? {
+              signature: {
+                signedByName: manifestation.signedByName,
+                meaning: manifestation.meaning,
+                signedAt: manifestation.signedAt,
+                method: manifestation.method,
+              },
+            }
+          : {}),
+      },
       reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
     });
+
+    // Completion wakes dependents and tells the people affected — the same
+    // side-effects the /api/tasks path runs.
+    if (String(status) === 'completed' && existing.status !== 'completed') {
+      await cascadeUnblockOnCompletion(org, existing.taskId);
+      if (existing.createdById && existing.createdById !== actorId) {
+        notifyTaskEvent({
+          organizationId: org,
+          recipientUserId: existing.createdById,
+          category: 'task_completed',
+          title: `Completed: ${existing.title}`,
+          taskId: existing.taskId,
+        });
+      }
+    }
 
     res.json({
       success: true,

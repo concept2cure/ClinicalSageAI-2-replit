@@ -53,7 +53,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { asc, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requestDb } from '../db/requestDb';
@@ -90,6 +90,13 @@ interface TaskBoardItem {
   attachments: number;
   source: string;
   due: string;
+  /**
+   * Machine-readable due date (ISO 8601) or null. The humanised `due` string
+   * above is kept for display compat, but clients must not parse it — it is
+   * server-locale English and UTC-day based (assessment D21). Overdue logic
+   * belongs on this field.
+   */
+  dueDateIso: string | null;
   /**
    * Real `lifecycle_phase` column (LIFECYCLE_PHASES domain, shared/schema.ts:
    * strategy … postmarket); null when the task has never been phased.
@@ -176,10 +183,13 @@ export default function createTaskBoardRoutes(): Router {
     try {
       const db = requestDb(req);
 
+      // Soft-deleted (archived) rows never reach the board (D24).
       const rows = await db
         .select()
         .from(unifiedTasks)
-        .where(eq(unifiedTasks.organizationId, organizationId))
+        .where(
+          and(eq(unifiedTasks.organizationId, organizationId), isNull(unifiedTasks.deletedAt))
+        )
         .orderBy(asc(unifiedTasks.dueDate));
 
       const taskIds = rows.map(row => row.taskId);
@@ -245,6 +255,7 @@ export default function createTaskBoardRoutes(): Router {
           attachments: jsonArrayLength(row.attachments),
           source: mapSource(row.sourceEntityType),
           due: humanizeDue(row.dueDate, status),
+          dueDateIso: row.dueDate ? new Date(row.dueDate).toISOString() : null,
           phase: row.lifecyclePhase ?? null,
           blocked,
           estimatedHours: row.estimatedHours ?? null,

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -60,7 +60,15 @@ interface TaskItem {
   comments: number;
   attachments: number;
   source: string;
+  /** Humanised label for display only — never parsed for overdue state. */
   due: string;
+  /**
+   * Machine-readable due date (ISO). This is the ONLY overdue signal: the
+   * server emits it from `unified_tasks.due_date` and the taskDueSweep job
+   * (server/jobs/taskDueSweep.ts) keeps the derived overdue state fresh. null
+   * when the task has no due date.
+   */
+  dueDateIso: string | null;
   /**
    * Real `unified_tasks.lifecycle_phase` column (LIFECYCLE_PHASES domain,
    * shared/schema.ts: strategy … postmarket); null when never set.
@@ -75,6 +83,17 @@ interface TaskItem {
 /** Initials for an already-resolved display name. '?' when there is no name. */
 function tbAvatar(name: string): string {
   return (name || '?').split(' ').filter(Boolean).map(s => s[0]).join('').slice(0, 2) || '?';
+}
+
+/**
+ * Overdue is computed from the machine-readable `dueDateIso` (server column,
+ * kept fresh by the taskDueSweep job) — never by parsing the humanised `due`
+ * label. Completed/cancelled work is never overdue.
+ */
+function isOverdue(t: TaskItem): boolean {
+  if (!t.dueDateIso || t.status === 'completed' || t.status === 'cancelled') return false;
+  const due = new Date(t.dueDateIso).getTime();
+  return Number.isFinite(due) && due < Date.now();
 }
 
 /**
@@ -153,6 +172,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const [sel, setSel] = useState<TaskItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [wf, setWf] = useState(false);
+  /** State-machine / archive failures the server reported, surfaced in a banner. */
+  const [actionErr, setActionErr] = useState('');
+  /** A completion the server answered 428 ESIGN_REQUIRED for — the pending
+   *  21 CFR 11 §11.50 signature ceremony for an approval-gated task. */
+  const [signReq, setSignReq] = useState<{ t: TaskItem; status: string; progress: number } | null>(null);
 
   const modules = useMemo(() => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))], [tasks]);
   const list = tasks.filter(t =>
@@ -164,8 +188,15 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const byCol = (id: string) => list.filter(t => t.status === id);
   const byId = (id: string) => tasks.find(t => t.taskId === id);
 
-  // Move a card between columns -> the real persisted status update
-  // (PATCH /api/tasks/tasks/:taskId), then refetch so the board reflects it.
+  // Move a card between base's columns, then persist through the server task
+  // state machine (server/services/tasking/task-state-machine.ts). The column
+  // step stays base's index arithmetic over TB_COLS; the WRITE now surfaces the
+  // machine's verdict instead of silently swallowing it:
+  //   · a 409 illegal transition shows the server's message (with the legal
+  //     next states) rather than leaving the board looking stuck;
+  //   · a 409 CONFLICT_STALE (lost race) reloads to the authoritative state;
+  //   · a 428 ESIGN_REQUIRED (approval-gated completion, backed by
+  //     task-signoff -> part11/pin-verification) opens the §11.50 PIN ceremony.
   const move = async (t: TaskItem, dir: number) => {
     const order = TB_COLS.map(c => c.id);
     const i = order.indexOf(t.status);
@@ -173,11 +204,22 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     if (ni === i) return;
     const status = order[ni];
     const progress = status === 'completed' ? 100 : t.progress;
+    setActionErr('');
     try {
       const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), { status, progress });
       if (res.ok) setReloadKey((k) => k + 1);
-    } catch {
-      /* leave the board as-is on a failed move */
+    } catch (e) {
+      if (e instanceof ApiRequestError) {
+        const payload = e.payload as { code?: string; error?: unknown } | undefined;
+        if (e.status === 428 && payload?.code === 'ESIGN_REQUIRED') {
+          setSignReq({ t, status, progress });
+          return;
+        }
+        if (payload?.code === 'CONFLICT_STALE') setReloadKey((k) => k + 1);
+        setActionErr(typeof payload?.error === 'string' ? payload.error : e.message);
+        return;
+      }
+      setActionErr('Network error while updating the task.');
     }
   };
 
@@ -260,7 +302,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     projectOpts.rows.find(p => String(p.id) === String(id))?.name ?? id;
 
   /* Answer-first lead -- computed from live task state */
-  const overdue = list.filter(t => /overdue/.test(t.due) && t.status !== 'completed');
+  const overdue = list.filter(isOverdue);
   const workload = Object.entries(stats.byAsg || {}).map(([k, v]) => ({ k, open: v.open })).sort((a, b) => b.open - a.open);
   const heaviest = workload[0];
   const critOpen = critChain.filter(t => t.status !== 'completed');
@@ -280,6 +322,13 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
         </div>
       </div>
+
+      {actionErr && (
+        <div className="tb-alert" role="alert">
+          {I.alertTriangle} <span>{actionErr}</span>
+          <button onClick={() => setActionErr('')} aria-label="Dismiss error">{I.close}</button>
+        </div>
+      )}
 
       {liveTasks.loading ? (
         <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
@@ -378,7 +427,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                         <span className="tb-src-tag" data-src={t.source} title={SRC(t.source).t}>{SRC(t.source).l}</span>
                         {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream -- ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
                         {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
-                        <span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
+                        <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                         <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>
                       </div>
                       <div className="tb-move" onClick={e => e.stopPropagation()}>
@@ -407,7 +456,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                   <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{nameOf(t.assignee)}</span><span className="tb-dot">--</span>
                   <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
                   {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
-                  <span className="sp" /><span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
+                  <span className="sp" /><span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                 </div>
                 {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' -- ')}</div>}
               </div>
@@ -463,7 +512,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
               <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
               <div style={{ fontSize: 11 }}>{nameOf(t.assignee)}</div>
-              <div style={{ fontSize: 11, color: /overdue/.test(t.due) ? 'var(--error)' : 'var(--text-400)' }}>{t.due}</div>
+              <div style={{ fontSize: 11, color: isOverdue(t) ? 'var(--error)' : 'var(--text-400)' }}>{t.due}</div>
             </button>
           ))}
         </div>
@@ -498,7 +547,27 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           }}
         />
       )}
-      {sel && <TaskDetail t={sel} byId={byId} projLabel={projLabel} onClose={() => setSel(null)} onAsk={onAsk} onMove={move} nameOf={nameOf} />}
+      {sel && (
+        <TaskDetail
+          t={sel}
+          byId={byId}
+          projLabel={projLabel}
+          onClose={() => setSel(null)}
+          onAsk={onAsk}
+          onMove={move}
+          nameOf={nameOf}
+          onErr={setActionErr}
+          onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
+        />
+      )}
+      {signReq && (
+        <ESignTaskModal
+          req={signReq}
+          taskTitle={signReq.t.title}
+          onClose={() => setSignReq(null)}
+          onSigned={() => { setSignReq(null); setReloadKey((k) => k + 1); }}
+        />
+      )}
     </div>
   );
 }
@@ -514,12 +583,48 @@ interface TaskDetailProps {
   onMove: (t: TaskItem, dir: number) => void;
   /** Resolves a real assignee id to a name; see makeNameOf. */
   nameOf: (id: string | null | undefined) => string;
+  /** Surface an archive failure in the board's banner. */
+  onErr: (msg: string) => void;
+  /** Called after a successful soft-delete so the board closes + refetches. */
+  onArchived: () => void;
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf }: TaskDetailProps) {
+function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr, onArchived }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = { n: nameOf(t.assignee) || '?', t: '' };
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
+
+  // Two-step archive (soft delete). This is the ONLY removal verb: the server
+  // stamps deleted_at/deleted_by (DELETE /api/tasks/tasks/:taskId, backed by the
+  // 20260807_unified_tasks_soft_delete migration) instead of destroying the row,
+  // so every read model — which filters `deleted_at IS NULL` — drops it while the
+  // tombstone and its governed ledger entry are retained (Part 11). There is no
+  // hard-delete path on the board.
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  useEffect(() => {
+    if (!confirmArchive) return;
+    const id = setTimeout(() => setConfirmArchive(false), 4000);
+    return () => clearTimeout(id);
+  }, [confirmArchive]);
+  const archive = async () => {
+    if (!confirmArchive) { setConfirmArchive(true); return; }
+    if (archiving) return;
+    setArchiving(true);
+    try {
+      const res = await apiRequest('DELETE', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), {
+        reason: 'Archived from the task board',
+      });
+      if (res.ok) { onArchived(); return; }
+    } catch (e) {
+      onErr(e instanceof ApiRequestError && typeof (e.payload as { error?: unknown })?.error === 'string'
+        ? String((e.payload as { error?: unknown }).error)
+        : 'Could not archive the task.');
+    }
+    setArchiving(false);
+    setConfirmArchive(false);
+  };
+
   return (
     <div className="tb-detail-bd" onClick={onClose}>
       <div className="tb-detail" onClick={e => e.stopPropagation()}>
@@ -541,7 +646,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf }: Task
           <div><label>Owner</label><span>{owner.n} -- {owner.t}</span></div>
           <div><label>Assigned by</label><span>{nameOf(t.assignedBy) || '--'}</span></div>
           <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
-          <div><label>Due</label><span style={{ color: /overdue/.test(t.due) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
+          <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
           <div><label>Origin store</label><span>{src.l} -- <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
@@ -564,9 +669,105 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf }: Task
         </div>
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
+          <button
+            className="btn ghost"
+            style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
+            disabled={archiving}
+            onClick={archive}
+            aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
+          >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
           <span className="sp" />
           <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
           <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── E-signature ceremony — approval-gated task completion (21 CFR 11 §11.50).
+   Opened when the server answers 428 ESIGN_REQUIRED on a completion. This is a
+   REAL signature: the PIN is verified server-side by
+   server/services/tasking/task-signoff.ts via
+   server/services/part11/pin-verification.ts — the same credential store and
+   lockout policy as document sealing — and the manifestation (printed name,
+   time, meaning) is appended to the task's approval history and the governed
+   audit ledger. The PIN is never logged, audited, or echoed back. ── */
+
+const SIGN_MEANINGS = ['APPROVED', 'REVIEWED', 'RESPONSIBILITY', 'AUTHORSHIP'] as const;
+
+interface ESignTaskModalProps {
+  req: { t: TaskItem; status: string; progress: number };
+  taskTitle: string;
+  onClose: () => void;
+  onSigned: () => void;
+}
+
+function ESignTaskModal({ req, taskTitle, onClose, onSigned }: ESignTaskModalProps) {
+  const [meaning, setMeaning] = useState<string>('APPROVED');
+  const [reason, setReason] = useState('');
+  const [pin, setPin] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  // Re-run the same transition, now carrying the signature. The server verifies
+  // the PIN and, only if it holds, writes the transition + the §11.50
+  // manifestation atomically; a bad PIN / lockout comes back as an ESIGN_* error.
+  const sign = async () => {
+    if (busy || !pin || reason.trim().length < 3) return;
+    setBusy(true);
+    setErr('');
+    try {
+      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(req.t.taskId), {
+        status: req.status,
+        progress: req.progress,
+        reason: reason.trim(),
+        signature: { pin, meaning },
+      });
+      if (res.ok) { onSigned(); return; }
+    } catch (e) {
+      setErr(e instanceof ApiRequestError && typeof (e.payload as { error?: unknown })?.error === 'string'
+        ? String((e.payload as { error?: unknown }).error)
+        : 'The signature was not accepted.');
+    }
+    setBusy(false);
+    setPin(''); // never leave a rejected PIN in the field
+  };
+
+  return (
+    <div className="tb-detail-bd" onClick={onClose}>
+      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Electronic signature required" onClick={e => e.stopPropagation()}>
+        <div className="tb-detail-h">
+          <div><h3>{I.lock} Sign to complete</h3></div>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Cancel signing">{I.close}</button>
+        </div>
+        <div className="tb-form">
+          <div className="tb-detail-note" style={{ marginBottom: 8 }}>
+            <b>{taskTitle}</b> is approval-gated. Completing it applies your electronic
+            signature — your identity is verified with your signing PIN, and your printed
+            name, the date and time, and the meaning below are recorded with the task and
+            in the audit ledger (21 CFR Part 11 §11.50).
+          </div>
+          <div className="tb-frow">
+            <div className="tb-field"><label>Meaning of signature</label>
+              <select value={meaning} onChange={e => setMeaning(e.target.value)}>
+                {SIGN_MEANINGS.map(m => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
+              </select>
+            </div>
+            <div className="tb-field"><label>Signing PIN<i>*</i></label>
+              <input type="password" autoComplete="off" value={pin} onChange={e => setPin(e.target.value)} placeholder="Your signing PIN" aria-label="Signing PIN" />
+            </div>
+          </div>
+          <div className="tb-field full"><label>Reason for sign-off<i>*</i></label>
+            <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Reviewed the deliverable against the acceptance criteria" />
+          </div>
+          {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
+        </div>
+        <div className="tb-detail-f">
+          <button className="btn ghost" onClick={onClose}>Cancel — leave incomplete</button>
+          <button className="btn primary" disabled={busy || !pin || reason.trim().length < 3} onClick={sign}>
+            {I.shieldCheck} {busy ? 'Verifying…' : 'Sign & complete'}
+          </button>
         </div>
       </div>
     </div>

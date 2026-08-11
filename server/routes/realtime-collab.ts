@@ -43,6 +43,37 @@ import { parseFiniteInt } from '../middleware/orgMembership';
 import { authorizeResource } from '../services/collab/collab-authorization';
 
 // ---------------------------------------------------------------------------
+// LAZY INFRASTRUCTURE
+//
+// The db facade throws at import when DATABASE_URL is absent, and the ledger/
+// notification modules drag their own import chains. This router must stay
+// importable in environments without a database (unit tests, tooling), so the
+// pool, ledger and notifier are resolved lazily on first use. A process with
+// no reachable pool degrades to the in-memory lock store — exactly the old
+// behaviour — rather than failing at import.
+// ---------------------------------------------------------------------------
+
+interface PgPoolLike {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount: number | null }>;
+  connect: () => Promise<{
+    query: (sql: string, params?: unknown[]) => Promise<{ rows: any[]; rowCount: number | null }>;
+    release: () => void;
+  }>;
+}
+
+let cachedPool: PgPoolLike | null | undefined;
+async function getDbPool(): Promise<PgPoolLike | null> {
+  if (cachedPool !== undefined) return cachedPool;
+  try {
+    const mod = await import('../db.js');
+    cachedPool = ((mod as { pool?: PgPoolLike }).pool as PgPoolLike) ?? null;
+  } catch {
+    cachedPool = null;
+  }
+  return cachedPool;
+}
+
+// ---------------------------------------------------------------------------
 // TYPES
 // ---------------------------------------------------------------------------
 
@@ -236,10 +267,29 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // ROOM MANAGER — In-memory Yjs room tracking
 // ---------------------------------------------------------------------------
 
+/**
+ * Presence TTL. The heartbeat PUTs awareness every 20s; a member not heard
+ * from in this window is evicted from the roster. Without this, `lastSeen`
+ * was written and never read — a closed laptop stayed in every roster
+ * forever (assessment D26), and the client comment claiming "the server also
+ * expires idle members" was wrong. Now it is true.
+ */
+const PRESENCE_TTL_MS = 90 * 1000;
+
 class YjsRoomManager {
   private rooms: Map<string, CollabRoom> = new Map();
   private userColors: Map<string, string> = new Map();
   private colorIndex = 0;
+
+  /** Drop members whose lastSeen exceeds the TTL. Runs on every read path. */
+  private pruneIdle(room: CollabRoom): void {
+    const cutoff = Date.now() - PRESENCE_TTL_MS;
+    const before = room.connectedUsers.length;
+    room.connectedUsers = room.connectedUsers.filter(u => u.lastSeen.getTime() >= cutoff);
+    if (room.connectedUsers.length !== before) {
+      room.lastActivity = new Date();
+    }
+  }
 
   getOrCreateRoom(
     roomKey: string,
@@ -273,6 +323,7 @@ class YjsRoomManager {
   ): CollabUser | null {
     const room = this.rooms.get(roomKey);
     if (!room) return null;
+    this.pruneIdle(room);
 
     // Assign a persistent color
     if (!this.userColors.has(user.userId)) {
@@ -317,16 +368,21 @@ class YjsRoomManager {
   }
 
   getRoom(roomKey: string): CollabRoom | undefined {
-    return this.rooms.get(roomKey);
+    const room = this.rooms.get(roomKey);
+    if (room) this.pruneIdle(room);
+    return room;
   }
 
   getAllRooms(): CollabRoom[] {
-    return Array.from(this.rooms.values());
+    const rooms = Array.from(this.rooms.values());
+    rooms.forEach(room => this.pruneIdle(room));
+    return rooms;
   }
 
   updateAwareness(roomKey: string, userId: string, update: Partial<AwarenessUpdate>): void {
     const room = this.rooms.get(roomKey);
     if (!room) return;
+    this.pruneIdle(room);
     const user = room.connectedUsers.find(u => u.userId === userId);
     if (user) {
       if (update.cursor) user.cursor = update.cursor;
@@ -373,54 +429,45 @@ const roomManager = new YjsRoomManager();
 // LOCK MANAGER — Document section-level locking
 // ---------------------------------------------------------------------------
 
-class DocumentLockManager {
+/** The old process-local Map, retained ONLY as the unprovisioned-table
+ *  fallback (a database that has not run 20260807_collab_section_locks.sql). */
+class MemoryLockStore {
   private locks: Map<string, DocumentLock> = new Map();
 
-  acquireLock(
+  acquire(
     lockKey: string,
     documentId: string,
     userId: string,
-    sectionId?: string,
-    opts?: {
-      lockType?: DocumentLock['lockType'];
-      durationMs?: number;
-      reason?: string;
-      lockedByLabel?: string;
-    }
-  ): DocumentLock | { error: string } {
+    sectionId: string | undefined,
+    opts: { lockType?: DocumentLock['lockType']; durationMs?: number; reason?: string; lockedByLabel?: string },
+    takeover: boolean
+  ):
+    | { lock: DocumentLock; previousHolder?: { id: string; label: string } }
+    | { conflict: DocumentLock } {
     const existing = this.locks.get(lockKey);
-
-    // Check if there's an active, unexpired lock by someone else
-    if (existing && existing.lockedBy !== userId && existing.expiresAt > new Date()) {
-      return {
-        error: `Section is locked by another user until ${existing.expiresAt.toISOString()}`,
-      };
+    if (existing && existing.lockedBy !== userId && existing.expiresAt > new Date() && !takeover) {
+      return { conflict: existing };
     }
-
     const lock: DocumentLock = {
       id: uuidv4(),
       documentId,
       sectionId,
       lockedBy: userId,
-      lockedByLabel: opts?.lockedByLabel ?? userId,
+      lockedByLabel: opts.lockedByLabel ?? userId,
       lockedAt: new Date(),
-      expiresAt: new Date(Date.now() + (opts?.durationMs ?? 30 * 60 * 1000)), // 30 min default
-      lockType: opts?.lockType ?? 'advisory',
-      reason: opts?.reason,
+      expiresAt: new Date(Date.now() + (opts.durationMs ?? 30 * 60 * 1000)),
+      lockType: opts.lockType ?? 'advisory',
+      reason: opts.reason,
     };
     this.locks.set(lockKey, lock);
-    return lock;
+    const stolen = existing && existing.lockedBy !== userId && takeover;
+    return {
+      lock,
+      previousHolder: stolen ? { id: existing.lockedBy, label: existing.lockedByLabel } : undefined,
+    };
   }
 
-  /**
-   * Release a lock the caller actually holds.
-   *
-   * `userId` is the authenticated principal, which is the whole fix: the
-   * ownership test below was previously comparing the stored holder against a
-   * value the requester supplied, so naming the holder was sufficient to steal
-   * their lock.
-   */
-  releaseLock(lockKey: string, userId: string): boolean {
+  release(lockKey: string, userId: string): boolean {
     const existing = this.locks.get(lockKey);
     if (existing && existing.lockedBy === userId) {
       this.locks.delete(lockKey);
@@ -429,21 +476,7 @@ class DocumentLockManager {
     return false;
   }
 
-  getLock(lockKey: string): DocumentLock | null {
-    const lock = this.locks.get(lockKey);
-    if (lock && lock.expiresAt <= new Date()) {
-      this.locks.delete(lockKey);
-      return null;
-    }
-    return lock ?? null;
-  }
-
-  /**
-   * Active locks for one document within one tenant. Scanning by documentId
-   * alone — the previous behaviour — returned another tenant's locks, and with
-   * them the identity of the author holding each one.
-   */
-  getDocumentLocks(tenantId: number, documentId: string): DocumentLock[] {
+  list(tenantId: number, documentId: string): DocumentLock[] {
     const result: DocumentLock[] = [];
     const prefix = `t${tenantId}:${documentId}`;
     const now = new Date();
@@ -456,7 +489,313 @@ class DocumentLockManager {
   }
 }
 
-const lockManager = new DocumentLockManager();
+/**
+ * Durable, replica-safe section locks over `collab_section_locks`
+ * (20260807_collab_section_locks.sql). The previous Map-based manager was lost
+ * on every restart and — behind more than one replica — two authors could hold
+ * the same "exclusive" lock at once (assessment D25).
+ *
+ * Semantics:
+ *   · acquire is ATOMIC: one upsert that only displaces a lock the caller
+ *     already holds or one that has expired — a live conflict returns the
+ *     current holder for the 409;
+ *   · takeover is explicit (assessment D27): requires a reason, displaces the
+ *     live holder, is written to the governed audit ledger, and notifies the
+ *     displaced holder;
+ *   · release deletes only the caller's own row;
+ *   · expiry is expires_at-based; expired rows are invisible and reaped
+ *     opportunistically on list.
+ *
+ * Falls back to the process-local store ONLY when the table is unprovisioned
+ * (42P01) so a not-yet-migrated environment degrades to exactly the old
+ * behaviour instead of erroring.
+ */
+class DurableLockManager {
+  private fallback = new MemoryLockStore();
+  /** Sticky memory mode: unprovisioned table, or no pool at all. */
+  private useFallback = false;
+
+  private isMissingTable(err: unknown): boolean {
+    return typeof err === 'object' && err !== null && (err as { code?: string }).code === '42P01';
+  }
+
+  /**
+   * Decide whether this error demotes us to the in-memory fallback.
+   *
+   * ONLY an unprovisioned table (42P01) does. Demotion is permanent for the
+   * process and invisible to every other replica, so a broad rule turns a
+   * transient blip into lasting cross-replica split-brain: two authors each
+   * hold "the" lock on the same section, in a Part 11 surface whose entire
+   * purpose is that they cannot. A statement timeout (57014), an admin
+   * shutdown (57P01), too-many-clients (53300), a reset pooled socket — and,
+   * before it was fixed, the takeover path's own 23505 — must surface as the
+   * 500 the route handlers already render, not silently unseat mutual
+   * exclusion. Absent pool / DATABASE_URL is handled at the `!pool` guards.
+   */
+  private demoteOn(err: unknown): boolean {
+    return this.isMissingTable(err);
+  }
+
+  /** What this process is actually using, for /health. */
+  get storageMode(): string {
+    return this.useFallback
+      ? 'in-memory fallback (per process; not durable, not shared across replicas)'
+      : 'durable (collab_section_locks)';
+  }
+
+  private rowToLock(r: Record<string, unknown>): DocumentLock {
+    return {
+      id: String(r.id),
+      documentId: String(r.document_id),
+      sectionId: r.section_id != null ? String(r.section_id) : undefined,
+      lockedBy: String(r.locked_by),
+      lockedByLabel: String(r.locked_by_label),
+      lockedAt: new Date(r.locked_at as string),
+      expiresAt: new Date(r.expires_at as string),
+      lockType: (String(r.lock_type) as DocumentLock['lockType']) ?? 'advisory',
+      reason: r.reason != null ? String(r.reason) : undefined,
+    };
+  }
+
+  async acquireLock(args: {
+    lockKey: string;
+    tenantId: number;
+    documentId: string;
+    userId: string;
+    sectionId?: string;
+    lockType?: DocumentLock['lockType'];
+    durationMs?: number;
+    reason?: string;
+    lockedByLabel?: string;
+    takeover?: boolean;
+    /** Internal: bounded retry counter for the expiry race. */
+    attempt?: number;
+  }): Promise<
+    | { lock: DocumentLock; previousHolder?: { id: string; label: string } }
+    | { conflict: DocumentLock }
+  > {
+    const { lockKey, tenantId, documentId, userId, sectionId, takeover = false } = args;
+    const opts = {
+      lockType: args.lockType,
+      durationMs: args.durationMs,
+      reason: args.reason,
+      lockedByLabel: args.lockedByLabel,
+    };
+    const pool = await getDbPool();
+    if (this.useFallback || !pool) {
+      return this.fallback.acquire(lockKey, documentId, userId, sectionId, opts, takeover);
+    }
+    const expiresAt = new Date(Date.now() + (args.durationMs ?? 30 * 60 * 1000));
+    try {
+      if (takeover) {
+        // One atomic statement: capture the live holder, then overwrite the row.
+        // No client checkout — the instrumented pool's tenant scoping applies as
+        // on any other query.
+        //
+        // This MUST be an upsert, not DELETE-then-INSERT. Every sub-statement of
+        // a single statement shares one command id, and the unique-index probe
+        // runs under SnapshotDirty, where a tuple deleted by the same command is
+        // still seen as live. A `DELETE … ` CTE therefore does NOT clear the way
+        // for the INSERT: the INSERT raises 23505 against UNIQUE(lock_key) on
+        // every takeover of an existing row — which is the only case takeover
+        // exists for. Ordering the CTEs or referencing `del` would not help.
+        //
+        // Unlike the non-takeover branch below, there is deliberately NO
+        // `WHERE locked_by = EXCLUDED.locked_by OR expires_at <= NOW()` guard on
+        // the DO UPDATE: displacing a live foreign holder is the whole point.
+        // `prior` is read-only and evaluates against the pre-command snapshot,
+        // so it still reports the displaced holder after the row is overwritten.
+        const result = await pool.query(
+          `WITH prior AS (
+             SELECT locked_by, locked_by_label, expires_at
+             FROM collab_section_locks
+             WHERE lock_key = $4 AND tenant_id = $1
+           )
+           INSERT INTO collab_section_locks
+             (tenant_id, document_id, section_id, lock_key, locked_by, locked_by_label,
+              lock_type, reason, locked_at, expires_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),$9)
+           ON CONFLICT (lock_key) DO UPDATE SET
+             locked_by = EXCLUDED.locked_by,
+             locked_by_label = EXCLUDED.locked_by_label,
+             lock_type = EXCLUDED.lock_type,
+             reason = EXCLUDED.reason,
+             locked_at = NOW(),
+             expires_at = EXCLUDED.expires_at
+           RETURNING *,
+             (SELECT locked_by FROM prior)       AS prev_locked_by,
+             (SELECT locked_by_label FROM prior) AS prev_locked_by_label,
+             (SELECT expires_at FROM prior)      AS prev_expires_at`,
+          [
+            tenantId, documentId, sectionId ?? null, lockKey, userId,
+            opts.lockedByLabel ?? userId, opts.lockType ?? 'advisory',
+            opts.reason ?? null, expiresAt,
+          ]
+        );
+        const row = result.rows[0];
+        const stolen =
+          row.prev_locked_by != null &&
+          String(row.prev_locked_by) !== userId &&
+          new Date(row.prev_expires_at as string) > new Date();
+        return {
+          lock: this.rowToLock(row),
+          previousHolder: stolen
+            ? { id: String(row.prev_locked_by), label: String(row.prev_locked_by_label) }
+            : undefined,
+        };
+      }
+
+      const result = await pool.query(
+        `INSERT INTO collab_section_locks
+           (tenant_id, document_id, section_id, lock_key, locked_by, locked_by_label,
+            lock_type, reason, locked_at, expires_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),$9)
+         ON CONFLICT (lock_key) DO UPDATE SET
+           locked_by = EXCLUDED.locked_by,
+           locked_by_label = EXCLUDED.locked_by_label,
+           lock_type = EXCLUDED.lock_type,
+           reason = EXCLUDED.reason,
+           locked_at = NOW(),
+           expires_at = EXCLUDED.expires_at
+         WHERE collab_section_locks.locked_by = EXCLUDED.locked_by
+            OR collab_section_locks.expires_at <= NOW()
+         RETURNING *`,
+        [
+          tenantId, documentId, sectionId ?? null, lockKey, userId,
+          opts.lockedByLabel ?? userId, opts.lockType ?? 'advisory',
+          opts.reason ?? null, expiresAt,
+        ]
+      );
+      if (result.rows[0]) return { lock: this.rowToLock(result.rows[0]) };
+
+      // Live lock held by someone else — surface the holder for the 409.
+      const current = await pool.query(
+        `SELECT * FROM collab_section_locks
+         WHERE lock_key = $1 AND tenant_id = $2 AND expires_at > NOW()`,
+        [lockKey, tenantId]
+      );
+      if (current.rows[0]) return { conflict: this.rowToLock(current.rows[0]) };
+      // No row inserted AND no live conflict. On real Postgres that is only
+      // the expiry race (lock lapsed between the two statements) — retry once.
+      // Twice in a row is not Postgres semantics (a stubbed pool, a broken
+      // backend): demote to per-process locks rather than looping or 500ing.
+      if ((args.attempt ?? 0) < 1) {
+        return this.acquireLock({ ...args, attempt: (args.attempt ?? 0) + 1 });
+      }
+      this.useFallback = true;
+      console.warn(
+        '[realtime-collab] lock backend returned no row and no conflict twice — per-process lock fallback'
+      );
+      return this.fallback.acquire(lockKey, documentId, userId, sectionId, opts, takeover);
+    } catch (err) {
+      if (this.demoteOn(err)) {
+        this.useFallback = true;
+        console.warn(
+          '[realtime-collab] durable locks unavailable — per-process lock fallback:',
+          err instanceof Error ? err.message : err
+        );
+        return this.fallback.acquire(lockKey, documentId, userId, sectionId, opts, takeover);
+      }
+      throw err;
+    }
+  }
+
+  async releaseLock(lockKey: string, tenantId: number, userId: string): Promise<boolean> {
+    const pool = await getDbPool();
+    if (this.useFallback || !pool) return this.fallback.release(lockKey, userId);
+    try {
+      const result = await pool.query(
+        `DELETE FROM collab_section_locks
+         WHERE lock_key = $1 AND tenant_id = $2 AND locked_by = $3
+         RETURNING id`,
+        [lockKey, tenantId, userId]
+      );
+      return (result.rowCount ?? 0) > 0;
+    } catch (err) {
+      if (this.demoteOn(err)) {
+        this.useFallback = true;
+        console.warn('[realtime-collab] lock table unprovisioned on release — per-process lock fallback');
+        return this.fallback.release(lockKey, userId);
+      }
+      throw err;
+    }
+  }
+
+  async getDocumentLocks(tenantId: number, documentId: string): Promise<DocumentLock[]> {
+    const pool = await getDbPool();
+    if (this.useFallback || !pool) return this.fallback.list(tenantId, documentId);
+    try {
+      const result = await pool.query(
+        `SELECT * FROM collab_section_locks
+         WHERE tenant_id = $1 AND document_id = $2 AND expires_at > NOW()`,
+        [tenantId, documentId]
+      );
+      // Opportunistic reap of long-expired rows for this document.
+      void pool
+        .query(
+          `DELETE FROM collab_section_locks
+           WHERE tenant_id = $1 AND document_id = $2 AND expires_at < NOW() - INTERVAL '1 hour'`,
+          [tenantId, documentId]
+        )
+        .catch(() => {});
+      return result.rows.map(r => this.rowToLock(r));
+    } catch (err) {
+      if (this.demoteOn(err)) {
+        this.useFallback = true;
+        console.warn('[realtime-collab] lock table unprovisioned on list — per-process lock fallback');
+        return this.fallback.list(tenantId, documentId);
+      }
+      throw err;
+    }
+  }
+}
+
+const lockManager = new DurableLockManager();
+
+/**
+ * Governed-ledger record for a lock event (assessment D28 — acquire, release
+ * and takeover were unaudited). Fire-and-forget: the ledger write must never
+ * add latency or failure to the lock path. Skipped when the principal id is
+ * not numeric (the ledger requires a real user id).
+ */
+function auditLockEvent(params: {
+  tenantId: number;
+  actorUserId: string;
+  command: 'collab.lock_acquire' | 'collab.lock_release' | 'collab.lock_takeover';
+  documentId: string;
+  sectionId?: string | null;
+  reason?: string;
+  payload?: Record<string, unknown>;
+}): void {
+  const userId = Number(params.actorUserId);
+  if (!Number.isFinite(userId) || userId <= 0) return;
+  void (async () => {
+    const pool = await getDbPool();
+    if (!pool) return; // no ledger without a database — fallback mode
+    const { recordGovernedAction } = await import('./c2c/actions.js');
+    await recordGovernedAction(pool, {
+      orgId: params.tenantId,
+      userId,
+      command: params.command,
+      target: `document:${params.documentId}${params.sectionId ? `:${params.sectionId}` : ''}`,
+      // The ledger requires a reason string; supply the command's default when
+      // the caller gave none (mirrors task-audit's defaultReason pattern).
+      reason:
+        params.reason && params.reason.trim()
+          ? params.reason.trim()
+          : params.command === 'collab.lock_takeover'
+            ? 'Section lock takeover via realtime-collab API'
+            : params.command === 'collab.lock_release'
+              ? 'Section lock released via realtime-collab API'
+              : 'Section lock acquired via realtime-collab API',
+      payload: params.payload ?? {},
+      domain: 'collab',
+      surface: 'realtime-collab-api',
+    });
+  })().catch(err => {
+    console.warn('[realtime-collab] lock audit failed (non-fatal):', err?.message ?? err);
+  });
+}
 
 // ---------------------------------------------------------------------------
 // EXPRESS ROUTES
@@ -570,6 +909,15 @@ router.put('/rooms/:documentId/awareness', (req: Request, res: Response) => {
     focusedField,
   });
   const room = roomManager.getRoom(roomKey);
+  // A heartbeat from a member the idle sweep evicted (laptop slept, tab
+  // resumed) re-joins them rather than leaving their own roster without them.
+  if (room && !room.connectedUsers.some(u => u.userId === actor.userId)) {
+    roomManager.addUser(roomKey, {
+      userId: actor.userId,
+      displayName: actor.label,
+      email: actor.email,
+    });
+  }
   res.json({ success: true, connectedUsers: room?.connectedUsers || [] });
 });
 
@@ -587,13 +935,15 @@ router.put('/rooms/:documentId/awareness', (req: Request, res: Response) => {
 
 /**
  * POST /locks
- * Acquire the edit lock on a document or one of its sections.
+ * Acquire the edit lock on a document or one of its sections. With
+ * `takeover: true` + a reason, displaces a live holder — audited, and the
+ * displaced holder is notified (assessment D27).
  */
 router.post('/locks', async (req: Request, res: Response) => {
   const actor = requirePrincipal(req, res);
   if (!actor) return;
 
-  const { documentId, sectionId, lockType, durationMs, reason } = req.body ?? {};
+  const { documentId, sectionId, lockType, durationMs, reason, takeover } = req.body ?? {};
   if (!documentId) return res.status(400).json({ success: false, error: 'documentId required' });
   if (!UUID_RE.test(String(documentId))) {
     return res.status(400).json({ success: false, error: 'documentId must be a UUID' });
@@ -602,19 +952,73 @@ router.post('/locks', async (req: Request, res: Response) => {
   if (section && !UUID_RE.test(section)) {
     return res.status(400).json({ success: false, error: 'sectionId must be a UUID' });
   }
+  const wantsTakeover = takeover === true;
+  if (wantsTakeover && (typeof reason !== 'string' || reason.trim().length < 3)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Taking over a lock requires a reason — it is recorded in the audit trail.',
+    });
+  }
   if (await denyDocumentAccess(String(documentId), section, actor.tenantId, res)) return;
 
-  const result = lockManager.acquireLock(
-    scopedKey(actor.tenantId, String(documentId), section),
-    String(documentId),
-    actor.userId,
-    section ?? undefined,
-    { lockType, durationMs, reason, lockedByLabel: actor.label }
-  );
-  if ('error' in result) {
-    return res.status(409).json({ success: false, error: result.error });
+  try {
+    const result = await lockManager.acquireLock({
+      lockKey: scopedKey(actor.tenantId, String(documentId), section),
+      tenantId: actor.tenantId,
+      documentId: String(documentId),
+      userId: actor.userId,
+      sectionId: section ?? undefined,
+      lockType,
+      durationMs,
+      reason,
+      lockedByLabel: actor.label,
+      takeover: wantsTakeover,
+    });
+
+    if ('conflict' in result) {
+      return res.status(409).json({
+        success: false,
+        error: `Section is locked by ${result.conflict.lockedByLabel} until ${result.conflict.expiresAt.toISOString()}`,
+        heldBy: result.conflict.lockedByLabel,
+        expiresAt: result.conflict.expiresAt.toISOString(),
+        canTakeover: true,
+      });
+    }
+
+    auditLockEvent({
+      tenantId: actor.tenantId,
+      actorUserId: actor.userId,
+      command: result.previousHolder ? 'collab.lock_takeover' : 'collab.lock_acquire',
+      documentId: String(documentId),
+      sectionId: section,
+      reason: typeof reason === 'string' ? reason : undefined,
+      payload: result.previousHolder
+        ? { previousHolder: result.previousHolder.label }
+        : {},
+    });
+
+    if (result.previousHolder) {
+      // Tell the displaced author what happened and who did it.
+      const displacedId = Number(result.previousHolder.id);
+      if (Number.isFinite(displacedId) && displacedId > 0) {
+        sendDisplacedNotification(
+          {
+            tenantId: actor.tenantId,
+            byLabel: actor.label,
+            documentId: String(documentId),
+            sectionId: section,
+            reason: typeof reason === 'string' ? reason.trim() : '',
+          },
+          displacedId
+        );
+      }
+    }
+
+    res.json({ success: true, data: { ...result.lock, mine: true } });
+  } catch (err) {
+    console.error('[realtime-collab] lock acquire failed:', err);
+    res.status(500).json({ success: false, error: 'Failed to acquire the lock' });
   }
-  res.json({ success: true, data: { ...result, mine: true } });
 });
 
 /**
@@ -622,16 +1026,31 @@ router.post('/locks', async (req: Request, res: Response) => {
  * Release the caller's own lock. A caller can only ever release their own:
  * both the key and the ownership test come from the authenticated principal.
  */
-router.delete('/locks/:documentId', (req: Request, res: Response) => {
+router.delete('/locks/:documentId', async (req: Request, res: Response) => {
   const actor = requirePrincipal(req, res);
   if (!actor) return;
   const documentId = String(req.params.documentId);
   const section = req.body?.sectionId ? String(req.body.sectionId) : null;
-  const released = lockManager.releaseLock(
-    scopedKey(actor.tenantId, documentId, section),
-    actor.userId
-  );
-  res.json({ success: true, released });
+  try {
+    const released = await lockManager.releaseLock(
+      scopedKey(actor.tenantId, documentId, section),
+      actor.tenantId,
+      actor.userId
+    );
+    if (released) {
+      auditLockEvent({
+        tenantId: actor.tenantId,
+        actorUserId: actor.userId,
+        command: 'collab.lock_release',
+        documentId,
+        sectionId: section,
+      });
+    }
+    res.json({ success: true, released });
+  } catch (err) {
+    console.error('[realtime-collab] lock release failed:', err);
+    res.status(500).json({ success: false, error: 'Failed to release the lock' });
+  }
 });
 
 /**
@@ -642,14 +1061,47 @@ router.delete('/locks/:documentId', (req: Request, res: Response) => {
  * id strings — the server is the only party that knows which principal the
  * request came from.
  */
-router.get('/locks/:documentId', (req: Request, res: Response) => {
+router.get('/locks/:documentId', async (req: Request, res: Response) => {
   const actor = requirePrincipal(req, res);
   if (!actor) return;
-  const locks = lockManager
-    .getDocumentLocks(actor.tenantId, String(req.params.documentId))
-    .map(lock => ({ ...lock, mine: lock.lockedBy === actor.userId }));
-  res.json({ success: true, data: locks });
+  try {
+    const locks = (
+      await lockManager.getDocumentLocks(actor.tenantId, String(req.params.documentId))
+    ).map(lock => ({ ...lock, mine: lock.lockedBy === actor.userId }));
+    res.json({ success: true, data: locks });
+  } catch (err) {
+    console.error('[realtime-collab] lock list failed:', err);
+    res.status(500).json({ success: false, error: 'Failed to list locks' });
+  }
 });
+
+function sendDisplacedNotification(
+  params: {
+    tenantId: number;
+    byLabel: string;
+    documentId: string;
+    sectionId: string | null;
+    reason: string;
+  },
+  recipientUserId: number
+): void {
+  void (async () => {
+    const { createNotification } = await import('../services/notifications/notification-service');
+    await createNotification({
+      organizationId: params.tenantId,
+      recipientUserId,
+      category: 'collaboration',
+      severity: 'warning',
+      title: `${params.byLabel} took over your section lock`,
+      body: params.reason || null,
+      resourceType: 'authoring_document',
+      resourceId: params.sectionId
+        ? `${params.documentId}:${params.sectionId}`
+        : params.documentId,
+      metadata: {},
+    });
+  })().catch(() => {});
+}
 
 /**
  * GET /health
@@ -666,7 +1118,7 @@ router.get('/health', (req: Request, res: Response) => {
     // `part11AuditTrail: true`, `offlineSync: true` and
     // `conflictResolution: 'automatic-crdt'` from a router that does none of
     // those things.
-    storage: 'in-memory (per process; not durable across restarts)',
+    storage: lockManager.storageMode,
     activeRooms: stats?.totalRooms ?? null,
     connectedUsers: stats?.totalUsers ?? null,
   });

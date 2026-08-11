@@ -361,7 +361,7 @@ export function useWorkbenchValidation(programs: Program[]): UseWorkbenchValidat
  */
 export interface UnifiedWorkItemView {
   id: string;
-  source: 'schedule' | 'review' | 'correspondence' | 'filing';
+  source: 'schedule' | 'review' | 'correspondence' | 'filing' | 'board';
   title: string;
   status: 'open' | 'in_progress' | 'blocked' | 'done';
   priority: string | null;
@@ -376,7 +376,8 @@ export interface UnifiedWorkSummaryView {
   open: number;
   inProgress: number;
   done: number;
-  bySource: Record<'schedule' | 'review' | 'correspondence' | 'filing', number>;
+  /** `board` = the canonical unified_tasks org board, now part of the view. */
+  bySource: Record<'schedule' | 'review' | 'correspondence' | 'filing' | 'board', number>;
 }
 
 export interface UseUnifiedWorkResult {

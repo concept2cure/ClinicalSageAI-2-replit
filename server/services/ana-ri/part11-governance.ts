@@ -42,6 +42,20 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   // escalates it centrally; the onboarding route consults that policy and fails
   // closed rather than continuing on a weaker path.
   'onboarding.apply_proposals',
+  // NOT here, deliberately: `update_task`. It mutates unified_tasks — the
+  // canonical regulated task record — so adding it looks right, but membership
+  // of this set is coupled by an anti-drift guard
+  // (__tests__/command-rbac.test.ts, "every dispatchable Part 11 governed
+  // command is a manager-tier write") to `minRole: 'manager'` plus
+  // requiresReasonForChange. `update_task` is `minRole: 'member'`
+  // (command-rbac.ts), matching the HTTP route, where members transition their
+  // own tasks. Promoting it would stop a member marking their own task done
+  // through AnA — a real permissions change, not a compliance tightening.
+  // The Part 11 obligation is met where it belongs instead: the mirror in
+  // command-executor.ts writes an unconditional `task.transition` ledger entry
+  // and enforces the status state machine, whatever tier the caller holds.
+  // Escalate this only as a deliberate RBAC decision, with the tier changed in
+  // the same commit.
 ]);
 
 /**

@@ -151,12 +151,42 @@ describe('summary roll-up', () => {
         { id: 5, sourceType: 'review_task', title: 'r1', status: 'in_progress' },
       ],
       filings: [{ id: 'f1', title: 'f', status: 'under_review' }],
+      boardTasks: [
+        { taskId: 'TASK-1', title: 'b1', status: 'in-progress' },
+        { taskId: 'TASK-2', title: 'b2', status: 'blocked' },
+      ],
     });
     const s = summarizeUnifiedWork(items);
-    expect(s.total).toBe(6);
-    expect(s.bySource).toEqual({ schedule: 3, review: 1, correspondence: 1, filing: 1 });
+    expect(s.total).toBe(8);
+    expect(s.bySource).toEqual({ schedule: 3, review: 1, correspondence: 1, filing: 1, board: 2 });
     expect(s.done).toBe(1);
-    expect(s.blocking).toBe(2); // the blocked task + the correspondence blocker
-    expect(s.inProgress).toBe(2); // review in_progress + filing under_review
+    expect(s.blocking).toBe(3); // the blocked task + the correspondence blocker + the blocked board task
+    expect(s.inProgress).toBe(3); // review in_progress + filing under_review + board in-progress
+  });
+
+  it('adapts canonical board tasks (unified_tasks) into the shared shape', () => {
+    const open = mergeUnifiedWork({
+      boardTasks: [
+        {
+          taskId: 'TASK-9',
+          title: 'Reconcile ORR',
+          status: 'review',
+          priority: 'critical',
+          assigneeName: 'M. Wei',
+          moduleType: 'Biostatistics',
+          criticalPath: true,
+        },
+      ],
+    });
+    expect(open).toHaveLength(1);
+    expect(open[0]).toMatchObject({
+      id: 'board:TASK-9',
+      source: 'board',
+      status: 'in_progress',
+      priority: 'urgent', // 'critical' maps onto the shared scale
+      ownerName: 'M. Wei',
+      blocking: true, // critical-path + not done holds the timeline
+      detail: 'Biostatistics',
+    });
   });
 });
