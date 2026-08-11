@@ -1,6 +1,6 @@
 /**
  * Unified work view — one normalized answer to "what is outstanding on this
- * project/filing?" across the three systems that independently track work:
+ * project/filing?" across the systems that independently track work:
  *
  *   1. project_tasks            — schedule-of-events milestones + the proactive
  *                                 sweep's recovery/mitigation tasks (filing-type
@@ -9,12 +9,17 @@
  *                                 regulatory correspondence (knows artifacts,
  *                                 CTD sections, approvals)
  *   3. estar_submissions        — tracked filings and their FDA review clock
+ *   4. unified_tasks            — the canonical org task board (assignments,
+ *                                 dependencies, approvals, critical path)
  *
  * These grew separately, so a milestone slip, a review blocker, and a filing's
- * review clock on the SAME submission lived in three tables with three shapes
- * and no common query. This module unifies the READ model only: it does not
- * change how any system writes, so it is additive and reversible. Converging
- * the write paths is a separate, deliberate migration.
+ * review clock on the SAME submission lived in separate tables with separate
+ * shapes and no common query — and, until source 4 was added, this "unified"
+ * view itself excluded the canonical board, so the product showed two boards
+ * of the same person's work with no rows in common (assessment P2). This
+ * module unifies the READ model only: it does not change how any system
+ * writes, so it is additive and reversible. Converging the write paths is a
+ * separate, deliberate migration.
  *
  * The normalizers are PURE (no DB) so status/priority/blocking mapping is
  * unit-testable; `loadUnifiedWork` is the thin org-scoped loader over them.
@@ -22,13 +27,22 @@
  * @module server/services/unified-work/unified-work-view
  */
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
-import { projectTasks, c2cProjectWorkItems } from '../../../shared/schema';
+import { projectTasks, c2cProjectWorkItems, unifiedTasks } from '../../../shared/schema';
 import { estarSubmissions } from '../../../shared/schema/estar-submission';
 
+/**
+ * True for rows NOT mirrored from project_tasks (AnA's create_task mirrors
+ * into unified_tasks with sourceEntityType 'project_task'; those rows are
+ * already in the view via source 1). IS DISTINCT FROM keeps NULL rows.
+ */
+function sqlDistinctFromProjectTask() {
+  return sql`${unifiedTasks.sourceEntityType} IS DISTINCT FROM 'project_task'`;
+}
+
 /** Which system a unified item came from. */
-export type UnifiedWorkSource = 'schedule' | 'review' | 'correspondence' | 'filing';
+export type UnifiedWorkSource = 'schedule' | 'review' | 'correspondence' | 'filing' | 'board';
 
 /** Normalized status across all three systems. */
 export type UnifiedWorkStatus = 'open' | 'in_progress' | 'blocked' | 'done';
@@ -127,7 +141,7 @@ export interface UnifiedWorkSummary {
 
 export function summarizeUnifiedWork(items: UnifiedWorkItem[]): UnifiedWorkSummary {
   const bySource: Record<UnifiedWorkSource, number> = {
-    schedule: 0, review: 0, correspondence: 0, filing: 0,
+    schedule: 0, review: 0, correspondence: 0, filing: 0, board: 0,
   };
   let blocking = 0, open = 0, inProgress = 0, done = 0;
   for (const i of items) {
@@ -205,6 +219,49 @@ export function workItemToUnified(r: WorkItemRowLike): UnifiedWorkItem {
   };
 }
 
+export interface UnifiedTaskRowLike {
+  taskId: string;
+  projectId?: number | null;
+  title?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  dueDate?: Date | string | null;
+  assigneeName?: string | null;
+  moduleType?: string | null;
+  criticalPath?: boolean | null;
+  blockedBy?: string[] | null;
+}
+
+/** unified_tasks: pending|in-progress|review|completed|blocked|cancelled → unified. */
+export function normalizeUnifiedTaskStatus(raw: unknown): UnifiedWorkStatus {
+  const v = String(raw ?? '').trim().toLowerCase();
+  if (v === 'completed' || v === 'cancelled') return 'done';
+  if (v === 'blocked') return 'blocked';
+  if (v === 'in-progress' || v === 'in_progress' || v === 'review') return 'in_progress';
+  return 'open';
+}
+
+export function unifiedTaskToUnified(r: UnifiedTaskRowLike): UnifiedWorkItem {
+  const status = normalizeUnifiedTaskStatus(r.status);
+  const blockedByArray = Array.isArray(r.blockedBy) && r.blockedBy.length > 0;
+  return {
+    id: `board:${r.taskId}`,
+    source: 'board',
+    nativeId: String(r.taskId),
+    projectId: r.projectId ?? null,
+    title: r.title ?? 'Untitled task',
+    status,
+    priority: normalizePriority(r.priority),
+    dueAt: iso(r.dueDate),
+    ownerName: r.assigneeName ?? null,
+    // Blocked, or on the critical path and not finished — either holds the
+    // submission timeline.
+    blocking:
+      status === 'blocked' || blockedByArray || (!!r.criticalPath && status !== 'done'),
+    detail: r.moduleType ?? null,
+  };
+}
+
 export interface FilingRowLike {
   id: string;
   projectId?: number | null;
@@ -238,11 +295,13 @@ export function mergeUnifiedWork(input: {
   tasks?: TaskRowLike[];
   workItems?: WorkItemRowLike[];
   filings?: FilingRowLike[];
+  boardTasks?: UnifiedTaskRowLike[];
 }): UnifiedWorkItem[] {
   return [
     ...(input.tasks ?? []).map(taskToUnified),
     ...(input.workItems ?? []).map(workItemToUnified),
     ...(input.filings ?? []).map(filingToUnified),
+    ...(input.boardTasks ?? []).map(unifiedTaskToUnified),
   ].sort(compareUnifiedWork);
 }
 
@@ -298,10 +357,38 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput): Promise<Unif
     )
     .catch(() => [] as FilingRowLike[]);
 
+  // The canonical org board. Terminal rows are excluded here (not in the
+  // adapter) so an org's full history doesn't drown the outstanding view, and
+  // rows mirrored FROM project_tasks are excluded because source 1 already
+  // carries them — the same task must not appear twice.
+  const openStatuses = ['pending', 'in-progress', 'review', 'blocked'];
+  const notAMirror = sqlDistinctFromProjectTask();
+  const boardTasks = await db
+    .select()
+    .from(unifiedTasks)
+    .where(
+      projectId !== undefined
+        ? and(
+            eq(unifiedTasks.organizationId, organizationId),
+            eq(unifiedTasks.projectId, projectId),
+            inArray(unifiedTasks.status, openStatuses),
+            isNull(unifiedTasks.deletedAt),
+            notAMirror,
+          )
+        : and(
+            eq(unifiedTasks.organizationId, organizationId),
+            inArray(unifiedTasks.status, openStatuses),
+            isNull(unifiedTasks.deletedAt),
+            notAMirror,
+          ),
+    )
+    .catch(() => [] as UnifiedTaskRowLike[]);
+
   const items = mergeUnifiedWork({
     tasks: tasks as TaskRowLike[],
     workItems: workItems as WorkItemRowLike[],
     filings: filings as FilingRowLike[],
+    boardTasks: boardTasks as UnifiedTaskRowLike[],
   });
   return { items, summary: summarizeUnifiedWork(items) };
 }
@@ -314,4 +401,5 @@ export default {
   taskToUnified,
   workItemToUnified,
   filingToUnified,
+  unifiedTaskToUnified,
 };

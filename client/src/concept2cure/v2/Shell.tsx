@@ -26,6 +26,7 @@ import {
 } from '../hooks/useChatUpload';
 import { I } from './icons';
 import { SampleTag, connected } from './dataConnect';
+import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
@@ -258,11 +259,15 @@ export function TopBar({
   onPalette,
   segment,
   onSegment,
+  onNav,
+  onAsk,
 }: {
   surface: ShellSurfaceRef;
   onPalette: () => void;
   segment: string;
   onSegment: (id: string) => void;
+  onNav?: (id: string) => void;
+  onAsk?: (text: string) => void;
 }) {
   const tenant = useTenant();
   const orgName = tenant?.currentOrganization?.name ?? 'Organization';
@@ -345,21 +350,28 @@ export function TopBar({
         <span className="lbl">Search, jump, or run a command</span>
         <span className="kbd">⌘K</span>
       </button>
+      {/* New task / Collaborate open the universal launcher with the current
+          surface's context; the tray is the live "what needs me" slide-over. */}
       <button
         type="button"
         className="tb-task"
-        title="New task — assign & track from this screen (lands with the tasks surface port)"
+        title="New task — assign & track from this screen"
+        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch (_e) { /* launcher not mounted */ } }}
       >
         <span className="ico">{I.checkSquare ?? I.plus}</span>
         <span className="tb-task-lbl">Task</span>
       </button>
-      <button type="button" className="tb-btn" title="Collaborate — message, @mention, route (lands with the collaboration port)">
+      <button
+        type="button"
+        className="tb-btn"
+        title="Collaborate — message a colleague about this screen"
+        aria-label="Collaborate"
+        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch (_e) { /* launcher not mounted */ } }}
+      >
         {I.messageSquare}
       </button>
-      <button type="button" className="tb-btn" title="Notifications">
-        {I.bell}
-      </button>
-      <button type="button" className="tb-btn" title="Help">
+      <TaskTray onNav={onNav} onAsk={onAsk} />
+      <button type="button" className="tb-btn" title="Help" aria-label="Help">
         {I.help}
       </button>
     </header>

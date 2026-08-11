@@ -148,16 +148,28 @@ describe('AuthoringCollab — real presence + locks', () => {
 
   it('leaves the room by document id and "me", not by naming a user', async () => {
     // The old path was /rooms/:roomKey/users/:userId, which let a caller evict
-    // any user from any room by naming both.
+    // any user from any room by naming both. The leave now rides a keepalive
+    // fetch (a plain XHR is cancelled mid-unload — assessment D29), so the
+    // contract is asserted on global fetch, not the apiRequest wrapper.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(ok({ success: true, removed: true }) as unknown as Response);
     (window as any).C2C_PROJECT = { id: 'proj-1' };
     const { unmount } = render(<AuthoringCollab documentId="D1" sectionId="S1" fireToast={vi.fn()} />);
     await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'POST' && c[1] === '/api/realtime-collab/rooms')).toBe(true));
     unmount();
     await waitFor(() => {
-      const leave = apiRequest.mock.calls.find((c) => c[0] === 'DELETE' && String(c[1]).includes('/users/'));
+      const leave = fetchSpy.mock.calls.find(
+        (c) => String(c[0]).includes('/users/') && (c[1] as RequestInit | undefined)?.method === 'DELETE'
+      );
       expect(leave).toBeTruthy();
-      expect(String(leave![1])).toBe('/api/realtime-collab/rooms/D1/users/me?sectionId=S1');
+      expect(String(leave![0])).toBe('/api/realtime-collab/rooms/D1/users/me?sectionId=S1');
+      // Survives navigation/tab close.
+      expect((leave![1] as RequestInit).keepalive).toBe(true);
+      // No body naming a user — the server removes the authenticated caller.
+      expect((leave![1] as RequestInit).body).toBeUndefined();
     });
+    fetchSpy.mockRestore();
   });
 
   it('renders nothing without a project (no join, no fabricated identity)', () => {

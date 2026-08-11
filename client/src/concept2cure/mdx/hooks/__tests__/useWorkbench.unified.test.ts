@@ -9,12 +9,12 @@ const summary = (bySource: UnifiedWorkSummaryView['bySource']): UnifiedWorkSumma
 
 describe('workNotOnTheBoard', () => {
   it('counts the sources the task board cannot show (schedule + filings)', () => {
-    const n = workNotOnTheBoard(summary({ schedule: 3, review: 5, correspondence: 2, filing: 1 }));
-    expect(n).toBe(4); // 3 schedule + 1 filing; review/correspondence ARE on the board
+    const n = workNotOnTheBoard(summary({ schedule: 3, review: 5, correspondence: 2, filing: 1, board: 4 }));
+    expect(n).toBe(4); // 3 schedule + 1 filing; review/correspondence/board ARE on the board
   });
 
   it('is zero when everything already comes from work items', () => {
-    expect(workNotOnTheBoard(summary({ schedule: 0, review: 7, correspondence: 3, filing: 0 }))).toBe(0);
+    expect(workNotOnTheBoard(summary({ schedule: 0, review: 7, correspondence: 3, filing: 0, board: 2 }))).toBe(0);
   });
 
   it('degrades to zero rather than throwing when the view has not loaded', () => {

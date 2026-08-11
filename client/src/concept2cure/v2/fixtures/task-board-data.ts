@@ -92,15 +92,21 @@ export interface WorkflowTemplate {
 export const TB_MOD: Record<string, string> = {
   CMC: '#7c6f5b',
   IND: '#2a6f97',
+  // Both spellings: the server enum / demo seed use the space-less keys
+  // (MedicalDevice, ProtocolDesign) while older rows may carry the spaced
+  // labels — a live row must never fall through to grey (assessment D7).
   'Medical Device': '#5a8f69',
+  MedicalDevice: '#5a8f69',
   eCTD: '#8a5a9c',
   Vault: '#9c7a3c',
   'Protocol Design': '#9c5a5a',
+  ProtocolDesign: '#9c5a5a',
   Clinical: '#2a6f97',
   Nonclinical: '#6b8f5a',
   Biostatistics: '#5a6f9c',
   Safety: '#a8553c',
   Regulatory: '#7c6f5b',
+  general: '#7c6f5b',
 };
 
 /* ── Board columns (unifiedTasks status -> 4 columns, Board.tsx) ── */

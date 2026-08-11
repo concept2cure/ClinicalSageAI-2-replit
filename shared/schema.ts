@@ -7126,6 +7126,12 @@ export const unifiedTasks = pgTable(
     lastModifiedBy: integer('last_modified_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+
+    // Soft delete (20260807_unified_tasks_soft_delete.sql). NULL = live.
+    // Tasks are never hard-deleted over HTTP — Part 11 retention (D24).
+    // No FK on deletedBy: the tombstone must outlive the account.
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    deletedBy: integer('deleted_by'),
   },
   table => ({
     taskIdIdx: index('unified_task_id_idx').on(table.taskId),
@@ -7173,11 +7179,43 @@ export type InsertUnifiedTask = z.infer<typeof insertUnifiedTaskSchema>;
  *
  * Tracks relationships and dependencies between tasks across different modules.
  */
+/**
+ * Durable collaborative section locks (20260807_collab_section_locks.sql).
+ * Replaces the process-local lock Map in realtime-collab: shared across
+ * replicas, TTL-expired via expires_at, takeover is explicit and audited.
+ * lock_key is the tenant-prefixed address (t<tenant>:<doc>[:<section>]).
+ */
+export const collabSectionLocks = pgTable(
+  'collab_section_locks',
+  {
+    id: serial('id').primaryKey(),
+    tenantId: integer('tenant_id').notNull(),
+    documentId: text('document_id').notNull(),
+    sectionId: text('section_id'),
+    lockKey: text('lock_key').notNull().unique(),
+    lockedBy: text('locked_by').notNull(),
+    lockedByLabel: text('locked_by_label').notNull(),
+    lockType: text('lock_type').default('advisory').notNull(),
+    reason: text('reason'),
+    lockedAt: timestamp('locked_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  table => ({
+    tenantDocIdx: index('collab_locks_tenant_doc_idx').on(table.tenantId, table.documentId),
+    expiresIdx: index('collab_locks_expires_idx').on(table.expiresAt),
+  })
+);
+export type CollabSectionLock = InferSelectModel<typeof collabSectionLocks>;
+
 export const crossModuleTaskLinks = pgTable(
   'cross_module_task_links',
   {
     id: serial('id').primaryKey(),
     linkId: text('link_id').notNull().unique(),
+
+    // Owning tenant (20260807_task_graph_org_columns.sql) — see the note on
+    // taskDependencies.organizationId.
+    organizationId: integer('organization_id'),
 
     // Source Task
     sourceTaskId: text('source_task_id')
@@ -7553,6 +7591,12 @@ export const taskDependencies = pgTable(
   {
     id: serial('id').primaryKey(),
     dependencyId: text('dependency_id').notNull().unique(),
+
+    // Owning tenant (20260807_task_graph_org_columns.sql). Nullable: legacy
+    // rows whose endpoints validated same-org at write time are backfilled
+    // from the predecessor task; endpoint-id scoping remains the primary
+    // isolation (assessment D20 — this is defense in depth).
+    organizationId: integer('organization_id'),
 
     // Task References
     predecessorTaskId: text('predecessor_task_id')
