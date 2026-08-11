@@ -77,8 +77,18 @@ export function extractTableDdl(file: string, tables: readonly string[]): string
 export interface JourneyDb {
   pglite: import('@electric-sql/pglite').PGlite;
   db: unknown;
-  /** node-postgres-compatible shim over PGlite for the raw-SQL services. */
-  pool: { query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
+  /** node-postgres-compatible shim over PGlite for the raw-SQL services.
+   *  `connect()` returns a client with the same shim so handlers that run
+   *  BEGIN/COMMIT on a checked-out client work under the single-connection
+   *  PGlite (release() is a no-op). Declared here so services type-checked
+   *  outside tests/** (e.g. server/**) see the real runtime shape. */
+  pool: {
+    query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+    connect: () => Promise<{
+      query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+      release: () => void;
+    }>;
+  };
   close: () => Promise<void>;
 }
 

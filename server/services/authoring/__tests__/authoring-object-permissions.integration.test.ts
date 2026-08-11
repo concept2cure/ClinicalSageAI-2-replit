@@ -262,7 +262,7 @@ describe('authoring object permissions — real canonical DDL', () => {
         pool,
         tenantId: 1,
         docId: DOCUMENT_ID,
-        permissionId: String(owner.rows[0].id),
+        permissionId: String((owner.rows[0] as { id: string }).id),
         revokedBy: AUTHOR_ID,
         reason: 'Attempt to remove final owner',
       }),

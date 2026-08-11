@@ -101,51 +101,62 @@ BEGIN
       CHECK (valid_until IS NULL OR valid_until > valid_from);
   END IF;
 
-  -- Existing authoring migrations create the composite document key. Keep this
-  -- guard for retrofits that predate the tenant-parentage remediation.
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'authoring_documents_id_tenant_key'
-      AND conrelid = 'public.authoring_documents'::regclass
-  ) THEN
-    ALTER TABLE public.authoring_documents
-      ADD CONSTRAINT authoring_documents_id_tenant_key UNIQUE (id, tenant_id);
+  -- The composite parent keys and the doc_permissions tenant-parentage FKs only
+  -- make sense once the authoring parent tables exist. In the authoring-subsystem
+  -- lineage the loop-tables migration creates them first, so these run normally.
+  -- When this file is applied standalone before loop-tables (e.g. the preview-DB
+  -- new-migration apply job), the parent tables may be absent — to_regclass()
+  -- yields NULL instead of throwing, so the parent-dependent DDL is skipped
+  -- rather than hard-erroring on a missing relation.
+  IF to_regclass('public.authoring_documents') IS NOT NULL THEN
+    -- Existing authoring migrations create the composite document key. Keep this
+    -- guard for retrofits that predate the tenant-parentage remediation.
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+      WHERE conname = 'authoring_documents_id_tenant_key'
+        AND conrelid = 'public.authoring_documents'::regclass
+    ) THEN
+      ALTER TABLE public.authoring_documents
+        ADD CONSTRAINT authoring_documents_id_tenant_key UNIQUE (id, tenant_id);
+    END IF;
+
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+      WHERE conname = 'doc_permissions_doc_tenant_fkey'
+        AND conrelid = 'public.doc_permissions'::regclass
+    ) THEN
+      ALTER TABLE public.doc_permissions
+        ADD CONSTRAINT doc_permissions_doc_tenant_fkey
+        FOREIGN KEY (doc_id, tenant_id)
+        REFERENCES public.authoring_documents (id, tenant_id)
+        ON DELETE CASCADE;
+    END IF;
   END IF;
 
   -- A section-scoped permission must structurally belong to the declared
   -- document and tenant, not merely point at a section id visible under RLS.
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'authoring_sections_id_doc_tenant_key'
-      AND conrelid = 'public.authoring_sections'::regclass
-  ) THEN
-    ALTER TABLE public.authoring_sections
-      ADD CONSTRAINT authoring_sections_id_doc_tenant_key
-      UNIQUE (id, doc_id, tenant_id);
-  END IF;
+  IF to_regclass('public.authoring_sections') IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+      WHERE conname = 'authoring_sections_id_doc_tenant_key'
+        AND conrelid = 'public.authoring_sections'::regclass
+    ) THEN
+      ALTER TABLE public.authoring_sections
+        ADD CONSTRAINT authoring_sections_id_doc_tenant_key
+        UNIQUE (id, doc_id, tenant_id);
+    END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'doc_permissions_doc_tenant_fkey'
-      AND conrelid = 'public.doc_permissions'::regclass
-  ) THEN
-    ALTER TABLE public.doc_permissions
-      ADD CONSTRAINT doc_permissions_doc_tenant_fkey
-      FOREIGN KEY (doc_id, tenant_id)
-      REFERENCES public.authoring_documents (id, tenant_id)
-      ON DELETE CASCADE;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'doc_permissions_section_doc_tenant_fkey'
-      AND conrelid = 'public.doc_permissions'::regclass
-  ) THEN
-    ALTER TABLE public.doc_permissions
-      ADD CONSTRAINT doc_permissions_section_doc_tenant_fkey
-      FOREIGN KEY (section_id, doc_id, tenant_id)
-      REFERENCES public.authoring_sections (id, doc_id, tenant_id)
-      ON DELETE CASCADE;
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+      WHERE conname = 'doc_permissions_section_doc_tenant_fkey'
+        AND conrelid = 'public.doc_permissions'::regclass
+    ) THEN
+      ALTER TABLE public.doc_permissions
+        ADD CONSTRAINT doc_permissions_section_doc_tenant_fkey
+        FOREIGN KEY (section_id, doc_id, tenant_id)
+        REFERENCES public.authoring_sections (id, doc_id, tenant_id)
+        ON DELETE CASCADE;
+    END IF;
   END IF;
 END $$;
 
@@ -202,24 +213,35 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS authoring_document_seed_permissions
-  ON public.authoring_documents;
-CREATE TRIGGER authoring_document_seed_permissions
-AFTER INSERT ON public.authoring_documents
-FOR EACH ROW
-EXECUTE FUNCTION public.seed_authoring_document_permissions();
+-- The seed trigger and the historical backfill both target authoring_documents.
+-- In the authoring-subsystem lineage the loop-tables migration creates that table
+-- first, so both run normally. When this file is applied standalone before
+-- loop-tables (e.g. the preview-DB new-migration apply job), authoring_documents
+-- may be absent — guard so the trigger/backfill are skipped rather than hard-
+-- erroring on a missing relation.
+DO $$
+BEGIN
+  IF to_regclass('public.authoring_documents') IS NOT NULL THEN
+    DROP TRIGGER IF EXISTS authoring_document_seed_permissions
+      ON public.authoring_documents;
+    CREATE TRIGGER authoring_document_seed_permissions
+    AFTER INSERT ON public.authoring_documents
+    FOR EACH ROW
+    EXECUTE FUNCTION public.seed_authoring_document_permissions();
 
--- Retrofit existing documents. This is intentionally idempotent and records the
--- original creator as the grantor so historical ownership remains attributable.
-INSERT INTO public.doc_permissions
-  (doc_id, section_id, tenant_id, principal_id, email, role,
-   granted_by, grant_reason)
-SELECT d.id, NULL, d.tenant_id, d.created_by::text, lower(u.email::text), role_name,
-       d.created_by::text, 'Backfilled document creator'
-  FROM public.authoring_documents d
-  LEFT JOIN public.users u ON u.id::text = d.created_by::text
- CROSS JOIN (VALUES ('OWNER'), ('AUTHOR')) AS roles(role_name)
-ON CONFLICT DO NOTHING;
+    -- Retrofit existing documents. Idempotent; records the original creator as
+    -- the grantor so historical ownership remains attributable.
+    INSERT INTO public.doc_permissions
+      (doc_id, section_id, tenant_id, principal_id, email, role,
+       granted_by, grant_reason)
+    SELECT d.id, NULL, d.tenant_id, d.created_by::text, lower(u.email::text), role_name,
+           d.created_by::text, 'Backfilled document creator'
+      FROM public.authoring_documents d
+      LEFT JOIN public.users u ON u.id::text = d.created_by::text
+     CROSS JOIN (VALUES ('OWNER'), ('AUTHOR')) AS roles(role_name)
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
 
 -- Tenant isolation mirrors the canonical authoring policy installed by the
 -- subsystem helper. FORCE RLS prevents table owners from accidentally bypassing
