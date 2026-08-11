@@ -173,6 +173,84 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
 }
 
 // ---------------------------------------------------------------------------
+// Chained audit row — transaction-enlistable
+// ---------------------------------------------------------------------------
+
+/**
+ * Write ONE sha256-chained + HMAC-sealed `audit_logs` row on the CALLER'S
+ * client, inside the caller's transaction. No BEGIN/COMMIT here: the caller
+ * owns the transaction, so the audit row commits or rolls back atomically with
+ * whatever it records — and a failure PROPAGATES rather than being swallowed.
+ *
+ * Why this is exported rather than being private to `logAction`:
+ *
+ * `logAction` deliberately runs on its own connection and swallows persistence
+ * failures ("an audit-trail outage must not break the user action it records").
+ * That is a defensible policy for the ~234 general call sites, but it is the
+ * WRONG policy for 21 CFR Part 11 signing events, where the regulated claim is
+ * the opposite: no signature may exist without its audit row. A caller on that
+ * path cannot get the guarantee from `logAction` at all — not by awaiting it
+ * (it resolves normally on DB failure) and not by catching (it never rejects
+ * for one). It needs the write inside its own transaction, which is this.
+ *
+ * Same shape as `recordGovernedAction(client, …)` in server/routes/c2c/actions.ts,
+ * which already executes on the caller's client for exactly this reason.
+ */
+export async function writeChainedAuditRow(
+  client: { query: (sql: string, params?: unknown[]) => Promise<unknown> },
+  entry: AuditLogEntry,
+  resolvedTenantId?: string | number,
+  resolvedResourceId?: string,
+): Promise<void> {
+  const tenantIdSource = resolvedTenantId ?? entry.tenantId ?? entry.organizationId;
+  const recordId =
+    resolvedResourceId ??
+    entry.resourceId?.toString() ??
+    entry.recordId?.toString() ??
+    'unknown';
+
+  const occurredAt = new Date().toISOString();
+  const actorId =
+    entry.userId != null && Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
+  const tenantId = Number.isFinite(Number(tenantIdSource)) ? Number(tenantIdSource) : 0;
+  const newValues = entry.details ?? entry.metadata ?? null;
+  const target = `${entry.resourceType ?? entry.tableName ?? 'unknown'}:${recordId}`;
+  const payloadHash = hashPayload(newValues ?? { action: entry.action, target });
+  const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
+    action: entry.action,
+    actor_id: actorId,
+    target,
+    payload_hash: payloadHash,
+    occurred_at: occurredAt,
+  });
+  await client.query(
+    `INSERT INTO audit_logs
+       (id, tenant_id, user_id, action, table_name, record_id,
+        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,
+        old_values, new_values, ip_address, user_agent)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)`,
+    [
+      randomUUID(),
+      tenantId,
+      actorId,
+      entry.action,
+      entry.resourceType || entry.tableName || 'unknown',
+      recordId,
+      actorId,
+      target,
+      payloadHash,
+      sha256Chain,
+      occurredAt,
+      hmacSeal,
+      null,
+      newValues == null ? null : JSON.stringify(newValues),
+      entry.ipAddress ?? null,
+      entry.userAgent ?? null,
+    ],
+  );
+}
+
+// ---------------------------------------------------------------------------
 // AuditService
 // ---------------------------------------------------------------------------
 
@@ -257,45 +335,7 @@ class AuditService {
         const client = await pool.connect();
         try {
           await client.query('BEGIN');
-          const occurredAt = new Date().toISOString();
-          const actorId =
-            entry.userId != null && Number.isFinite(Number(entry.userId)) ? Number(entry.userId) : null;
-          const tenantId = Number.isFinite(Number(resolvedTenantId)) ? Number(resolvedTenantId) : 0;
-          const newValues = entry.details ?? entry.metadata ?? null;
-          const target = `${entry.resourceType ?? 'unknown'}:${resolvedResourceId}`;
-          const payloadHash = hashPayload(newValues ?? { action: entry.action, target });
-          const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client as any, {
-            action: entry.action,
-            actor_id: actorId,
-            target,
-            payload_hash: payloadHash,
-            occurred_at: occurredAt,
-          });
-          await client.query(
-            `INSERT INTO audit_logs
-               (id, tenant_id, user_id, action, table_name, record_id,
-                actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,
-                old_values, new_values, ip_address, user_agent)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)`,
-            [
-              randomUUID(),
-              tenantId,
-              actorId,
-              entry.action,
-              entry.resourceType || 'unknown',
-              resolvedResourceId,
-              actorId,
-              target,
-              payloadHash,
-              sha256Chain,
-              occurredAt,
-              hmacSeal,
-              null,
-              newValues == null ? null : JSON.stringify(newValues),
-              entry.ipAddress ?? null,
-              entry.userAgent ?? null,
-            ],
-          );
+          await writeChainedAuditRow(client, entry, resolvedTenantId, resolvedResourceId);
           await client.query('COMMIT');
         } catch (txErr) {
           try {
