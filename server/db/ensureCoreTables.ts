@@ -55,24 +55,44 @@ const IMPORTANT_TABLES = [
   // logged five permanent "important tables missing" warnings, which is how a
   // diagnostic stops being read.
   'workflow_runs',
-  'step_runs',
-  'organization_settings',
+  // step_runs / organization_settings / assembly_docs / assembly_audit_logs were
+  // listed here and are deliberately gone (evidence-based reachability audit,
+  // 2026-08-11). None is queried by any LIVE production path, so listing them made
+  // readiness warn about tables no shipped code needs — the same "a diagnostic
+  // stops being read" failure the auth_users cohort above caused:
+  //   • organization_settings — phantom: it appears only as an audit-log
+  //     resourceType LABEL (server/routes/ana-tool-policy.ts,
+  //     organizations-routes.ts); no SQL anywhere addresses a table by that name.
+  //   • step_runs — the hash-chained public.step_runs is written only by
+  //     WorkflowExecutionEngine, which is referenced solely from a test, and it has
+  //     no creator on any lineage. Its companion public.workflow_runs stays above:
+  //     the MOUNTED orchestration-checkpoints route reads it and 0007 provisions it.
+  //   • assembly_docs / assembly_audit_logs — written only by AssemblyLine, which
+  //     is instantiated only by /api/test-assembly, a route fenced OUT of non-test
+  //     environments (server/bootstrap/register-core-routes.ts). Test scaffolding,
+  //     not production schema.
+  // If any is later wired into a live path, provision it durably and restore the
+  // entry then — don't warn for a table before it is real.
   'document_templates',
   'lumen_data_atoms',
-  'assembly_docs',
-  'assembly_audit_logs',
   // CERV2 Medical Device module tables
   'documents',
   'document_versions',
   'cerv2_510k_sections',
   'cerv2_section_versions',
-  'cerv2_document_sessions',
+  // cerv2_document_sessions removed (reachability audit, 2026-08-11): provisioned
+  // (shared/schema.ts + boot autocreate) but queried by NOTHING in shipped server
+  // code — the mounted cerv2-versions.ts never reads it and the drizzle export is
+  // imported nowhere. Its boot autocreate DDL was dropped too. Restore both if a
+  // document-session feature is wired to a live route.
   // RAG system tables
   'rag_documents',
   'rag_chunks',
   'rag_queries',
   'rag_knowledge_graph',
-  'rag_ingestion_jobs',
+  // rag_ingestion_jobs removed (reachability audit, 2026-08-11): defined in
+  // shared/schema.ts but no live SQL or ORM consumer anywhere — gating readiness
+  // on it warned about a table no shipped code needs.
   // Pharmacovigilance + commitments (applied via `npm run db:apply-c2c`).
   'adverse_events',
   'icsrs',
@@ -448,17 +468,11 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
         changed_at TIMESTAMPTZ DEFAULT NOW(),
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
-      cerv2_document_sessions: `CREATE TABLE IF NOT EXISTS cerv2_document_sessions (
-        id SERIAL PRIMARY KEY,
-        organization_id INTEGER NOT NULL,
-        document_id INTEGER,
-        user_id INTEGER,
-        open_sections JSONB,
-        active_section_id INTEGER,
-        is_dirty BOOLEAN DEFAULT FALSE,
-        last_activity TIMESTAMPTZ DEFAULT NOW(),
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )`,
+      // cerv2_document_sessions autocreate removed (reachability audit,
+      // 2026-08-11): no shipped server code queries the table, and shared/schema.ts
+      // already provisions it via drizzle push — a boot-time CREATE for a table
+      // nothing reads was dead work. Restore alongside the readiness entry if a
+      // document-session feature is wired to a live route.
       rag_documents: `CREATE TABLE IF NOT EXISTS rag_documents (
         id SERIAL PRIMARY KEY,
         organization_id INTEGER NOT NULL,
