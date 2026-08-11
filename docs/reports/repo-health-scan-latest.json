@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-11T04:03:54.220Z",
+  "generatedAt": "2026-08-11T15:38:02.210Z",
   "git": {
-    "sha": "b8c8546b5d40051f922ee774ed65af60a8fcddbf",
+    "sha": "d60483b0f5290685e5c121b79919da38cdacc8cf",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -234,28 +234,6 @@
         ]
       },
       {
-        "basename": "routes",
-        "count": 16,
-        "paths": [
-          "server/api/ai/routes.ts",
-          "server/api/cmc/routes.ts",
-          "server/api/drafting/routes.ts",
-          "server/api/ectd/routes.ts",
-          "server/api/enterprise/routes.js",
-          "server/api/gcc/ectd/routes.js",
-          "server/api/gcc/labeling/routes.js",
-          "server/api/gcc/signing/routes.js",
-          "server/api/gcc/site-intel/routes.js",
-          "server/api/gcc/vault/routes.js",
-          "server/api/labeling/routes.ts",
-          "server/api/neuro-symbolic/routes.ts",
-          "server/api/signing/routes.ts",
-          "server/api/site-intel/routes.ts",
-          "server/api/templates/routes.ts",
-          "server/startup/routes.ts"
-        ]
-      },
-      {
         "basename": "data",
         "count": 15,
         "paths": [
@@ -274,6 +252,27 @@
           "ui_kits/risk/data.jsx",
           "ui_kits/submission/data.jsx",
           "ui_kits/tasking/data.jsx"
+        ]
+      },
+      {
+        "basename": "routes",
+        "count": 15,
+        "paths": [
+          "server/api/ai/routes.ts",
+          "server/api/cmc/routes.ts",
+          "server/api/drafting/routes.ts",
+          "server/api/ectd/routes.ts",
+          "server/api/enterprise/routes.js",
+          "server/api/gcc/ectd/routes.js",
+          "server/api/gcc/labeling/routes.js",
+          "server/api/gcc/signing/routes.js",
+          "server/api/gcc/site-intel/routes.js",
+          "server/api/labeling/routes.ts",
+          "server/api/neuro-symbolic/routes.ts",
+          "server/api/signing/routes.ts",
+          "server/api/site-intel/routes.ts",
+          "server/api/templates/routes.ts",
+          "server/startup/routes.ts"
         ]
       },
       {
@@ -2133,11 +2132,11 @@
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "bytes": 472707
+        "bytes": 472815
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 341829
+        "bytes": 341859
       },
       {
         "file": "server/statistics-service.ts",
@@ -2145,7 +2144,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 200311
+        "bytes": 209605
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2220,6 +2219,10 @@
         "bytes": 114269
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 113352
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2246,10 +2249,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
         "bytes": 104369
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 102844
       }
     ],
     "largeFilesByLines": [
@@ -2270,12 +2269,12 @@
         "lines": 6893
       },
       {
-        "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "lines": 5560
+        "file": "server/routes/authoring.router.ts",
+        "lines": 5691
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "lines": 5477
+        "file": "server/services/ind/ctd/authoring-guidance.ts",
+        "lines": 5560
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2307,7 +2306,7 @@
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3114
+        "lines": 3113
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2326,6 +2325,10 @@
         "lines": 2759
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 2756
+      },
+      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "lines": 2678
       },
@@ -2340,10 +2343,6 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2557
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2548
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2591,7 +2590,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 400,
+      "duplicateGroups": 399,
       "largeByBytes": 29,
       "largeByLines": 72
     },
