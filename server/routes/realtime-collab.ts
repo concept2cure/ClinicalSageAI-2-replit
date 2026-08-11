@@ -533,7 +533,18 @@ class DurableLockManager {
    * exclusion. Absent pool / DATABASE_URL is handled at the `!pool` guards.
    */
   private demoteOn(err: unknown): boolean {
-    return this.isMissingTable(err);
+    return this.isMissingTable(err) || this.isMissingTenantScope(err);
+  }
+
+  /** The instrumented pool fail-closes an un-scoped query when RLS_ENFORCE=on:
+   *  this call site has no request tenant scope (a non-request context, or a
+   *  test that stubs the auth boundary), so a durable lock cannot be keyed to a
+   *  tenant here — demote to per-process advisory locks rather than 500. A real
+   *  JWT-gated request always establishes the scope at the auth boundary, so
+   *  production does not take this path. */
+  private isMissingTenantScope(err: unknown): boolean {
+    const message = err instanceof Error ? err.message : String(err);
+    return /requires an active tenant scope/i.test(message);
   }
 
   /** What this process is actually using, for /health. */

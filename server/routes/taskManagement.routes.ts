@@ -787,48 +787,6 @@ router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => 
   }
 });
 
-// List workflow templates — the org's stored templates plus the built-in
-// catalog (org rows win on id collision). This endpoint is what makes the
-// from-template flow reachable end-to-end: without it no client could know
-// what to instantiate (assessment D10).
-router.get('/templates', async (req: Request, res: Response) => {
-  try {
-    const organizationIdRaw = getSecureOrgId(req);
-    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
-    if (!Number.isFinite(organizationId) || organizationId <= 0) {
-      return res.status(401).json({ success: false, error: 'Organization context required' });
-    }
-
-    let stored: Array<Record<string, unknown>> = [];
-    try {
-      stored = await storage.db
-        .select()
-        .from(taskTemplates)
-        .where(
-          and(
-            eq(taskTemplates.organizationId, organizationId),
-            eq(taskTemplates.isActive, true)
-          )
-        )
-        .orderBy(desc(taskTemplates.usageCount));
-    } catch (err: any) {
-      // Unprovisioned table degrades to the built-ins, never to a 500.
-      if (err?.code !== '42P01') throw err;
-    }
-
-    const storedIds = new Set(stored.map(t => String((t as any).templateId)));
-    const builtins = BUILTIN_WORKFLOW_TEMPLATES.filter(t => !storedIds.has(t.templateId));
-    const data = [
-      ...stored.map(t => ({ ...t, builtin: false })),
-      ...builtins,
-    ];
-    return res.json({ success: true, data, total: data.length });
-  } catch (error) {
-    console.error('Error listing templates:', error);
-    return res.status(500).json({ success: false, error: 'Failed to list templates' });
-  }
-});
-
 // Set task dependencies
 router.post('/tasks/dependencies', async (req: Request, res: Response) => {
   try {
