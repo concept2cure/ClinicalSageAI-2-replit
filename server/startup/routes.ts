@@ -29,8 +29,6 @@ import type { Pool } from 'pg';
 import { authMiddleware } from '../auth.js';
 import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
-import { authoringObjectAuthorization } from '../middleware/authoringObjectAuthorization';
-import authoringPermissionsRouter from '../routes/authoring-permissions';
 import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
@@ -125,14 +123,12 @@ export async function registerPreStartRoutes(
   registerConcept2CureRoutes(app);
   registerAdminRoutes(app);
 
-  // Authoring object security is mounted once at the existing `/api` gateway,
-  // immediately ahead of the legacy `/api/authoring` router. The middleware
-  // ignores non-authoring paths, so no second `/api/authoring` mount is added and
-  // the route-mount no-regression contract stays intact.
-  //
-  // Permission-management routes are owner/admin controlled and terminate their
-  // own requests; every other document/section mutation must pass the mandatory,
-  // fail-closed object authorization middleware.
+  // Authoring object security. The permission-management router and the
+  // mandatory, fail-closed object-authorization middleware are mounted at the
+  // `/api` gateway inside the AI-workflow slot below
+  // (registerInlineAiWorkflowRoutes), immediately ahead of the legacy
+  // `/api/authoring` router — the composition root stays mount-free and only
+  // asserts boot-time readiness here (and retires the legacy flag).
   //
   // The old authoring router contains a feature-flagged helper under
   // AUTH_ENFORCE_SECTION_PERMS. That helper is now RETIRED on the production
@@ -147,8 +143,6 @@ export async function registerPreStartRoutes(
     );
   }
   process.env.AUTH_ENFORCE_SECTION_PERMS = '0';
-  app.use('/api', authoringPermissionsRouter);
-  app.use('/api', authoringObjectAuthorization);
 
   // Slot 5 — Authoring router + authoring actions + AnA platform control +
   // AI actions (+ Redis / queue init) + Phase 3 orchestration.
