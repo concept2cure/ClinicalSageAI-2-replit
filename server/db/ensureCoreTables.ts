@@ -80,13 +80,19 @@ const IMPORTANT_TABLES = [
   'document_versions',
   'cerv2_510k_sections',
   'cerv2_section_versions',
-  'cerv2_document_sessions',
+  // cerv2_document_sessions removed (reachability audit, 2026-08-11): provisioned
+  // (shared/schema.ts + boot autocreate) but queried by NOTHING in shipped server
+  // code — the mounted cerv2-versions.ts never reads it and the drizzle export is
+  // imported nowhere. Its boot autocreate DDL was dropped too. Restore both if a
+  // document-session feature is wired to a live route.
   // RAG system tables
   'rag_documents',
   'rag_chunks',
   'rag_queries',
   'rag_knowledge_graph',
-  'rag_ingestion_jobs',
+  // rag_ingestion_jobs removed (reachability audit, 2026-08-11): defined in
+  // shared/schema.ts but no live SQL or ORM consumer anywhere — gating readiness
+  // on it warned about a table no shipped code needs.
   // Pharmacovigilance + commitments (applied via `npm run db:apply-c2c`).
   'adverse_events',
   'icsrs',
@@ -462,17 +468,11 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
         changed_at TIMESTAMPTZ DEFAULT NOW(),
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
-      cerv2_document_sessions: `CREATE TABLE IF NOT EXISTS cerv2_document_sessions (
-        id SERIAL PRIMARY KEY,
-        organization_id INTEGER NOT NULL,
-        document_id INTEGER,
-        user_id INTEGER,
-        open_sections JSONB,
-        active_section_id INTEGER,
-        is_dirty BOOLEAN DEFAULT FALSE,
-        last_activity TIMESTAMPTZ DEFAULT NOW(),
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )`,
+      // cerv2_document_sessions autocreate removed (reachability audit,
+      // 2026-08-11): no shipped server code queries the table, and shared/schema.ts
+      // already provisions it via drizzle push — a boot-time CREATE for a table
+      // nothing reads was dead work. Restore alongside the readiness entry if a
+      // document-session feature is wired to a live route.
       rag_documents: `CREATE TABLE IF NOT EXISTS rag_documents (
         id SERIAL PRIMARY KEY,
         organization_id INTEGER NOT NULL,
