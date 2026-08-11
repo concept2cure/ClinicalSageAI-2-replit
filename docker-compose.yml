@@ -72,6 +72,15 @@ services:
       # The stock image does not ship TLS-on by default; bind-mount certs and a
       # postgres `command:` to enable ssl=on, then upgrade this to `require`.
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-concept2cure}?sslmode=prefer
+      # Non-superuser runtime role (the RLS enforcement unlock). DATABASE_URL
+      # above is the DB owner/superuser — RLS never filters on it. To enforce
+      # tenant isolation, set APP_SERVICE_DB_PASSWORD in .env (install-fresh mints
+      # the `app_service` role from it) and the app connects as it via
+      # APP_DATABASE_URL below. Both default empty → the app connects as the owner
+      # (single-role behavior). See .env.example for the full explanation.
+      APP_SERVICE_DB_PASSWORD: ${APP_SERVICE_DB_PASSWORD:-}
+      APP_DATABASE_URL: ${APP_DATABASE_URL:-}
+      RLS_ENFORCE: ${RLS_ENFORCE:-off}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}

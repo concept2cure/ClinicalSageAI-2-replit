@@ -41,7 +41,10 @@
  *      tables. See scripts/db/authoring-subsystem.mjs.
  *   4. The out-of-band migration set — scripts/db/migration-set.mjs, one
  *      transaction per file, STOPPING at the first failure.
- *   5. Verify the readiness contract /readyz enforces at boot, so a deploy can
+ *   5. Refresh the non-superuser runtime role's grants (app_service) so tables
+ *      this deploy created are reachable by the request-serving pool. No-op
+ *      unless APP_SERVICE_DB_PASSWORD is set. See scripts/db/provision-app-role.mjs.
+ *   6. Verify the readiness contract /readyz enforces at boot, so a deploy can
  *      never report success while leaving the state that fails readiness.
  *
  * Every step is idempotent; re-running a successful migration is a no-op.
@@ -65,6 +68,7 @@ import {
 } from './authoring-subsystem.mjs';
 import { C2C_MIGRATION_FILES, applyMigrationFiles } from './migration-set.mjs';
 import { resolveDatabaseUrl, sslFor, APPLY_URL_VARS } from './connection.mjs';
+import { provisionAppServiceRole } from './provision-app-role.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -193,15 +197,15 @@ async function main() {
   let locked = false;
 
   try {
-    log('▶ 1/4 Preflight — database already provisioned?');
+    log('▶ 1/5 Preflight — database already provisioned?');
     await preflight(client);
 
-    log('\n▶ 2/4 Acquire migration lock');
+    log('\n▶ 2/5 Acquire migration lock');
     await client.query('SELECT pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
     locked = true;
     log('  ✓ lock held (released automatically if this task dies)');
 
-    log('\n▶ 3/4 Apply migrations');
+    log('\n▶ 3/5 Apply migrations');
     await applyAuthoringSubsystem(client, REPO_ROOT, { log });
     const { applied, failures } = await applyMigrationFiles(client, REPO_ROOT, C2C_MIGRATION_FILES, {
       log: (m) => log(`  ${m}`),
@@ -218,7 +222,19 @@ async function main() {
     }
     log(`  ✓ ${applied.length}/${C2C_MIGRATION_FILES.length} migration files applied`);
 
-    log('\n▶ 4/4 Verify readiness contract');
+    log('\n▶ 4/5 Runtime role — refresh non-superuser grants');
+    // Re-apply the app_service grants so any table this deploy just created is
+    // reachable by the request-serving pool. GRANT ... ON ALL TABLES only
+    // covers tables that existed when it ran, so a role provisioned by a prior
+    // install would otherwise be locked out of every new table until the next
+    // full provisioning. No-op unless APP_SERVICE_DB_PASSWORD is set. Runs as
+    // the owner (this connection), which is what GRANT requires.
+    const roleResult = await provisionAppServiceRole(client, { log });
+    if (roleResult.skipped) {
+      log(`  • ${roleResult.role} grants not refreshed (APP_SERVICE_DB_PASSWORD unset)`);
+    }
+
+    log('\n▶ 5/5 Verify readiness contract');
     await verifyReadinessContract(client);
 
     log('\n✅ Schema migration complete — safe to roll services.');
