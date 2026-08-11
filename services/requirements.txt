@@ -4,7 +4,7 @@ pytest==9.0.3
 
 # Queue and Broker
 celery==5.6.3
-redis==7.4.0
+redis==8.1.0
 
 # API/Dev
 fastapi==0.141.1
