@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-10T17:13:28.688Z",
+  "generatedAt": "2026-08-11T04:03:54.220Z",
   "git": {
-    "sha": "d177ce59d37bcfd620d8068ff486ec913e962163",
+    "sha": "b8c8546b5d40051f922ee774ed65af60a8fcddbf",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2398,6 +2398,10 @@
         "lines": 2093
       },
       {
+        "file": "server/routes/auth.ts",
+        "lines": 2084
+      },
+      {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
       },
@@ -2416,10 +2420,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
-      },
-      {
-        "file": "server/routes/auth.ts",
-        "lines": 2011
       },
       {
         "file": "server/routes/report-os.ts",
