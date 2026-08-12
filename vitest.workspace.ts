@@ -32,7 +32,16 @@ export default defineWorkspace([
         'server/**/__tests__/**/*.test.ts',
         'server/**/__tests__/**/*.spec.ts',
       ],
-      exclude: ['node_modules', 'dist', '_archive', '_deprecated', 'tests/e2e/**'],
+      // See vitest.config.ts: `*.dbtest.ts` runs under vitest.db.config.ts
+      // against a real server and must never inherit this project's pg mock.
+      exclude: [
+        'node_modules',
+        'dist',
+        '_archive',
+        '_deprecated',
+        'tests/e2e/**',
+        '**/*.dbtest.ts',
+      ],
       testTimeout: 10000,
       hookTimeout: 10000,
     },

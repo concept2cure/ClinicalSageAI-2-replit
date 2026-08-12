@@ -305,6 +305,16 @@ jobs:
       - name: Guardrails — every test file is reachable by a runner
         run: npm run ci:check-unrun-tests
 
+      # tests/setup.ts mocks `pg` for the whole default project, and the
+      # "Integration Tests" job below — which stands up a real Postgres and
+      # applies migrations to it — ran under that mock: every query resolved to
+      # { rows: [], rowCount: 0 } without a packet leaving the process, so the
+      # DB-backed suite proved nothing and reported green. Real-database tests
+      # are now `*.dbtest.ts` under vitest.db.config.ts, excluded from every
+      # mocked config. This fails the PR that would undo that separation.
+      - name: Guardrails — real-database tests never inherit the pg mock
+        run: npm run ci:db-test-isolation
+
       - name: Guardrails — embedding runtime canonicality (corpus policy)
         run: npm run ci:check-embedding-runtime
 
@@ -687,6 +697,31 @@ jobs:
         env:
           CI: true
           RUN_INTEGRATION_TESTS: 'true'
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      # ── The step that actually uses the database this job provisions ────────
+      #
+      # Everything above runs under tests/setup.ts, which mocks `pg` process-
+      # wide. That mock is right for unit tests and wrong here: it meant this
+      # job — a real PostgreSQL service, real migrations applied to it — never
+      # opened a socket from a test. `new Pool().query(...)` answered
+      # { rows: [], rowCount: 0 }, and an empty result is indistinguishable from
+      # a query that never ran, so the suite was green either way.
+      #
+      # `*.dbtest.ts` runs under vitest.db.config.ts with NO pg mock, and
+      # tests/setup.db.ts fails the run if one is ever present. It also fails
+      # rather than skips when the database is unreachable: a database test that
+      # quietly does not run is the defect this whole split exists to end.
+      #
+      # RLS_ENFORCE=on is the mode production hard-requires, and until this step
+      # existed no CI job ran a single test in it.
+      - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
+        run: npm run test:db
+        env:
+          CI: true
+          NODE_ENV: test
+          RLS_ENFORCE: 'on'
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
