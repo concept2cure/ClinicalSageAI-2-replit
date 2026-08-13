@@ -849,6 +849,12 @@ export const C2C_MIGRATION_FILES = [
   // creates a table, and it is the version the contract tests enforce.
   'migrations/20260813_tenant_offboarding_lifecycle.sql',
 
+  // Export receipts — what turns the purge's `finalExportDigest` precondition
+  // from "a non-empty string was supplied" into "an export of THIS tenant was
+  // actually produced". Creates one table, so it must precede the isolation
+  // steps below (C-33: the sweep has to see everything the set creates).
+  'migrations/20260813b_tenant_export_receipts.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

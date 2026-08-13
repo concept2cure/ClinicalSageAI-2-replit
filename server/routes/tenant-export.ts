@@ -25,6 +25,12 @@ import {
   generateAttestation,
   AttestationKeyMissingError,
 } from '../services/tenant-export/attestation-report.service';
+import {
+  digestOf,
+  exportTenantFull,
+  recordExportReceipt,
+  TenantNotFoundError as FullExportTenantNotFoundError,
+} from '../services/tenant-export/tenant-full-export.service';
 
 const router = Router();
 router.use(authenticateToken);
@@ -83,6 +89,72 @@ router.get('/', async (req: Request, res: Response) => {
     }
     const detail = err instanceof Error ? err.message : 'unknown';
     res.status(500).json({ error: 'Tenant export failed', detail });
+  }
+});
+
+/**
+ * GET /api/tenant-export/full — the complete, catalog-driven data return.
+ *
+ * The curated manifest at `GET /` covers eleven hand-picked tables. That is a
+ * good structured view and a poor data return: measured against the purge set it
+ * covers one of the eight tables a purge destroys. This endpoint discovers every
+ * tenant-keyed table from the catalog instead, so coverage tracks the schema
+ * without anyone maintaining a list.
+ *
+ * It also writes an export RECEIPT and returns the digest, which is what
+ * `POST /api/tenants/:id/purge` verifies. Before this existed the purge asked for
+ * a digest that nothing produced — so the only way past the gate was to invent
+ * one, which made the gate theatre.
+ */
+router.get('/full', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: 'Organization context required' });
+  }
+  if (!isAdmin(req)) {
+    return res.status(403).json({ error: 'Admin role required for tenant export' });
+  }
+
+  try {
+    const payload = await exportTenantFull(pool, orgId);
+    const digest = digestOf(payload);
+
+    await recordExportReceipt(pool, {
+      organizationId: orgId,
+      digest,
+      tableCount: payload.coverage.tablesExported,
+      rowCount: payload.coverage.totalRows,
+      createdBy: Number((req as any).user?.userId ?? (req as any).user?.id) || null,
+    });
+
+    void auditService.logAction({
+      tenantId: orgId,
+      userId: (req as any).user?.id ?? null,
+      action: 'tenant.export.full',
+      resourceType: 'tenant_data_export',
+      resourceId: String(orgId),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { digest, coverage: payload.coverage },
+    });
+
+    res
+      .status(200)
+      .set('Content-Type', 'application/json')
+      // Surfaced as a header too so an operator can capture the digest from a
+      // curl -I without downloading and re-hashing a multi-megabyte body.
+      .set('X-Export-Digest', digest)
+      .set(
+        'Content-Disposition',
+        `attachment; filename="tenant-full-export-${payload.organization.slug}-${Date.now()}.json"`
+      )
+      .send(JSON.stringify({ digest, ...payload }, null, 2));
+  } catch (err: unknown) {
+    if (err instanceof FullExportTenantNotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
+    const detail = err instanceof Error ? err.message : 'unknown';
+    res.status(500).json({ error: 'Tenant full export failed', detail });
   }
 });
 

@@ -31,9 +31,10 @@ tenancy implementation, not a greenfield one.
 | Membership-validated organization switching for multi-org users | `server/routes/authEnterprise.ts` |
 | Seat-licensing decision engine, pure and unit-tested | `server/services/seat-licensing.ts` |
 
-The isolation burndown (`docs/RLS_ENFORCEMENT_BURNDOWN.md`) remains the right
-tracker for its own residual item — a full-schema two-tenant probe under
-`RLS_ENFORCE=on`. Nothing here supersedes it.
+The isolation burndown (`docs/RLS_ENFORCEMENT_BURNDOWN.md`) tracked one residual
+item — a full-schema two-tenant probe under `RLS_ENFORCE=on`. **That is now
+closed** (see R1 below): 222 policied tables, 220 seeded with two tenants, zero
+cross-tenant reads, with a negative control proving the probe can fail.
 
 ---
 
@@ -190,7 +191,7 @@ first.
 | ~~R1~~ | ~~Full-schema two-tenant probe under `RLS_ENFORCE=on`~~ | ~~High~~ | **CLOSED 2026-08-13.** `tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` — 222 policied tables, 220 seeded with two tenants, zero cross-tenant reads, ships with a negative control. Closes GA plan item 0.1. |
 | R2 | No per-tenant encryption keys (BYOK/CMK) | High for regulated buyers | Frequently a hard requirement in pharma procurement. Needs a key-hierarchy design, not a patch. |
 | R3 | No data-residency pinning (EU/US) | High for EU sponsors | The schema has no region concept. Architectural. |
-| R4 | Tenant export covers a subset of resources | Medium | `tenant-export.service.ts` is explicitly BETA-scoped and in-memory; the purge path now depends on it, so it should be widened and streamed before the first contractual offboarding. |
+| ~~R4~~ | ~~Tenant export covers a subset of resources~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The curated manifest covered 1 of the 8 tables the purge destroys, and the purge's `finalExportDigest` gate accepted **any non-empty string** — a precondition nothing could satisfy honestly. Now: a catalog-driven full export (`GET /api/tenant-export/full`, ~170 tenant-keyed tables discovered from `information_schema`, not a hand-list), an export **receipt** persisted per digest, and a purge that verifies the digest against a receipt **scoped to that organization**. A structural contract test keeps the purge set a subset of the export set. |
 | ~~R5~~ | ~~No audited support-impersonation flow~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The guard now evaluates the posture for platform actors instead of short-circuiting, and writes a `tenant_lifecycle_override` audit entry (severity `critical` on a denied tenant) plus a `platform_override` metric whenever staff proceed past a refusal. Staff are still never blocked — including when the posture is unreadable. |
 | R6 | Quotas beyond seats (`max_projects`, `max_storage`) still unenforced | Medium | Seats are the contracted unit and are now enforced; the other two remain decoration. |
 | R7 | Organization switch is not audited | Low | Membership is validated (`authEnterprise.ts`), but the switch emits no audit event. |
