@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 
 const REQUIRED_CONSTRAINTS = [
   'doc_permissions_role_check',
@@ -14,8 +15,36 @@ const REQUIRED_TRIGGER = 'authoring_document_seed_permissions';
  * incomplete. This is intentionally stricter than waiting for the first edit to
  * discover a missing permission table: an enabled regulated capability must not
  * advertise readiness while its least-privilege control is absent.
+ *
+ * ── Why the system tenant scope ──────────────────────────────────────────────
+ * Every query below reads a system catalog (to_regclass, pg_constraint,
+ * pg_trigger, pg_class) and touches no tenant row at all. But pool
+ * instrumentation blocks ANY unscoped `pool.query` once RLS_ENFORCE=on, and
+ * production accepts no other value — so with enforcement on this invariant
+ * threw `[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope`
+ * out of `registerPreStartRoutes`, where nothing catches it. The result was an
+ * uncaughtException during boot: the production build shut down before it ever
+ * listened, in the only mode production permits.
+ *
+ * Reproduced on PostgreSQL 16 against a fully provisioned database (install-fresh
+ * + deploy-migrate, 768 tables / 790 policies) with the runtime connected as the
+ * non-superuser app_service role. It is the same defect already fixed for the
+ * boot posture probe (`startup:assert-rls-catalog-posture`, server/index.ts) and
+ * for `startup:verify-database-connection` / `startup:ensure-core-tables`
+ * (server/startup/services.ts) — this estate-wide check was simply the next one
+ * behind them, and it runs EARLIER, so it failed first.
+ *
+ * Declaring the scope is the established fix, and it is the honest one here: a
+ * catalog check legitimately spans every tenant, which is exactly what the
+ * system scope means.
  */
 export async function assertAuthoringAuthorizationReady(pool: Pool): Promise<void> {
+  return runWithSystemTenantScope('startup:assert-authoring-authorization', () =>
+    assertAuthoringAuthorizationReadyScoped(pool),
+  );
+}
+
+async function assertAuthoringAuthorizationReadyScoped(pool: Pool): Promise<void> {
   const optional = process.env.AUTHORING_SUBSYSTEM_OPTIONAL === 'true';
   const tableResult = await pool.query(
     `SELECT to_regclass('public.authoring_documents')::text AS documents,

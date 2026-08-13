@@ -420,6 +420,16 @@ export class AIGateway {
     );
   }
 
+  /**
+   * Verify the provenance ledger is writable. Throws with the remedy if not.
+   * No-op when auditing is switched off, which is an explicit operator choice
+   * rather than the silent failure this guards against.
+   */
+  async assertAuditStoreReady(): Promise<void> {
+    if (!this.config.auditEnabled) return;
+    await this.auditLogger.initialize();
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // Per-request retry with exponential backoff + jitter
   // ─────────────────────────────────────────────────────────────────────────
@@ -901,6 +911,9 @@ export class AIGateway {
       thinking: reasoning || undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
+      // The snapshot the provider says answered — `modelConfig.model` is only
+      // the alias we asked for. See GatewayResponse.resolvedModel.
+      resolvedModel: typeof completion.model === 'string' ? completion.model : undefined,
       usage: {
         inputTokens: completion.usage?.prompt_tokens || 0,
         outputTokens: completion.usage?.completion_tokens || 0,
@@ -1145,6 +1158,9 @@ export class AIGateway {
       toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
+      // Anthropic echoes the resolved snapshot on the message body; an alias
+      // like claude-opus-4-8 comes back as the dated version that served it.
+      resolvedModel: typeof (response as any).model === 'string' ? (response as any).model : undefined,
       usage: {
         inputTokens,
         outputTokens,
@@ -1276,6 +1292,7 @@ export class AIGateway {
     let cacheCreationInputTokens = 0;
     let cacheReadInputTokens = 0;
     let stopReason = 'unknown';
+    let resolvedModel: string | undefined;
 
     // Per-chunk watchdog — detect stalled streams (no data for 30s)
     let lastChunkTime = Date.now();
@@ -1328,6 +1345,9 @@ export class AIGateway {
           stopReason = event.delta?.stop_reason || stopReason;
           outputTokens = event.usage?.output_tokens || outputTokens;
         } else if (event.type === 'message_start') {
+          // The resolved snapshot arrives once, on message_start, alongside the
+          // input-token count — the streaming path's only sighting of it.
+          if (typeof event.message?.model === 'string') resolvedModel = event.message.model;
           inputTokens = event.message?.usage?.input_tokens || 0;
           // Prompt cache usage (Anthropic emits these on the message_start
           // event alongside input_tokens). They stay 0 when caching is off.
@@ -1364,6 +1384,7 @@ export class AIGateway {
       toolUses: toolUses.length > 0 ? toolUses : undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
+      resolvedModel,
       usage: {
         inputTokens,
         outputTokens,
@@ -1437,6 +1458,7 @@ export class AIGateway {
       thinking: reasoning || undefined,
       provider: 'moonshot',
       model: modelConfig.model,
+      resolvedModel: typeof completion.model === 'string' ? completion.model : undefined,
       usage: {
         inputTokens: completion.usage?.prompt_tokens || 0,
         outputTokens: completion.usage?.completion_tokens || 0,
@@ -1500,6 +1522,7 @@ export class AIGateway {
     let outputTokens = 0;
     let totalTokens = 0;
     let finishReason = 'unknown';
+    let resolvedModel: string | undefined;
 
     // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
     // Anthropic path) so a hung provider can't wedge the turn.
@@ -1526,6 +1549,12 @@ export class AIGateway {
       for await (const chunk of stream as AsyncIterable<any>) {
         lastChunkTime = Date.now();
         if (streamStalled) break;
+
+        // Every chunk repeats the resolved model; take the first one that
+        // carries it rather than re-assigning on each.
+        if (resolvedModel === undefined && typeof chunk?.model === 'string') {
+          resolvedModel = chunk.model;
+        }
 
         const delta = parseOpenAIStreamDelta(chunk);
         // Reasoning precedes the answer within a turn — emit it first.
@@ -1561,6 +1590,7 @@ export class AIGateway {
       thinking: thinking || undefined,
       provider,
       model: modelConfig.model,
+      resolvedModel,
       usage: {
         inputTokens,
         outputTokens,
@@ -1884,6 +1914,11 @@ export class AIGateway {
         timestamp: new Date(),
         provider: response.provider,
         model: response.model,
+        // Which snapshot actually answered. `model` above is the registry entry
+        // the router picked, and 13 of the 15 entries are floating aliases —
+        // recording only that cannot identify the model that produced the
+        // output, which is the question this row exists to answer.
+        resolvedModel: response.resolvedModel,
         taskType: request.taskType,
         strategy,
         organizationId: request.organizationId,
@@ -1900,7 +1935,26 @@ export class AIGateway {
         cached: response.cached,
         deterministic: response.deterministic,
         // Reproducibility: which params + prompt produced this output.
-        temperature: request.temperature ?? 0.7,
+        //
+        // This recorded `request.temperature ?? 0.7` — the temperature ASKED
+        // FOR, defaulted — under a heading that claims to describe what
+        // produced the output. For the Opus 4.7+ reasoning-only family those
+        // are different things: applyAnthropicSamplingParams() returns early
+        // for those models and never sets params.temperature, because sending
+        // one is a 400. So the ledger asserted a sampling parameter that was
+        // never transmitted, and anyone reproducing the call from this record
+        // would set 0.7 against a model that does no sampling at all — a
+        // provenance record that is confidently wrong is worse than one that
+        // says "not applicable", because only the first gets trusted.
+        //
+        // Record the EFFECTIVE value: omitted when the model rejects sampling.
+        // `undefined`, not `null`, because GatewayAuditEntry.temperature is
+        // `number | undefined`; the writer coalesces it (`entry.temperature ??
+        // null`), so the column still stores NULL — the DB outcome is identical
+        // and the type is honest.
+        temperature: this.isReasoningOnlyModel(response.model)
+          ? undefined
+          : request.temperature ?? 0.7,
         seed: request.seed,
         promptHash: this.hashPrompt(request.messages),
         promptVersion,
@@ -2242,4 +2296,19 @@ export function getGateway(config?: Partial<GatewayConfig>): AIGateway {
  */
 export function resetGateway(): void {
   gatewayInstance = null;
+}
+
+/**
+ * Boot-time assertion that the AI provenance ledger is present and writable.
+ *
+ * Separate from the per-call writer, which stays non-blocking: an audit outage
+ * must not take inference down mid-request. But "non-blocking" had become
+ * indistinguishable from "silently doing nothing", and did so for two reasons
+ * at once (no migration, no pool — see server/services/ai-gateway/audit.ts).
+ * This gives the condition exactly one place to surface loudly.
+ *
+ * @throws when the ledger cannot be written.
+ */
+export async function assertAiProvenanceLedgerReady(): Promise<void> {
+  await getGateway().assertAuditStoreReady();
 }

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-13T04:59:13.389Z",
+  "generatedAt": "2026-08-13T17:21:22.098Z",
   "git": {
-    "sha": "0c40d21ff82e37ac896f6ad699ce06d80b436de4",
+    "sha": "753cfb9309bf9391cb6decd4c0acaff03541a88e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -807,6 +807,15 @@
         ]
       },
       {
+        "basename": "harness",
+        "count": 3,
+        "paths": [
+          "tests/db/harness.ts",
+          "tests/golden-journeys/harness.ts",
+          "tests/schema-contract/harness.ts"
+        ]
+      },
+      {
         "basename": "health",
         "count": 3,
         "paths": [
@@ -1492,14 +1501,6 @@
         ]
       },
       {
-        "basename": "harness",
-        "count": 2,
-        "paths": [
-          "tests/golden-journeys/harness.ts",
-          "tests/schema-contract/harness.ts"
-        ]
-      },
-      {
         "basename": "huggingface-service",
         "count": 2,
         "paths": [
@@ -2152,7 +2153,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 215748
+        "bytes": 216160
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2179,12 +2180,12 @@
         "bytes": 138123
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "bytes": 136488
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 136607
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 135353
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "bytes": 136488
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2278,7 +2279,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5816
+        "lines": 5821
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2310,7 +2311,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3260
+        "lines": 3275
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2345,12 +2346,12 @@
         "lines": 2609
       },
       {
-        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
-        "lines": 2559
+        "file": "server/routes/knowledge-base.ts",
+        "lines": 2561
       },
       {
-        "file": "server/routes/knowledge-base.ts",
-        "lines": 2557
+        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
+        "lines": 2559
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2373,16 +2374,16 @@
         "lines": 2327
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2315
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2254
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2246
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2604,7 +2605,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 250,
+      "duplicateGroups": 251,
       "largeByBytes": 2,
       "largeByLines": 8
     },

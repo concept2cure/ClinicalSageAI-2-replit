@@ -579,7 +579,15 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       if (isGovernedContractInvalidError(promoteErr) && promoteErr.governed) {
         return sendGovernedContractInvalid(res, promoteErr.governed);
       }
-      return res.json({
+      // A governed promotion that threw did NOT happen. Reporting it as HTTP 200
+      // with `promoted: false` put a failed state transition on the success side
+      // of every caller's error handling and of the request metrics — the
+      // artifact's status, its decision record and its receipt are all in doubt,
+      // and a 200 says none of that is worth a retry or an alert. The
+      // machine-readable reason is preserved in the body; only the status
+      // changes, so a caller that already branches on `promoted` still works.
+      console.error('[authoring-actions] promote-to-review failed:', promoteErr?.message);
+      return res.status(500).json({
         promoted: false,
         reason: 'error',
         message: promoteErr?.message || 'Failed to promote artifact',
@@ -1351,8 +1359,15 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
         decisionId: harmonizeDecision?.id || null,
         authority: harmonizeDecision?.authority || null,
       });
-    } catch {
-      return res.json({
+    } catch (harmonizeErr: any) {
+      // The consistency check did not run. A 200 here meant "no cross-section
+      // inconsistencies were reported" arrived on the same status code as "no
+      // cross-section inconsistencies were LOOKED FOR" — and this endpoint's
+      // clean result is the evidence an author leans on before promoting a
+      // document. 503 says plainly that the check is unavailable; the body keeps
+      // the same `status` discriminator for callers already branching on it.
+      console.error('[authoring-actions] harmonize engine unavailable:', harmonizeErr?.message);
+      return res.status(503).json({
         status: 'service_unavailable',
         action: 'harmonize_sections',
         message: 'Harmonize engine is not available. Sections were found but consistency check could not run.',

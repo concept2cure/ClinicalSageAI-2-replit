@@ -59,8 +59,20 @@ router.get('/', async (req: Request, res: Response) => {
     const readiness = buildSmpcReadiness(statuses);
     return res.json({ data: readiness, meta: { count: readiness.sections.length } });
   } catch (err) {
-    const pendingStore = (err as { code?: string })?.code === '42P01';
-    return res.json({ data: buildSmpcReadiness({}), meta: { count: 0, pendingStore } });
+    // An unprovisioned store answers with the all-sections-outstanding skeleton
+    // (pendingStore) — that is a true statement about a deployment with no SmPC
+    // rows yet. A genuine query failure is NOT that: reporting every section as
+    // "not started" when the status query broke understates labelling readiness
+    // and would let a reviewer sign off against a picture the database never
+    // produced. Fail loudly instead.
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.json({ data: buildSmpcReadiness({}), meta: { count: 0, pendingStore: true } });
+    }
+    console.error(
+      '[labeling-smpc] readiness read failed:',
+      err instanceof Error ? err.message : String(err),
+    );
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read SmPC readiness.' } });
   }
 });
 

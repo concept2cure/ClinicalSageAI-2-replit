@@ -12,10 +12,15 @@
  * GENERATED from the kit registry (scripts in the design package) — edit the
  * kit first, then re-port, so design and code cannot drift.
  *
- * The ANA_* co-author/context objects are FIXTURES (the kit's offline shapes).
- * Surfaces render them only behind the SampleTag pill until the live
- * /api/coauthor + /api/ana-ri wiring lands in the surface-port phases —
- * never as live data (GAP RULE).
+ * The ANA_* co-author/context objects are REFERENCE CONFIG, not data. They were
+ * the kit's offline fixture shapes and carried invented per-programme values —
+ * a lead programme code, a readiness percentage, linked-evidence counts and a
+ * timestamped activity feed — which the AnA rail rendered on every authenticated
+ * surface behind a "Sample data" pill. Those fields are gone (see the note above
+ * ANA_COAUTHOR_BY_SEG and the one above SEGMENT_CONTEXT). What remains is
+ * tenant-independent vocabulary: CTD section names, regulatory pathway lists,
+ * prompt templates and surface routing. Nothing in this file may describe a
+ * particular organization's programmes — that comes from the API.
  */
 import { getSurface, UI_SURFACES, type UiSurface } from '@shared/constants/ui-surface-registry';
 // ANA_SURFACE_CTX is the large per-surface AnA context table; it lives in a
@@ -755,18 +760,31 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],
 };
-/** FIXTURE — per-segment co-author context; live override comes from /api/coauthor (SampleTag applies) */
+/**
+ * Per-segment co-author REFERENCE CONFIG — the CTD/dossier section AnA defaults
+ * to for a client category, and the prompt templates its action buttons send.
+ *
+ * What this map no longer carries is the part that was invented. Each entry used
+ * to ship a `program` ('BX-204 · oncology BLA'), a `stage`, a `readiness`
+ * percentage, `evidence` counts and a `activity` feed with relative timestamps
+ * ('Endpoint rationale updated · 12m ago'). None of it came from the
+ * organization's data — it was a design-kit sample, rendered by the AnA rail on
+ * EVERY authenticated surface as though it described the user's own program. In
+ * a regulated tool that is a data-integrity defect, not a placeholder: a
+ * reviewer reading "72% ready" has no way to know no such number was ever
+ * computed. There is no per-surface co-author endpoint to read the real values
+ * from (see the note at Shell.tsx's getAnaContext call — /api/coauthor has no
+ * root handler), so the honest replacement is to render nothing at all: the rail
+ * now omits the program line, the stage/readiness pair, the evidence chips and
+ * the activity feed rather than fabricating them.
+ *
+ * `section` and `actions` stay because they are configuration, not data —
+ * '2.5 Clinical Overview' is the ICH CTD section name for a biologics overview,
+ * identical for every tenant, and the actions are prompt text.
+ */
 export const ANA_COAUTHOR_BY_SEG = {
   biotech: {
-    program: 'BX-204 · oncology BLA',
     section: '2.5 Clinical Overview',
-    stage: 'Draft',
-    readiness: 72,
-    evidence: [{ count: 3, label: 'studies' }, { count: 1, label: 'CSR' }, { count: 2, label: 'precedents' }],
-    activity: [
-      { type: 'edit', text: 'Endpoint rationale updated', when: '12m ago' },
-      { type: 'alert', text: 'ORR contradiction detected', when: '1h ago' },
-    ],
     actions: [
       {
         id: 'draft_section',
@@ -801,19 +819,7 @@ export const ANA_COAUTHOR_BY_SEG = {
     ],
   },
   medtech: {
-    program: 'CardioFlow CX · 510(k)',
     section: '§12 — Substantial Equivalence',
-    stage: 'Draft',
-    readiness: 64,
-    evidence: [
-      { count: 2, label: 'predicates' },
-      { count: 1, label: 'bench test' },
-      { count: 1, label: 'clinical' },
-    ],
-    activity: [
-      { type: 'edit', text: 'Predicate K203117 linked', when: '9m ago' },
-      { type: 'alert', text: 'Sterilization SE gap flagged', when: '40m ago' },
-    ],
     actions: [
       {
         id: 'draft',
@@ -842,19 +848,7 @@ export const ANA_COAUTHOR_BY_SEG = {
     ],
   },
   diagnostics: {
-    program: 'DxAssay RT-PCR · IVDR',
     section: 'Annex II — Performance Evaluation',
-    stage: 'Draft',
-    readiness: 58,
-    evidence: [
-      { count: 3, label: 'analytical' },
-      { count: 1, label: 'clinical perf' },
-      { count: 2, label: 'precedents' },
-    ],
-    activity: [
-      { type: 'edit', text: 'LoD study results updated', when: '15m ago' },
-      { type: 'alert', text: 'CDx linkage gap detected', when: '1h ago' },
-    ],
     actions: [
       {
         id: 'draft',
@@ -883,15 +877,7 @@ export const ANA_COAUTHOR_BY_SEG = {
     ],
   },
   pharma: {
-    program: 'AltexaTab · NDA',
     section: '2.7.1 Biopharmaceutic Summary',
-    stage: 'Draft',
-    readiness: 70,
-    evidence: [{ count: 4, label: 'CSRs' }, { count: 1, label: 'ISS/ISE' }, { count: 2, label: 'precedents' }],
-    activity: [
-      { type: 'edit', text: 'Pop-PK bridge updated', when: '11m ago' },
-      { type: 'alert', text: 'PLLR labeling gap flagged', when: '1h ago' },
-    ],
     actions: [
       {
         id: 'label',
@@ -920,15 +906,7 @@ export const ANA_COAUTHOR_BY_SEG = {
     ],
   },
   cro: {
-    program: 'Multi-sponsor portfolio',
     section: 'Cross-sponsor submission plan',
-    stage: 'Planning',
-    readiness: 45,
-    evidence: [{ count: 7, label: 'sponsors' }, { count: 12, label: 'studies' }],
-    activity: [
-      { type: 'edit', text: 'Sponsor Acme study added', when: '20m ago' },
-      { type: 'alert', text: 'Org-isolation check pending', when: '2h ago' },
-    ],
     actions: [
       {
         id: 'plan',
@@ -957,15 +935,7 @@ export const ANA_COAUTHOR_BY_SEG = {
     ],
   },
   health: {
-    program: 'IIT · oncology',
     section: 'IIT Protocol — IRB submission',
-    stage: 'Draft',
-    readiness: 52,
-    evidence: [{ count: 1, label: 'protocol' }, { count: 2, label: 'site agreements' }],
-    activity: [
-      { type: 'edit', text: 'Protocol v2 drafted', when: '18m ago' },
-      { type: 'alert', text: 'IRB form 1572 gap', when: '1h ago' },
-    ],
     actions: [
       {
         id: 'draft',
@@ -998,12 +968,27 @@ export const ANA_COAUTHOR = ANA_COAUTHOR_BY_SEG.biotech;
 export const getCoauthor = (segment: string) =>
   (ANA_COAUTHOR_BY_SEG as Record<string, typeof ANA_COAUTHOR>)[segment] ?? ANA_COAUTHOR;
 
-/** Per-client-category context: pathways, lead program (fixture), AnA framing, quick actions */
+/**
+ * Per-client-category REFERENCE CONFIG: the category label, its regulatory
+ * pathway vocabulary, AnA's framing sentence and the quick-action targets.
+ *
+ * Each entry also used to carry a `program` string — biotech's was
+ * 'BX-301 — BLA · 351(a)' — which the Home surface rendered under a branch icon
+ * as if it were the signed-in organization's lead programme. It was not: it is a
+ * design-kit sample, and it appeared on the FIRST authenticated screen while the
+ * Projects page one click away correctly reported zero programmes. Invented
+ * programme identity in a regulated tool is a data-integrity defect, so the
+ * field is gone. Home now reads the real portfolio from GET /api/c2c/projects —
+ * the same route Projects uses — and shows the real lead programme, an honest
+ * "No programs yet", or an honest error.
+ *
+ * Everything left here is tenant-independent regulatory vocabulary: '510(k)' and
+ * 'BLA' are the pathways that category files under, for every customer.
+ */
 export const SEGMENT_CONTEXT = {
   medtech: {
     label: 'Medical Device & IVD',
     tagline: '510(k) · De Novo · PMA · EU MDR',
-    program: 'CardioFlow CX — 510(k) Class II',
     pathways: ['510(k)', 'De Novo', 'PMA', 'EU MDR / CER'],
     ana: 'Predicate & substantial-equivalence reasoning, eSTAR, ISO 14971 risk, EU MDR / CER.',
     actions: [
@@ -1018,7 +1003,6 @@ export const SEGMENT_CONTEXT = {
   biotech: {
     label: 'Biotech',
     tagline: 'IND · BLA · MAA · J-NDA',
-    program: 'BX-301 — BLA · 351(a)',
     pathways: ['IND', 'BLA', 'MAA', 'J-NDA'],
     ana: 'Biologics IND→BLA. CTD assembly, comparability & immunogenicity.',
     actions: [
@@ -1031,7 +1015,6 @@ export const SEGMENT_CONTEXT = {
   diagnostics: {
     label: 'Diagnostics',
     tagline: '510(k) · EU IVDR · CLIA · CDx',
-    program: 'DxAssay RT-PCR — IVDR Class C',
     pathways: ['510(k)', 'EU IVDR', 'CLIA', 'CDx'],
     ana: 'IVD analytical & clinical performance, IVDR Annex, companion-diagnostic linkage.',
     actions: [
@@ -1044,7 +1027,6 @@ export const SEGMENT_CONTEXT = {
   pharma: {
     label: 'Pharma',
     tagline: 'IND · NDA · 505(b)(2) · MAA · Lifecycle',
-    program: 'BX-204 — NDA 212345 · 505(b)(1)',
     pathways: ['IND', 'NDA', '505(b)(2)', 'MAA', 'Lifecycle'],
     ana: 'Small-molecule IND→NDA/MAA. ISS/ISE, labeling (PLLR), pediatric plans.',
     actions: [
@@ -1057,7 +1039,6 @@ export const SEGMENT_CONTEXT = {
   cro: {
     label: 'CRO / Research',
     tagline: 'Multi-sponsor · protocol-led · org-isolated',
-    program: 'Portfolio — 7 sponsors · 12 studies',
     pathways: ['Protocol development', 'Cross-sponsor', 'IND', '510(k)'],
     ana: 'Multi-sponsor portfolio. Protocol authoring + committee governance, org-isolated across sponsors.',
     actions: [
@@ -1070,7 +1051,6 @@ export const SEGMENT_CONTEXT = {
   health: {
     label: 'Health Systems',
     tagline: 'IIT · IRB · Investigator IND',
-    program: 'IIT — investigator-initiated oncology trial',
     pathways: ['IIT', 'IRB', 'Investigator IND'],
     ana: 'Investigator-initiated trials. IRB, investigator INDs, site governance.',
     actions: [
@@ -1207,12 +1187,16 @@ export function getAnaContext(surfaceId: string, segment: string): AnaContext {
     icon: 'icon' in meta ? meta.icon : undefined,
     here,
     focus,
-    program: co.program,
     section: isAuthoring ? co.section : null,
-    stage: co.stage,
-    readiness: co.readiness,
-    evidence: co.evidence,
-    activity: co.activity,
+    /* program / stage / readiness / evidence / activity are deliberately NOT
+       returned. They came from the per-segment co-author fixture and described
+       an invented programme ("BX-204 · oncology BLA", "72%", "ORR contradiction
+       detected · 1h ago") on every authenticated surface. A per-surface
+       co-author endpoint that could supply the real values does not exist —
+       /api/coauthor has no root handler — so the rail omits the fields
+       (AnaContext keeps them optional) instead of rendering a fabrication. If
+       that endpoint is built, populate them HERE from its response; do not
+       reintroduce a constant. */
     actions,
     suggestions,
   };

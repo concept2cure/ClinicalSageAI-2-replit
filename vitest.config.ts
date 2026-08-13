@@ -31,7 +31,19 @@ export default defineConfig({
       'client/**/__tests__/**/*.test.jsx',
       'shared/**/__tests__/**/*.test.ts',
     ],
-    exclude: ['node_modules', 'dist', '_archive', '_deprecated', 'tests/e2e/**'],
+    // `*.dbtest.ts` belongs to vitest.db.config.ts, which runs against a real
+    // PostgreSQL server. This config's setupFiles mock `pg` process-wide, so a
+    // database test picked up here would query a stub that answers
+    // `{ rows: [], rowCount: 0 }` and pass without opening a socket — the exact
+    // defect the split exists to end. Pinned by ci:db-test-isolation.
+    exclude: [
+      'node_modules',
+      'dist',
+      '_archive',
+      '_deprecated',
+      'tests/e2e/**',
+      '**/*.dbtest.ts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

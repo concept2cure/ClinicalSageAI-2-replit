@@ -284,22 +284,18 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
     // ── 14. Store active client/project in a header so frontend can hydrate ─
     res.json({ success: true, data: summary });
   } catch (err: any) {
+    // This used to answer `success: true` with a FABRICATED workspace: a
+    // hardcoded org identity ("Concept2Cure" / biotech) that is not the caller's
+    // tenant, zeroed project/document counts, and complianceScore 0. Every one
+    // of those is a factual claim about the customer's regulatory workspace, and
+    // none of them came from a query that ran. The screen looked healthy while
+    // reporting someone else's org name and a compliance posture nobody
+    // computed. A summary that could not be assembled has to fail as one.
     console.error('[workspace/summary] error:', err?.message);
-    // Return a safe default so the UI never crashes
-    res.json({
-      success: true,
-      data: {
-        org: { id: orgId, name: 'Concept2Cure', slug: 'concept2cure', industryMode: 'biotech' },
-        clients: [],
-        active: { clientId: null, projectId: null, projectName: null, mode: 'biotech' },
-        counts: { projects: 0, documents: 0, pendingReviews: 0, complianceScore: 0, threads: 0 },
-        recent: { threads: [], documents: [], exports: [], validations: [] },
-        nextActions: [
-          { id: 'upload_docs', label: 'Upload documents', intent: 'vault.upload' },
-          { id: 'new_project', label: 'Create a project', intent: 'project.new' },
-          { id: 'ask_lumen', label: 'Ask AnA a regulatory question', intent: 'chat.new' },
-        ],
-      },
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to assemble the workspace summary',
+      code: 'WORKSPACE_SUMMARY_ERROR',
     });
   }
 });

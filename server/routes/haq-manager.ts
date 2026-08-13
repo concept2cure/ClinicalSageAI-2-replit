@@ -31,8 +31,14 @@ function getOrgId(req: Request): number {
  * "rounds" plus their questions grouped by round, shaped to exactly the keys
  * the surface renders (id/disc/tone/status/q/draft/cites/commitments). The
  * surface adopts this via liveGet and falls back to its codebase fixture when
- * the store is empty or unreachable, so it never renders a blank workbench.
- * Fails closed to `{ data: null }` on any store error.
+ * the store is empty, so it never renders a blank workbench.
+ *
+ * An unprovisioned store (42P01) still degrades to `{ data: null,
+ * pendingStore: true }` — that is a deployment state, not a fault. Every OTHER
+ * error is now a 500. Previously any exception produced the same 200, so a
+ * failed read of an authority's outstanding questions was indistinguishable
+ * from "this org has no open HAQs" — the reading that lets a response deadline
+ * pass unnoticed.
  */
 router.get('/rounds', async (req: Request, res: Response) => {
   try {
@@ -83,8 +89,17 @@ router.get('/rounds', async (req: Request, res: Response) => {
     }
 
     res.json({ data: { rounds, questions: byRound }, meta: { count: rounds.length } });
-  } catch {
-    res.json({ data: null, meta: { count: 0, pendingStore: true } });
+  } catch (err) {
+    if ((err as { code?: string } | null)?.code === '42P01') {
+      return res.json({ data: null, meta: { count: 0, pendingStore: true } });
+    }
+    console.error(
+      '[haq-manager] GET /rounds failed:',
+      err instanceof Error ? err.message : String(err),
+    );
+    return res.status(500).json({
+      error: { code: 'INTERNAL', message: 'Failed to read HAQ rounds.' },
+    });
   }
 });
 

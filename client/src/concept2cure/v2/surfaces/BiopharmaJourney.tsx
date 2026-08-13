@@ -6,7 +6,8 @@
  * The connective map that ties the ~30 scattered biopharma surfaces into
  * one legible arc for the active program.
  *
- * Segment-aware: biotech -> BX-301 BLA 351(a), pharma -> BX-204 NDA 212345.
+ * Segment-aware: the biotech and pharma records the org actually holds, read
+ * from GET /api/program-journey (never a sample programme).
  * A persistent intelligence column carries CTD-module readiness, the review
  * clock, predicted HAQs, cross-module contradictions and open blockers --
  * every row routes into the deep surface that owns it.
@@ -109,24 +110,17 @@ interface PjBlocker {
   due: string;
 }
 
-/* ── Program identity (segment-aware) ── */
-
-export const PJ_PROGRAMS: Record<string, PjProgram> = {
-  biotech: {
-    code: 'BX-301', name: '', app: 'BLA · 351(a)',
-    modality: 'Biologic (BLA)', indication: 'Relapsed multiple myeloma',
-    pathway: 'BLA · 351(a)', sponsor: 'Concept2Cure', agency: 'FDA',
-    readiness: 64, current: 'assemble',
-    target: { label: 'Filing readiness', v: 'BLA assembly · 64% ready', agency: 'FDA · 351(a)' },
-  },
-  pharma: {
-    code: 'BX-204', name: '', app: 'NDA 212345',
-    modality: 'Small molecule · 505(b)(1)', indication: 'Oncology · pivotal ORR 38.6%, OS HR 0.62',
-    pathway: 'NDA · 505(b)(1)', sponsor: 'Concept2Cure', agency: 'FDA',
-    readiness: 88, current: 'review',
-    target: { label: 'PDUFA target action', v: '04 Apr 2027', agency: 'FDA · 41 days out' },
-  },
-};
+/* ── Program identity ──
+ *
+ * `PJ_PROGRAMS` used to live here: two invented programmes (BX-301 "Relapsed
+ * multiple myeloma · 64% ready" and BX-204 "pivotal ORR 38.6%, OS HR 0.62")
+ * keyed by segment. The surface itself was migrated to GET /api/program-journey
+ * some time ago and stopped reading it — but the constant stayed exported, so
+ * the fabricated identity still shipped in the bundle and was one import away
+ * from being rendered again. It is deleted rather than left dormant: the only
+ * source of a programme's code, indication, readiness and target action is the
+ * org's own record from the live read below. `PjProgram` remains as the type
+ * that record is asserted to. */
 
 /* ── The 9-stage lifecycle ── */
 

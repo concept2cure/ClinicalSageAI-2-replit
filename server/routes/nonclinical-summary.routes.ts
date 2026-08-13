@@ -56,16 +56,27 @@ router.get('/', async (req: Request, res: Response) => {
     const view = assembleNonclinicalSummary(studies);
     return res.json({ data: view, meta: { count: studies.length, provisioned: view.provisioned } });
   } catch (err) {
-    // Fail closed to the honest empty-registry skeleton — never 500, never
-    // fabricate nonclinical content. Surface a missing store via meta.pendingStore.
-    const view = assembleNonclinicalSummary([]);
-    return res.json({
-      data: view,
-      meta: {
-        count: 0,
-        provisioned: false,
-        pendingStore: (err as { code?: string })?.code === '42P01',
-      },
+    // An unprovisioned registry fails closed to the empty-registry skeleton —
+    // never fabricated nonclinical content — and says so via meta.pendingStore.
+    //
+    // Anything else is a real failure and now answers 5xx. The skeleton reports
+    // `provisioned: false` with every section empty; emitting that after a
+    // broken query told the Module 2.6 surface "the registry holds no studies"
+    // when the truth was "we could not read the registry". Those are different
+    // claims and only one of them is checkable by a reviewer.
+    if ((err as { code?: string })?.code === '42P01') {
+      const view = assembleNonclinicalSummary([]);
+      return res.json({
+        data: view,
+        meta: { count: 0, provisioned: false, pendingStore: true },
+      });
+    }
+    console.error(
+      '[nonclinical-summary] study registry read failed:',
+      err instanceof Error ? err.message : String(err),
+    );
+    return res.status(500).json({
+      error: { code: 'INTERNAL', message: 'Failed to read the nonclinical study registry.' },
     });
   }
 });

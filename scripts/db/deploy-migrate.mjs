@@ -222,7 +222,19 @@ async function main() {
     }
     log(`  ✓ ${applied.length}/${C2C_MIGRATION_FILES.length} migration files applied`);
 
-    log('\n▶ 4/5 Runtime role — refresh non-superuser grants');
+    // The readiness contract (server/db/ensureCoreTables.ts requiredSchemas)
+    // demands the `extensions` schema, and until this line NOTHING on the
+    // deploy path created it — startup did, via CREATE SCHEMA IF NOT EXISTS on
+    // the request pool, which the non-superuser runtime role must refuse. On a
+    // single-pass fresh estate the schema therefore did not exist when the
+    // grant refresh below enumerated schemas, app_service never received USAGE,
+    // and /readyz honestly reported `schemas missing: extensions` forever — the
+    // production-boot-smoke CI job caught exactly this: provisioning converged
+    // only on the SECOND deploy-migrate run (schema born late in run one,
+    // granted in run two). Creating it here, before the grant refresh, makes
+    // one pass sufficient. Reproduced and verified against PostgreSQL 16.
+    log('\n▶ 4/5 Runtime role — required schemas + refresh non-superuser grants');
+    await client.query('CREATE SCHEMA IF NOT EXISTS extensions');
     // Re-apply the app_service grants so any table this deploy just created is
     // reachable by the request-serving pool. GRANT ... ON ALL TABLES only
     // covers tables that existed when it ran, so a role provisioned by a prior

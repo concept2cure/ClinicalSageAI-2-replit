@@ -127,12 +127,19 @@ async function main() {
       CREATE SCHEMA IF NOT EXISTS vault;
       CREATE SCHEMA IF NOT EXISTS precedent;
       CREATE SCHEMA IF NOT EXISTS audit;
+      -- Required by the readiness contract (ensureCoreTables requiredSchemas).
+      -- Absent from this step, it was first created at STARTUP by the runtime
+      -- role — which cannot (permission denied) — so on a single-pass fresh
+      -- install app_service never got USAGE on it and /readyz reported
+      -- "schemas missing: extensions" forever. The production-boot-smoke job
+      -- caught it. Installers own schema; startup only validates.
+      CREATE SCHEMA IF NOT EXISTS extensions;
       CREATE EXTENSION IF NOT EXISTS pgcrypto;
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
       CREATE EXTENSION IF NOT EXISTS vector;
       CREATE EXTENSION IF NOT EXISTS pg_trgm;
     `);
-    console.log('  ✓ schemas (vault, precedent, audit) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
+    console.log('  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
   });
 
   await step('2/8 Tables — drizzle-kit push', async () => {

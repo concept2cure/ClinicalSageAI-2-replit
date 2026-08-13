@@ -3,6 +3,7 @@ import { AlertTriangle, RotateCw } from 'lucide-react';
 import { Button } from './button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './card';
 import { Alert, AlertTitle, AlertDescription } from './alert';
+import { reportClientError } from '@/utils/reportClientError';
 
 /**
  * Error Boundary Component
@@ -32,14 +33,16 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error to an error reporting service
-    console.error('Error caught by boundary:', error, errorInfo);
     this.setState({ errorInfo });
 
-    // Log to application monitoring service if available
-    if (window.appMonitor && typeof window.appMonitor.logError === 'function') {
-      window.appMonitor.logError(error, errorInfo);
-    }
+    // Report through the app's monitoring client. The previous body logged to
+    // the console and then called `window.appMonitor.logError` behind a guard
+    // that is never true — nothing in this repository assigns
+    // `window.appMonitor` — so a crash caught here never left the browser.
+    reportClientError(error, {
+      boundary: 'ui/ErrorBoundary',
+      componentStack: errorInfo?.componentStack,
+    });
   }
 
   /**
@@ -137,8 +140,6 @@ export class ModuleErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Module error caught:', error, errorInfo);
-
     // Check if this is a Vite module loading error
     const isViteModuleError =
       error.message &&
@@ -148,6 +149,16 @@ export class ModuleErrorBoundary extends React.Component {
     if (isViteModuleError) {
       this.setState({ isViteError: true });
     }
+
+    // Reported, not just console-logged. This boundary is the OUTERMOST one in
+    // App.jsx, so anything reaching it took the whole application down — the
+    // single most important client error to have a record of, and the one that
+    // previously produced nothing but a console line the user never sends us.
+    reportClientError(error, {
+      boundary: 'ModuleErrorBoundary',
+      componentStack: errorInfo?.componentStack,
+      extra: { viteModuleError: Boolean(isViteModuleError) },
+    });
   }
 
   handleReload = () => {
