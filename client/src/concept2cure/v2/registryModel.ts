@@ -12,10 +12,15 @@
  * GENERATED from the kit registry (scripts in the design package) — edit the
  * kit first, then re-port, so design and code cannot drift.
  *
- * The ANA_* co-author/context objects are FIXTURES (the kit's offline shapes).
- * Surfaces render them only behind the SampleTag pill until the live
- * /api/coauthor + /api/ana-ri wiring lands in the surface-port phases —
- * never as live data (GAP RULE).
+ * The ANA_* co-author/context objects are REFERENCE CONFIG, not data. They were
+ * the kit's offline fixture shapes and carried invented per-programme values —
+ * a lead programme code, a readiness percentage, linked-evidence counts and a
+ * timestamped activity feed — which the AnA rail rendered on every authenticated
+ * surface behind a "Sample data" pill. Those fields are gone (see the note above
+ * ANA_COAUTHOR_BY_SEG and the one above SEGMENT_CONTEXT). What remains is
+ * tenant-independent vocabulary: CTD section names, regulatory pathway lists,
+ * prompt templates and surface routing. Nothing in this file may describe a
+ * particular organization's programmes — that comes from the API.
  */
 import { getSurface, UI_SURFACES, type UiSurface } from '@shared/constants/ui-surface-registry';
 // ANA_SURFACE_CTX is the large per-surface AnA context table; it lives in a

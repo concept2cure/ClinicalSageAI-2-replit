@@ -25,7 +25,6 @@ import {
   SR_ONLY_STYLE,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
-import { SampleTag, connected } from './dataConnect';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { SignoffList } from './SignoffList';
@@ -458,7 +457,7 @@ export function AnaRail({
   const failedAttachments = attachments.filter((a) => a.status === 'error');
   const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
   const co = getCoauthor(segment);
-  /* AnA's per-surface context is local, and says so.
+  /* AnA's per-surface context is local, and no longer claims otherwise.
    *
    * This used to fetch `GET /api/coauthor?surface=…&segment=…` under a comment
    * calling it a HARD RULE that bound AnA to "the real co-author endpoint".
@@ -467,13 +466,18 @@ export function AnaRail({
    * that request 404'd on every render of every surface, forever, and the result
    * was discarded into the same fixture fallback used when it was never issued.
    *
-   * The `sample` flag is what the user actually sees, and it was being derived
-   * from a call that could not succeed. Deriving it from `connected()` alone is
-   * the same answer honestly obtained. If per-surface AnA context becomes a real
-   * server concern, add the endpoint and restore the merge — do not reinstate a
-   * fetch against a route that does not exist. */
+   * The header also carried a `<SampleTag>` whose "Sample data" state meant
+   * "backend not reachable — showing sample data from the codebase fixture
+   * shape". That was true while the co-author fixture supplied an invented
+   * programme, a readiness percentage and an activity feed. Those fields are
+   * gone (registryModel.ts), and everything the block still renders — the module
+   * label, what AnA is attached to here, the CTD section for authoring surfaces,
+   * the action prompts — is reference config, identical for every tenant and
+   * every connection state. A pill announcing "sample data" over config would be
+   * a new inaccuracy in the opposite direction, so it is removed rather than
+   * re-labelled. If per-surface AnA context becomes a real server concern, add
+   * the endpoint and the provenance signal together. */
   const ac: AnaContext = getAnaContext(surface.id, segment);
-  const anaSample = !connected();
   const suggestions = ac.suggestions?.length ? ac.suggestions : [];
   const send = () => {
     const t = draft.trim();
@@ -573,7 +577,6 @@ export function AnaRail({
                 <div className="ana-ctx-module-k">Working in</div>
                 <div className="ana-ctx-module-v">{ac.module}</div>
               </div>
-              <SampleTag sample={anaSample} />
             </div>
             <div className="ana-ctx-here">{ac.here}</div>
             {ac.program && (
