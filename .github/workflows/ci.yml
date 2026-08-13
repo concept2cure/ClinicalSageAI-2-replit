@@ -1031,6 +1031,16 @@ jobs:
             sleep 1
           done
           if [ -z "$READY" ]; then
+            # The body names the failing dependency and the schema verdict
+            # (readiness-state's detail string). Its absence from this output is
+            # what made the first two failures here cost a debugging session
+            # each: "503 forever" vs "port never bound" vs WHICH dependency was
+            # down are indistinguishable from status codes alone. The single-
+            # pass-provisioning defect (schemas missing: extensions) would have
+            # been named right here on the first red run.
+            echo "──────── /readyz body at failure ────────"
+            curl -s http://127.0.0.1:5199/readyz || echo "(no HTTP response — the port was never bound)"
+            echo ""
             echo "──────── boot log ────────"
             tail -n 120 "$RUNNER_TEMP/boot.log"
             echo "::error::production boot smoke FAILED — the shipped build did not reach /readyz=200 with RLS_ENFORCE=on as a non-superuser role."
