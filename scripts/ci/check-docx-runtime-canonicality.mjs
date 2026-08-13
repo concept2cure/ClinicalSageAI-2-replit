@@ -30,7 +30,6 @@ const APPROVED_JS = new Set([
   // Known legacy consumers — documented, not new entry points
   'server/services/documentReconstruction.js',
   'server/services/diffChecker.js',
-  'server/services/fda510kDocumentGenerator.js',
   'server/services/cerGenerationService.ts',
   'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',

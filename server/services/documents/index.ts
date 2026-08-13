@@ -37,7 +37,6 @@ export { default as DocumentOrchestrationService } from '../DocumentOrchestratio
 export { documentDataCenterService as DocumentDataCenterService } from '../DocumentDataCenterService';
 
 // Generator services (submission-specific)
-export { default as fda510kDocumentGenerator } from '../fda510kDocumentGenerator.js';
 export { default as pmaDocumentGenerator } from '../pmaDocumentGenerator.js';
 
 // Types
@@ -125,8 +124,8 @@ export const DOCUMENT_SERVICE_REGISTRY = {
   workflow: 'DocumentOrchestrationService',
   dataCenter: 'DocumentDataCenterService',
 
-  // Generation
-  '510k': 'fda510kDocumentGenerator',
+  // Generation ('510k' removed — legacy fda510kDocumentGenerator deleted;
+  // canonical 510(k) drafting is /api/510k/estar/* over cerv2_510k_sections)
   pma: 'pmaDocumentGenerator',
 } as const;
 

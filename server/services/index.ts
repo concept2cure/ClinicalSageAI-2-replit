@@ -132,7 +132,8 @@ export const SERVICE_REGISTRY = {
   // FDA
   'fda.service': 'fdaService',
   'fda.forms': 'FDAFormGenerator',
-  'fda.510k': 'fda510kDocumentGenerator',
+  // 'fda.510k': removed — legacy fda510kDocumentGenerator deleted; canonical
+  // 510(k) drafting is /api/510k/estar/* over cerv2_510k_sections.
 
   // Clinical
   'clinical.csr': 'csr-search-service',

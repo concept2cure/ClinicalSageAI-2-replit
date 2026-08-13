@@ -74,7 +74,6 @@ import mdxSearchRoutes from '../routes/mdx-search';
 import mdxAnalyticsRoutes from '../routes/mdx-analytics';
 import mdxImportsRoutes from '../routes/mdx-imports';
 import regulatoryCorrespondenceRoutes from '../routes/regulatory-correspondence';
-import { create510kWorkflowRoutes } from '../routes/510k-workflow-routes';
 import { createPMAWorkflowRoutes } from '../routes/pma-workflow-routes';
 import fdaFormsRoutes from '../routes/fda-forms.routes';
 import fieldSyncRoutes from '../routes/fieldSync.routes';
@@ -1206,9 +1205,9 @@ export function registerInlineSubmissionWorkflowRoutes({
   console.log('✅ MDX module health endpoint mounted successfully');
   console.log('✅ Regulatory Correspondence API routes mounted successfully');
 
-  // 510k + PMA workflow routes.
-  app.use('/api/510k-workflow', create510kWorkflowRoutes(pool));
-  console.log('✅ 510k-workflow API routes mounted successfully');
+  // PMA workflow routes. (The legacy /api/510k-workflow family was deleted in
+  // the Phase 1 consolidation — the canonical 510(k) surface is
+  // /api/510k/estar/* + /api/510k/device/* over cerv2_510k_sections.)
   app.use('/api/pma-workflow', createPMAWorkflowRoutes(pool));
   console.log('✅ PMA-workflow API routes mounted successfully');
 

@@ -1,18 +1,14 @@
 import { db } from '../db';
-import { 
-  fda510kProjects, 
-  fda510kDocuments, 
-  fda510kDataMappings,
-  fda510kTemplates,
+import {
+  fda510kProjects,
+  fda510kDocuments,
   fda510kStageProgress,
   documentAuditTrail,
   users
 } from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import crypto from 'crypto';
-import FDA510kTemplateService from './FDA510kTemplateServiceBackend.js';
 import CrossReferenceMapper from './CrossReferenceMapping.js';
-import { smartFieldLinking } from './SmartFieldLinking.js';
 
 interface WorkflowData {
   deviceInfo?: any;
@@ -25,40 +21,18 @@ interface WorkflowData {
   [key: string]: any;
 }
 
-interface MappingRule {
-  id: number;
-  mappingCode: string;
-  mappingName: string;
-  sourceType: string;
-  sourceReference: string;
-  targetTemplate: string;
-  targetField: string;
-  transformationType?: string | null;
-  transformationRules?: any;
-}
-
-interface DocumentMetadata {
-  documentId: string;
-  projectId: number;
-  documentType: string;
-  version: number;
-  status: string;
-  lockedBy?: number | null;
-  lockedAt?: Date | null;
-  finalHash?: string | null;
-}
-
 class DocumentOrchestrationService {
-  private templateService: FDA510kTemplateService;
-  private crossReferenceMapper: CrossReferenceMapper;
-
-  constructor() {
-    this.templateService = new FDA510kTemplateService();
-    this.crossReferenceMapper = new CrossReferenceMapper();
-  }
-
   /**
-   * Main orchestration method - takes workflow data and generates all documents
+   * Main orchestration method - takes workflow data and generates FDA forms.
+   *
+   * NOTE (Phase 1 consolidation): this used to also generate a '510k-main'
+   * document by filling the eight hardcoded HTML templates in
+   * FDA510kTemplateServiceBackend with [placeholder] substitution. That
+   * duplicate 510(k) drafting path was deleted — the canonical 510(k)
+   * section drafting is AnA write_kit_section + /api/510k/estar/build over
+   * cerv2_510k_sections. What remains here is the FDA form generation
+   * (3514/3601/3881/3654) consumed by fda-forms.routes.ts generate-all and
+   * documentOrchestrationRoutes.ts.
    */
   async orchestrateDocumentGeneration(projectId: string, userId: string, organizationId: string): Promise<any> {
     try {
@@ -84,43 +58,16 @@ class DocumentOrchestrationService {
 
       const workflowData = await this.aggregateWorkflowData(projectIdNum);
 
-      // 2. Load mapping rules for this organization
-      const mappingRules = await this.loadMappingRules(orgIdNum);
-      
-      // 2a. Create intelligent cross-reference mapping
-      const crossRefRules = await this.crossReferenceMapper.createMappingRules(
-        projectIdNum,
-        'default',
-        orgIdNum
-      );
-      
-      // 2b. Map workflow data to eSTAR sections
-      const mappedSections = await this.crossReferenceMapper.mapDataToSections(
-        workflowData,
-        crossRefRules
-      );
-
-      // 3. Generate main 510(k) document sections with enhanced mapping
-      const mainDocument = await this.generateMainDocument(
-        project, 
-        workflowData, 
-        mappingRules, 
-        userIdNum, 
-        orgIdNum,
-        mappedSections  // Pass mapped sections
-      );
-
-      // 4. Generate FDA forms
+      // 2. Generate FDA forms
       const forms = await this.generateFDAForms(
-        project, 
-        workflowData, 
-        userIdNum, 
+        project,
+        workflowData,
+        userIdNum,
         orgIdNum
       );
 
-      // 5. Create audit trail - use original string IDs for better tracking
+      // 3. Create audit trail - use original string IDs for better tracking
       await this.createAuditTrail(projectIdNum, userIdNum, orgIdNum, 'document_generated', {
-        mainDocumentId: mainDocument.documentId,
         formIds: forms.map(f => f.documentId),
         userIdStr,  // Include original string ID for audit
         orgIdStr    // Include original string ID for audit
@@ -128,9 +75,8 @@ class DocumentOrchestrationService {
 
       return {
         success: true,
-        mainDocument,
         forms,
-        message: 'Documents generated successfully'
+        message: 'FDA forms generated successfully'
       };
     } catch (error) {
       console.error('Document orchestration error:', error);
@@ -208,236 +154,6 @@ class DocumentOrchestrationService {
     }
 
     return workflowData;
-  }
-
-  /**
-   * Load data mapping rules for the organization
-   */
-  private async loadMappingRules(organizationId: number): Promise<MappingRule[]> {
-    const mappings = await db!
-      .select()
-      .from(fda510kDataMappings)
-      .where(eq(fda510kDataMappings.organizationId, organizationId));
-
-    // If no custom mappings, use default mappings
-    if (mappings.length === 0) {
-      return this.getDefaultMappingRules(organizationId);
-    }
-
-    return mappings as MappingRule[];
-  }
-
-  /**
-   * Get default mapping rules for standard 510(k) sections
-   */
-  private getDefaultMappingRules(organizationId: number): MappingRule[] {
-    return [
-      // Device Information mappings
-      {
-        id: 0,
-        mappingCode: 'DEV_NAME',
-        mappingName: 'Device Trade Name',
-        sourceType: 'workflow',
-        sourceReference: 'deviceInfo.deviceName',
-        targetTemplate: '3.0',
-        targetField: '[Device Trade Name]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      {
-        id: 0,
-        mappingCode: 'DEV_COMMON',
-        mappingName: 'Common Name',
-        sourceType: 'workflow',
-        sourceReference: 'deviceInfo.commonName',
-        targetTemplate: '3.0',
-        targetField: '[Common Name]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      {
-        id: 0,
-        mappingCode: 'DEV_DESC',
-        mappingName: 'Device Description',
-        sourceType: 'workflow',
-        sourceReference: 'deviceInfo.description',
-        targetTemplate: '7.0',
-        targetField: '[Device Description]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      {
-        id: 0,
-        mappingCode: 'DEV_IND',
-        mappingName: 'Indications for Use',
-        sourceType: 'workflow',
-        sourceReference: 'deviceInfo.indicationsForUse',
-        targetTemplate: '4.0',
-        targetField: '[Indications for Use]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      // Regulatory mappings
-      {
-        id: 0,
-        mappingCode: 'REG_CODE',
-        mappingName: 'Product Code',
-        sourceType: 'workflow',
-        sourceReference: 'regulatoryInfo.productCode',
-        targetTemplate: '3.0',
-        targetField: '[3-letter FDA Product Code]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      {
-        id: 0,
-        mappingCode: 'REG_NUM',
-        mappingName: 'Regulation Number',
-        sourceType: 'workflow',
-        sourceReference: 'regulatoryInfo.regulationNumber',
-        targetTemplate: '3.0',
-        targetField: '[XXX.XXXX]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      // Predicate mappings
-      {
-        id: 0,
-        mappingCode: 'PRED_NAME',
-        mappingName: 'Predicate Device Name',
-        sourceType: 'workflow',
-        sourceReference: 'predicateComparison.predicateName',
-        targetTemplate: '9.0',
-        targetField: '[Predicate Device Name]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      {
-        id: 0,
-        mappingCode: 'PRED_K',
-        mappingName: 'Predicate K Number',
-        sourceType: 'workflow',
-        sourceReference: 'predicateComparison.predicateKNumber',
-        targetTemplate: '9.0',
-        targetField: '[XXXXXX]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      // Company Info mappings
-      {
-        id: 0,
-        mappingCode: 'COMP_NAME',
-        mappingName: 'Company Name',
-        sourceType: 'workflow',
-        sourceReference: 'deviceInfo.companyName',
-        targetTemplate: '1.0',
-        targetField: '[Company Name]',
-        transformationType: 'direct',
-        transformationRules: null
-      },
-      {
-        id: 0,
-        mappingCode: 'COMP_ADDR',
-        mappingName: 'Company Address',
-        sourceType: 'workflow',
-        sourceReference: 'deviceInfo.companyAddress',
-        targetTemplate: '1.0',
-        targetField: '[Street Address]',
-        transformationType: 'direct',
-        transformationRules: null
-      }
-    ];
-  }
-
-  /**
-   * Generate the main 510(k) document
-   */
-  private async generateMainDocument(
-    project: any,
-    workflowData: WorkflowData,
-    mappingRules: MappingRule[],
-    userId: number,
-    organizationId: number,
-    mappedSections?: Record<string, any>  // Enhanced eSTAR mapped sections
-  ): Promise<any> {
-    const documentId = this.generateDocumentId();
-    
-    // Get all section templates
-    const templates = this.templateService.getAllTemplates();
-    const populatedSections: any = {};
-
-    // Process each section template
-    for (const [sectionId, template] of Object.entries(templates)) {
-      // Get mappings for this section
-      const sectionMappings = mappingRules.filter(m => m.targetTemplate === sectionId);
-      
-      // Populate template with data
-      let populatedContent = (template as any).template;
-      
-      // First, apply enhanced eSTAR section mapping if available
-      if (mappedSections) {
-        const sectionKey = `section_${sectionId.replace('.', '_')}`;
-        if (mappedSections[sectionKey]) {
-          // Apply mapped section data to template
-          for (const [field, value] of Object.entries(mappedSections[sectionKey])) {
-            const placeholder = `\\[${field}\\]`;
-            populatedContent = populatedContent.replace(
-              new RegExp(placeholder, 'gi'),
-              String(value)
-            );
-          }
-        }
-      }
-      
-      // Then apply standard mapping rules
-      for (const mapping of sectionMappings) {
-        const value = this.extractValueFromPath(workflowData, mapping.sourceReference);
-        
-        if (value !== undefined) {
-          // Apply transformation if specified
-          const transformedValue = mapping.transformationType 
-            ? this.applyTransformation(value, mapping.transformationType, mapping.transformationRules)
-            : value;
-          
-          // Replace placeholder in template
-          populatedContent = populatedContent.replace(
-            new RegExp(this.escapeRegExp(mapping.targetField), 'g'),
-            transformedValue
-          );
-        }
-      }
-      
-      populatedSections[sectionId] = {
-        ...(template as any),
-        content: populatedContent,
-        populated: true,
-        eStarMapped: mappedSections ? !!mappedSections[`section_${sectionId.replace('.', '_')}`] : false
-      };
-    }
-
-    // Save to database
-    const [document] = await db!.insert(fda510kDocuments).values({
-      documentId: documentId,
-      projectId: project.id,
-      templateId: 1, // Reference to main-510k template
-      documentType: '510k-main',
-      documentName: `510(k) Submission - ${project.deviceName || 'Project ' + project.id}`,
-      content: JSON.stringify(populatedSections),
-      version: 1,
-      status: 'draft',
-      formData: {
-        sections: Object.keys(populatedSections),
-        generatedAt: new Date().toISOString(),
-        generatedBy: userId
-      },
-      createdBy: userId,
-      updatedBy: userId,
-      organizationId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
-
-    return document;
   }
 
   /**
@@ -691,45 +407,6 @@ class DocumentOrchestrationService {
     );
 
     return newDoc;
-  }
-
-  /**
-   * Helper: Extract value from nested object path
-   */
-  private extractValueFromPath(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
-  }
-
-  /**
-   * Helper: Apply transformation to value
-   */
-  private applyTransformation(value: any, transformationType: string, rules?: any): string {
-    try {
-      // Simple transformations
-      switch (transformationType) {
-        case 'uppercase':
-          return String(value).toUpperCase();
-        case 'lowercase':
-          return String(value).toLowerCase();
-        case 'date':
-          return new Date(value).toLocaleDateString();
-        case 'currency':
-          return `$${Number(value).toFixed(2)}`;
-        case 'direct':
-        default:
-          return String(value);
-      }
-    } catch (error) {
-      console.error('Transformation error:', error);
-      return String(value);
-    }
-  }
-
-  /**
-   * Helper: Escape special regex characters
-   */
-  private escapeRegExp(string: string): string {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   /**
