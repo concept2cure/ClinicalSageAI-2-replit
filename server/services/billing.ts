@@ -12,6 +12,11 @@
 
 import Stripe from 'stripe';
 import { pool } from '../db.js';
+// Every write to organizations.payment_status below changes whether the tenant
+// may operate. The lifecycle guard caches that posture for 60s, so each writer
+// drops the cached entry to make the change take effect immediately on this
+// instance instead of after the TTL. See services/tenant/tenant-lifecycle.ts.
+import { invalidateTenantPosture } from './tenant/tenant-lifecycle';
 
 /**
  * The amount to charge per billing interval, in cents.
@@ -500,6 +505,7 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
       `UPDATE organizations SET tier = 'free', payment_status = 'active', updated_at = NOW() WHERE id = $1`,
       [organizationId]
     );
+    invalidateTenantPosture(organizationId);
     await provisionModulesForTier(organizationId, 'free');
     return { url: successUrl, sessionId: 'free' };
   }
@@ -795,6 +801,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
   // Auto-provision modules for new tier
   await provisionModulesForTier(parseInt(organizationId, 10), tier);
 
+  invalidateTenantPosture(organizationId);
   console.log(`[Billing] Subscription updated: org=${organizationId}, tier=${tier}, status=${paymentStatus}`);
 }
 
@@ -812,6 +819,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
     [parseInt(organizationId, 10)]
   );
 
+  invalidateTenantPosture(organizationId);
   console.log(`[Billing] Subscription canceled for org ${organizationId}`);
 }
 
@@ -831,6 +839,8 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
      WHERE id = $2`,
     [new Date(getSubscriptionPeriodEnd(sub) * 1000), parseInt(organizationId, 10)]
   );
+
+  invalidateTenantPosture(organizationId);
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
@@ -849,6 +859,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     [parseInt(organizationId, 10)]
   );
 
+  invalidateTenantPosture(organizationId);
   console.warn(`[Billing] Payment failed for org ${organizationId}`);
 }
 

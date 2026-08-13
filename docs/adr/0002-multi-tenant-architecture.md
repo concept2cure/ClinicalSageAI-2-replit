@@ -142,6 +142,58 @@ export const documents = pgTable('documents', {
 
 **Why not chosen:** Unacceptable security risk for regulated data.
 
+## Amendment (2026-08-13): tenancy is two questions, not one
+
+The decision above answers **isolation** — can tenant A reach tenant B's data.
+It is silent on **entitlement** — may tenant A be operating at all. Those are
+separate controls with separate failure modes, and the platform shipped with only
+the first.
+
+`organizations.status` and `organizations.payment_status` existed and were
+written by live code (the admin console and the Stripe webhook respectively), but
+no request-path control read either. A suspended organization — suspended for
+non-payment, a terminated contract, or a security incident — retained full read
+and write access to every route. Isolation held perfectly the entire time; it was
+simply answering a different question.
+
+**The model is now two layers:**
+
+| Layer | Question | Mechanism |
+|---|---|---|
+| Isolation | Can A see B's data? | RLS + JWT-derived org scoping + membership re-check |
+| Entitlement | May A operate? | `services/tenant/tenant-lifecycle.ts` → `middleware/tenantLifecycleGuard.ts` |
+
+Entitlement is three-valued, and the middle value carries the design weight:
+
+- **allow** — normal operation.
+- **read_only** — the tenant keeps sight of and can export its own regulatory
+  record but cannot create new work. Applied to `past_due`, cancelled
+  subscriptions, and `pending_deletion`. Locking a past-due customer out of their
+  own IND file would be a support burden and, under most enterprise MSAs, a
+  breach; the state that drives payment is deliberately not a lockout.
+- **deny** — `suspended`, `inactive`, `purged`, or an unrecognized status.
+
+An unreadable posture refuses (503), matching the fail-closed doctrine of the
+membership re-check next to it. A suspension must not lapse because a lookup
+failed.
+
+### Consequence for tenant deletion
+
+The original decision said nothing about tenant destruction, and the
+implementation that grew into the gap was a cascade `DELETE FROM organizations`.
+That cannot stand on a Part 11 platform: §11.10(e) requires deletion to remain
+reconstructable from the audit trail, and the cascade destroyed the evidence with
+the record.
+
+Deletion is now a lifecycle — `active → pending_deletion → purged` — with a
+retention window, a required export digest before purge, and a surviving
+organization row that carries the offboarding evidence. Purge is an explicit
+operator action, never a scheduled job: unattended irreversible destruction of
+regulated records would be a worse control than the hard delete it replaced.
+
+See `docs/security/TENANCY_GA_ASSESSMENT_2026-08-13.md` for the full assessment,
+the residual register, and operator rollout notes.
+
 ## Implementation Notes
 
 ### PostgreSQL RLS Policy
@@ -186,3 +238,4 @@ export async function setTenantContext(pool: Pool, organizationId: number) {
 | ---------- | ----------------- | -------------------------------- |
 | 2025-07-01 | Architecture Team | Initial decision                 |
 | 2025-10-15 | Security Team     | Added RLS implementation details |
+| 2026-08-13 | Platform          | Added the entitlement layer (tenant lifecycle posture) and the governed offboarding lifecycle |

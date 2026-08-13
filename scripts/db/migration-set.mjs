@@ -846,6 +846,12 @@ export const C2C_MIGRATION_FILES = [
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
 
+  // ── Tenant offboarding lifecycle ────────────────────────────────────────────
+  // ADD COLUMN IF NOT EXISTS only, on `organizations` — a table that predates
+  // every entry above. It therefore has no ordering dependency and sits after
+  // the isolation sweep deliberately: it introduces no new TABLE for the sweep
+  // to policy, so running it later cannot leave anything unprotected.
+  'migrations/20260813_tenant_offboarding_lifecycle.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

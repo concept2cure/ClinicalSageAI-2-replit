@@ -15,6 +15,7 @@ import { verifyJwtWithRotation } from './utils/jwtVerify';
 import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
 import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
+import { enforceTenantLifecycle } from './middleware/tenantLifecycleGuard';
 
 const logger = createScopedLogger('auth');
 
@@ -214,7 +215,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       // scope for essentially every authenticated `/api` route — the fix for
       // the fail-closed 500s catalogued in the RLS route-layer audit. Idempotent
       // and honours the SYSTEM carve-outs; see establishRequestTenantScope.
-      return establishRequestTenantScope(req, res, next);
+      //
+      // The tenant lifecycle guard runs after the scope exists (its posture
+      // lookup is a tenant-scoped query) and refuses suspended, inactive,
+      // past-due and pending-deletion organizations. See tenantLifecycleGuard.
+      return establishRequestTenantScope(req, res, () =>
+        enforceTenantLifecycle(req, res, next)
+      );
     } catch (error) {
       logger.error('Authentication error', error);
       return res.status(401).json({ error: 'Invalid or expired token' });
