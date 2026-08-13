@@ -440,6 +440,14 @@
 .mdx-shell .status-pill.excluded  { background: var(--bg-100); color: var(--text-400); }
 .mdx-shell .status-pill.serious   { background: var(--error-muted); color: var(--error); }
 .mdx-shell .status-pill.non-serious { background: var(--bg-200); color: var(--text-300); }
+/* Verdict pills already emitted by EstarFilingPanel / PathwayPanes / the CER
+   workbench but previously unstyled (fell back to the neutral base). Tokens
+   only; each pill also carries a text label, so color is never the only
+   signal. */
+.mdx-shell .status-pill.ok        { background: var(--success-muted); color: var(--success); }
+.mdx-shell .status-pill.warn      { background: var(--warning-muted); color: var(--warning); }
+.mdx-shell .status-pill.err,
+.mdx-shell .status-pill.blocked   { background: var(--error-muted); color: var(--error); }
 
 /* ════════════════════════════════════════════════════════════
    SE Matrix
@@ -2677,3 +2685,29 @@
 }
 .mdx-shell .ana-draft-banner,
 .mdx-shell .ana-draft-btn { transition: none; }
+
+/* ════════════════════════════════════════════════════════════
+   CER workbench (CerSurface tabs)
+   Reuses the pwt-bar/pwt-btn idiom from pathway-tabs.css. The
+   inner bar's active indicator is NEUTRAL ink — the outer
+   PathwayPanes bar already carries the screen's one accent-100
+   indicator, and the design contract caps Claude orange at one
+   appearance per screen.
+   ════════════════════════════════════════════════════════════ */
+.mdx-shell .cer-tabbar {
+  margin: 4px 0 16px;
+  padding: 0;
+  background: transparent;
+}
+.mdx-shell .cer-tabbar .pwt-btn.active { border-bottom-color: var(--text-100); }
+
+/* Tab switches fade in at the contract's 200ms ease-out; no spring. */
+.mdx-shell .cer-tabpanel { animation: cer-tab-in var(--dur) var(--ease); }
+@keyframes cer-tab-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .mdx-shell .cer-tabpanel { animation: none; }
+}
+
+/* Wide tables (GSPR matrix, literature results) scroll inside their own
+   container — the page body never scrolls horizontally. */
+.mdx-shell .tbl-scroll { overflow-x: auto; }

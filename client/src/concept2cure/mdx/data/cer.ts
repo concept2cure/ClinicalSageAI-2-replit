@@ -1,8 +1,9 @@
 /**
- * CER (basic surface) fixtures — ported verbatim from data.jsx.
- *
- * The full 7-tab CerWorkbench is not present in this kit drop; the basic
- * surface uses these three datasets only (signals, literature, export plan).
+ * CER workbench fixtures — ported from data.jsx (signals / literature /
+ * export plan) plus the CerWorkbench.jsx shapes (GSPR, equivalence,
+ * PMS/PMCF). Consumed by the CerSurface tabs STRICTLY behind the
+ * sample-mode guard (lib/useSampleRows) — live tenants with no data see
+ * honest empty states, never these examples.
  */
 
 export type SignalSource = 'FAERS' | 'MAUDE' | 'PubMed' | 'Eudamed';
@@ -62,9 +63,9 @@ export const CER_EXPORT: CerSection[] = [
 ];
 
 // ─── CerWorkbench fixtures ─────────────────────────────────────────────
-// Referenced by CerWorkbench.jsx but not present in any kit data file. These
-// shapes were inferred from the component's usage in CerWorkbench.jsx.
-// Replace with real data when the kit ships them.
+// Shapes inferred from CerWorkbench.jsx usage (the kit shipped no data file
+// for them). Rendered only in explicit sample mode by GsprMatrixTab,
+// EquivalenceTab and PmsPmcfTab.
 
 export type GsprStatus = 'conform' | 'partial' | 'gap' | 'na';
 export type GsprChapter = 'I' | 'II' | 'III';

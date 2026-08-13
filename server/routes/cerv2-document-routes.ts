@@ -75,6 +75,67 @@ const saveSchema = z.object({
   metadata: z.any().optional(),
 });
 
+/**
+ * GET /api/cerv2/literature/search?q=…&max=&years=&studyType=
+ *
+ * Thin org-authenticated read over the canonical PubMed client
+ * (server/services/integrations/pubmed-client.ts — the same client AnA's
+ * search_literature tool uses). Read-only: results are NOT persisted to
+ * literature_entries (no write path exists for that table outside the seed
+ * script), so the UI must present them as an unrecorded search.
+ *
+ * Honest degradation: a PubMed/network failure answers 200 with
+ * { available: false, unavailableReason } and zero articles — never a
+ * fabricated result set, never a silent empty list.
+ */
+const literatureQuerySchema = z.object({
+  q: z.string().trim().min(2, 'q must be at least 2 characters').max(400),
+  max: z.coerce.number().int().min(1).max(20).optional(),
+  /** Year or range, e.g. "2023" or "2020-2026". */
+  years: z
+    .string()
+    .trim()
+    .regex(/^\d{4}(\s*-\s*\d{4})?$/, 'years must be YYYY or YYYY-YYYY')
+    .optional(),
+  studyType: z.enum(['rct', 'observational', 'systematic_review', 'case_report', 'any']).optional(),
+});
+
+router.get('/literature/search', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrganizationId(req);
+  if (!organizationId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+  const parsed = literatureQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid query', details: parsed.error.flatten() });
+  }
+  const { q, max, years, studyType } = parsed.data;
+  try {
+    const { searchPubmed } = await import('../services/integrations/pubmed-client');
+    const result = await searchPubmed({
+      query: q,
+      maxResults: max,
+      dateRange: years,
+      studyType,
+    });
+    return res.json({ available: true, recorded: false, ...result });
+  } catch (error: any) {
+    logger.warn('PubMed literature search unavailable', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.json({
+      available: false,
+      recorded: false,
+      unavailableReason: `PubMed search unavailable — ${
+        error instanceof Error ? error.message : 'network error'
+      }`,
+      source: 'PubMed',
+      totalCount: 0,
+      articles: [],
+    });
+  }
+});
+
 router.get('/documents', authMiddleware, async (req, res) => {
   const organizationId = resolveOrganizationId(req);
   if (!organizationId) {
