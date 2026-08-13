@@ -12,7 +12,8 @@
  *
  * Scope: this validates the CURRENT composition, so every leaf is `new`. It does
  * not compute cross-sequence lifecycle (replace/append/delete) — that is the
- * export delta path's job (ectdExportService lifecycleAgainstPrior). A backbone
+ * canonical core's job (submission_leaves carry a per-leaf lifecycle_op that
+ * package-from-core maps into the packager). A backbone
  * that needs lifecycle operators is produced there, not here.
  *
  * Determinism: PDF/A normalization is SKIPPED here (skipPdfaConversion) so the

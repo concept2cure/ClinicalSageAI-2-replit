@@ -62,7 +62,7 @@ describe('EctdCompile — real eCTD assembly', () => {
       expect(call![2] as any).toMatchObject({ submissionType: 'initial', region: 'FDA' });
     });
     expect(await screen.findByText(/Compilation complete/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Download eCTD 4.0 backbone/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Download eCTD backbone/ })).toBeTruthy();
   });
 
   it('shows an honest empty state when no program is open (no fixture)', () => {
@@ -120,14 +120,14 @@ describe('EctdCompile — what the surface may claim', () => {
       contentValidationPassed: true,
       leafFilesRendered: 0,
       submissionBlockers: [
-        'No leaf files have been rendered. This platform compiles the eCTD backbone over authored section content; it does not yet produce the PDF leaf files a sequence consists of, so the package cannot be transmitted to an agency gateway.',
+        "No leaf files have been rendered for this compile: it is not linked to a canonical submission (submissions → eCTD sequence) with placed documents, so this backbone describes authored section content only and cannot be transmitted to an agency gateway. Leaf rendering runs from the submission spine — create the program's submission and place approved documents into its eCTD sequence.",
       ],
     });
     render(<EctdCompile {...props()} />);
     fireEvent.click(await screen.findByText(/Compile eCTD/));
 
     expect(await screen.findByText('Not yet submittable:')).toBeTruthy();
-    expect(screen.getByText(/does not yet produce the PDF leaf files/)).toBeTruthy();
+    expect(screen.getByText(/No leaf files have been rendered for this compile/)).toBeTruthy();
   });
 
   it('warns that the downloadable backbone is not a sequence', async () => {
@@ -136,7 +136,7 @@ describe('EctdCompile — what the surface may claim', () => {
     render(<EctdCompile {...props()} />);
     fireEvent.click(await screen.findByText(/Compile eCTD/));
 
-    await screen.findByText(/Download eCTD 4.0 backbone XML/);
+    await screen.findByText(/Download eCTD backbone XML/);
     expect(screen.getByText(/not a sequence to transmit/)).toBeTruthy();
   });
 

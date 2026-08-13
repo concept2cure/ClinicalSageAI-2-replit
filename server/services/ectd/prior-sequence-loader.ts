@@ -2,8 +2,8 @@
  * Prior-sequence loader — reads a stored sequence leaf manifest back into the
  * lifecycle operator's PriorLeaf shape, tenant-scoped.
  *
- * This is the read half of the sequence-manifest feature (the export service is
- * the write half). Given an application + a prior sequence number, it fetches
+ * This is the read half of the sequence-manifest feature (compile paths that
+ * persist a leaf manifest onto ectd_compilations are the write half). Given an application + a prior sequence number, it fetches
  * that sequence's compilation row for the caller's organization and returns its
  * published leaves, so a new sequence can be diffed against exactly what shipped
  * — without the caller hand-supplying every prior href.

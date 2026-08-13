@@ -2,8 +2,10 @@
  * PDEV → eCTD compile bridge.
  *
  * Honest framing: this is **not** new eCTD publishing. It invokes the
- * existing `generateEctdPackage` primitive (see
- * `server/services/ectdExportService.ts`) once a program's PDEV IND
+ * CANONICAL package generator (`assembleSubmissionEctd` in
+ * `server/services/ectd/assemble-from-core.ts` — the submission spine:
+ * submissions → ectd_sequences → submission_leaves, real ICH backbone +
+ * MD5 manifest + rendered PDF leaves) once a program's PDEV IND
  * assembly readiness clears a threshold, and records the compilation
  * result against the program.
  *
@@ -13,7 +15,10 @@
  *   - Refuses to compile when mandatory-document readiness is below
  *     the configured threshold (default 90 %) unless the caller passes
  *     `force: true` (audit-flagged as override).
- *   - Calls generateEctdPackage with the resolved submissionId.
+ *   - Calls assembleSubmissionEctd with the resolved submissionId
+ *     (the canonical submissions.id). A submission with no sequence or
+ *     placed leaves fails closed — the refusal propagates to the caller,
+ *     it is never papered over with a placeholder package.
  *   - Returns the package buffer + filename + stats, plus the
  *     ind-assembly readiness snapshot at compile time.
  *   - Audit-logs the compile through the existing dual-write auditor.
@@ -25,7 +30,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
-import { generateEctdPackage } from '../ectdExportService';
+import { assembleSubmissionEctd } from '../ectd/assemble-from-core';
 import { pdevIndAssemblyService, type IndAssemblyReport } from './pdev-ind-assembly';
 import auditService from '../auditService';
 
@@ -35,11 +40,16 @@ export interface PdevEctdCompileInput {
   programId: string;
   organizationId: number;
   userId: number;
-  /** Required: the numeric submission/project id the eCTD pipeline uses. */
+  /** Required: the CANONICAL submissions.id the eCTD pipeline is keyed by. */
   submissionId: number;
-  /** Optional override knobs forwarded to generateEctdPackage. */
+  /** Cross-check only: the sequence's recorded region is authoritative; a
+   *  contradicting value makes the compile fail closed (never silently
+   *  honored or ignored). */
   region?: string;
+  /** Accepted for wire-compat; the submission's RECORDED application type is
+   *  what the canonical packager emits — a caller cannot relabel it here. */
   submissionType?: string;
+  /** Specific sequence to compile; the submission's latest when omitted. */
   sequenceNumber?: string;
   applicationNumber?: string;
   /** Minimum mandatory-document readiness % to allow the compile.
@@ -123,12 +133,14 @@ export class PdevEctdCompileService {
       };
     }
 
-    // Invoke the existing eCTD pipeline.
-    let pkg: Awaited<ReturnType<typeof generateEctdPackage>>;
+    // Invoke the canonical eCTD pipeline (submission spine → real packager).
+    let pkg: Awaited<ReturnType<typeof assembleSubmissionEctd>>;
     try {
-      pkg = await generateEctdPackage(input.submissionId, input.organizationId, {
+      pkg = await assembleSubmissionEctd({
+        submissionId: input.submissionId,
+        organizationId: input.organizationId,
+        userId: input.userId,
         region: input.region,
-        submissionType: input.submissionType,
         sequenceNumber: input.sequenceNumber,
         applicationNumber: input.applicationNumber,
       });

@@ -5,6 +5,13 @@ const { mockGenerate, mockValidate, mockGovernance } = vi.hoisted(() => ({
   mockGenerate: vi.fn(async () => ({
     buffer: Buffer.from('zip-bytes'),
     filename: 'submission.zip',
+    sequenceId: 1,
+    sequenceNumber: '0000',
+    region: 'fda',
+    sha256: 'a'.repeat(64),
+    materialized: 7,
+    unresolvedLeaves: [],
+    skipped: [],
     stats: {
       totalModules: 5,
       totalFiles: 10,
@@ -21,8 +28,11 @@ const { mockGenerate, mockValidate, mockGovernance } = vi.hoisted(() => ({
   mockGovernance: vi.fn(async () => ({ artifactId: 'art_123' })),
 }));
 
-vi.mock('../../server/services/ectdExportService', () => ({
-  generateEctdPackage: mockGenerate,
+vi.mock('../../server/services/ectd/assemble-from-core', () => ({
+  assembleSubmissionEctd: mockGenerate,
+}));
+
+vi.mock('../../server/services/submission-gateways/ectd-structural-validator', () => ({
   validateEctdPackage: mockValidate,
 }));
 
@@ -41,7 +51,7 @@ function getHandler(path: string, method: 'post' | 'get' = 'post') {
 // Unit contract for the eCTD export human-review gate. The route reads the
 // gate from CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW and from the request's
 // governance evidence; these tests drive both. The mocks match the route's
-// current call graph (generateEctdPackage / validateEctdPackage /
+// current call graph (assembleSubmissionEctd / validateEctdPackage /
 // registerExportGovernanceQuick). Verified meaningful via mutation testing:
 // disabling the gate in ectd-export.ts makes the strict-mode block fail.
 describe('eCTD export governance gate', () => {

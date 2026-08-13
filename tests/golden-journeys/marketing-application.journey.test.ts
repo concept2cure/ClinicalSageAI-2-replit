@@ -363,7 +363,7 @@ describe('Journey B — marketing application spine (canonical DDL)', () => {
       'ectd_compilations is created here from the drizzle baseline shape (migrations/0000_sweet_joseph.sql) as test-only DDL, with the two NOT NULLs dropped exactly as db/migrations/20260725_ectd_compilations_project_level.sql does — that migration is an ALTER, so it cannot run against a table the journey has not first created.',
       'Both routers take the organization from request context rather than verifying a JWT themselves, so this journey installs a tenant middleware. Journey A covers the JWT-verifying path; the token-issuance flow is outside both.',
       'server/services/ectd/ectd-validator-hardening.ts queries ectd_compilations.sequence_number and .application_number — neither column exists in any definition of that table. NOT fixed here and NOT exercised by this journey: it needs a schema decision about where submission sequence history lives (recorded in ledger C-16).',
-      'The eCTD ZIP/export path (ectdExportService) and gateway submission are not in this journey; it ends at a persisted compilation with an XML backbone.',
+      'The eCTD ZIP/export path (the canonical assembleSubmissionEctd over the submission spine) and gateway submission are not in this journey; it ends at a persisted compilation with an XML backbone.',
     );
 
     const m = R.manifest();

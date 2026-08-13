@@ -25,13 +25,19 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
-import { submissionLeaves } from '../../../shared/schema';
+import { submissions, ectdSequences, submissionLeaves } from '../../../shared/schema';
 import { packageSequenceFromCore, type PackageFromCoreResult } from './package-from-core';
 import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
 import { validateLeafPaths } from './leaf-path-safety';
-import type { LeafFileResolver } from './core-to-packager';
+import { toPackagerRegion, type LeafFileResolver } from './core-to-packager';
+import {
+  computeEctdCompleteness,
+  assertEctdSubmissionComplete,
+  type CompletenessReport,
+  type IncompleteLeaf,
+} from './completeness';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -222,4 +228,192 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   }
 }
 
-export default { assembleSequence };
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission-level convenience: submissions.id → sequence → assembled package
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AssembleSubmissionParams {
+  /** Canonical submissions.id (the submission spine slice-4 intake creates). */
+  submissionId: number;
+  organizationId: number;
+  userId: number;
+  /**
+   * Explicit sequence to assemble ('0000'…). When omitted, the submission's
+   * LATEST sequence is assembled. Fail-closed: an explicit number that does not
+   * exist is an error, never a silent fallback to another sequence.
+   */
+  sequenceNumber?: string;
+  /** Recorded application number for the backbone envelope. Falls back to the
+   *  neutral `SEQ-<sequenceId>` handle (same convention as the /api/submissions
+   *  assemble route) — never an invented agency number. */
+  applicationNumber?: string;
+  /**
+   * Requested region (accepts core codes fda|eu|jp and agency names FDA|EMA|
+   * PMDA). The sequence's RECORDED region is always authoritative for what gets
+   * packaged; a caller-requested region that contradicts it is REFUSED rather
+   * than silently honored or silently ignored. Omit to package as recorded.
+   */
+  region?: string;
+  /**
+   * Submission-grade gate. When true, throws EctdCompletenessError instead of
+   * returning a package with unmaterialized (source-unresolvable) leaves or no
+   * leaves at all — a substantively-empty dossier can never be produced for an
+   * actual filing.
+   */
+  requireComplete?: boolean;
+}
+
+export interface AssembleSubmissionResult {
+  /** The assembled eCTD ZIP bytes (staging already cleaned up). */
+  buffer: Buffer;
+  filename: string;
+  sequenceId: number;
+  sequenceNumber: string;
+  /** The sequence's recorded core region (fda | eu | jp …). */
+  region: string;
+  sha256: string;
+  materialized: number;
+  unresolvedLeaves: UnresolvedLeaf[];
+  skipped: Array<{ sectionCode: string; reason: string }>;
+  /** DTD self-containment status from the packager. */
+  dtdStatus?: { required: string[]; present: string[]; missing: string[]; selfContained: boolean };
+  stats: {
+    totalModules: number;
+    totalGranules: number;
+    totalFiles: number;
+    generatedAt: string;
+    completeness: CompletenessReport;
+  };
+}
+
+/**
+ * Assemble a submission's eCTD package from the canonical core, addressed by
+ * submissions.id rather than sequence id. This is the ONE package-build entry
+ * point for callers that hold a submission handle (the eCTD export route, the
+ * audit-services export, the PDEV compile bridge) — it resolves the sequence,
+ * drives `assembleSequence` (the canonical assembler), reads the ZIP bytes,
+ * computes the submission-completeness report over what actually materialized,
+ * and always cleans up the staging directory before returning.
+ *
+ * Fail-closed: unknown submission / sequence throws; `requireComplete` refuses
+ * a package with unmaterialized leaves or no leaves via EctdCompletenessError.
+ */
+export async function assembleSubmissionEctd(
+  params: AssembleSubmissionParams,
+): Promise<AssembleSubmissionResult> {
+  const { submissionId, organizationId, userId } = params;
+
+  const [submission] = await db
+    .select()
+    .from(submissions)
+    .where(
+      and(
+        eq(submissions.id, submissionId),
+        eq(submissions.organizationId, organizationId),
+        isNull(submissions.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (!submission) {
+    throw new Error('Submission not found for this organization.');
+  }
+
+  const sequenceRows = await db
+    .select()
+    .from(ectdSequences)
+    .where(
+      and(
+        eq(ectdSequences.submissionId, submissionId),
+        eq(ectdSequences.organizationId, organizationId),
+        isNull(ectdSequences.deletedAt),
+      ),
+    )
+    .orderBy(desc(ectdSequences.sequenceNumber), desc(ectdSequences.id));
+
+  const sequence = params.sequenceNumber != null
+    ? sequenceRows.find((s) => s.sequenceNumber === params.sequenceNumber)
+    : sequenceRows[0];
+  if (!sequence) {
+    throw new Error(
+      params.sequenceNumber != null
+        ? `eCTD sequence ${params.sequenceNumber} not found for this submission.`
+        : 'No eCTD sequence exists for this submission — it was not found. Create a sequence and place documents into it before exporting.',
+    );
+  }
+
+  // Region honesty: the sequence's recorded region is what gets packaged. A
+  // caller-requested region that contradicts the record is refused outright —
+  // silently honoring it would mislabel a regulatory package, silently ignoring
+  // it would mislead the caller.
+  if (params.region) {
+    const requested = toPackagerRegion(params.region);
+    const recorded = toPackagerRegion(sequence.region);
+    if (requested !== recorded) {
+      throw new Error(
+        `Requested region "${params.region}" does not match the sequence's recorded region "${sequence.region}". ` +
+          'The recorded region is authoritative; omit the region to package as recorded.',
+      );
+    }
+  }
+
+  const assembled = await assembleSequence({
+    sequenceId: sequence.id,
+    organizationId,
+    userId,
+    applicationId: params.applicationNumber ?? `SEQ-${sequence.id}`,
+    sponsorId: `ORG-${organizationId}`,
+    sponsorName: `Organization ${organizationId}`,
+  });
+
+  try {
+    // Completeness over what ACTUALLY materialized. `skipped` is the packager's
+    // view of every leaf without a staged file (a superset of the resolver's
+    // `unresolvedLeaves`), so it is the honest "unfinished leaf" count.
+    const incompleteSections: IncompleteLeaf[] = assembled.skipped.map((s) => ({
+      granuleId: s.sectionCode,
+      granuleName: s.sectionCode,
+      status: s.reason,
+    }));
+    const completeness = computeEctdCompleteness(
+      assembled.materialized + assembled.skipped.length,
+      assembled.skipped.length,
+      incompleteSections,
+      0,
+    );
+    if (params.requireComplete) assertEctdSubmissionComplete(completeness);
+
+    const buffer = await fs.readFile(assembled.bundle.path);
+
+    // Honest counts from the actual archive.
+    const JSZip = (await import('jszip')).default;
+    const zip = await JSZip.loadAsync(buffer);
+    const entries = Object.keys(zip.files).filter((f) => !zip.files[f].dir);
+    const moduleDirs = new Set(
+      entries.map((f) => f.split('/')[0]).filter((top) => /^m[1-5]$/.test(top)),
+    );
+
+    return {
+      buffer,
+      filename: path.basename(assembled.bundle.path),
+      sequenceId: sequence.id,
+      sequenceNumber: sequence.sequenceNumber,
+      region: sequence.region,
+      sha256: assembled.bundle.sha256,
+      materialized: assembled.materialized,
+      unresolvedLeaves: assembled.unresolvedLeaves,
+      skipped: assembled.skipped,
+      dtdStatus: assembled.bundle.dtdStatus,
+      stats: {
+        totalModules: moduleDirs.size,
+        totalGranules: assembled.materialized,
+        totalFiles: entries.length,
+        generatedAt: new Date().toISOString(),
+        completeness,
+      },
+    };
+  } finally {
+    await assembled.cleanup();
+  }
+}
+
+export default { assembleSequence, assembleSubmissionEctd };

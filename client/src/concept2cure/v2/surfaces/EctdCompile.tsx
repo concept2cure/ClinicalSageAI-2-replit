@@ -11,10 +11,14 @@
  *                                     completion, overall %), the go/no-go picture
  *   • POST /:projectIdent/validate  — pre-compile validation findings (missing /
  *                                     unapproved / empty required sections), by rule
- *   • POST /:projectIdent/compile   — builds the eCTD 4.0 XML backbone across the
- *                                     selected region (FDA/EMA) and submission type,
- *                                     returns per-module status + the real backbone
- *                                     XML + blocking errors/warnings
+ *   • POST /:projectIdent/compile   — compiles the submission: a program linked to
+ *                                     the canonical submission spine (placed
+ *                                     submission_leaves) assembles the REAL package
+ *                                     server-side (rendered PDF leaves, ICH v3.2.2
+ *                                     index.xml, MD5s) and returns its actual
+ *                                     backbone; otherwise the honest draft backbone
+ *                                     over authored section text, with blockers
+ *                                     saying exactly why no leaf files exist
  *   • GET  /:projectIdent/history   — prior compilations
  *
  * HONESTY: every panel renders live server data, an honest empty, or an honest
@@ -315,9 +319,14 @@ export function EctdCompile(_props: SurfaceViewProps) {
             {compileResult.xmlBackbone && (
               <>
                 <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-${ident.replace(/[^a-zA-Z0-9._-]/g, '_')}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
-                  {I.download} Download eCTD 4.0 backbone XML
+                  {I.download} Download eCTD backbone XML
                 </button>
-                {!compileResult.submissionReady && (
+                {/* Draft-backbone compiles (no leaf files rendered) get the
+                    working-document caveat. A spine-backed compile returned the
+                    package's REAL index.xml — its leaves are rendered files, so
+                    this caveat would be false there; the blockers panel above
+                    already says what still stands between it and transmission. */}
+                {!compileResult.submissionReady && (compileResult.leafFilesRendered ?? 0) === 0 && (
                   <div style={{ fontSize: 11.5, marginTop: 6, color: 'var(--c2c-dim,#667085)' }}>
                     The backbone describes the authored section content and marks every leaf
                     <span className="mono"> rendered=&quot;false&quot;</span>. It is a working document,
