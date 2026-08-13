@@ -16,23 +16,22 @@ jobs:
     env:
       TF_IN_AUTOMATION: true
     steps:
-      # TODO(GA-blocker): pin every `uses:` in this workflow to a full commit
-      # SHA (e.g. actions/checkout@<40-char-sha> # v4.x.x). Floating tags are
-      # supply-chain-mutable and must be SHA-pinned before GA.
-      - uses: actions/checkout@v4
+      # Every `uses:` in this repo's workflow tree is pinned to a full commit
+      # SHA with the human-readable tag in a trailing comment. A tag is a mutable
+      # pointer — whoever can move it can run arbitrary code in this job — so the
+      # SHA is the only reference that actually pins what executes. Read the
+      # comment for the version; change BOTH when upgrading.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
 
       - name: Terraform Security Scan (Checkov)
         # Was `@master` (mutable branch ref — an attacker controlling that
-        # branch could run arbitrary code in this job). Moved off the branch
-        # ref to a versioned major tag. checkov-action is not referenced
-        # elsewhere in this repo to derive an exact MAJOR.MINOR.PATCH, so this
-        # still needs a real pin.
-        # TODO(GA-blocker): pin to commit SHA (resolve the SHA for the intended
-        # bridgecrewio/checkov-action release and replace the tag below).
-        uses: bridgecrewio/checkov-action@v12
+        # branch could run arbitrary code in this job), then `@v12` (a mutable
+        # major tag with the same exposure). Now pinned to the commit the `v12`
+        # tag resolved to at the time of pinning.
+        uses: bridgecrewio/checkov-action@358405ddafaa109ad35d3d607bbc7cf933c742d9 # v12
         with:
           directory: terraform/
           framework: terraform
@@ -47,7 +46,7 @@ jobs:
           terraform plan -no-color -out=tfplan
 
       - name: Comment PR with Plan (snippet)
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
         with:
           script: |
             const fs = require('fs');
