@@ -8,6 +8,7 @@ import { renderPdfBuffersFor510k } from '../export/renderers';
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
+import { assembleDeviceSubmission } from '../services/pathway-engines/device-assembly/assemble-device-submission';
 import {
   descriptorFor,
   listVendoredTemplates,
@@ -707,6 +708,69 @@ router.post('/official', authMiddleware, requireEditorAccess, async (req, res) =
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
       message: error.message || 'Official eSTAR export failed before consequence persistence',
+    });
+  }
+});
+
+const assembleSchema = z.object({
+  pathway: z.enum(['510k', 'de_novo']).default('510k'),
+  variant: z.enum(ESTAR_VARIANTS).default('device'),
+  /** Narrow the authored-content load to one document's sections. */
+  documentId: z.coerce.number().int().positive().optional(),
+  /** Target market for the readiness overlay (optional). */
+  market: z.string().min(1).optional(),
+});
+
+/**
+ * POST /api/510k/estar/assemble
+ * body: { pathway?, variant?, documentId?, market? }
+ *
+ * The device-assembly contract (spec B5) over HTTP: computes what can honestly
+ * be produced for the caller org's REAL authored content (cerv2_510k_sections
+ * → readiness leaves) against the REAL vendored template drop-point — the same
+ * deterministic engine the assemble_device_submission AnA tool uses, with the
+ * inputs loaded server-side instead of caller-supplied. Returns the assembly
+ * result plus a validationReport whose errors are the blockers that prevent a
+ * submittable official eSTAR. Read-only: renders and persists nothing.
+ */
+router.post('/assemble', authMiddleware, requireEditorAccess, async (req, res) => {
+  const validation = assembleSchema.safeParse(req.body ?? {});
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
+  }
+  const { pathway, variant, documentId, market } = validation.data;
+
+  try {
+    const orgId = getOrganizationId(req);
+    const [leaves, vendored] = await Promise.all([
+      loadDeviceContentLeaves(orgId, { documentId }),
+      listVendoredTemplates(),
+    ]);
+
+    const result = assembleDeviceSubmission({
+      pathway,
+      variant,
+      leaves,
+      presentTemplates: vendored.map((t) => t.fileName),
+      market: market as never,
+      environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+    });
+
+    return res.status(200).json({
+      ...result,
+      validationReport: {
+        // Every blocker prevents a submittable official eSTAR — errors, not advice.
+        errors: result.blockers,
+        sectionSummary: result.estar.summary,
+      },
+    });
+  } catch (error: any) {
+    logger.error('device assembly contract failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'DEVICE_ASSEMBLY_FAILED',
+      message: error.message || 'Failed to compute device assembly state',
     });
   }
 });

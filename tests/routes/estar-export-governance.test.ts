@@ -7,6 +7,7 @@ const {
   mockResolveRows,
   mockLogAction,
   mockLoadAuthoredSections,
+  mockLoadContentLeaves,
 } = vi.hoisted(() => ({
   mockRender510k: vi.fn(async () => ({
     coverLetter: Buffer.from('cover'),
@@ -37,6 +38,9 @@ const {
   mockResolveRows: vi.fn<[], unknown[]>(() => []),
   mockLogAction: vi.fn(async () => undefined),
   mockLoadAuthoredSections: vi.fn(async () => [] as Array<{ title: string; content: string }>),
+  mockLoadContentLeaves: vi.fn(
+    async () => [] as Array<{ sectionCode: string; title: string; documentType?: string }>,
+  ),
 }));
 
 vi.mock('../../server/export/renderers', () => ({
@@ -72,7 +76,7 @@ vi.mock('../../server/services/auditService', () => ({
 }));
 
 vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', () => ({
-  loadDeviceContentLeaves: vi.fn(async () => []),
+  loadDeviceContentLeaves: mockLoadContentLeaves,
   loadAuthoredDeviceSections: mockLoadAuthoredSections,
   sectionsToEditorJson: (sections: Array<{ title: string; content: string }>) => ({
     type: 'doc',
@@ -284,5 +288,47 @@ describe('510(k) eSTAR governed export', () => {
       })
     );
     expect(res.end).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/510k/estar/assemble — the device-assembly contract over HTTP', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('reports artifactKind none with blockers when nothing is authored', async () => {
+    mockLoadContentLeaves.mockResolvedValueOnce([]);
+
+    const req = makeReq({ body: { pathway: '510k', variant: 'device' } });
+    const res = createMockResponse() as any;
+
+    await getHandler('/assemble')(req, res);
+
+    expect(mockLoadContentLeaves).toHaveBeenCalledWith(2, { documentId: undefined });
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.artifactKind).toBe('none');
+    expect(payload.canProduceOfficialEstar).toBe(false);
+    expect(payload.validationReport.errors.length).toBeGreaterThan(0);
+    expect(payload.validationReport.errors).toEqual(payload.blockers);
+  });
+
+  it('reports a draft-only artifact for authored content with no vendored template', async () => {
+    mockLoadContentLeaves.mockResolvedValueOnce([
+      { sectionCode: '3', title: 'Device Description', documentType: 'device_description' },
+    ]);
+
+    const req = makeReq({ body: { pathway: '510k', variant: 'device' } });
+    const res = createMockResponse() as any;
+
+    await getHandler('/assemble')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    // Content exists but the official FDA template is not vendored — only the
+    // non-submittable draft package is honestly producible.
+    expect(payload.artifactKind).toBe('content-package-draft');
+    expect(payload.canProduceOfficialEstar).toBe(false);
+    expect(payload.validationReport.sectionSummary).toBeDefined();
   });
 });
