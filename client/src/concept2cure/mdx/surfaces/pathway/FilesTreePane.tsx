@@ -28,7 +28,7 @@ import type {
   SectionTarget,
 } from '../../types';
 
-const PATHWAY_LABEL_FS: Record<string, string> = { k510: '510(k)', pma: 'PMA', cer: 'CER' };
+const PATHWAY_LABEL_FS: Record<string, string> = { k510: '510(k)', pma: 'PMA', cer: 'CER', ivd: 'IVDR' };
 
 interface TreeNode {
   name: string;

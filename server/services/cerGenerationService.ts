@@ -821,7 +821,7 @@ class CerGenerationService {
       .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
 
     const patientSum = await db
-      .select({ total: sql`sum(number_of_patients)` })
+      .select({ total: sql`sum(${cerClinicalEvidence.patients})` })
       .from(cerClinicalEvidence)
       .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
 
