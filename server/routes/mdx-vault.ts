@@ -7,10 +7,13 @@
  *   GET /api/mdx/vault/:artifactId/versions  version history rows
  *
  * Reads from concept2cure_artifacts (existing table, see schema.ts:5276).
- * concept2cure_artifacts.project_id is the legacy projects.id (numeric);
- * regulatory programs (uuid) bind to them via projects.regulatory_program_id
- * which we follow in the WHERE clause. When no program_id is given we list
- * every artifact in the org.
+ * concept2cure_artifacts.project_id is the legacy projects.id (numeric).
+ * Regulatory programs are uuid-keyed and there is NO bridge between the two
+ * in the schema today, so artifacts cannot be filtered by program: a
+ * program_id request is refused honestly (422) rather than 500-ing on a
+ * missing column or passing off the whole org's artifacts as one program's.
+ * Listing without program_id returns every artifact in the org.
+ * The bridge is the subject of docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md.
  *
  * All endpoints return the canonical { data, meta? } envelope. Tenant-
  * scoped via the caller's organizationId. Audit-logged for reads at the
@@ -76,16 +79,31 @@ router.get('/vault', async (req: Request, res: Response) => {
   }
   const { program_id: programId, ctd_prefix: ctdPrefix, status, limit = 200 } = parsed.data;
 
-  /* The project ↔ regulatory_program bridge. projects.regulatory_program_id
-     was added by the MDX migration. When it's null on legacy rows the
-     filter degrades to "any project in this org". */
+  /* The project ↔ regulatory_program bridge. HONESTY NOTE (2026-08-13): the
+     comment here previously claimed `projects.regulatory_program_id` "was
+     added by the MDX migration" — no migration creates it, so this filter
+     raised 42703 and every program-scoped Vault request 500'd. Until the
+     bridge lands (see docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md, awaiting
+     approval), a program-scoped request reports honestly that it cannot be
+     filtered rather than erroring or silently returning the whole org's
+     artifacts as if they were this program's. */
   /* a.organization_id lives in the SQL literal below (not this array) so the
      tenant-isolation CI gate can verify the scope statically. */
   const filters: string[] = [`a.status != 'archived'`];
   const args: unknown[] = [orgId];
   if (programId) {
-    args.push(programId);
-    filters.push(`p.regulatory_program_id::text = $${args.length}`);
+    return clientError(
+      res,
+      422,
+      'Program-scoped vault listing is unavailable',
+      {
+        program_id: [
+          'Artifacts cannot yet be filtered by regulatory program: the ' +
+            'project-to-program bridge does not exist in the schema. Listing ' +
+            'without program_id returns this organization\'s artifacts.',
+        ],
+      },
+    );
   }
   if (ctdPrefix) {
     args.push(`${ctdPrefix}%`);
@@ -103,7 +121,6 @@ router.get('/vault', async (req: Request, res: Response) => {
               a.version, a.content_hash, a.created_by_id, a.created_at, a.updated_at,
               a.locked_at, a.metadata
          FROM concept2cure_artifacts a
-         LEFT JOIN projects p ON p.id = a.project_id
         WHERE a.organization_id = $1 AND ${filters.join(' AND ')}
         ORDER BY a.updated_at DESC
         LIMIT $${args.length}`,
@@ -157,9 +174,12 @@ router.get('/vault/:artifactId', async (req: Request, res: Response) => {
 
   try {
     const { rows } = await pool.query(
-      `SELECT a.*, p.regulatory_program_id
+      // No p.regulatory_program_id here: that column does not exist in the
+      // schema (see the bridge note above), so selecting it raised 42703 and
+      // this endpoint 500'd on every request. The join is dropped with it —
+      // nothing else in this query reads from projects.
+      `SELECT a.*
          FROM concept2cure_artifacts a
-         LEFT JOIN projects p ON p.id = a.project_id
         WHERE a.organization_id = $1
           AND (a.id::text = $2 OR a.artifact_id = $2)
         LIMIT 1`,

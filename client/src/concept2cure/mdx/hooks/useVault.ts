@@ -62,9 +62,6 @@ interface VaultVersionsPayload {
   meta?: { count?: number };
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 function toStatus(status: string, lockedAt: string | null): VaultFileStatus {
   if (lockedAt || status === 'locked') return 'locked';
   if (status === 'approved') return 'final';
@@ -191,11 +188,15 @@ export interface UseVaultResult {
  * program filter only applies to real program ids.
  */
 export function useVault(programId: string | null): UseVaultResult {
-  const url =
-    programId && UUID_RE.test(programId)
-      ? `/api/mdx/vault?program_id=${encodeURIComponent(programId)}`
-      : '/api/mdx/vault';
-  const { data, loading, error, refresh } = useFetchJson<VaultListPayload>(url);
+  /* Program filtering is not requested: no project-to-program bridge exists
+     in the schema, so the server refuses program_id with a 422 (it used to
+     500 on the missing column). Listing org-wide is the honest behaviour —
+     the surface labels the scope so nobody reads it as program-scoped.
+     Restore the filter when the bridge lands (see the server route's note
+     and docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md); `programId` is kept in
+     the signature so callers need not change then. */
+  void programId;
+  const { data, loading, error, refresh } = useFetchJson<VaultListPayload>('/api/mdx/vault');
   const files = useMemo(() => selectVaultFiles(data), [data]);
   const folders = useMemo(() => (files && files.length ? deriveVaultFolders(files) : null), [files]);
   const kpis = useMemo(() => (files && files.length ? deriveVaultKpis(files) : null), [files]);
