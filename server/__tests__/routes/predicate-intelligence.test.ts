@@ -478,4 +478,44 @@ describe('Predicate Intelligence BFF Proxy', () => {
       expect(res.status).toBe(502);
     });
   });
+
+  describe('POST /se-discussion/author — server-derived provenance', () => {
+    it('a client-supplied matrix is ALWAYS sample provenance, even when it claims analyzed', async () => {
+      mockAuthorSE.mockClear();
+      const res = await request(app)
+        .post('/api/predicate-intelligence/se-discussion/author')
+        .query({ program_id: PROGRAM_ID })
+        .send({
+          matrix: { comparison_rows: [], __provenance: 'analyzed' },
+          subject_device_name: 'BX-204',
+        });
+      expect(res.status).toBe(200);
+      expect(mockAuthorSE).toHaveBeenCalledTimes(1);
+      expect(mockAuthorSE.mock.calls[0][0]).toMatchObject({ provenance: 'sample' });
+    });
+
+    it('program_id in the body triggers the live analyzed-matrix fetch (502 when shadow unreachable, never a silent sample)', async () => {
+      mockAuthorSE.mockClear();
+      const res = await request(app)
+        .post('/api/predicate-intelligence/se-discussion/author')
+        .query({ program_id: PROGRAM_ID })
+        .send({ program_id: PROGRAM_ID });
+      expect(res.status).toBe(502);
+      expect(res.body.error).toContain('Live SE matrix unavailable');
+      expect(mockAuthorSE).not.toHaveBeenCalled();
+    });
+  });
 });
+
+const { mockAuthorSE } = vi.hoisted(() => ({
+  mockAuthorSE: vi.fn(async (input: { provenance: string }) => ({
+    authored: true,
+    provenance: input.provenance,
+    sealable: input.provenance === 'analyzed',
+  })),
+}));
+
+vi.mock('../../services/ana/se-discussion/se-discussion-author.js', () => ({
+  isSeDiscussionAuthoringEnabled: () => true,
+  authorSEDiscussion: mockAuthorSE,
+}));
