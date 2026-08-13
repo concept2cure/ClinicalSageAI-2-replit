@@ -109,10 +109,18 @@ export const TB_MOD: Record<string, string> = {
   general: '#7c6f5b',
 };
 
-/* ── Board columns (unifiedTasks status -> 4 columns, Board.tsx) ── */
+/* ── Board columns ──
+   One column per NON-TERMINAL status in TASK_STATUSES, in workflow order.
+   'blocked' has to be here: it is a legal target of every transition in
+   TASK_TRANSITIONS, the server's unblock cascade only wakes successors that are
+   literally in it, and without a column such a task rendered in no column at
+   all — counted in the Blocked stat tile but invisible and unmovable on the
+   board. ('cancelled' is deliberately absent; it is terminal and filtered out
+   of `list` rather than given a column.) */
 export const TB_COLS: BoardColumn[] = [
   { id: 'pending', label: 'To do', tone: 'idle' },
   { id: 'in-progress', label: 'In progress', tone: 'ai' },
+  { id: 'blocked', label: 'Blocked', tone: 'warn' },
   { id: 'review', label: 'In review', tone: 'warn' },
   { id: 'completed', label: 'Done', tone: 'ok' },
 ];

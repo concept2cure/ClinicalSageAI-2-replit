@@ -288,16 +288,42 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   //   · a 428 ESIGN_REQUIRED (approval-gated completion, backed by
   //     task-signoff -> part11/pin-verification) opens the §11.50 PIN ceremony.
   const move = async (t: TaskItem, dir: number) => {
-    const order = TB_COLS.map(c => c.id);
-    const i = order.indexOf(t.status);
-    const ni = Math.max(0, Math.min(order.length - 1, i + dir));
-    if (ni === i) return;
-    const status = order[ni];
+    // Explicit map, not index arithmetic over TB_COLS. Blocked now has a column
+    // (so a blocked task is visible and movable at all), but it is NOT a step on
+    // the happy path — stepping by index would make Advance from "In progress"
+    // land on "Blocked". Every pair below is legal under TASK_TRANSITIONS
+    // (server/services/tasking/task-state-machine.ts); from `blocked`, Advance
+    // resumes the work and Retreat sends it back to the queue.
+    const ADVANCE: Record<string, string | undefined> = {
+      pending: 'in-progress',
+      'in-progress': 'review',
+      review: 'completed',
+      blocked: 'in-progress',
+    };
+    const RETREAT: Record<string, string | undefined> = {
+      'in-progress': 'pending',
+      review: 'in-progress',
+      completed: 'review',
+      blocked: 'pending',
+    };
+    const status = (dir > 0 ? ADVANCE : RETREAT)[t.status];
+    if (!status || status === t.status) return;
     const progress = status === 'completed' ? 100 : t.progress;
     setActionErr('');
     try {
       const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), { status, progress });
-      if (res.ok) setReloadKey((k) => k + 1);
+      if (res.ok) {
+        setReloadKey((k) => k + 1);
+      } else {
+        // apiRequest throws for every non-OK status EXCEPT 401, which it returns.
+        // Without this branch an expired session made the move a silent no-op:
+        // the card stayed put, no banner, no explanation.
+        setActionErr(
+          res.status === 401
+            ? 'Your session has expired — sign in again to move this task.'
+            : `Could not move "${t.title}" (HTTP ${res.status}).`,
+        );
+      }
     } catch (e) {
       if (e instanceof ApiRequestError) {
         const payload = e.payload as { code?: string; error?: unknown } | undefined;
@@ -328,19 +354,35 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         return { ok: false, error: body && body.error ? String(body.error) : 'Could not create the task.' };
       }
       const newTaskId = String(body.data.taskId);
+      // A failed dependency link never blocks the created task — but it must not
+      // be silent either. Swallowing these meant that when every link failed the
+      // board reported an unqualified success while the task landed with no
+      // predecessors: not blocked, not gating, never reached by the cascade.
+      const failed: string[] = [];
       for (const dep of dependsOn) {
         try {
-          await apiRequest('POST', '/api/tasks/tasks/dependencies', {
+          const linkRes = await apiRequest('POST', '/api/tasks/tasks/dependencies', {
             predecessorTaskId: dep,
             successorTaskId: newTaskId,
             dependencyType: 'finish-to-start',
           });
+          if (!linkRes.ok) failed.push(dep);
         } catch {
-          /* a failed dependency link never blocks the created task */
+          failed.push(dep);
         }
       }
       setReloadKey((k) => k + 1);
       setCreating(false);
+      if (failed.length) {
+        const noun = dependsOn.length === 1 ? 'dependency' : 'dependencies';
+        // States the consequence rather than a remedy that does not exist —
+        // there is no add-dependency control outside this create flow.
+        setActionErr(
+          `Task created, but ${failed.length} of ${dependsOn.length} ${noun} could not be linked — it is not blocked by them.`,
+        );
+      }
+      // Still ok: the task itself persisted. Returning ok:false would keep the
+      // modal open and invite a duplicate create.
       return { ok: true };
     } catch {
       return { ok: false, error: 'Network error while creating the task.' };
@@ -623,8 +665,10 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       <details className="tb-gaps">
         <summary>Engineering reality -- backend status</summary>
         <ul>
-          <li><b>Canonical store</b> is <code>unifiedTasks</code>. Section tasks live in <code>projectTasks</code> (own state machine); pyramid tasks are <b>in-memory only</b> (no persistence table); legacy WBS in <code>project_tasks</code>. No reconciliation service -- origin shown per card.</li>
-          <li><b>Audit:</b> every mutation on this board is written to the Part-11 <code>c2c_ana_actions</code> ledger through <code>task-audit.ts</code> -- create, transition (including the e-signature manifestation), archive, dependency link, auto-assign and from-template.</li>
+          <li><b>Canonical store</b> is <code>unifiedTasks</code> (ADR-0011). <code>project_tasks</code> keeps its own schedule-of-events lifecycle and mirrors forward into the canonical table with a deterministic id; the unified work view excludes those mirrored rows so nothing is counted twice. Origin is shown per card.</li>
+          <li><b>Audit:</b> every task create, transition, link and archive writes the Part-11 <code>c2c_ana_actions</code> / <code>audit_logs</code> hash-chained pair through <code>task-audit.ts</code>, on <i>both</i> task routers and on the AnA mirror. Approval-gated completion additionally carries a verified §11.50 signature manifestation.</li>
+          <li><b>Notifications:</b> real. Assignment, blocked, completion and the unblock cascade write to <code>mdx_notifications</code>; an hourly sweep adds due-soon (48h) and overdue, once each per task.</li>
+          <li><b>Both routers gate identically:</b> <code>/api/task-management/*</code> and <code>/api/regulatory/tasks/*</code> share the status state machine (409), the e-signature ceremony (428) and the org-scoped unblock cascade, so governance is a property of the record rather than of the URL. Consolidating them is deferred refactor, not missing enforcement.</li>
           <li><b>Automation:</b> rules are stored and can be dry-run, but no event source dispatches to the rules engine, so a stored rule never fires on its own.</li>
         </ul>
       </details>
@@ -1132,19 +1176,26 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
         },
       );
       const body = await res.json().catch(() => null);
-      const payload = body as { success?: boolean; data?: { tasks?: unknown[] }; error?: string } | null;
+      /* The route replies { success, data: <created tasks ARRAY>, count, template }.
+         This used to read `data.tasks`, which is undefined on an array — so the
+         count silently fell back to the template's advertised size and, worse,
+         the auto-assign id list was always empty, meaning the toggle (ON by
+         default) never actually assigned anything while the UI reported that it
+         had. */
+      const payload = body as { success?: boolean; data?: unknown; error?: string } | null;
       if (!res.ok || payload?.success !== true) {
         setErr(payload?.error || 'Could not create the tasks (HTTP ' + res.status + ').');
         return;
       }
-      const created = Array.isArray(payload.data?.tasks) ? payload.data!.tasks!.length : tpl.taskCount;
+      const createdTasks: unknown[] = Array.isArray(payload.data) ? payload.data : [];
+      const created = createdTasks.length || tpl.taskCount;
 
       /* Auto-assign is a SEPARATE governed step; the instantiate route takes no
          assignee. It runs against the ids that were just created, and a failure
          here is reported without pretending the tasks were not created — they
          were. */
       if (autoAssign) {
-        const ids = (payload.data?.tasks ?? [])
+        const ids = createdTasks
           .map(t => (t as { taskId?: string })?.taskId)
           .filter((x): x is string => typeof x === 'string' && x.length > 0);
         if (ids.length) {

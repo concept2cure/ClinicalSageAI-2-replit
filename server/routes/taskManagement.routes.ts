@@ -14,6 +14,7 @@ import {
 import { getSecureOrgId } from '../utils/tenantContext';
 import { auditTaskAction } from '../services/tasking/task-audit';
 import { loadTaskAnalytics } from '../services/tasking/task-analytics';
+import { listTemplatesForOrg } from '../services/tasking/task-template-catalog';
 import { createNotification } from '../services/notifications/notification-service';
 import {
   BUILTIN_WORKFLOW_TEMPLATES,
@@ -799,22 +800,29 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
 
     const [predecessorRows, successorRows] = await Promise.all([
       storage.db
-        .select({ taskId: unifiedTasks.taskId })
+        .select({ taskId: unifiedTasks.taskId, status: unifiedTasks.status })
         .from(unifiedTasks)
         .where(
           and(
             eq(unifiedTasks.taskId, validatedData.predecessorTaskId),
-            eq(unifiedTasks.organizationId, organizationId)
+            eq(unifiedTasks.organizationId, organizationId),
+            isNull(unifiedTasks.deletedAt)
           )
         )
         .limit(1),
       storage.db
-        .select({ taskId: unifiedTasks.taskId })
+        .select({
+          taskId: unifiedTasks.taskId,
+          status: unifiedTasks.status,
+          title: unifiedTasks.title,
+          assigneeId: unifiedTasks.assigneeId,
+        })
         .from(unifiedTasks)
         .where(
           and(
             eq(unifiedTasks.taskId, validatedData.successorTaskId),
-            eq(unifiedTasks.organizationId, organizationId)
+            eq(unifiedTasks.organizationId, organizationId),
+            isNull(unifiedTasks.deletedAt)
           )
         )
         .limit(1),
@@ -867,9 +875,60 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
       },
     });
 
+    // A blocking edge onto an unfinished predecessor means the successor IS
+    // blocked — so say so. Without this the edge was recorded but no task ever
+    // entered 'blocked', which made cascadeUnblockOnCompletion dead code: it
+    // only wakes successors whose status is literally 'blocked', so completing
+    // a predecessor never unblocked anything and never notified the dependents'
+    // assignees. Guarded by the same state machine the routes use, so an
+    // already-completed or cancelled successor is left alone.
+    const isBlockingEdge = validatedData.isBlocking !== false;
+    let successorBlocked = false;
+    if (
+      isBlockingEdge &&
+      predecessorTask.status !== 'completed' &&
+      successorTask.status !== 'blocked' &&
+      isLegalTransition(successorTask.status, 'blocked')
+    ) {
+      const [blocked] = await storage.db
+        .update(unifiedTasks)
+        .set({ status: 'blocked', updatedAt: new Date() })
+        .where(
+          and(
+            eq(unifiedTasks.taskId, successorTask.taskId),
+            eq(unifiedTasks.organizationId, organizationId),
+            // Compare-and-set: never stomp a status that moved under us.
+            eq(unifiedTasks.status, successorTask.status)
+          )
+        )
+        .returning({ taskId: unifiedTasks.taskId });
+      if (blocked) {
+        successorBlocked = true;
+        await auditTaskAction({
+          orgId: organizationId,
+          userId: getActorUserId(req),
+          command: 'task.transition',
+          taskId: successorTask.taskId,
+          payload: { from: successorTask.status, to: 'blocked' },
+          reason: `Blocked by new dependency on ${validatedData.predecessorTaskId}`,
+        });
+        notifyTaskEvent({
+          organizationId,
+          recipientUserId: successorTask.assigneeId,
+          category: 'task_blocked',
+          title: `Blocked: ${successorTask.title}`,
+          body: 'This task now depends on work that is not finished yet.',
+          taskId: successorTask.taskId,
+        });
+      }
+    }
+
     res.json({
       success: true,
       data: newDependency,
+      /** So the client can say the successor moved, rather than the board
+       *  silently re-rendering it in a different column. */
+      successorBlocked,
     });
   } catch (error) {
     console.error('Error creating dependency:', error);
@@ -1014,13 +1073,6 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
 });
 
 /**
- * Cap on the per-template task preview returned by the list route. A template
- * is a workflow, not a dossier; anything past this is shown as a truncation
- * notice rather than silently dropped.
- */
-const MAX_TEMPLATE_TASK_PREVIEW = 50;
-
-/**
  * GET /api/task-management/templates — the org's workflow templates.
  *
  * The write half of this feature already existed and is thorough:
@@ -1048,67 +1100,7 @@ router.get('/templates', async (req: Request, res: Response) => {
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-
-    const rows = await storage.db
-      .select()
-      .from(taskTemplates)
-      .where(
-        and(
-          eq(taskTemplates.organizationId, organizationId),
-          eq(taskTemplates.isActive, true)
-        )
-      )
-      .orderBy(taskTemplates.name);
-
-    const data = rows.map(t => {
-      const defs = Array.isArray(t.tasks) ? (t.tasks as any[]) : [];
-      const deps = Array.isArray(t.dependencies) ? (t.dependencies as any[]) : [];
-      // Span and effort are derived from the SAME fields the instantiate route
-      // uses (dayOffset / duration / estimatedHours), so the preview cannot
-      // disagree with what actually gets created.
-      const span = defs.reduce(
-        (max, d) => Math.max(max, Number(d?.dayOffset ?? 0) + Number(d?.duration ?? 0)),
-        0,
-      );
-      const estimatedHours = defs.reduce((sum, d) => sum + Number(d?.estimatedHours ?? 0), 0);
-      return {
-        templateId: t.templateId,
-        name: t.name,
-        description: t.description ?? null,
-        category: t.category,
-        submissionType: t.submissionType ?? null,
-        milestone: t.milestone ?? null,
-        isDefault: t.isDefault ?? false,
-        version: t.version ?? 1,
-        usageCount: t.usageCount ?? 0,
-        taskCount: defs.length,
-        dependencyCount: deps.length,
-        /** Days from start to the last task's end; 0 when no definition carries
-         *  timing. Not fabricated — 0 means the template says nothing. */
-        spanDays: span,
-        /** Sum of estimatedHours across definitions; 0 when none carry it. */
-        estimatedHours,
-        /**
-         * A TRIMMED preview of what instantiating creates — the fields the
-         * picker renders, and nothing else. This matters because the route
-         * below writes real unified_tasks rows: the user should be able to see
-         * what is about to be created before it is. Descriptions and any custom
-         * template payload are deliberately excluded to keep the list small.
-         */
-        tasks: defs.slice(0, MAX_TEMPLATE_TASK_PREVIEW).map(d => ({
-          id: String(d?.id ?? ''),
-          title: String(d?.title ?? ''),
-          moduleType: String(d?.moduleType ?? 'general'),
-          priority: String(d?.priority ?? 'medium'),
-          dayOffset: Number(d?.dayOffset ?? 0),
-          duration: Number(d?.duration ?? 0),
-        })),
-        /** True when the preview above was truncated, so the UI can say so
-         *  rather than quietly showing fewer tasks than it will create. */
-        tasksTruncated: defs.length > MAX_TEMPLATE_TASK_PREVIEW,
-      };
-    });
-
+    const data = await listTemplatesForOrg(organizationId);
     return res.json({ success: true, data, meta: { count: data.length } });
   } catch (error) {
     console.error('Error listing task templates:', error);
