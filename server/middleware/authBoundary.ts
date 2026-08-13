@@ -37,9 +37,10 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { authenticateToken } from './auth';
 import { createScopedLogger } from '../utils/logger';
 import { readEnforcementMode } from '../db/rlsEnforcement';
-import { runWithTenantScope } from '../db/tenantStore';
-import { getPool } from '../db/runtime';
-import { LazyRequestDbClient } from './lazyRequestDbClient';
+import {
+  establishRequestTenantScope,
+  isSystemScopedPath,
+} from './establishRequestTenantScope';
 
 const defaultLogger = createScopedLogger('auth-boundary');
 
@@ -147,66 +148,50 @@ function positiveIntegerClaim(value: unknown): string | null {
 }
 
 /**
- * Install the tenant execution envelope once canonical JWT authentication and
- * live membership verification have succeeded. This is the global adoption
- * point for protected `/api` routes; individual route files do not need to
- * recreate pool/session setup.
+ * Assert that an authenticated request carries a usable tenant identity, then
+ * hand off to the canonical scope installer.
+ *
+ * ── Why this is now a thin wrapper ────────────────────────────────────────────
+ * This function used to carry its own copy of the scope-installation logic —
+ * session vars, lazy client, AsyncLocalStorage wrap — gated behind
+ * `readEnforcementMode() !== 'on'`. That was two problems in one:
+ *
+ *   1. A SECOND implementation of tenant-scope setup, diverging from
+ *      `establishRequestTenantScope`, which `authenticateToken` already calls
+ *      on the very same request. Every authenticated request ran both, and the
+ *      second silently overwrote the first's `req.dbClient`.
+ *   2. The RLS gate meant tenant IDENTITY (`req.tenantContext`) was only
+ *      published when the DATABASE ISOLATION knob was on. Production is the only
+ *      environment that accepts `RLS_ENFORCE=on`, so in dev, test and CI
+ *      `req.tenantContext` was simply absent — and everything reading it, most
+ *      notably per-organization rate limiting, quietly degraded and was never
+ *      exercised before production.
+ *
+ * `establishRequestTenantScope` now publishes identity unconditionally and owns
+ * the scope. What remains here is the one control this boundary added that the
+ * scope installer does not: an authenticated request with no resolvable tenant
+ * is rejected outright (AUTH_011) rather than allowed through unscoped.
  */
 function continueWithTenantExecutionContext(req: Request, res: Response, next: NextFunction): void {
-  if (readEnforcementMode() !== 'on') {
-    next();
-    return;
-  }
-
   const tenantId = positiveIntegerClaim(req.user?.organizationId);
   const userId = positiveIntegerClaim(req.user?.userId ?? req.user?.id);
-  if (!tenantId || !userId) {
+
+  // System/cross-tenant consoles and platform-level tokens legitimately carry no
+  // organization claim; the scope installer routes those to the system scope.
+  // Only reject when RLS is actually enforcing, preserving the historical
+  // behaviour for identities that predate the tenant claim.
+  if ((!tenantId || !userId) && readEnforcementMode() === 'on' && !isSystemScopedPath(req)) {
     res.status(401).json({
       error: { code: 'AUTH_011', message: 'Authenticated request is missing tenant context' },
     });
     return;
   }
 
-  const role = req.user?.role ?? null;
-  req.userId = userId;
-  req.tenantId = tenantId;
-  req.userRole = role ?? undefined;
-  req.tenantContext = {
-    ...(req.tenantContext ?? {}),
-    organizationId: tenantId,
-    userId,
-    role,
-  };
+  if (userId) req.userId = userId;
 
-  const lazy = new LazyRequestDbClient(getPool(), async client => {
-    await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [tenantId]);
-    await client.query("SELECT set_config('app.current_user_role', $1, false)", [role ?? '']);
-    await client.query("SELECT set_config('app.current_org_id', $1, false)", [
-      req.tenantContext?.organizationUuid ?? '',
-    ]);
-  });
-  req.dbClient = lazy;
-
-  let released = false;
-  const release = () => {
-    if (released) return;
-    released = true;
-    req.dbClient = null;
-    void lazy.release();
-  };
-  res.once('finish', release);
-  res.once('close', release);
-
-  runWithTenantScope(
-    {
-      tenantId,
-      orgUuid: req.tenantContext.organizationUuid ?? null,
-      role,
-      source: 'request',
-      caller: req.path,
-    },
-    next
-  );
+  // Single canonical implementation. Idempotent — when `authenticateToken` has
+  // already installed the scope for this request, this is a pass-through.
+  establishRequestTenantScope(req, res, next);
 }
 
 /** Cap on the warn-once dedup set so unbounded path cardinality (ids in

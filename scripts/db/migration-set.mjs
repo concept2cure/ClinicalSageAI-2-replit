@@ -833,6 +833,22 @@ export const C2C_MIGRATION_FILES = [
   // tables join the RLS regime via the sweep below (assessment D20).
   'db/migrations/20260807_task_graph_org_columns.sql',
 
+  // ── Tenant offboarding lifecycle ────────────────────────────────────────────
+  // ADD COLUMN IF NOT EXISTS only, on `organizations` — a table that predates
+  // every entry above — so it has no ordering dependency of its own.
+  //
+  // It sits BEFORE the two isolation steps because "the isolation steps are the
+  // tail of the set" is an invariant, not a default: C-33 requires the integer
+  // sweep to be the very last entry, and the uuid step immediately before it
+  // (tests/schema-contract/tenant-isolation-sweep.contract.test.ts,
+  // uuid-tenant-isolation.contract.test.ts). An earlier revision of this entry
+  // sat after the sweep, reasoning that a migration creating no TABLE has
+  // nothing for the sweep to policy and is therefore exempt. That reasoning is
+  // true of THIS file and is still the wrong rule to encode: "sweep last,
+  // always" holds without anyone having to audit each new entry for whether it
+  // creates a table, and it is the version the contract tests enforce.
+  'migrations/20260813_tenant_offboarding_lifecycle.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
@@ -845,7 +861,6 @@ export const C2C_MIGRATION_FILES = [
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
-
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

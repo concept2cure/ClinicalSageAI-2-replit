@@ -19,6 +19,7 @@ import { createScopedLogger } from '../utils/logger';
 import { db } from '../db';
 import crypto from 'crypto';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { invalidateTenantPosture } from '../services/tenant/tenant-lifecycle';
 
 const logger = createScopedLogger('tenant-api');
 const router = Router();
@@ -254,6 +255,12 @@ router.patch('/:id', validateTenantAccessMiddleware, requireAdminRole, async (re
       })
       .where(eq(organizations.id, tenantId))
       .returning();
+
+    // A PATCH here can flip `status` between active and suspended. Drop the
+    // cached lifecycle posture so the change takes effect on the next request
+    // rather than up to a TTL later — the difference matters most in the case
+    // this control exists for, suspending a tenant during an incident.
+    invalidateTenantPosture(tenantId);
 
     res.json(updatedTenant[0]);
   } catch (error) {
