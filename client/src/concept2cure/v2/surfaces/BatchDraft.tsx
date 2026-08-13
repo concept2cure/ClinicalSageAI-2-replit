@@ -318,6 +318,42 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [cards, setCards] = useState<Record<string, CardState>>({});
   const startRef = useRef<Record<string, number>>({});
 
+  /**
+   * Timers scheduled by the offline sample path, so they can be cancelled if
+   * this surface unmounts before they fire.
+   *
+   * ── Why this exists ─────────────────────────────────────────────────────────
+   * The offline fallback below schedules one timer per selected section plus a
+   * final one that moves to 'review'. Each calls setCards/setPhase. Nothing
+   * cancelled them, so navigating away mid-draft left N+1 timers holding a
+   * reference to this component's setState. React 18 no longer warns about
+   * setState-after-unmount, so the leak was silent in the browser.
+   *
+   * It was NOT silent under test. Once the test finished, jsdom tore the
+   * environment down, the pending timers fired against a destroyed global, and
+   * the run died with an uncaught
+   *
+   *   ReferenceError: window is not defined
+   *     ❯ dispatchSetState react-dom-client.development.js
+   *     ❯ Timeout._onTimeout BatchDraft.tsx:500
+   *
+   * which vitest reports as an unhandled error and exits non-zero on — with
+   * every one of its 18,621 tests passing. The delays are 300 + idx*150 ms, so
+   * whether teardown wins the race depends on machine speed, which is why this
+   * surfaced intermittently rather than every run.
+   */
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const trackedTimeout = (fn: () => void, ms: number) => {
+    timersRef.current.push(setTimeout(fn, ms));
+  };
+  useEffect(
+    () => () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    },
+    [],
+  );
+
   const selList = todo.filter((s) => sel.has(s.id));
   // The service refuses more than 20 requests per batch; refuse it here with a
   // reason instead of sending a request that will 400.
@@ -484,7 +520,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     } else {
       /* Offline fallback: generate sample cards */
       selList.forEach((s, idx) => {
-        setTimeout(() => {
+        trackedTimeout(() => {
           setCards((c) => ({
             ...c,
             [s.id]: bdCard({
@@ -497,7 +533,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           }));
         }, 300 + idx * 150);
       });
-      setTimeout(() => { setPhase('review'); }, 300 + selList.length * 150 + 100);
+      trackedTimeout(() => { setPhase('review'); }, 300 + selList.length * 150 + 100);
     }
   };
 
