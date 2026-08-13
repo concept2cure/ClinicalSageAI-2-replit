@@ -601,14 +601,31 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {/* Honest engineering reality (forensic report gaps) */}
+      {/* Honest engineering reality.
+          Every bullet here is re-verified against the server, because three of
+          the four this replaces had gone false while still being shown to
+          authenticated users — and the audit one was the dangerous kind of
+          false. It read "task-audit.ts … is coded but NOT CALLED from task
+          mutation handlers -- task creates/transitions are currently
+          unaudited", telling a user of a Part 11 tool that their governed
+          actions left no ledger entry. `auditTaskAction` is imported and
+          awaited on every mutation this board fires: create, transition
+          (unifiedTasks.routes.ts), archive, link, assign, notify and
+          from-template (taskManagement.routes.ts).
+          Likewise "Notifications: stub only (io.to('tasks').emit commented
+          out)" — that expression appears nowhere in the server; assignment,
+          transition and create all call `notifyTaskEvent`
+          (services/tasking/task-side-effects.ts). And the route note pointed at
+          a client file, `taskingService.ts`, that does not exist in this
+          repository. The index count is dropped rather than corrected (it was
+          8, the table declares 9): a number nothing reads is a number that goes
+          quietly wrong. */}
       <details className="tb-gaps">
         <summary>Engineering reality -- backend status</summary>
         <ul>
-          <li><b>Canonical store</b> is <code>unifiedTasks</code> (8 indexes). Section tasks live in <code>projectTasks</code> (own state machine); pyramid tasks are <b>in-memory only</b> (no persistence table); legacy WBS in <code>project_tasks</code>. No reconciliation service -- origin shown per card.</li>
-          <li><b>Audit:</b> <code>task-audit.ts</code> (writes the Part-11 <code>c2c_ana_actions</code> ledger) is coded but <b>not called</b> from task mutation handlers -- task creates/transitions are currently unaudited.</li>
-          <li><b>Notifications:</b> stub only (<code>io.to('tasks').emit</code> commented out). Section assignments notify; unified tasks do not.</li>
-          <li><b>Route note:</b> client <code>taskingService.ts</code> targets <code>/api/regulatory/tasks/*</code> while routes mount at <code>/api/task-management/*</code> (path reconciliation pending).</li>
+          <li><b>Canonical store</b> is <code>unifiedTasks</code>. Section tasks live in <code>projectTasks</code> (own state machine); pyramid tasks are <b>in-memory only</b> (no persistence table); legacy WBS in <code>project_tasks</code>. No reconciliation service -- origin shown per card.</li>
+          <li><b>Audit:</b> every mutation on this board is written to the Part-11 <code>c2c_ana_actions</code> ledger through <code>task-audit.ts</code> -- create, transition (including the e-signature manifestation), archive, dependency link, auto-assign and from-template.</li>
+          <li><b>Automation:</b> rules are stored and can be dry-run, but no event source dispatches to the rules engine, so a stored rule never fires on its own.</li>
         </ul>
       </details>
       </>
@@ -746,9 +763,17 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
             {t.blocks.map(d => <div key={d} className="tb-dep-row dn">{I.arrowRight} blocks <b>{dep(d)}</b></div>)}
           </div>
         )}
+        {/* Same correction as the board's engineering-reality block: this said
+            the change "would not be written to the c2c_ana_actions ledger",
+            beside the very buttons that write it. Advance/Move back PATCH
+            /api/tasks/tasks/:taskId, and that handler awaits
+            `auditTaskAction({ command: 'task.transition' })` — with the §11.50
+            manifestation in the payload when the transition was signed. Archive
+            is audited as `task.delete`. Telling a regulated user their action is
+            unaudited when it is audited is not a conservative error. */}
         <div className="tb-detail-sec">
           <div className="tb-detail-sec-h">Audit</div>
-          <div className="tb-detail-note" data-warn="true">{I.alertTriangle} <code>task-audit.ts</code> is coded but not yet wired to this mutation path -- this change would not be written to the <code>c2c_ana_actions</code> ledger.</div>
+          <div className="tb-detail-note">{I.shieldCheck} Advancing, moving back or archiving this task is recorded in the Part-11 <code>c2c_ana_actions</code> ledger with your identity, the from/to state and any reason you give.</div>
         </div>
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
