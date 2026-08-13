@@ -31,9 +31,10 @@ tenancy implementation, not a greenfield one.
 | Membership-validated organization switching for multi-org users | `server/routes/authEnterprise.ts` |
 | Seat-licensing decision engine, pure and unit-tested | `server/services/seat-licensing.ts` |
 
-The isolation burndown (`docs/RLS_ENFORCEMENT_BURNDOWN.md`) remains the right
-tracker for its own residual item — a full-schema two-tenant probe under
-`RLS_ENFORCE=on`. Nothing here supersedes it.
+The isolation burndown (`docs/RLS_ENFORCEMENT_BURNDOWN.md`) tracked one residual
+item — a full-schema two-tenant probe under `RLS_ENFORCE=on`. **That is now
+closed** (see R1 below): 222 policied tables, 220 seeded with two tenants, zero
+cross-tenant reads, with a negative control proving the probe can fail.
 
 ---
 
@@ -180,6 +181,181 @@ environment default rather than silently disabling a revenue control.
 
 ---
 
+## 2.5 Second pass — four surfaces bypassed the lifecycle guard, and the ratchet that ends it
+
+Found on a follow-up sweep, after the guard had shipped. Both are the same
+mistake in different clothes: the guard is Express middleware on the `/api`
+chain, and **not everything that reaches tenant data is on that chain.**
+
+### 2.5.1 The public API — a suspended tenant's key kept working
+
+`/api/v1` is on `PUBLIC_API_ALLOWLIST` precisely because it authenticates with
+`X-API-Key` rather than a session — so it never reached `enforceTenantLifecycle`.
+And `validateApiKey` checks the **key's** status (`revoked`, `expired`) and
+nothing else: key status and *organization* status are different facts.
+
+Net: an organization suspended for non-payment, a terminated contract, or a
+security incident kept **full programmatic read and write access**, using a key
+that was itself still `active`. The guard covered the session surface and left a
+hole exactly the shape of the public API — the surface an enterprise customer is
+most likely to have automated against.
+
+Closed in `requireApiKey` (`routes/public-api.ts`): posture consulted after key
+validation, `deny` → 403 with the machine-readable code and `tenantState` so an
+integration can branch, `read_only` → writes blocked and reads allowed, unreadable
+posture → 503 fail-closed. Deliberately not a carve-out like billing: there is no
+"you must be able to reach checkout" equivalent here.
+
+### 2.5.2 The collaboration socket — a suspended tenant kept editing in real time
+
+`server/services/hocuspocus-server.ts` is a different **transport**. It checked
+token class, live membership and per-document tenant ownership — genuinely good
+controls — but not the lifecycle posture, because no Express middleware runs for
+a WebSocket.
+
+This one is sharper than the API-key gap: a collaboration socket is a pure
+**write** channel. A suspended organization's users kept editing documents in
+real time while every HTTP route refused them — the worst possible split for a
+control whose entire job is to stop a suspended tenant working.
+
+Closed in `authenticateCollabConnection`. `deny` refuses the connection;
+`read_only` **downgrades** it via hocuspocus's `connectionConfig.readOnly` rather
+than refusing, because a past-due tenant retains HTTP read access by design and
+making a document readable over one transport but not the other buys nothing.
+Where no `connectionConfig` is available to downgrade with, it fails closed
+rather than admitting a writer. The check sits *after* membership, so a revoked
+user is refused for revocation and never learns the tenant's billing state.
+
+### 2.5.3 Background work — a suspended tenant kept being notified
+
+The third instance of the same pattern, and the one that needed a different
+answer rather than the same check.
+
+`server/jobs/taskDueSweep.ts` selects open, dated, assigned tasks across **every
+organization** and calls `notifyTaskEvent`. It runs on no transport, so no guard
+saw it. A suspended organization's users kept receiving automated mail about work
+that every HTTP route, the public API and the collaboration socket would all now
+refuse them — mail whose links lead to a 403. On the AI-backed sweeps the same
+gap is a spend problem: model budget burned on tenants that are not paying.
+
+Closed with `filterTenantsForBackgroundWork`, resolved once per distinct
+organization rather than per row (a 500-row sweep dominated by one tenant must
+not issue 500 lookups), and reported as a `skippedNotEntitled` count rather than
+a log line per row.
+
+**Background work needed different semantics, not the same check.** Two
+deliberate divergences from the HTTP rule, both pinned by test because getting
+either backwards is silent:
+
+- `read_only` is a **NO**. There is no read-only background job — a sweep exists
+  to write, notify, or bill. Treating it as "go ahead" would let a past-due
+  tenant keep generating notifications and spend, which is what the state exists
+  to stop.
+- An unreadable posture is a **SKIP, not an error**. A sweep has no caller to
+  receive a 503; doing nothing this tick and retrying next is the safe failure,
+  where alerting would turn a database blip into a cron alert storm.
+
+The other jobs were surveyed rather than assumed: `retentionCron` notifies
+*platform* admins with an estate summary, not tenants, and the remaining sweeps
+(`auditChainIntegritySweep`, `corpusIngestionSweep`, `regulatoryHorizonScan`,
+`externalIntelligenceSweep`, `scheduleOfEventsSweep`, `driftSentinelSweep`) run
+estate-wide under a system scope with no per-tenant outward effect. `taskDueSweep`
+was the one that needed the filter.
+
+### 2.5.4 Socket.IO — a third transport, same gap
+
+`server/socketServer.ts` is separate from the hocuspocus socket and carries live
+task, notification, compliance and timer traffic. Its tenant ISOLATION is good —
+rooms derive from the verified handshake principal, and a `check-security-patterns`
+rule blocks namespace-global publishes — but isolation and entitlement are
+different questions, and a suspended organization's users could still connect and
+receive the feed.
+
+Closed at the handshake. Refuses for `read_only` as well as `deny`: unlike the
+hocuspocus socket there is no per-connection read-only mode to downgrade into —
+this namespace is a live event feed and every handler on it publishes — so the
+honest options are connect or do not. Read access to the same data remains on
+HTTP, which `read_only` permits.
+
+### 2.5.6 SCIM — the asymmetry, decided
+
+Left open in the first pass as needing a product call. Decided here, with the
+default chosen deliberately and made reversible without a deploy.
+
+SCIM is mounted at `/scim/v2` — outside `/api`, with its own bearer token — so
+the lifecycle guard never runs for it. A suspended organization's IdP could keep
+**creating** users on a tenancy nobody may log into and nobody is paying for.
+
+The behaviour is **asymmetric**, which is why it is a decision rather than a
+copy of the HTTP rule:
+
+- **Provisioning (create / activate) STOPS.** Adding a seat to a suspended tenant
+  grows something unusable and, on a seat-licensed product, unbillable. An
+  activating `PATCH` counts — re-activation is provisioning wearing a PATCH.
+- **Deprovisioning (delete / deactivate) ALWAYS CONTINUES.** An IdP removing a
+  user is a **security** action: a departed employee, or a compromised account.
+  Blocking it because the tenant is behind on an invoice would turn a billing
+  state into a security incident — and it is the direction an administrator
+  reaches for *during* a suspension.
+- **Reads always continue.** An IdP reconciling its view changes nothing.
+
+It uses the BACKGROUND rule (`allow` only), not the HTTP one: a `read_only`
+tenant must not gain seats either, and there is no safe verb here — every guarded
+route creates or re-activates.
+
+`SCIM_PROVISIONING_ON_SUSPENDED_TENANT=allow` restores the previous behaviour.
+The default is `block` because that is the defensible position, but this is a
+product judgement and the operator gets to override it.
+
+Mutation-verified in both directions, which is what keeps an asymmetry honest:
+disabling the guard fails the two provisioning assertions, and extending it to
+`DELETE` fails the deprovisioning one.
+
+### 2.5.5 The generalizable fix — a ratchet, not a fifth code review
+
+Four surfaces, found one at a time, none related to the others. Finding the fifth
+by reading code again is not a strategy.
+
+`scripts/ci/check-tenant-entry-points.mjs` makes the surface **enumerable**. It
+discovers files matching known entry-point shapes — scheduled sweeps, workers,
+socket transports, alternative-auth routers — and requires each either to
+reference the lifecycle vocabulary or to sit in a baseline **with a written
+reason**. Same idiom as `check-tenant-isolation.mjs` and
+`audit-requestdb-coverage.mjs`, because that idiom is already proven here and a
+second pattern for the same job is just another thing to remember.
+
+It found 16 entry points: 4 now consider entitlement, 12 are baselined. Writing
+those 12 justifications was itself the exercise — three turned out to be false
+positives of the matcher (session-authed routers behind the boundary), two are
+**deliberately unconditional** (audit-chain integrity and retention must run *for*
+suspended tenants, not despite them), six have no per-tenant fan-out at all, and
+one — SCIM — is a genuine open product decision rather than an oversight.
+`server/workers/ivdr-pack-worker.ts` was the one that turned out to need the check
+and got it rather than a justification.
+
+Each baseline entry carries a **content digest**. A justification is true of the
+code as it stood; "this sweep has no per-tenant fan-out" stops being true the
+moment someone adds one, and nothing else would notice. A changed file re-flags
+for re-justification.
+
+Verified by mutation, both arms: a new unguarded sweep fails the gate, and
+appending a line to a baselined file fails it for drift.
+
+**The lesson, stated plainly.** A control mounted on one transport is not a
+platform control. This gate does not prove any individual check is correct — the
+contract tests beside each surface do that — but it does mean a new entry point
+cannot ship having never considered the question, which is exactly how all four
+arrived.
+
+**The generalizable lesson.** A control mounted on one transport is not a
+platform control. The remaining alternative-auth surfaces were enumerated and
+dispositioned: Stripe webhooks must stay open (that is how a suspended tenant
+pays its way back), Firecrawl webhooks are signature-verified ingestion,
+`/api/csp-report` carries no tenant data, and the auth/health/setup paths carry
+none either. SCIM (`/scim/v2`) is now **closed** — see §2.5.6.
+
+---
+
 ## 3. Residual register — triaged, not closed
 
 Ordered by what a prospective enterprise buyer's security review would ask about
@@ -190,10 +366,10 @@ first.
 | ~~R1~~ | ~~Full-schema two-tenant probe under `RLS_ENFORCE=on`~~ | ~~High~~ | **CLOSED 2026-08-13.** `tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` — 222 policied tables, 220 seeded with two tenants, zero cross-tenant reads, ships with a negative control. Closes GA plan item 0.1. |
 | R2 | No per-tenant encryption keys (BYOK/CMK) | High for regulated buyers | Frequently a hard requirement in pharma procurement. Needs a key-hierarchy design, not a patch. |
 | R3 | No data-residency pinning (EU/US) | High for EU sponsors | The schema has no region concept. Architectural. |
-| R4 | Tenant export covers a subset of resources | Medium | `tenant-export.service.ts` is explicitly BETA-scoped and in-memory; the purge path now depends on it, so it should be widened and streamed before the first contractual offboarding. |
+| ~~R4~~ | ~~Tenant export covers a subset of resources~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The curated manifest covered 1 of the 8 tables the purge destroys, and the purge's `finalExportDigest` gate accepted **any non-empty string** — a precondition nothing could satisfy honestly. Now: a catalog-driven full export (`GET /api/tenant-export/full`, ~170 tenant-keyed tables discovered from `information_schema`, not a hand-list), an export **receipt** persisted per digest, and a purge that verifies the digest against a receipt **scoped to that organization**. A structural contract test keeps the purge set a subset of the export set. |
 | ~~R5~~ | ~~No audited support-impersonation flow~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The guard now evaluates the posture for platform actors instead of short-circuiting, and writes a `tenant_lifecycle_override` audit entry (severity `critical` on a denied tenant) plus a `platform_override` metric whenever staff proceed past a refusal. Staff are still never blocked — including when the posture is unreadable. |
-| R6 | Quotas beyond seats (`max_projects`, `max_storage`) still unenforced | Medium | Seats are the contracted unit and are now enforced; the other two remain decoration. |
-| R7 | Organization switch is not audited | Low | Membership is validated (`authEnterprise.ts`), but the switch emits no audit event. |
+| R6 | `max_storage` unenforced | Low–Medium | **Partially mis-triaged in the original register — corrected.** `max_projects` is NOT decoration: `services/atomicQuotaService.js::atomicCreateProject` enforces it inside a transaction with `SELECT … FOR UPDATE`, and both creation routes (`routes/projects-management.ts:244`, `routes/project-hierarchy.ts:229`) go through it. It reads `license.max_projects` rather than `organizations.max_projects`, which is a second source of truth worth reconciling but is a working control. **`max_storage` is genuinely unenforced** — it needs storage accounting that does not exist yet, which is why it is left rather than patched. |
+| ~~R7~~ | ~~Organization switch is not audited~~ | ~~Low~~ | **CLOSED 2026-08-13.** `POST /api/auth/enterprise/select-organization` now writes an `organization_switch` audit event recorded against the DESTINATION org, with the origin org and the role granted in metadata. Authorized-but-unrecorded was the wrong combination for the one endpoint whose job is to move a session between customers' data — a CRO consultant crosses it routinely, and an access review of any one sponsor needs to see when their tenant was entered and by whom. |
 | R8 | Lifecycle posture cache converges across instances only within 60s | Low | Explicit invalidation is wired at every writer, so the mutating instance is immediate; others converge within the TTL. Same trade the membership cache already makes. |
 | ~~R9~~ | ~~`server/routes/tenants.ts` appears unmounted~~ | ~~Low~~ | **CLOSED 2026-08-13.** Confirmed referenced nowhere (it was already carried in `scripts/ci/unreferenced-modules-baseline.json`) and deleted; both ratchets regenerated (unreferenced 109→108, requestdb baseline cleaned). It was the last copy of the ungoverned `db.delete(organizations)` cascade. The only endpoint lost with it is `GET /api/tenants/:id`, which was never reachable. |
 

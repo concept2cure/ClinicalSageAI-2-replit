@@ -42,6 +42,7 @@ import type { Pool } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { invalidateTenantPosture } from './tenant-lifecycle';
 import { invalidateOrgMembershipCache } from '../../middleware/orgMembership';
+import { findExportReceipt } from '../tenant-export/tenant-full-export.service';
 
 const logger = createScopedLogger('tenant-offboarding');
 
@@ -251,9 +252,13 @@ export async function cancelDeletion(
 
 export interface PurgePreconditions {
   /**
-   * SHA-256 of the export manifest handed to the customer. Required: the purge
-   * refuses without evidence that the data-return obligation was discharged.
-   * Pass the digest returned by the tenant-export endpoint.
+   * Digest of the full export handed to the customer. Required, and VERIFIED:
+   * `assertPurgePermitted` looks it up in `tenant_export_receipts` scoped to this
+   * organization, so a fabricated string — or a real digest belonging to a
+   * different tenant — does not open the gate.
+   *
+   * Obtain it from `GET /api/tenant-export/full`, which returns it in the body
+   * and in the `X-Export-Digest` response header.
    */
   finalExportDigest: string;
   /**
@@ -287,10 +292,29 @@ async function assertPurgePermitted(
   organizationId: number,
   preconditions: PurgePreconditions
 ): Promise<OffboardingRecord> {
-  if (!preconditions.finalExportDigest?.trim()) {
+  const digest = preconditions.finalExportDigest?.trim();
+  if (!digest) {
     throw new OffboardingStateError(
       'EXPORT_EVIDENCE_REQUIRED',
       'A final export digest is required before a tenant may be purged'
+    );
+  }
+
+  // VERIFY the digest, do not merely require one.
+  //
+  // An earlier revision accepted any non-empty string here. That is the failure
+  // mode this whole module exists to prevent, reproduced in miniature: a control
+  // that reads as evidence and checks nothing. The receipt is written by the full
+  // export (services/tenant-export/tenant-full-export.service.ts) and is scoped to
+  // the organization, so a digest from a DIFFERENT tenant's export is rejected
+  // too — which is the mistake an operator running several offboardings in one
+  // afternoon would actually make.
+  const receipt = await findExportReceipt(pool, organizationId, digest);
+  if (!receipt) {
+    throw new OffboardingStateError(
+      'EXPORT_EVIDENCE_UNVERIFIED',
+      'No export receipt matches that digest for this organization. Produce a full ' +
+        'export (GET /api/tenant-export/full) and purge with the digest it returns.'
     );
   }
 

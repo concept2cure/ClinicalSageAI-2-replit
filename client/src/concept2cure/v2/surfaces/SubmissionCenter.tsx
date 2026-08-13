@@ -7,7 +7,11 @@
  * portfolio list binds live to GET /api/submissions and the per-submission
  * sequences to GET /api/submissions/:id/sequences (both DB-backed via
  * submission-service) with a four-state render — loading → error → honest empty
- * → real. Slices with no load-time list read (Builder leaves are per-sequence;
+ * → real. The Portfolio view additionally reads the DEVICE journey from the
+ * eSTAR tracker (GET /api/510k/estar/submissions + one POST /assemble verdict
+ * for the section header) — a separate spine from the eCTD core, because eSTAR
+ * is not eCTD and a device filing is never forced into ectd_sequences.
+ * Slices with no load-time list read (Builder leaves are per-sequence;
  * eValidator findings, shadow-review results, and cross-region gaps are
  * POST/AI results, not a list GET) show an honest EmptyState instead of the
  * kit's sample data. Every fixture presented as content, plus the SampleTag,
@@ -19,7 +23,7 @@ import React from 'react';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
 import {
   // Canonical enum / label / state-machine maps (mirror shared/types/
   // submission-constants + the server SEQUENCE_TRANSITIONS) — reference config,
@@ -71,12 +75,92 @@ const SUB_STATUS_TONE: Record<string, string> = {
   archived: 'idle',
 };
 
+/* ── Device filings (eSTAR tracker) ─────────────────────────────────────────
+   eSTAR is NOT eCTD: a tracked device filing never becomes an ectd_sequences
+   row. The device journey is read here from its own canonical tracker,
+   GET /api/510k/estar/submissions (server/routes/510k-estar-routes.ts →
+   estar_submissions), and rendered as its own Portfolio section. Only columns
+   the backend returns are typed; nullable columns render null-safe — never
+   fabricated. ── */
+
+// GET /api/510k/estar/submissions → { submissions: estar_submissions rows }.
+interface DeviceFilingRow {
+  id: string;
+  catalogKey: string;
+  programType: string; // 510k|de_novo|pma|q_sub|ide|513g
+  variant: string; // device|ivd
+  title: string | null;
+  status: string; // draft|filed|under_review|additional_info|decision|withdrawn
+  decision: string | null;
+  fdaTrackingNumber: string | null;
+  filedAt: string | null;
+  decisionDueAt: string | null;
+  projectId: number | null;
+}
+
+// Deterministic display map for the eSTAR filing-status enum (mirrors
+// shared/schema/estar-submission ESTAR_SUBMISSION_STATUSES) — reference
+// config, not sample data. Unknown statuses fall through Chip's honest
+// `{ l: k }` default, so a status is never invented.
+const ESTAR_FILING_STATUS: Record<string, ToneMap> = {
+  draft: { l: 'Draft', t: 'idle' },
+  filed: { l: 'Filed', t: 'ai' },
+  under_review: { l: 'Under review', t: 'ai' },
+  additional_info: { l: 'Additional info', t: 'warn' },
+  decision: { l: 'Decision', t: 'ok' },
+  withdrawn: { l: 'Withdrawn', t: 'idle' },
+};
+
+// POST /api/510k/estar/assemble → assembly verdict (device-assembly contract).
+interface AssemblyVerdictPayload {
+  artifactKind: string; // official-estar | content-package-draft | none
+  blockers?: string[];
+}
+
+// Honest labels for the assembly verdict's artifactKind enum.
+const ARTIFACT_KIND_LABEL: Record<string, string> = {
+  'official-estar': 'official eSTAR producible',
+  'content-package-draft': 'draft content package only — not submittable',
+  none: 'nothing assemblable yet',
+};
+
+type AssemblyVerdictState =
+  | { state: 'loading' }
+  | { state: 'error' }
+  | { state: 'ready'; artifactKind: string; blockerCount: number };
+
+/** The device-section header line: the org-wide assembly verdict (one call). */
+function assemblyReadinessLine(v: AssemblyVerdictState): string {
+  if (v.state === 'loading') return 'Checking assembly readiness…';
+  if (v.state === 'error') return 'Assembly readiness unavailable right now';
+  const kind = ARTIFACT_KIND_LABEL[v.artifactKind] ?? v.artifactKind;
+  return `Assembly readiness: ${kind} · ${v.blockerCount} blocker${v.blockerCount === 1 ? '' : 's'}`;
+}
+
+/** Review-clock cell: only states the tracker actually knows. */
+function reviewClock(f: DeviceFilingRow): string {
+  if (f.decisionDueAt) {
+    const d = new Date(f.decisionDueAt);
+    if (!Number.isNaN(d.getTime())) return `Decision due ${d.toLocaleDateString()}`;
+  }
+  return f.filedAt ? 'No review clock' : 'Not filed yet';
+}
+
 function Chip({ map, k }: { map: Record<string, ToneMap>; k: string }) {
   const m = map[k] ?? { l: k, t: 'idle' };
   return <span className={`rd-chip tone-${m.t}`}>{m.l}</span>;
 }
 
-export function SubmissionCenter({ onAsk }: { onAsk: (text: string) => void }) {
+export function SubmissionCenter({
+  onAsk,
+  onNav,
+}: {
+  onAsk: (text: string) => void;
+  /** Shell navigation (surfaceId router) — the device-filing deep link into
+   *  the 510(k) surface (`device-510k`). Optional so the surface still
+   *  renders standalone (the shell always provides it). */
+  onNav?: (id: string) => void;
+}) {
   const [ws, setWs] = React.useState('portfolio');
   const [selSub, setSelSub] = React.useState<number | null>(null);
   const [lens, setLens] = React.useState('fda_filing');
@@ -85,6 +169,43 @@ export function SubmissionCenter({ onAsk }: { onAsk: (text: string) => void }) {
   const subs = useLiveRows<SubRow>('/api/submissions');
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
+
+  // GET /api/510k/estar/submissions — the org's tracked eSTAR device filings.
+  // { submissions } envelope (not the `{ data }` convention), so the shape is
+  // guarded explicitly; a mismatched 200 reaches the error branch, never an
+  // invented empty state.
+  const deviceRes = useLiveData<{ submissions: DeviceFilingRow[] }>(
+    '/api/510k/estar/submissions',
+    ['/api/510k/estar/submissions'],
+    hasKeys('submissions'),
+  );
+  const deviceFilingsRaw = deviceRes.data?.submissions;
+  const deviceFilings: DeviceFilingRow[] = Array.isArray(deviceFilingsRaw) ? deviceFilingsRaw : [];
+  const deviceEmpty = !deviceRes.loading && !deviceRes.error && deviceFilings.length === 0;
+
+  // POST /api/510k/estar/assemble — ONE org-wide device-assembly verdict for
+  // the section header (read-only on the server; renders/persists nothing).
+  // One call per mount, never per-row.
+  const [assembly, setAssembly] = React.useState<AssemblyVerdictState>({ state: 'loading' });
+  React.useEffect(() => {
+    let cancelled = false;
+    liveMutateOrNull<AssemblyVerdictPayload>('POST', '/api/510k/estar/assemble', {
+      pathway: '510k',
+      variant: 'device',
+    }).then((r) => {
+      if (cancelled) return;
+      if (r.data && typeof r.data.artifactKind === 'string') {
+        const blockers = Array.isArray(r.data.blockers) ? r.data.blockers : [];
+        setAssembly({ state: 'ready', artifactKind: r.data.artifactKind, blockerCount: blockers.length });
+      } else {
+        // Failed or misshapen — say it is unavailable, never fabricate a verdict.
+        setAssembly({ state: 'error' });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // GET /api/submissions/:id/sequences — keyed on the selected submission (a real
   // numeric id). Null path while no submission is selected → the hook stays idle
@@ -177,6 +298,7 @@ export function SubmissionCenter({ onAsk }: { onAsk: (text: string) => void }) {
       </div>
 
       {ws === 'portfolio' && (
+        <>
         <div className="pj-card">
           <div className="pj-card-h">
             <span className="t">Submissions</span>
@@ -249,6 +371,83 @@ export function SubmissionCenter({ onAsk }: { onAsk: (text: string) => void }) {
             )}
           </div>
         </div>
+
+        {/* Device filings — the eSTAR tracker's journey, read-only here.
+            eSTAR is not eCTD: these rows live in estar_submissions and never
+            masquerade as sequences. The header line is the org's one-call
+            device-assembly verdict (artifact kind + blocker count). */}
+        <div className="pj-card">
+          <div className="pj-card-h">
+            <span className="t">Device filings · eSTAR</span>
+            <span className="s">{assemblyReadinessLine(assembly)}</span>
+          </div>
+          <div className="pj-card-b pj-card-b-flush">
+            {deviceRes.loading ? (
+              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+                Loading device filings…
+              </div>
+            ) : deviceRes.error ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load the device filings"
+                hint="The eSTAR filing tracker didn't respond. These are your organization's tracked device filings — sign in and retry, or check the service is reachable."
+              />
+            ) : deviceEmpty ? (
+              <EmptyState
+                icon={I.fileText}
+                title="No device filings tracked yet"
+                hint="Start tracking an eSTAR filing (510(k), De Novo, PMA, Q-Sub…) from the 510(k) surface's filing panel — its status and review clock appear here."
+              />
+            ) : (
+              <table className="ub-inv">
+                <thead>
+                  <tr>
+                    <th>Filing</th>
+                    <th>Program</th>
+                    <th>Status</th>
+                    <th>FDA tracking</th>
+                    <th>Review clock</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deviceFilings.map((f) => (
+                    <tr key={f.id} className="sc-subrow">
+                      <td>
+                        <b>{f.title ?? f.catalogKey}</b>
+                        {f.title ? <span className="sp-row-s"> · {f.catalogKey}</span> : null}
+                        {f.projectId != null ? (
+                          <span className="sp-row-s"> · project #{f.projectId}</span>
+                        ) : null}
+                      </td>
+                      <td>
+                        {appL(f.programType)} <span className="sc-cap">· {f.variant}</span>
+                      </td>
+                      <td>
+                        <Chip map={ESTAR_FILING_STATUS} k={f.status} />
+                        {f.decision ? <span className="sp-row-s"> · {f.decision}</span> : null}
+                      </td>
+                      <td>{f.fdaTrackingNumber ?? '—'}</td>
+                      <td>{reviewClock(f)}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="sc-trans-b"
+                          title="Open the 510(k) surface — the device filing workspace"
+                          onClick={() => onNav && onNav('device-510k')}
+                        >
+                          {I.right} Open 510(k) surface
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+        </>
       )}
 
       {ws === 'planner' && sub && (

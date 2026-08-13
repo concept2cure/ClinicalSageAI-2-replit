@@ -802,6 +802,47 @@ router.post('/select-organization', async (req: Request, res: Response) => {
       { expiresIn: '24h' }
     );
 
+    // AUDIT: this is a tenant-boundary crossing and it was previously silent.
+    //
+    // Membership is validated above, so the switch is authorized — but "authorized"
+    // and "unrecorded" is the wrong combination for the one endpoint on the
+    // platform whose entire job is to move a session from one customer's data to
+    // another's. A CRO consultant serving several sponsors crosses this boundary
+    // routinely, and an access review of any one of those sponsors needs to see
+    // when their tenant was entered and by whom. 21 CFR Part 11 §11.10(d) asks the
+    // same question of any system limiting access to authorized individuals.
+    //
+    // Recorded against the DESTINATION org (the tenant being entered), with the
+    // origin in metadata, because that is the direction a reviewer reads it from.
+    // Fire-and-forget: an audit-sink outage must not break a legitimate switch,
+    // and the failure is logged rather than swallowed.
+    void import('../services/audit/auditLogger')
+      .then(({ logAuditEvent }) =>
+        logAuditEvent({
+          category: 'authorization',
+          severity: 'info',
+          action: 'organization_switch',
+          userId: String(userId),
+          organizationId: String(organizationId),
+          resourceType: 'organization',
+          resourceId: String(organizationId),
+          success: true,
+          metadata: {
+            fromOrganizationId: decoded.organizationId != null ? String(decoded.organizationId) : null,
+            toOrganizationId: String(organizationId),
+            roleInTarget: selectOrgRole,
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+        })
+      )
+      .catch(auditError => {
+        console.warn(
+          '[Enterprise Auth] failed to record organization_switch in the audit trail:',
+          auditError instanceof Error ? auditError.message : String(auditError)
+        );
+      });
+
     res.json({
       success: true,
       token,

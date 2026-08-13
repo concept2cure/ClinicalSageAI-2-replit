@@ -36,7 +36,44 @@ export interface EstarExportOutcome {
   formattingWarnings: number;
   /** Honest blockers when the official eSTAR is not producible (422). */
   blockers: string[];
+  /**
+   * The server refused with 403 { error:'NOT_ENTITLED' } — the capability is
+   * above the org's plan (services/entitlements/require-entitlement). Distinct
+   * from a role 403: only the entitlement shape sets this, so the surface can
+   * render the Locked state (never a dead button) instead of a generic failure.
+   */
+  blockedByEntitlement: boolean;
+  /** Minimum plan tier the server named alongside NOT_ENTITLED (never invented). */
+  requiredTier: string | null;
   error: string | null;
+}
+
+/**
+ * The one-line export status the 510(k) surface renders (pure — extracted so
+ * the Locked/blocked/success wording is unit-testable without a DOM).
+ *
+ * The NOT_ENTITLED line follows the entitlements UX contract (§4, locked-never-
+ * dead): name the real minimum tier and the capability, nothing more.
+ */
+export function exportStatusLine(busy: boolean, outcome: EstarExportOutcome | null): string | null {
+  if (busy) return 'Exporting…';
+  if (!outcome) return null;
+  if (outcome.ok) {
+    const formatting =
+      outcome.formattingErrors + outcome.formattingWarnings > 0
+        ? ` · ${outcome.formattingErrors} formatting errors, ${outcome.formattingWarnings} warnings to fix before submitting`
+        : '';
+    const registry = outcome.governed ? '' : ' · audit-logged; artifact registry placement pending';
+    return `Downloaded ${outcome.filename ?? 'package'}${formatting}${registry}`;
+  }
+  if (outcome.blockedByEntitlement) {
+    return outcome.requiredTier
+      ? `Requires the ${outcome.requiredTier} plan — device assembly readiness`
+      : 'Requires a higher plan — device assembly readiness';
+  }
+  return `Export failed — ${
+    outcome.blockers.length ? outcome.blockers.join(' · ') : outcome.error ?? 'unknown error'
+  }`;
 }
 
 const IDLE: EstarExportOutcome | null = null;
@@ -86,6 +123,9 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
         (typeof json?.message === 'string' && json.message) ||
         (typeof json?.error === 'string' && json.error) ||
         `HTTP ${res.status}`;
+      // Only the entitlement gate's exact 403 shape marks a Locked outcome —
+      // a role/permission 403 must NOT read as a plan limitation.
+      const blockedByEntitlement = res.status === 403 && json?.error === 'NOT_ENTITLED';
       return {
         ok: false,
         governed: false,
@@ -93,6 +133,9 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
         formattingErrors: 0,
         formattingWarnings: 0,
         blockers,
+        blockedByEntitlement,
+        requiredTier:
+          blockedByEntitlement && typeof json?.requiredTier === 'string' ? json.requiredTier : null,
         error: message,
       };
     }
@@ -110,6 +153,8 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       formattingErrors: formatting?.errors ?? 0,
       formattingWarnings: formatting?.warnings ?? 0,
       blockers: [],
+      blockedByEntitlement: false,
+      requiredTier: null,
       error: null,
     };
   } catch (err) {
@@ -120,6 +165,8 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       formattingErrors: 0,
       formattingWarnings: 0,
       blockers: [],
+      blockedByEntitlement: false,
+      requiredTier: null,
       error: err instanceof Error ? err.message : 'Export request failed',
     };
   }

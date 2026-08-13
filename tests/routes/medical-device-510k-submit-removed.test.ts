@@ -1,189 +1,108 @@
 /**
- * Regression contract: the legacy fabricated-FDA-submission endpoint is gone.
+ * Contract: the legacy fabricated-FDA-submission surface stays deleted.
  *
- * POST /api/medical-devices/510k/:submissionId/submit (the SECOND registration
- * of that path in server/routes/medical-device-routes.js) used to fabricate an
- * FDA agency response with no environment gate: a minted `ACK<timestamp>`
- * identifier, a synthetic K-number, a fabricated "received" status with a
- * 90-day review estimate, a "submitted to FDA successfully" message — and it
- * wrote submissionStatus 'submitted' to the database for a transmission that
- * never happened. That handler is now a fail-closed 410 Gone with NO
- * simulation branch (doctrine reference: ESGSubmissionService.transmitToESG).
+ * server/routes/medical-device-routes.js carried POST
+ * /api/medical-devices/510k/:submissionId/submit, which historically fabricated
+ * an FDA agency response with no environment gate: a minted `ACK<timestamp>`
+ * identifier, a synthetic K-number, a fabricated "Submission Received" status
+ * with a 90-day review estimate, and a "510(k) submitted to FDA successfully"
+ * message — and it wrote submissionStatus 'submitted' to the database for a
+ * transmission that never happened.
  *
- * NOTE on dispatch: the same path is registered TWICE in this router. The
- * earlier registration (validate + e-sign only, `transmitted: false` via
- * medicalDeviceService.submit510kToFDA) is the one Express dispatches to; the
- * legacy fabricating registration was shadowed dead code — but dead code that
- * would reactivate as fabrication if the earlier registration were ever
- * removed. These tests therefore pin BOTH layers: the legacy layer must be a
- * 410 that fabricates nothing, and no layer on the path may mint agency
- * identifiers or record submissionStatus 'submitted'.
+ * In the Phase 1 consolidation the whole route file was deleted (zero client
+ * callers; the canonical 510(k) surface is /api/510k/estar/* + /api/510k/device/*
+ * and the honest transmission seam is ESGSubmissionService — see
+ * tests/fda-submission-honesty.contract.test.ts). An earlier version of this
+ * file exercised the router's layers; with the router gone, this contract pins
+ * the deletion itself so the fabrication cannot quietly return:
+ *
+ *   1. the route file does not exist on disk;
+ *   2. nothing under server/bootstrap/ references it (so it cannot be mounted);
+ *   3. no route code under server/ contains the fabrication strings
+ *      (comment-stripped, same idiom as tests/regulatory-honesty.contract.test.ts).
  */
 
-import express from 'express';
-import request from 'supertest';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createMockResponse } from '../setup';
 
-const { mockMedicalDeviceService } = vi.hoisted(() => ({
-  mockMedicalDeviceService: {
-    submit510kToFDA: vi.fn(async () => ({})),
-    update510kSubmission: vi.fn(async () => ({})),
-    get510kSubmission: vi.fn(async () => null),
-    get510kSubmissions: vi.fn(async () => []),
-  },
-}));
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
-vi.mock('../../server/services/medicalDeviceService', () => ({
-  default: mockMedicalDeviceService,
-}));
+/**
+ * Source with comments removed. Assertions here are about what the CODE does —
+ * files may legitimately quote the removed fabrication strings in comments as
+ * the record of why the endpoint is gone (same idiom as
+ * tests/regulatory-honesty.contract.test.ts).
+ */
+const stripComments = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
-vi.mock('../../server/services/quotaEnforcementService.js', () => ({
-  default: { getUsageStatistics: vi.fn(async () => null) },
-}));
-
-vi.mock('../../server/middleware/auth.js', () => ({
-  authenticateJWT: (req: any, _res: any, next: any) => {
-    req.user = { id: 7, organizationId: 42 };
-    next();
-  },
-}));
-
-vi.mock('../../server/middleware/uploadSafety', () => ({
-  assertUploadSafe: vi.fn(async () => undefined),
-  UploadSafetyError: class UploadSafetyError extends Error {},
-}));
-
-import medicalDeviceRoutes from '../../server/routes/medical-device-routes.js';
-
-const SUBMIT_PATH = '/510k/:submissionId/submit';
-
-/** All router layers registered for POST /510k/:submissionId/submit. */
-function submitLayers() {
-  return (medicalDeviceRoutes as any).stack.filter(
-    (l: any) => l.route?.path === SUBMIT_PATH && l.route?.methods?.post
-  );
-}
-
-/** Final handler (past the auth/org middleware) of a route layer. */
-function finalHandler(layer: any) {
-  return layer.route.stack[layer.route.stack.length - 1].handle;
-}
-
-function makeReq() {
-  return {
-    params: { submissionId: '123' },
-    body: {},
-    user: { id: 7, organizationId: 42 },
-    organizationId: 42,
-    userId: 7,
-  } as any;
-}
-
-/** Assertions shared by every response the path can produce: no fabricated agency evidence. */
-function expectNoFabricatedAgencyResponse(payload: unknown) {
-  const serialized = JSON.stringify(payload ?? {});
-  expect(serialized).not.toContain('acknowledgmentNumber');
-  expect(serialized).not.toContain('submissionTrackingNumber');
-  expect(serialized).not.toContain('estimatedReviewTime');
-  expect(serialized).not.toMatch(/ACK\d/);
-  // A K-number is 'K' + year + sequence digits (e.g. K2025000123).
-  expect(serialized).not.toMatch(/K\d{4,}/);
-  expect(serialized).not.toMatch(/Submission Received/i);
-  expect(serialized).not.toMatch(/submitted to FDA successfully/i);
-}
-
-function expectNoSubmittedStatusWrite() {
-  for (const call of mockMedicalDeviceService.update510kSubmission.mock.calls) {
-    // update510kSubmission(orgId, submissionId, updates, userId)
-    expect(call[2]).not.toEqual(expect.objectContaining({ submissionStatus: 'submitted' }));
-    expect(call[2]).not.toEqual(expect.objectContaining({ submissionStatus: 'test_submitted' }));
-  }
-}
-
-describe('legacy fabricated 510(k) FDA submit endpoint is removed', () => {
-  it('the legacy registration returns 410 Gone and fabricates nothing', async () => {
-    const layers = submitLayers();
-    expect(layers.length).toBeGreaterThanOrEqual(1);
-
-    // The fabricating handler was the LAST registration of this path.
-    const handler = finalHandler(layers[layers.length - 1]);
-    const req = makeReq();
-    const res = createMockResponse() as any;
-
-    await handler(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(410);
-    expect(res.json).toHaveBeenCalledTimes(1);
-
-    const payload = res.json.mock.calls[0][0];
-    expect(payload).toEqual(
-      expect.objectContaining({
-        error: 'FDA_TRANSMISSION_NOT_AVAILABLE',
-        transmitted: false,
-        trackFilingsAt: 'POST /api/510k/estar/submissions',
-      })
-    );
-    expect(payload.fdaResponse).toBeUndefined();
-    expectNoFabricatedAgencyResponse(payload);
-
-    // The DB is never told a submission happened.
-    expect(mockMedicalDeviceService.update510kSubmission).not.toHaveBeenCalled();
-  });
-
-  it('no registration of the path mints agency identifiers or records status submitted', async () => {
-    for (const layer of submitLayers()) {
-      const res = createMockResponse() as any;
-      await finalHandler(layer)(makeReq(), res);
-
-      for (const [payload] of res.json.mock.calls) {
-        expectNoFabricatedAgencyResponse(payload);
+/** Recursively collect source files under a directory. */
+function sourceFilesUnder(root: string): string[] {
+  const out: string[] = [];
+  const stack = [root];
+  while (stack.length > 0) {
+    const dir = stack.pop()!;
+    if (!fs.existsSync(dir)) continue;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && entry.name !== 'dist') stack.push(full);
+      } else if (/\.(ts|js|mjs|cjs)$/.test(entry.name) && !/\.(test|spec)\./.test(entry.name)) {
+        out.push(full);
       }
     }
-    expectNoSubmittedStatusWrite();
+  }
+  return out.sort();
+}
+
+describe('the legacy fabricated 510(k) FDA submit surface stays deleted', () => {
+  it('server/routes/medical-device-routes.js does not exist', () => {
+    expect(
+      fs.existsSync(path.join(REPO_ROOT, 'server/routes/medical-device-routes.js')),
+      'medical-device-routes.js is back on disk — the deleted fabrication surface has been reintroduced',
+    ).toBe(false);
   });
 
-  it('the live mounted endpoint returns no fabricated FDA response and never writes submitted', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use('/api/medical-devices', medicalDeviceRoutes);
+  it('no bootstrap registrar references medical-device-routes', () => {
+    const bootstrapFiles = sourceFilesUnder(path.join(REPO_ROOT, 'server/bootstrap'));
+    // Guard against the sweep silently matching nothing.
+    expect(bootstrapFiles.length).toBeGreaterThan(3);
 
-    const res = await request(app).post('/api/medical-devices/510k/123/submit').send({});
-
-    // Express dispatches to the FIRST registration (validate + e-sign, mocked
-    // here to a benign empty result), so any fabricated field in the response
-    // would have to come from route code — there must be none. Once the
-    // duplicate registration is consolidated this request must return 410.
-    expect([200, 410]).toContain(res.status);
-    expect(res.body.fdaResponse).toBeUndefined();
-    expectNoFabricatedAgencyResponse(res.body);
-    expectNoSubmittedStatusWrite();
+    for (const file of bootstrapFiles) {
+      const src = fs.readFileSync(file, 'utf8');
+      expect(
+        src.includes('medical-device-routes'),
+        `${path.relative(REPO_ROOT, file)} references medical-device-routes — nothing may mount the deleted route file`,
+      ).toBe(false);
+    }
   });
 
-  it('the fabrication cannot be reinstated in source (comment-stripped)', () => {
-    const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-    // Strip comments first: the fix deliberately documents the removed strings
-    // in comments, and this contract is about what the CODE does (same idiom
-    // as tests/regulatory-honesty.contract.test.ts).
-    const stripped = fs
-      .readFileSync(path.join(repoRoot, 'server/routes/medical-device-routes.js'), 'utf8')
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/^\s*\/\/.*$/gm, '');
+  it('no route code under server/ contains the fabrication strings (comment-stripped)', () => {
+    // Scope: route-layer code — server/**/routes/** and server/bootstrap/**.
+    // Deliberately NOT all of server/: 'Submission Received' is a legitimate
+    // PDUFA milestone name in server/services/global-ri/global-review-timeline.ts
+    // (FDA receipt of an NDA/BLA — a real agency event, not a fabricated 510(k)
+    // acknowledgement).
+    const routeFiles = sourceFilesUnder(path.join(REPO_ROOT, 'server')).filter((f) => {
+      const rel = path.relative(REPO_ROOT, f).replace(/\\/g, '/');
+      return /\/routes\//.test(rel) || rel.startsWith('server/bootstrap/');
+    });
+    // Guard against the sweep silently matching nothing.
+    expect(routeFiles.length).toBeGreaterThan(100);
 
-    expect(stripped).not.toContain('acknowledgmentNumber');
-    expect(stripped).not.toContain('submissionTrackingNumber');
-    expect(stripped).not.toContain('estimatedReviewTime');
-    expect(stripped).not.toContain('Submission Received');
-    expect(stripped).not.toMatch(/submitted to FDA successfully/i);
-    // No write of a submitted status (reads like the analytics filters use
-    // `=== 'submitted'` and are allowed; object-literal writes are not).
-    expect(stripped).not.toMatch(/submissionStatus:\s*'submitted'/);
-    expect(stripped).not.toMatch(/submissionStatus:\s*testSubmission/);
-    // The fail-closed replacement is present.
-    expect(stripped).toContain("res.status(410)");
-    expect(stripped).toContain('FDA_TRANSMISSION_NOT_AVAILABLE');
+    for (const file of routeFiles) {
+      const stripped = stripComments(fs.readFileSync(file, 'utf8'));
+      const rel = path.relative(REPO_ROOT, file);
+      expect(
+        stripped,
+        `${rel} claims a 510(k) was submitted to FDA — that fabrication was deleted and must not return`,
+      ).not.toMatch(/submitted to FDA successfully/i);
+      expect(
+        stripped,
+        `${rel} fabricates a 'Submission Received' agency status in route code`,
+      ).not.toMatch(/Submission Received/i);
+    }
   });
 });

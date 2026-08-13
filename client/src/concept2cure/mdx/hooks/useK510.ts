@@ -16,6 +16,12 @@
  *      /api/predicate-intelligence/se-matrix?program_id=X (also shadow).
  *      Adapts {rows[]} → kit SeRow[].
  *
+ *  useK510PredicateFallback(deviceName, productCode) — REDUCED predicate
+ *      fallback from /api/510k/device/predicates (openFDA clearances,
+ *      LOCAL endpoint). Only queried once the shadow-backed predicate
+ *      fetch has errored; rows carry no match scoring and must render
+ *      under an explicit "Reduced results" label.
+ *
  * All three handle:
  *   - cancelled fetches on unmount / id change
  *   - non-OK responses (including 502 from a down shadow service) → null
@@ -244,6 +250,91 @@ export function useK510Predicates(programId: string | null): UseK510PredicatesRe
   const list = data.candidates ?? data.rows ?? data.data ?? [];
   const rows = list.map(adaptPredicate).filter((p): p is Predicate => p !== null);
   return { rows: rows.length > 0 ? rows : null, loading, error };
+}
+
+/* ─── Reduced predicate fallback (openFDA clearances, LOCAL endpoint) ── */
+
+/** One openFDA 510(k) clearance record — real FDA data, but NOT the
+ *  predicate-intelligence engine (no SE scoring, no evidence cells).
+ *  Surfaces must label these rows as reduced results. */
+export interface PredicateFallbackRow {
+  kNumber: string;
+  deviceName: string;
+  applicant: string;
+  productCode: string;
+  decisionDate: string;
+  decisionCode: string;
+  clearanceType: string;
+}
+
+interface PredicateFallbackPayload {
+  available: boolean;
+  unavailableReason?: string;
+  results: PredicateFallbackRow[];
+  source: 'openfda';
+  reduced: boolean;
+}
+
+/**
+ * Build the /api/510k/device/predicates query string. Pure + exported so
+ * the fallback contract is unit-testable without a DOM. Null when no
+ * usable term remains (the server 400s an empty query; deviceName needs
+ * 2+ characters) — which also keeps useFetchJson idle while the primary
+ * predicate source is healthy (callers pass nulls until it errors).
+ */
+export function predicateFallbackUrl(
+  deviceName: string | null,
+  productCode: string | null,
+): string | null {
+  const params = new URLSearchParams();
+  if ((deviceName?.trim().length ?? 0) >= 2) params.set('deviceName', deviceName!.trim());
+  if (productCode?.trim()) params.set('productCode', productCode.trim());
+  const qs = params.toString();
+  return qs ? `/api/510k/device/predicates?${qs}` : null;
+}
+
+export interface UseK510PredicateFallbackResult {
+  /** Clearance records, or null while idle / loading / unavailable. */
+  rows: PredicateFallbackRow[] | null;
+  /** Server's honest availability verdict; null until a response lands. */
+  available: boolean | null;
+  /** Set when available=false — why openFDA could not be queried. */
+  unavailableReason: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
+/**
+ * Fetch the REDUCED predicate fallback from /api/510k/device/predicates
+ * (openFDA device/510k.json, in-repo — no shadow service). Only call with
+ * non-null terms once useK510Predicates has errored; pass nulls otherwise
+ * so no request is issued. Rows are real FDA clearance records with no
+ * match scoring — the surface renders them under an explicit
+ * "Reduced results" label, never as predicate-intelligence output.
+ */
+export function useK510PredicateFallback(
+  deviceName: string | null,
+  productCode: string | null,
+): UseK510PredicateFallbackResult {
+  const url = predicateFallbackUrl(deviceName, productCode);
+  const { data, loading, error } = useFetchJson<PredicateFallbackPayload>(url);
+  if (!data) return { rows: null, available: null, unavailableReason: null, loading, error };
+  if (!data.available) {
+    return {
+      rows: null,
+      available: false,
+      unavailableReason: data.unavailableReason ?? 'openFDA unavailable',
+      loading,
+      error,
+    };
+  }
+  return {
+    rows: Array.isArray(data.results) ? data.results : [],
+    available: true,
+    unavailableReason: null,
+    loading,
+    error,
+  };
 }
 
 /* ─── SE matrix (proxies to shadow service) ─────────────────────────── */

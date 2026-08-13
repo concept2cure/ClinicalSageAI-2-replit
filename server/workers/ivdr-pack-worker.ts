@@ -27,6 +27,7 @@ import { renderHtmlToPdfTracked } from '../export/renderers';
 import { putBytes, isVaultAvailable } from '../services/vaultService';
 import archiver from 'archiver';
 import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
+import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
 
 // ── Stable stringify (in-line to avoid import issues in worker context) ──────
 
@@ -192,6 +193,18 @@ async function runPackBuild(pool: Pool, job: ClaimedJob): Promise<string> {
   const projectId = job.project_id;
   const packType = job.pack_type;
   const userId = job.requested_by_user_id || 'system';
+
+  // TENANT LIFECYCLE. This worker claims queued jobs system-wide and then does
+  // real per-tenant work — document assembly, evidence collation, PDF
+  // generation. It runs on no transport, so the HTTP lifecycle guard never saw
+  // it, and a job queued before a suspension would still build and bill after
+  // it. Refusing here is a REFUSAL, not a skip: the job was claimed, so it must
+  // reach a terminal state rather than silently vanish from the queue.
+  if (!(await shouldProcessTenantInBackground(orgId))) {
+    throw new Error(
+      `IVDR_TENANT_NOT_ENTITLED: organization ${orgId} is not entitled to background processing`
+    );
+  }
 
   // ── Step 1: Validate readiness ─────────────────────────────────────────
 

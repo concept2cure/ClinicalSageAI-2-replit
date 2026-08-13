@@ -10,12 +10,23 @@
  * Every route that emits a document renders REAL authored content behind
  * authMiddleware + requireEditorAccess. The four GET /sample/:docType* routes
  * that rendered placeholder documents are gone — see the note where they were.
+ *
+ * Anchor contract (matches 510k-estar-routes.ts): the body carries either the
+ * legacy numeric `projectId` (PM spine, governed artifact-registry placement)
+ * or `meta.ident` (numeric fda510kProjects id / regulatoryPrograms UUID /
+ * program code, resolved org-scoped). UUID/code programs have no PM-spine row
+ * yet, so their exports are delivered + audit-logged with a SHA-256 and
+ * explicitly reported as registry-unplaced. `useProjectContent: true` assembles
+ * the document from the org's authored sections server-side instead of a
+ * client-supplied payload.
  */
 
 import { Router, Request, Response } from 'express';
 import archiver from 'archiver';
+import { createHash } from 'crypto';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
+import { and, eq } from 'drizzle-orm';
 import { stylePacks } from '../export/stylePacks/config';
 import {
   renderPdfBuffersFor510k,
@@ -27,6 +38,15 @@ import {
 import { PassThrough } from 'stream';
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
+import type { ExportSourceType } from '../services/export/governedExportConsequence';
+import { db } from '../db';
+import { fda510kProjects } from '../../shared/schema';
+import { regulatoryPrograms } from '../../shared/schema/programs';
+import auditService from '../services/auditService';
+import {
+  loadAuthoredDeviceSections,
+  sectionsToEditorJson,
+} from '../services/pathway-engines/estar/estar-content-leaves';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -78,33 +98,249 @@ const requireEditorAccess = (req: any, res: any, next: () => void) => {
 // ── Validation schemas ─────────────────────────────────────────────────────────
 const validDocTypes = ['cerv2_510k', 'cerv2_pma', 'cerv2_cer'] as const;
 
-const exportSchema = z.object({
+const editorContentSchema = z.object({
+  type: z.literal('doc'),
+  content: z.array(z.any()).min(1, 'Editor content must have at least one node'),
+});
+
+/**
+ * The export anchor accepts either the legacy numeric PM-spine projectId or a
+ * program identifier (`meta.ident`: numeric fda510kProjects.id,
+ * regulatoryPrograms UUID, or program code) — the same 3-way contract as
+ * server/routes/510k-estar-routes.ts. At least one is required so every export
+ * resolves to a real, org-owned project/program before anything renders.
+ * Content may be supplied inline (TipTap doc) or assembled server-side from
+ * the org's authored sections via `useProjectContent`.
+ */
+const exportObjectSchema = z.object({
   docType: z.enum(validDocTypes),
-  projectId: z.coerce.number().int().positive(),
-  content: z.object({
-    type: z.literal('doc'),
-    content: z.array(z.any()).min(1, 'Editor content must have at least one node'),
-  }),
+  projectId: z.coerce.number().int().positive().optional(),
+  content: editorContentSchema.optional(),
+  /** Assemble content from the org's authored cerv2_510k_sections (the table
+   *  spans 510(k)/PMA/CER despite its name) instead of a client payload. */
+  useProjectContent: z.boolean().optional(),
+  /** Narrow useProjectContent to one document's sections when known. */
+  documentId: z.coerce.number().int().positive().optional(),
   meta: z
     .object({
       id: z.string().optional(),
       title: z.string().optional(),
+      /** Program ident resolved org-scoped server-side (see above). */
+      ident: z.string().min(1).optional(),
     })
     .optional(),
 });
 
-const zipSchema = exportSchema.extend({
-  attachments: z
-    .array(
-      z.object({
-        filename: z.string().min(1).max(255),
-        buffer: z.string().min(1).max(10_485_760), // ~10 MB base64 ≈ 7.5 MB decoded
-        mimeType: z.string().max(127).optional(),
-      })
-    )
-    .max(20)
-    .optional(),
-});
+/** Shared refinement: an anchor and a content source are both required. */
+const exportRefinement = (
+  b: Pick<z.infer<typeof exportObjectSchema>, 'projectId' | 'meta' | 'content' | 'useProjectContent'>,
+  ctx: z.RefinementCtx,
+) => {
+  if (b.projectId === undefined && b.meta?.ident === undefined) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'projectId or meta.ident is required' });
+  }
+  if (b.content === undefined && b.useProjectContent !== true) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'content or useProjectContent is required' });
+  }
+};
+
+const exportSchema = exportObjectSchema.superRefine(exportRefinement);
+
+const zipSchema = exportObjectSchema
+  .extend({
+    attachments: z
+      .array(
+        z.object({
+          filename: z.string().min(1).max(255),
+          buffer: z.string().min(1).max(10_485_760), // ~10 MB base64 ≈ 7.5 MB decoded
+          mimeType: z.string().max(127).optional(),
+        })
+      )
+      .max(20)
+      .optional(),
+  })
+  .superRefine(exportRefinement);
+
+// ── Project / program anchor resolution (ported from 510k-estar-routes) ───────
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface ProjectAnchor {
+  /** Numeric PM-spine project id when one exists — required for artifact-registry placement. */
+  anchorProjectId: number | null;
+  /** The resolved regulatoryPrograms UUID when the ident named a program. */
+  programUuid: string | null;
+  title: string | null;
+}
+
+/**
+ * Resolve the export's anchor, org-scoped: numeric → fda510kProjects.id (GA
+ * path, carries the numeric anchor the artifact registry needs), UUID →
+ * regulatoryPrograms.id, else → regulatoryPrograms.code. Returns null when
+ * nothing in this org matches — the caller must 404, never export against an
+ * unresolved project. A UUID/code program resolves WITHOUT a numeric anchor:
+ * the artifact registry (concept2cure_artifacts.project_id → projects.id FK)
+ * predates the program spine; those exports are delivered + audit-logged but
+ * explicitly not registry-placed (same contract as the estar /build handler,
+ * pending the document-identity contract — RECONCILE.md §6).
+ */
+async function resolveProjectAnchor(orgId: number, ident: string): Promise<ProjectAnchor | null> {
+  if (/^\d+$/.test(ident)) {
+    try {
+      const [row] = await db
+        .select({ id: fda510kProjects.id, deviceName: fda510kProjects.deviceName })
+        .from(fda510kProjects)
+        .where(and(eq(fda510kProjects.id, Number(ident)), eq(fda510kProjects.organizationId, orgId)))
+        .limit(1);
+      if (row) return { anchorProjectId: row.id, programUuid: null, title: row.deviceName ?? null };
+    } catch {
+      /* fall through */
+    }
+    return null;
+  }
+
+  const byUuid = UUID_RE.test(ident);
+  try {
+    const [row] = await db
+      .select({ id: regulatoryPrograms.id, name: regulatoryPrograms.name })
+      .from(regulatoryPrograms)
+      .where(
+        and(
+          byUuid ? eq(regulatoryPrograms.id, ident) : eq(regulatoryPrograms.code, ident),
+          eq(regulatoryPrograms.organizationId, orgId),
+        ),
+      )
+      .limit(1);
+    if (row) return { anchorProjectId: null, programUuid: row.id, title: row.name ?? null };
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
+
+interface ResolvedExport {
+  anchorProjectId: number | null;
+  programUuid: string | null;
+  content: z.infer<typeof editorContentSchema>;
+}
+
+/**
+ * Shared front half of the three export handlers: resolve the anchor (legacy
+ * numeric projectId passes through untouched; meta.ident resolves org-scoped
+ * or 404s) and materialize content (inline payload, or server-side assembly
+ * from the org's authored sections). Sends the error response and returns
+ * null when the export must not proceed.
+ */
+async function resolveExportRequest(
+  req: Request,
+  res: Response,
+  data: z.infer<typeof exportObjectSchema>,
+): Promise<ResolvedExport | null> {
+  const orgId = (req as any).resolvedOrganizationId as number;
+
+  let anchorProjectId: number | null = data.projectId ?? null;
+  let programUuid: string | null = null;
+  if (data.meta?.ident) {
+    const anchor = await resolveProjectAnchor(orgId, data.meta.ident);
+    if (!anchor) {
+      res.status(404).json({ error: 'Project not found in your organization' });
+      return null;
+    }
+    if (anchor.anchorProjectId !== null) anchorProjectId = anchor.anchorProjectId;
+    programUuid = anchor.programUuid;
+  }
+
+  let content = data.content;
+  if (content === undefined && data.useProjectContent) {
+    const sections = await loadAuthoredDeviceSections(
+      orgId,
+      data.documentId !== undefined ? { documentId: data.documentId } : {}
+    );
+    if (sections.length === 0) {
+      res.status(422).json({
+        error: 'NO_AUTHORED_CONTENT',
+        message:
+          'No authored sections found for this organization' +
+          (data.documentId !== undefined ? ` (document ${data.documentId})` : '') +
+          ' — author section content before exporting.',
+      });
+      return null;
+    }
+    content = sectionsToEditorJson(sections) as z.infer<typeof editorContentSchema>;
+  }
+  if (content === undefined) {
+    // Unreachable behind the schema refinement; keep the route fail-closed anyway.
+    res.status(400).json({ error: 'Document has no content to export' });
+    return null;
+  }
+
+  // Validate content has substantive nodes (not just empty paragraphs)
+  const substantiveNodes = content.content.filter(
+    (n: any) => n.type !== 'paragraph' || (n.content && n.content.length > 0)
+  );
+  if (substantiveNodes.length === 0) {
+    res.status(400).json({ error: 'Document has no content to export' });
+    return null;
+  }
+
+  return { anchorProjectId, programUuid, content };
+}
+
+/**
+ * Delivery path for program-spine (UUID) anchors with no PM-spine project row:
+ * the artifact registry cannot place the export yet, so deliver the file and
+ * audit-log it with its SHA-256 (provenance preserved), saying plainly that
+ * registry placement is pending rather than pretending it happened. Mirrors
+ * the audited-unplaced contract in 510k-estar-routes.ts.
+ */
+async function respondAuditedUnplaced(
+  req: Request,
+  res: Response,
+  opts: {
+    sourceType: ExportSourceType;
+    backendRoute: string;
+    programUuid: string | null;
+    fallbackResourceId: string;
+    filename: string;
+    mimeType: string;
+    buffer: Buffer;
+    metadata: Record<string, unknown>;
+  }
+) {
+  const sha256 = createHash('sha256').update(opts.buffer).digest('hex');
+  await auditService.logAction({
+    organizationId: (req as any).resolvedOrganizationId,
+    userId: getUserId(req),
+    action: 'EXPORT_GENERATED',
+    resourceType: 'cerv2_export',
+    resourceId: opts.programUuid ?? opts.fallbackResourceId,
+    details: {
+      backendRoute: opts.backendRoute,
+      sourceType: opts.sourceType,
+      filename: opts.filename,
+      sha256,
+      artifactRegistry: 'unplaced_pending_document_identity_contract',
+      ...opts.metadata,
+    },
+  });
+
+  return res.status(200).json({
+    governed: false,
+    audited: true,
+    source_type: opts.sourceType,
+    artifact_id: null,
+    artifact_registry:
+      'unplaced — artifact registry requires a PM-spine project row; ' +
+      'export is audit-logged with its SHA-256 (pending document-identity contract)',
+    program_id: opts.programUuid,
+    sha256,
+    downloadable_output_ref: {
+      encoding: 'base64',
+      mime_type: opts.mimeType,
+      filename: opts.filename,
+      data: opts.buffer.toString('base64'),
+    },
+  });
+}
 
 const sanitizeFilename = (value: string) =>
   value.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
@@ -174,7 +410,7 @@ function getUserId(req: Request): number {
 
 async function buildZipBuffer(
   docType: (typeof validDocTypes)[number],
-  content: z.infer<typeof exportSchema>['content'],
+  content: z.infer<typeof editorContentSchema>,
   title: string,
   attachments: Array<{ filename: string; buffer: string }>
 ): Promise<Buffer> {
@@ -266,16 +502,12 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta, projectId } = validation.data;
+    const { docType, meta } = validation.data;
     if (!validateExportGovernance(req, res)) return;
 
-    // Validate content has substantive nodes (not just empty paragraphs)
-    const substantiveNodes = content.content.filter(
-      (n: any) => n.type !== 'paragraph' || (n.content && n.content.length > 0)
-    );
-    if (substantiveNodes.length === 0) {
-      return res.status(400).json({ error: 'Document has no content to export' });
-    }
+    const resolved = await resolveExportRequest(req, res, validation.data);
+    if (!resolved) return;
+    const { content } = resolved;
 
     let pdfBuffer: Buffer;
     try {
@@ -294,9 +526,28 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.pdf';
     const placement = resolveCtdPlacement(docType);
+    const exportMetadata = {
+      docType,
+      format: 'pdf',
+      programId: resolved.programUuid ?? undefined,
+    };
+
+    if (resolved.anchorProjectId === null) {
+      return respondAuditedUnplaced(req, res, {
+        sourceType: 'export_pdf',
+        backendRoute: 'POST /api/cerv2/export/pdf',
+        programUuid: resolved.programUuid,
+        fallbackResourceId: meta?.ident ?? meta?.id ?? docType,
+        filename,
+        mimeType: 'application/pdf',
+        buffer: pdfBuffer,
+        metadata: exportMetadata,
+      });
+    }
+
     const consequence = await createGovernedExportConsequence({
       organizationId: (req as any).resolvedOrganizationId,
-      projectId,
+      projectId: resolved.anchorProjectId,
       userId: getUserId(req),
       title: meta?.title || `${docType} PDF Export`,
       contentForArtifact: JSON.stringify(content),
@@ -307,7 +558,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
       binaryOutput: pdfBuffer,
       mimeType: 'application/pdf',
       filename,
-      metadata: { docType, format: 'pdf' },
+      metadata: exportMetadata,
     });
 
     return res.status(200).json(consequence);
@@ -332,16 +583,12 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta, projectId } = validation.data;
+    const { docType, meta } = validation.data;
     if (!validateExportGovernance(req, res)) return;
 
-    // Validate content has substantive nodes
-    const substantiveNodes = content.content.filter(
-      (n: any) => n.type !== 'paragraph' || (n.content && n.content.length > 0)
-    );
-    if (substantiveNodes.length === 0) {
-      return res.status(400).json({ error: 'Document has no content to export' });
-    }
+    const resolved = await resolveExportRequest(req, res, validation.data);
+    if (!resolved) return;
+    const { content } = resolved;
 
     let docxBuffer: Buffer;
     try {
@@ -360,9 +607,29 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
 
     const filename = sanitizeFilename(meta?.title || `${docType}_export`) + '.docx';
     const placement = resolveCtdPlacement(docType);
+    const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const exportMetadata = {
+      docType,
+      format: 'docx',
+      programId: resolved.programUuid ?? undefined,
+    };
+
+    if (resolved.anchorProjectId === null) {
+      return respondAuditedUnplaced(req, res, {
+        sourceType: 'export_docx',
+        backendRoute: 'POST /api/cerv2/export/docx',
+        programUuid: resolved.programUuid,
+        fallbackResourceId: meta?.ident ?? meta?.id ?? docType,
+        filename,
+        mimeType: docxMime,
+        buffer: docxBuffer,
+        metadata: exportMetadata,
+      });
+    }
+
     const consequence = await createGovernedExportConsequence({
       organizationId: (req as any).resolvedOrganizationId,
-      projectId,
+      projectId: resolved.anchorProjectId,
       userId: getUserId(req),
       title: meta?.title || `${docType} DOCX Export`,
       contentForArtifact: JSON.stringify(content),
@@ -371,9 +638,9 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
       suggestedPlacement: placement.suggestedPlacement,
       backendRoute: 'POST /api/cerv2/export/docx',
       binaryOutput: docxBuffer,
-      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      mimeType: docxMime,
       filename,
-      metadata: { docType, format: 'docx' },
+      metadata: exportMetadata,
     });
 
     return res.status(200).json(consequence);
@@ -398,17 +665,13 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
         .json({ error: 'Invalid request', details: validation.error.flatten() });
     }
 
-    const { docType, content, meta, attachments = [], projectId } = validation.data;
+    const { docType, meta, attachments = [] } = validation.data;
     if (!validateExportGovernance(req, res)) return;
     const title = sanitizeFilename(meta?.title || meta?.id || docType);
 
-    // Validate content has substantive nodes before starting ZIP stream
-    const substantiveNodes = content.content.filter(
-      (n: any) => n.type !== 'paragraph' || (n.content && n.content.length > 0)
-    );
-    if (substantiveNodes.length === 0) {
-      return res.status(400).json({ error: 'Document has no content to export' });
-    }
+    const resolved = await resolveExportRequest(req, res, validation.data);
+    if (!resolved) return;
+    const { content } = resolved;
 
     // Validate attachment filenames for path traversal
     for (const att of attachments) {
@@ -424,9 +687,29 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
 
     const placement = resolveCtdPlacement(docType);
     const filename = `${title}_export.zip`;
+    const exportMetadata = {
+      docType,
+      format: 'zip',
+      attachmentCount: attachments.length,
+      programId: resolved.programUuid ?? undefined,
+    };
+
+    if (resolved.anchorProjectId === null) {
+      return respondAuditedUnplaced(req, res, {
+        sourceType: 'export_zip',
+        backendRoute: 'POST /api/cerv2/export/zip',
+        programUuid: resolved.programUuid,
+        fallbackResourceId: meta?.ident ?? meta?.id ?? docType,
+        filename,
+        mimeType: 'application/zip',
+        buffer: zipBuffer,
+        metadata: exportMetadata,
+      });
+    }
+
     const consequence = await createGovernedExportConsequence({
       organizationId: (req as any).resolvedOrganizationId,
-      projectId,
+      projectId: resolved.anchorProjectId,
       userId: getUserId(req),
       title: meta?.title || `${docType} ZIP Export`,
       contentForArtifact: JSON.stringify(content),
@@ -437,7 +720,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
       binaryOutput: zipBuffer,
       mimeType: 'application/zip',
       filename,
-      metadata: { docType, format: 'zip', attachmentCount: attachments.length },
+      metadata: exportMetadata,
     });
 
     return res.status(200).json(consequence);

@@ -41,7 +41,6 @@ const APPROVED = new Set([
   'server/services/cerGenerationService.ts',
   'server/services/eSTARValidator.ts',
   'server/services/biotech-artifact-generator.ts',
-  'server/services/fda510kDocumentGenerator.js',
   'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
   'server/services/claude/ClaudeToolExecutor.ts',

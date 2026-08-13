@@ -307,8 +307,7 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
     res.json({
       success: true,
       message: 'All FDA forms generated successfully',
-      forms: result.forms,
-      mainDocument: result.mainDocument
+      forms: result.forms
     });
 
   } catch (error: any) {

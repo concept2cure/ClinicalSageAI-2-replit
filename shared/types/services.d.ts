@@ -180,11 +180,6 @@ declare module '*/enhancedPdfBuilder.js' {
   export default enhancedPdfBuilder;
 }
 
-declare module '*/fda510kDocumentGenerator.js' {
-  const fda510kDocumentGenerator: Record<string, (...args: any[]) => any>;
-  export default fda510kDocumentGenerator;
-}
-
 declare module '*/cmcBlueprintService.js' {
   const cmcBlueprintService: Record<string, (...args: any[]) => any>;
   export default cmcBlueprintService;

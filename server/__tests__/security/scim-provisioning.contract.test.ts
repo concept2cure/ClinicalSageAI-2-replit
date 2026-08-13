@@ -19,9 +19,17 @@ import request from 'supertest';
 import { createHash } from 'crypto';
 import { __resetScimDbTenantCache } from '../../routes/scim';
 
-const { queryMock, clientQueryMock } = vi.hoisted(() => ({
+const { queryMock, clientQueryMock, tenantEntitledMock } = vi.hoisted(() => ({
   queryMock: vi.fn(),
   clientQueryMock: vi.fn(),
+  // SCIM sits outside /api, so the lifecycle guard never runs for it and the
+  // router consults the posture itself. Driven explicitly here — an entitled
+  // tenant is the baseline, and the suspended case is exercised below.
+  tenantEntitledMock: vi.fn(async () => true),
+}));
+
+vi.mock('../../services/tenant/tenant-lifecycle.js', () => ({
+  shouldProcessTenantInBackground: tenantEntitledMock,
 }));
 
 vi.mock('../../db', () => ({
@@ -266,5 +274,81 @@ describe('SCIM provisioning — DB-backed tenant tokens', () => {
       .get('/scim/v2/Users')
       .set('Authorization', 'Bearer not-in-env-or-db');
     expect(res.status).toBe(401);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tenant lifecycle on the SCIM surface.
+//
+// The behaviour is deliberately ASYMMETRIC: provisioning a suspended tenant
+// grows something unusable and unbillable, while deprovisioning is a SECURITY
+// action — an IdP removing a departed employee or a compromised account —
+// and blocking it would turn a billing state into a security incident.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('SCIM respects tenant entitlement — asymmetrically', () => {
+  beforeEach(() => {
+    tenantEntitledMock.mockResolvedValue(true);
+  });
+
+  it('REFUSES to create a user for a non-entitled organization', async () => {
+    tenantEntitledMock.mockResolvedValue(false);
+    const res = await request(app)
+      .post('/scim/v2/Users')
+      .set('Authorization', 'Bearer test-scim-token-value')
+      .send({ userName: 'new@example.test', active: true });
+    expect(res.status).toBe(403);
+    expect(String(res.body?.detail ?? '')).toMatch(/not active/i);
+  });
+
+  it('STILL deactivates a user for a non-entitled organization', async () => {
+    // The load-bearing case. Offboarding must not depend on the invoice.
+    tenantEntitledMock.mockResolvedValue(false);
+    queryMock.mockReset();
+    queryMock.mockResolvedValue({ rows: [{ id: 5, email: 'a@b.test', name: 'A', status: 'inactive' }] });
+    const res = await request(app)
+      .delete('/scim/v2/Users/5')
+      .set('Authorization', 'Bearer test-scim-token-value');
+    expect(res.status).not.toBe(403);
+  });
+
+  it('STILL allows a DEACTIVATING patch for a non-entitled organization', async () => {
+    tenantEntitledMock.mockResolvedValue(false);
+    queryMock.mockReset();
+    queryMock.mockResolvedValue({ rows: [{ id: 5, email: 'a@b.test', name: 'A', status: 'inactive' }] });
+    const res = await request(app)
+      .patch('/scim/v2/Users/5')
+      .set('Authorization', 'Bearer test-scim-token-value')
+      .send({ Operations: [{ op: 'replace', path: 'active', value: false }] });
+    expect(res.status).not.toBe(403);
+  });
+
+  it('REFUSES an ACTIVATING patch for a non-entitled organization', async () => {
+    // Re-activation is provisioning wearing a PATCH.
+    tenantEntitledMock.mockResolvedValue(false);
+    queryMock.mockReset();
+    queryMock.mockResolvedValue({ rows: [{ id: 5, email: 'a@b.test', name: 'A', status: 'active' }] });
+    const res = await request(app)
+      .patch('/scim/v2/Users/5')
+      .set('Authorization', 'Bearer test-scim-token-value')
+      .send({ Operations: [{ op: 'replace', path: 'active', value: true }] });
+    expect(res.status).toBe(403);
+  });
+
+  it('is reversible without a deploy via SCIM_PROVISIONING_ON_SUSPENDED_TENANT=allow', async () => {
+    // A product judgement the operator gets to override.
+    const original = process.env.SCIM_PROVISIONING_ON_SUSPENDED_TENANT;
+    process.env.SCIM_PROVISIONING_ON_SUSPENDED_TENANT = 'allow';
+    try {
+      tenantEntitledMock.mockResolvedValue(false);
+        const res = await request(app)
+        .post('/scim/v2/Users')
+        .set('Authorization', 'Bearer test-scim-token-value')
+        .send({ userName: 'new@example.test', active: true });
+      expect(res.status).not.toBe(403);
+    } finally {
+      if (original === undefined) delete process.env.SCIM_PROVISIONING_ON_SUSPENDED_TENANT;
+      else process.env.SCIM_PROVISIONING_ON_SUSPENDED_TENANT = original;
+    }
   });
 });

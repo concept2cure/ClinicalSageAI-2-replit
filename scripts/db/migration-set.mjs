@@ -918,6 +918,11 @@ export const C2C_MIGRATION_FILES = [
   // judgement. The sweep will not touch these tables anyway — it keys on an
   // org column they do not have, and it never replaces an existing policy.
   'db/migrations/20260813_child_table_parent_scoped_rls.sql',
+  // Export receipts — what turns the purge's `finalExportDigest` precondition
+  // from "a non-empty string was supplied" into "an export of THIS tenant was
+  // actually produced". Creates one table, so it must precede the isolation
+  // steps below (C-33: the sweep has to see everything the set creates).
+  'migrations/20260813b_tenant_export_receipts.sql',
 
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
