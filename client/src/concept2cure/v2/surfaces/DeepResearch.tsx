@@ -7,11 +7,13 @@ import { AnswerLead } from '../AnswerLead';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import {
-  DR_CONN,
+  // Canonical display config only — the category label map, the engine's two
+  // research depths (pinned to the engine's own cost model by
+  // deepResearchPricing.test.ts) and the tier→tone map. The connector CATALOG
+  // (DR_CONN) is deliberately NOT imported any more; see the note on `conn`.
   DR_CATS,
   DEPTHS,
   TIER_TONE,
-  type ConnectorInfo,
   type ConnectorState,
   type DrJob,
   type ResearchDepth,
@@ -43,6 +45,12 @@ interface DrBoard {
   connectors?: ConnectorState[];
   connectorCount?: number;
   configuredCount?: number;
+}
+
+/** POST /api/deep-research/connectors → { success } | { error }. */
+interface DrConnectorWrite {
+  success?: boolean;
+  error?: string;
 }
 interface DrResult { title?: string; conn?: string; source?: string; meta?: string; date?: string; url?: string }
 interface DrRunJob {
