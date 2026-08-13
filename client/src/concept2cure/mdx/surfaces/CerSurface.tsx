@@ -30,14 +30,18 @@ import { GsprMatrixTab } from './cer/GsprMatrixTab';
 import { EquivalenceTab } from './cer/EquivalenceTab';
 import { PmsPmcfTab } from './cer/PmsPmcfTab';
 import { GeneratorTab } from './cer/GeneratorTab';
+import type { EditorSectionRef } from '../../v2/editorTarget';
 
 export interface CerSurfaceProps {
   /** Active CER program from the shell's selection. */
   program: Program | null;
   onAskAna: (text: string) => void;
+  /** Open the one document editor; a section ref deep-links to that section
+   *  (Generator tab rows, DossierDrawer hand-off). */
+  onOpenEditor?: (section?: EditorSectionRef) => void;
 }
 
-export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
+export function CerSurface({ program, onAskAna, onOpenEditor }: CerSurfaceProps) {
   const programId = program?.id ?? null;
   const [tab, setTab] = React.useState<CerTabId>('signals');
 
@@ -111,6 +115,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
           literature={extras.literature}
           literatureTotal={extras.literatureTotal}
           loading={extras.loading}
+          programId={programId}
           programTitle={program?.title ?? null}
           onAskAna={onAskAna}
         />
@@ -149,6 +154,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
           literatureTotal={extras.literatureTotal}
           profile={profileState.profile}
           onAskAna={onAskAna}
+          onOpenEditor={onOpenEditor}
         />
       </CerTabPanel>
     </>
@@ -159,6 +165,7 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
       pathway="cer"
       workspace={workspace}
       onAskAna={onAskAna}
+      onOpenEditor={onOpenEditor}
       programId={programId}
     />
   );

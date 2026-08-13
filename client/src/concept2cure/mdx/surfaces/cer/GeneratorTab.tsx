@@ -36,6 +36,7 @@ import { readEquivalentDevices } from './EquivalenceTab';
 import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { useSampleMode } from '../../components/DataGate';
 import { useSampleRows } from '../../lib/useSampleRows';
+import type { EditorSectionRef } from '../../../v2/editorTarget';
 
 export interface GeneratorTabProps {
   program: Program | null;
@@ -50,6 +51,11 @@ export interface GeneratorTabProps {
   literatureTotal: number;
   profile: DeviceProfileView | null;
   onAskAna: (text: string) => void;
+  /** Open the one document editor on this section. Code + label travel so the
+   *  editor can select the matching authored section — or say honestly that
+   *  it holds no such section yet. Absent → the affordance is not drawn (a
+   *  button that navigates and claims nothing is the defect this fixes). */
+  onOpenEditor?: (section?: EditorSectionRef) => void;
 }
 
 function downloadSectionsCsv(rows: Array<{ label: string; status: string }>) {
@@ -78,6 +84,7 @@ export function GeneratorTab({
   literatureTotal,
   profile,
   onAskAna,
+  onOpenEditor,
 }: GeneratorTabProps) {
   const sampleOn = useSampleMode();
   const structure = useCerStructure();
@@ -368,7 +375,22 @@ export function GeneratorTab({
                           label={`Draft ${s.label} with AnA`}
                         />
                       </div>
-                      <span className={`status-pill ${s.status}`}>{s.status}</span>
+                      {/* One flex cell for status + editor hand-off: .estar-row is a
+                          3-column grid, so a 4th direct child would wrap to its own
+                          row instead of sitting beside the pill. */}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <span className={`status-pill ${s.status}`}>{s.status}</span>
+                        {onOpenEditor && (
+                          <button
+                            className="tb-btn"
+                            title={`Open “${s.label}” in the document editor`}
+                            aria-label={`Open ${s.label} in the document editor`}
+                            onClick={() => onOpenEditor({ code: s.id, label: s.label })}
+                          >
+                            {I.edit}
+                          </button>
+                        )}
+                      </span>
                     </div>
                     {s.draft ? (
                       <AnaDraftBanner draft={s.draft} onAccepted={refreshSections} />
