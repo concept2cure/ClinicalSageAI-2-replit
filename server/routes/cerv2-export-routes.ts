@@ -39,7 +39,7 @@ import { PassThrough } from 'stream';
 import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 import type { ExportSourceType } from '../services/export/governedExportConsequence';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import auditService from '../services/auditService';
@@ -183,10 +183,19 @@ interface ProjectAnchor {
  * explicitly not registry-placed (same contract as the estar /build handler,
  * pending the document-identity contract — RECONCILE.md §6).
  */
-async function resolveProjectAnchor(orgId: number, ident: string): Promise<ProjectAnchor | null> {
+async function resolveProjectAnchor(
+  req: Request,
+  orgId: number,
+  ident: string,
+): Promise<ProjectAnchor | null> {
+  // Resolved once, up front, and deliberately OUTSIDE the try blocks below: a
+  // missing tenant scope is a wiring fault, not a miss, and must not be caught
+  // by the fall-through and reported to the caller as "project not found".
+  const rdb = requestDb(req);
+
   if (/^\d+$/.test(ident)) {
     try {
-      const [row] = await db
+      const [row] = await rdb
         .select({ id: fda510kProjects.id, deviceName: fda510kProjects.deviceName })
         .from(fda510kProjects)
         .where(and(eq(fda510kProjects.id, Number(ident)), eq(fda510kProjects.organizationId, orgId)))
@@ -200,7 +209,7 @@ async function resolveProjectAnchor(orgId: number, ident: string): Promise<Proje
 
   const byUuid = UUID_RE.test(ident);
   try {
-    const [row] = await db
+    const [row] = await rdb
       .select({ id: regulatoryPrograms.id, name: regulatoryPrograms.name })
       .from(regulatoryPrograms)
       .where(
@@ -240,7 +249,7 @@ async function resolveExportRequest(
   let anchorProjectId: number | null = data.projectId ?? null;
   let programUuid: string | null = null;
   if (data.meta?.ident) {
-    const anchor = await resolveProjectAnchor(orgId, data.meta.ident);
+    const anchor = await resolveProjectAnchor(req, orgId, data.meta.ident);
     if (!anchor) {
       res.status(404).json({ error: 'Project not found in your organization' });
       return null;
