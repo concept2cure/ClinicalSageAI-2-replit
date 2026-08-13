@@ -19,6 +19,7 @@
  */
 
 import type { AuditLogEntry } from './types';
+import { runWithSystemTenantScope } from '../../db/tenantStore';
 
 /**
  * Resolve the application pool for callers that construct the logger without
@@ -56,8 +57,10 @@ export class GatewayAuditLogger {
   private buffer: AuditLogEntry[] = [];
   private maxBufferSize = 100;
   private storeVerified = false;
-  /** Set once the store is known unusable, so the failure is reported once, not per call. */
+  /** Set once the store is known STRUCTURALLY unusable, so it is reported once, not per call. */
   private storeUnusable: string | null = null;
+  /** Set once a non-structural failure has been reported, so retries stay quiet. */
+  private transientReported = false;
 
   /** Set once resolveDefaultPool() has been tried, so it is tried exactly once. */
   private poolResolved = false;
@@ -111,6 +114,30 @@ export class GatewayAuditLogger {
    * then failed into the same swallowing catch.
    */
   private async checkStore(pool: any): Promise<string | null> {
+    return runWithSystemTenantScope('ai-gateway:audit-store-probe', () =>
+      this.checkStoreScoped(pool),
+    );
+  }
+
+  /**
+   * ── Why the caller above declares a tenant scope ──────────────────────────
+   * Pool instrumentation blocks ANY unscoped `pool.query` once RLS_ENFORCE=on,
+   * and production permits no other value. Without the scope, this probe threw
+   *
+   *   [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope
+   *
+   * which checkStore() reported as "probe failed", which initialize() turned
+   * into a fail-closed boot error — so the production build shut down before it
+   * listened. Caught by the production-boot-smoke job on commit 262f349.
+   *
+   * Declaring the scope is the established fix here (see
+   * server/startup/authoringAuthorizationInvariant.ts, and the boot posture
+   * probe in server/index.ts) and it is the honest one: ai.gateway_audit_log is
+   * an estate-wide operational ledger with no tenant policy — RLS off, zero
+   * policies, verified against a provisioned database — so "every tenant" is
+   * exactly what this touches.
+   */
+  private async checkStoreScoped(pool: any): Promise<string | null> {
     try {
       const { rows } = await pool.query(
         `SELECT to_regclass('ai.gateway_audit_log') IS NOT NULL AS present`,
@@ -227,9 +254,32 @@ export class GatewayAuditLogger {
    * re-checking. Latching matters: without it a broken store re-probes the
    * database on every AI call and prints the same line every time, which is
    * indistinguishable from noise and gets filtered.
+   *
+   * ── Only STRUCTURAL problems latch ────────────────────────────────────────
+   * "The table does not exist" and "this role has no INSERT" are conditions an
+   * operator must fix; they will not resolve on their own, so re-probing on
+   * every AI call only produces noise. Anything else — a dropped connection, a
+   * failover, a transient error — must NOT permanently disable auditing for the
+   * life of the process. An earlier revision latched on everything, which meant
+   * one bad moment could silently stop the Part 11 ledger until the next deploy:
+   * the exact failure mode this whole change exists to remove, reintroduced one
+   * level up.
    */
-  private reportUnusable(problem: string): void {
-    this.storeUnusable = problem;
+  private reportProblem(problem: string): void {
+    const structural =
+      problem.includes('does not exist') ||
+      problem.includes('lacks INSERT') ||
+      problem.includes('no database pool');
+
+    if (structural) {
+      this.storeUnusable = problem;
+    } else if (this.transientReported) {
+      // Already said this once; keep retrying quietly rather than logging per call.
+      return;
+    } else {
+      this.transientReported = true;
+    }
+
     const message = missingStoreRemedy(problem);
     console.error(`[AI Gateway Audit] ${message}`);
     process.emitWarning(message, 'AuditWarning');
@@ -243,7 +293,7 @@ export class GatewayAuditLogger {
 
     const pool = await this.getPool();
     if (!pool) {
-      this.reportUnusable(
+      this.reportProblem(
         'no database pool is available, so records exist only in a 100-entry in-memory buffer',
       );
       return;
@@ -253,13 +303,21 @@ export class GatewayAuditLogger {
       if (!this.storeVerified) {
         const problem = await this.checkStore(pool);
         if (problem) {
-          this.reportUnusable(problem);
+          this.reportProblem(problem);
           return;
         }
         this.storeVerified = true;
       }
 
-      await pool.query(
+      // Same tenant scope as the probe, for the same reason and one more: an
+      // AI call can originate outside a request (schedulers, workers, queue
+      // consumers), and there the ambient scope is absent, so an unscoped
+      // INSERT would be refused by pool instrumentation under RLS_ENFORCE=on.
+      // The ledger carries no tenant policy, so estate-wide is correct — and
+      // without this, background AI work would go unrecorded precisely where it
+      // is hardest to notice.
+      await runWithSystemTenantScope('ai-gateway:audit-write', () =>
+        pool.query(
         `INSERT INTO ai.gateway_audit_log (
           request_id, timestamp, provider, model, resolved_model, task_type, strategy,
           organization_id, user_id, project_id, caller_module,
@@ -299,6 +357,7 @@ export class GatewayAuditLogger {
           entry.region || null,
           entry.retentionPolicy || null,
         ],
+        ),
       );
     } catch (error: any) {
       // Non-blocking — don't let audit failures break the gateway
