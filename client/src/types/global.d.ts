@@ -26,10 +26,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
-
-declare module '@/pages/csr/CERV2Page' {
-  import type { ComponentType } from 'react';
-
-  const CERV2Page: ComponentType<{ projectId: string | null }>;
-  export default CERV2Page;
-}

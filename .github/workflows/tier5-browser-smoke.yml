@@ -14,8 +14,7 @@
 # blocks the PR.
 #
 # Reuses the proven from-scratch provisioning recipe of ci.yml's
-# `blank-db-provisioning` job (pgvector service + scripts/db/install-fresh.mjs)
-# and the Playwright install of beta-founder-proof.yml.
+# `blank-db-provisioning` job (pgvector service + scripts/db/install-fresh.mjs).
 name: Tier 5 Browser Smoke
 
 on:

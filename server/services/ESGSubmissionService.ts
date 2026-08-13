@@ -30,7 +30,7 @@ interface SubmissionPackage {
   metadata: any;
 }
 
-interface ESGResponse {
+export interface ESGResponse {
   transactionId: string;
   acknowledgmentNumber?: string;
   status: 'submitted' | 'processing' | 'accepted' | 'rejected' | 'simulated_not_transmitted';
@@ -413,6 +413,60 @@ class ESGSubmissionService {
   }
 
   /**
+   * Map an ESG response onto the fields persisted on the
+   * fda_510k_submission_packages row.
+   *
+   * Static and pure so the invariant is unit-testable without a database:
+   * a simulated run must NEVER produce a package status implying a real
+   * transmission ('submitted' / 'accepted' / 'transmitted').
+   *
+   * Two regimes:
+   *
+   *   - Simulated (`simulated: true` or status 'simulated_not_transmitted'):
+   *     NOTHING was transmitted, so the row gets the explicit local status
+   *     'simulated' with no submittedAt / submittedBy and no acknowledgment
+   *     number — the `simulated` flag is checked first, so even a malformed
+   *     response carrying both the flag and a real-sounding status or a
+   *     minted ACK number still fails closed. The local transactionId
+   *     (SIMULATED-NOT-SENT-*) is kept for traceability; its own text says
+   *     it is not an ESG transaction.
+   *
+   *   - Real transport statuses ('submitted' | 'processing' | 'accepted' |
+   *     'rejected'): unreachable today — transmitToESG throws in production
+   *     before this runs — but the original accepted → submitted persistence
+   *     gate is preserved so the row reflects the agency outcome once the
+   *     production transport client exists.
+   */
+  static packageUpdateForResponse(
+    response: ESGResponse,
+    userId: number
+  ): {
+    esgTransactionId: string;
+    fdaAcknowledgmentNumber: string | null;
+    status: 'simulated' | 'submitted' | 'ready';
+    submittedAt: Date | null;
+    submittedBy: number | null;
+  } {
+    if (response.simulated || response.status === 'simulated_not_transmitted') {
+      return {
+        esgTransactionId: response.transactionId,
+        fdaAcknowledgmentNumber: null,
+        status: 'simulated',
+        submittedAt: null,
+        submittedBy: null
+      };
+    }
+
+    return {
+      esgTransactionId: response.transactionId,
+      fdaAcknowledgmentNumber: response.acknowledgmentNumber || null,
+      status: response.status === 'accepted' ? 'submitted' : 'ready',
+      submittedAt: response.status === 'accepted' ? new Date() : null,
+      submittedBy: response.status === 'accepted' ? userId : null
+    };
+  }
+
+  /**
    * Update submission package status
    */
   private async updateSubmissionStatus(
@@ -424,11 +478,7 @@ class ESGSubmissionService {
     await db!
       .update(fda510kSubmissionPackages)
       .set({
-        esgTransactionId: response.transactionId,
-        fdaAcknowledgmentNumber: response.acknowledgmentNumber || null,
-        status: response.status === 'accepted' ? 'submitted' : 'ready',
-        submittedAt: response.status === 'accepted' ? new Date() : null,
-        submittedBy: response.status === 'accepted' ? userId : null,
+        ...ESGSubmissionService.packageUpdateForResponse(response, userId),
         updatedAt: new Date()
       })
       .where(eq(fda510kSubmissionPackages.packageId, packageId));
