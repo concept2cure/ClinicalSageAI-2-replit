@@ -18,6 +18,32 @@ import '../styles/project-home-v2.css';
  * `match` are nullable on the real record and render null-safe, an empty corpus
  * shows an honest empty state, and a failed load shows an honest error — never
  * the old PE_* fixture.
+ *
+ * ── The pre-filled demo submission is gone, and nothing replaces it ───────────
+ *
+ * The query state used to be SEEDED with an invented programme — therapeutic
+ * area 'Diabetes', indication 'Continuous glucose monitoring -- 14-day wear',
+ * product code 'QBJ' — and `applied` was seeded from it, so the board fetched
+ * on mount with those criteria before the user had typed anything.
+ *
+ * The read is live, but the QUESTION was fabricated, and the surface then wrote
+ * the fabrication into its own answer. The AnswerLead eyebrow rendered "The
+ * honest read on your 510(k) -- Continuous glucose monitoring", the headline
+ * rendered "Citing <K-number> (<device>) is your cleanest path -- N devices like
+ * yours cleared in about X--Y days", and the action button passed
+ * "Draft the substantial-equivalence argument citing <K-number>" to `onAsk`,
+ * which pushes it into the AnA conversation as the USER's own words. An
+ * organization with no CGM device was told, on an authenticated regulated
+ * screen, which predicate its submission should cite.
+ *
+ * This is the failure the ind-lifecycle cleanup documents ('BX-301'): invented
+ * product context that is not merely displayed but SPOKEN back to the user and
+ * to the assistant, in a workspace whose next output is a submission document.
+ *
+ * So the form now starts empty and no board is fetched until the user runs a
+ * search. Until then the surface shows the search form and an honest "no search
+ * run yet" panel. `submissionType` keeps its '510(k)' default: that is the first
+ * member of the select's own enum, not a claim about anyone's programme.
  */
 
 /* ── Live view shapes (mirror the server DTO in precedent-engine-board.ts) ── */
@@ -93,13 +119,14 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
 
   const [q, setQ] = useState<PeQuery>({
     submissionType: '510(k)',
-    therapeuticArea: 'Diabetes',
-    indication: 'Continuous glucose monitoring -- 14-day wear',
-    productCode: 'QBJ',
+    therapeuticArea: '',
+    indication: '',
+    productCode: '',
   });
   // The query actually sent to the board — committed on Search, so editing the
-  // form does not refetch until the user runs it.
-  const [applied, setApplied] = useState<PeQuery>(q);
+  // form does not refetch until the user runs it. `null` until the user runs a
+  // search: there is no honest board to show before they have asked something.
+  const [applied, setApplied] = useState<PeQuery | null>(null);
   const [selK, setSelK] = useState<string | null>(null);
   const [tab, setTab] = useState('risk');
   const [claim, setClaim] = useState('');
@@ -108,8 +135,10 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
 
   // Live precedent board — GET /api/precedent-engine-board?<applied query>.
   // Changing `path` (via Search committing `applied`) refetches; the previous
-  // board stays visible while the next one loads.
+  // board stays visible while the next one loads. A null path before the first
+  // search idles the hook — no request, no board, no invented question.
   const path = useMemo(() => {
+    if (!applied) return null;
     const p = new URLSearchParams();
     p.set('submissionType', applied.submissionType);
     if (applied.therapeuticArea.trim()) p.set('therapeuticArea', applied.therapeuticArea.trim());
@@ -195,12 +224,16 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const checkClaim = async () => {
     if (!claim.trim() || claimBusy) return;
     setClaimBusy(true);
+    // Before a search has been run there is no applied context, so the claim is
+    // checked against whatever the user has typed into the form — never against
+    // a seeded one.
+    const ctx = applied ?? q;
     try {
       const res = await apiRequest('POST', '/api/precedent-engine/check-claim', {
         claim: claim.trim(),
-        submissionType: applied.submissionType,
-        ...(applied.therapeuticArea.trim() ? { therapeuticArea: applied.therapeuticArea.trim() } : {}),
-        ...(applied.indication.trim() ? { indication: applied.indication.trim() } : {}),
+        submissionType: ctx.submissionType,
+        ...(ctx.therapeuticArea.trim() ? { therapeuticArea: ctx.therapeuticArea.trim() } : {}),
+        ...(ctx.indication.trim() ? { indication: ctx.indication.trim() } : {}),
       });
       const body = await res.json().catch(() => null);
       setClaimRes(res.ok && body?.data ? (body.data as ClaimView) : null);
@@ -234,48 +267,142 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
     analysis && isRisk(analysis) && analysis.factors && analysis.factors[0] ? analysis.factors[0] : null;
   const strong = (top.match || 0) >= 0.85;
 
-  // Four honest states on the real read-model — never a fixture.
+  /* The surface's identity and its search form are shown in EVERY state. They
+     used to live only in the fully-loaded branch, so a load failure replaced the
+     form with an error panel and left the user with no way to re-run the search
+     that had just failed. */
+  const head = (
+    <div className="sp-head">
+      <div>
+        <div className="sp-eyebrow">Specialist -- /api/precedent-engine-board</div>
+        <h1 className="sp-title">Precedent intelligence</h1>
+        <p className="sp-state">
+          Search cleared precedents, compare your submission, and run regulatory-risk, strategy,
+          CRL/RTF-trigger, EMA-question and Advisory-Committee analyses -- every result traces to
+          registry precedents.
+        </p>
+      </div>
+      <button
+        className="sp-primary"
+        onClick={() => ask('Ingest a new precedent into the registry')}
+      >
+        {I.plus} Ingest precedent
+      </button>
+    </div>
+  );
+
+  const searchCard = (
+    <div className="pj-card" style={{ marginBottom: 14 }}>
+      <div
+        className="pj-card-b"
+        style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}
+      >
+        <label className="pe-f">
+          <span>Submission type</span>
+          <select
+            value={q.submissionType}
+            onChange={(e) => setQ({ ...q, submissionType: e.target.value })}
+          >
+            {['510(k)', 'De Novo', 'PMA', 'NDA', 'BLA', 'ANDA'].map((x) => (
+              <option key={x}>{x}</option>
+            ))}
+          </select>
+        </label>
+        <label className="pe-f" style={{ flex: 1.4 }}>
+          <span>Indication</span>
+          <input
+            value={q.indication}
+            onChange={(e) => setQ({ ...q, indication: e.target.value })}
+          />
+        </label>
+        <label className="pe-f">
+          <span>Therapeutic area</span>
+          <input
+            value={q.therapeuticArea}
+            onChange={(e) => setQ({ ...q, therapeuticArea: e.target.value })}
+          />
+        </label>
+        <label className="pe-f" style={{ maxWidth: 110 }}>
+          <span>Product code</span>
+          <input
+            value={q.productCode}
+            onChange={(e) => setQ({ ...q, productCode: e.target.value })}
+          />
+        </label>
+        <button
+          className="sp-primary"
+          style={{ padding: '8px 16px' }}
+          onClick={runSearch}
+          disabled={board.loading}
+        >
+          {I.search} {board.loading ? 'Searching...' : 'Search'}
+        </button>
+        <button className="sp-ask" onClick={saveQuery} title="Save this query for reuse">
+          {I.plus} Save query
+        </button>
+      </div>
+      {(saved.length > 0 || savedNote) && (
+        <div className="pj-card-b" style={{ paddingTop: 0, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          {saved.map((s) => (
+            <span key={s.id} className="rd-chip tone-idle" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <button style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
+                onClick={() => applySaved(s)} title="Load and run this saved query">
+                {s.label}
+              </button>
+              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', opacity: 0.6 }}
+                onClick={() => deleteSaved(s.id)} title="Delete saved query" aria-label={'Delete ' + s.label}>
+                ×
+              </button>
+            </span>
+          ))}
+          {savedNote && <span style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{savedNote}</span>}
+        </div>
+      )}
+    </div>
+  );
+
+  /* Four honest states on the real read-model — never a fixture, and never a
+     seeded search standing in for one the user has not run. */
+  if (!applied) {
+    return (
+      <div className="sp" style={{ maxWidth: 1160 }}>
+        {head}
+        {searchCard}
+        <EmptyState
+          icon={I.search}
+          title="No search run yet"
+          hint="Enter your submission type, indication, therapeutic area or product code above and run a search. Precedents, risk, strategy and CRL/RTF/EMA/AdComm analyses are assembled from your organization's precedent corpus and the FDA registry for the criteria YOU enter — nothing is pre-filled on your behalf."
+        />
+      </div>
+    );
+  }
   if (board.loading && !board.data) {
     return (
       <div className="sp" style={{ maxWidth: 1160 }}>
-        <div style={{ padding: 24 }}><EmptyState title="Loading precedent intelligence…" icon={I.clock} /></div>
+        {head}
+        {searchCard}
+        <EmptyState title="Loading precedent intelligence…" icon={I.clock} />
       </div>
     );
   }
   if (board.error && !board.data) {
     return (
       <div className="sp" style={{ maxWidth: 1160 }}>
-        <div style={{ padding: 24 }}>
-          <EmptyState
-            tone="error"
-            icon={I.alertTriangle}
-            title="Couldn't load precedent intelligence"
-            hint="The precedent read-model didn't respond. It's assembled live from your organization's precedent corpus and the FDA registry — sign in and retry. Nothing is shown from a cached sample."
-          />
-        </div>
+        {head}
+        {searchCard}
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load precedent intelligence"
+          hint="The precedent read-model didn't respond. It's assembled live from your organization's precedent corpus and the FDA registry — sign in and retry. Nothing is shown from a cached sample."
+        />
       </div>
     );
   }
 
   return (
     <div className="sp" style={{ maxWidth: 1160 }}>
-      <div className="sp-head">
-        <div>
-          <div className="sp-eyebrow">Specialist -- /api/precedent-engine-board</div>
-          <h1 className="sp-title">Precedent intelligence</h1>
-          <p className="sp-state">
-            Search cleared precedents, compare your submission, and run regulatory-risk, strategy,
-            CRL/RTF-trigger, EMA-question and Advisory-Committee analyses -- every result traces to
-            registry precedents.
-          </p>
-        </div>
-        <button
-          className="sp-primary"
-          onClick={() => ask('Ingest a new precedent into the registry')}
-        >
-          {I.plus} Ingest precedent
-        </button>
-      </div>
+      {head}
 
       <AnswerLead
         tone={strong ? 'good' : 'calm'}
@@ -333,73 +460,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         secondary="Or explore the precedents and analyses below when you're ready."
       />
 
-      <div className="pj-card" style={{ marginBottom: 14 }}>
-        <div
-          className="pj-card-b"
-          style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}
-        >
-          <label className="pe-f">
-            <span>Submission type</span>
-            <select
-              value={q.submissionType}
-              onChange={(e) => setQ({ ...q, submissionType: e.target.value })}
-            >
-              {['510(k)', 'De Novo', 'PMA', 'NDA', 'BLA', 'ANDA'].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </label>
-          <label className="pe-f" style={{ flex: 1.4 }}>
-            <span>Indication</span>
-            <input
-              value={q.indication}
-              onChange={(e) => setQ({ ...q, indication: e.target.value })}
-            />
-          </label>
-          <label className="pe-f">
-            <span>Therapeutic area</span>
-            <input
-              value={q.therapeuticArea}
-              onChange={(e) => setQ({ ...q, therapeuticArea: e.target.value })}
-            />
-          </label>
-          <label className="pe-f" style={{ maxWidth: 110 }}>
-            <span>Product code</span>
-            <input
-              value={q.productCode}
-              onChange={(e) => setQ({ ...q, productCode: e.target.value })}
-            />
-          </label>
-          <button
-            className="sp-primary"
-            style={{ padding: '8px 16px' }}
-            onClick={runSearch}
-            disabled={board.loading}
-          >
-            {I.search} {board.loading ? 'Searching...' : 'Search'}
-          </button>
-          <button className="sp-ask" onClick={saveQuery} title="Save this query for reuse">
-            {I.plus} Save query
-          </button>
-        </div>
-        {(saved.length > 0 || savedNote) && (
-          <div className="pj-card-b" style={{ paddingTop: 0, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            {saved.map((s) => (
-              <span key={s.id} className="rd-chip tone-idle" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <button style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
-                  onClick={() => applySaved(s)} title="Load and run this saved query">
-                  {s.label}
-                </button>
-                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', opacity: 0.6 }}
-                  onClick={() => deleteSaved(s.id)} title="Delete saved query" aria-label={'Delete ' + s.label}>
-                  ×
-                </button>
-              </span>
-            ))}
-            {savedNote && <span style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{savedNote}</span>}
-          </div>
-        )}
-      </div>
+      {searchCard}
 
       <div className="sp-2col" style={{ gridTemplateColumns: '1.15fr 1fr' }}>
         <div className="pj-card">
