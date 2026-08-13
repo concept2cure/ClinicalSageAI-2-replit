@@ -375,6 +375,7 @@ import {
   ASSESS_QMS,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
+  PLACE_INTO_SEQUENCE,
 } from './submission-center-tool-defs.js';
 // QMS + labeling + search + analytics tool definitions extracted to their own module (tranche 7).
 import {
@@ -1923,6 +1924,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ASSESS_QMS,
   LIST_REGULATORY_CAPABILITIES,
   ASSESS_DISPATCH_READINESS,
+  PLACE_INTO_SEQUENCE,
   FIRE_NOTIFICATION,
   CREATE_CLINICAL_STUDY,
   CREATE_CLINICAL_INVESTIGATOR,
