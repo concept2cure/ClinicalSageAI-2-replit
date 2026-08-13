@@ -9,6 +9,11 @@
  *   3. Writes an audit_logs row with sha256_chain in the same transaction.
  *   4. Returns { actionId, auditId, sha256_chain }.
  *
+ * `sign` additionally persists a 21 CFR Part 11 electronic_signatures row in
+ * the SAME transaction as the ledger pair (single e-signature write path — see
+ * server/services/part11/signature-persistence.ts). A governed sign lands in
+ * both substrates or in neither.
+ *
  * Legacy redirect (handled here):
  *   POST /api/cerv2-sections/:id/accept-ana-draft → delegate to accept-ai-suggestion
  *
@@ -36,6 +41,7 @@ import {
   SeparationOfDutiesError,
 } from '../../services/governance/separation-of-duties.js';
 import { can } from '../../services/governance/permissions.js';
+import { persistGovernedSignSignature } from '../../services/part11/signature-persistence.js';
 
 const router = Router();
 
@@ -384,6 +390,11 @@ export async function writeMutation(
    * transaction (the default, unchanged).
    */
   externalClient?: PoolClient,
+  /**
+   * Request-derived context for the Part 11 signature row a `sign` command
+   * persists (see below). Only attribution metadata — never credentials.
+   */
+  signContext?: { ipAddress?: string | null },
 ): Promise<ActionResult> {
   const { target, reason, payload = {}, idempotencyKey } = envelope;
 
@@ -421,12 +432,17 @@ export async function writeMutation(
     }
   }
 
-  // Caller-owned transaction: run the governed-action writes on their client so
-  // the audit and the caller's mutation commit or roll back together. No
-  // BEGIN/COMMIT/release here — the caller owns the transaction lifecycle.
-  if (externalClient) {
-    await setTenantContextTx(externalClient, orgId);
-    const { actionId, auditId, sha256Chain } = await recordGovernedAction(externalClient, {
+  // The governed writes for one action, run on whichever client owns the
+  // transaction. For `sign` this is the SINGLE e-signature write path: the
+  // sha256-chained ledger pair AND the Part 11 electronic_signatures row are
+  // written on the SAME client, so a governed sign lands in both substrates or
+  // in neither (a Part 11 inspector querying electronic_signatures sees every
+  // governed sign). persistGovernedSignSignature throws → the transaction rolls
+  // back → no ledger row without a signature row, and vice versa.
+  const executeGovernedWrites = async (
+    client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  ): Promise<RecordGovernedActionResult> => {
+    const recorded = await recordGovernedAction(client, {
       orgId,
       userId,
       command,
@@ -437,6 +453,39 @@ export async function writeMutation(
       surface,
       idempotencyKey: idempotencyKey ?? null,
     });
+    if (command === 'sign') {
+      // Attribution honesty: record only the re-auth factors verifyReauth
+      // actually verified for this envelope (password always for the HTTP
+      // path; TOTP only when supplied). A programmatic call without re-auth
+      // credentials is recorded as 'session', never as a password check that
+      // did not happen.
+      const reauth = envelope.reauth;
+      await persistGovernedSignSignature(client, {
+        orgId,
+        userId,
+        target,
+        reason,
+        payload: effectivePayload,
+        actionId: recorded.actionId,
+        auditId: recorded.auditId,
+        sha256Chain: recorded.sha256Chain,
+        authenticationMethod: reauth?.password
+          ? (reauth?.totp ? 'password+totp' : 'password')
+          : 'session',
+        secondFactorVerified: Boolean(reauth?.totp),
+        ipAddress: signContext?.ipAddress ?? null,
+        occurredAt: new Date(),
+      });
+    }
+    return recorded;
+  };
+
+  // Caller-owned transaction: run the governed-action writes on their client so
+  // the audit and the caller's mutation commit or roll back together. No
+  // BEGIN/COMMIT/release here — the caller owns the transaction lifecycle.
+  if (externalClient) {
+    await setTenantContextTx(externalClient, orgId);
+    const { actionId, auditId, sha256Chain } = await executeGovernedWrites(externalClient);
     return { actionId, auditId, sha256Chain, state: 'executed' };
   }
 
@@ -450,17 +499,7 @@ export async function writeMutation(
     // research/protocol governed family (e.g. effort-certification.ts).
     await setTenantContextTx(client, orgId);
 
-    const { actionId, auditId, sha256Chain } = await recordGovernedAction(client, {
-      orgId,
-      userId,
-      command,
-      target,
-      reason,
-      payload: effectivePayload,
-      domain,
-      surface,
-      idempotencyKey: idempotencyKey ?? null,
-    });
+    const { actionId, auditId, sha256Chain } = await executeGovernedWrites(client);
 
     await client.query('COMMIT');
     return { actionId, auditId, sha256Chain, state: 'executed' };
@@ -544,6 +583,15 @@ function makeHandler(command: Command) {
         orgId,
         (req.headers['x-c2c-surface'] as string | undefined) ?? 'api',
         (req.headers['x-c2c-domain']  as string | undefined) ?? 'mdx',
+        undefined,
+        {
+          // Honest attribution on the Part 11 signature row a `sign` persists:
+          // the real client IP when resolvable, null otherwise (never fabricated).
+          ipAddress:
+            (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+            req.socket?.remoteAddress ||
+            null,
+        },
       );
       return res.json(result);
     } catch (err: any) {

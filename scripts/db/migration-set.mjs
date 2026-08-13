@@ -957,6 +957,17 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260508_ivd_diagnostic_surfaces.sql',
   'migrations/001_create_ivdr_tables.sql',
 
+  // ── Single e-signature write path, D6 (added 2026-08-13) ─────────────────
+  // The governed sign action (/api/c2c/actions/sign) now persists an
+  // electronic_signatures row in the same transaction as its ledger write.
+  // Governed targets are typed pointers, not documents rows, so this relaxes
+  // document_id/version_id to nullable, adds signed_target + binding_basis,
+  // and installs the fail-closed anchor CHECK. Additive; ALTERs only. MUST be
+  // applied before code that writes signed_target/binding_basis is live —
+  // both /api/esignature/sign and the governed sign fail closed (503/500)
+  // until it lands.
+  'migrations/20260813d_esignature_governed_unification.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

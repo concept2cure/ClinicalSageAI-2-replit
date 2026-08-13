@@ -576,14 +576,19 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
   const { documentId } = req.params;
 
   try {
+    // Physical-schema column set (the previous SELECT referenced columns —
+    // document_version, signer_organization, meaning, password_verified,
+    // mfa_verified, timestamp, user_agent — that never existed on the table,
+    // so this read failed for every stored signature).
     const result = await pool.query(
       `
-      SELECT id, document_id, document_version, signer_id, signer_name, signer_title,
-             signer_organization, meaning, signature_hash, password_verified, mfa_verified,
-             timestamp, ip_address, user_agent
+      SELECT id, document_id, version_id, signed_target, signature_type,
+             signature_purpose, signer_id, signer_name, signer_title, signer_email,
+             signature_meaning, signature_hash, binding_basis,
+             second_factor_verified, is_valid, signed_at, ip_address
       FROM electronic_signatures
       WHERE document_id = $1
-      ORDER BY timestamp DESC
+      ORDER BY signed_at DESC
     `,
       [documentId]
     );
@@ -613,13 +618,44 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
   const pool: Pool = (req as any).pool || (req.app as any).pool;
   const { signatureId } = req.params as { signatureId: string };
 
+  // electronic_signatures.id is a serial integer — reject a non-numeric id
+  // before it reaches the database (22P02 would surface as an opaque 500).
+  const idNum = Number(signatureId);
+  if (!Number.isInteger(idNum) || idNum <= 0) {
+    return res.status(400).json({ success: false, error: 'signatureId must be a positive integer' });
+  }
+
   try {
+    // Query the PHYSICAL schema (shared/schema.ts electronicSignatures / the
+    // 0000 migration): signature_meaning + signed_at — the previous query
+    // referenced columns (meaning, custom_meaning, timestamp,
+    // signer_organization) that never existed on the table, so this endpoint
+    // 500'd for every stored signature. Serves BOTH document-anchored rows
+    // (/api/esignature/sign, sign-release) and governed-sign rows
+    // (/api/c2c/actions/sign — signed_target/binding_basis). §11.50 meaning
+    // falls back to signature_type when no explicit meaning was declared —
+    // a derivation from stored fields, never an invented value.
+    //
+    // Tenant scope: when the authenticated request carries an organization,
+    // only that org's rows (plus legacy pre-tenancy rows with NULL org) are
+    // servable — no cross-tenant signature probing by id.
+    const orgIdRaw =
+      (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    const orgId = Number(orgIdRaw);
+    const params: unknown[] = [idNum];
+    let tenantClause = '';
+    if (Number.isFinite(orgId)) {
+      params.push(orgId);
+      tenantClause = ' AND (es.organization_id = $2 OR es.organization_id IS NULL)';
+    }
     const result = await pool.query(
-      `SELECT id, signer_name, signer_title, signer_organization,
-              meaning, custom_meaning, timestamp
-       FROM electronic_signatures
-       WHERE id = $1`,
-      [signatureId]
+      `SELECT es.id, es.signer_name, es.signer_title, o.name AS signer_organization,
+              COALESCE(es.signature_meaning, es.signature_type) AS meaning,
+              es.signed_at, es.signed_target, es.binding_basis
+         FROM electronic_signatures es
+         LEFT JOIN organizations o ON o.id = es.organization_id
+        WHERE es.id = $1${tenantClause}`,
+      params
     );
     if (!result.rows.length) {
       return res.status(404).json({ success: false, error: 'Signature not found' });
@@ -630,14 +666,25 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
       signerTitle: row.signer_title,
       signerOrganization: row.signer_organization,
       meaning: row.meaning,
-      customMeaning: row.custom_meaning,
-      timestamp: row.timestamp,
+      customMeaning: null,
+      timestamp: row.signed_at,
     });
     res.json({
       success: true,
-      data: { id: row.id, ...manifest, compliance: '21 CFR Part 11 §11.50' },
+      data: {
+        id: row.id,
+        ...manifest,
+        signedTarget: row.signed_target ?? null,
+        bindingBasis: row.binding_basis ?? null,
+        compliance: '21 CFR Part 11 §11.50',
+      },
     });
   } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === '42P01' || code === '42703') {
+      // Store or its D6 columns unprovisioned — fail closed, honestly.
+      return res.status(503).json({ success: false, error: 'SIGNATURE_STORE_UNPROVISIONED' });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to build signature manifest',

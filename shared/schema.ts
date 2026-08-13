@@ -1956,12 +1956,24 @@ export const electronicSignatures = pgTable(
   'electronic_signatures',
   {
     id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => documents.id),
-    versionId: integer('version_id')
-      .notNull()
-      .references(() => documentVersions.id),
+    // ── Phase 4 D6 (single e-signature write path) ─────────────────────────
+    // documentId/versionId became NULLABLE: governed sign actions
+    // (/api/c2c/actions/sign) sign typed targets (ectd-sequence:<id>,
+    // document:<id>, …) that are not documents/document_versions rows; those
+    // rows anchor via signedTarget instead. Migration
+    // 20260813d_esignature_governed_unification.sql also installs a CHECK
+    // (inexpressible in drizzle) requiring (document_id AND version_id) OR
+    // signed_target — no anchorless signature row can exist. All document
+    // signing paths still always populate both columns (route-enforced).
+    documentId: integer('document_id').references(() => documents.id),
+    versionId: integer('version_id').references(() => documentVersions.id),
+    // Governed typed target pointer (e.g. 'ectd-sequence:42') for signatures
+    // born from the governed sign action. NULL on document-anchored rows.
+    signedTarget: text('signed_target'),
+    // EXPLICIT provenance of boundPayloadDigest — see
+    // server/services/part11/signature-persistence.ts BINDING_BASIS. NULL on
+    // historical rows; every new write sets it.
+    bindingBasis: text('binding_basis'),
     // Signature Details
     signatureType: varchar('signature_type', { length: 50 }).notNull(),
     // approval, review, witness, acknowledgment
@@ -2025,6 +2037,13 @@ export const electronicSignatures = pgTable(
     signatureOrgPayloadDigestIdx: index('electronic_signatures_org_payload_digest_idx').on(
       table.organizationId,
       table.boundPayloadDigest,
+    ),
+    // Inspector/verification lookup for governed signatures: "every signature
+    // applied to this governed target in this org". (Partial WHERE signed_target
+    // IS NOT NULL lives in the raw SQL migration, as above.)
+    signatureOrgSignedTargetIdx: index('electronic_signatures_org_signed_target_idx').on(
+      table.organizationId,
+      table.signedTarget,
     ),
   })
 );
