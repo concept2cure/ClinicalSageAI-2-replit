@@ -147,18 +147,21 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
      So: real rows, or an honest loading / error / empty state. No local
      mutation of this array either — a connector's status changes when the
      SERVER says it changed, which is why every mutation below re-reads. */
-  const conn: ConnectorState[] = board.data?.connectors ?? [];
+  const boardConnectors = board.data?.connectors;
+  const conn: ConnectorState[] = boardConnectors ?? [];
   const connectorsReady = !board.loading && !board.error && conn.length > 0;
 
   /* Seed the selection once, from the org's real configured connectors. A ref
-     guards it so a later board re-read (after a credential write) cannot stomp
-     a selection the user has since edited. */
+     guards it so a later board re-read (after a credential write) cannot stomp a
+     selection the user has since edited. The dep is the RESPONSE array, not the
+     `?? []` fallback, which is a fresh identity on every render while the board
+     is still loading. */
   const selSeeded = useRef(false);
   useEffect(() => {
-    if (selSeeded.current || conn.length === 0) return;
+    if (selSeeded.current || !boardConnectors || boardConnectors.length === 0) return;
     selSeeded.current = true;
-    setSel(conn.filter((c) => c.configured).map((c) => c.id));
-  }, [conn]);
+    setSel(boardConnectors.filter((c) => c.configured).map((c) => c.id));
+  }, [boardConnectors]);
 
   const toggle = (id: string) =>
     setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
