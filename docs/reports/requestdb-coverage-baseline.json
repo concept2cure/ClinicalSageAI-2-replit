@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-13T04:40:13.889Z",
+  "generatedAt": "2026-08-13T16:23:15.070Z",
   "onSharedPool": [
     "server/routes/admin-security.ts",
     "server/routes/ana-cortex.ts",
@@ -28,7 +28,6 @@
     "server/routes/documentOrchestrationRoutes.ts",
     "server/routes/docx-factory.ts",
     "server/routes/ectd-documents.ts",
-    "server/routes/esgSubmissionRoutes.ts",
     "server/routes/evidence-fabric.ts",
     "server/routes/evidence-management.routes.ts",
     "server/routes/evidence-sufficiency.ts",
@@ -108,7 +107,6 @@
       "server/routes/documentOrchestrationRoutes.ts",
       "server/routes/docx-factory.ts",
       "server/routes/ectd-documents.ts",
-      "server/routes/esgSubmissionRoutes.ts",
       "server/routes/evidence-fabric.ts",
       "server/routes/evidence-management.routes.ts",
       "server/routes/evidence-sufficiency.ts",

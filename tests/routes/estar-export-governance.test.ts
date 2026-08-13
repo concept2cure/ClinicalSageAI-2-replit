@@ -61,15 +61,12 @@ vi.mock('../../server/services/export/governedExportConsequence', () => ({
   createGovernedExportConsequence: mockGovernedConsequence,
 }));
 
-vi.mock('../../server/db', () => ({
-  db: {
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({ limit: vi.fn(async () => mockResolveRows()) })),
-      })),
-    })),
-  },
-}));
+// The route resolves its project anchor through `requestDb(req)` — the
+// request-scoped drizzle client — not the shared pool, so `server/db` alone no
+// longer intercepts. Same fake, returned from both.
+const { fakeDb } = vi.hoisted(() => ({ fakeDb: { select: vi.fn() } as any }));
+vi.mock('../../server/db', () => ({ db: fakeDb }));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
 
 vi.mock('../../server/services/auditService', () => ({
   default: { logAction: mockLogAction },
@@ -85,6 +82,12 @@ vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', () =
       { type: 'paragraph', content: [{ type: 'text', text: s.content }] },
     ]),
   }),
+}));
+
+fakeDb.select = vi.fn(() => ({
+  from: vi.fn(() => ({
+    where: vi.fn(() => ({ limit: vi.fn(async () => mockResolveRows()) })),
+  })),
 }));
 
 import estarRoutes from '../../server/routes/510k-estar-routes';
