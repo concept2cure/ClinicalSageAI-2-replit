@@ -878,16 +878,20 @@ router.post('/generate-ind-section', async (req: Request, res: Response) => {
     const result = await proxyJson('/knowledge/generate-ind-section', 'POST', req.body);
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
-    console.warn('[knowledge-base] Shadow service unavailable for IND section, returning scaffold');
-    const { section_code, section_title, drug_name } = req.body;
-    res.json({
-      section_code: section_code || 'unknown',
-      title: section_title || 'IND Section',
-      content: `<h1>${section_title || 'IND Section'}</h1>\n<p>This section for ${
-        drug_name || 'the investigational drug'
-      } requires authoring. Use the Document Editor to draft content with Regulatory Intelligence assistance.</p>`,
-      status: 'scaffold',
-      generated_by: 'node-fallback',
+    // Generation failed. This used to answer 200 with a one-paragraph
+    // placeholder in the `content` field — the same field a generated IND
+    // section arrives in. Anything downstream that persists or assembles this
+    // response (the editor, a package build) would file that placeholder as
+    // IND section content, and `status: 'scaffold'` is a flag every one of
+    // those consumers has to remember to check. A section that was not
+    // generated is reported as not generated.
+    console.error('[knowledge-base] IND section generation unavailable:', err?.message);
+    res.status(503).json({
+      error: 'IND section generation is unavailable',
+      code: 'IND_SECTION_GENERATION_UNAVAILABLE',
+      message:
+        'The generation service is unreachable, so no section content was produced. Author the section in the Document Editor or retry once the service is available.',
+      section_code: req.body?.section_code ?? null,
     });
   }
 });

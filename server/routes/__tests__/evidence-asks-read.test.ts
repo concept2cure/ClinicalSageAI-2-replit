@@ -70,11 +70,25 @@ describe('GET /api/evidence-asks', () => {
     expect(res.body.meta.count).toBe(0);
   });
 
-  it('fails closed to null when the store is not provisioned (42P01)', async () => {
+  // Regression: this used to assert 200 + `meta.pendingStore`, i.e. the route
+  // reported an unreadable provenance chain with the same shape it uses for
+  // "this org has never run an ask" (data: null). A caller could not tell the
+  // two apart, so a missing trace store read as "no evidence was ever
+  // retrieved" — a false negative about whether grounded evidence exists. The
+  // 200 was the defect; the assertion below encodes the fix.
+  it('503s when the trace store is not provisioned (42P01) — never a 200 empty', async () => {
     assembleOrgEvidenceAsks.mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
     const res = await request(appWith(7)).get('/api/evidence-asks');
-    expect(res.status).toBe(200);
-    expect(res.body.data).toBeNull();
-    expect(res.body.meta.pendingStore).toBe(true);
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('EVIDENCE_TRACE_STORE_UNPROVISIONED');
+    expect(res.body.data).toBeUndefined();
+  });
+
+  it('500s on any other read failure — never a 200 empty', async () => {
+    assembleOrgEvidenceAsks.mockRejectedValueOnce(new Error('connection reset'));
+    const res = await request(appWith(7)).get('/api/evidence-asks');
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('INTERNAL');
+    expect(res.body.data).toBeUndefined();
   });
 });

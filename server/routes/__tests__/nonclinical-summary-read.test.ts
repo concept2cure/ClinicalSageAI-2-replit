@@ -104,12 +104,16 @@ describe('GET /api/nonclinical-summary', () => {
     expect(res.body.meta.pendingStore).toBe(true);
   });
 
-  it('fails closed to the skeleton on an unexpected store error (never 500)', async () => {
+  // Regression: this used to assert 200 + the empty-registry skeleton for an
+  // unexpected error. That answer states "the nonclinical study registry holds
+  // nothing" — a claim about the data — when the truth was "the registry could
+  // not be read". Only the asserted-above 42P01 case may degrade that way.
+  it('500s on an unexpected store error — never a 200 skeleton', async () => {
     query.mockRejectedValueOnce(new Error('connection reset'));
     const res = await request(appWith(7)).get('/api/nonclinical-summary');
-    expect(res.status).toBe(200);
-    expect(res.body.data.provisioned).toBe(false);
-    expect(res.body.meta.pendingStore).toBe(false);
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('INTERNAL');
+    expect(res.body.data).toBeUndefined();
   });
 });
 

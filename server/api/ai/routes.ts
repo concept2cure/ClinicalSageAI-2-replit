@@ -748,32 +748,21 @@ Guidelines:
       context: context || 'regulatory_compliance',
     });
   } catch (error: any) {
+    // The caller asked a regulatory question and this handler used to answer
+    // 200 with a canned block of CMC "guidance" in the SAME `response` field a
+    // real model answer occupies. Chat surfaces render that field verbatim, so
+    // a provider outage produced text that reads as regulatory advice from the
+    // platform, is quotable and screenshot-able, and carries no upstream source
+    // — the definition of fabricated content in a runtime path. A generation
+    // that did not happen must be reported as unavailable, not substituted for.
     console.error('Regulatory guidance error:', error);
 
-    // Fallback response if OpenAI fails
-    const fallbackResponse = `I'm experiencing technical difficulties connecting to the AI service. However, I can still help with your regulatory question.
-
-For immediate assistance with CMC and regulatory guidance:
-• Check ICH guidelines (www.ich.org) for harmonized requirements
-• Review FDA guidance documents for US submissions
-• Consult EMA guidelines for European submissions
-• Consider engaging regulatory consultants for complex questions
-
-📋 **Common CMC Topics I Can Help With:**
-• Analytical method validation (ICH Q2)
-• Process validation strategies
-• Stability study design
-• Quality control specifications
-• Regulatory submission requirements
-
-Please try your question again, or contact our support team if the issue persists.`;
-
-    res.json({
-      response: fallbackResponse,
-      timestamp: new Date().toISOString(),
-      model: 'fallback',
-      context: 'regulatory_compliance',
+    return res.status(503).json({
       error: 'AI service temporarily unavailable',
+      code: 'AI_PROVIDER_UNAVAILABLE',
+      message:
+        'Regulatory guidance could not be generated because the AI provider is unreachable. No answer was produced — retry once the service is available.',
+      timestamp: new Date().toISOString(),
     });
   }
 });

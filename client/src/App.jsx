@@ -41,13 +41,15 @@ const LoadingPage = () => (
 
 // Main App wrapper with auth and providers
 function App() {
-  // Client error reporting. The class ErrorBoundary components swallow render
-  // crashes (they only log to console / window.appMonitor) and Sentry is never
-  // told, so no client error is ever reported. Wiring Sentry into
-  // ErrorBoundary.componentDidCatch itself is out of scope here (that file is
-  // owned elsewhere), so we install top-level window listeners that forward
-  // uncaught errors and unhandled promise rejections to Sentry when it is
-  // available. Fully guarded: a no-op if Sentry (or captureException) is absent.
+  // Client error reporting, layer one of two.
+  //
+  // Every React error boundary now reports through utils/reportClientError
+  // (ErrorBoundary, ModuleErrorBoundary and — the one an authenticated user
+  // actually reaches — SurfaceBoundary in concept2cure/v2/SurfaceScaffold.tsx).
+  // Boundaries only see errors thrown during React's render/commit phase,
+  // though: an exception in a `setTimeout`, an event handler, or a rejected
+  // promise never touches one. These two window listeners catch that second
+  // class. Fully guarded: a no-op if Sentry (or captureException) is absent.
   useEffect(() => {
     if (!Sentry || typeof Sentry.captureException !== 'function') {
       return undefined;

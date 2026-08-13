@@ -586,21 +586,35 @@ export function AnaRail({
               <span className="ana-ctx-k">{ac.section ? 'Current section' : 'Focus'}</span>
               <span className="ana-ctx-section">{ac.focus}</span>
             </div>
-            <div className="ana-ctx-grid">
-              <div className="ana-ctx-cell">
-                <span className="ana-ctx-k">Stage</span>
-                <span className="ana-ctx-stage">{ac.stage}</span>
+            {/* Stage + readiness render only when a surface's own context
+                actually supplies them. They used to be unconditional, filled
+                from the per-segment co-author FIXTURE — so every surface showed
+                "Draft · 72% ready" about a programme that did not exist. With
+                the fixture retired these are usually absent, and an absent
+                readiness must show nothing rather than a confident "0%": in a
+                regulated tool a fabricated completeness number is worse than no
+                number at all. */}
+            {(ac.stage || typeof ac.readiness === 'number') && (
+              <div className="ana-ctx-grid">
+                {ac.stage && (
+                  <div className="ana-ctx-cell">
+                    <span className="ana-ctx-k">Stage</span>
+                    <span className="ana-ctx-stage">{ac.stage}</span>
+                  </div>
+                )}
+                {typeof ac.readiness === 'number' && (
+                  <div className="ana-ctx-cell">
+                    <span className="ana-ctx-k">Readiness</span>
+                    <span className="ana-ctx-ready">
+                      <span className="ana-ctx-bar">
+                        <span style={{ width: `${ac.readiness}%` }} />
+                      </span>
+                      {ac.readiness}%
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="ana-ctx-cell">
-                <span className="ana-ctx-k">Readiness</span>
-                <span className="ana-ctx-ready">
-                  <span className="ana-ctx-bar">
-                    <span style={{ width: `${ac.readiness ?? 0}%` }} />
-                  </span>
-                  {ac.readiness}%
-                </span>
-              </div>
-            </div>
+            )}
             {ac.evidence && (
               <div className="ana-ctx-cell">
                 <span className="ana-ctx-k">Linked evidence</span>
