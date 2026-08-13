@@ -898,6 +898,22 @@ jobs:
         # here fails the build on a real DB before it can ship.
         run: node scripts/db/deploy-smoke-assert.mjs
 
+      - name: Server SQL resolves against the LIVE provisioned schema (ratchet)
+        # The two static table guards (ci:unbacked-tables, ci:migration-
+        # reachability) compare the repo to itself — "does some .sql file on
+        # some applier's list claim to create this table?" — a question the
+        # repository can always answer yes to. The 2026-08 assessment counted
+        # ~85 server-queried tables that do not exist after a full successful
+        # provisioning run while both guards reported green over every one.
+        # This guard asks the only question that settles it: it takes the SAME
+        # server-referenced table set (importing the reachability parser, not
+        # re-implementing it) and resolves each name against the database this
+        # job just built from nothing. First real census: 98 absent, baselined;
+        # the baseline may only shrink, and any NEW absence fails the build.
+        # It belongs in THIS job because this is the one place in CI where a
+        # database produced by the real installers exists to ask.
+        run: npm run ci:tables-live-schema
+
   # ── Production boot smoke — the shipped build must actually serve ──────────
   #
   # Every other DB-backed job here proves something about the SCHEMA. None of

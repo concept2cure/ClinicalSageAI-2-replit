@@ -89,6 +89,7 @@
     "ci:proof-tier:write-baseline": "node scripts/ci/check-proof-tier.mjs --write-baseline",
     "ci:journey-migration-reachability": "node scripts/ci/check-journey-migration-reachability.mjs",
     "ci:migration-reachability": "node scripts/ci/check-migration-reachability.mjs",
+    "ci:tables-live-schema": "node scripts/ci/check-tables-against-live-schema.mjs --strict-no-regression",
     "ci:migration-reachability:write-baseline": "node scripts/ci/check-migration-reachability.mjs --write-baseline",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
