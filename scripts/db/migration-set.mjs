@@ -833,6 +833,25 @@ export const C2C_MIGRATION_FILES = [
   // tables join the RLS regime via the sweep below (assessment D20).
   'db/migrations/20260807_task_graph_org_columns.sql',
 
+  // ── 21 CFR Part 11 tamper-proof store (added 2026-08-13) ──────────────────
+  // audit.tamper_proof_log had NO migration: its only creator was runtime DDL in
+  // server/lib/tamper-proof-audit.ts, run on the request pool. As the
+  // non-superuser app_service role that can never succeed — `audit` is granted
+  // append-only (SELECT, INSERT) precisely to preserve tamper-evidence, so DDL
+  // there is what must be refused — and the failure was swallowed as
+  // "(non-fatal)" with a console fallback. Verified by booting the production
+  // build against a database provisioned by install-fresh + deploy-migrate:
+  // to_regclass('audit.tamper_proof_log') returned MISSING. The Part 11 store a
+  // QA unit audits first did not exist, and the platform reported itself healthy.
+  //
+  // Placed BEFORE the two isolation steps because it CREATES a table, and they
+  // are the final pair by contract (ledger C-33: the sweep runs last so it sees
+  // everything the set creates). It needs nothing from them — the table lives in
+  // the `audit` schema with no tenant column by design, an estate-wide immutable
+  // ledger protected by the mutation trigger and withheld UPDATE/DELETE rather
+  // than by RLS — so the ordering costs it nothing.
+  'db/migrations/20260813_audit_tamper_proof_log.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
@@ -846,22 +865,6 @@ export const C2C_MIGRATION_FILES = [
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
 
-  // ── 21 CFR Part 11 tamper-proof store (added 2026-08-13) ──────────────────
-  // audit.tamper_proof_log had NO migration: its only creator was runtime DDL in
-  // server/lib/tamper-proof-audit.ts, run on the request pool. As the
-  // non-superuser app_service role that can never succeed — `audit` is granted
-  // append-only (SELECT, INSERT) precisely to preserve tamper-evidence, so DDL
-  // there is what must be refused — and the failure was swallowed as
-  // "(non-fatal)" with a console fallback. Verified by booting the production
-  // build against a database provisioned by install-fresh + deploy-migrate:
-  // to_regclass('audit.tamper_proof_log') returned MISSING. The Part 11 store a
-  // QA unit audits first did not exist, and the platform reported itself healthy.
-  //
-  // Listed AFTER the tenant-isolation sweep deliberately: the sweep policies
-  // public tenant-keyed tables, and this one is in the `audit` schema with no
-  // tenant column by design — an estate-wide immutable ledger, protected by the
-  // mutation trigger and revoked UPDATE/DELETE rather than by RLS.
-  'db/migrations/20260813_audit_tamper_proof_log.sql',
 
 ];
 
