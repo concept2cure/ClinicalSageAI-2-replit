@@ -38,8 +38,25 @@
 -- The remaining 57 are deliberately untouched here. Each needs its own decision
 -- (estate-wide reference data, platform config, or a genuine missing tenant
 -- key), and bulk-guessing them is how a schema acquires columns nothing writes.
--- They are recorded in docs/reports/unprotected-tables-baseline.json with the
--- evidence, and the guard there prevents the list from growing.
+--
+-- ── A second, opposite defect, fixed by the same predicate ──────────────────
+-- Separately, 21 tables had RLS ENABLED and NO POLICY — 15 csr_* and 6 ctd_*,
+-- from migrations/0005_csr_knowledge_database.sql. That combination denies
+-- every row to every non-owner, so those tables are inert rather than leaky:
+-- SELECT returns nothing and INSERT is refused. 18 of them key on an FK to
+-- csr_studies / ctd_programs and are handled below.
+--
+-- Three are NOT, because their parent is itself parentless-to-a-tenant and the
+-- chain needs a nested predicate this file's single-level spec cannot express.
+-- Recorded here so the next pass has the map rather than rediscovering it:
+--
+--   csr_endpoint_results  -> csr_endpoints(endpoint_id)     -> csr_studies
+--   ctd_module_sections   -> ctd_submissions(submission_id) -> ctd_programs
+--   ctd_documents         -> ctd_module_sections(section_id) -> ctd_submissions
+--                                                            -> ctd_programs
+--
+-- All three remain deny-all, which is safe, and none is referenced by server
+-- code — so nothing is broken by leaving them until they are needed.
 --
 -- ── Why the policy shape is copied, not invented ────────────────────────────
 -- The predicate is 20260801_tenant_isolation_sweep.sql's policy with the tenant
@@ -87,7 +104,54 @@ DECLARE
     ['lumen_atom_quality_scores',  'atom_id',          'lumen_data_atoms',     'id',       'organization_id'],
     ['lumen_atom_versions',        'atom_id',          'lumen_data_atoms',     'id',       'organization_id'],
     ['program_milestones',         'program_id',       'regulatory_programs',  'id',       'organization_id'],
-    ['rag_chunks',                 'document_id',      'rag_documents',        'id',       'organization_id']
+    ['rag_chunks',                 'document_id',      'rag_documents',        'id',       'organization_id'],
+
+    -- ── The CSR/CTD knowledge families ──────────────────────────────────────
+    -- A DIFFERENT defect from the 21 above, fixed by the same predicate.
+    -- migrations/0005_csr_knowledge_database.sql ran ENABLE ROW LEVEL SECURITY
+    -- on these and never created a policy. RLS enabled with NO policy denies
+    -- every row to every non-owner role, so for the runtime app_service role
+    -- these tables are inert: SELECT returns nothing whatever the table holds,
+    -- and INSERT is refused outright —
+    --
+    --   ERROR: new row violates row-level security policy for table "ctd_documents"
+    --
+    -- verified against the provisioned database as app_service. That is
+    -- fail-closed, so it is not a leak; it is a subsystem that cannot work.
+    -- Three of them ARE reached from server code today, through Drizzle rather
+    -- than raw SQL (csr_endpoints from endpoint-recommender-service.ts,
+    -- csr_sections from m2-summary-builders.ts and
+    -- load-csr-inputs-for-project.ts, ctd_nonclinical_studies from the two
+    -- preclinical services) — so those three read empty in production under
+    -- RLS_ENFORCE=on and report nothing wrong.
+    --
+    -- Every one of these keys on a NOT NULL FK to csr_studies / ctd_programs,
+    -- both organization_id-keyed, so the same parent-scoped policy both
+    -- isolates them and makes them usable again.
+    ['csr_adverse_events',         'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_biomarkers',             'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_dose_response',          'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_eligibility_criteria',   'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_endpoints',              'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_pharmacokinetics',       'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_populations',            'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_references',             'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_safety_summaries',       'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_sections',               'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_statistical_analyses',   'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_tables_and_figures',     'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['csr_treatment_arms',         'study_id',         'csr_studies',          'id',       'organization_id'],
+    ['ctd_nonclinical_studies',    'program_id',       'ctd_programs',         'id',       'organization_id'],
+    ['ctd_quality_data',           'program_id',       'ctd_programs',         'id',       'organization_id'],
+    ['ctd_submissions',            'program_id',       'ctd_programs',         'id',       'organization_id'],
+
+    -- These two key on a NULLABLE FK. A NULL makes the EXISTS false, so an
+    -- unparented row is visible to NOBODY — the same fail-closed choice made
+    -- for unattributed knowledge-graph rows, and stated here rather than
+    -- discovered later. Both tables are empty on a provisioned database and
+    -- unreferenced by server code, so nothing is being hidden today.
+    ['csr_knowledge_edges',        'source_study_id',  'csr_studies',          'id',       'organization_id'],
+    ['ctd_cross_references',       'target_study_id',  'csr_studies',          'id',       'organization_id']
   ];
   i INT;
   child TEXT; fk_col TEXT; parent TEXT; parent_col TEXT; parent_tenant TEXT;

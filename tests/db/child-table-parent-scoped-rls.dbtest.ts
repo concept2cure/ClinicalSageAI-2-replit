@@ -130,6 +130,32 @@ const CASES: Case[] = [
     countOwn: `SELECT count(*)::int AS n FROM public.csr_details WHERE report_id = $1::int`,
   },
   {
+    // Included because it is one of the three that were INERT, not leaky:
+    // migrations/0005_csr_knowledge_database.sql enabled RLS on it and never
+    // wrote a policy, so the runtime role could read nothing and write nothing
+    // — while server/services/m2-summary-builders.ts and
+    // load-csr-inputs-for-project.ts query it. The positive half of this case
+    // is therefore the substantive claim: the table WORKS again.
+    child: 'csr_sections',
+    parent: 'csr_studies',
+    fk: 'study_id',
+    parentTenant: 'organization_id',
+    seed: async (q, org, tag) => {
+      const p = await q(
+        `INSERT INTO public.csr_studies (organization_id, csr_id, study_title)
+         VALUES ($1, $2, $3) RETURNING id`,
+        [org, tag, `study ${tag}`],
+      );
+      await q(
+        `INSERT INTO public.csr_sections (study_id, section_title)
+         VALUES ($1, $2)`,
+        [p.rows[0].id, `section for org ${org}`],
+      );
+      return String(p.rows[0].id);
+    },
+    countOwn: `SELECT count(*)::int AS n FROM public.csr_sections WHERE study_id = $1::int`,
+  },
+  {
     child: 'rag_chunks',
     parent: 'rag_documents',
     fk: 'document_id',
@@ -160,7 +186,23 @@ const ALL_CHILD_TABLES = [
   'document_versions', 'embedding_audit_log', 'fda_510k_stage_progress',
   'lumen_atom_citations', 'lumen_atom_conflicts', 'lumen_atom_quality_scores',
   'lumen_atom_versions', 'program_milestones', 'rag_chunks',
+  // The CSR/CTD families, which had RLS ENABLED and NO POLICY — inert rather
+  // than leaky, and three of them queried by live services.
+  'csr_adverse_events', 'csr_biomarkers', 'csr_dose_response',
+  'csr_eligibility_criteria', 'csr_endpoints', 'csr_pharmacokinetics',
+  'csr_populations', 'csr_references', 'csr_safety_summaries', 'csr_sections',
+  'csr_statistical_analyses', 'csr_tables_and_figures', 'csr_treatment_arms',
+  'ctd_nonclinical_studies', 'ctd_quality_data', 'ctd_submissions',
+  'csr_knowledge_edges', 'ctd_cross_references',
 ];
+
+/**
+ * Deliberately NOT covered by the migration, so they must still have no policy.
+ * Each needs a nested predicate through a second parent, and none is referenced
+ * by server code. Asserted explicitly rather than left implicit: if a later
+ * change policies them, this list is where the decision gets revisited.
+ */
+const STILL_DENY_ALL = ['csr_endpoint_results', 'ctd_module_sections', 'ctd_documents'];
 
 /**
  * Create the parent/child pairs this suite exercises when they are absent.
@@ -212,6 +254,18 @@ async function ensureTables(pool: { query: (sql: string) => Promise<unknown> }):
       id           SERIAL PRIMARY KEY,
       report_id    INTEGER REFERENCES public.csr_reports(id),
       study_design TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS public.csr_studies (
+      id              SERIAL PRIMARY KEY,
+      organization_id INTEGER,
+      csr_id          VARCHAR NOT NULL,
+      study_title     TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.csr_sections (
+      id            SERIAL PRIMARY KEY,
+      study_id      INTEGER NOT NULL REFERENCES public.csr_studies(id),
+      section_title TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS public.rag_documents (
@@ -327,6 +381,32 @@ describe('child tables are scoped to their parent row’s tenant', () => {
       expect(await countFor(ORG_A, fkB), `${c.child}: tenant A can read tenant B's row`).toBe(0);
     });
   }
+
+  it('leaves the three chained tables deny-all, deliberately and visibly', async () => {
+    // These need a nested predicate through a second parent
+    // (csr_endpoint_results -> csr_endpoints -> csr_studies, and the
+    // ctd_documents -> ctd_module_sections -> ctd_submissions -> ctd_programs
+    // chain), which this migration's single-level spec cannot express. None is
+    // referenced by server code, so deny-all costs nothing today.
+    //
+    // Asserted rather than left implicit: policying one of them is a decision
+    // someone should make on purpose, and this is where they will be told.
+    const { rows } = await scratch.ownerPool.query(
+      `SELECT c.relname AS table_name,
+              EXISTS (SELECT 1 FROM pg_policies p
+                       WHERE p.schemaname='public' AND p.tablename=c.relname) AS policied
+         FROM pg_class c
+         JOIN pg_namespace n ON n.oid=c.relnamespace AND n.nspname='public'
+        WHERE c.relname = ANY($1::text[])`,
+      [STILL_DENY_ALL],
+    );
+    for (const row of rows) {
+      expect(
+        row.policied,
+        `${row.table_name} gained a policy — update STILL_DENY_ALL and say why`,
+      ).toBe(false);
+    }
+  });
 
   it('the policy is inert when enforcement is off, exactly like its siblings', async () => {
     // The sweep's policy carries the same `app.rls_enforce IS DISTINCT FROM
