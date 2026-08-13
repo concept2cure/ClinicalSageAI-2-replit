@@ -181,6 +181,62 @@ environment default rather than silently disabling a revenue control.
 
 ---
 
+## 2.5 Second pass — two transports bypassed the lifecycle guard entirely
+
+Found on a follow-up sweep, after the guard had shipped. Both are the same
+mistake in different clothes: the guard is Express middleware on the `/api`
+chain, and **not everything that reaches tenant data is on that chain.**
+
+### 2.5.1 The public API — a suspended tenant's key kept working
+
+`/api/v1` is on `PUBLIC_API_ALLOWLIST` precisely because it authenticates with
+`X-API-Key` rather than a session — so it never reached `enforceTenantLifecycle`.
+And `validateApiKey` checks the **key's** status (`revoked`, `expired`) and
+nothing else: key status and *organization* status are different facts.
+
+Net: an organization suspended for non-payment, a terminated contract, or a
+security incident kept **full programmatic read and write access**, using a key
+that was itself still `active`. The guard covered the session surface and left a
+hole exactly the shape of the public API — the surface an enterprise customer is
+most likely to have automated against.
+
+Closed in `requireApiKey` (`routes/public-api.ts`): posture consulted after key
+validation, `deny` → 403 with the machine-readable code and `tenantState` so an
+integration can branch, `read_only` → writes blocked and reads allowed, unreadable
+posture → 503 fail-closed. Deliberately not a carve-out like billing: there is no
+"you must be able to reach checkout" equivalent here.
+
+### 2.5.2 The collaboration socket — a suspended tenant kept editing in real time
+
+`server/services/hocuspocus-server.ts` is a different **transport**. It checked
+token class, live membership and per-document tenant ownership — genuinely good
+controls — but not the lifecycle posture, because no Express middleware runs for
+a WebSocket.
+
+This one is sharper than the API-key gap: a collaboration socket is a pure
+**write** channel. A suspended organization's users kept editing documents in
+real time while every HTTP route refused them — the worst possible split for a
+control whose entire job is to stop a suspended tenant working.
+
+Closed in `authenticateCollabConnection`. `deny` refuses the connection;
+`read_only` **downgrades** it via hocuspocus's `connectionConfig.readOnly` rather
+than refusing, because a past-due tenant retains HTTP read access by design and
+making a document readable over one transport but not the other buys nothing.
+Where no `connectionConfig` is available to downgrade with, it fails closed
+rather than admitting a writer. The check sits *after* membership, so a revoked
+user is refused for revocation and never learns the tenant's billing state.
+
+**The generalizable lesson.** A control mounted on one transport is not a
+platform control. The remaining alternative-auth surfaces were enumerated and
+dispositioned: Stripe webhooks must stay open (that is how a suspended tenant
+pays its way back), Firecrawl webhooks are signature-verified ingestion,
+`/api/csp-report` carries no tenant data, and the auth/health/setup paths carry
+none either. SCIM (`/scim/v2`) is left deliberately: provisioning for a suspended
+tenant arguably *should* stop while deprovisioning *should* continue, and that
+distinction wants a product decision rather than a guess.
+
+---
+
 ## 3. Residual register — triaged, not closed
 
 Ordered by what a prospective enterprise buyer's security review would ask about
