@@ -881,6 +881,26 @@ export const C2C_MIGRATION_FILES = [
   // creates a table, and it is the version the contract tests enforce.
   'migrations/20260813_tenant_offboarding_lifecycle.sql',
 
+  // ── AI gateway provenance ledger (added 2026-08-13) ──────────────────────
+  // ai.gateway_audit_log had no migration at all. Its only creator was runtime
+  // DDL in server/services/ai-gateway/audit.ts (`CREATE SCHEMA IF NOT EXISTS ai`
+  // + CREATE TABLE), run lazily on the first persist and swallowed by a catch —
+  // and Postgres checks database-level CREATE BEFORE the IF NOT EXISTS
+  // short-circuit, so the non-superuser runtime role was refused on statement
+  // one even though the `ai` schema already exists (059_gcc_vector_embeddings).
+  // scripts/ci/tables-live-schema-baseline.json confirmed it against a real
+  // provisioned database: absent. Every AI call reported itself audited and
+  // wrote nothing.
+  //
+  // BEFORE the two isolation steps, like every other table-creating entry
+  // (C-33). The sweep will find no organization_id to key on — the column is
+  // VARCHAR(64), inherited from the runtime DDL and left alone here so the
+  // writer's `organizationId?.toString()` bind keeps working — so it will SKIP
+  // with a NOTICE rather than policy it. That is the intended outcome: this is
+  // an operational ledger read by admin/ops surfaces across tenants, not
+  // tenant-facing data.
+  'db/migrations/20260813_ai_gateway_audit_log.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

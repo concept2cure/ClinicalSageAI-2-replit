@@ -1,9 +1,9 @@
 {
-  "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability — which compare the repo to itself and can only tell you whether some file CLAIMS to create a table — every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one.",
+  "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability \u2014 which compare the repo to itself and can only tell you whether some file CLAIMS to create a table \u2014 every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one.",
   "generatedAt": "2026-08-13T03:51:34.426Z",
   "liveRelationCount": 1246,
   "referencedCount": 787,
-  "count": 98,
+  "count": 97,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -13,9 +13,6 @@
     ],
     "agent_runtime.threads": [
       "server/services/cognitive-ecosystem/langgraph-orchestrator.service.ts"
-    ],
-    "ai.gateway_audit_log": [
-      "server/services/ai-gateway/audit.ts"
     ],
     "ai_feedback": [
       "server/routes/concept2cure.ts"

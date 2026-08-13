@@ -4,6 +4,22 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
+# The scan below ends in `|| true`, because rg exits 1 when it matches nothing
+# and `set -e` would abort on a clean run. That swallows EVERY rg failure
+# identically — including "rg is not installed", which yields an empty HITS and
+# the cheerful "✅ no direct Pool construction found". A guard that cannot tell
+# "found nothing" from "never looked" reports success loudest exactly when it
+# has stopped working.
+#
+# Not hypothetical here: `server/db/bootstrap/index.ts:38` has constructed a
+# Pool since #1307, this script flags it when run by hand, and the Lint job has
+# been green throughout.
+if ! command -v rg >/dev/null 2>&1; then
+  echo "❌ ban-new-pool: ripgrep (rg) is not installed — the scan cannot run."
+  echo "   Refusing to report success for a check that did not execute."
+  exit 1
+fi
+
 # We enforce: no `new Pool(` (or `new pg.Pool(`) anywhere in runtime code,
 # except the canonical DB module(s).
 ALLOWLIST_FILES=(
@@ -12,6 +28,14 @@ ALLOWLIST_FILES=(
   "server/db/runtime.ts"
   "server/db/ensureCoreTables.ts"
   "server/utils/database.js"
+  # The OWNER connection, which is a different role from the runtime pool this
+  # guard steers everything else toward. When APP_DATABASE_URL splits the two,
+  # ensureAuthTables must connect as the owner to create tables the
+  # non-superuser app_service role is deliberately not allowed to create.
+  # server/db/runtime.ts cannot supply that — it is the runtime role by
+  # definition — so this is the same kind of exception as ensureCoreTables.ts
+  # above, not an unconverted call site.
+  "server/db/bootstrap/index.ts"
 )
 
 # Scan ALL of server/ and exclude what is not runtime, rather than listing the
