@@ -92,6 +92,7 @@ async function cleanup(): Promise<void> {
   // — which is itself a small proof that FORCE is on.
   for (const org of [ORG_A, ORG_B]) {
     await asTenant(org, async c => {
+      await c.query('DELETE FROM knowledge_graph_edges WHERE id LIKE $1', [`${TAG}%`]);
       await c.query('DELETE FROM knowledge_graph_nodes WHERE description = $1', [TAG]);
     });
   }
@@ -202,6 +203,56 @@ describe('knowledge graph tenant isolation', () => {
       );
       expect(rows.rows).toEqual([]);
     }
+  });
+
+  it('accepts an ingest-shaped node+edge write for the writer\'s own tenant', async () => {
+    // Mirrors the two INSERTs in server/routes/graphrag.ts POST /ingest,
+    // including the ON CONFLICT clauses, so the column list this suite proves
+    // is the column list that handler sends. Adding organization_id there was
+    // not optional once the policy landed: WITH CHECK refuses a NULL tenant, so
+    // the pre-migration statement would fail EVERY ingest at the database.
+    await asTenant(ORG_A, async c => {
+      await c.query(
+        `INSERT INTO knowledge_graph_nodes
+           (id, entity_type, name, description, metadata, confidence, source_document_id, organization_id, created_at)
+         VALUES ($1, 'compound', 'ZX-9', $2, '{}'::jsonb, 0.7, 'doc-1', $3, NOW())
+         ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+        [`${TAG}-ingest-node`, TAG, ORG_A]
+      );
+      await c.query(
+        `INSERT INTO knowledge_graph_edges
+           (id, source_id, target_id, relationship_type, weight, metadata, organization_id, created_at)
+         VALUES ($1, $2, $2, 'mentions', 1.0, '{}'::jsonb, $3, NOW())
+         ON CONFLICT (id) DO NOTHING`,
+        [`${TAG}-ingest-edge`, `${TAG}-ingest-node`, ORG_A]
+      );
+    });
+
+    const mine = await asTenant(ORG_A, c =>
+      c.query('SELECT name FROM knowledge_graph_nodes WHERE id = $1', [`${TAG}-ingest-node`])
+    );
+    expect(mine.rows.map(r => r.name)).toEqual(['ZX-9']);
+
+    const theirs = await asTenant(ORG_B, c =>
+      c.query('SELECT name FROM knowledge_graph_nodes WHERE id = $1', [`${TAG}-ingest-node`])
+    );
+    expect(theirs.rows).toEqual([]);
+  });
+
+  it('refuses an ingest write that omits the tenant, rather than storing it unattributed', async () => {
+    // The pre-migration statement, verbatim minus organization_id. It must be
+    // refused: silently storing an unattributed row would put it beyond every
+    // tenant's reach (the NULL-invisible rule) while looking like a success.
+    await expect(
+      asTenant(ORG_A, c =>
+        c.query(
+          `INSERT INTO knowledge_graph_nodes
+             (id, entity_type, name, description, metadata, confidence, source_document_id, created_at)
+           VALUES ($1, 'compound', 'orphan', $2, '{}'::jsonb, 0.7, 'doc-1', NOW())`,
+          [`${TAG}-no-tenant`, TAG]
+        )
+      )
+    ).rejects.toThrow(/row-level security/i);
   });
 
   it('shows nothing at all to a connection carrying no tenant scope', async () => {
