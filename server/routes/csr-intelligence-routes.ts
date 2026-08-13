@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const ANALYTICS_CACHE_TTL_MS = 30_000;
 const MAX_ANALYTICS_CACHE_ENTRIES = 500;
@@ -11,6 +12,43 @@ interface CacheEntry {
 }
 
 const analyticsCache = new Map<string, CacheEntry>();
+
+/**
+ * Build a cache key that cannot serve one tenant's numbers to another.
+ *
+ * ── The exposure this closes ─────────────────────────────────────────────────
+ * The 2026-08 assessment: "the shared knowledge-graph (GraphRAG) and the
+ * CSR-analytics cache are tenant-less — one tenant's document entities and
+ * portfolio metrics surface to another." The graph half is fixed by
+ * db/migrations/20260813_knowledge_graph_tenant_keys.sql. This is the other
+ * half, and it is not an RLS problem — it sits in front of the database.
+ *
+ * The three keys were literals: `analytics:${type}`, `stats:overview` and
+ * `insights:factual`. The SQL underneath them IS correctly filtered — csr_reports
+ * carries organization_id with RLS enabled and forced, and pool instrumentation
+ * applies `app.current_tenant_id` LOCAL to each pooled statement under
+ * RLS_ENFORCE=on — so each response is computed for the requesting tenant and
+ * then stored under a key shared by all of them. For the next 30 seconds every
+ * other tenant got a `X-Cache: HIT` carrying those numbers.
+ *
+ * What leaked is not just counts. `therapeuticAreas` is keyed by INDICATION
+ * NAME, taken straight from csr_reports.indication, and the stats/insights
+ * payloads carry the same shape. On a platform holding unannounced programmes,
+ * the indication list IS the confidential part — the same argument that made the
+ * knowledge-graph entity names worth fixing.
+ *
+ * ── Why an unresolvable org is a miss rather than a shared key ───────────────
+ * Falling back to a constant ("anonymous", "unknown") would rebuild exactly the
+ * shared bucket being removed, and it would be reached precisely when identity
+ * is least certain. An unresolvable org therefore gets no cache participation at
+ * all: no read, no write. That costs a little repeated work on a path that is
+ * already querying the database, and it cannot leak.
+ */
+function tenantCacheKey(req: Request, suffix: string): string | null {
+  const orgId = getSecureOrgId(req);
+  if (!orgId) return null;
+  return `org:${orgId}:${suffix}`;
+}
 
 function getCachedPayload(cacheKey: string): unknown | null {
   const cached = analyticsCache.get(cacheKey);
@@ -105,10 +143,10 @@ export function createCsrIntelligenceRoutes(pool: Pool, csrSearchService: any): 
   router.get('/csr-intelligence/analytics', async (req: Request, res: Response) => {
     try {
       const { type = 'dashboard', refresh = 'false' } = req.query;
-      const cacheKey = `analytics:${String(type)}`;
+      const cacheKey = tenantCacheKey(req, `analytics:${String(type)}`);
       const bypassCache = String(refresh).toLowerCase() === 'true';
 
-      if (!bypassCache) {
+      if (!bypassCache && cacheKey) {
         const cached = getCachedPayload(cacheKey);
         if (cached) {
           res.setHeader('X-Cache', 'HIT');
@@ -178,7 +216,7 @@ export function createCsrIntelligenceRoutes(pool: Pool, csrSearchService: any): 
         timestamp: new Date().toISOString(),
       };
 
-      setCachedPayload(cacheKey, analyticsData);
+      if (cacheKey) setCachedPayload(cacheKey, analyticsData);
       res.setHeader('X-Cache', 'MISS');
       res.json(analyticsData);
     } catch (error) {
@@ -194,10 +232,10 @@ export function createCsrIntelligenceRoutes(pool: Pool, csrSearchService: any): 
   router.get('/csr-intelligence/stats', async (req: Request, res: Response) => {
     try {
       const { refresh = 'false' } = req.query;
-      const cacheKey = 'stats:overview';
+      const cacheKey = tenantCacheKey(req, 'stats:overview');
       const bypassCache = String(refresh).toLowerCase() === 'true';
 
-      if (!bypassCache) {
+      if (!bypassCache && cacheKey) {
         const cached = getCachedPayload(cacheKey);
         if (cached) {
           res.setHeader('X-Cache', 'HIT');
@@ -290,7 +328,7 @@ export function createCsrIntelligenceRoutes(pool: Pool, csrSearchService: any): 
         timestamp: new Date().toISOString(),
       };
 
-      setCachedPayload(cacheKey, statsData);
+      if (cacheKey) setCachedPayload(cacheKey, statsData);
       res.setHeader('X-Cache', 'MISS');
       res.json(statsData);
     } catch (error) {
@@ -306,10 +344,10 @@ export function createCsrIntelligenceRoutes(pool: Pool, csrSearchService: any): 
   router.get('/csr-intelligence/factual-insights', async (req: Request, res: Response) => {
     try {
       const { refresh = 'false' } = req.query;
-      const cacheKey = 'insights:factual';
+      const cacheKey = tenantCacheKey(req, 'insights:factual');
       const bypassCache = String(refresh).toLowerCase() === 'true';
 
-      if (!bypassCache) {
+      if (!bypassCache && cacheKey) {
         const cached = getCachedPayload(cacheKey);
         if (cached) {
           res.setHeader('X-Cache', 'HIT');
@@ -373,7 +411,7 @@ export function createCsrIntelligenceRoutes(pool: Pool, csrSearchService: any): 
         source: 'database',
       };
 
-      setCachedPayload(cacheKey, payload);
+      if (cacheKey) setCachedPayload(cacheKey, payload);
       res.setHeader('X-Cache', 'MISS');
       res.json(payload);
     } catch (error) {
