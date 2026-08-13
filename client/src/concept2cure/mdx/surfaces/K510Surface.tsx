@@ -15,7 +15,7 @@ import {
   useK510SeMatrix,
 } from '../hooks/useK510';
 import { useDeviceProfile } from '../hooks/useDeviceProfile';
-import { useEstarExport } from '../hooks/useEstarExport';
+import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
@@ -71,21 +71,19 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
      package assembles server-side from the org's authored sections; the
      response's base64 payload downloads in-browser. */
   const estarExport = useEstarExport();
-  const exportStatus = estarExport.busy
-    ? 'Exporting…'
-    : estarExport.outcome
-      ? estarExport.outcome.ok
-        ? `Downloaded ${estarExport.outcome.filename ?? 'package'}` +
-          (estarExport.outcome.formattingErrors + estarExport.outcome.formattingWarnings > 0
-            ? ` · ${estarExport.outcome.formattingErrors} formatting errors, ${estarExport.outcome.formattingWarnings} warnings to fix before submitting`
-            : '') +
-          (estarExport.outcome.governed ? '' : ' · audit-logged; artifact registry placement pending')
-        : `Export failed — ${
-            estarExport.outcome.blockers.length
-              ? estarExport.outcome.blockers.join(' · ')
-              : estarExport.outcome.error ?? 'unknown error'
-          }`
-      : null;
+  const exportStatus = exportStatusLine(estarExport.busy, estarExport.outcome);
+
+  /* Locked-never-dead (entitlements contract §4): a 403 NOT_ENTITLED from the
+     export routes disables the buttons WITH the reason — a Locked pill plus a
+     tooltip and status line naming the real minimum tier — never a reasonless
+     dead control, and never conflated with a role 403 or an out-of-credits
+     state (blockedByEntitlement is set only by the entitlement gate's shape). */
+  const entitlementLocked = estarExport.outcome?.blockedByEntitlement === true;
+  const lockedTitle = entitlementLocked
+    ? `Locked — requires the ${
+        estarExport.outcome?.requiredTier ?? 'higher'
+      } plan (device assembly readiness)`
+    : null;
 
   const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
   const sourceSeRows     = useSampleRows(seMatrix.rows, K510_SE_ROWS);
@@ -139,11 +137,12 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         <button
           className="section-more"
           style={{ marginLeft: 8 }}
-          disabled={estarExport.busy || !program}
+          disabled={estarExport.busy || !program || entitlementLocked}
           title={
-            program
+            lockedTitle ??
+            (program
               ? 'Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests'
-              : 'Select a 510(k) program first'
+              : 'Select a 510(k) program first')
           }
           onClick={() => {
             if (!program) return;
@@ -155,15 +154,16 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         <button
           className="section-more"
           style={{ marginLeft: 8 }}
-          disabled={!officialReady || estarReadiness.loading || estarExport.busy || !program}
+          disabled={!officialReady || estarReadiness.loading || estarExport.busy || !program || entitlementLocked}
           title={
-            estarReadiness.loading
+            lockedTitle ??
+            (estarReadiness.loading
               ? 'Checking official eSTAR availability…'
               : officialReady
                 ? 'Generate the official FDA eSTAR interactive PDF — the submittable artifact CDRH ingests'
                 : `Official eSTAR not yet available — ${
                     officialBlockers.join(' · ') || 'template not vendored / field map not populated'
-                  }`
+                  }`)
           }
           onClick={() => {
             if (!program) return;
@@ -176,6 +176,11 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
 
       {exportStatus && (
         <div className="section-sub" role="status" style={{ marginTop: 4 }}>
+          {entitlementLocked ? (
+            <span className="status-pill review" style={{ marginRight: 6 }}>
+              Locked
+            </span>
+          ) : null}
           {exportStatus}
         </div>
       )}

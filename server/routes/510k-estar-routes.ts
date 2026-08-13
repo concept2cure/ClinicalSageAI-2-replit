@@ -60,6 +60,7 @@ import {
 } from '../../shared/schema/estar-submission';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { requireEntitlement } from '../services/entitlements/require-entitlement';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
 import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../services/market-specs/market-formatting-validator';
 
@@ -275,7 +276,12 @@ async function buildZipBuffer(
  * body: { meta, content, attachments[] }
  * returns: zip file stream with FDA-named PDFs + attachments/
  */
-router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
+// The three producing/assembling actions of the device_assembly_readiness
+// capability are entitlement-gated (ENTITLEMENTS_ENFORCE: off|warn|on — see
+// services/entitlements/require-entitlement). Read paths below stay open.
+const requireAssemblyEntitlement = requireEntitlement('device_assembly_readiness');
+
+router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = requestSchema.safeParse(req.body);
   if (!validation.success) {
     return res.status(400).json({
@@ -596,7 +602,7 @@ const officialSchema = z.object({
  * The `officialEstarPdf` flag is wired to `result.filled`, so it flips true on
  * its own the moment the template + verified field map land (no code change).
  */
-router.post('/official', authMiddleware, requireEditorAccess, async (req, res) => {
+router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = officialSchema.safeParse(req.body);
   if (!validation.success) {
     return res.status(400).json({
@@ -733,7 +739,7 @@ const assembleSchema = z.object({
  * result plus a validationReport whose errors are the blockers that prevent a
  * submittable official eSTAR. Read-only: renders and persists nothing.
  */
-router.post('/assemble', authMiddleware, requireEditorAccess, async (req, res) => {
+router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = assembleSchema.safeParse(req.body ?? {});
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });

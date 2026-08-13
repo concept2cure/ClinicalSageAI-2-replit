@@ -12,6 +12,7 @@
 export * from './types';
 export * from './mdx-entitlements';
 export * from './resolver';
+export * from './require-entitlement';
 
 import entitlements from './mdx-entitlements';
 

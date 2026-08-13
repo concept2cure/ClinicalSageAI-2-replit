@@ -22,6 +22,7 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 
 import { authMiddleware } from '../auth';
+import { requireEntitlement } from '../services/entitlements/require-entitlement';
 import { db } from '../db';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import {
@@ -103,7 +104,9 @@ const profilePatchSchema = z
   })
   .refine((p) => Object.keys(p).length > 0, { message: 'At least one field is required' });
 
-router.put('/profile', async (req, res) => {
+// The device-profile WRITE is part of the device_assembly_readiness capability
+// (ENTITLEMENTS_ENFORCE: off|warn|on). Reads stay open.
+router.put('/profile', requireEntitlement('device_assembly_readiness'), async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
   const identParsed = identSchema.safeParse(req.query);
