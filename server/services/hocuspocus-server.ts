@@ -70,6 +70,7 @@ import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { checkOrgMembership, parseFiniteInt } from '../middleware/orgMembership';
+import { getTenantAccessPosture } from './tenant/tenant-lifecycle';
 import {
   authoringDocIdOf,
   authorizeResource,
@@ -128,6 +129,53 @@ interface CollabTokenClaims {
 }
 
 /**
+ * Step 6 extracted: apply the tenant lifecycle posture to a collaboration
+ * connection. Throws to refuse; mutates `connectionConfig.readOnly` to downgrade.
+ *
+ * Lives outside `authenticateCollabConnection` so that function stays within the
+ * complexity budget — it is already a six-gate security boundary and each gate
+ * deserves to stay readable.
+ */
+async function applyTenantPostureToSocket(
+  organizationId: number,
+  documentName: string,
+  connectionConfig?: { readOnly: boolean }
+): Promise<void> {
+  const posture = await getTenantAccessPosture(organizationId);
+  if (!posture) {
+    log.warn('Refused collaboration — tenant posture unverifiable (fail-closed)', {
+      documentName,
+      organizationId,
+    });
+    throw denied('tenant-state-unverified');
+  }
+  if (posture.decision === 'deny') {
+    log.warn('Refused collaboration — tenant lifecycle posture denies access', {
+      documentName,
+      organizationId,
+      state: posture.state,
+    });
+    throw denied('tenant-suspended');
+  }
+  if (posture.decision !== 'read_only') return;
+
+  if (!connectionConfig) {
+    log.warn('Refused collaboration — read-only tenant and no way to downgrade the socket', {
+      documentName,
+      organizationId,
+      state: posture.state,
+    });
+    throw denied('tenant-read-only');
+  }
+  connectionConfig.readOnly = true;
+  log.info('Collaboration downgraded to read-only by tenant lifecycle posture', {
+    documentName,
+    organizationId,
+    state: posture.state,
+  });
+}
+
+/**
  * Authenticate one client for one document.
  *
  * Every rejection is a throw, because hocuspocus turns a thrown error into a
@@ -141,9 +189,16 @@ interface CollabTokenClaims {
 export async function authenticateCollabConnection({
   token,
   documentName,
+  connectionConfig,
 }: {
   token: string;
   documentName: string;
+  /**
+   * Hocuspocus's per-connection config. Setting `readOnly` here downgrades the
+   * socket to view-only instead of refusing it outright — see step 6.
+   * Optional so the existing direct-call tests need no fixture change.
+   */
+  connectionConfig?: { readOnly: boolean };
 }): Promise<CollabContext> {
   // 1. The requested resource must be one we know how to authorize. Parsing
   //    first means an unknown or malformed name never reaches Postgres.
@@ -204,7 +259,24 @@ export async function authenticateCollabConnection({
     }
   }
 
-  // 6. The document itself. Fails closed on anything unverifiable.
+  // 6. Tenant lifecycle. The socket is a separate TRANSPORT, so the HTTP
+  //    lifecycle guard (middleware/tenantLifecycleGuard.ts) never runs for it —
+  //    and this is a pure WRITE channel: real-time document editing. Without
+  //    this check a suspended organization's users kept editing documents in
+  //    real time while every HTTP route refused them, which is the worst
+  //    possible split for a control whose whole job is to stop a suspended
+  //    tenant working.
+  //
+  //    `read_only` DOWNGRADES rather than refuses. A past-due tenant retains
+  //    read access to its own regulatory record on HTTP by design; refusing the
+  //    socket outright would make documents that are readable over one transport
+  //    unreadable over the other, for no benefit. Hocuspocus enforces
+  //    `connectionConfig.readOnly` for us. Where the caller supplies no
+  //    connectionConfig (the direct-call tests), a read-only posture refuses —
+  //    failing closed rather than silently granting write access.
+  await applyTenantPostureToSocket(organizationId, documentName, connectionConfig);
+
+  // 7. The document itself. Fails closed on anything unverifiable.
   const authorization = await authorizeResource(resource, organizationId);
   if (authorization !== 'authorized') {
     log.warn('Refused collaboration — document not authorized for this tenant', {
