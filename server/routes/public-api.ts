@@ -20,6 +20,7 @@ import {
   decisionPermitsMethod,
   getTenantAccessPosture,
 } from '../services/tenant/tenant-lifecycle.js';
+import { enforceStorageQuota } from '../middleware/storageQuotaGuard.js';
 // Centralized, fleet-wide scope guard (server/middleware/enterprise-security.ts).
 // Imported as requireApiScope to avoid colliding with the legacy single-scope
 // helper below. Demonstrates the shared mechanism on the two most sensitive
@@ -322,6 +323,17 @@ function parsePositiveInt(value: unknown, defaultVal: number, max = 100): number
 
 // Apply API key auth to all subsequent routes
 router.use(requireApiKey);
+
+// Storage quota. `/api/v1` has no content-bearing write route TODAY, so this is
+// a no-op on every current path — mounted anyway, and deliberately.
+//
+// The lifecycle guard above had to be retrofitted onto this router after the
+// session surface was already covered, because a key-authenticated transport is
+// invisible to a guard mounted in the auth chain. Mounting the storage guard now
+// means the first `/api/v1` upload route is metered by construction rather than
+// by whoever writes it remembering. The guard evaluates only multipart /
+// octet-stream / large bodies, so it costs nothing on the JSON routes here.
+router.use(enforceStorageQuota);
 
 // Log every authenticated API request for observability
 router.use((req: ApiRequest, _res: Response, next: NextFunction) => {

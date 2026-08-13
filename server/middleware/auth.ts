@@ -13,6 +13,7 @@ import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
 import { establishRequestTenantScope } from './establishRequestTenantScope';
 import { enforceTenantLifecycle } from './tenantLifecycleGuard';
+import { enforceStorageQuota } from './storageQuotaGuard';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -172,8 +173,13 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // posture lookup is itself a tenant-scoped query. Order matters in the other
     // direction too: membership answers "is this user still in this org", the
     // guard answers "is this org still entitled to operate". Both must hold.
+    //
+    // The storage quota guard runs LAST, and only on content-bearing writes. A
+    // suspended tenant must be told it is suspended, not that it is out of disk.
     enforceOrgMembership(req, res, () =>
-      establishRequestTenantScope(req, res, () => enforceTenantLifecycle(req, res, next))
+      establishRequestTenantScope(req, res, () =>
+        enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
+      )
     );
   } catch (error) {
     return res.status(401).json({

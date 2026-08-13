@@ -16,6 +16,7 @@ import { requireAccessTokenReason } from './middleware/tokenType';
 import { runWithPreAuthScope } from './db/tenantStore';
 import { establishRequestTenantScope } from './middleware/establishRequestTenantScope';
 import { enforceTenantLifecycle } from './middleware/tenantLifecycleGuard';
+import { enforceStorageQuota } from './middleware/storageQuotaGuard';
 
 const logger = createScopedLogger('auth');
 
@@ -219,8 +220,15 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       // The tenant lifecycle guard runs after the scope exists (its posture
       // lookup is a tenant-scoped query) and refuses suspended, inactive,
       // past-due and pending-deletion organizations. See tenantLifecycleGuard.
+      //
+      // The storage quota guard runs LAST, and only on content-bearing writes.
+      // Order matters: a suspended tenant must be told it is suspended, not that
+      // it is out of disk. Mounting it here rather than on each upload route is
+      // deliberate — see storageQuotaGuard's note on why an optional parameter
+      // threaded through the upload helpers would have produced a quota enforced
+      // only on the routes someone remembered.
       return establishRequestTenantScope(req, res, () =>
-        enforceTenantLifecycle(req, res, next)
+        enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
       );
     } catch (error) {
       logger.error('Authentication error', error);

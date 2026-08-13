@@ -41,6 +41,7 @@
     "eval:risk-backtest": "tsx scripts/backtest-risk-model.ts",
     "check:security-patterns": "tsx scripts/check-security-patterns.ts",
     "report:regulatory-coverage": "tsx scripts/regulatory-coverage-report.ts",
+    "report:tenant-storage": "tsx scripts/tenant-storage-report.ts",
     "fetch:fda-forms": "tsx scripts/fetch-fda-forms.ts",
     "check:compliance-claims": "node scripts/ci/check-compliance-claims.mjs",
     "check:microcopy": "node scripts/ci/check-microcopy.mjs",
