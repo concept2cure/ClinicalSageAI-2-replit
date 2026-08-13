@@ -898,6 +898,161 @@ jobs:
         # here fails the build on a real DB before it can ship.
         run: node scripts/db/deploy-smoke-assert.mjs
 
+  # ── Production boot smoke — the shipped build must actually serve ──────────
+  #
+  # Every other DB-backed job here proves something about the SCHEMA. None of
+  # them ever started the application. That gap was not theoretical: with
+  # RLS_ENFORCE=on — the ONLY value production accepts (server/db/
+  # rlsEnforcement.ts refuses to boot on unset/off/shadow) — the shipped build
+  # threw
+  #
+  #   [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope
+  #
+  # as an uncaughtException out of registerPreStartRoutes and shut down before
+  # it ever listened. An estate-wide catalog check (assertAuthoringAuthorization
+  # Ready) issued an unscoped pool.query, which instrumentation blocks once
+  # enforcement is on. No job noticed, because no job booted the app.
+  #
+  # So this one does the whole thing the way a deploy does:
+  #   blank DB → install-fresh → deploy-migrate → npm run build → node dist/
+  # with NODE_ENV=production, RLS_ENFORCE=on, and the runtime connected as the
+  # NON-SUPERUSER app_service role (APP_DATABASE_URL) over TLS — then asserts
+  # /readyz returns 200. That is Postgres RLS actually filtering, not merely
+  # compiled: a superuser or BYPASSRLS runtime role would make all ~790 policies
+  # inert, and the boot posture check fails closed on exactly that.
+  #
+  # Postgres runs as a plain container rather than a `services:` block because
+  # production hard-requires TLS with rejectUnauthorized (server/db/ssl.ts), so
+  # the server needs certificates mounted — which a service block cannot do.
+  production-boot-smoke:
+    name: Production Boot Smoke (RLS on, non-superuser role)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      # Production forces TLS verification, so the server must present a cert
+      # the runtime trusts (NODE_EXTRA_CA_CERTS below). Self-signed is fine —
+      # what is being proven is that the TLS path works, not who signed it.
+      - name: Start PostgreSQL with TLS
+        run: |
+          mkdir -p "$RUNNER_TEMP/pgcerts"
+          openssl req -new -x509 -days 2 -nodes -text \
+            -out "$RUNNER_TEMP/pgcerts/server.crt" \
+            -keyout "$RUNNER_TEMP/pgcerts/server.key" \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+          # The postgres user inside the image (uid 999) must own the key, and
+          # the server refuses to start if it is group/world readable.
+          sudo chown 999:999 "$RUNNER_TEMP/pgcerts/server.key" "$RUNNER_TEMP/pgcerts/server.crt"
+          sudo chmod 600 "$RUNNER_TEMP/pgcerts/server.key"
+          docker run -d --name pgboot \
+            -e POSTGRES_HOST_AUTH_METHOD=trust \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_DB=c2c_boot \
+            -p 5432:5432 \
+            -v "$RUNNER_TEMP/pgcerts:/certs:ro" \
+            pgvector/pgvector:pg15 \
+            -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
+          for i in $(seq 1 45); do
+            pg_isready -h localhost -p 5432 -U postgres && break
+            sleep 2
+          done
+          psql "postgresql://postgres@localhost:5432/c2c_boot?sslmode=require" \
+            -tAc "SELECT 'TLS handshake OK'"
+
+      - name: Provision the schema from scratch (owner connection)
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS vector'
+          node scripts/db/install-fresh.mjs
+          node scripts/db/deploy-migrate.mjs
+        env:
+          DATABASE_URL: postgresql://postgres@localhost:5432/c2c_boot
+          # Mints the non-superuser runtime role the boot below connects as.
+          # Without it the installers are a no-op on this step and the app would
+          # fall back to the owner connection — which is the posture this job
+          # exists to reject.
+          APP_SERVICE_DB_PASSWORD: ci-boot-smoke-app-service-password
+
+      - name: The runtime role must be non-superuser and NOBYPASSRLS
+        run: |
+          POSTURE=$(psql "postgresql://postgres@localhost:5432/c2c_boot" -tAc \
+            "SELECT rolsuper::text || ',' || rolbypassrls::text FROM pg_roles WHERE rolname='app_service'")
+          echo "app_service rolsuper,rolbypassrls = $POSTURE"
+          if [ "$POSTURE" != "false,false" ]; then
+            echo "::error::app_service must be NOSUPERUSER and NOBYPASSRLS; got $POSTURE."
+            echo "A superuser or BYPASSRLS runtime role makes every RLS policy inert."
+            exit 1
+          fi
+
+      - name: Build the production bundle
+        run: npm run build
+
+      # The assertion: the built server, in production mode, under the only RLS
+      # value production accepts, as the least-privilege role, reaches ready.
+      - name: Boot in production mode and require /readyz=200
+        run: |
+          node dist/index.js > "$RUNNER_TEMP/boot.log" 2>&1 &
+          BOOT_PID=$!
+          READY=""
+          for i in $(seq 1 90); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5199/readyz || true)
+            if [ "$CODE" = "200" ]; then READY="yes"; echo "/readyz=200 after ${i}s"; break; fi
+            if ! kill -0 $BOOT_PID 2>/dev/null; then
+              echo "::error::the server exited during boot (last /readyz code: ${CODE:-none})."
+              break
+            fi
+            sleep 1
+          done
+          if [ -z "$READY" ]; then
+            echo "──────── boot log ────────"
+            tail -n 120 "$RUNNER_TEMP/boot.log"
+            echo "::error::production boot smoke FAILED — the shipped build did not reach /readyz=200 with RLS_ENFORCE=on as a non-superuser role."
+            kill $BOOT_PID 2>/dev/null || true
+            exit 1
+          fi
+          curl -s http://127.0.0.1:5199/readyz
+          kill $BOOT_PID 2>/dev/null || true
+        env:
+          NODE_ENV: production
+          RLS_ENFORCE: 'on'
+          PORT: '5199'
+          # Migrations/admin keep the owner URL; the request-serving pool is the
+          # least-privilege role. This split is the whole point of the job.
+          DATABASE_URL: postgresql://postgres@localhost:5432/c2c_boot
+          APP_DATABASE_URL: postgresql://app_service:ci-boot-smoke-app-service-password@localhost:5432/c2c_boot
+          NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/pgcerts/server.crt
+          # Production refuses to start without each of these. They are
+          # throwaway values for a container that is destroyed with the job.
+          JWT_SECRET: ci-boot-smoke-jwt-secret-min-32-chars-long-aaa
+          SESSION_SECRET: ci-boot-smoke-session-secret-min-32-chars-bbb
+          REFRESH_TOKEN_SECRET: ci-boot-smoke-refresh-secret-min-32-chars-ccc
+          AUDIT_HMAC_SECRET: ci-boot-smoke-audit-hmac-secret-min-32-chars-ddd
+          AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
+          MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
+          CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+
+      - name: Tear down PostgreSQL
+        if: always()
+        run: docker rm -f pgboot || true
+
   aios-audit-assets:
     name: AIOS Audit Assets
     runs-on: ubuntu-latest
