@@ -17,6 +17,15 @@ describe('dossierStore live-data integrity', () => {
     expect(DossierStore.readSectionBody('k510', 1, 'Medical Device User Fee Cover Sheet')).toContain('BX-204');
   });
 
+  it('excludes the synthesized audit seed from section activity outside sample mode', () => {
+    /* Even with sample fixtures installed in the store, the drawer's Activity
+       feed merges the kit's synthesized hash-chain events only when sample
+       mode itself is on — otherwise only real in-store edits appear. */
+    DossierStore.enableSampleFixtures();
+    const activity = DossierStore.activityForSection('k510', 11);
+    expect(activity.every((e) => e.live === true)).toBe(true);
+  });
+
   it('empty backend hydration removes prior sample evidence', () => {
     DossierStore.enableSampleFixtures();
     expect(DossierStore.readSectionBody('k510', 1, 'Medical Device User Fee Cover Sheet')).not.toBe('');

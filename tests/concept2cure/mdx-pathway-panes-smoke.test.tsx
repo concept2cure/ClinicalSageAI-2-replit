@@ -11,8 +11,12 @@
  * runtime issues tsc can't see (hook-order violations, data-shape mismatches,
  * missing icon refs) fail the build.
  *
- * Everything here is in-memory (PATHWAY_TABS_DATA + the seeded dossierStore +
- * CORRESP_DETAIL); fetch is mocked to 404 only as a safety net.
+ * Everything here is in-memory (PATHWAY_TABS_DATA + the dossierStore +
+ * CORRESP_DETAIL); fetch is mocked to 404 only as a safety net. Since the
+ * data-honesty pass, fixtures are reachable ONLY in explicit sample mode —
+ * with sample off and no live data the panes render DataGate's honest
+ * loading / error / empty states. Tests that need populated panes cross the
+ * demo boundary deliberately via setSampleMode(true).
  */
 
 import { describe, expect, it, beforeAll, beforeEach, afterEach, vi } from 'vitest';
@@ -39,7 +43,8 @@ const mkProgram = (pathway: Program['pathway']): Program => ({
 });
 
 // PathwayPanes now uses react-query (live audit/correspondence/approvals); renders
-// must run under a QueryClient. retry:false so a mocked 404 falls back immediately.
+// must run under a QueryClient. retry:false so a mocked 404 settles immediately
+// (to an honest error state — or to the sample fixtures when sample mode is on).
 function renderWithClient(ui: React.ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } } });
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
@@ -113,17 +118,25 @@ describe('MDX pathway panes smoke', () => {
     });
   });
 
-  it('opens the DossierDrawer from the audit pane', () => {
-    const { getAllByRole, container } = renderWithClient(
-      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    fireEvent.click(getAllByRole('tab')[1]); // Audit
-    expect(container.querySelector('.audit-pane')).toBeTruthy();
-    const openBtn = container.querySelector('.audit-act.primary');
-    if (openBtn) fireEvent.click(openBtn);
-    // Drawer mounts with the 3-tab layout, or the audit pane is still present — either way no crash.
-    expect(container.querySelector('.dd-drawer, .audit-pane')).toBeTruthy();
-    assertNoReactErrors();
+  it('opens the DossierDrawer from the audit pane (sample mode)', () => {
+    // Fixture audit rows render only behind the explicit sample-mode boundary.
+    setSampleMode(true);
+    try {
+      const { getAllByRole, container } = renderWithClient(
+        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+      );
+      fireEvent.click(getAllByRole('tab')[1]); // Audit
+      expect(container.querySelector('.audit-pane')).toBeTruthy();
+      // The standing sample banner must accompany the fixture pane.
+      expect(container.querySelector('.data-gate-sample')).toBeTruthy();
+      const openBtn = container.querySelector('.audit-act.primary');
+      if (openBtn) fireEvent.click(openBtn);
+      // Drawer mounts with the 3-tab layout, or the audit pane is still present — either way no crash.
+      expect(container.querySelector('.dd-drawer, .audit-pane')).toBeTruthy();
+      assertNoReactErrors();
+    } finally {
+      setSampleMode(false);
+    }
   });
 
   it('FilesTreePane preview opens a body section in the drawer', () => {
@@ -348,20 +361,27 @@ describe('pathway panes — operational flows', () => {
   });
 
   it('DossierDrawer opens from the audit pane and switches its three tabs', () => {
-    const { getAllByRole, container } = renderWithClient(
-      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-    );
-    fireEvent.click(getAllByRole('tab')[1]); // Audit
-    const open = container.querySelector('.audit-act.primary') as HTMLElement | null;
-    expect(open).toBeTruthy();
-    fireEvent.click(open!);
-    expect(container.querySelector('.dd-drawer')).toBeTruthy();
-    const ddTabs = container.querySelectorAll('.dd-tab');
-    expect(ddTabs.length).toBe(3); // Document · Attachments · Activity
-    fireEvent.click(ddTabs[1] as HTMLElement);
-    fireEvent.click(ddTabs[2] as HTMLElement);
-    fireEvent.click(ddTabs[0] as HTMLElement);
-    assertNoReactErrors();
+    // The audit pane's rows come from fixtures here, so sample mode is the
+    // supported way to populate it (no live backend in this suite).
+    setSampleMode(true);
+    try {
+      const { getAllByRole, container } = renderWithClient(
+        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+      );
+      fireEvent.click(getAllByRole('tab')[1]); // Audit
+      const open = container.querySelector('.audit-act.primary') as HTMLElement | null;
+      expect(open).toBeTruthy();
+      fireEvent.click(open!);
+      expect(container.querySelector('.dd-drawer')).toBeTruthy();
+      const ddTabs = container.querySelectorAll('.dd-tab');
+      expect(ddTabs.length).toBe(3); // Document · Attachments · Activity
+      fireEvent.click(ddTabs[1] as HTMLElement);
+      fireEvent.click(ddTabs[2] as HTMLElement);
+      fireEvent.click(ddTabs[0] as HTMLElement);
+      assertNoReactErrors();
+    } finally {
+      setSampleMode(false);
+    }
   });
 
   it('AnaDrafter generates a structured draft from an unstarted item', async () => {
@@ -379,7 +399,8 @@ describe('pathway panes — operational flows', () => {
 });
 
 // The operator decision: kit UI, real backend data. Prove the live path renders
-// backend rows (the 15 tests above already prove fixture fallback under fetch→404).
+// backend rows (fixtures are no longer a fallback — with sample mode off and no
+// live data the panes render honest empty states, asserted below).
 describe('live backend wiring', () => {
   it('renders live audit / correspondence / approvals from the backend', async () => {
     const ok = (body: unknown) =>
@@ -407,6 +428,71 @@ describe('live backend wiring', () => {
     expect((await findAllByText('LIVE-LETTER-ROW')).length).toBeGreaterThan(0);
     fireEvent.click(getAllByRole('tab')[3]); // Approvals
     expect((await findAllByText('LIVE-APPROVAL-ROW')).length).toBeGreaterThan(0);
+  });
+});
+
+// The data-honesty guarantee: with sample mode off and no live rows, the panes
+// render DataGate's honest states — never the kit fixtures, and in particular
+// never the synthesized Part 11 audit hash-chain.
+describe('honest empty states — sample mode off, no live data', () => {
+  it('renders empty states with zero fixture audit rows on resolved-empty feeds', async () => {
+    const ok = (body: unknown) =>
+      Promise.resolve({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) } as Response);
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const u = String(input);
+      if (u.includes('/api/mdx/audit')) {
+        return ok({ data: { events: [], actions: [], resources: [], kpis: [] } });
+      }
+      if (u.includes('/api/regulatory-correspondence/correspondence')) {
+        return ok({ data: [] });
+      }
+      if (u.includes('/api/approval-workflows/pending')) {
+        return ok({ approvals: [] });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: async () => ({}), text: async () => 'Not Found' } as Response);
+    }) as unknown as typeof fetch;
+
+    const { getAllByRole, container, findByText } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} programId="proj-1" />,
+    );
+    const tabs = getAllByRole('tab');
+
+    fireEvent.click(tabs[1]); // Audit
+    await findByText(/No audit events yet/i);
+    expect(container.querySelector('.audit-pane')).toBeNull();
+    expect(container.querySelectorAll('.audit-row').length).toBe(0);
+    // Nothing from the synthesized fixture chain may leak through.
+    expect(container.textContent).not.toContain('Tamper-evident');
+    expect(container.textContent).not.toContain('Jordan Chen');
+    // And no sample banner either — this is an honest empty, not sample mode.
+    expect(container.querySelector('.data-gate-sample')).toBeNull();
+
+    fireEvent.click(tabs[2]); // Correspondence
+    await findByText(/No correspondence yet/i);
+    expect(container.querySelector('.corr-pane')).toBeNull();
+
+    fireEvent.click(tabs[3]); // Approvals
+    await findByText(/No approvals yet/i);
+    expect(container.querySelector('.ap-pane')).toBeNull();
+
+    // Tab-bar counts report the honest zero, not the fixture totals.
+    const countEls = Array.from(container.querySelectorAll('.pwt-count'));
+    expect(countEls.length).toBeGreaterThan(0);
+    countEls.forEach((el) => expect(el.textContent).toBe('0'));
+    assertNoReactErrors();
+  });
+
+  it('renders an error state — not fixtures — when the feeds fail', async () => {
+    // beforeEach mocks fetch to 404 everything; sample mode is off.
+    const { getAllByRole, container, findByText } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+    fireEvent.click(getAllByRole('tab')[1]); // Audit
+    await findByText(/Could not load audit events/i);
+    expect(container.querySelector('.audit-pane')).toBeNull();
+    expect(container.querySelectorAll('.audit-row').length).toBe(0);
+    expect(container.textContent).not.toContain('Tamper-evident');
+    assertNoReactErrors();
   });
 });
 
@@ -451,5 +537,10 @@ describe('live dossier wiring', () => {
     fireEvent.click(treeBody);
     // PreviewBody renders the backend section content.
     expect(await findByText(/LIVE BODY CONTENT from the backend/)).toBeTruthy();
+    // Sample-only content stays out of a live tree: no example Sources/
+    // placeholder dirs, and no synthesized audit-chain ndjson (the audit
+    // feed 404s in this mock, so the Audit/ dir is honestly empty).
+    expect(container.textContent).not.toContain('predicates/');
+    expect(container.textContent).not.toContain('audit-trail.ndjson');
   });
 });

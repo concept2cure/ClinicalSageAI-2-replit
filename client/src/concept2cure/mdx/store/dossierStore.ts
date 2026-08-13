@@ -24,6 +24,7 @@
 import * as React from 'react';
 import { K510_ESTAR } from '../data/k510';
 import { PATHWAY_TABS_DATA } from '../data/pathwayTabs';
+import { isSampleMode } from '../lib/sampleMode';
 import type {
   AuditEvent,
   DossierAttachment,
@@ -365,7 +366,12 @@ function liveEventsForPathway(_pathway: PathwayId): AuditEvent[] {
 }
 
 function activityForSection(pathway: PathwayId, sectionId: string | number): AuditEvent[] {
-  const seed = PATHWAY_TABS_DATA[pathway as keyof typeof PATHWAY_TABS_DATA]?.audit || [];
+  /* The kit's seed audit slice — a *synthesized* hash-chain — merges in only
+     under explicit sample mode. A live dossier's Activity tab must never show
+     fictional Part 11 events alongside (or instead of) real in-store edits. */
+  const seed = isSampleMode()
+    ? PATHWAY_TABS_DATA[pathway as keyof typeof PATHWAY_TABS_DATA]?.audit || []
+    : [];
   const all = [...liveAuditEvents, ...seed];
   return all.filter((e) => e.target_id === sectionId);
 }
