@@ -40,11 +40,20 @@ export class CreateTaskHandler implements ActionHandler {
       // Resolve assignee by role if specified
       let assigneeId: number | null = null;
       if (params.assignToRole) {
+        // Least-loaded first. The ordering subquery used to count tasks whose
+        // status was not 'done' — a value unified_tasks never holds (its domain
+        // is TASK_STATUSES; 'done' belongs to project_tasks). So it counted
+        // every task the user had EVER been assigned: whoever had the longest
+        // history looked busiest, and finishing work never made you eligible
+        // again. Archived tasks were counted too.
         const assignee = await this.pool.query(
           `SELECT u.id FROM users u
            JOIN user_roles ur ON u.id = ur.user_id
            WHERE ur.role = $1 AND u.organization_id = $2
-           ORDER BY (SELECT COUNT(*) FROM unified_tasks WHERE assignee_id = u.id AND status != 'done') ASC
+           ORDER BY (SELECT COUNT(*) FROM unified_tasks
+                      WHERE assignee_id = u.id
+                        AND deleted_at IS NULL
+                        AND status NOT IN ('completed', 'cancelled')) ASC
            LIMIT 1`,
           [params.assignToRole, payload.organizationId]
         );
