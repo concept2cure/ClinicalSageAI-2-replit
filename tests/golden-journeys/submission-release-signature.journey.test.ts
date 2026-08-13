@@ -116,6 +116,11 @@ beforeAll(async () => {
       // this also puts the RESTRICT FK + append-only step trigger under the
       // journey so the gate runs against the hardened schema.
       'db/migrations/20260730_orchestrator_run_ledger_hardening.sql',
+      // D6 (single e-signature write path): signed_target/binding_basis columns
+      // + nullable document anchor. part11ComplianceService's Drizzle insert
+      // enumerates every declared column, so the journey schema must carry the
+      // D6 shape or the release-gate insert 42703s.
+      'migrations/20260813d_esignature_governed_unification.sql',
     ],
   });
   h.db = jdb.db;

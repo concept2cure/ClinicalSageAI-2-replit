@@ -38,7 +38,7 @@ function appWithPool(query: (sql: string, params?: unknown[]) => Promise<{ rows:
 
 describe('GET /signatures/:signatureId/manifest — governed signatures (§11.50)', () => {
   it('manifests a governed-sign row: printed name, date/time, meaning, target, basis', async () => {
-    const query = vi.fn(async () => ({ rows: [governedRow] }));
+    const query = vi.fn(async (_sql: string, _params?: unknown[]) => ({ rows: [governedRow] }));
     const res = await request(appWithPool(query)).get('/signatures/12/manifest');
 
     expect(res.status).toBe(200);
@@ -59,10 +59,10 @@ describe('GET /signatures/:signatureId/manifest — governed signatures (§11.50
   });
 
   it('tenant-scopes the lookup when the request carries an organization', async () => {
-    const query = vi.fn(async () => ({ rows: [governedRow] }));
+    const query = vi.fn(async (_sql: string, _params?: unknown[]) => ({ rows: [governedRow] }));
     const res = await request(appWithPool(query, { organizationId: 7 })).get('/signatures/12/manifest');
     expect(res.status).toBe(200);
-    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    const [sql, params] = query.mock.calls[0];
     expect(sql).toMatch(/organization_id = \$2 OR es\.organization_id IS NULL/);
     expect(params).toEqual([12, 7]);
   });

@@ -304,8 +304,12 @@ class Part11ComplianceService {
       // §11.70 record binding: re-derive the content digest of the SIGNED version
       // and confirm it still matches what was signed. This is what detects a
       // post-signing content change — the guarantee the signature exists to make.
+      // versionId is nullable since D6 (governed-target rows anchor via
+      // signed_target and never reach here — the documentId match above already
+      // rejected them); a null version cannot be re-derived, so it reports as
+      // unverifiable rather than silently valid.
       const bound = (signature as { boundPayloadDigest?: string | null }).boundPayloadDigest;
-      const current = bound && bound.length > 0
+      const current = bound && bound.length > 0 && signature.versionId != null
         ? await this.computeVersionBindingDigest(signature.versionId)
         : null;
       const binding = evaluateBindingVerification(bound, current);
