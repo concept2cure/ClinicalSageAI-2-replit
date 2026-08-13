@@ -7,7 +7,11 @@
  * portfolio list binds live to GET /api/submissions and the per-submission
  * sequences to GET /api/submissions/:id/sequences (both DB-backed via
  * submission-service) with a four-state render — loading → error → honest empty
- * → real. Slices with no load-time list read (Builder leaves are per-sequence;
+ * → real. The Portfolio view additionally reads the DEVICE journey from the
+ * eSTAR tracker (GET /api/510k/estar/submissions + one POST /assemble verdict
+ * for the section header) — a separate spine from the eCTD core, because eSTAR
+ * is not eCTD and a device filing is never forced into ectd_sequences.
+ * Slices with no load-time list read (Builder leaves are per-sequence;
  * eValidator findings, shadow-review results, and cross-region gaps are
  * POST/AI results, not a list GET) show an honest EmptyState instead of the
  * kit's sample data. Every fixture presented as content, plus the SampleTag,

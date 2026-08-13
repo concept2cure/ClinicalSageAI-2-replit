@@ -80,9 +80,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
      state (blockedByEntitlement is set only by the entitlement gate's shape). */
   const entitlementLocked = estarExport.outcome?.blockedByEntitlement === true;
   const lockedTitle = entitlementLocked
-    ? `Locked — requires the ${
-        estarExport.outcome?.requiredTier ?? 'higher'
-      } plan (device assembly readiness)`
+    ? estarExport.outcome?.requiredTier
+      ? `Locked — requires the ${estarExport.outcome.requiredTier} plan (device assembly readiness)`
+      : 'Locked — requires a higher plan (device assembly readiness)'
     : null;
 
   const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
