@@ -27,6 +27,7 @@ import {
   scaffoldProjectDocuments,
   type ScaffoldResult,
 } from '../../services/c2c/scaffold-project-documents.js';
+import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
 import {
   canCreateProgram,
   canMutateProgram,
@@ -251,6 +252,121 @@ function productTypeForProgram(programType: string): string {
   return 'drug';
 }
 
+/**
+ * Program types whose intake must also create the canonical `submissions` row —
+ * the spine every canonical-core surface reads (IndLifecycle checklist,
+ * NdaCockpit, SubmissionCenter sequences, DispatchReadiness). Value = the
+ * canonical submissions.application_type. Only concrete drug/biologic
+ * APPLICATION types map; 'biologic' is a product class with no named
+ * application, and inventing one ('bla'?) would fabricate a filing identity the
+ * customer never declared, so it is deliberately absent. Device/IVD program
+ * types (510k/pma/mdr/…) run on their own pathway stores, not this spine.
+ */
+const DRUG_APPLICATION_TYPES: Record<string, string> = {
+  ind: 'ind',
+  cta: 'cta',
+  nda: 'nda',
+  bla: 'bla',
+  maa: 'maa',
+  jnda: 'jnda',
+  anda: 'anda',
+};
+
+/** productType (validated: drug|biologic|device|ivd) → canonical clientType. */
+const CLIENT_TYPE_BY_PRODUCT: Record<string, string> = {
+  drug: 'pharma',
+  biologic: 'biotech',
+  device: 'mdx',
+  ivd: 'ivd',
+};
+
+/** Wizard agency values → canonical submissions.primary_region. */
+const AGENCY_TO_REGION: Record<string, string> = {
+  FDA: 'fda',
+  EMA: 'eu',
+  PMDA: 'jp',
+  MHRA: 'uk',
+  HEALTH_CANADA: 'ca',
+  TGA: 'au',
+  NMPA: 'cn',
+  SWISSMEDIC: 'ch',
+  ANVISA: 'br',
+  CDSCO: 'in',
+  MFDS: 'kr',
+  HSA: 'sg',
+};
+
+/** Region each application type files in when the agency doesn't say. Total
+ *  over DRUG_APPLICATION_TYPES, so a region always resolves deterministically. */
+const REGION_BY_APPLICATION: Record<string, string> = {
+  ind: 'fda',
+  nda: 'fda',
+  bla: 'fda',
+  anda: 'fda',
+  cta: 'eu', // CTR 536/2014 — the cta rule pack is cta:ema
+  maa: 'eu',
+  jnda: 'jp',
+};
+
+/**
+ * Ensure the canonical submission spine for a drug-program intake, INSIDE the
+ * caller's transaction.
+ *
+ * Idempotent by the SAME identity convention the ind-checklist-view-assembler
+ * uses to match program ↔ submission (product_name / title, case-insensitive,
+ * per application type): when a matching submission already exists in the org
+ * it is linked rather than duplicated, so re-creating a program for the same
+ * product never forks a second spine. When none exists, the row is created via
+ * the canonical submission-service insert on this client — commit and rollback
+ * are atomic with the program.
+ *
+ * Fail-closed: any error propagates so the whole transaction rolls back — a
+ * drug program without its submission spine is exactly the permanently-empty
+ * canonical core this exists to end.
+ */
+async function ensureSubmissionSpine(params: {
+  client: PoolClient;
+  orgId: number;
+  userId: number;
+  /** Program name → submissions.title (assembler identity key). */
+  name: string;
+  /** Program product_name → submissions.product_name (assembler identity key). */
+  productName: string;
+  applicationType: string;
+  productType: string;
+  primaryAgency: string;
+}): Promise<{ id: number; created: boolean }> {
+  const { client, orgId, userId, name, productName, applicationType } = params;
+  const identityKeys = [...new Set([productName, name].map((v) => v.trim().toLowerCase()).filter(Boolean))];
+  const existing = await client.query(
+    `SELECT id FROM submissions
+      WHERE organization_id = $1 AND deleted_at IS NULL
+        AND lower(application_type) = $2
+        AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(title) = ANY($3))
+      ORDER BY updated_at DESC NULLS LAST, id DESC
+      LIMIT 1`,
+    [orgId, applicationType, identityKeys],
+  );
+  if (existing.rows.length > 0) {
+    return { id: Number((existing.rows[0] as { id: number | string }).id), created: false };
+  }
+  const region =
+    AGENCY_TO_REGION[params.primaryAgency.toUpperCase().replace(/\s+/g, '_')] ??
+    REGION_BY_APPLICATION[applicationType];
+  const row = await createSubmissionTx(
+    client,
+    {
+      title: name,
+      productName,
+      applicationType,
+      clientType: CLIENT_TYPE_BY_PRODUCT[params.productType],
+      primaryRegion: region,
+    },
+    { organizationId: orgId, userId },
+  );
+  return { id: Number(row.id), created: true };
+}
+
 /** A tester-friendly, org-unique program code derived from the product/name. */
 function baseCodeFrom(productName: string, name: string): string {
   const src = (productName || name || 'PRJ').trim();
@@ -348,6 +464,10 @@ router.get('/', async (req: Request, res: Response) => {
 // `regulatory_programs` — the SAME table the portfolio list reads — so a
 // tester's new project appears live immediately and survives reload, instead of
 // the old client-only `window.C2C_PROJECT` stub that vanished on refresh.
+// Drug program types (DRUG_APPLICATION_TYPES) additionally create/link the
+// canonical `submissions` row in the same transaction — the spine the
+// IndLifecycle checklist, NdaCockpit, SubmissionCenter and DispatchReadiness
+// surfaces read.
 //
 // Body (from the wizard): { name, productName?, programType, productType?,
 // primaryAgency?, submissionTypeId?, indication?, targetSubmissionDate?,
@@ -474,6 +594,10 @@ router.post('/', async (req: Request, res: Response) => {
   // audit row below records what was written, not what was first attempted.
   let createdCode = base;
   let scaffold: ScaffoldResult = { documentId: null, sectionCount: 0 };
+  // Canonical application type for drug programs; null for device/CER/MDR
+  // program types, which create no submission spine.
+  const applicationType = DRUG_APPLICATION_TYPES[programType] ?? null;
+  let submissionSpine: { id: number; created: boolean } | null = null;
   try {
     try {
       await client.query('BEGIN');
@@ -505,6 +629,22 @@ router.post('/', async (req: Request, res: Response) => {
         programType, primaryAgency, productName,
       });
 
+      // Canonical submission spine, SAME transaction. Intake wrote
+      // regulatory_programs + the document scaffold but never a `submissions`
+      // row, so every canonical-core surface (IndLifecycle checklist,
+      // NdaCockpit, SubmissionCenter, DispatchReadiness) stayed permanently
+      // empty for self-serve drug programs. Drug application types only;
+      // device/CER/MDR programs run on their own pathway stores. Title and
+      // product_name are set from the program's name/product_name so the
+      // ind-checklist-view-assembler's identity match (program ↔ submission by
+      // product_name/title) holds by construction. A failure here rolls the
+      // whole creation back — no program without its spine.
+      if (applicationType) {
+        submissionSpine = await ensureSubmissionSpine({
+          client, orgId, userId, name, productName, applicationType, productType, primaryAgency,
+        });
+      }
+
       // Domain audit row for the creation, in the SAME transaction as the
       // insert: a created program that left no audit trace is not a record a
       // regulated tenant can defend, and rolling back the program is the only
@@ -525,6 +665,16 @@ router.post('/', async (req: Request, res: Response) => {
         product_type: productType,
         primary_agency: primaryAgency,
         created_via: 'v2-new-project-wizard',
+        // The audit row covers EVERY creation this transaction performed: the
+        // linked canonical submission is part of the record, whether newly
+        // created here or matched to an existing spine by identity.
+        ...(submissionSpine
+          ? {
+              submission_id: submissionSpine.id,
+              submission_created: submissionSpine.created,
+              submission_application_type: applicationType,
+            }
+          : {}),
       };
       const payloadHash = hashPayload(auditDetails);
       const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client, {
@@ -581,6 +731,12 @@ router.post('/', async (req: Request, res: Response) => {
         documentId: scaffold.documentId,
         scaffoldedSections: scaffold.sectionCount,
         ...(scaffold.skipped ? { scaffoldSkipped: scaffold.skipped, scaffoldDetail: scaffold.detail } : {}),
+        // Surfaced so the spine linkage is never silent: present for drug
+        // programs (submissionCreated=false means an existing spine was
+        // matched by identity), absent for device/CER/MDR program types.
+        ...(submissionSpine
+          ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
+          : {}),
       },
     });
   } catch (err: unknown) {
