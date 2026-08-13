@@ -34,7 +34,6 @@ const APPROVED_JS = new Set([
   'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
   'server/routes/authoring.router.ts',
-  'server/routes/ind-templates.ts',
   'scripts/generate_sso_spec.js',
   'client/src/services/Fda510kExportService.js',
   // Imports ONLY the convertInchesToTwip unit helper from 'docx' — no

@@ -40,19 +40,8 @@ describe('Unified Router Structure', () => {
     });
   });
 
-  describe('IND Unified Router', () => {
-    const EXPECTED_SUB_ROUTES = [
-      '/automation',
-      '/database',
-      '/submissions',
-      '/templates',
-      '/pre-ind',
-    ];
-
-    it('should define all expected sub-routes', () => {
-      expect(EXPECTED_SUB_ROUTES).toHaveLength(5);
-    });
-  });
+  // The IND Unified Router block was removed with server/routes/ind-unified.ts
+  // (zero-caller facade deleted in the biotech-lifecycle consolidation).
 
   describe('Documents Unified Router', () => {
     const EXPECTED_SUB_ROUTES = [
@@ -115,18 +104,8 @@ describe('Health Check Endpoints', () => {
     expect(response.modules).toHaveLength(4);
   });
 
-  it('should have consistent health check structure for IND', () => {
-    const response = healthCheckResponse('ind-unified-api', [
-      'automation',
-      'database',
-      'submissions',
-      'templates',
-      'pre-ind',
-    ]);
-
-    expect(response.status).toBe('ok');
-    expect(response.modules).toHaveLength(5);
-  });
+  // The ind-unified-api health-check case was removed with
+  // server/routes/ind-unified.ts (zero-caller facade).
 });
 
 describe('API Documentation Endpoints', () => {

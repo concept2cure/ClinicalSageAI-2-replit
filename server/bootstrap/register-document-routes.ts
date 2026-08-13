@@ -215,32 +215,11 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount HAQ Manager routes:', error);
   }
 
-  // ── IND AutoDraft (AI-powered IND section generation) ──
-  try {
-    const indAutodraftModule = await import('../routes/ind-autodraft');
-    app.use('/api/ind-autodraft', indAutodraftModule.default);
-    console.log('✅ IND AutoDraft Engine routes mounted (16 IND sections, sentence-level traceability)');
-  } catch (error) {
-    console.error('❌ Failed to mount IND AutoDraft routes:', error);
-  }
-
-  // ── IND PDF generation (Puppeteer + PDFKit fallback) ──
-  try {
-    const indPdfModule = await import('../routes/ind-pdf');
-    app.use('/api/ind-pdf', indPdfModule.default);
-    console.log('✅ IND PDF generation routes mounted (Puppeteer-powered)');
-  } catch (error) {
-    console.error('❌ Failed to mount IND PDF routes:', error);
-  }
-
-  // ── IND Sections API (live CTD section map) ──
-  try {
-    const indSectionsModule = await import('../routes/ind-sections');
-    app.use('/api/ind-sections', indSectionsModule.default);
-    console.log('✅ IND Sections API routes loaded');
-  } catch (error) {
-    console.error('❌ Failed to mount IND Sections routes:', error);
-  }
+  // The zero-caller IND helper routes formerly mounted here (/api/ind-autodraft,
+  // /api/ind-pdf, /api/ind-sections) were deleted in the biotech-lifecycle
+  // consolidation — no client or server code called any of the three prefixes.
+  // IND autodraft lives on under /api/knowledge-base/ind-autodraft/*; the CTD
+  // section map is served by services/regulatory (registry adapters).
 
   // ── Project Sections (tracking, assignments, comments, audit trail) ──
   try {

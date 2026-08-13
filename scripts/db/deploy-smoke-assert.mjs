@@ -144,7 +144,9 @@ const CONSUMER_QUERIES = [
   ['atom quality JOIN (conflictDetection, C-36)', `SELECT a.id, q.overall_score FROM lumen_data_atoms a LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id LIMIT 1`],
   ['sequence-continuity UNION (validator, C-31)', `SELECT sequence_number FROM ectd_compilations WHERE application_number = 'x' UNION SELECT sequence_number FROM ectd_submissions WHERE application_number = 'x'`],
   ['maud validations (maudDb, C-39)', `SELECT * FROM maud_validations WHERE document_id = 'x' AND organization_id = 1`],
-  ['ind milestones (preIndRoutes, C-39)', `SELECT id FROM ind_milestones WHERE pre_ind_data_id = '00000000-0000-0000-0000-000000000000'`],
+  // The consumer (preIndRoutes.ts) was deleted in the biotech-lifecycle
+  // consolidation (zero callers); the table remains in the shipped schema.
+  ['ind milestones (C-39; ex-preIndRoutes, deleted)', `SELECT id FROM ind_milestones WHERE pre_ind_data_id = '00000000-0000-0000-0000-000000000000'`],
   ['literature buckets (regulatory-programs, C-39)', `SELECT COUNT(*)::int FROM literature_entries WHERE organization_id::text = '1'::text`],
 ];
 for (const [label, sql] of CONSUMER_QUERIES) {

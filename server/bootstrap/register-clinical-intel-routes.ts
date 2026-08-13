@@ -13,11 +13,6 @@ import { authenticateToken } from '../middleware/auth.js';
 import { mountAll } from './mount-routes.js';
 
 import indRoutes from '../routes/ind.js';
-import indUnified from '../routes/ind-unified.js';
-import indTemplates from '../routes/ind-templates.js';
-import indSubmissions from '../routes/ind-submissions.routes.js';
-import indDatabase from '../routes/ind-database.routes.js';
-import indAutomation from '../routes/ind_automation_routes.js';
 import intelligence from '../routes/intelligence.js';
 import { protocolRoutes } from '../routes/protocol_routes.js';
 import qcRoutes from '../routes/qc.routes.js';
@@ -34,7 +29,7 @@ export async function registerClinicalIntelRoutes({
   app,
   pool,
 }: ClinicalIntelBootstrapContext) {
-  // ── IND Family (parallelized) ──
+  // ── IND Family ──
   //
   // SECURITY: All IND routes are tenant-scoped and must be
   // authenticated. Pre-fix, this entire family was reachable from the
@@ -43,16 +38,16 @@ export async function registerClinicalIntelRoutes({
   // backstop: even if an individual router file forgets to add its own
   // auth (and most do), the bootstrap forces it. Tenant isolation
   // inside each handler is a separate concern audited per-file.
+  //
+  // The legacy zero-caller wizard family (ind-unified /api/ind-wizard facade +
+  // ind-templates + ind-submissions + ind-database + ind_automation_routes +
+  // preIndRoutes) was deleted in the biotech-lifecycle consolidation: no client
+  // or AnA caller referenced any of those prefixes. The live IND surface is
+  // register-ind-lifecycle-routes.ts (/api/ind-lifecycle, /api/ind-forms,
+  // /api/ind-master-data) plus /api/ind-generation in register-ai-routes.ts.
   mountAll(
     app,
-    [
-      { path: '/api/ind', router: indRoutes, name: 'IND (auth-gated)' },
-      { path: '/api/ind-wizard', router: indUnified, name: 'IND Unified / Wizard (auth-gated)' },
-      { path: '/api/ind-templates', router: indTemplates, name: 'IND Templates (auth-gated)' },
-      { path: '/api/ind-submissions', router: indSubmissions, name: 'IND Submissions (auth-gated)' },
-      { path: '/api/ind-database', router: indDatabase, name: 'IND Database (auth-gated)' },
-      { path: '/api/ind-automation', router: indAutomation, name: 'IND Automation (auth-gated)' },
-    ],
+    [{ path: '/api/ind', router: indRoutes, name: 'IND (auth-gated)' }],
     authenticateToken,
   );
 

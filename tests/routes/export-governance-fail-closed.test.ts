@@ -22,14 +22,8 @@ describe('export routes fail closed on governance registration', () => {
     });
   });
 
-  it('ind-pdf route source awaits governance registration', async () => {
-    const fs = await import('node:fs');
-    const path = await import('node:path');
-    const file = path.resolve(__dirname, '../../server/routes/ind-pdf.ts');
-    const content = fs.readFileSync(file, 'utf-8');
-    expect(content.includes('await registerExportGovernanceQuick')).toBe(true);
-    expect(content.includes("Register governed export (fail-closed")).toBe(true);
-  });
+  // The ind-pdf route-source assertion was removed with server/routes/ind-pdf.ts
+  // itself (zero-caller route deleted in the biotech-lifecycle consolidation).
 
   it('ectd-export route source contains explicit governance gate', async () => {
     const fs = await import('node:fs');
