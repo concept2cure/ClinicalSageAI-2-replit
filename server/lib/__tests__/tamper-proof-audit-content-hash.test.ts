@@ -69,8 +69,15 @@ function jsonbReorder<T>(value: T): T {
 
 /**
  * Minimal in-memory stand-in for a pg Pool that supports exactly the queries
- * TamperProofAuditLog.log()/verifyChain() issue: the FOR UPDATE tail lookup,
- * the INSERT, BEGIN/COMMIT/ROLLBACK, and the ORDER BY sequence_number scan.
+ * TamperProofAuditLog.log()/verifyChain() issue: the advisory chain lock, the
+ * lockless tail lookup, the INSERT, BEGIN/COMMIT/ROLLBACK, and the ORDER BY
+ * sequence_number scan.
+ *
+ * Deliberately STRICT: an unrecognized query throws instead of returning empty
+ * rows. That is what caught the append path gaining `pg_advisory_xact_lock`
+ * (the chain-fork fix) — 6 tests failed loudly in CI rather than passing
+ * against a silently-absorbed query, which is exactly how a strict fake should
+ * age. When the class's SQL changes, extend this list; never soften the throw.
  */
 class FakePool {
   rows: StoredRow[] = [];
@@ -79,6 +86,15 @@ class FakePool {
   private async run(sql: string, params: unknown[] = []): Promise<{ rows: any[] }> {
     const s = sql.trim();
     if (s.startsWith('BEGIN') || s.startsWith('COMMIT') || s.startsWith('ROLLBACK')) {
+      return { rows: [] };
+    }
+    if (/pg_advisory_xact_lock/i.test(s)) {
+      // The append path takes a transaction-scoped advisory lock so concurrent
+      // writers serialize (LIMIT 1 FOR UPDATE locked nothing on an empty table
+      // and the chain forked — see tests/db/part11-audit-store.dbtest.ts, which
+      // proves the concurrency behavior against real Postgres). This fake is
+      // single-threaded, so the lock is a no-op here; hash symmetry is what
+      // these tests own.
       return { rows: [] };
     }
     if (/ORDER BY sequence_number DESC LIMIT 1/i.test(s)) {

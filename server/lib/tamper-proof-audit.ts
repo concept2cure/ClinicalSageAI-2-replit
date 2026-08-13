@@ -111,12 +111,19 @@ export interface VerificationResult {
 /**
  * Advisory-lock key serializing appends to the Part 11 hash chain.
  *
- * A fixed, arbitrary 64-bit constant: any writer taking the same key serializes
- * against the others, and it collides with no other advisory lock in the
- * codebase. Transaction-scoped (pg_advisory_xact_lock), so it is released by
- * COMMIT or ROLLBACK and a crashed writer cannot hold it.
+ * A fixed, arbitrary constant inside int64 range: any writer taking the same
+ * key serializes against the others, and it collides with no other advisory
+ * lock in the codebase. Transaction-scoped (pg_advisory_xact_lock), so it is
+ * released by COMMIT or ROLLBACK and a crashed writer cannot hold it.
+ *
+ * Held as a decimal STRING, not a BigInt, on purpose: node-postgres sends text
+ * parameters and PostgreSQL coerces to bigint from pg_advisory_xact_lock's
+ * signature — the exact form tests/db/part11-audit-store.dbtest.ts executes
+ * against a real server. A BigInt would lean on the driver's serialization of
+ * a type it has no dedicated handling for, which is a dependency this Part 11
+ * path does not need.
  */
-const AUDIT_CHAIN_LOCK_KEY = 8213_0011_0000_0001n % 9223372036854775807n;
+const AUDIT_CHAIN_LOCK_KEY = '8213001100000001';
 
 export class TamperProofAuditLog {
   private pool: Pool;

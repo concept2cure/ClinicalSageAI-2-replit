@@ -158,8 +158,12 @@ describe('concurrent appends do not fork the hash chain', () => {
     // row existing, so it serializes from the very first append.
     //
     // Modelled as the append transaction actually runs it: take the lock, read
-    // the current head, insert chained onto it, commit.
-    const LOCK_KEY = '821300110000000001';
+    // the current head, insert chained onto it, commit. Same key VALUE the
+    // runtime uses (AUDIT_CHAIN_LOCK_KEY in server/lib/tamper-proof-audit.ts):
+    // advisory locks only serialize callers holding the same key, so a test
+    // that locked a different key would coexist with, rather than contend
+    // with, a real writer.
+    const LOCK_KEY = '8213001100000001';
     const CONCURRENCY = 8;
 
     const append = async (n: number): Promise<void> => {
