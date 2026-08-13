@@ -8,7 +8,17 @@ version: '3.9'
 #   docker compose --profile workflow up      # + Temporal
 #   docker compose --profile llm up           # + LiteLLM gateway / OPA
 #
-# Required .env: DB_PASSWORD, JWT_SECRET, and at least one of ANTHROPIC_API_KEY / OPENAI_API_KEY.
+# The app runs with NODE_ENV=production, so it is bound by the fail-closed boot
+# contract: the server EXITS at startup when any required variable is missing,
+# rather than booting degraded. Those variables use compose's `${VAR:?...}`
+# required-variable syntax (same posture as docker-compose.staging.yml) so
+# `docker compose up` stops with the missing name instead of leaving a container
+# to crash-loop. Per-variable rationale is on the `app` service below.
+#
+# Required .env: DB_PASSWORD, APP_SERVICE_DB_PASSWORD, APP_DATABASE_URL,
+#   JWT_SECRET, SESSION_SECRET, REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY,
+#   AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET, CONNECTOR_ENCRYPTION_KEY,
+#   and at least one of ANTHROPIC_API_KEY / OPENAI_API_KEY.
 # This stack is single-tenant by default (SEED_DEMO_USER=false): it seeds one
 # organization and no publicly-known demo admin. Create your admin user via the
 # app's first-run flow or the db:seed:admin script.
@@ -22,7 +32,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # Required with NO insecure default — compose fails closed if DB_PASSWORD is
+      # unset, rather than starting Postgres with a blank superuser password.
+      # (Same posture as docker-compose.staging.yml.)
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       POSTGRES_DB: ${DB_NAME:-concept2cure}
     ports:
       - '${DB_PORT:-5432}:5432'
@@ -71,18 +84,58 @@ services:
       # sslmode=prefer: encrypt when the server offers TLS, otherwise plaintext.
       # The stock image does not ship TLS-on by default; bind-mount certs and a
       # postgres `command:` to enable ssl=on, then upgrade this to `require`.
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD}@db:5432/${DB_NAME:-concept2cure}?sslmode=prefer
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD must be set}@db:5432/${DB_NAME:-concept2cure}?sslmode=prefer
+      # ── Production boot contract ────────────────────────────────────────────
+      # NODE_ENV=production above puts the app under its fail-closed startup
+      # assertions. Each variable below is checked at boot; a missing or invalid
+      # one is a refusal to start, not a warning. Sources are named so the next
+      # person can verify the requirement instead of trusting this comment.
+      #
       # Non-superuser runtime role (the RLS enforcement unlock). DATABASE_URL
-      # above is the DB owner/superuser — RLS never filters on it. To enforce
-      # tenant isolation, set APP_SERVICE_DB_PASSWORD in .env (install-fresh mints
-      # the `app_service` role from it) and the app connects as it via
-      # APP_DATABASE_URL below. Both default empty → the app connects as the owner
-      # (single-role behavior). See .env.example for the full explanation.
-      APP_SERVICE_DB_PASSWORD: ${APP_SERVICE_DB_PASSWORD:-}
-      APP_DATABASE_URL: ${APP_DATABASE_URL:-}
-      RLS_ENFORCE: ${RLS_ENFORCE:-off}
+      # above is the DB owner/superuser — RLS never filters on it, and under
+      # RLS_ENFORCE=on the boot posture probe (server/index.ts →
+      # assertRlsCatalogPosture) FAILS CLOSED on a superuser / BYPASSRLS runtime
+      # role. These previously defaulted to empty alongside RLS_ENFORCE=off,
+      # which under NODE_ENV=production is a combination the app refuses to boot
+      # on at all. Mint the role once with
+      # `APP_SERVICE_DB_PASSWORD=... node scripts/db/install-fresh.mjs`, then set
+      #   APP_DATABASE_URL=postgresql://app_service:<pw>@db:5432/concept2cure?sslmode=prefer
+      # See .env.example for the full explanation.
+      APP_SERVICE_DB_PASSWORD: ${APP_SERVICE_DB_PASSWORD:?APP_SERVICE_DB_PASSWORD must be set (mints/rotates the non-superuser app_service role)}
+      APP_DATABASE_URL: ${APP_DATABASE_URL:?APP_DATABASE_URL must be set to the non-superuser app_service role — RLS_ENFORCE=on refuses to boot on the owner role}
+      # Production accepts ONLY the literal `on` — unset, `off`, `shadow` and
+      # even truthy aliases (`true`/`1`/`enforce`) all refuse to boot, so the
+      # deployed environment can be audited with a plain `grep RLS_ENFORCE=on`
+      # (server/db/rlsEnforcement.ts).
+      RLS_ENFORCE: ${RLS_ENFORCE:-on}
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET}
+      # >=32 chars (server/config/environment.ts).
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (>=32 chars)}
+      # Signs sessions in start.sh; unset there means a per-restart ephemeral
+      # secret, which silently invalidates every session on every restart.
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set}
+      # Dedicated refresh-token secret. Required in staging/production, >=32
+      # chars, and MUST differ from JWT_SECRET — reusing one secret across both
+      # token classes is refused at boot (server/config/environment.ts).
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:?REFRESH_TOKEN_SECRET must be set (>=32 chars, must differ from JWT_SECRET)}
+      # Encrypts stored MFA TOTP secrets under a dedicated key. Production
+      # refuses the JWT-derived fallback: a JWT_SECRET leak must not also
+      # decrypt every enrolled authenticator (server/config/environment.ts).
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:?MFA_ENCRYPTION_KEY must be set (>=32 chars)}
+      # Keys the HMAC seal over the tamper-evident audit hash chain (21 CFR
+      # Part 11 record authenticity). Missing = boot refusal unless the operator
+      # explicitly accepts an unsealed ledger via AUDIT_SEAL_ACCEPT_UNSEALED=true
+      # (server/services/audit/auditSealPosture.ts).
+      AUDIT_HMAC_KEY: ${AUDIT_HMAC_KEY:?AUDIT_HMAC_KEY must be set (>=32 chars)}
+      # Signs the audit hash-chain links themselves. A predictable secret lets
+      # anyone with the source recompute the chain, defeating the integrity
+      # guarantee (server/lib/tamper-proof-audit.ts).
+      AUDIT_HMAC_SECRET: ${AUDIT_HMAC_SECRET:?AUDIT_HMAC_SECRET must be set}
+      # AES key for stored third-party connector credentials. Deliberately NOT
+      # derived from JWT_SECRET — the two are separate trust domains and the
+      # module throws at import in production when it is unset
+      # (server/services/connectors/connector-registry.ts).
+      CONNECTOR_ENCRYPTION_KEY: ${CONNECTOR_ENCRYPTION_KEY:?CONNECTOR_ENCRYPTION_KEY must be set}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}

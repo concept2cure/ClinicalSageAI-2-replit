@@ -119,11 +119,18 @@
   --ai-glow:                 rgba(106, 155, 204, 0.10);
 
   /* Semantic status — earthy, matches Claude palette */
-  --success:                 #788c5d;
+  /* Status colours, darkened 2026-08-13 to clear WCAG AA (4.5:1) as TEXT on the
+     page, the sidebar, and their own badge fill. Previously: success 3.49:1,
+     warning 3.10:1 on --bg-000, and every badge pairing below 4.5 (warning on
+     its own fill was 2.73:1). Hue preserved; these are functional status
+     colours, not the brand accent, and a warning nobody can read is not a
+     warning. Ratios below are bg-000 / bg-100 / own muted fill.
+     scripts/ci/check-token-contrast.mjs enforces them. */
+  --success:                 #5e6d49;   /* 5.30 / 4.81 / 4.57 */
   --success-muted:           #e4ebd8;
-  --warning:                 #c87d2e;
+  --warning:                 #955d22;   /* 5.16 / 4.68 / 4.54 */
   --warning-muted:           #f8e9d0;
-  --error:                   #b93a3a;
+  --error:                   #b63939;   /* 5.49 / 4.98 / 4.54 */
   --error-muted:             #f5dfdd;
   --info:                    var(--ai);
   --info-muted:              var(--ai-muted);
@@ -287,6 +294,29 @@
   --shadow-md:               0 4px 6px -1px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.40);
   --shadow-lg:               0 10px 15px -3px rgb(0 0 0 / 0.45), 0 4px 6px -4px rgb(0 0 0 / 0.45);
   --shadow-xl:               0 20px 25px -5px rgb(0 0 0 / 0.50), 0 8px 10px -6px rgb(0 0 0 / 0.50);
+
+  /* ── Status colours for dark (added 2026-08-13) ─────────────────────────────
+     These were never declared for dark, so the LIGHT values cascaded onto the
+     dark page. Measured against --bg-000 #262624:
+
+         --error   #b93a3a  2.69:1   fails even the 3:1 non-text floor
+         --success #788c5d  4.12:1   below AA 4.5:1 for normal text
+         --warning #c87d2e  4.64:1   passed, and is lifted here for consistency
+
+     An unreadable error message is the one string a user cannot afford to
+     miss, and this is a regulated platform. The *-muted fills are darkened
+     alongside, because lifting only the text colour would leave it on a
+     near-white pastel badge (#ef7d7d on #f5dfdd is 2.09:1 — worse than what it
+     replaced). --accent-muted above was already darkened this way, so these six
+     are the ones the dark port missed rather than a new convention.
+
+     Hue-preserving minimum lifts; ratios on bg-000 / bg-100 / badge fill. */
+  --success:                 #8fae6e;   /* 6.10 / 5.32 */
+  --success-muted:           #2e3a24;   /* badge 4.84:1 */
+  --warning:                 #d99a58;   /* 6.29 / 5.49 */
+  --warning-muted:           #4a3a1e;   /* badge 4.55:1 */
+  --error:                   #ef7d7d;   /* 5.70 / 4.97 */
+  --error-muted:             #4a2424;   /* badge 5.03:1 */
 }
 
 /* ═══════════════════════════════════════════════════════════

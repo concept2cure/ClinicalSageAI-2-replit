@@ -34,19 +34,22 @@ export async function listThreads(req: Request, res: Response) {
     let params: unknown[];
 
     if (projectId) {
-      // Try ai_threads first (has project_id) and return empty when no project rows.
-      try {
-        const aiResult = await pool.query(
-          `SELECT id, project_id, title, created_at, updated_at FROM ai_threads
-           WHERE project_id = $1 ${orgId ? 'AND organization_id = $2' : ''}
-           ORDER BY COALESCE(updated_at, created_at) DESC LIMIT ${orgId ? '$3' : '$2'}`,
-          orgId ? [projectId, orgId, limit] : [projectId, limit]
-        );
-        return res.json({ threads: aiResult.rows });
-      } catch {
-        // ai_threads unavailable: fail closed for project-scoped listing
-        return res.json({ threads: [] });
-      }
+      // ai_threads is the project-scoped conversation store.
+      //
+      // This branch previously swallowed EVERY failure into `{ threads: [] }`,
+      // so a broken query, a lost connection, or an RLS denial was reported to
+      // the caller as "this project has no conversations". A reviewer looking
+      // at a project's AnA history could not tell an empty history from a
+      // failed read — the same data-integrity defect the Part 11 reads had.
+      // Let the error escape to the outer catch, which now answers with a real
+      // status instead of a fabricated empty list.
+      const aiResult = await pool.query(
+        `SELECT id, project_id, title, created_at, updated_at FROM ai_threads
+         WHERE project_id = $1 ${orgId ? 'AND organization_id = $2' : ''}
+         ORDER BY COALESCE(updated_at, created_at) DESC LIMIT ${orgId ? '$3' : '$2'}`,
+        orgId ? [projectId, orgId, limit] : [projectId, limit]
+      );
+      return res.json({ threads: aiResult.rows });
     } else {
       // Org scope is required for the global recents list — without it
       // we'd leak threads across tenants.
@@ -71,9 +74,26 @@ export async function listThreads(req: Request, res: Response) {
     const result = await pool.query(query, params);
     res.json({ threads: result.rows });
   } catch (error: any) {
-    // Table may not exist yet — return empty
-    console.warn('[AnA] Thread listing failed:', error?.message);
-    res.json({ threads: [] });
+    // A read that FAILED must never be reported as a read that returned
+    // nothing. The previous `res.json({ threads: [] })` here made every
+    // outage (missing table, connection loss, permission denial) look like
+    // "you have no conversations", which silently hides user work and makes
+    // the failure invisible to monitoring as well (a 200 is not an error rate).
+    // 42P01 is called out separately because "the store was never provisioned"
+    // is an operator problem, not a transient server fault.
+    const code = (error as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.error('[AnA] Thread listing failed: conversation store not provisioned');
+      return res.status(503).json({
+        error: 'Conversation store is not provisioned',
+        code: 'THREAD_STORE_UNPROVISIONED',
+      });
+    }
+    console.error('[AnA] Thread listing failed:', error?.message);
+    return res.status(500).json({
+      error: 'Failed to list threads',
+      code: 'THREAD_LIST_ERROR',
+    });
   }
 }
 
@@ -105,8 +125,23 @@ export async function listThreadMessages(req: Request, res: Response) {
     const messages = await getThreadMessages(threadId);
     res.json({ messages: messages.slice(-limit) });
   } catch (error: any) {
-    console.warn('[AnA] Thread messages failed:', error?.message);
-    res.json({ messages: [] });
+    // Same rule as listThreads: an unreadable transcript is NOT an empty
+    // transcript. Returning `{ messages: [] }` on a failed read let the UI
+    // render a thread as if the user had said nothing, which is worse than an
+    // error — it looks like data loss and it is indistinguishable from one.
+    const code = (error as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.error('[AnA] Thread messages failed: message store not provisioned');
+      return res.status(503).json({
+        error: 'Conversation store is not provisioned',
+        code: 'THREAD_STORE_UNPROVISIONED',
+      });
+    }
+    console.error('[AnA] Thread messages failed:', error?.message);
+    return res.status(500).json({
+      error: 'Failed to retrieve thread messages',
+      code: 'THREAD_MESSAGES_ERROR',
+    });
   }
 }
 

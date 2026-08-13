@@ -566,7 +566,15 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
 /* ── Collaborate -- post a message / @mention / route, optionally -> task ── */
 
 function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussProps) {
-  const [to, setTo] = useState('sm');
+  /* No recipient until one is picked from the REAL roster.
+     This initialised to `'sm'` — one of the retired TB_TEAM fixture short-ids
+     ('jc' / 'mw' / 'sm' / …). Those keys no longer exist: `C2C.team` is keyed by
+     real user id from GET /api/task-management/assignees. So the drawer opened
+     with an addressee that resolves to nobody, and the "Also create a task"
+     branch stamped `assignee: 'sm'` onto the row it added — a fabricated user id
+     travelling with a task. Empty is the honest starting state, and the roster
+     below is the only thing that can set it. */
+  const [to, setTo] = useState('');
   const [body, setBody] = useState('');
   const [makeTask, setMakeTask] = useState(false);
 
@@ -615,12 +623,14 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         </div>
       </div>
       <div className="cl-field"><label>Message</label>
+        {/* The "@name" prompt only appears once a real teammate is selected;
+            with no recipient it used to read "@ -- share context...". */}
         <textarea rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
-          placeholder={'@' + (C2C.team[to] || { n: '' }).n + ' -- share context, ask a question, or route this for action...'} />
+          placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' -- ' : '') + 'share context, ask a question, or route this for action...'} />
       </div>
       <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} onClick={() => setMakeTask(m => !m)}>
         <span className="cl-check">{makeTask ? I.check : ''}</span>
-        <span><b>Also create a task</b> and assign it to {(C2C.team[to] || { n: 'them' }).n}</span>
+        <span><b>Also create a task</b>{C2C.team[to] ? <> and assign it to {C2C.team[to].n}</> : <>, unassigned</>}</span>
       </button>
       <div className="cl-warn">
         <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread (<code>POST /api/collaboration/messages</code>) + <code>/tasks/:id/notify</code> is not yet wired here -- the message is not persisted, and WebSocket delivery is stubbed (<code>io.to('tasks').emit</code> commented out).

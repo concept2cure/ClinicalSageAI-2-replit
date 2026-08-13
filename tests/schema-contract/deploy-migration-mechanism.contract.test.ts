@@ -24,10 +24,14 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
+
+/** Only the shape this contract reads. `needs:` is a scalar or a list in YAML. */
+type DeployWorkflow = { jobs: Record<string, { needs?: string | string[] }> };
 
 describe('deploy migration mechanism', () => {
   describe('the runtime image carries a migration payload', () => {
@@ -78,16 +82,60 @@ describe('deploy migration mechanism', () => {
       expect(workflow).toMatch(/"npm",\s*"run",\s*"db:migrate:deploy"/);
     });
 
-    it.each([['deploy-api'], ['deploy-worker']])(
-      '%s cannot roll unless the migration succeeded',
-      (job) => {
+    // WHICH jobs must be gated is DERIVED from the workflow, never hard-coded.
+    //
+    // The previous revision named ['deploy-api', 'deploy-worker'] literally and
+    // read each job's `needs:` with `workflow.slice(workflow.indexOf(…))`. When
+    // the dead worker pipeline was deleted (it built `-f worker/Dockerfile`, a
+    // path that has never existed in this repo, so every tag-triggered deploy
+    // failed at build-push), `indexOf` returned -1, `slice(-1)` handed the
+    // matcher the final character of the file, and the assertion failed against
+    // a job that no longer exists — a red test that named a real removal as a
+    // lost migration gate.
+    //
+    // A hard-coded list is wrong in BOTH directions, and the second one is the
+    // expensive one: it goes red when a legitimate job is removed, and it stays
+    // silent when a NEW service-rolling job is added without the gate — which is
+    // the case that actually ships code onto an unmigrated schema.
+    //
+    // The invariant, stated once: `build-push` produces the API image, so ANY
+    // job that consumes it rolls that image onto the database, and must
+    // therefore depend on `migrate`. `deploy-frontend` is correctly excluded —
+    // it publishes static assets and consumes no image. A worker deploy, if one
+    // is ever re-introduced, is covered the moment it declares `needs:
+    // build-push`, with no edit here.
+    const jobs = (yaml.load(workflow) as DeployWorkflow).jobs;
+    const needsOf = (job: string): string[] => {
+      const declared = jobs[job]?.needs;
+      if (declared === undefined) return [];
+      return Array.isArray(declared) ? declared : [declared];
+    };
+    const rollsTheBuiltImage = Object.keys(jobs).filter(
+      (job) => job !== 'migrate' && needsOf(job).includes('build-push'),
+    );
+
+    it('gates every job that rolls the built image on the migration', () => {
+      // Non-emptiness first. Without it this assertion passes vacuously the day
+      // the last image-consuming job is renamed or removed — a green test
+      // proving nothing, which is the failure mode this whole contract exists
+      // to prevent.
+      expect(
+        rollsTheBuiltImage,
+        'no job consumes build-push — the deploy path no longer rolls the image it builds',
+      ).not.toEqual([]);
+
+      for (const job of rollsTheBuiltImage) {
         // The `needs:` edge is the gate. Without it the job runs in parallel with
         // the migration and ships code onto whatever schema happens to be there.
-        const body = workflow.slice(workflow.indexOf(`\n  ${job}:\n`));
-        const needs = body.match(/^ {4}needs: (.+)$/m)?.[1] ?? '';
-        expect(needs, `${job} must depend on the migrate job`).toContain('migrate');
-      },
-    );
+        expect(needsOf(job), `${job} must depend on the migrate job`).toContain('migrate');
+      }
+    });
+
+    it('runs the migration itself against the image that was just built', () => {
+      // The other half of the same edge: `migrate` is only a meaningful gate if
+      // it, too, waits for build-push rather than racing it.
+      expect(needsOf('migrate')).toContain('build-push');
+    });
 
     it('pins the migration task to the same image digest being deployed', () => {
       // A migration run from a different image than the one about to serve

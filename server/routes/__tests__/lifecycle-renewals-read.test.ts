@@ -104,11 +104,16 @@ describe('GET /api/lifecycle/renewals', () => {
     expect(res.body.meta.pendingStore).toBe(true);
   });
 
-  it('fails closed to an empty list on any store error (never 500)', async () => {
+  // Regression: this used to assert 200 + `data: []` for ANY store error, which
+  // is byte-for-byte the response for "no renewals are due". A failed read of
+  // the recurring-obligation store therefore rendered as an empty renewal
+  // calendar — precisely how a regulatory renewal deadline passes unnoticed.
+  // The 42P01 degrade above stays; a real fault is now a 5xx.
+  it('500s on a non-42P01 store error — never a 200 empty list', async () => {
     listObligations.mockRejectedValueOnce(new Error('connection reset'));
     const res = await request(appWith(7)).get('/api/lifecycle/renewals');
-    expect(res.status).toBe(200);
-    expect(res.body.data).toEqual([]);
-    expect(res.body.meta.pendingStore).toBe(false);
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('INTERNAL');
+    expect(res.body.data).toBeUndefined();
   });
 });

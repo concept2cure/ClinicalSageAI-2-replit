@@ -7,43 +7,69 @@
  *   - Lifecycle   (registry id `lifecycle-mgmt`)
  *   - Pharmacovigilance (registry id `pharmacovigilance`)
  *
- * Each surface pairs a reference dashboard with real structured data entry:
- * the primary action opens a typed intake drawer (C2CForm) and the saved
- * record is prepended to the live list (fresh-row highlight + toast).
+ * ── Fixture-free contract (GA real-data standard) ─────────────────────────────
+ *
+ * Every card here used to be `useLiveList(path, FIXTURE)`: it attempted the real
+ * org-scoped GET and, on any failure OR an empty result, rendered a design-kit
+ * sample behind a small "sample" pill. The samples were invented drug programmes
+ * — BX-301 with a pending FDA orphan designation for relapsed multiple myeloma,
+ * BX-099 with a PRR-4.2 pneumonitis signal across 27 cases, sNDA sequence
+ * numbers, PDUFA dates. A pill is not consent: a reviewer looking at a
+ * pharmacovigilance screen has no way to know the safety signal in front of them
+ * was never observed, and an unprovisioned tenant saw a full portfolio it does
+ * not own. All nine fixtures are deleted.
+ *
+ * Each card now renders one of exactly four things: a loading note, the org's
+ * REAL rows, an honest empty state, or an honest error state. Reads:
+ *   GET /api/biopharma/pediatric · /prea-milestones
+ *   GET /api/biopharma/orphan · /orphan-rpd · /orphan-advocacy
+ *   GET /api/biopharma/supplements · /api/lifecycle/renewals · /api/cmc-changes
+ *   GET /api/pharmacovigilance/board
+ *
+ * The typed intake drawers (C2CForm) that used to sit on top of these lists are
+ * gone with them. Every one of those routers is READ-ONLY — there is no POST for
+ * a pediatric plan, an orphan designation, a supplement or a safety signal — so
+ * "Add plan" prepended a row to local state, fired a toast saying it was saved,
+ * claimed in its own copy that "saving writes an audit entry", and lost the
+ * record on the next render. On a Part 11 surface that is a worse defect than
+ * the fixtures were. The drawers come back when the write endpoints exist.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { I } from '../icons';
-import { useLive, useLiveList, useLiveRows } from '../dataConnect';
+import { useLiveData, useLiveRows, type ListState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { C2CForm } from '../C2CForm';
-import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 
 /* ── Inline shared kit helpers (Nonclinical.tsx pattern) ── */
-
-interface QueueItem {
-  ico: string;
-  title: string;
-  sub: string;
-  tone: string;
-  action: string;
-  cmd: string;
-}
 
 interface BpComposerProps {
   eyebrow: string;
   title: string;
   state: React.ReactNode;
   starters: string[];
-  primary?: React.ReactNode;
-  queue: QueueItem[];
   onAsk: (text: string) => void;
   lead?: React.ReactNode;
   children?: React.ReactNode;
 }
 
-function BpComposer({ eyebrow, title, state, starters, primary, queue, onAsk, lead, children }: BpComposerProps) {
+/**
+ * The shell every specialty surface renders into: heading, AnswerLead, and the
+ * AnA starter prompts.
+ *
+ * It also carried a "Today · your queue" strip — three hardcoded work items per
+ * surface ("Pneumonitis signal under evaluation · PRR 4.2 · 27 cases · FAERS",
+ * "iPSP still in draft · Pre-IND dependency · AltexaTab"), headed by the count
+ * of them and a "sample" pill. Calling a constant "your queue" and putting a
+ * number on it is the strongest possible claim that these are the signed-in
+ * user's real open items; they never were, on any tenant. There is no
+ * per-surface work-queue endpoint to replace it with (the real cross-surface
+ * queue is the Task Tray, GET /api/task-management/my-work, which the shell top
+ * bar already renders), so the strip is removed rather than re-sourced.
+ *
+ * `starters` stay: they are prompt text sent to AnA, not claims about data.
+ */
+function BpComposer({ eyebrow, title, state, starters, onAsk, lead, children }: BpComposerProps) {
   return (
     <div className="sp">
       <div className="sp-head">
@@ -52,7 +78,6 @@ function BpComposer({ eyebrow, title, state, starters, primary, queue, onAsk, le
           <h1 className="sp-title">{title}</h1>
           <p className="sp-state">{state}</p>
         </div>
-        {primary}
       </div>
       {lead}
       <div className="sp-starters">
@@ -63,25 +88,6 @@ function BpComposer({ eyebrow, title, state, starters, primary, queue, onAsk, le
           </button>
         ))}
       </div>
-      <div className="sp-sec">
-        <div className="sp-sec-h">
-          <span className="t">Today {I.dot} your queue</span>
-          <span className="s">{queue.length} items</span>
-          <span className="sp-sample">sample</span>
-        </div>
-        <div className="sp-queue">
-          {queue.map((q, i) => (
-            <button key={i} className="sp-q" data-tone={q.tone} onClick={() => onAsk(q.cmd)}>
-              <span className="sp-q-ic">{I[q.ico] || I.info}</span>
-              <span className="sp-q-b">
-                <span className="sp-q-t">{q.title}</span>
-                <span className="sp-q-s">{q.sub}</span>
-              </span>
-              <span className="sp-q-a">{q.action} {I.right}</span>
-            </button>
-          ))}
-        </div>
-      </div>
       {children}
     </div>
   );
@@ -90,21 +96,17 @@ function BpComposer({ eyebrow, title, state, starters, primary, queue, onAsk, le
 interface SpCardProps {
   title: string;
   meta?: React.ReactNode;
-  sample?: boolean;
-  action?: React.ReactNode;
   children?: React.ReactNode;
   foot?: React.ReactNode;
 }
 
-function SpCard({ title, meta, sample, action, children, foot }: SpCardProps) {
+function SpCard({ title, meta, children, foot }: SpCardProps) {
   return (
     <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">{title}</span>
         <span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {sample && <span className="sp-sample">sample</span>}
           {meta}
-          {action}
         </span>
       </div>
       <div className="pj-card-b">
@@ -115,17 +117,50 @@ function SpCard({ title, meta, sample, action, children, foot }: SpCardProps) {
   );
 }
 
-interface AddBtnProps {
-  onClick: () => void;
-  label: string;
+/**
+ * The honest non-row states a card shows instead of a fixture. Returns null once
+ * real rows are in hand, so a card body reads
+ * `<SpState .../> ?? rows.map(...)`-style: state first, rows second, never both.
+ *
+ * `what` completes each sentence in lower case ("Loading pediatric plans…",
+ * "No pediatric plans yet."), and `hint` carries the one line that tells the
+ * user what would put something here — the difference between an empty state
+ * and a dead end.
+ */
+function SpState({
+  st,
+  what,
+  hint,
+}: {
+  st: { loading: boolean; error?: string; empty: boolean };
+  what: string;
+  hint?: string;
+}) {
+  if (st.loading) {
+    return <div className="sp-row"><span className="sp-row-s">Loading {what}…</span></div>;
+  }
+  if (st.error) {
+    return (
+      <div className="sp-row">
+        <span className="sp-row-s">
+          Couldn&rsquo;t load {what} — sign in and retry, or check that the service is reachable.
+        </span>
+      </div>
+    );
+  }
+  if (st.empty) {
+    return (
+      <div className="sp-row">
+        <span className="sp-row-s">No {what} yet.{hint ? ' ' + hint : ''}</span>
+      </div>
+    );
+  }
+  return null;
 }
 
-function AddBtn({ onClick, label }: AddBtnProps) {
-  return (
-    <button className="sp-addbtn" onClick={onClick}>
-      {I.plus} {label}
-    </button>
-  );
+/** True while a list read has nothing real to show (loading, failed, or empty). */
+function pending(st: { loading: boolean; error?: string; empty: boolean }): boolean {
+  return st.loading || Boolean(st.error) || st.empty;
 }
 
 interface SpAskProps {
@@ -156,46 +191,12 @@ function pill(status: string) {
   return <span className={'rd-chip tone-' + (map[status] || 'idle')}>{status}</span>;
 }
 
-function rowcls(r: { _new?: boolean }): string {
-  return 'sp-row' + (r._new ? ' de-row-new' : '');
-}
-
-function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T) => void] {
-  const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
-  // Re-seed when the live source resolves (seed identity changes once).
-  const seedRef = useRef(seed);
-  useEffect(() => {
-    if (seed !== seedRef.current) {
-      seedRef.current = seed;
-      setRows((seed || []).map((r) => ({ ...r })));
-    }
-  }, [seed]);
-  const add = (r: T) => {
-    const row: T = { ...r, _new: true };
-    setRows((rs) => [row, ...rs]);
-    setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
-  };
-  return [rows, add] as const;
-}
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
+/* `rowcls` / `useRows` / `useToast` / `C2CToast` lived here to support the local
+   optimistic prepend after a C2CForm submit — a fresh-row highlight and a
+   "…added" toast. With no write endpoint behind any of these lists that prepend
+   was the only thing that ever happened, so the row, the highlight and the toast
+   all announced a save that never occurred. They are gone with the drawers; rows
+   render straight off the live read. */
 
 /* ═══════════════════════════════════════════════════════════════════
    Pediatric -- PREA / iPSP / EMA PIP
@@ -211,7 +212,6 @@ interface PedPlan {
   milestones: number;
   due: string;
   status: string;
-  _new?: boolean;
 }
 
 interface PedPrea {
@@ -220,61 +220,24 @@ interface PedPrea {
   due: string;
 }
 
-const PED_PLANS: PedPlan[] = [
-  { id: 'pip-420', product: 'BX-420', kind: 'EMA PIP', ageRange: '2--17', deferrals: 2, waivers: 1, milestones: 8, due: 'Trial readout · Q1 2027', status: 'agreed' },
-  { id: 'psp-204', product: 'BX-204', kind: 'FDA iPSP', ageRange: '12--17', deferrals: 1, waivers: 0, milestones: 5, due: 'PREA · post-approval Y2', status: 'submitted' },
-  { id: 'pip-301', product: 'BX-301', kind: 'EMA PIP', ageRange: '0--17', deferrals: 0, waivers: 1, milestones: 6, due: 'CHMP advice · Q3 2026', status: 'in draft' },
-  { id: 'psp-115', product: 'BX-115', kind: 'FDA iPSP', ageRange: '6--17', deferrals: 0, waivers: 0, milestones: 4, due: 'Pre-IND meeting · 28 days', status: 'in draft' },
-];
-
-const PED_PREA: PedPrea[] = [
-  { product: 'BX-204', ms: 'Adolescent PK substudy -- interim', due: 'Aug 2026' },
-  { product: 'BX-420', ms: 'Juvenile tox study report -- final', due: 'Oct 2026' },
-  { product: 'BX-301', ms: 'Cohort C enrollment -- first patient in', due: 'Nov 2026' },
-];
-
 export function Pediatric({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const livePlans = useLiveList<PedPlan>('/api/biopharma/pediatric', PED_PLANS);
-  const [plans, addPlan] = useRows<PedPlan>(livePlans.data);
-  /* live ?? fixture — PREA/PIP milestones from the governed store. */
-  const livePrea = useLiveList<PedPrea>('/api/biopharma/prea-milestones', PED_PREA);
-  const prea = livePrea.data;
-  const [form, setForm] = useState(false);
-  const [toast, fireToast] = useToast();
+  /* The org's real pediatric investigation plans and PREA/PIP milestones.
+     `rows` is a fresh [] while loading and on error, so every derivation below
+     is null-safe without a fixture standing in. */
+  const livePlans = useLiveRows<PedPlan>('/api/biopharma/pediatric');
+  const plans = livePlans.rows;
+  const livePrea = useLiveRows<PedPrea>('/api/biopharma/prea-milestones');
+  const prea = livePrea.rows;
 
-  const FORM: C2CFormConfig = {
-    eyebrow: 'Pediatric · new plan',
-    title: 'Open a pediatric plan',
-    governed: 'Pediatric plans are governed -- saving writes an audit entry; AnA drafts the rationale for review.',
-    submitLabel: 'Add plan',
-    fields: [
-      { key: 'product', label: 'Product', type: 'select', options: ['BX-204', 'BX-301', 'BX-115', 'BX-099'], required: true, half: true },
-      { key: 'kind', label: 'Plan type', type: 'select', options: ['FDA iPSP', 'EMA PIP', 'FDA PREA waiver'], required: true, half: true },
-      { key: 'ageRange', label: 'Age range', type: 'text', placeholder: 'e.g. 12--17', required: true },
-      { key: 'deferrals', label: 'Deferrals', type: 'number', min: 0, default: '0', half: true },
-      { key: 'waivers', label: 'Waivers', type: 'number', min: 0, default: '0', half: true },
-      { key: 'milestones', label: 'Milestones', type: 'number', min: 0, default: '0', half: true },
-      { key: 'due', label: 'Next milestone due', type: 'date', half: true },
-      { key: 'status', label: 'Status', type: 'seg', options: ['draft', 'review', 'active'], default: 'draft' },
-      { key: 'rationale', label: 'Extrapolation rationale', type: 'textarea', placeholder: 'Basis for age-range selection / extrapolation...' },
-    ],
-  };
-
-  const onSubmit = (v: Record<string, string>) => {
-    addPlan({
-      product: v.product, kind: v.kind, ageRange: v.ageRange,
-      deferrals: +v.deferrals || 0, waivers: +v.waivers || 0,
-      milestones: +v.milestones || 0, due: v.due ? ('due ' + v.due) : '--',
-      status: v.status,
-    });
-    setForm(false);
-    fireToast('Pediatric plan added · ' + v.product + ' ' + v.kind);
-  };
-
-  /* AnswerLead computation */
+  /* AnswerLead computation.
+     `nextMs.ms` is read through a local rather than inline: these rows come off a
+     real SELECT, and a nullable/absent `milestone` column makes `.toLowerCase()`
+     throw through SurfaceBoundary — turning a partially-populated row into
+     "this surface stopped unexpectedly". (hostilePayloadProbe pins this.) */
   const drafts = plans.filter((p) => String(p.status).includes('draft'));
   const nextMs = prea[0];
+  const nextMsLabel = nextMs?.ms ? String(nextMs.ms).toLowerCase() : null;
   const topDraft = drafts[0];
 
   return (
@@ -282,16 +245,19 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
       eyebrow="Pediatric · §505B PREA · EMA PIP"
       title="Pediatric strategy"
       state={<>FDA iPSP and EMA PIP plans, deferrals, waivers and PREA milestones across the portfolio.</>}
-      lead={
+      /* The lead reads the org's own plans out loud, so it may only render when
+         there ARE plans. Left ungated it asserted "Your pediatric plans are
+         filed" to a tenant that has none. */
+      lead={(plans.length > 0 || prea.length > 0) ? (
         <AnswerLead
           tone="calm"
           eyebrow="Where do your pediatric obligations stand -- and what's next"
           headline={drafts.length
             ? <>{drafts.length} pediatric {drafts.length === 1 ? 'plan is' : 'plans are'} still in draft -- the closest gate is <b>{topDraft.kind} for {topDraft.product}</b> ({topDraft.due}).</>
-            : <>Your pediatric plans are filed -- the next thing to watch is the {nextMs ? nextMs.ms.toLowerCase() : 'upcoming milestone'}.</>}
+            : <>Your pediatric plans are filed -- the next thing to watch is the {nextMsLabel ?? 'upcoming milestone'}.</>}
           body={drafts.length
             ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main program on track. The age-range extrapolation is the part reviewers scrutinize most -- get that right and the plan moves.</>
-            : <>{nextMs ? <>The {nextMs.ms.toLowerCase()} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</> : <>No milestones are overdue -- you're in good standing on your pediatric commitments.</>}</>}
+            : <>{nextMsLabel ? <>The {nextMsLabel} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</> : <>No milestones are overdue -- you're in good standing on your pediatric commitments.</>}</>}
           reassure={drafts.length ? "You don't have to draft the extrapolation rationale from scratch -- I'll write the first pass with you." : "You're on top of your pediatric commitments. I'll flag anything before it slips."}
           action={{
             label: drafts.length ? 'Draft the extrapolation rationale' : 'Check upcoming milestones',
@@ -301,26 +267,22 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
           }}
           secondary="Or work the plans and milestones below."
         />
-      }
+      ) : undefined}
       starters={[
         'Draft the PSP rationale for adolescent extrapolation',
         'Compare PIP modifications across the portfolio',
         'Surface every PIP milestone due in the next 90 days',
         'Draft a PREA waiver justification against the extrapolation framework',
       ]}
-      primary={<button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Open pediatric plan</button>}
-      queue={[
-        { ico: 'users', title: 'PIP modification pending CHMP advice', sub: 'Paediatric population scope change', tone: 'warn', action: 'Open', cmd: 'Open the pending PIP modification and summarize the scope change' },
-        { ico: 'fileText', title: 'iPSP still in draft', sub: 'Pre-IND dependency · AltexaTab', tone: 'warn', action: 'Draft', cmd: 'Continue drafting the iPSP -- focus on the age-range rationale' },
-        { ico: 'clock', title: 'PREA milestone due this quarter', sub: 'Adolescent PK substudy -- interim', tone: 'info', action: 'Status', cmd: 'Status of the adolescent PK substudy interim milestone' },
-      ]}
       onAsk={ask}
     >
       <div className="sp-sec">
-        <SpCard title="Pediatric investigation plans" sample={livePlans.sample} meta="FDA · EMA" action={<AddBtn onClick={() => setForm(true)} label="Add plan" />}>
+        <SpCard title="Pediatric investigation plans" meta="FDA · EMA">
           <div className="sp-list">
-            {plans.map((p, i) => (
-              <div key={i} className={rowcls(p)}>
+            {pending(livePlans) ? (
+              <SpState st={livePlans} what="pediatric plans" hint="FDA iPSP and EMA PIP plans recorded for this organization appear here." />
+            ) : plans.map((p, i) => (
+              <div key={i} className="sp-row">
                 <span className="sp-tag">{p.product}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{p.kind} · ages {p.ageRange}</span>
@@ -333,9 +295,11 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-sec">
-        <SpCard title="Upcoming PREA milestones" sample={livePrea.sample} foot={<SpAsk onAsk={ask} cmd="Draft a PREA waiver justification against the pediatric extrapolation framework from the last Type C meeting." label="Draft PREA waiver justification" />}>
+        <SpCard title="Upcoming PREA milestones" foot={<SpAsk onAsk={ask} cmd="Draft a PREA waiver justification against the pediatric extrapolation framework from the last Type C meeting." label="Draft PREA waiver justification" />}>
           <div className="sp-list">
-            {prea.map((u, i) => (
+            {pending(livePrea) ? (
+              <SpState st={livePrea} what="PREA milestones" hint="Milestones committed under a pediatric plan appear here as they are recorded." />
+            ) : prea.map((u, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Status of the ${u.product} milestone "${u.ms}" due ${u.due}`)}>
                 <span className="sp-tag">{u.product}</span>
                 <span className="sp-row-b">
@@ -348,8 +312,6 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
           </div>
         </SpCard>
       </div>
-      {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={onSubmit} />}
-      <C2CToast msg={toast} />
     </BpComposer>
   );
 }
@@ -366,7 +328,6 @@ interface OrphDes {
   prevalence: string;
   benefit: string;
   status: string;
-  _new?: boolean;
 }
 
 interface OrphRpd {
@@ -383,78 +344,40 @@ interface OrphAdv {
   engagement: string;
 }
 
-const ORPH_DES: OrphDes[] = [
-  { product: 'BX-256', agency: 'FDA', indication: 'RPE65-mediated dystrophy', date: '2024-08-12', prevalence: '~3,000 US patients', benefit: '7-yr exclusivity · PDUFA waiver · Tax credit', status: 'designated' },
-  { product: 'BX-256', agency: 'EMA', indication: 'RPE65-mediated dystrophy', date: '2024-11-04', prevalence: '<5 per 10k EU', benefit: '10-yr exclusivity · Protocol assistance · Fee reduction', status: 'designated' },
-  { product: 'BX-301', agency: 'FDA', indication: 'Relapsed multiple myeloma', date: '2026-03-22', prevalence: '<200k US patients', benefit: 'Pending', status: 'requested' },
-  { product: 'BX-420', agency: 'PMDA', indication: 'Pediatric biologic', date: '2025-05-01', prevalence: '~4,200 Japan patients', benefit: 'Re-exam 10-yr · Priority review', status: 'designated' },
-  { product: 'BX-115', agency: 'FDA', indication: 'CNS · rare seizure', date: '--', prevalence: '~7,500 US patients', benefit: 'Pre-submission', status: 'planned' },
-];
-
-const ORPH_RPD: OrphRpd[] = [
-  { product: 'BX-256', kind: 'Rare Pediatric Disease', value: '$100M+', notes: 'Voucher issued at approval, sold 2024', status: 'received' },
-  { product: 'BX-420', kind: 'NIH rare disease grant', value: '$2.4M', notes: '4-yr funded · year 2', status: 'awarded' },
-];
-
-const ORPH_ADV: OrphAdv[] = [
-  { product: 'BX-256', org: 'RPE65 Foundation', engagement: 'Steering committee · Q monthly' },
-  { product: 'BX-301', org: 'Multiple Myeloma Research', engagement: 'CAB · biannual' },
-  { product: 'BX-115', org: 'Childhood Neurology Net', engagement: 'Early dialogue' },
-];
-
 export function Orphan({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const liveDes = useLiveList<OrphDes>('/api/biopharma/orphan', ORPH_DES);
-  const [des, addDes] = useRows<OrphDes>(liveDes.data);
-  /* live ?? fixture — RPD vouchers/grants + patient-advocacy engagements. */
-  const liveRpd = useLiveList<OrphRpd>('/api/biopharma/orphan-rpd', ORPH_RPD);
-  const rpd = liveRpd.data;
-  const liveAdv = useLiveList<OrphAdv>('/api/biopharma/orphan-advocacy', ORPH_ADV);
-  const adv = liveAdv.data;
-  const [form, setForm] = useState(false);
-  const [toast, fireToast] = useToast();
+  /* Designations, RPD vouchers/grants and patient-advocacy engagements the org
+     actually holds. Fixture-free: real rows, honest empty, honest error. */
+  const liveDes = useLiveRows<OrphDes>('/api/biopharma/orphan');
+  const des = liveDes.rows;
+  const liveRpd = useLiveRows<OrphRpd>('/api/biopharma/orphan-rpd');
+  const rpd = liveRpd.rows;
+  const liveAdv = useLiveRows<OrphAdv>('/api/biopharma/orphan-advocacy');
+  const adv = liveAdv.rows;
 
-  const FORM: C2CFormConfig = {
-    eyebrow: 'Orphan · designation request',
-    title: 'Open a designation application',
-    governed: 'A designation request is a governed submission -- prevalence evidence and rationale are captured for the application package.',
-    submitLabel: 'Create request',
-    fields: [
-      { key: 'product', label: 'Product', type: 'select', options: ['BX-204', 'BX-115', 'BX-099', 'BX-301'], required: true, half: true },
-      { key: 'agency', label: 'Agency', type: 'select', options: ['FDA', 'EMA', 'PMDA'], required: true, half: true },
-      { key: 'indication', label: 'Orphan indication', type: 'text', placeholder: 'e.g. RPE65 retinal dystrophy', required: true },
-      { key: 'prevalence', label: 'Prevalence', type: 'text', placeholder: 'e.g. <20k US', required: true, half: true },
-      { key: 'benefit', label: 'Primary benefit sought', type: 'select', options: ['7-yr exclusivity + fee waiver', '10-yr market exclusivity', 'exclusivity + RPD voucher eligible', 'tax credits'], half: true },
-      { key: 'rationale', label: 'Scientific rationale', type: 'textarea', placeholder: 'Medical plausibility / disease seriousness / unmet need...' },
-    ],
-  };
-
-  const onSubmit = (v: Record<string, string>) => {
-    addDes({
-      product: v.product, agency: v.agency, indication: v.indication,
-      date: 'pending', prevalence: v.prevalence,
-      benefit: v.benefit || 'exclusivity', status: 'requested',
-    });
-    setForm(false);
-    fireToast('Designation request created · ' + v.product + ' ' + v.agency);
-  };
-
-  /* AnswerLead computation */
-  const pending = des.filter((d) => d.status === 'requested' || d.status === 'planned' || String(d.date).includes('pending'));
+  /* AnswerLead computation. Named `awaiting` rather than `pending` so it does
+     not shadow the module-level load-state helper of that name. */
+  const awaiting = des.filter((d) => d.status === 'requested' || d.status === 'planned' || String(d.date).includes('pending'));
   const designated = des.filter((d) => d.status === 'designated');
-  const topPending = pending[0];
+  const topPending = awaiting[0];
+  // Same nullable-column hazard as Pediatric's milestone label: `indication` is
+  // free text on the real record and may be absent.
+  const topPendingInd = topPending?.indication ? String(topPending.indication).toLowerCase() : null;
 
   return (
     <BpComposer
       eyebrow="Orphan drug · rare disease"
       title="Orphan and rare programs"
       state={<>Designations across FDA / EMA / PMDA, RPD vouchers and grants, and patient-advocacy engagements.</>}
-      lead={
+      /* Only render the lead once there is a real designation to speak about —
+         ungated it told an org with none that its "exclusivity and incentives
+         are secured". */
+      lead={des.length > 0 ? (
         <AnswerLead
           tone="calm"
           eyebrow="Where do your rare-disease designations stand"
           headline={topPending
-            ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPending.indication.toLowerCase()} -- {String(topPending.date).includes('pending') ? 'awaiting an FDA decision' : 'ready to file'}.</>
+            ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingInd ?? 'indication not recorded'} -- {String(topPending.date).includes('pending') ? 'awaiting an FDA decision' : 'ready to file'}.</>
             : <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>}
           body={topPending
             ? <>Orphan status brings 7-year exclusivity, fee waivers, and RPD-voucher eligibility -- real value worth getting right. The prevalence evidence and scientific rationale are what carry the application; that's where I can help most.</>
@@ -468,26 +391,22 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
           }}
           secondary="Or work designations, vouchers and advocacy below."
         />
-      }
+      ) : undefined}
       starters={[
         'Find orphan precedents for our lead rare-disease indication',
         'Draft the FDA orphan application narrative',
         'Pull every RPD voucher transaction 2022--2025',
         'Compare exclusivity benefits across FDA, EMA and PMDA designations',
       ]}
-      primary={<button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Open designation application</button>}
-      queue={[
-        { ico: 'sparkles', title: 'FDA orphan designation requested', sub: 'BX-115 · decision pending', tone: 'warn', action: 'Status', cmd: 'Status of the pending FDA orphan designation request and expected decision window' },
-        { ico: 'fileText', title: 'Designation application planned', sub: 'Pre-submission narrative', tone: 'info', action: 'Draft', cmd: 'Draft the FDA orphan designation application narrative -- prevalence + scientific rationale' },
-        { ico: 'users', title: 'Patient advocacy steering committee', sub: 'Quarterly engagement due', tone: 'info', action: 'Prep', cmd: 'Prepare the agenda for the next patient advocacy steering committee' },
-      ]}
       onAsk={ask}
     >
       <div className="sp-sec">
-        <SpCard title="Designations" sample={liveDes.sample} meta="FDA · EMA · PMDA" action={<AddBtn onClick={() => setForm(true)} label="New request" />}>
+        <SpCard title="Designations" meta="FDA · EMA · PMDA">
           <div className="sp-list">
-            {des.map((d, i) => (
-              <div key={i} className={rowcls(d)}>
+            {pending(liveDes) ? (
+              <SpState st={liveDes} what="orphan designations" hint="FDA, EMA and PMDA designations recorded for this organization appear here." />
+            ) : des.map((d, i) => (
+              <div key={i} className="sp-row">
                 <span className="sp-tag">{d.product}</span><span className="sp-tag2">{d.agency}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{d.indication}</span>
@@ -500,9 +419,11 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="RPD vouchers & grants" sample={liveRpd.sample}>
+        <SpCard title="RPD vouchers & grants">
           <div className="sp-list">
-            {rpd.map((g, i) => (
+            {pending(liveRpd) ? (
+              <SpState st={liveRpd} what="vouchers or grants" hint="Rare-pediatric-disease vouchers and rare-disease grants appear here once recorded." />
+            ) : rpd.map((g, i) => (
               <div key={i} className="sp-row">
                 <span className="sp-tag">{g.product}</span>
                 <span className="sp-row-b">
@@ -514,9 +435,11 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
             ))}
           </div>
         </SpCard>
-        <SpCard title="Patient advocacy" sample={liveAdv.sample}>
+        <SpCard title="Patient advocacy">
           <div className="sp-list">
-            {adv.map((a, i) => (
+            {pending(liveAdv) ? (
+              <SpState st={liveAdv} what="advocacy engagements" hint="Patient-organization engagements appear here once recorded." />
+            ) : adv.map((a, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Summarize our engagement history with ${a.org}`)}>
                 <span className="sp-tag">{a.product}</span>
                 <span className="sp-row-b">
@@ -529,8 +452,6 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
           </div>
         </SpCard>
       </div>
-      {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={onSubmit} />}
-      <C2CToast msg={toast} />
     </BpComposer>
   );
 }
@@ -547,7 +468,6 @@ interface LcmSupp {
   filed: string;
   due: string;
   status: string;
-  _new?: boolean;
 }
 
 interface LcmCmc {
@@ -574,83 +494,47 @@ interface LcmRen {
   due: string;
 }
 
-const LCM_SUPP: LcmSupp[] = [
-  { agency: 'FDA', product: 'BX-099', subject: 'sNDA · Prior Approval -- Pediatric indication extension', id: 'sNDA-211990-001', filed: '2026-03-04', due: 'PDUFA 2026-09-04', status: 'filed' },
-  { agency: 'FDA', product: 'BX-099', subject: 'sNDA · CBE-30 -- Manufacturing site addition (DS)', id: 'sNDA-211990-002', filed: '2026-04-22', due: 'Effective 2026-05-22', status: 'filed' },
-  { agency: 'EMA', product: 'BX-099', subject: 'Type II variation -- Specification change (host cell protein)', id: 'EU-VAR-006012-1', filed: '2026-02-11', due: 'CHMP day 60', status: 'review' },
-  { agency: 'EMA', product: 'BX-099', subject: 'Type IB variation -- Container closure update', id: 'EU-VAR-006012-2', filed: '--', due: 'Target 2026-06', status: 'drafting' },
-  { agency: 'PMDA', product: 'BX-099', subject: 'Partial change (Japan) -- Manufacturer change', id: 'JP-VAR-2024-3', filed: '2026-01-15', due: 'PMDA day 60', status: 'review' },
-];
-
-const LCM_REN: LcmRen[] = [
-  { authority: 'FDA', product: 'BX-099', next: 'PADER', interval: 'Annual', due: '2026-09-30' },
-  { authority: 'EMA', product: 'BX-099', next: 'Renewal', interval: '5-year', due: '2030-02-14' },
-  { authority: 'PMDA', product: 'BX-099', next: 'Re-exam', interval: '8-year', due: '2032-02-14' },
-];
-
 export function Lifecycle({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const liveSupp = useLiveList<LcmSupp>('/api/biopharma/supplements', LCM_SUPP);
-  const [supp, addSupp] = useRows<LcmSupp>(liveSupp.data);
-  /* live ?? fixture — the "Renewal cycles" card projects the governed
-     recurring-obligation store (/api/lifecycle/renewals) through the tested
-     lifecycle composer (region→authority, recurrence→interval, urgency bucket).
-     Falls back to the fixture with a Sample pill when offline/unprovisioned. */
-  const liveRen = useLiveList<LcmRen>('/api/lifecycle/renewals', LCM_REN);
-  const ren = liveRen.data;
-  /* Fixture-free (real-data standard): the "CMC change control" card reads the org's
-     REAL proposed-change store (cmc_change_controls, written via POST /api/cmc-changes)
-     projected on read through the deterministic SUPAC/variations classifier (FDA
-     reporting category → risk band). Real rows, an honest empty, or an honest error —
-     never a fixture. `rows` is a fresh [] while loading/on error, so the derivations
-     below are null-safe. */
+  /* Three real reads, no fixture:
+       supplements  — the org's filed/drafting supplements & variations
+       renewals     — the governed recurring-obligation store, projected through
+                      the tested lifecycle composer (region→authority,
+                      recurrence→interval)
+       cmc-changes  — the proposed-change store (cmc_change_controls) projected
+                      on read through the deterministic SUPAC/variations
+                      classifier (FDA reporting category → risk band) */
+  const liveSupp = useLiveRows<LcmSupp>('/api/biopharma/supplements');
+  const supp = liveSupp.rows;
+  const liveRen = useLiveRows<LcmRen>('/api/lifecycle/renewals');
+  const ren = liveRen.rows;
   const liveCmc = useLiveRows<LcmCmc>('/api/cmc-changes');
   const cmc = liveCmc.rows;
-  const [form, setForm] = useState(false);
-  const [toast, fireToast] = useToast();
-
-  const FORM: C2CFormConfig = {
-    eyebrow: 'Lifecycle · new supplement',
-    title: 'New supplement / variation',
-    governed: 'Supplements are governed submissions -- classification and pathway are recorded; dispatch requires e-signature.',
-    submitLabel: 'Create supplement',
-    fields: [
-      { key: 'agency', label: 'Agency & type', type: 'select', options: ['FDA sBLA', 'FDA sNDA', 'FDA CBE-30', 'FDA CBE-0', 'EMA Type IA', 'EMA Type IB', 'EMA Type II', 'PMDA partial change'], required: true },
-      { key: 'product', label: 'Product', type: 'select', options: ['BX-099', 'BX-204', 'BX-301'], required: true, half: true },
-      { key: 'id', label: 'Sequence / ID', type: 'text', placeholder: 'e.g. sBLA-005', half: true },
-      { key: 'subject', label: 'Subject of change', type: 'text', placeholder: 'e.g. New indication -- 2L expansion', required: true },
-      { key: 'due', label: 'Target / due', type: 'text', placeholder: 'e.g. PDUFA Feb 2027', half: true },
-      { key: 'status', label: 'Status', type: 'seg', options: ['drafted', 'review', 'approved'], default: 'drafted', half: true },
-      { key: 'justification', label: 'Change justification', type: 'textarea', placeholder: 'Basis for the change and supporting data...' },
-    ],
-  };
-
-  const onSubmit = (v: Record<string, string>) => {
-    addSupp({
-      agency: v.agency, product: v.product, subject: v.subject,
-      id: v.id || '--', filed: '--', due: v.due || 'drafting', status: v.status,
-    });
-    setForm(false);
-    fireToast('Supplement created · ' + v.agency + ' · ' + v.product);
-  };
 
   /* AnswerLead computation */
   const inReview = supp.filter((s) => s.status === 'review');
   const highChg = cmc.filter((c) => c.risk === 'high');
   const nextRen = [...ren].sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
   const topChg = highChg[0];
+  const topChgTitle = topChg?.title ? String(topChg.title) : null;
 
   return (
     <BpComposer
       eyebrow="Post-approval · supplements · variations"
       title="Lifecycle management"
-      state={<><b>2</b> approved products in post-approval lifecycle -- supplements, variations, CMC change control and renewal cycles.</>}
-      lead={
+      /* The strapline used to open with a hardcoded "<b>2</b> approved products".
+         There is no read that counts approved products, so the number is dropped
+         rather than guessed. */
+      state={<>Post-approval supplements, variations, CMC change control and renewal cycles.</>}
+      /* The lead narrates supplements, changes and renewals; with none of the
+         three loaded it asserted "Your post-approval portfolio is steady" and
+         "Nothing is overdue" about an empty portfolio. */
+      lead={(supp.length > 0 || cmc.length > 0 || ren.length > 0) ? (
         <AnswerLead
           tone={highChg.length ? 'urgent' : 'calm'}
           eyebrow="What needs your attention across the approved portfolio"
           headline={highChg.length
-            ? <>A <b>high-risk CMC change</b> is in play -- {topChg.title.toLowerCase()} -- and it decides your filing path.</>
+            ? <>A <b>high-risk CMC change</b> is in play -- {topChgTitle ? topChgTitle.toLowerCase() : 'an unnamed change'} -- and it decides your filing path.</>
             : <>Your post-approval portfolio is steady -- {inReview.length} {inReview.length === 1 ? 'supplement' : 'supplements'} in agency review, next renewal {nextRen ? nextRen.due : 'scheduled'}.</>}
           body={highChg.length
             ? <>Under ICH Q12 this is the difference between a PACMP and a prior-approval supplement -- get the classification right and you avoid a costly re-file. {inReview.length ? <>{inReview.length} {inReview.length === 1 ? 'supplement is' : 'supplements are'} already in review.</> : null}</>
@@ -659,31 +543,27 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
           action={{
             label: highChg.length ? 'Classify the change against ICH Q12' : 'Prepare the next renewal',
             onClick: () => ask(highChg.length
-              ? ('Assess ' + topChg.title + ' against ICH Q12 -- PACMP eligible or prior-approval supplement?')
+              ? ('Assess ' + (topChgTitle ?? 'the open high-risk CMC change') + ' against ICH Q12 -- PACMP eligible or prior-approval supplement?')
               : ('Prepare the ' + (nextRen ? nextRen.authority + ' ' + nextRen.next : 'next') + ' renewal for ' + (nextRen ? nextRen.product : 'the lead product'))),
           }}
           secondary="Or work supplements and change control below."
         />
-      }
+      ) : undefined}
       starters={[
         'Compare CMC change-control across the approved portfolio',
         'Draft a Type II variation against the current EMA guidance',
         'Open every supplement filed in the last 90 days',
         'Which changes are PACMP-eligible under ICH Q12?',
       ]}
-      primary={<button className="sp-primary" onClick={() => setForm(true)}>{I.plus} New supplement</button>}
-      queue={[
-        { ico: 'history', title: 'Type II variation in CHMP review', sub: 'Specification change -- host cell protein', tone: 'warn', action: 'Status', cmd: 'Status of the Type II variation in CHMP review and any open questions' },
-        { ico: 'beaker', title: 'High-risk CMC change under evaluation', sub: 'Bioreactor scale-up 2,000L -> 5,000L', tone: 'warn', action: 'Assess', cmd: 'Assess the bioreactor scale-up change against ICH Q12 -- PACMP eligible or prior-approval supplement?' },
-        { ico: 'shieldCheck', title: 'Annual report cycle approaching', sub: 'PADER · FDA', tone: 'info', action: 'Prep', cmd: 'Prepare the next PADER annual report -- pull every post-approval change this cycle' },
-      ]}
       onAsk={ask}
     >
       <div className="sp-sec">
-        <SpCard title="Supplements and variations" sample={liveSupp.sample} meta="FDA · EMA · PMDA" action={<AddBtn onClick={() => setForm(true)} label="New supplement" />}>
+        <SpCard title="Supplements and variations" meta="FDA · EMA · PMDA">
           <div className="sp-list">
-            {supp.map((s, i) => (
-              <div key={i} className={rowcls(s)}>
+            {pending(liveSupp) ? (
+              <SpState st={liveSupp} what="supplements or variations" hint="Post-approval supplements and variations filed by this organization appear here." />
+            ) : supp.map((s, i) => (
+              <div key={i} className="sp-row">
                 <span className="sp-tag">{s.agency}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{s.product} · {s.subject}</span>
@@ -696,7 +576,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="CMC change control" meta={cmc.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
+        <SpCard title="CMC change control" meta={pending(liveCmc) ? undefined : cmc.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
           <div className="sp-list">
             {liveCmc.loading ? (
               <div className="sp-row"><span className="sp-row-s">Loading CMC changes…</span></div>
@@ -716,9 +596,11 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
             ))}
           </div>
         </SpCard>
-        <SpCard title="Renewal cycles" sample={liveRen.sample} meta="PADER · 5-yr · re-exam">
+        <SpCard title="Renewal cycles" meta="PADER · 5-yr · re-exam">
           <div className="sp-list">
-            {ren.map((r, i) => (
+            {pending(liveRen) ? (
+              <SpState st={liveRen} what="renewal cycles" hint="Recurring obligations (PADER, EU renewal, PMDA re-exam) appear here once an approved product is registered." />
+            ) : ren.map((r, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Prepare the ${r.authority} ${r.next} renewal for ${r.product}`)}>
                 <span className="sp-tag">{r.authority}</span>
                 <span className="sp-row-b">
@@ -731,8 +613,6 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
           </div>
         </SpCard>
       </div>
-      {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={onSubmit} />}
-      <C2CToast msg={toast} />
     </BpComposer>
   );
 }
@@ -751,7 +631,6 @@ interface PvSignal {
   /** Null from live: no contributing-case date to derive recency from. */
   age: string | null;
   status: string;
-  _new?: boolean;
 }
 
 interface PvAgg {
@@ -767,103 +646,75 @@ interface PvAgg {
 }
 
 /**
- * Shape of GET /api/pharmacovigilance/board as it arrives through useLive.
- * useLive assigns the WHOLE HTTP body to `.data`, and the live body is the
- * envelope `{ success, data: { signals, aggregateReports } }` — so the rows we
- * render live at `board.data.data`. On any failure useLive hands back the flat
- * fixture we passed (`{ signals, aggregateReports }`, no nested `.data`), so
- * `.data.data` resolves to undefined and each card fails closed to its fixture.
+ * Shape of GET /api/pharmacovigilance/board's payload.
+ *
+ * The route returns the canonical `{ success, data: { signals,
+ * aggregateReports } }` envelope, which `useLiveData` unwraps for us — so the
+ * hook hands back `{ signals, aggregateReports }` directly. `hasKeys` is not
+ * used as a guard here because BOTH keys are legitimately absent-or-null on a
+ * tenant with no safety data, and a guard must never turn "nothing yet" into
+ * "broken".
  */
-interface PvBoardEnvelope {
-  signals?: PvSignal[];
-  aggregateReports?: PvAgg[];
-  data?: {
-    signals?: PvSignal[] | null;
-    aggregateReports?: PvAgg[] | null;
-  };
+interface PvBoard {
+  signals?: PvSignal[] | null;
+  aggregateReports?: PvAgg[] | null;
 }
-
-const PV_SIG: PvSignal[] = [
-  { product: 'BX-099', term: 'Immune-mediated pneumonitis', count: 27, prr: 4.2, owner: 'TP', age: '3 days', status: 'evaluating' },
-  { product: 'BX-099', term: 'Infusion reaction grade >=3', count: 8, prr: 2.1, owner: 'TP', age: '11 days', status: 'monitoring' },
-  { product: 'BX-204', term: 'Hepatic enzyme elevation', count: 14, prr: 1.8, owner: 'JC', age: '6 days', status: 'monitoring' },
-];
-
-const PV_AGG: PvAgg[] = [
-  { product: 'BX-099', cycle: 'PSUR 2026-Q2', due: 'EMA · day +60', by: 'AnA', reviewers: 'TP, MS', status: 'drafting' },
-  { product: 'BX-099', cycle: 'PBRER 2026-H1', due: 'FDA · day +60', by: 'AnA', reviewers: 'TP, MS', status: 'queued' },
-];
 
 export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  /* live ?? fixture — the safety-surveillance board derives BOTH cards from
-     real, org-scoped data (adverse_events → disproportionality screen for the
-     "Active signals"; periodic_safety_reports for the "Aggregate reports").
-     useLive assigns the whole HTTP body to `.data`, and the live envelope is
-     `{ success, data: { signals, aggregateReports } }`, so the rows live at
-     board.data.data. Any unreachable/malformed response (or an empty live list)
-     fails closed to the flat fixture we passed, with an honest Sample pill. */
-  const board = useLive<PvBoardEnvelope>('/api/pharmacovigilance/board', { signals: PV_SIG, aggregateReports: PV_AGG });
-  const payload = board.data.data;
-  const rawSignals = payload?.signals;
-  const rawAggs = payload?.aggregateReports;
-  const liveSignals: PvSignal[] = !board.sample && Array.isArray(rawSignals) ? rawSignals : [];
-  const liveAggs: PvAgg[] = !board.sample && Array.isArray(rawAggs) ? rawAggs : [];
+  /* The safety-surveillance board, both cards from real org-scoped data:
+     adverse_events → disproportionality screen for "Active signals";
+     periodic_safety_reports → "Aggregate reports".
 
-  /* Seed the editable signal list from live when present, else the fixture;
-     drive each Sample pill honestly (on the fixture OR an empty live list). */
-  const [sigs, addSig] = useRows<PvSignal>(liveSignals.length ? liveSignals : PV_SIG);
-  const aggs = liveAggs.length ? liveAggs : PV_AGG;
-  const sigSample = board.sample || !liveSignals.length;
-  const aggSample = board.sample || !liveAggs.length;
+     This previously ran through `useLive(path, { signals: PV_SIG,
+     aggregateReports: PV_AGG })` and fell back to an invented BX-099 pneumonitis
+     signal (PRR 4.2 across 27 cases) whenever the read failed or came back
+     empty. A fabricated safety signal is the single worst thing on this screen
+     to invent — it is the row a pharmacovigilance officer would act on — so the
+     fallback is gone and each card states plainly what it has. */
+  const board = useLiveData<PvBoard>('/api/pharmacovigilance/board');
+  const sigs = board.data?.signals ?? [];
+  const aggs = board.data?.aggregateReports ?? [];
 
-  const [form, setForm] = useState(false);
-  const [toast, fireToast] = useToast();
-
-  const FORM: C2CFormConfig = {
-    eyebrow: 'Pharmacovigilance · log signal',
-    title: 'Log a safety signal',
-    governed: 'Signals are governed safety records -- logging creates a §11 audit entry and routes causality assessment.',
-    submitLabel: 'Log signal',
-    fields: [
-      { key: 'product', label: 'Product', type: 'select', options: ['BX-204', 'BX-099', 'BX-301'], required: true, half: true },
-      { key: 'source', label: 'Detection source', type: 'select', options: ['FAERS', 'EudraVigilance', 'Both', 'Literature', 'Clinical'], default: 'FAERS', half: true },
-      { key: 'term', label: 'MedDRA preferred term', type: 'text', placeholder: 'e.g. Immune-mediated pneumonitis', required: true },
-      { key: 'count', label: 'Case count', type: 'number', min: 0, placeholder: '0', required: true, half: true },
-      { key: 'prr', label: 'PRR', type: 'number', min: 0, placeholder: 'e.g. 2.4', half: true },
-      { key: 'status', label: 'Disposition', type: 'seg', options: ['watch', 'monitoring', 'evaluating'], default: 'watch' },
-      { key: 'note', label: 'Assessment note', type: 'textarea', placeholder: 'Initial causality read / action...' },
-    ],
+  /* Per-card honest state, derived from the ONE board read: a card is empty
+     when the read succeeded and its own list came back with no rows. */
+  const sigState = {
+    loading: board.loading,
+    error: board.error,
+    empty: !board.loading && !board.error && sigs.length === 0,
   };
-
-  const onSubmit = (v: Record<string, string>) => {
-    const prr = parseFloat(v.prr) || 0;
-    addSig({
-      product: v.product, term: v.term, count: +v.count || 0,
-      prr, owner: 'PV', age: 'new · ' + (v.source || 'FAERS'), status: v.status,
-    });
-    setForm(false);
-    fireToast('Signal logged · ' + v.product + ' · ' + v.term);
+  const aggState = {
+    loading: board.loading,
+    error: board.error,
+    empty: !board.loading && !board.error && aggs.length === 0,
   };
 
   /* AnswerLead computation */
   const ranked = [...sigs].sort((a, b) => (b.prr || 0) - (a.prr || 0));
   const top = ranked[0];
+  // `term` is a MedDRA preferred term off the real record and `prr` a computed
+  // float; either can be absent on a partially-populated row, and both are read
+  // through string/number methods below.
+  const topTerm = top?.term ? String(top.term) : null;
   const agg = aggs.find((a) => a.status === 'drafting') || aggs[0];
-  const highPrr = top && top.prr >= 3;
+  const highPrr = Boolean(topTerm) && typeof top.prr === 'number' && top.prr >= 3;
 
   return (
     <BpComposer
       eyebrow="Pharmacovigilance · PSUR / PBRER · signals"
       title="Safety surveillance"
       state={<>Signal detection, aggregate reports in cycle and expedited submissions across approved products.</>}
-      lead={
+      /* Only speak about the safety picture when there IS one. Ungated, an org
+         with no adverse-event data was told "Nothing is alarming today … still
+         within routine monitoring" — a safety assurance derived from the
+         absence of a table, which is not the same as the absence of a signal. */
+      lead={(sigs.length > 0 || aggs.length > 0) ? (
         <AnswerLead
           tone={highPrr ? 'urgent' : 'calm'}
           eyebrow="Is anything in your safety data asking for action right now"
           headline={highPrr
-            ? <>Yes -- <b>{top.term.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{top.prr}</b> across {top.count} cases.</>
-            : <>Nothing is alarming today -- the highest signal is {top ? top.term.toLowerCase() : 'within expected range'} (PRR {top ? top.prr : '--'}), still within routine monitoring.</>}
+            ? <>Yes -- <b>{topTerm?.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{top.prr}</b> across {top.count} cases.</>
+            : <>Nothing is alarming today -- the highest signal is {topTerm?.toLowerCase() ?? 'within expected range'} (PRR {top?.prr ?? '--'}), still within routine monitoring.</>}
           body={highPrr
             ? <>A PRR above 3 with this many cases is worth a real causality read, not a wait-and-see. This is about patients on the drug now -- pulling the case narratives and running the assessment tells you whether a label change is warranted. {agg ? <>The {agg.cycle} is also in {agg.status} for the {agg.due} window.</> : null}</>
             : <>You're keeping watch across FAERS and EudraVigilance and nothing crosses the threshold for expedited action. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that's the next scheduled obligation.</> : null}</>}
@@ -871,37 +722,48 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
           action={{
             label: highPrr ? 'Adjudicate this signal now' : 'Continue the aggregate report',
             onClick: () => ask(highPrr
-              ? ('Adjudicate the ' + top.term + ' signal on ' + top.product + ' -- pull every case narrative, run causality assessment, and advise whether a label update is warranted')
+              ? ('Adjudicate the ' + topTerm + ' signal on ' + top.product + ' -- pull every case narrative, run causality assessment, and advise whether a label update is warranted')
               : ('Continue drafting the ' + (agg ? agg.cycle : 'open aggregate report') + ' -- focus on the §15 risk evaluation')),
             alt: highPrr && agg ? { label: 'Work the ' + agg.cycle, onClick: () => ask('Continue drafting the ' + agg.cycle + ' §15 risk evaluation') } : undefined,
           }}
           secondary="Or work signals and aggregate reports below."
         />
-      }
+      ) : undefined}
       starters={[
         'Adjudicate the highest-PRR signal across the portfolio',
         'Draft the PSUR §15 risk evaluation',
         'Cross-reference EudraVigilance and FAERS for active signals',
         'List every expedited report filed this quarter',
       ]}
-      primary={<button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Log a signal</button>}
-      queue={[
-        { ico: 'shieldAlert', title: 'Pneumonitis signal under evaluation', sub: 'PRR 4.2 · 27 cases · FAERS', tone: 'err', action: 'Adjudicate', cmd: 'Adjudicate the immune-mediated pneumonitis signal -- pull every case narrative, run causality assessment, suggest label update' },
-        { ico: 'fileText', title: 'PSUR drafting in cycle', sub: 'EMA · day +60 window', tone: 'warn', action: 'Continue', cmd: 'Continue drafting the open PSUR -- focus on §15 risk evaluation' },
-        { ico: 'globe', title: 'PBRER queued for the FDA cycle', sub: 'Day +60 window', tone: 'info', action: 'Start', cmd: 'Start the queued PBRER -- pull the safety data since the last data lock point' },
-      ]}
       onAsk={ask}
     >
       {/* PvSignalPanel placeholder -- not yet ported as a standalone component */}
       <div className="sp-sec">
-        <SpCard title="Active signals" sample={sigSample} meta="FAERS + EudraVigilance · 90d" action={<AddBtn onClick={() => setForm(true)} label="Log signal" />} foot={<SpAsk onAsk={ask} cmd="Adjudicate the immune-mediated pneumonitis signal -- pull every case narrative, run causality assessment, suggest label update." label="Adjudicate the pneumonitis signal" />}>
+        <SpCard
+          title="Active signals"
+          meta="FAERS + EudraVigilance · 90d"
+          /* The footer action used to name the fixture's own signal
+             ("Adjudicate the pneumonitis signal"). It now names whatever the
+             REAL top-ranked signal is, and is omitted entirely when there is
+             none — an adjudicate button for a signal that does not exist is the
+             fixture surviving as a verb. */
+          foot={topTerm ? (
+            <SpAsk
+              onAsk={ask}
+              cmd={`Adjudicate the ${topTerm} signal on ${top.product} -- pull every case narrative, run causality assessment, suggest label update.`}
+              label={`Adjudicate the ${topTerm.toLowerCase()} signal`}
+            />
+          ) : undefined}
+        >
           <div className="sp-list">
-            {sigs.map((s, i) => (
-              <div key={i} className={rowcls(s)}>
+            {pending(sigState) ? (
+              <SpState st={sigState} what="active safety signals" hint="Signals are screened from this organization's adverse-event records; none has been detected." />
+            ) : sigs.map((s, i) => (
+              <div key={i} className="sp-row">
                 <span className="sp-tag">{s.product}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{s.term}</span>
-                  <span className="sp-row-s">{s.count} cases · <span className={s.prr >= 3 ? 'sp-tone-err' : s.prr >= 2 ? 'sp-tone-warn' : ''}>PRR {s.prr.toFixed(1)}</span>{s.owner ? <> · owner {s.owner}</> : null}{s.age ? <> · {s.age}</> : null}</span>
+                  <span className="sp-row-s">{s.count} cases · <span className={s.prr >= 3 ? 'sp-tone-err' : s.prr >= 2 ? 'sp-tone-warn' : ''}>PRR {typeof s.prr === 'number' ? s.prr.toFixed(1) : '--'}</span>{s.owner ? <> · owner {s.owner}</> : null}{s.age ? <> · {s.age}</> : null}</span>
                 </span>
                 {pill(s.status)}
               </div>
@@ -910,9 +772,11 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-sec">
-        <SpCard title="Aggregate reports in cycle" sample={aggSample} meta="PSUR + PBRER">
+        <SpCard title="Aggregate reports in cycle" meta="PSUR + PBRER">
           <div className="sp-list">
-            {aggs.map((r, i) => (
+            {pending(aggState) ? (
+              <SpState st={aggState} what="aggregate reports in cycle" hint="PSUR and PBRER cycles appear here once a periodic safety report is opened." />
+            ) : aggs.map((r, i) => (
               <div key={i} className="sp-row">
                 {r.product ? <span className="sp-tag">{r.product}</span> : null}
                 <span className="sp-row-b">
@@ -925,8 +789,6 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
           </div>
         </SpCard>
       </div>
-      {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={onSubmit} />}
-      <C2CToast msg={toast} />
     </BpComposer>
   );
 }

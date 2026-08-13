@@ -74,8 +74,22 @@ describe('GET /api/haq-manager/rounds', () => {
     expect(res.body.meta.count).toBe(0);
   });
 
-  it('fails closed when the store query throws', async () => {
+  // Regression: this used to assert 200 + pendingStore for ANY thrown error,
+  // which is the same body the route returns for "this org has no open health
+  // authority questions". A failed read of an authority's outstanding questions
+  // therefore looked like an empty HAQ workbench — the reading under which a
+  // response deadline quietly lapses. Only a genuinely unprovisioned store
+  // (42P01) may degrade; everything else is a 500.
+  it('500s when the store query throws — never a 200 empty', async () => {
     queryMock.mockRejectedValueOnce(new Error('store unreachable'));
+    const res = await request(app()).get('/api/haq-manager/rounds');
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('INTERNAL');
+    expect(res.body.data).toBeUndefined();
+  });
+
+  it('still degrades to pendingStore when the store is not provisioned (42P01)', async () => {
+    queryMock.mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
     const res = await request(app()).get('/api/haq-manager/rounds');
     expect(res.status).toBe(200);
     expect(res.body.data).toBeNull();

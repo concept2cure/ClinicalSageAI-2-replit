@@ -1,4 +1,5 @@
 import React from 'react';
+import { reportClientError } from './utils/reportClientError';
 
 /**
  * Global Error Boundary
@@ -26,14 +27,19 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error to an error reporting service
-    console.error('Error caught by boundary:', error, errorInfo);
     this.setState({ errorInfo });
 
-    // Log to application monitoring service if available
-    if (window.appMonitor && typeof window.appMonitor.logError === 'function') {
-      window.appMonitor.logError(error, errorInfo);
-    }
+    // Report to the monitoring backend the app already ships (Sentry, via
+    // utils/reportClientError). This used to be a console line plus a call to
+    // `window.appMonitor.logError` — and `window.appMonitor` is assigned
+    // NOWHERE in this repository, so the guard was always false and the only
+    // record of an app-level crash was a console line in one user's browser.
+    // reportClientError still writes that console line; it just also leaves the
+    // machine.
+    reportClientError(error, {
+      boundary: 'ErrorBoundary',
+      componentStack: errorInfo?.componentStack,
+    });
   }
 
   /**

@@ -39,8 +39,15 @@ function getOrgId(req: Request): number | null {
  * no legacy/seed blob and no fallback: an org with no adverse events returns an empty
  * list and the surface renders its own honest empty state. Trial-only fields the PV
  * intake store does not carry (demographics, arm, medical history, con-meds) are
- * honestly absent. Fails closed to an empty list on 42P01 so an unprovisioned store
- * never 500s. See sae-cases-view-assembler.
+ * honestly absent. See sae-cases-view-assembler.
+ *
+ * A FAILED read is never reported as an empty worklist. This endpoint is a
+ * pharmacovigilance read: "no serious adverse events" and "the adverse-event
+ * query failed" are opposite safety claims, and a reviewer cannot tell them
+ * apart from a 200 carrying `[]`. A missing store answers 503 (an operator must
+ * run migrations before this surface means anything); any other fault answers
+ * 500. `adverse_events` is created by the PV migrations, so the 503 branch is
+ * an unprovisioned-deployment guard, not a normal state.
  */
 router.get('/cases', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -52,8 +59,19 @@ router.get('/cases', async (req: Request, res: Response) => {
     return res.json({ data, meta: { count: data.length, source: 'adverse_events' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.json({ data: [], meta: { count: 0, pendingStore: true } });
+      console.error('[safety-narrative] adverse_events store not provisioned — failing closed');
+      return res.status(503).json({
+        error: {
+          code: 'AE_STORE_UNPROVISIONED',
+          message:
+            'The adverse-event store is not provisioned in this deployment; SAE cases cannot be read. Run the pharmacovigilance migrations.',
+        },
+      });
     }
+    console.error(
+      '[safety-narrative] SAE case read failed:',
+      err instanceof Error ? err.message : String(err),
+    );
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read SAE cases.' } });
   }
 });

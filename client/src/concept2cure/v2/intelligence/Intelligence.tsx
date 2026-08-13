@@ -28,14 +28,15 @@ import React from 'react';
    This one is already scoped, so it costs one line. */
 import '../styles/intelligence-v2.css';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
 import {
+  // Reference config only: the tool catalog (what AnA can run) and the pedigree
+  // /trust vocabulary. INTEL_DEMOS, INTEL_VALIDATION and INTEL_STATS are no
+  // longer imported — the first two were sample RESULTS (see the note where the
+  // worked-example strip used to be) and the third was a hand-maintained count
+  // of the catalog, now derived from it.
   INTEL_CATALOG,
-  INTEL_DEMOS,
   INTEL_PEDIGREE,
-  INTEL_STATS,
   INTEL_TRUST_LABEL,
-  INTEL_VALIDATION,
   type DetResult,
   type ValidationSummary,
 } from '../fixtures/intelligence';
@@ -198,12 +199,23 @@ export function ValidationSummaryPanel({ v }: { v?: ValidationSummary | null }) 
 
 /* ── Capability Index surface — read-only "what AnA knows" reference. ── */
 export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
-  const S = INTEL_STATS;
-  const [demoKey, setDemoKey] = React.useState('ttc');
   const [query, setQuery] = React.useState('');
-  const demo = INTEL_DEMOS[demoKey];
   const term = query.trim().toLowerCase();
   const runTool = (name: string) => onAsk(`Run ${name} for this program`);
+
+  /* Counted from the catalog rendered below, not asserted.
+     The strapline used to read its numbers from a separate INTEL_STATS constant
+     ({ waves: 4, domains: 24, tools: 142 }). Two sources for one fact drift the
+     moment a tool is added, and a page that claims 142 while listing 138 is
+     wrong in the direction that matters. */
+  const S = React.useMemo(() => {
+    const domains = INTEL_CATALOG.reduce((n, w) => n + w.domains.length, 0);
+    const tools = INTEL_CATALOG.reduce(
+      (n, w) => n + w.domains.reduce((m, d) => m + d.tools.length, 0),
+      0,
+    );
+    return { waves: INTEL_CATALOG.length, domains, tools };
+  }, []);
 
   return (
     <div className="cap">
@@ -226,42 +238,21 @@ export function CapabilityIndex({ onAsk }: { onAsk: (text: string) => void }) {
         ))}
       </div>
 
-      {/* Worked-example strip — one calm result pattern, reused across all tools */}
-      <div className="cap-demo">
-        <div className="cap-demo-h">
-          A deterministic result, rendered <SampleTag sample />
-        </div>
-        <div className="cap-demo-sub">
-          One governed pattern binds every tool: a verdict, severity-graded findings, rationale, next
-          actions, and a citations block. Pick an example.
-        </div>
-        <div className="cap-demo-picks">
-          {(
-            [
-              ['ttc', 'TTC · ICH M7'],
-              ['estimand', 'Estimand · ICH E9(R1)'],
-              ['naranjo', 'Causality · Naranjo'],
-            ] as const
-          ).map(([k, l]) => (
-            <button
-              key={k}
-              type="button"
-              className="ana-sugg cap-demo-pick"
-              data-on={demoKey === k || undefined}
-              onClick={() => setDemoKey(k)}
-            >
-              {I.zap}
-              {l}
-            </button>
-          ))}
-        </div>
-        <div className="cap-demo-cols">
-          <DetResultCard r={demo} />
-          <ValidationSummaryPanel v={INTEL_VALIDATION.cdisc} />
-        </div>
-      </div>
+      {/* The worked-example strip is gone.
+          It rendered a DetResultCard and a ValidationSummaryPanel filled from
+          the INTEL_DEMOS / INTEL_VALIDATION fixtures — a TTC calculation, a
+          Naranjo causality read, and a CDISC conformance report against a
+          package called "BX204-301" with named reject and warning rules —
+          behind a "Sample data" pill. It was there to illustrate the output
+          format, and as illustration it was honest about itself. But it is
+          still a fabricated regulatory result rendered on an authenticated
+          screen in a regulated product: a reader who screenshots the CDISC
+          panel has a conformance report for a study that does not exist, and
+          the pill does not travel with the image. The format is better shown by
+          a real tool result, which is what every deterministic surface and AnA
+          answer already renders through these same two components. */}
 
-      {/* The catalog — 24 domains / 142 tools, filterable */}
+      {/* The catalog — every domain and tool, filterable */}
       <div className="ev-search cap-filter">
         <span className="ico">{I.search}</span>
         <input

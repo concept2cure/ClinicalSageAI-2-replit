@@ -833,6 +833,38 @@ export const C2C_MIGRATION_FILES = [
   // tables join the RLS regime via the sweep below (assessment D20).
   'db/migrations/20260807_task_graph_org_columns.sql',
 
+  // ── 21 CFR Part 11 tamper-proof store (added 2026-08-13) ──────────────────
+  // audit.tamper_proof_log had NO migration: its only creator was runtime DDL in
+  // server/lib/tamper-proof-audit.ts, run on the request pool. As the
+  // non-superuser app_service role that can never succeed — `audit` is granted
+  // append-only (SELECT, INSERT) precisely to preserve tamper-evidence, so DDL
+  // there is what must be refused — and the failure was swallowed as
+  // "(non-fatal)" with a console fallback. Verified by booting the production
+  // build against a database provisioned by install-fresh + deploy-migrate:
+  // to_regclass('audit.tamper_proof_log') returned MISSING. The Part 11 store a
+  // QA unit audits first did not exist, and the platform reported itself healthy.
+  //
+  // Placed BEFORE the two isolation steps because it CREATES a table, and they
+  // are the final pair by contract (ledger C-33: the sweep runs last so it sees
+  // everything the set creates). It needs nothing from them — the table lives in
+  // the `audit` schema with no tenant column by design, an estate-wide immutable
+  // ledger protected by the mutation trigger and withheld UPDATE/DELETE rather
+  // than by RLS — so the ordering costs it nothing.
+  'db/migrations/20260813_audit_tamper_proof_log.sql',
+
+  // ── Knowledge-graph tenant keys (added 2026-08-13) ────────────────────────
+  // knowledge_graph_nodes / _edges / lumen_knowledge_graph_edges carried NO
+  // tenant column and no RLS, while their siblings (extracted_graph_edges,
+  // rag_knowledge_graph, section_graph_nodes) all carry organization_id WITH
+  // RLS — drift, not design. server/routes/graphrag.ts writes document entities
+  // into them and reads them back with no tenant predicate, so one tenant's
+  // extracted entity names were reachable by another's semantic search.
+  //
+  // BEFORE the two isolation steps, like every other table-creating/altering
+  // migration: the sweep must see the organization_id this adds. It is also why
+  // the policy here and the sweep's cannot conflict — both are guarded on
+  // pg_policies, so whichever runs first wins and the other no-ops.
+  'db/migrations/20260813_knowledge_graph_tenant_keys.sql',
   // ── Tenant offboarding lifecycle ────────────────────────────────────────────
   // ADD COLUMN IF NOT EXISTS only, on `organizations` — a table that predates
   // every entry above — so it has no ordering dependency of its own.
@@ -849,6 +881,43 @@ export const C2C_MIGRATION_FILES = [
   // creates a table, and it is the version the contract tests enforce.
   'migrations/20260813_tenant_offboarding_lifecycle.sql',
 
+  // ── AI gateway provenance ledger (added 2026-08-13) ──────────────────────
+  // ai.gateway_audit_log had no migration at all. Its only creator was runtime
+  // DDL in server/services/ai-gateway/audit.ts (`CREATE SCHEMA IF NOT EXISTS ai`
+  // + CREATE TABLE), run lazily on the first persist and swallowed by a catch —
+  // and Postgres checks database-level CREATE BEFORE the IF NOT EXISTS
+  // short-circuit, so the non-superuser runtime role was refused on statement
+  // one even though the `ai` schema already exists (059_gcc_vector_embeddings).
+  // scripts/ci/tables-live-schema-baseline.json confirmed it against a real
+  // provisioned database: absent. Every AI call reported itself audited and
+  // wrote nothing.
+  //
+  // BEFORE the two isolation steps, like every other table-creating entry
+  // (C-33). The sweep will find no organization_id to key on — the column is
+  // VARCHAR(64), inherited from the runtime DDL and left alone here so the
+  // writer's `organizationId?.toString()` bind keeps working — so it will SKIP
+  // with a NOTICE rather than policy it. That is the intended outcome: this is
+  // an operational ledger read by admin/ops surfaces across tenants, not
+  // tenant-facing data.
+  'db/migrations/20260813_ai_gateway_audit_log.sql',
+
+  // ── Parent-scoped RLS for child tables (added 2026-08-13) ────────────────
+  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
+  // readable by every tenant. Found mechanically against a provisioned
+  // database: of 937 public base tables, 195 have no tenant column, 170 of
+  // those have no RLS at all, 78 of those are referenced by server SQL, and 21
+  // of those carry an FK to a table that IS tenant-keyed. chat_messages is the
+  // sharpest: every tenant's conversation bodies.
+  //
+  // The FK is the evidence of ownership, so these get a PARENT-scoped policy
+  // rather than an organization_id column of their own — a copied tenant key is
+  // a second source of truth that can drift from the parent.
+  //
+  // Placed with the other pre-sweep entries: it only ALTERs, but "the isolation
+  // steps are the tail of the set" is an invariant (C-33), not a case-by-case
+  // judgement. The sweep will not touch these tables anyway — it keys on an
+  // org column they do not have, and it never replaces an existing policy.
+  'db/migrations/20260813_child_table_parent_scoped_rls.sql',
   // Export receipts — what turns the purge's `finalExportDigest` precondition
   // from "a non-empty string was supplied" into "an export of THIS tenant was
   // actually produced". Creates one table, so it must precede the isolation

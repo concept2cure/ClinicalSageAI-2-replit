@@ -316,8 +316,20 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
 
         res.json(templates);
       } catch (dbError: any) {
-        console.error('[WARNING] Database unavailable, using fallback templates:', dbError.message);
-        res.json(fallbackTemplates);
+        // This endpoint promises the ORG'S eCTD templates. Substituting the
+        // static `fallbackTemplates` catalog on a DB failure answered a
+        // tenant-scoped question with tenant-agnostic content: a 200 carrying a
+        // list that looks like the org's templates but belongs to no
+        // organization, whose ids resolve to nothing on the follow-up
+        // GET /:id. A read that could not reach the store must say so.
+        console.error('[ectd/templates] template list read failed:', dbError?.message);
+        if (dbError?.code === '42P01') {
+          return res.status(503).json({
+            error: 'Template store is not provisioned',
+            code: 'TEMPLATE_STORE_UNPROVISIONED',
+          });
+        }
+        return res.status(500).json({ error: 'Failed to fetch templates' });
       }
     } catch (error) {
       console.error('[ERROR] Failed to fetch templates:', error);
@@ -372,14 +384,20 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
 
         res.json(template);
       } catch (dbError: any) {
-        console.error('[WARNING] Database unavailable for template fetch:', dbError.message);
-
-        const fallbackTemplate = fallbackTemplates.find(t => t.id.toString() === templateId);
-        if (fallbackTemplate) {
-          res.json(fallbackTemplate);
-        } else {
-          res.status(404).json({ error: 'Template not found' });
+        // Same rule as the list route, plus a sharper failure mode: the static
+        // catalog's ids are a separate id space from `ectd_templates.id`, so on
+        // a DB fault this returned a DIFFERENT template than the one requested
+        // whenever the numbers collided — a wrong-document answer served as a
+        // 200. And a miss became a 404 ("no such template") when the truth was
+        // "the store is unreachable".
+        console.error('[ectd/templates] template fetch failed:', dbError?.message);
+        if (dbError?.code === '42P01') {
+          return res.status(503).json({
+            error: 'Template store is not provisioned',
+            code: 'TEMPLATE_STORE_UNPROVISIONED',
+          });
         }
+        return res.status(500).json({ error: 'Failed to fetch template' });
       }
     } catch (error) {
       console.error('[ERROR] Failed to fetch template:', error);
