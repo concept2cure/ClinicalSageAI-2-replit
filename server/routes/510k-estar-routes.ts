@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request as ExpressRequest } from 'express';
 import archiver from 'archiver';
 import { createHash } from 'crypto';
 import { PassThrough } from 'stream';
@@ -36,7 +36,7 @@ import {
   sectionsToEditorJson,
 } from '../services/pathway-engines/estar/estar-content-leaves';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import auditService from '../services/auditService';
@@ -153,9 +153,20 @@ interface ProjectAnchor {
  * explicitly not registry-placed — see the /build handler.
  */
 async function resolveProjectAnchor(
+  // ExpressRequest, not the ambient DOM `Request`: this file imports no express
+  // types, so a bare `Request` resolves to lib.dom's fetch Request and the
+  // handlers' express req is not assignable to it.
+  req: ExpressRequest,
   orgId: number,
   meta: z.infer<typeof exportMetaSchema>,
 ): Promise<ProjectAnchor | null> {
+  // requestDb(req), not the shared `db`: the request-scoped client carries
+  // app.current_tenant_id, so these lookups are filtered by RLS as well as by
+  // the explicit organizationId predicates below (kept as belt-and-braces, and
+  // as documentation of intent). ci:requestdb-coverage enforces this for
+  // tenant-facing routes and was failing on this file — it reads
+  // fda510k_projects and regulatory_programs, both tenant-keyed.
+  const db = requestDb(req);
   const ident = meta.ident ?? (meta.projectId !== undefined ? String(meta.projectId) : '');
   if (!ident) return null;
 
@@ -287,7 +298,7 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
   const { meta, useProjectContent, documentId, attachments = [] } = validation.data;
   let { content } = validation.data;
 
-  const anchor = await resolveProjectAnchor(getOrganizationId(req), meta);
+  const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
   if (!anchor) {
     return res.status(404).json({ error: 'Project not found in your organization' });
   }
@@ -608,7 +619,7 @@ router.post('/official', authMiddleware, requireEditorAccess, async (req, res) =
   const { meta, type, variant, data, flatten } = validation.data;
 
   try {
-    const anchor = await resolveProjectAnchor(getOrganizationId(req), meta);
+    const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
     if (!anchor) {
       return res.status(404).json({ error: 'Project not found in your organization' });
     }
