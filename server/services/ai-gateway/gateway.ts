@@ -1900,7 +1900,22 @@ export class AIGateway {
         cached: response.cached,
         deterministic: response.deterministic,
         // Reproducibility: which params + prompt produced this output.
-        temperature: request.temperature ?? 0.7,
+        //
+        // This recorded `request.temperature ?? 0.7` — the temperature ASKED
+        // FOR, defaulted — under a heading that claims to describe what
+        // produced the output. For the Opus 4.7+ reasoning-only family those
+        // are different things: applyAnthropicSamplingParams() returns early
+        // for those models and never sets params.temperature, because sending
+        // one is a 400. So the ledger asserted a sampling parameter that was
+        // never transmitted, and anyone reproducing the call from this record
+        // would set 0.7 against a model that does no sampling at all — a
+        // provenance record that is confidently wrong is worse than one that
+        // says "not applicable", because only the first gets trusted.
+        //
+        // Record the EFFECTIVE value: null when the model rejects sampling.
+        temperature: this.isReasoningOnlyModel(response.model)
+          ? null
+          : request.temperature ?? 0.7,
         seed: request.seed,
         promptHash: this.hashPrompt(request.messages),
         promptVersion,
