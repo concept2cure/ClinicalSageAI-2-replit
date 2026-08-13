@@ -25,6 +25,7 @@ import * as crypto from 'crypto';
 import { query, transaction } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import { ipInAnyCidr } from '../utils/cidr';
+import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
 
 const logger = createScopedLogger('scim');
 const router = Router();
@@ -351,6 +352,60 @@ function toScimUser(req: Request, row: UserRow): Record<string, unknown> {
 
 // ─── ServiceProviderConfig ───────────────────────────────────────────────────
 
+// ─── Tenant lifecycle: provisioning stops, deprovisioning never does ─────────
+//
+// SCIM is mounted at /scim/v2 — OUTSIDE /api — with its own bearer token, so the
+// lifecycle guard (middleware/tenantLifecycleGuard.ts) never runs for it. That
+// left a suspended organization's IdP able to keep CREATING users on a tenancy
+// nobody is paying for and nobody may log into.
+//
+// The correct behaviour is ASYMMETRIC, which is why it is a decision rather than
+// a copy of the HTTP rule:
+//
+//   PROVISIONING (create / activate) STOPS. Adding a seat to a suspended tenant
+//   grows something that cannot be used and, on a seat-licensed product, cannot
+//   be billed.
+//
+//   DEPROVISIONING (delete / deactivate) ALWAYS CONTINUES. An IdP removing a
+//   user is a SECURITY action — the offboarding of a departed employee, or the
+//   response to a compromised account. Blocking it because the tenant is behind
+//   on an invoice would turn a billing state into a security incident. It is
+//   also the direction an administrator reaches for during the suspension.
+//
+//   READS always continue: an IdP reconciling its view changes nothing, and
+//   read_only tenants keep read access everywhere else by design.
+//
+// Reversible without a deploy: SCIM_PROVISIONING_ON_SUSPENDED_TENANT=allow
+// restores the old behaviour. The default is `block` because that is the
+// defensible position, but this is a product judgement and the operator gets to
+// override it.
+function scimProvisioningBlocked(): boolean {
+  return (process.env.SCIM_PROVISIONING_ON_SUSPENDED_TENANT ?? '').trim().toLowerCase() !== 'allow';
+}
+
+/**
+ * Refuse a PROVISIONING request when the tenant is not entitled to operate.
+ * Never applied to DELETE or to a deactivating PATCH — see the note above.
+ *
+ * Uses the background-work rule (`allow` only), not the HTTP rule: a read_only
+ * tenant must not gain seats either, and there is no "safe verb" here — every
+ * route this guards creates or re-activates something.
+ */
+async function refuseIfNotEntitled(req: Request, res: Response): Promise<boolean> {
+  if (!scimProvisioningBlocked()) return false;
+  const orgId = orgOf(req);
+  if (!Number.isFinite(orgId) || orgId <= 0) return false;
+  if (await shouldProcessTenantInBackground(orgId)) return false;
+  logger.warn('SCIM provisioning refused — organization is not entitled', { orgId });
+  scimError(
+    res,
+    403,
+    'This organization is not active. User provisioning is suspended; ' +
+      'deprovisioning remains available.'
+  );
+  return true;
+}
+
 router.get('/ServiceProviderConfig', scimAuth, (req: Request, res: Response) => {
   res.json({
     schemas: ['urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'],
@@ -481,6 +536,7 @@ function resolveName(body: ScimUserBody, email: string): string {
 
 router.post('/Users', scimAuth, async (req: Request, res: Response) => {
   try {
+    if (await refuseIfNotEntitled(req, res)) return;
     const orgId = orgOf(req);
     const body = (req.body ?? {}) as ScimUserBody;
     const email = resolveEmail(body);
@@ -546,6 +602,7 @@ router.post('/Users', scimAuth, async (req: Request, res: Response) => {
 
 router.put('/Users/:id', scimAuth, async (req: Request, res: Response) => {
   try {
+    if (await refuseIfNotEntitled(req, res)) return;
     const orgId = orgOf(req);
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return scimError(res, 404, 'User not found.');
@@ -614,6 +671,11 @@ router.patch('/Users/:id', scimAuth, async (req: Request, res: Response) => {
         if (v.name?.formatted) nextName = v.name.formatted;
       }
     }
+
+    // Only an ACTIVATING patch is provisioning. A deactivating one — and a pure
+    // rename — must go through even on a suspended tenant, for the reason in the
+    // note above: deprovisioning is a security action, not a billable one.
+    if (nextStatus === 'active' && (await refuseIfNotEntitled(req, res))) return;
 
     if (nextStatus !== null || nextName !== null) {
       const sets: string[] = [];
