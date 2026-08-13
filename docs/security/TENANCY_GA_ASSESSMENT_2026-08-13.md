@@ -31,9 +31,10 @@ tenancy implementation, not a greenfield one.
 | Membership-validated organization switching for multi-org users | `server/routes/authEnterprise.ts` |
 | Seat-licensing decision engine, pure and unit-tested | `server/services/seat-licensing.ts` |
 
-The isolation burndown (`docs/RLS_ENFORCEMENT_BURNDOWN.md`) remains the right
-tracker for its own residual item — a full-schema two-tenant probe under
-`RLS_ENFORCE=on`. Nothing here supersedes it.
+The isolation burndown (`docs/RLS_ENFORCEMENT_BURNDOWN.md`) tracked one residual
+item — a full-schema two-tenant probe under `RLS_ENFORCE=on`. **That is now
+closed** (see R1 below): 222 policied tables, 220 seeded with two tenants, zero
+cross-tenant reads, with a negative control proving the probe can fail.
 
 ---
 
@@ -190,10 +191,10 @@ first.
 | ~~R1~~ | ~~Full-schema two-tenant probe under `RLS_ENFORCE=on`~~ | ~~High~~ | **CLOSED 2026-08-13.** `tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` — 222 policied tables, 220 seeded with two tenants, zero cross-tenant reads, ships with a negative control. Closes GA plan item 0.1. |
 | R2 | No per-tenant encryption keys (BYOK/CMK) | High for regulated buyers | Frequently a hard requirement in pharma procurement. Needs a key-hierarchy design, not a patch. |
 | R3 | No data-residency pinning (EU/US) | High for EU sponsors | The schema has no region concept. Architectural. |
-| R4 | Tenant export covers a subset of resources | Medium | `tenant-export.service.ts` is explicitly BETA-scoped and in-memory; the purge path now depends on it, so it should be widened and streamed before the first contractual offboarding. |
+| ~~R4~~ | ~~Tenant export covers a subset of resources~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The curated manifest covered 1 of the 8 tables the purge destroys, and the purge's `finalExportDigest` gate accepted **any non-empty string** — a precondition nothing could satisfy honestly. Now: a catalog-driven full export (`GET /api/tenant-export/full`, ~170 tenant-keyed tables discovered from `information_schema`, not a hand-list), an export **receipt** persisted per digest, and a purge that verifies the digest against a receipt **scoped to that organization**. A structural contract test keeps the purge set a subset of the export set. |
 | ~~R5~~ | ~~No audited support-impersonation flow~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The guard now evaluates the posture for platform actors instead of short-circuiting, and writes a `tenant_lifecycle_override` audit entry (severity `critical` on a denied tenant) plus a `platform_override` metric whenever staff proceed past a refusal. Staff are still never blocked — including when the posture is unreadable. |
-| R6 | Quotas beyond seats (`max_projects`, `max_storage`) still unenforced | Medium | Seats are the contracted unit and are now enforced; the other two remain decoration. |
-| R7 | Organization switch is not audited | Low | Membership is validated (`authEnterprise.ts`), but the switch emits no audit event. |
+| R6 | `max_storage` unenforced | Low–Medium | **Partially mis-triaged in the original register — corrected.** `max_projects` is NOT decoration: `services/atomicQuotaService.js::atomicCreateProject` enforces it inside a transaction with `SELECT … FOR UPDATE`, and both creation routes (`routes/projects-management.ts:244`, `routes/project-hierarchy.ts:229`) go through it. It reads `license.max_projects` rather than `organizations.max_projects`, which is a second source of truth worth reconciling but is a working control. **`max_storage` is genuinely unenforced** — it needs storage accounting that does not exist yet, which is why it is left rather than patched. |
+| ~~R7~~ | ~~Organization switch is not audited~~ | ~~Low~~ | **CLOSED 2026-08-13.** `POST /api/auth/enterprise/select-organization` now writes an `organization_switch` audit event recorded against the DESTINATION org, with the origin org and the role granted in metadata. Authorized-but-unrecorded was the wrong combination for the one endpoint whose job is to move a session between customers' data — a CRO consultant crosses it routinely, and an access review of any one sponsor needs to see when their tenant was entered and by whom. |
 | R8 | Lifecycle posture cache converges across instances only within 60s | Low | Explicit invalidation is wired at every writer, so the mutating instance is immediate; others converge within the TTL. Same trade the membership cache already makes. |
 | ~~R9~~ | ~~`server/routes/tenants.ts` appears unmounted~~ | ~~Low~~ | **CLOSED 2026-08-13.** Confirmed referenced nowhere (it was already carried in `scripts/ci/unreferenced-modules-baseline.json`) and deleted; both ratchets regenerated (unreferenced 109→108, requestdb baseline cleaned). It was the last copy of the ungoverned `db.delete(organizations)` cascade. The only endpoint lost with it is `GET /api/tenants/:id`, which was never reachable. |
 

@@ -33,6 +33,28 @@ type Row = Record<string, unknown>;
  * Minimal pg.Pool stand-in. `rowsFor` is consulted in order: each entry is a
  * predicate on the SQL text plus the rows to return.
  */
+const VALID_DIGEST = 'sha256:abc';
+
+/**
+ * A receipt row, as `findExportReceipt` expects it. Purges now VERIFY the
+ * digest against tenant_export_receipts rather than accepting any string, so a
+ * fixture that omits this makes every purge refuse — which is the new control
+ * working, and is asserted explicitly in "refusals" below.
+ */
+const receiptResponse = {
+  match: /FROM tenant_export_receipts/,
+  rows: [
+    {
+      organization_id: 42,
+      digest: VALID_DIGEST,
+      table_count: 12,
+      row_count: 340,
+      created_at: new Date(),
+      created_by: 7,
+    },
+  ],
+};
+
 function makePool(responses: Array<{ match: RegExp; rows: Row[] }>) {
   const statements: Array<{ text: string; params?: unknown[] }> = [];
   const pool = {
@@ -187,8 +209,58 @@ describe('purgeTenant — refusals', () => {
     ).rejects.toMatchObject({ code: 'EXPORT_EVIDENCE_REQUIRED' });
   });
 
+  it('VERIFIES the digest — a fabricated string does not open the gate', async () => {
+    // The whole point of the change. An earlier revision accepted any non-empty
+    // string, which reproduced in miniature the defect this module exists to
+    // prevent: a control that reads as evidence and checks nothing.
+    const pool = makePool([
+      { match: /FROM tenant_export_receipts/, rows: [] }, // no receipt matches
+      {
+        match: /SELECT id, name, status/,
+        rows: [orgRow({ status: 'pending_deletion', purge_eligible_at: new Date(Date.now() - 86_400_000) })],
+      },
+    ]);
+    await expect(
+      purgeTenant(pool, {
+        organizationId: ORG,
+        purgedByUserId: ACTOR,
+        preconditions: { finalExportDigest: 'sha256:i-made-this-up' },
+        childTables: [],
+      })
+    ).rejects.toMatchObject({ code: 'EXPORT_EVIDENCE_UNVERIFIED' });
+  });
+
+  it('scopes the receipt lookup to THIS organization', async () => {
+    // The mistake an operator running several offboardings in one afternoon
+    // actually makes: pasting the digest from the previous tenant's export.
+    const pool = makePool([receiptResponse]);
+    await purgeTenant(pool, {
+      organizationId: ORG,
+      purgedByUserId: ACTOR,
+      preconditions: { finalExportDigest: VALID_DIGEST },
+      childTables: [],
+    }).catch(() => undefined);
+
+    const lookup = pool.statements.find((s: any) => /FROM tenant_export_receipts/.test(s.text));
+    expect(lookup).toBeDefined();
+    expect(lookup.params).toEqual([ORG, VALID_DIGEST]);
+  });
+
+  it('checks the digest BEFORE reading the organization — cheapest refusal first', async () => {
+    const pool = makePool([{ match: /FROM tenant_export_receipts/, rows: [] }]);
+    await purgeTenant(pool, {
+      organizationId: ORG,
+      purgedByUserId: ACTOR,
+      preconditions: { finalExportDigest: 'sha256:nope' },
+    }).catch(() => undefined);
+
+    // No org read, and above all no DELETE, once the evidence check has failed.
+    expect(pool.statements.some((s: any) => /DELETE FROM/.test(s.text))).toBe(false);
+  });
+
   it('refuses while the retention window is still open', async () => {
     const pool = makePool([
+      receiptResponse,
       {
         match: /SELECT id, name, status/,
         rows: [orgRow({ status: 'pending_deletion', purge_eligible_at: tomorrow })],
@@ -198,25 +270,29 @@ describe('purgeTenant — refusals', () => {
       purgeTenant(pool, {
         organizationId: ORG,
         purgedByUserId: ACTOR,
-        preconditions: { finalExportDigest: 'abc123' },
+        preconditions: { finalExportDigest: VALID_DIGEST },
       })
     ).rejects.toMatchObject({ code: 'RETENTION_WINDOW_OPEN' });
   });
 
   it('refuses to purge a tenant that was never scheduled for deletion', async () => {
     // No path from active straight to destroyed.
-    const pool = makePool([{ match: /SELECT id, name, status/, rows: [orgRow({ status: 'active' })] }]);
+    const pool = makePool([
+      receiptResponse,
+      { match: /SELECT id, name, status/, rows: [orgRow({ status: 'active' })] },
+    ]);
     await expect(
       purgeTenant(pool, {
         organizationId: ORG,
         purgedByUserId: ACTOR,
-        preconditions: { finalExportDigest: 'abc123' },
+        preconditions: { finalExportDigest: VALID_DIGEST },
       })
     ).rejects.toMatchObject({ code: 'TENANT_NOT_PENDING_DELETION' });
   });
 
   it('permits an early purge ONLY with an explicit override reason', async () => {
     const pool = makePool([
+      receiptResponse,
       {
         match: /SELECT id, name, status/,
         rows: [orgRow({ status: 'pending_deletion', purge_eligible_at: tomorrow })],
@@ -227,7 +303,7 @@ describe('purgeTenant — refusals', () => {
         organizationId: ORG,
         purgedByUserId: ACTOR,
         preconditions: {
-          finalExportDigest: 'abc123',
+          finalExportDigest: VALID_DIGEST,
           overrideRetentionWindowReason: 'regulator-ordered immediate destruction',
         },
         childTables: [],
@@ -237,6 +313,7 @@ describe('purgeTenant — refusals', () => {
 
   it('purges once the window has closed', async () => {
     const pool = makePool([
+      receiptResponse,
       {
         match: /SELECT id, name, status/,
         rows: [orgRow({ status: 'pending_deletion', purge_eligible_at: yesterday })],
@@ -246,7 +323,7 @@ describe('purgeTenant — refusals', () => {
       purgeTenant(pool, {
         organizationId: ORG,
         purgedByUserId: ACTOR,
-        preconditions: { finalExportDigest: 'abc123' },
+        preconditions: { finalExportDigest: VALID_DIGEST },
         childTables: [],
       })
     ).resolves.toBeDefined();
@@ -258,6 +335,7 @@ describe('purgeTenant — what it actually does', () => {
 
   function pendingPool() {
     return makePool([
+      receiptResponse,
       {
         match: /SELECT id, name, status/,
         rows: [orgRow({ status: 'pending_deletion', purge_eligible_at: yesterday })],
