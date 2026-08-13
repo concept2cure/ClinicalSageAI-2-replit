@@ -1012,13 +1012,22 @@ jobs:
           node dist/index.js > "$RUNNER_TEMP/boot.log" 2>&1 &
           BOOT_PID=$!
           READY=""
-          for i in $(seq 1 90); do
+          # 300s, not 90s. Boot takes ~7s on a warm local machine but far longer
+          # on a cold runner: the first attempt failed here with the process
+          # still alive and mid-startup ("[MEMORY] High memory usage: 97%",
+          # schedulers still registering). That is a slow runner, not a boot
+          # failure, and a smoke test that reports one as the other is worse
+          # than no smoke test. The loop still exits IMMEDIATELY if the process
+          # dies, so a genuine failure is not made slower by this budget.
+          for i in $(seq 1 300); do
             CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5199/readyz || true)
             if [ "$CODE" = "200" ]; then READY="yes"; echo "/readyz=200 after ${i}s"; break; fi
             if ! kill -0 $BOOT_PID 2>/dev/null; then
               echo "::error::the server exited during boot (last /readyz code: ${CODE:-none})."
               break
             fi
+            # Progress every 30s so a hang is distinguishable from a slow start.
+            if [ $((i % 30)) -eq 0 ]; then echo "…still booting at ${i}s (last /readyz: ${CODE:-none})"; fi
             sleep 1
           done
           if [ -z "$READY" ]; then
