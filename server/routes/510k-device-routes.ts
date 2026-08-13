@@ -17,13 +17,13 @@
  * predicate-intelligence engine (no SE scoring, no evidence cells).
  */
 
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 
 import { authMiddleware } from '../auth';
 import { requireEntitlement } from '../services/entitlements/require-entitlement';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import {
   searchDeviceClassification,
@@ -47,10 +47,17 @@ function getOrgId(req: any): number | null {
   return null;
 }
 
-/** Resolve a program by uuid or code, org-scoped. Null = not in this org. */
-async function findProgram(orgId: number, ident: string) {
+/**
+ * Resolve a program by uuid or code, org-scoped. Null = not in this org.
+ *
+ * Takes `req` so the read runs on the REQUEST-SCOPED client (`requestDb`) rather
+ * than the shared pool. The explicit `organization_id` predicate below is the
+ * primary boundary; the request-scoped client is the RLS one underneath it, so
+ * a future predicate slip fails closed instead of reading across tenants.
+ */
+async function findProgram(req: Request, orgId: number, ident: string) {
   const byUuid = UUID_RE.test(ident);
-  const [row] = await db
+  const [row] = await requestDb(req)
     .select({
       id: regulatoryPrograms.id,
       name: regulatoryPrograms.name,
@@ -84,7 +91,7 @@ router.get('/profile', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: 'ident is required' });
 
   try {
-    const program = await findProgram(orgId, parsed.data.ident);
+    const program = await findProgram(req, orgId, parsed.data.ident);
     if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
     return res.status(200).json({ profile: program });
   } catch (error: any) {
@@ -117,17 +124,17 @@ router.put('/profile', requireEntitlement('device_assembly_readiness'), async (r
   }
 
   try {
-    const program = await findProgram(orgId, identParsed.data.ident);
+    const program = await findProgram(req, orgId, identParsed.data.ident);
     if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
 
-    await db
+    await requestDb(req)
       .update(regulatoryPrograms)
       .set({ ...patchParsed.data, updatedAt: new Date() })
       .where(
         and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, orgId)),
       );
 
-    const updated = await findProgram(orgId, program.id);
+    const updated = await findProgram(req, orgId, program.id);
     return res.status(200).json({ profile: updated });
   } catch (error: any) {
     logger.error('device profile update failure', { err: error?.message });

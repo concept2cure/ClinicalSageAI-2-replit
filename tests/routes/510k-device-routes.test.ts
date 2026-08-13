@@ -31,21 +31,37 @@ vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 
-vi.mock('../../server/db', () => ({
-  db: {
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
-      })),
-    })),
-    update: vi.fn(() => ({ set: vi.fn(() => ({ where: mockUpdateWhere })) })),
-  },
+// The route reads and writes through `requestDb(req)` — the REQUEST-SCOPED
+// drizzle client — rather than the shared pool, so that its queries run on the
+// connection carrying the tenant session vars. Mocking `server/db` alone stopped
+// intercepting anything when that changed; the fake is now returned from
+// `requestDb` so these tests exercise the same handler logic against the same
+// shape. `requestDb` deliberately THROWS when the middleware has not attached a
+// client, which is what surfaced this.
+// Built inside vi.hoisted: vi.mock is hoisted above ordinary top-level consts,
+// so a factory closing over a plain `const fakeDb` reads it before initialization.
+const { fakeDb } = vi.hoisted(() => ({
+  fakeDb: {
+    select: vi.fn(),
+    update: vi.fn(),
+  } as any,
 }));
+vi.mock('../../server/db', () => ({ db: fakeDb }));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
 
 vi.mock('../../server/services/integrations/openfda-device-client', () => ({
   searchDeviceClassification: mockClassification,
   search510kClearances: mockClearances,
 }));
+
+// Behaviour is attached AFTER the hoisted shell exists, where mockSelectRows /
+// mockUpdateWhere are in scope.
+fakeDb.select = vi.fn(() => ({
+  from: vi.fn(() => ({
+    where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
+  })),
+}));
+fakeDb.update = vi.fn(() => ({ set: vi.fn(() => ({ where: mockUpdateWhere })) }));
 
 import deviceRoutes from '../../server/routes/510k-device-routes';
 

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import archiver from 'archiver';
 import { createHash } from 'crypto';
 import { PassThrough } from 'stream';
@@ -36,7 +36,7 @@ import {
   sectionsToEditorJson,
 } from '../services/pathway-engines/estar/estar-content-leaves';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import auditService from '../services/auditService';
@@ -154,6 +154,7 @@ interface ProjectAnchor {
  * explicitly not registry-placed — see the /build handler.
  */
 async function resolveProjectAnchor(
+  req: Request,
   orgId: number,
   meta: z.infer<typeof exportMetaSchema>,
 ): Promise<ProjectAnchor | null> {
@@ -162,7 +163,7 @@ async function resolveProjectAnchor(
 
   if (/^\d+$/.test(ident)) {
     try {
-      const [row] = await db
+      const [row] = await requestDb(req)
         .select({ id: fda510kProjects.id, deviceName: fda510kProjects.deviceName })
         .from(fda510kProjects)
         .where(and(eq(fda510kProjects.id, Number(ident)), eq(fda510kProjects.organizationId, orgId)))
@@ -176,7 +177,7 @@ async function resolveProjectAnchor(
 
   const byUuid = UUID_RE.test(ident);
   try {
-    const [row] = await db
+    const [row] = await requestDb(req)
       .select({ id: regulatoryPrograms.id, name: regulatoryPrograms.name })
       .from(regulatoryPrograms)
       .where(
@@ -293,7 +294,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   const { meta, useProjectContent, documentId, attachments = [] } = validation.data;
   let { content } = validation.data;
 
-  const anchor = await resolveProjectAnchor(getOrganizationId(req), meta);
+  const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
   if (!anchor) {
     return res.status(404).json({ error: 'Project not found in your organization' });
   }
@@ -614,7 +615,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
   const { meta, type, variant, data, flatten } = validation.data;
 
   try {
-    const anchor = await resolveProjectAnchor(getOrganizationId(req), meta);
+    const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
     if (!anchor) {
       return res.status(404).json({ error: 'Project not found in your organization' });
     }

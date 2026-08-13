@@ -35,17 +35,19 @@ vi.mock('../../server/services/export/governedExportConsequence', () => ({
 
 // The export routes resolve the project anchor org-scoped before producing
 // anything; resolve the tests' meta.projectId to an in-org GA project row.
-vi.mock('../../server/db', () => ({
-  db: {
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(async () => [{ id: 33, deviceName: 'Test Device' }]),
-        })),
-      })),
-    })),
-  },
+// The route resolves its project anchor through `requestDb(req)`; mocking
+// `server/db` alone stopped intercepting when that changed.
+const { fakeDb } = vi.hoisted(() => ({
+  fakeDb: {
+    select: () => ({
+      from: () => ({
+        where: () => ({ limit: async () => [{ id: 33, deviceName: 'Test Device' }] }),
+      }),
+    }),
+  } as any,
 }));
+vi.mock('../../server/db', () => ({ db: fakeDb }));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
 
 vi.mock('../../server/services/auditService', () => ({
   default: { logAction: vi.fn(async () => undefined) },
