@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
@@ -37,8 +37,8 @@ import '../styles/project-home-v2.css';
 interface TaskItem {
   taskId: string;
   title: string;
-  /** Real project FK as a string; '' when unattached. Does NOT match the
-   *  TB_PROJECTS slugs — see the projects/roster follow-up flag. */
+  /** Real project FK as a string (the numeric projects.id); '' when unattached.
+   *  Resolved to a programme name against GET /api/projects — see projLabel. */
   project: string;
   moduleType: string;
   taskType: string;
@@ -123,6 +123,94 @@ function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => str
   };
 }
 
+/* ── Automation — the organization's REAL configured rules ────────────────────
+   GET /api/project-rules (server/routes/project-rules.ts) lists the
+   `project_rules` rows for the signed-in organization, active ones by default.
+
+   The panel this replaces was hard-coded prose in the JSX: "24 trigger event
+   types -- 9 action types defined in project-rules", followed by four strings —
+   task_overdue -> escalate, review_completed -> advance_stage,
+   approval_rejected -> create_task, deadline_approaching -> send_notification —
+   typeset exactly like a list of the automation this organization has running.
+
+   Nothing read them from anywhere, and both counts were also simply wrong: the
+   route's own vocabulary is 20 trigger events and 8 action types. So an
+   authenticated user was shown invented figures about their own tenant, and an
+   organization with no rules at all was shown four it does not have. Same four
+   honest states as every other slice on this board: loading, the real rules,
+   "none configured", or a failed read said plainly. */
+interface RuleRow {
+  rule_id: string;
+  name: string;
+  description: string | null;
+  trigger_event: string;
+  /** jsonb `actions` — each entry carries a `type` from the route's actionTypes. */
+  actions: Array<{ type?: string }> | null;
+  is_active: boolean;
+}
+
+/** The action types a rule fires, from its stored jsonb. Never inferred. */
+function ruleActions(r: RuleRow): string {
+  const types = (Array.isArray(r.actions) ? r.actions : [])
+    .map(a => (a && typeof a.type === 'string' ? a.type : ''))
+    .filter(Boolean);
+  return types.length ? types.join(' + ') : '—';
+}
+
+function AutomationCard() {
+  // The payload is `{ rules, total }` — no `data` key, so the envelope unwrapper
+  // leaves it alone. The guard turns a 200 of some other shape into the error
+  // branch rather than a silent "no rules configured", which would be a lie.
+  const rules = useLiveData<{ rules: RuleRow[]; total: number }>(
+    '/api/project-rules',
+    ['/api/project-rules'],
+    hasKeys<{ rules: RuleRow[]; total: number }>('rules'),
+  );
+  const rows = Array.isArray(rules.data?.rules) ? rules.data!.rules : [];
+
+  return (
+    <div className="tb-an-card">
+      <div className="tb-an-h">Automation</div>
+      {rules.loading ? (
+        <div className="tb-an-auto">Loading this organization&rsquo;s rules…</div>
+      ) : rules.error ? (
+        <>
+          <div className="tb-an-auto">Couldn&rsquo;t load the automation rules.</div>
+          <div className="tb-an-foot" data-warn="true">{I.alertTriangle} {rules.error}</div>
+        </>
+      ) : rows.length === 0 ? (
+        <div className="tb-an-auto">
+          No active automation rules are configured for this organization.
+        </div>
+      ) : (
+        <>
+          <div className="tb-an-auto">
+            <b>{rows.length}</b> active rule{rows.length === 1 ? '' : 's'} in{' '}
+            <code>project-rules</code>.
+          </div>
+          <div className="tb-an-auto-rules">
+            {rows.slice(0, 8).map(r => (
+              <span key={r.rule_id} title={r.description || r.name}>
+                {r.trigger_event} -&gt; {ruleActions(r)}
+              </span>
+            ))}
+          </div>
+          {rows.length > 8 && (
+            <div className="tb-an-foot">…and {rows.length - 8} more.</div>
+          )}
+        </>
+      )}
+      {/* Verified, not assumed: `getRulesEngine()` is called only from the
+          project-rules routes (create / dry-run). No event source in the server
+          dispatches to it, so a stored rule does not fire on its own. */}
+      <div className="tb-an-foot" data-warn="true">
+        {I.alertTriangle} Rules are stored; the background executor is not yet wired, so
+        nothing here fires on its own.
+      </div>
+    </div>
+  );
+}
+
 /* ── Main surface ── */
 
 export function TaskBoard({ onAsk }: SurfaceViewProps) {
@@ -132,10 +220,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      empty state, or an honest error state — never the fixture. The old window.C2C
      in-browser store was seeded from the TB_TASKS fixture (CollabLauncher.tsx),
      so reading it presented fixture data as the board; that read is retired here.
-     New task now POSTs the real persisted create (POST /api/tasks/tasks) with a
-     real project + assignee and the board refetches, so created tasks appear
-     live. Start workflow / Move still write to the in-browser window.C2C store
-     only (flagged for the actions pass) and do not persist. */
+     New task POSTs the real persisted create (POST /api/tasks/tasks) with a real
+     project + assignee; Move PATCHes through the server task state machine
+     (including the 428 §11.50 signature ceremony); Start workflow POSTs
+     /tasks/from-template/:templateId. All three refetch the board, so what you
+     see after an action is what the server actually stored — no client-built
+     rows, no window.C2C write-back. */
   const [reloadKey, setReloadKey] = useState(0);
   const liveTasks = useLiveRows<TaskItem>('/api/task-management/board', [
     '/api/task-management/board',
@@ -489,14 +579,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               ))}
               <div className="tb-an-foot">Auto-assign on a saved task balances workload server-side via <code>getOptimalAssignee()</code>; the per-module default shown here does not.</div>
             </div>
-            <div className="tb-an-card">
-              <div className="tb-an-h">Automation</div>
-              <div className="tb-an-auto"><b>24</b> trigger event types -- <b>9</b> action types defined in <code>project-rules</code>.</div>
-              <div className="tb-an-auto-rules">
-                <span>task_overdue -&gt; escalate</span><span>review_completed -&gt; advance_stage</span><span>approval_rejected -&gt; create_task</span><span>deadline_approaching -&gt; send_notification</span>
-              </div>
-              <div className="tb-an-foot" data-warn="true">{I.alertTriangle} Rules are stored; the background executor is not yet wired.</div>
-            </div>
+            <AutomationCard />
           </div>
         </div>
       )}
