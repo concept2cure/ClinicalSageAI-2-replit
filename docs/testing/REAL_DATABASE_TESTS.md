@@ -91,6 +91,30 @@ installed and `RLS_ENFORCE=on`:
 These are the regression harness for the role split. When the runtime is pointed
 at `APP_DATABASE_URL`, this suite is what proves it took.
 
+**`tests/db/part11-audit-store.dbtest.ts`** — the 21 CFR Part 11 tamper-proof
+store, executed. Applies the real migration file (not a copy of its statements —
+a test that restates the DDL proves only that it agrees with itself) and pins:
+
+- the store **exists** after the migration, rather than being created at runtime
+  by DDL an append-only role must refuse;
+- `user_id` / `session_id` are TEXT, so an attributed write keyed by an integer
+  `users.id` is accepted instead of raising `invalid input syntax for type uuid`
+  — the old shape could record only *un*attributed events;
+- no `CHECK (TRUE)` constraint remains masquerading as immutability;
+- `UPDATE` and `DELETE` are refused **even for the table owner** — the strongest
+  caller present, so a compromised application process is covered a fortiori;
+- the runtime role holds exactly `SELECT` + `INSERT`, and no role holds
+  `UPDATE`/`DELETE`;
+- and **8 concurrent appends do not fork the hash chain**.
+
+That last one is the case that cannot exist anywhere else in the suite. The
+append path used `... ORDER BY sequence_number DESC LIMIT 1 FOR UPDATE`, which
+locks *nothing* on an empty table, so simultaneous writers each read zero rows,
+each chained onto `GENESIS`, and the chain forked. Mutation-verified: remove the
+advisory lock and 8 writers produce forks (`claimants: 3` and `2` sharing a
+predecessor); with `pg_advisory_xact_lock`, zero. A stub has no concurrency, so
+no mocked test could have caught it — which is why it survived a green suite.
+
 ## Adding a test
 
 1. Name the file `*.dbtest.ts` and put it under `tests/db/` or any
@@ -121,8 +145,16 @@ at `APP_DATABASE_URL`, this suite is what proves it took.
 
 ## Known limits
 
-This project currently covers the database layer directly: RLS behavior, role
-posture, and the policy's agreement with its migration. It does **not** yet
-drive HTTP routes against a fully provisioned schema, so route-level SQL is
-still only covered by the mocked suite. That is the next increment — the harness
-here is what makes it possible.
+This project covers the database layer directly: RLS behavior, role posture, the
+policy's agreement with its migration, and the Part 11 store's existence,
+shape, immutability and append concurrency.
+
+It does **not** yet drive HTTP routes against a fully provisioned schema, so
+route-level SQL is still only covered by the mocked suite. That is the next
+increment — the harness here is what makes it possible.
+
+Related, and deliberately not claimed here: the production boot path is proven
+by a separate CI job (`production-boot-smoke`), which provisions, migrates,
+builds and boots the real server as the non-superuser role and requires
+`/readyz=200`. Between the two, "the schema is right" and "the app actually runs
+against it" are both covered by execution rather than by inspection.
