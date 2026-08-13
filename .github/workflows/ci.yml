@@ -179,6 +179,13 @@ jobs:
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
         run: npm run ci:tenant-column-types
 
+      - name: Guardrails — WCAG AA contrast on design tokens
+        # Contrast is arithmetic on two hex values, so this cannot drift into
+        # false positives. It caught --error never being declared for dark mode:
+        # the light red cascaded onto the dark page at 2.69:1, under even the
+        # 3:1 non-text floor.
+        run: npm run ci:token-contrast
+
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
 

@@ -96,6 +96,7 @@
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
     "ci:tenant-column-types": "node scripts/ci/check-tenant-column-types.mjs",
+    "ci:token-contrast": "node scripts/ci/check-token-contrast.mjs",
     "ci:js-ts-shadows": "node scripts/ci/check-js-ts-shadows.mjs",
     "ci:typecheck:no-regression": "node scripts/ci/typecheck-no-regression.mjs",
     "ci:typecheck:write-baseline": "node scripts/ci/typecheck-no-regression.mjs --write-baseline",
