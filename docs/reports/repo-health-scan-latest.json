@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-08-11T20:07:48.685Z",
+  "generatedAt": "2026-08-13T02:45:22.259Z",
   "git": {
-    "sha": "14ebdb21f063ec5aa77af1be0e5ce0e9c74acbdb",
-    "branch": "concept2cure-v2"
+    "sha": "4f6a452118683fedb165a27ddcb6c39946432e65",
+    "branch": "claude/continue-session-015w92gc-hmg179"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -807,6 +807,15 @@
         ]
       },
       {
+        "basename": "harness",
+        "count": 3,
+        "paths": [
+          "tests/db/harness.ts",
+          "tests/golden-journeys/harness.ts",
+          "tests/schema-contract/harness.ts"
+        ]
+      },
+      {
         "basename": "health",
         "count": 3,
         "paths": [
@@ -1492,14 +1501,6 @@
         ]
       },
       {
-        "basename": "harness",
-        "count": 2,
-        "paths": [
-          "tests/golden-journeys/harness.ts",
-          "tests/schema-contract/harness.ts"
-        ]
-      },
-      {
         "basename": "huggingface-service",
         "count": 2,
         "paths": [
@@ -2179,12 +2180,12 @@
         "bytes": 138123
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "bytes": 136488
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 136607
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 135353
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "bytes": 136488
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2310,7 +2311,7 @@
       },
       {
         "file": "server/routes/authoring-actions.ts",
-        "lines": 3260
+        "lines": 3275
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2345,12 +2346,12 @@
         "lines": 2609
       },
       {
-        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
-        "lines": 2559
+        "file": "server/routes/knowledge-base.ts",
+        "lines": 2561
       },
       {
-        "file": "server/routes/knowledge-base.ts",
-        "lines": 2557
+        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
+        "lines": 2559
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2594,7 +2595,15 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "contentDuplicateGroups": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
@@ -2604,7 +2613,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 250,
+      "duplicateGroups": 251,
       "largeByBytes": 2,
       "largeByLines": 8
     },

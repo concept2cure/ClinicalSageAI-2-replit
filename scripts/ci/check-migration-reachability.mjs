@@ -175,7 +175,51 @@ function walk(dir, test, acc = []) {
 // (tests/schema-contract/migration-reachability-guard.contract.test.ts, ledger
 // C-35). Everything below runs only when this file is the entry point — importing
 // it must not walk the repo or call process.exit.
-export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION, sqlishSegments };
+
+// ── The reference scan, as a reusable unit ──────────────────────────────────
+// Same qualification rule as the creator side — see the note above. A reference to
+// `regulatory.information_requests` must resolve to that table, not to a phantom
+// relation named after its schema.
+const REF_RE = new RegExp(
+  String.raw`(?:\bFROM|\bJOIN|\bINTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?`,
+  'gi',
+);
+
+/**
+ * Every table the server's raw SQL names, mapped to the files that name it.
+ *
+ * Exported, and used by this guard through the export, because a SECOND guard
+ * asks the same question against a live database
+ * (check-tables-against-live-schema.mjs). Two copies of this parser is exactly
+ * how the pair would drift: the regexes here carry three rounds of hard-won
+ * corrections (schema-qualified capture, comment stripping, prose rejection),
+ * and a private copy in the sibling guard would start out identical, then
+ * silently stop matching what this one matches — leaving the two guards
+ * disagreeing about which tables the server even references, with no test able
+ * to tell which one is right.
+ *
+ * @param {string} [dir] absolute directory to scan; defaults to server/
+ * @returns {Map<string, Set<string>>} qualified table name -> repo-relative files
+ */
+export function referencedTables(dir = path.join(repoRoot, 'server')) {
+  const referenced = new Map();
+  for (const abs of walk(dir, (n) => n.endsWith('.ts') && !/\.test\.|\.spec\./.test(n))) {
+    const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
+    // Only SQL-looking string segments — never the whole file. See sqlishSegments.
+    for (const segment of sqlishSegments(read(abs))) {
+      REF_RE.lastIndex = 0;
+      for (const m of segment.matchAll(REF_RE)) {
+        if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
+        const t = qualify(m[1], m[2]);
+        if (!referenced.has(t)) referenced.set(t, new Set());
+        referenced.get(t).add(rel);
+      }
+    }
+  }
+  return referenced;
+}
+
+export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION, sqlishSegments, REF_RE, repoRoot };
 
 const isEntryPoint =
   process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
@@ -236,30 +280,9 @@ for (const abs of walk(path.join(repoRoot, 'server'), (n) => n.endsWith('.ts')))
 }
 
 // ── 2. Tables the server actually queries ───────────────────────────────────
-// Same qualification rule as the creator side — see the note above. A reference to
-// `regulatory.information_requests` must resolve to that table, not to a phantom
-// relation named after its schema.
-const REF_RE = new RegExp(
-  String.raw`(?:\bFROM|\bJOIN|\bINTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?`,
-  'gi',
-);
-const referenced = new Map(); // table -> Set(files)
-for (const abs of walk(
-  path.join(repoRoot, 'server'),
-  (n) => n.endsWith('.ts') && !/\.test\.|\.spec\./.test(n),
-)) {
-  const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
-  // Only SQL-looking string segments — never the whole file. See sqlishSegments.
-  for (const segment of sqlishSegments(read(abs))) {
-    REF_RE.lastIndex = 0;
-    for (const m of segment.matchAll(REF_RE)) {
-      if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
-      const t = qualify(m[1], m[2]);
-      if (!referenced.has(t)) referenced.set(t, new Set());
-      referenced.get(t).add(rel);
-    }
-  }
-}
+// The scan itself lives in `referencedTables` above, so this guard and the
+// live-schema guard cannot drift apart on what "the server references" means.
+const referenced = referencedTables(); // table -> Set(files)
 
 // ── 3. The finding: referenced, created ONLY by a deploy-dead migration ─────
 const findings = {};
