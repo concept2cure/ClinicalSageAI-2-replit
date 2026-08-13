@@ -162,6 +162,75 @@ const ALL_CHILD_TABLES = [
   'lumen_atom_versions', 'program_milestones', 'rag_chunks',
 ];
 
+/**
+ * Create the parent/child pairs this suite exercises when they are absent.
+ *
+ * CI's Integration database is not a fully provisioned application schema — it
+ * is a bare PostgreSQL service with the extensions installed — so
+ * `public.organizations` and the six tables below may not exist there. The
+ * first CI run of this suite failed on exactly that:
+ *
+ *   ERROR: relation "public.organizations" does not exist
+ *   STATEMENT: INSERT INTO public.organizations (id, name, slug) ...
+ *
+ * IF NOT EXISTS throughout, so on a real provisioned database every statement
+ * is a no-op and the suite runs against the genuine shapes. Only the columns
+ * this suite reads or writes are declared; the migration under test keys on the
+ * FK and the parent's tenant column, both of which are present either way.
+ *
+ * Same idiom as ensureGraphTables() in knowledge-graph-tenant-isolation.dbtest.ts
+ * and for the same reason: a real-database test that silently skips when its
+ * tables are missing is indistinguishable from one that passes.
+ */
+async function ensureTables(pool: { query: (sql: string) => Promise<unknown> }): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.organizations (
+      id   SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS public.chat_threads (
+      id              TEXT PRIMARY KEY,
+      organization_id INTEGER,
+      title           TEXT
+    );
+    CREATE TABLE IF NOT EXISTS public.chat_messages (
+      id        SERIAL PRIMARY KEY,
+      thread_id TEXT REFERENCES public.chat_threads(id),
+      role      TEXT NOT NULL,
+      content   TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS public.csr_reports (
+      id              SERIAL PRIMARY KEY,
+      organization_id INTEGER,
+      report_id       TEXT NOT NULL,
+      report_title    TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.csr_details (
+      id           SERIAL PRIMARY KEY,
+      report_id    INTEGER REFERENCES public.csr_reports(id),
+      study_design TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS public.rag_documents (
+      id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      organization_id INTEGER,
+      document_id     TEXT NOT NULL,
+      title           TEXT NOT NULL,
+      document_type   TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS public.rag_chunks (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      document_id UUID REFERENCES public.rag_documents(id),
+      chunk_id    TEXT NOT NULL,
+      chunk_index INTEGER NOT NULL,
+      content     TEXT NOT NULL
+    );
+  `);
+}
+
 const ORG_A = 91001;
 const ORG_B = 91002;
 /** Unique per run, so a previous run's rows can never satisfy this one. */
@@ -172,6 +241,11 @@ describe('child tables are scoped to their parent row’s tenant', () => {
 
   beforeAll(async () => {
     scratch = await createScratchSchema(databaseUrl);
+    // Tables BEFORE the migration, not after: the migration skips a table it
+    // cannot find, so provisioning afterwards would leave them unpolicied and
+    // the isolation cases would fail for a reason that has nothing to do with
+    // the policy.
+    await ensureTables(scratch.ownerPool);
     // Applied here rather than assumed, so the suite is self-provisioning
     // regardless of which migrations the surrounding CI job happened to run.
     await scratch.ownerPool.query(fs.readFileSync(MIGRATION, 'utf8'));
