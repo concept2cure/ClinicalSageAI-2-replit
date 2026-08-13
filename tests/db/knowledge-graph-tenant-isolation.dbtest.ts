@@ -102,8 +102,63 @@ async function cleanup(): Promise<void> {
   await owner.query('ALTER TABLE knowledge_graph_nodes ENABLE ROW LEVEL SECURITY');
 }
 
+/**
+ * Create the three graph tables if the target database has not got them.
+ *
+ * Necessary because this suite must run on BOTH shapes of database CI provides.
+ * The Integration Tests job applies only the GCC migration set, which does not
+ * include these tables (they come from the drizzle schema via install-fresh), so
+ * there they are absent; the migration under test correctly SKIPS a missing
+ * table with a NOTICE, and the suite then failed on its own GRANT with
+ * `relation "public.knowledge_graph_nodes" does not exist`. That was my bug: the
+ * suite provisioned the COLUMNS and POLICIES it needed but assumed the tables.
+ *
+ * Skipping when they are absent would have been the easy fix and the wrong one —
+ * "a database test that silently does not run is the defect it exists to
+ * prevent" (tests/setup.db.ts). So it provisions instead, from the shapes the
+ * real tables actually have (verified against a database built by install-fresh
+ * + deploy-migrate), and on a fully provisioned database these statements are
+ * no-ops and the REAL tables are exercised.
+ */
+async function ensureGraphTables(pool: Pool): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.knowledge_graph_nodes (
+      id TEXT PRIMARY KEY,
+      entity_type TEXT,
+      name TEXT,
+      description TEXT,
+      metadata JSONB,
+      confidence REAL,
+      source_document_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS public.knowledge_graph_edges (
+      id TEXT PRIMARY KEY,
+      source_id TEXT,
+      target_id TEXT,
+      relationship_type TEXT,
+      weight REAL,
+      metadata JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS public.lumen_knowledge_graph_edges (
+      id UUID PRIMARY KEY,
+      source_atom_id INTEGER NOT NULL,
+      target_atom_id INTEGER NOT NULL,
+      relationship_type VARCHAR NOT NULL,
+      relationship_strength REAL,
+      bidirectional BOOLEAN,
+      metadata JSONB,
+      created_at TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ,
+      created_by VARCHAR
+    );
+  `);
+}
+
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await ensureGraphTables(owner);
   await owner.query(fs.readFileSync(MIGRATION, 'utf8'));
 
   // Mint (or reuse) the real non-superuser runtime role via the SAME script the
