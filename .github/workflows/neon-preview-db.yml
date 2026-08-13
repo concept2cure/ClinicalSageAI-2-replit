@@ -52,6 +52,13 @@ jobs:
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.check_secrets.outputs.skip != 'true'
+        with:
+          # Full history: this job diffs against the PR's base twice — to pick
+          # the migrations to apply, and to scan them for destructive patterns.
+          # The default depth of 1 leaves no merge base, which the apply step
+          # worked around with a --depth=200 fetch and the destructive-pattern
+          # check did not work around at all.
+          fetch-depth: 0
 
       - name: Install psql client
         if: steps.check_secrets.outputs.skip != 'true'
@@ -130,6 +137,13 @@ jobs:
 
       - name: Check for destructive migration patterns
         if: steps.check_secrets.outputs.skip != 'true'
+        env:
+          # The script used to hardcode `origin/main`, which does not exist in
+          # this repo — git aborted, the pipeline's status came from grep, and
+          # `|| true` turned it into "✅ No migration files changed in this PR."
+          # on every run. Hand it the real base instead of letting it guess.
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           chmod +x scripts/check_no_destructive_migrations.sh
           bash scripts/check_no_destructive_migrations.sh
