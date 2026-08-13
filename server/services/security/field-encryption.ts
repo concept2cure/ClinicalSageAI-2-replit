@@ -14,8 +14,33 @@
  *
  *   enc:v1:<base64(iv)>:<base64(authTag)>:<base64(ciphertext)>
  *
- * @compliance HIPAA 45 CFR 164.312(a)(2)(iv) (encryption at rest),
- *             FDA 21 CFR 11 (data integrity via GCM authentication)
+ * ── NOT IN USE. READ BEFORE CITING THIS FILE ──────────────────────────────────
+ * This module has ZERO production call sites. It is imported by exactly one
+ * file — its own test. No customer field, PII, PHI or regulatory content is
+ * encrypted with it today, and `PII_ENCRYPTION_KEY` is not provisioned in
+ * `.env.example`, so a caller wired up right now would throw at boot in
+ * production by design.
+ *
+ * The note matters because the annotation below used to read as an unqualified
+ * compliance claim. A HIPAA "encryption at rest" citation attached to a module
+ * that encrypts nothing is exactly the finding a customer security audit is
+ * looking for, and it is the same defect this codebase has now found three
+ * times: `organizations.status` before the lifecycle guard, `organizations.
+ * max_storage` before the storage quota, and this. The artefact is good; it is
+ * simply not connected to anything.
+ *
+ * Encryption at rest in production TODAY comes from the managed database's
+ * disk-level encryption — where the operator holds the key. That is a hosting
+ * property, not an application one, and it is not BYOK.
+ *
+ * Keeping this file is deliberate: it is the natural foundation for the envelope
+ * scheme in ADR-0012 (R2.1), whose `enc:v2` format adds the `key_id` this one
+ * lacks. See docs/adr/0012-tenant-key-custody-and-data-residency.md.
+ *
+ * @compliance Implements the AES-256-GCM primitive required by HIPAA 45 CFR
+ *             164.312(a)(2)(iv) and FDA 21 CFR Part 11 (data integrity via GCM
+ *             authentication). NOT EVIDENCE of encryption at rest: see the note
+ *             above — this module has no production call sites.
  * @version 1.0.0
  */
 
