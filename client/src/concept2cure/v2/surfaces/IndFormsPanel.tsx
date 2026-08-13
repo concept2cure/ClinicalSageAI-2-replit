@@ -33,13 +33,14 @@ const FORM_LABELS: Record<string, string> = {
 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3'];
 
-/** The open program's numeric project id, or null when absent / non-numeric.
- *  Mirrors the convention used by the other v2 surfaces (Dossier, EctdCompile). */
-function readNumericProjectId(): number | null {
+/** The open program's identifier — a regulatory_programs UUID, a program code,
+ *  or a legacy numeric project id (a `proj_` prefix on a numeric id is
+ *  stripped). The SERVER resolves whichever it is, org-scoped; this panel never
+ *  demands a numeric id (window.C2C_PROJECT.id is a program UUID). */
+function readProjectIdent(): string | null {
   const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-  const raw = String(p?.id ?? '').replace(/^proj_/, '');
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : null;
+  const raw = String(p?.id ?? '').trim().replace(/^proj_(?=\d+$)/, '');
+  return raw !== '' ? raw : null;
 }
 
 export function IndFormsPanel({ note }: { note: (m: string) => void }) {
@@ -117,23 +118,38 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
   }, [metadataBody, note]);
 
   // Persist the form as a GOVERNED artifact the platform records (not just a
-  // downloaded file). Needs the open program's project id — without it we do NOT
-  // guess; we tell the user to open a project.
+  // downloaded file). Needs the open program's identity — without it we do NOT
+  // guess; we tell the user to open a project. A legacy numeric id takes the
+  // governed-artifact path; a program UUID/code takes the server's
+  // audited-unplaced path (the artifact registry has no program mapping yet)
+  // and the note says exactly which of the two happened.
   const save = useCallback(async (formId: string) => {
-    const projectId = readNumericProjectId();
-    if (projectId == null) {
+    const ident = readProjectIdent();
+    if (ident == null) {
       note('Open a project first — a governed artifact must be saved to a project’s dossier.');
       return;
     }
     setBusy('save-' + formId);
     try {
-      const res = await apiRequest('POST', `/api/ind-forms/${formId}/artifact`, { ...metadataBody(), projectId });
+      const idBody = /^\d+$/.test(ident) ? { projectId: Number(ident) } : { projectIdent: ident };
+      const res = await apiRequest('POST', `/api/ind-forms/${formId}/artifact`, { ...metadataBody(), ...idBody });
       const json = await res.json().catch(() => null);
       if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.'); return; }
       if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.'); return; }
-      if (!res.ok || !json?.artifactId) { note(`Couldn’t save form ${formId} — ` + ((json as any)?.error?.message ?? `HTTP ${res.status}`) + '.'); return; }
-      const missing = Array.isArray(json.missingRequired) ? json.missingRequired.length : 0;
-      note(`FDA ${formId} saved to the dossier as a governed artifact${json.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)'}.`);
+      const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
+      const readiness = json?.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)';
+      if (res.ok && json?.artifactId) {
+        note(`FDA ${formId} saved to the dossier as a governed artifact${readiness}.`);
+        return;
+      }
+      if (res.ok && json?.audited === true && json?.governed === false) {
+        // Honest degradation, in the server's terms: the form was built and
+        // audit-logged with its content hash, but NOT placed in the dossier
+        // registry — this program has no legacy project row for it yet.
+        note(`FDA ${formId} built and audit-logged (content hash recorded)${readiness} — not placed in the dossier registry: this program has no legacy project row for the registry yet.`);
+        return;
+      }
+      note(`Couldn’t save form ${formId} — ` + ((json as any)?.error?.message ?? `HTTP ${res.status}`) + '.');
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 

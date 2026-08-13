@@ -31,6 +31,10 @@ import '../styles/project-home-v2.css';
    projecting from an invented offset. forms/sections are always arrays (the
    assembler returns [] when nothing is authored yet). */
 interface IndlChecklist {
+  /** The REAL submissions.id the checklist was assembled from — the anchor the
+      lifecycle /file routes need to create an ectd_sequences row. Optional so an
+      older server shape degrades to "cannot file" honestly, never to a guess. */
+  submissionId?: number | null;
   code: string;
   drugName: string | null;
   productName: string | null;
@@ -49,6 +53,109 @@ interface CoverLetterResult {
   body: string;
   gaps: string[];
 }
+
+/* ── Generic wired-deliverable model — mirrors the cover-letter exemplar ──
+   Every wired card does the same four honest things: (1) a real POST to its
+   documented route carrying the loaded checklist's identity plus the
+   particulars entered on the card, (2) renders the SERVER's returned model and
+   its gap verdict, (3) offers the /pdf render via the same blob-download idiom,
+   and (4) for the lifecycle deliverables with a filing counterpart
+   (safety-report / annual-report / amendment →
+   server/routes/ind-lifecycle/filing.routes.ts), a "File into sequence"
+   follow-up after a successful build that creates a REAL ectd_sequences row
+   (+ submission_leaves) through createSequence/upsertLeaf. Failures are
+   reported in the server's words — never as success. */
+interface DelivView {
+  /** The server's model, flattened to readable text — response data only. */
+  text: string;
+  /** The server's gap verdict (empty exactly when the server reported none). */
+  gaps: string[];
+  /** Whether THIS build can be filed (a NOT_REPORTABLE event cannot). */
+  canFile: boolean;
+  /** Honest note shown in place of the file action when filing is unavailable. */
+  fileNote?: string;
+}
+interface DelivRun {
+  busy: boolean;
+  error: string;
+  view: DelivView | null;
+  filing: boolean;
+  fileError: string;
+  filed: { sequenceNumber: string; sequenceId: number | string; leafCount: number } | null;
+}
+const EMPTY_RUN: DelivRun = { busy: false, error: '', view: null, filing: false, fileError: '', filed: null };
+
+interface DelivField {
+  key: string;
+  label: string;
+  kind: 'text' | 'date' | 'textarea' | 'select';
+  options?: Array<{ v: string; label: string }>;
+  placeholder?: string;
+}
+
+interface WiredDeliverable {
+  assemblePath: string;
+  pdf?: { path: string; filename: string };
+  /** The filing counterpart route (creates the ectd_sequences row), if any. */
+  file?: { path: string };
+  fields: DelivField[];
+  payload: () => Record<string, unknown>;
+  toView: (json: unknown) => DelivView | null;
+}
+
+/** Flatten a server section tree ({heading, body, cfrRef?, children?}) to text. */
+function sectionsText(sections: unknown): string {
+  if (!Array.isArray(sections)) return '';
+  return sections
+    .map((s: any) => {
+      const head = [s?.heading, s?.cfrRef ? `(${s.cfrRef})` : ''].filter(Boolean).join(' ');
+      const body = typeof s?.body === 'string' && s.body.trim() !== '' ? s.body : '(empty)';
+      const kids = Array.isArray(s?.children) && s.children.length > 0 ? '\n' + sectionsText(s.children) : '';
+      return `${head}\n${body}${kids}`;
+    })
+    .join('\n\n');
+}
+
+/** Parse "topic | question" lines into numbered briefing questions. Only what
+    the user typed goes up — an absent topic stays empty, never invented. */
+function parseQuestions(raw: string): Array<{ number: number; topic: string; question: string }> {
+  return raw
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line, i) => {
+      const at = line.indexOf('|');
+      return at >= 0
+        ? { number: i + 1, topic: line.slice(0, at).trim(), question: line.slice(at + 1).trim() }
+        : { number: i + 1, topic: '', question: line };
+    });
+}
+
+/* Field option lists — the server enums, stated once. */
+const OPTS = (vs: string[]) => vs.map((v) => ({ v, label: v }));
+const MEETING_TYPES = [
+  { v: 'pre_ind', label: 'Pre-IND' },
+  { v: 'type_a', label: 'Type A' },
+  { v: 'type_b', label: 'Type B' },
+  { v: 'type_c', label: 'Type C' },
+];
+const REF_FILE_TYPES = OPTS(['DMF', 'IND', 'NDA', 'BLA']);
+const EVENT_TYPES = [
+  { v: 'SAE', label: 'SAE — serious adverse event' },
+  { v: 'SUSAR', label: 'SUSAR' },
+  { v: 'AESI', label: 'AESI' },
+  { v: 'AE', label: 'AE — non-serious' },
+];
+const SERIOUSNESS = OPTS(['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important']);
+const CAUSALITY = OPTS(['definite', 'probable', 'possible', 'unlikely', 'unrelated']);
+const OUTCOME = OPTS(['recovered', 'recovering', 'not_recovered', 'fatal', 'unknown']);
+const EXPECTEDNESS = [
+  { v: '', label: 'Not assessed (treated as expected — no clock starts)' },
+  { v: 'expected', label: 'Expected (listed in RSI)' },
+  { v: 'unexpected', label: 'Unexpected (not listed in RSI)' },
+];
+const AMENDMENT_CATEGORIES = OPTS(['protocol', 'protocol_amendment_summary', 'new_investigator', 'cmc', 'pharmacology_toxicology', 'clinical_summary', 'investigators_brochure', 'other']);
+const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 
 /* Stable module-level empty seeds: useLiveRows synthesizes a fresh [] every
    render until the checklist resolves, so feeding these to the readiness memo
@@ -103,14 +210,29 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     [clock],
   );
 
-  /* Cover-letter exemplar — the one deliverable wired end-to-end (POST
-     /api/ind-lifecycle/cover-letter + /pdf). The other deliverables' buttons
-     honestly hand their prompt to AnA. */
+  /* Cover-letter exemplar — the first deliverable wired end-to-end (POST
+     /api/ind-lifecycle/cover-letter + /pdf). The other cards mirror it via the
+     generic wired-deliverable runner below (see the DelivRun/WiredDeliverable
+     model at the top of this file). */
   const [cl, setCl] = useState<{ busy: boolean; model: CoverLetterResult | null; error: string }>({
     busy: false,
     model: null,
     error: '',
   });
+
+  /* Wired-deliverable state (the other cards, mirroring the exemplar): one run
+     record per card, the card-local field entries, and the 4-digit eCTD
+     sequence number for the filing follow-ups (user-entered — a sequence number
+     is a deliberate regulatory decision, never guessed). */
+  const [runs, setRuns] = useState<Record<string, DelivRun>>({});
+  const [fields, setFields] = useState<Record<string, string>>({});
+  const [seqNums, setSeqNums] = useState<Record<string, string>>({});
+  const patchRun = useCallback((id: string, patch: Partial<DelivRun>) => {
+    setRuns((r) => ({ ...r, [id]: { ...(r[id] ?? EMPTY_RUN), ...patch } }));
+  }, []);
+  const setFieldVal = useCallback((key: string, value: string) => {
+    setFields((f) => ({ ...f, [key]: value }));
+  }, []);
   const fmt = (d: Date | null) =>
     d
       ? d.toLocaleDateString([], {
@@ -243,6 +365,323 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     } catch (e) {
       setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — ' + failMsg(e) + '.' }));
     }
+  };
+
+  /* ── The other deliverable cards, wired exactly like the exemplar ──
+     Identity comes from the loaded checklist; particulars come from the card's
+     own fields; the rendered model and every gap are the SERVER's verdict. */
+  const runOf = (id: string): DelivRun => runs[id] ?? EMPTY_RUN;
+  const fv = (k: string) => (fields[k] ?? '').trim();
+  const sel = (k: string, opts: Array<{ v: string }>) => fv(k) || opts[0].v;
+  /** The server's own words for a failure, else the HTTP status — never a
+      cheerful paraphrase. Trailing period trimmed so composed messages don't
+      double it. */
+  const serverErr = (json: any, st: number): string => {
+    const m = json?.error?.message ?? (typeof json?.error === 'string' ? json.error : null);
+    if (m) return String(m).replace(/\.\s*$/, '');
+    return st === 401 || st === 403 ? 'sign in with a regulatory-author account and retry' : `HTTP ${st}`;
+  };
+  /** The submission the filing routes anchor to — the checklist's REAL
+      submissions.id, or null (→ filing honestly unavailable, never guessed). */
+  const submissionId =
+    typeof prog.submissionId === 'number' && Number.isInteger(prog.submissionId) && prog.submissionId > 0
+      ? prog.submissionId
+      : null;
+
+  const runAssemble = async (id: string, w: WiredDeliverable) => {
+    patchRun(id, { busy: true, error: '', view: null, filed: null, fileError: '' });
+    try {
+      const res = await apiRequest('POST', w.assemblePath, w.payload());
+      const json = (await res.json().catch(() => null)) as any;
+      if (!res.ok || !json) {
+        patchRun(id, { busy: false, error: `Could not assemble — ${serverErr(json, res.status)}. Nothing was generated.` });
+        return;
+      }
+      const view = w.toView(json);
+      if (!view) {
+        patchRun(id, { busy: false, error: 'Could not assemble — unexpected response shape.' });
+        return;
+      }
+      patchRun(id, { busy: false, view });
+    } catch (e) {
+      patchRun(id, { busy: false, error: 'Could not assemble — ' + failMsg(e) + '.' });
+    }
+  };
+
+  const runPdf = async (id: string, w: WiredDeliverable) => {
+    if (!w.pdf) return;
+    patchRun(id, { busy: true, error: '' });
+    try {
+      const res = await apiRequest('POST', w.pdf.path, w.payload());
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as any;
+        patchRun(id, { busy: false, error: `Could not render the PDF — ${serverErr(json, res.status)}.` });
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = w.pdf.filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      patchRun(id, { busy: false });
+    } catch (e) {
+      patchRun(id, { busy: false, error: 'Could not render the PDF — ' + failMsg(e) + '.' });
+    }
+  };
+
+  /* File the built deliverable as a REAL eCTD sequence (+ leaves) via the
+     filing counterpart (filing.routes.ts → createSequence + upsertLeaf). */
+  const runFile = async (id: string, w: WiredDeliverable) => {
+    if (!w.file) return;
+    if (submissionId == null) {
+      patchRun(id, { fileError: 'This checklist carries no submission id, so there is no eCTD application to file into — nothing was filed.' });
+      return;
+    }
+    const seq = (seqNums[id] ?? '').trim();
+    if (!/^\d{4}$/.test(seq)) {
+      patchRun(id, { fileError: 'Enter the 4-digit eCTD sequence number (e.g. 0002). The sequence number is a deliberate regulatory decision — it is never guessed for you.' });
+      return;
+    }
+    patchRun(id, { filing: true, fileError: '' });
+    try {
+      const res = await apiRequest('POST', w.file.path, { ...w.payload(), submissionId, sequenceNumber: seq });
+      const json = (await res.json().catch(() => null)) as any;
+      if (!res.ok || !json?.sequence) {
+        patchRun(id, { filing: false, fileError: `Not filed — ${serverErr(json, res.status)}.` });
+        return;
+      }
+      patchRun(id, {
+        filing: false,
+        filed: {
+          sequenceNumber: String(json.sequence.sequenceNumber ?? seq),
+          sequenceId: json.sequence.id,
+          leafCount: Array.isArray(json.leaves) ? json.leaves.length : 0,
+        },
+      });
+    } catch (e) {
+      patchRun(id, { filing: false, fileError: 'Not filed — ' + failMsg(e) + '.' });
+    }
+  };
+
+  /* Safety-report intake: only what the user entered goes up — an absent field
+     reaches the server as absent, so classification never runs on invented
+     data (the un-assessed expectedness default is the server's conservative
+     "expected → no clock starts"). */
+  const safetyEventPayload = (): Record<string, unknown> => {
+    const ev: Record<string, unknown> = {
+      eventType: sel('sr.eventType', EVENT_TYPES),
+      seriousnessCriteria: sel('sr.seriousness', SERIOUSNESS),
+      causality: sel('sr.causality', CAUSALITY),
+      outcome: sel('sr.outcome', OUTCOME),
+    };
+    if (fv('sr.patientId')) ev.patientId = fv('sr.patientId');
+    if (fv('sr.description')) ev.eventDescription = fv('sr.description');
+    if (fv('sr.country')) ev.countryOfOccurrence = fv('sr.country');
+    if (fv('sr.expectedness')) ev.expectedness = fv('sr.expectedness');
+    if (fv('sr.onset')) ev.onsetDate = fv('sr.onset');
+    if (fv('sr.aware')) ev.reportDate = fv('sr.aware');
+    return { event: ev };
+  };
+
+  /* Annual-report intake. The period registers (study statuses, safety reports
+     in period, IB changes) are not captured on this card; they go up as empty
+     lists and the SERVER's gap verdict marks the affected sections incomplete —
+     nothing is invented to fill them. */
+  const annualReportPayload = (): Record<string, unknown> => ({
+    productName: prog.productName ?? drug,
+    indNumber: fv('ar.indNumber'),
+    reportingPeriodStart: fv('ar.start'),
+    reportingPeriodEnd: fv('ar.end'),
+    studyStatuses: [],
+    safetyReportsInPeriod: [],
+    ibChanges: [],
+    ...(fv('ar.safetySummary') ? { safetySummary: fv('ar.safetySummary') } : {}),
+    ...(fv('ar.plan') ? { investigationalPlan: fv('ar.plan') } : {}),
+  });
+
+  /* Amendment intake: one changed document, entered by the user. An empty entry
+     goes up as an empty list and the server answers IND_AMENDMENT_NO_DOCUMENTS
+     verbatim — the plan never maps invented documents. */
+  const amendmentPayload = (): Record<string, unknown> => {
+    const hasDoc = fv('am.docId') !== '' || fv('am.title') !== '';
+    return {
+      ...(fv('am.indNumber') ? { indNumber: fv('am.indNumber') } : {}),
+      changedDocuments: hasDoc
+        ? [{
+            documentId: fv('am.docId'),
+            title: fv('am.title'),
+            category: sel('am.category', AMENDMENT_CATEGORIES),
+            changeKind: sel('am.changeKind', CHANGE_KINDS),
+            ...(fv('am.leafGuid') ? { replacesLeafGuid: fv('am.leafGuid') } : {}),
+          }]
+        : [],
+    };
+  };
+
+  const modelSectionsView = (json: any): DelivView | null =>
+    json?.model && Array.isArray(json.model.sections)
+      ? {
+          text: sectionsText(json.model.sections),
+          gaps: Array.isArray(json.model.gaps) ? json.model.gaps.map(String) : [],
+          canFile: false,
+        }
+      : null;
+
+  const wired: Record<string, WiredDeliverable> = {
+    'briefing-book': {
+      assemblePath: '/api/ind-lifecycle/briefing-book',
+      pdf: { path: '/api/ind-lifecycle/briefing-book/pdf', filename: 'fda-briefing-book.pdf' },
+      fields: [
+        { key: 'bb.meetingType', label: 'Meeting type', kind: 'select', options: MEETING_TYPES },
+        { key: 'bb.indication', label: 'Indication', kind: 'text' },
+        { key: 'bb.background', label: 'Product background and rationale', kind: 'textarea' },
+        { key: 'bb.nonclinical', label: 'Nonclinical data summary', kind: 'textarea' },
+        { key: 'bb.plan', label: 'Proposed clinical development plan', kind: 'textarea' },
+        { key: 'bb.questions', label: 'Questions for FDA (one per line, "topic | question")', kind: 'textarea' },
+      ],
+      payload: () => ({
+        productName: prog.productName ?? drug,
+        indication: fv('bb.indication'),
+        meetingType: sel('bb.meetingType', MEETING_TYPES),
+        questions: parseQuestions(fv('bb.questions')),
+        ...(fv('bb.background') ? { productBackground: fv('bb.background') } : {}),
+        ...(fv('bb.nonclinical') ? { nonclinicalSummary: fv('bb.nonclinical') } : {}),
+        ...(fv('bb.plan') ? { proposedClinicalPlan: fv('bb.plan') } : {}),
+      }),
+      toView: (json: any) =>
+        json && Array.isArray(json.sections)
+          ? {
+              text: sectionsText(json.sections),
+              gaps: Array.isArray(json.gaps) ? json.gaps.map((g: any) => String(g?.message ?? g)) : [],
+              canFile: false,
+            }
+          : null,
+    },
+    loa: {
+      assemblePath: '/api/ind-lifecycle/loa',
+      pdf: { path: '/api/ind-lifecycle/loa/pdf', filename: 'ind-letter-of-authorization.pdf' },
+      fields: [
+        { key: 'loa.type', label: 'Referenced file type', kind: 'select', options: REF_FILE_TYPES },
+        { key: 'loa.number', label: 'Referenced file number', kind: 'text', placeholder: 'e.g. DMF 12345' },
+        { key: 'loa.holder', label: 'File holder (grantor)', kind: 'text' },
+        { key: 'loa.subject', label: 'Subject (drug substance / product)', kind: 'text' },
+        { key: 'loa.signatory', label: 'Signatory (for the holder)', kind: 'text' },
+      ],
+      payload: () => ({
+        referencedFileType: sel('loa.type', REF_FILE_TYPES),
+        referencedFileNumber: fv('loa.number'),
+        holderName: fv('loa.holder'),
+        authorizedPartyName: prog.sponsorName ?? '',
+        subjectName: fv('loa.subject'),
+        signatoryName: fv('loa.signatory'),
+      }),
+      toView: modelSectionsView,
+    },
+    'right-of-reference': {
+      assemblePath: '/api/ind-lifecycle/right-of-reference',
+      pdf: { path: '/api/ind-lifecycle/right-of-reference/pdf', filename: 'ind-right-of-reference.pdf' },
+      fields: [
+        { key: 'ror.type', label: 'Referenced file type', kind: 'select', options: REF_FILE_TYPES },
+        { key: 'ror.number', label: 'Referenced file number', kind: 'text' },
+        { key: 'ror.subject', label: 'Subject (drug substance / product)', kind: 'text' },
+        { key: 'ror.signatory', label: 'Signatory (for the sponsor)', kind: 'text' },
+      ],
+      payload: () => ({
+        sponsorName: prog.sponsorName ?? '',
+        referencedFileType: sel('ror.type', REF_FILE_TYPES),
+        referencedFileNumber: fv('ror.number'),
+        subjectName: fv('ror.subject'),
+        signatoryName: fv('ror.signatory'),
+      }),
+      toView: modelSectionsView,
+    },
+    'safety-report': {
+      assemblePath: '/api/ind-lifecycle/safety-report',
+      pdf: { path: '/api/ind-lifecycle/safety-report/pdf', filename: 'ind-safety-report.pdf' },
+      file: { path: '/api/ind-lifecycle/safety-report/file' },
+      fields: [
+        { key: 'sr.patientId', label: 'De-identified patient id', kind: 'text' },
+        { key: 'sr.description', label: 'Event description', kind: 'textarea' },
+        { key: 'sr.eventType', label: 'Event type', kind: 'select', options: EVENT_TYPES },
+        { key: 'sr.seriousness', label: 'Seriousness criterion (ICH E2A)', kind: 'select', options: SERIOUSNESS },
+        { key: 'sr.causality', label: 'Causality (WHO-UMC)', kind: 'select', options: CAUSALITY },
+        { key: 'sr.outcome', label: 'Outcome', kind: 'select', options: OUTCOME },
+        { key: 'sr.expectedness', label: 'Expectedness vs RSI', kind: 'select', options: EXPECTEDNESS },
+        { key: 'sr.onset', label: 'Onset date', kind: 'date' },
+        { key: 'sr.aware', label: 'Sponsor awareness date (clock start)', kind: 'date' },
+        { key: 'sr.country', label: 'Country of occurrence (ISO-2)', kind: 'text', placeholder: 'e.g. US' },
+      ],
+      payload: safetyEventPayload,
+      toView: (json: any) => {
+        const cls = json?.classification;
+        const doc = json?.document;
+        if (!cls || !doc) return null;
+        const deadline = cls.deadline ? new Date(cls.deadline) : null;
+        const head = [
+          `Obligation: ${cls.obligation}${cls.reportingWindowDays ? ` (${cls.reportingWindowDays}-day)` : ''}`,
+          deadline && !Number.isNaN(deadline.getTime()) ? `Deadline: ${fmt(deadline)}` : '',
+          String(cls.rationale ?? ''),
+        ].filter(Boolean).join('\n');
+        const notReportable = json.amendmentIntent == null;
+        return {
+          text: head + '\n\n' + sectionsText(doc.sections),
+          gaps: [],
+          canFile: !notReportable,
+          fileNote: notReportable
+            ? 'The server classified this event as not reportable as an individual expedited IND safety report — there is nothing to file.'
+            : undefined,
+        };
+      },
+    },
+    'annual-report': {
+      assemblePath: '/api/ind-lifecycle/annual-report',
+      pdf: { path: '/api/ind-lifecycle/annual-report/pdf', filename: 'ind-annual-report.pdf' },
+      file: { path: '/api/ind-lifecycle/annual-report/file' },
+      fields: [
+        { key: 'ar.indNumber', label: 'IND number', kind: 'text' },
+        { key: 'ar.start', label: 'Reporting period start', kind: 'date' },
+        { key: 'ar.end', label: 'Reporting period end', kind: 'date' },
+        { key: 'ar.safetySummary', label: 'Summary of safety information (312.33(b))', kind: 'textarea' },
+        { key: 'ar.plan', label: 'General investigational plan (312.33(c))', kind: 'textarea' },
+      ],
+      payload: annualReportPayload,
+      toView: (json: any) =>
+        json?.reportType === 'IND_ANNUAL_REPORT' && Array.isArray(json.sections)
+          ? {
+              text: sectionsText(json.sections),
+              gaps: Array.isArray(json.gaps) ? json.gaps.map((g: any) => String(g?.message ?? g)) : [],
+              canFile: true,
+            }
+          : null,
+    },
+    amendment: {
+      assemblePath: '/api/ind-lifecycle/amendment-plan',
+      file: { path: '/api/ind-lifecycle/amendment/file' },
+      fields: [
+        { key: 'am.indNumber', label: 'IND number', kind: 'text' },
+        { key: 'am.docId', label: 'Changed document id / ref', kind: 'text' },
+        { key: 'am.title', label: 'Changed document title', kind: 'text' },
+        { key: 'am.category', label: 'Content category', kind: 'select', options: AMENDMENT_CATEGORIES },
+        { key: 'am.changeKind', label: 'Change kind', kind: 'select', options: CHANGE_KINDS },
+        { key: 'am.leafGuid', label: 'Prior leaf GUID (revise / append / withdraw)', kind: 'text' },
+      ],
+      payload: amendmentPayload,
+      toView: (json: any) =>
+        Array.isArray(json?.leaves)
+          ? {
+              text:
+                json.leaves
+                  .map((l: any) => `${l.sectionCode} · ${l.lifecycleOp} — ${l.title}${l.cfrRef ? ` (${l.cfrRef})` : ''}`)
+                  .join('\n') || '(no leaves planned)',
+              gaps: Array.isArray(json.warnings) ? json.warnings.map(String) : [],
+              canFile: true,
+            }
+          : null,
+    },
   };
 
   return (
@@ -643,9 +1082,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="indl-ref">{d.ref}</span>
                   </div>
                   <div className="indl-dcard-desc">{d.desc}</div>
-                  {/* The cover letter is wired end-to-end (real POST + PDF).
-                      The other cards' buttons hand their prompt to AnA and say
-                      so — no printed route, no dead affordance. */}
+                  {/* Every card is wired end-to-end (real POST + gap verdict +
+                      PDF; the lifecycle documents also file into a real eCTD
+                      sequence). The cover letter keeps its original exemplar
+                      wiring; the rest share the generic runner. No printed
+                      route, no dead affordance. */}
                   {d.id === 'cover-letter' ? (
                     <>
                       <div className="indl-dcard-acts">
@@ -697,6 +1138,144 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         </div>
                       )}
                     </>
+                  ) : wired[d.id] ? (
+                    (() => {
+                      const w = wired[d.id];
+                      const run = runOf(d.id);
+                      return (
+                        <>
+                          <div style={{ display: 'grid', gap: 6, margin: '6px 0' }}>
+                            {w.fields.map((f) => (
+                              <label key={f.key} style={{ fontSize: 12 }}>
+                                {f.label}
+                                {f.kind === 'select' ? (
+                                  <select
+                                    className="c2c-input"
+                                    style={{ height: 28, width: '100%' }}
+                                    value={fv(f.key) || (f.options?.[0]?.v ?? '')}
+                                    onChange={(e) => setFieldVal(f.key, e.target.value)}
+                                  >
+                                    {(f.options ?? []).map((o) => (
+                                      <option key={o.v} value={o.v}>{o.label}</option>
+                                    ))}
+                                  </select>
+                                ) : f.kind === 'textarea' ? (
+                                  <textarea
+                                    className="c2c-input"
+                                    style={{ width: '100%', minHeight: 44 }}
+                                    placeholder={f.placeholder}
+                                    value={fields[f.key] ?? ''}
+                                    onChange={(e) => setFieldVal(f.key, e.target.value)}
+                                  />
+                                ) : (
+                                  <input
+                                    className="c2c-input"
+                                    type={f.kind === 'date' ? 'date' : 'text'}
+                                    style={{ height: 28, width: '100%' }}
+                                    placeholder={f.placeholder}
+                                    value={fields[f.key] ?? ''}
+                                    onChange={(e) => setFieldVal(f.key, e.target.value)}
+                                  />
+                                )}
+                              </label>
+                            ))}
+                          </div>
+                          <div className="indl-dcard-acts">
+                            <button
+                              className="btn primary sm"
+                              disabled={run.busy}
+                              onClick={() => void runAssemble(d.id, w)}
+                            >
+                              {I.fileText} {run.busy ? 'Assembling…' : 'Assemble now'}
+                            </button>
+                            {w.pdf && (
+                              <button
+                                className="btn ghost sm"
+                                disabled={run.busy}
+                                onClick={() => void runPdf(d.id, w)}
+                              >
+                                {I.download} PDF
+                              </button>
+                            )}
+                            <button className="btn ghost sm" onClick={() => ask(d.ask)}>
+                              {I.sparkles} Ask AnA
+                            </button>
+                          </div>
+                          {run.error && (
+                            <div className="indl-dcard-desc" role="status">
+                              {run.error}
+                            </div>
+                          )}
+                          {run.view && (
+                            <div className="indl-dcard-desc" role="status">
+                              <pre
+                                style={{
+                                  whiteSpace: 'pre-wrap',
+                                  maxHeight: 220,
+                                  overflowY: 'auto',
+                                  margin: '6px 0 0',
+                                  fontFamily: 'inherit',
+                                }}
+                              >
+                                {run.view.text}
+                              </pre>
+                              {run.view.gaps.length > 0 && (
+                                <div style={{ marginTop: 6 }}>
+                                  Missing before filing:{' '}
+                                  {run.view.gaps.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {/* Filing follow-up: only after a successful build,
+                              and only for deliverables with a real filing
+                              counterpart. Creates an actual ectd_sequences row
+                              (+ leaves) — or says exactly why it cannot. */}
+                          {run.view && w.file && (
+                            run.view.canFile ? (
+                              !run.filed && (
+                                <div className="indl-dcard-acts" style={{ alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+                                  <label style={{ fontSize: 12 }}>
+                                    eCTD sequence number
+                                    <input
+                                      className="c2c-input"
+                                      style={{ height: 28, width: 76, marginLeft: 6 }}
+                                      placeholder="e.g. 0002"
+                                      value={seqNums[d.id] ?? ''}
+                                      onChange={(e) => setSeqNums((s) => ({ ...s, [d.id]: e.target.value }))}
+                                    />
+                                  </label>
+                                  <button
+                                    className="btn primary sm"
+                                    disabled={run.filing}
+                                    onClick={() => void runFile(d.id, w)}
+                                  >
+                                    {I.rocket} {run.filing ? 'Filing…' : 'File into sequence'}
+                                  </button>
+                                </div>
+                              )
+                            ) : run.view.fileNote ? (
+                              <div className="indl-dcard-desc" role="status">
+                                {run.view.fileNote}
+                              </div>
+                            ) : null
+                          )}
+                          {run.fileError && (
+                            <div className="indl-dcard-desc" role="status">
+                              {run.fileError}
+                            </div>
+                          )}
+                          {run.filed && (
+                            <div className="indl-dcard-desc" role="status">
+                              Filed eCTD sequence {run.filed.sequenceNumber} (id{' '}
+                              {String(run.filed.sequenceId)}) —{' '}
+                              {run.filed.leafCount}{' '}
+                              {run.filed.leafCount === 1 ? 'leaf' : 'leaves'} placed.
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()
                   ) : (
                     <div className="indl-dcard-acts">
                       <button
@@ -712,9 +1291,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               ))}
             </div>
             <div className="indl-deliv-foot">
-              The cover letter assembles here end-to-end from this IND's
-              recorded identity. The other documents assemble deterministically
-              on the server — ask AnA and it runs them with you.
+              Each document assembles here end-to-end from this IND's recorded
+              identity plus the particulars you enter — the rendered model and
+              its gap list are the server's verdict. The lifecycle documents can
+              then be filed into a real eCTD sequence under this application.
             </div>
           </div>
         </aside>

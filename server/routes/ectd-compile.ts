@@ -6,10 +6,20 @@
  * validation, and compilation tracking.
  *
  * Endpoints:
- *   POST /api/ectd-compile/:projectId/compile      — Full eCTD compilation
- *   GET  /api/ectd-compile/:projectId/status        — Compilation readiness
- *   GET  /api/ectd-compile/:projectId/history       — Compilation history
- *   POST /api/ectd-compile/:projectId/validate      — Pre-compile validation
+ *   POST /api/ectd-compile/:projectIdent/compile    — Full eCTD compilation
+ *   GET  /api/ectd-compile/:projectIdent/status     — Compilation readiness
+ *   GET  /api/ectd-compile/:projectIdent/history    — Compilation history
+ *   POST /api/ectd-compile/:projectIdent/validate   — Pre-compile validation
+ *
+ * `:projectIdent` accepts the legacy numeric projects.id (the key of the
+ * project_sections store) OR a program identifier — a regulatory_programs UUID
+ * or program code — resolved org-scoped, mirroring the eSTAR meta.ident contract
+ * (see server/routes/510k-estar-routes.ts resolveProjectAnchor). A program-spine
+ * ident resolves WITHOUT a numeric section store: project_sections is keyed by
+ * the legacy integer project id and no mapping exists yet (document-identity
+ * contract, RECONCILE.md §6), so those requests run against an honestly-empty
+ * section set and every response says so explicitly rather than 400-ing the
+ * whole surface into a dead end or inventing readiness.
  *
  * @module server/routes/ectd-compile
  * @compliance ICH M8, eCTD 4.0, FDA ESG
@@ -54,8 +64,11 @@ const LEAF_RENDERING_BLOCKER =
  * Blockers are returned as text so the surface can say WHY rather than showing a
  * bare negative.
  */
-function submissionBlockers(contentErrors: string[]): string[] {
+function submissionBlockers(contentErrors: string[], anchor?: CompileAnchor): string[] {
   const blockers: string[] = [];
+  if (anchor && anchor.numericProjectId === null) {
+    blockers.push(PROGRAM_SECTION_STORE_BLOCKER);
+  }
   if (contentErrors.length > 0) {
     blockers.push(
       `${contentErrors.length} blocking content ${contentErrors.length === 1 ? 'issue' : 'issues'} must be resolved.`,
@@ -85,12 +98,159 @@ function resolveOrgId(req: Request): number | null {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PROJECT-IDENT RESOLUTION (numeric legacy id | program UUID | program code)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Why a program-spine project compiles against an empty section set. Stated once
+ * and returned verbatim as a blocker / validation finding so the caller is told,
+ * in so many words, why readiness is 0% — never left to infer it from silence.
+ */
+const PROGRAM_SECTION_STORE_BLOCKER =
+  'This program has no linked section-tracking store: project_sections is keyed by the ' +
+  'legacy numeric project id and no numeric project row exists for this program, so no ' +
+  'authored sections are visible to the compiler (pending the document-identity contract).';
+
+interface CompileAnchor {
+  /** Legacy numeric projects.id when the ident was numeric — keys project_sections. */
+  numericProjectId: number | null;
+  /** Resolved regulatory_programs UUID when the ident named a program. */
+  programId: string | null;
+  programCode: string | null;
+  title: string | null;
+  /** Stable human label used in compilation names + the history filter. */
+  label: string;
+}
+
+/**
+ * Resolve the route's `:projectIdent`, org-scoped, mirroring the eSTAR ident
+ * contract: numeric → the legacy project id (pass-through — every section query
+ * is already org-scoped), UUID → regulatory_programs.id, else →
+ * regulatory_programs.code. Returns null when nothing in this org matches — the
+ * caller must 404, never compile against an unresolved project.
+ */
+async function resolveCompileAnchor(ident: string, orgId: number): Promise<CompileAnchor | null> {
+  if (/^\d+$/.test(ident)) {
+    const numeric = parseInt(ident, 10);
+    if (!Number.isInteger(numeric) || numeric <= 0) return null;
+    return {
+      numericProjectId: numeric,
+      programId: null,
+      programCode: null,
+      title: null,
+      label: `Project ${numeric}`,
+    };
+  }
+  const byUuid = UUID_RE.test(ident);
+  try {
+    const result = await pool.query(
+      `SELECT id, code, name FROM regulatory_programs
+        WHERE ${byUuid ? 'id = $1' : 'code = $1'} AND organization_id = $2 AND deleted_at IS NULL
+        LIMIT 1`,
+      [ident, orgId],
+    );
+    const row = result.rows[0];
+    if (row) {
+      return {
+        numericProjectId: null,
+        programId: String(row.id),
+        programCode: row.code != null ? String(row.code) : null,
+        title: row.name != null ? String(row.name) : null,
+        label: `Program ${row.code ?? row.id}`,
+      };
+    }
+  } catch {
+    // A failed lookup is a non-match — never a guessed anchor.
+  }
+  return null;
+}
+
+/**
+ * Shared route prologue: org from auth context (401), then the ident resolved
+ * org-scoped (404). Responds itself and returns null on failure so handlers
+ * fail closed with one line.
+ */
+async function anchorFromRequest(
+  req: Request,
+  res: Response,
+): Promise<{ orgId: number; anchor: CompileAnchor; ident: string } | null> {
+  const ident = String(req.params.projectIdent ?? '').trim();
+  if (!ident) {
+    res.status(400).json({ error: 'Valid project identifier required' });
+    return null;
+  }
+  const orgId = resolveOrgId(req);
+  if (!orgId) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+  const anchor = await resolveCompileAnchor(ident, orgId);
+  if (!anchor) {
+    res.status(404).json({ error: 'Project not found in your organization' });
+    return null;
+  }
+  return { orgId, anchor, ident };
+}
+
+/**
+ * Load the anchor's tracked sections. A program-spine anchor has NO
+ * project_sections store (integer FK — see PROGRAM_SECTION_STORE_BLOCKER), so it
+ * loads an honestly-empty set rather than someone else's rows or a fabricated
+ * one. `swallow` preserves each route's existing table-missing behavior.
+ */
+async function loadAnchorSections(
+  anchor: CompileAnchor,
+  orgId: number,
+  columns: string,
+  opts: { orderBy?: string; swallow?: boolean } = {},
+): Promise<any[]> {
+  if (anchor.numericProjectId === null) return [];
+  try {
+    const result = await pool.query(
+      `SELECT ${columns}
+       FROM project_sections
+       WHERE project_id = $1 AND organization_id = $2${opts.orderBy ? ` ORDER BY ${opts.orderBy}` : ''}`,
+      [anchor.numericProjectId, orgId],
+    );
+    return result.rows;
+  } catch (err) {
+    if (opts.swallow) return []; // table may not exist — honest empty
+    throw err;
+  }
+}
+
+/**
+ * Prepend the unlinked-section-store finding for program-spine anchors so the
+ * validation report itself names the real reason every required section reads
+ * as missing.
+ */
+function withAnchorFindings(results: ValidationResult[], anchor: CompileAnchor): ValidationResult[] {
+  if (anchor.numericProjectId !== null) return results;
+  return [
+    {
+      rule: 'SECTION_STORE_UNLINKED',
+      severity: 'error',
+      message: PROGRAM_SECTION_STORE_BLOCKER,
+      fix: 'Author sections under a legacy sectioned project, or wait for the program → section-store mapping (document-identity contract).',
+    },
+    ...results,
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface CompilationResult {
   id: string;
-  projectId: number;
+  /** Legacy numeric project id, or null when the ident named a program. */
+  projectId: number | null;
+  /** The ident the caller addressed (numeric id, program UUID, or code). */
+  projectIdent: string;
+  /** Resolved regulatory_programs UUID for program-spine idents. */
+  programId: string | null;
   status: 'pending' | 'compiling' | 'validating' | 'completed' | 'failed';
   startedAt: string;
   completedAt?: string;
@@ -165,24 +325,21 @@ const ECTD_MODULE_DEFS: Record<string, { name: string; requiredSections: string[
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POST /:projectId/compile — Full eCTD compilation
+// POST /:projectIdent/compile — Full eCTD compilation
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/:projectId/compile', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
+router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
+  // Org from auth context, then the ident resolved org-scoped (404 on a miss) —
+  // never compile against an unresolved project.
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
     const moduleFilter = Array.isArray(targetModules)
       ? new Set(targetModules.map((m: string) => String(m).toLowerCase()))
       : null;
-
-    // Derive org from auth context
-    const orgId = resolveOrgId(req);
-    if (!orgId) {
-      return res.status(401).json({ error: 'Organization context required' });
-    }
 
     // 1. Gather all project sections from DB.
     //
@@ -192,19 +349,18 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
     // organization's sections just by guessing a numeric project id.
     // `project_sections.organization_id` is NOT NULL (see
     // db/migrations/20260220_ind_section_tracking.sql), so this cannot
-    // legitimately exclude rows that belong to the caller.
-    const sectionsResult = await pool.query(
-      `SELECT section_code, title, status, content, word_count, assigned_to, module,
-              required, updated_at
-       FROM project_sections
-       WHERE project_id = $1 AND organization_id = $2
-       ORDER BY section_code`,
-      [projectId, Number(orgId)]
+    // legitimately exclude rows that belong to the caller. A program-spine
+    // ident loads an honestly-empty set (no linked section store).
+    const sections = await loadAnchorSections(
+      anchor,
+      orgId,
+      `section_code, title, status, content, word_count, assigned_to, module,
+              required, updated_at`,
+      { orderBy: 'section_code' },
     );
-    const sections = sectionsResult.rows;
 
     // 2. Run pre-compile validation
-    const validationResults = runPreCompileValidation(sections, region);
+    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region), anchor);
     const hasBlockingErrors = validationResults.some(v => v.severity === 'error');
 
     // 3. Build module compilation status
@@ -248,9 +404,14 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
         };
       });
 
-    // 4. Generate eCTD 4.0 XML backbone
+    // 4. Generate eCTD 4.0 XML backbone. The application reference is the
+    //    recorded identity we actually hold: the legacy numeric id (unchanged),
+    //    or the program's real recorded code — never an invented number.
     const xmlBackbone = generateECTD4Backbone({
-      projectId,
+      applicationRef:
+        anchor.numericProjectId !== null
+          ? `IND-${anchor.numericProjectId}`
+          : anchor.programCode ?? anchor.programId ?? ident,
       submissionType,
       region,
       modules: moduleStatuses,
@@ -258,7 +419,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
     });
 
     // 5. Record compilation
-    const compilationId = `comp_${Date.now()}_${projectId}`;
+    const compilationId = `comp_${Date.now()}_${anchor.numericProjectId ?? anchor.programId}`;
     // This insert previously bound SIX values to FIVE placeholders with a
     // duplicated orgId in second position, so every remaining value landed one
     // column to the left: the org id was written as compilation_name, the name
@@ -267,7 +428,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
     // execute anyway: module_id and compiled_by were NOT NULL and unsupplied.
     // The catch below blamed a missing table, so the failure was invisible and
     // GET /:projectId/history was permanently empty. See ledger C-16.
-    const compilationName = `IND Compilation — Project ${projectId}`;
+    const compilationName = `IND Compilation — ${anchor.label}`;
     try {
       await pool.query(
         `INSERT INTO ectd_compilations
@@ -288,16 +449,18 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
       // than a failed request — but say what actually went wrong instead of
       // assuming the table is missing.
       console.warn(
-        `[eCTD Compile] could not record compilation for project ${projectId}: ${err?.message}`
+        `[eCTD Compile] could not record compilation for ${anchor.label}: ${err?.message}`
       );
     }
 
     const errors = validationResults.filter(v => v.severity === 'error').map(v => v.message);
-    const blockers = submissionBlockers(errors);
+    const blockers = submissionBlockers(errors, anchor);
 
     const result: CompilationResult = {
       id: compilationId,
-      projectId,
+      projectId: anchor.numericProjectId,
+      projectIdent: ident,
+      programId: anchor.programId,
       // The BACKBONE compiled — that part did succeed, and the caller can
       // download it. Whether the package can be submitted is a separate
       // question, answered by submissionReady/submissionBlockers below.
@@ -316,7 +479,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
     };
 
     console.log(
-      `[eCTD Compile] Project ${projectId}: ${result.status} | ` +
+      `[eCTD Compile] ${anchor.label}: ${result.status} | ` +
         `${moduleStatuses.filter(m => m.status === 'complete').length}/5 modules complete | ` +
         `${validationResults.filter(v => v.severity === 'error').length} errors, ` +
         `${validationResults.filter(v => v.severity === 'warning').length} warnings`
@@ -333,33 +496,25 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET /:projectId/status — Compilation readiness dashboard
+// GET /:projectIdent/status — Compilation readiness dashboard
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.get('/:projectId/status', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
-
-  const orgId = resolveOrgId(req);
-  if (!orgId) {
-    return res.status(401).json({ error: 'Organization context required' });
-  }
+router.get('/:projectIdent/status', async (req: Request, res: Response) => {
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
 
   try {
-    // Get project sections (tenant-scoped — readiness is tenant data)
-    let sections: any[] = [];
-    try {
-      const result = await pool.query(
-        `SELECT section_code, title, status, module, required,
-                word_count, updated_at
-         FROM project_sections WHERE project_id = $1 AND organization_id = $2
-         ORDER BY section_code`,
-        [projectId, orgId]
-      );
-      sections = result.rows;
-    } catch {
-      // Table may not exist — return empty readiness
-    }
+    // Get project sections (tenant-scoped — readiness is tenant data). A missing
+    // table returns empty readiness; a program-spine ident loads an honestly-
+    // empty set (no linked section store — see PROGRAM_SECTION_STORE_BLOCKER).
+    const sections = await loadAnchorSections(
+      anchor,
+      orgId,
+      `section_code, title, status, module, required,
+                word_count, updated_at`,
+      { orderBy: 'section_code', swallow: true },
+    );
 
     // Module-level readiness
     const moduleReadiness = Object.entries(ECTD_MODULE_DEFS).map(([code, def]) => {
@@ -391,7 +546,9 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
     const overallPct = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
 
     res.json({
-      projectId,
+      projectId: anchor.numericProjectId,
+      projectIdent: ident,
+      programId: anchor.programId,
       overallReadiness: overallPct,
       // Content completeness — every required section approved/locked/final.
       // This is what `submissionReady` used to report, and it is a real signal;
@@ -400,10 +557,10 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
       // Readiness to TRANSMIT. Complete section text over a package with no leaf
       // files is not a submission, and the surface renders this field as the
       // words "submission-ready" beside a download button.
-      submissionReady: overallPct === 100 && submissionBlockers([]).length === 0,
+      submissionReady: overallPct === 100 && submissionBlockers([], anchor).length === 0,
       submissionBlockers: overallPct === 100
-        ? submissionBlockers([])
-        : ['Required sections are not all complete.', ...submissionBlockers([])],
+        ? submissionBlockers([], anchor)
+        : ['Required sections are not all complete.', ...submissionBlockers([], anchor)],
       modules: moduleReadiness,
       totalSections: sections.length,
       totalRequired,
@@ -425,20 +582,16 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GET /:projectId/history — Compilation history
+// GET /:projectIdent/history — Compilation history
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.get('/:projectId/history', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
-
+router.get('/:projectIdent/history', async (req: Request, res: Response) => {
   // Compilation history is tenant data. The name-LIKE filter alone matched every
   // organization's compilations for the same project number, so one tenant could
   // read another's submission history. See ledger C-16.
-  const orgId = resolveOrgId(req);
-  if (!orgId) {
-    return res.status(401).json({ error: 'Organization context required' });
-  }
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
 
   try {
     let compilations: any[] = [];
@@ -450,14 +603,14 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
          WHERE organization_id = $1 AND compilation_name LIKE $2
          ORDER BY created_at DESC
          LIMIT 20`,
-        [orgId, `%Project ${projectId}%`]
+        [orgId, `%${anchor.label}%`]
       );
       compilations = result.rows;
     } catch (err: any) {
-      console.warn(`[eCTD History] query failed for project ${projectId}: ${err?.message}`);
+      console.warn(`[eCTD History] query failed for ${anchor.label}: ${err?.message}`);
     }
 
-    res.json({ projectId, compilations });
+    res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
   } catch (error: any) {
     console.error('[eCTD History] Error:', error);
     res.status(500).json({ error: 'Failed to get compilation history', message: error.message });
@@ -465,40 +618,33 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POST /:projectId/validate — Pre-compile validation only
+// POST /:projectIdent/validate — Pre-compile validation only
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/:projectId/validate', async (req: Request, res: Response) => {
-  const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
-
-  const orgId = resolveOrgId(req);
-  if (!orgId) {
-    return res.status(401).json({ error: 'Organization context required' });
-  }
+router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
+  const resolved = await anchorFromRequest(req, res);
+  if (!resolved) return;
+  const { orgId, anchor, ident } = resolved;
 
   try {
     const { region = 'FDA' } = req.body;
 
-    let sections: any[] = [];
-    try {
-      const result = await pool.query(
-        `SELECT section_code, title, status, content, word_count, module, required
-         FROM project_sections WHERE project_id = $1 AND organization_id = $2`,
-        [projectId, orgId]
-      );
-      sections = result.rows;
-    } catch {
-      // Table may not exist
-    }
+    const sections = await loadAnchorSections(
+      anchor,
+      orgId,
+      `section_code, title, status, content, word_count, module, required`,
+      { swallow: true },
+    );
 
-    const results = runPreCompileValidation(sections, region);
+    const results = withAnchorFindings(runPreCompileValidation(sections, region), anchor);
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;
     const errorCount = results.filter(r => r.severity === 'error').length;
 
     res.json({
-      projectId,
+      projectId: anchor.numericProjectId,
+      projectIdent: ident,
+      programId: anchor.programId,
       valid: errorCount === 0,
       results,
       summary: { pass: passCount, warnings: warnCount, errors: errorCount },
@@ -640,13 +786,15 @@ function runPreCompileValidation(sections: any[], region: string): ValidationRes
  * `sequence`. Until then the document says so.
  */
 function generateECTD4Backbone(opts: {
-  projectId: number;
+  /** Recorded application identity: `IND-<numeric id>` (legacy) or the program's
+   *  real recorded code — never an invented number. */
+  applicationRef: string;
   submissionType: string;
   region: string;
   modules: ModuleCompilationStatus[];
   sections: any[];
 }): string {
-  const { projectId, submissionType, region, modules, sections } = opts;
+  const { applicationRef, submissionType, region, modules, sections } = opts;
   const timestamp = new Date().toISOString();
   const sequenceNumber = '0000';
 
@@ -709,7 +857,7 @@ function generateECTD4Backbone(opts: {
            xmlns:xlink="http://www.w3.org/1999/xlink"
            version="4.0">
   <ectd:envelope>
-    <ectd:application-number>IND-${projectId}</ectd:application-number>
+    <ectd:application-number>${escapeXml(applicationRef)}</ectd:application-number>
     <ectd:sequence-number>${sequenceNumber}</ectd:sequence-number>
     <ectd:submission-type>${submissionType}</ectd:submission-type>
     <ectd:region>${region}</ectd:region>

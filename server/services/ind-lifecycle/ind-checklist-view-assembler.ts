@@ -232,6 +232,11 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
     const productName = s.product_name != null && str(s.product_name).trim() !== '' ? str(s.product_name) : null;
     const title = str(s.title).trim() !== '' ? str(s.title) : null;
     return {
+      // The REAL submissions.id this checklist was assembled from — the anchor the
+      // lifecycle filing routes (/safety-report/file, /annual-report/file,
+      // /amendment/file) need to create an ectd_sequences row. Real data, not an
+      // invented handle: every checklist row IS a submissions row.
+      submissionId: subId,
       // `code` is the surface's stable key and the drugName fallback; prefer the real
       // product/title, else a stable per-submission code.
       code: productName ?? title ?? `IND-${subId}`,

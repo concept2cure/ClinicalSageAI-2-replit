@@ -71,6 +71,32 @@ describe('EctdCompile — real eCTD assembly', () => {
     // No compile/status calls fire without a project.
     expect(apiRequest).not.toHaveBeenCalled();
   });
+
+  it('a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone', async () => {
+    // window.C2C_PROJECT.id is a regulatory_programs UUID in the real shell.
+    const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+    const STATUS_PROGRAM = {
+      projectId: null, projectIdent: uuid, programId: uuid, overallReadiness: 0,
+      contentComplete: false, submissionReady: false, totalSections: 0, totalRequired: 22, totalCompleted: 0, lastUpdated: null,
+      submissionBlockers: ['Required sections are not all complete.', 'This program has no linked section-tracking store'],
+      modules: [{ moduleCode: 'm1', moduleName: 'Administrative Information', totalSections: 0, requiredSections: 7, completedRequired: 0, completionPct: 0, ready: false }],
+    };
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === `/api/ectd-compile/${uuid}/status`) return ok(STATUS_PROGRAM);
+      if (method === 'GET' && url === `/api/ectd-compile/${uuid}/history`) return ok({ compilations: [] });
+      return ok({});
+    });
+    (window as any).C2C_PROJECT = { id: uuid, title: 'BX-204 CGM', code: 'BX-204' };
+    render(<EctdCompile {...props()} />);
+
+    // The server's readiness (not a client dead-end) renders.
+    expect(await screen.findByText('Administrative Information')).toBeTruthy();
+    expect(screen.queryByText(/no numeric project id/)).toBeNull();
+    // The status/history reads addressed the UUID ident verbatim.
+    expect(apiRequest.mock.calls.some((c) => c[1] === `/api/ectd-compile/${uuid}/status`)).toBe(true);
+    expect(apiRequest.mock.calls.some((c) => c[1] === `/api/ectd-compile/${uuid}/history`)).toBe(true);
+  });
 });
 
 describe('EctdCompile — what the surface may claim', () => {

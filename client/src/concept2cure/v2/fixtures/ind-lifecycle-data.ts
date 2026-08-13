@@ -188,6 +188,12 @@ export const INDL_DELIVERABLES: IndlDeliverable[] = [
     ask: 'Assemble a Letter of Authorization (m1.4.1) for a referenced DMF.',
   },
   {
+    id: 'right-of-reference', title: 'Statement of Right of Reference', placement: 'eCTD m1.4.2', ref: '21 CFR 312.23(b)', ai: false, group: 'file',
+    route: 'POST /api/ind-lifecycle/right-of-reference',
+    desc: 'The sponsor’s statement that a right of reference to another file has been granted, with its gap list.',
+    ask: 'Assemble the Statement of Right of Reference (m1.4.2) for a referenced file.',
+  },
+  {
     id: 'safety-report', title: 'IND Safety Report', placement: 'eCTD amendment', ref: '21 CFR 312.32', ai: true, group: 'lifecycle',
     route: 'POST /api/ind-lifecycle/safety-report',
     desc: 'Classifies the event (7/15-day reportability) and assembles the expedited safety report + E2B(R3) ICSR.',
