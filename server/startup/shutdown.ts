@@ -22,7 +22,6 @@ type AnyServer = { close: (cb?: () => void) => void } | null;
 
 interface ShutdownContext {
   getHttpServer: () => AnyServer;
-  getPythonProcess: () => { kill: (signal: string) => void } | null;
   pool: Pool;
 }
 
@@ -42,12 +41,6 @@ export async function gracefulShutdown(signal: string, ctx: ShutdownContext): Pr
         resolve();
       }, 10000);
     });
-  }
-
-  const pythonProcess = ctx.getPythonProcess();
-  if (pythonProcess) {
-    console.log('🔄 Shutting down Python backend...');
-    pythonProcess.kill('SIGTERM');
   }
 
   try {

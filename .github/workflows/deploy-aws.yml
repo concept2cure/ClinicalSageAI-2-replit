@@ -54,9 +54,10 @@ env:
   #     are worse than no worker, so pointing the "worker" build at
   #     Dockerfile.optimized would have been an actively harmful fix.
   #
-  # The Python Celery worker under services/ (services/worker.Dockerfile) is a
-  # different stack entirely — it is exercised only by docker-compose.e2e.yml and
-  # was never the NODE_ENV=production image this ECS service expects.
+  # The Python Celery worker that lived under services/ (services/worker.Dockerfile)
+  # was a different stack entirely — exercised only by its own E2E harness and
+  # never the NODE_ENV=production image this ECS service expects. It was deleted
+  # (D9, 2026-08-13) along with docker-compose.e2e.yml and its workflows.
   #
   # TODO(infra): the `c2c-production-worker` ECS service + `worker` ECR repo are
   # still declared in terraform/ with nothing to deploy into them. Remove them

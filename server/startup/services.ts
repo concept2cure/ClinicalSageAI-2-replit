@@ -8,7 +8,6 @@
  *  - Auth table column bootstrap (idempotent)
  *  - Feature toggle bootstrap (UNIFIED_REGULATORY_SUBMISSIONS)
  *  - AnA Capability Registry seeding (delayed, non-blocking)
- *  - Python backend stub (disabled, kept for future)
  *  - Parallel startup services (chain monitor, pattern registry,
  *    socket server, scheduled jobs, hocuspocus)
  *
@@ -26,11 +25,12 @@ import { ensureCoreTables } from '../db/ensureCoreTables';
 import { setSchemaReadiness } from './readiness-state';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 
-/** Python backend is currently disabled (size optimization). Kept as a stub
- * so the graceful-shutdown handler can address it if it gets re-enabled. */
-export function startPythonBackend(): Promise<null> {
-  return Promise.resolve(null);
-}
+// NOTE (D9, 2026-08-13): the `startPythonBackend()` stub that lived here (and
+// always resolved null) was removed together with the dead Python stack under
+// services/ (api.py / celery_app.py / ectd_generator.py — no Node caller, never
+// deployed; see .github/workflows/deploy-aws.yml worker note). The only live
+// Node→Python bridge is workers/artifact-compute (docx runtimes), which spawns
+// per-invocation processes and needs no startup/shutdown hook.
 
 /**
  * Tables classified "important" by ensureCoreTables that are nonetheless

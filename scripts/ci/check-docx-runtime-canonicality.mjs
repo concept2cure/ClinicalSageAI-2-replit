@@ -65,7 +65,6 @@ const APPROVED_PYTHON = new Set([
   'ind_automation/create_form_templates.py',
   'ind_automation/compilers/ectd4_compiler.py',
   'lumen_cortex/core/extractors/text_extract.py',
-  'services/ectd_generator.py',
 ]);
 
 // Patterns that indicate test files (always allowed)
