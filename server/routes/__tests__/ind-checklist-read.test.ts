@@ -42,7 +42,7 @@ describe('GET /api/ind-checklist', () => {
       {
         code: 'BX-301', drugName: 'BX-301', productName: 'BX-301 (anti-BCMA mAb)',
         indication: null, sponsorName: 'Concept2Cure', submissionType: 'IND',
-        targetReceiptOffsetDays: 14,
+        targetReceiptDate: null,
         forms: [{ id: 'FDA_1571', title: 'Form FDA 1571', label: 'IND Application', ref: '21 CFR 312.23(a)(1)', done: true }],
         sections: [{ code: 'm1.2', title: 'Cover Letter', module: 'M1', ref: '21 CFR 312.23(a)(1)', ai: true, status: 'signed' }],
       },
@@ -54,7 +54,7 @@ describe('GET /api/ind-checklist', () => {
     const first = res.body.data[0];
     for (const k of [
       'code', 'drugName', 'productName', 'indication', 'sponsorName',
-      'submissionType', 'targetReceiptOffsetDays', 'forms', 'sections',
+      'submissionType', 'targetReceiptDate', 'forms', 'sections',
     ]) {
       expect(first).toHaveProperty(k);
     }

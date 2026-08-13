@@ -141,6 +141,78 @@ describe('NdaCockpit BLA tab — honest empty state', () => {
   });
 });
 
+describe('NdaCockpit — no fabricated filing identity or review clock', () => {
+  /* The surface used to hardcode an invented filing — 'BX-204 · NDA 212345 ·
+     505(b)(1) · standard review' in the header, 'NDA 212345' in the eyebrow and
+     in the AnA prompts (the USER's words), 'Day 60 · PDUFA Day 304' KPI tiles,
+     and an NDA_CLOCK fixture (14 Jul 2026 receipt / 14 May 2027 PDUFA) rendered
+     as a live review clock. All of it is retired: identity comes from the open
+     program (window.C2C_PROJECT) or is claimed not at all, and the clock tab is
+     an honest "no review clock recorded" state (there is no clock store). */
+  const FABRICATED = [
+    'NDA 212345',
+    '212345',
+    'BX-204',
+    '505(b)(1)',
+    'standard review (10-month)',
+    '14 Jul 2026',
+    '12 Sep 2026',
+    '14 May 2027',
+    'PDUFA Day 304',
+    'Day 60',
+  ];
+
+  beforeEach(() => {
+    mockApi({ ok: true, status: 200, body: { assessments: [] } });
+    delete (window as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+  afterEach(() => {
+    delete (window as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  it('claims no application identity when no program is open', async () => {
+    render(<NdaCockpit {...props()} />);
+    await screen.findByText('No CTD modules yet'); // load settled
+    for (const s of FABRICATED) {
+      expect(document.body.textContent, `fabricated "${s}" leaked back in`).not.toContain(s);
+    }
+  });
+
+  it('renders the honest no-clock state on the PDUFA tab — never invented dates', async () => {
+    render(<NdaCockpit {...props()} />);
+    await screen.findByText('No CTD modules yet');
+    fireEvent.click(screen.getByText('PDUFA review clock'));
+
+    expect(await screen.findByText('No review clock recorded')).toBeTruthy();
+    // The honest state names the reason and the next action.
+    expect(document.body.textContent).toContain('The review clock starts when FDA accepts the filing');
+    for (const s of FABRICATED) expect(document.body.textContent).not.toContain(s);
+  });
+
+  it('sends AnA a generic program prompt — never an invented application number', async () => {
+    const p = props();
+    render(<NdaCockpit {...p} />);
+    await screen.findByText('No CTD modules yet');
+    fireEvent.click(screen.getByText(/Assess with AnA/));
+
+    expect(p.onAsk).toHaveBeenCalledTimes(1);
+    const sent = String(p.onAsk.mock.calls[0][0]);
+    expect(sent).not.toContain('212345');
+    expect(sent).not.toContain('BX-204');
+    expect(sent).toContain('this NDA program');
+  });
+
+  it('names the REAL open program (window.C2C_PROJECT) when one is open', async () => {
+    (window as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: 7, title: 'ZX-9 First-in-Human' };
+    render(<NdaCockpit {...props()} />);
+    await screen.findByText('No CTD modules yet');
+
+    // The name appears in the header intro (and again in the eyebrow).
+    expect(screen.getAllByText(/ZX-9 First-in-Human/).length).toBeGreaterThan(0);
+    for (const s of FABRICATED) expect(document.body.textContent).not.toContain(s);
+  });
+});
+
 describe('NdaCockpit BLA tab — honest error state', () => {
   beforeEach(() =>
     mockApi({ ok: false, status: 403, body: { error: 'FORBIDDEN' } }),

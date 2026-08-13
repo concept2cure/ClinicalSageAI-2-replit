@@ -116,8 +116,15 @@ export function SignalsTab({ signals, loading, programTitle, onAskAna }: Signals
                       </div>
                       <div className="k-holder">{('assess' in s ? s.assess : '') || ''}</div>
                     </td>
-                    <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-200)' }}>
-                      {s.count}
+                    <td
+                      style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-200)' }}
+                      title={
+                        typeof s.count === 'number'
+                          ? 'Adverse-event cases sharing this signal’s MedDRA PT code in this program’s scope'
+                          : 'No MedDRA PT linkage on this signal — supporting cases cannot be counted'
+                      }
+                    >
+                      {typeof s.count === 'number' ? s.count : '—'}
                     </td>
                     <td>
                       <span className={`status-pill ${s.severity}`}>{s.severity}</span>

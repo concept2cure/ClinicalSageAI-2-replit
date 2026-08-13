@@ -5,9 +5,12 @@
  *     /api/regulatory-programs/:id/literature (fetched once by CerSurface via
  *     useProgramExtras and passed down); fixtures only under sample mode.
  *   · Search panel — on-demand PubMed search through the real backend
- *     (GET /api/cerv2/literature/search → pubmed-client). Results are
- *     READ-ONLY: no literature_entries write path exists yet, so the tab says
- *     plainly that a search is not recorded to the project corpus.
+ *     (GET /api/cerv2/literature/search → pubmed-client), with a per-row
+ *     "Record" action that persists hits to the org corpus through
+ *     POST /api/cerv2/literature/record (literature_entries). Rows show their
+ *     real recorded/failed state and the server's failure text verbatim; the
+ *     table stores entries unscreened — include/exclude appraisal is not
+ *     persisted (the table cannot represent it).
  */
 
 import * as React from 'react';
@@ -16,7 +19,7 @@ import { AskAnaChip } from '../AskAnaChip';
 import { CER_LITERATURE } from '../../data/cer';
 import type { LiteratureBucket as KitLiteratureBucket } from '../../data/cer';
 import type { LiteratureBucket as LiveLiteratureBucket } from '../../hooks/useProgramExtras';
-import { useCerLiteratureSearch } from '../../hooks/useCerLiterature';
+import { useCerLiteratureSearch, useCerLiteratureRecorder } from '../../hooks/useCerLiterature';
 import type { CerLiteratureStudyType } from '../../hooks/useCerLiterature';
 import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { useSampleMode } from '../../components/DataGate';
@@ -26,6 +29,7 @@ export interface LiteratureTabProps {
   literature: LiveLiteratureBucket[] | null;
   literatureTotal: number;
   loading: boolean;
+  programId: string | null;
   programTitle: string | null;
   onAskAna: (text: string) => void;
 }
@@ -42,6 +46,7 @@ export function LiteratureTab({
   literature,
   literatureTotal,
   loading,
+  programId,
   programTitle,
   onAskAna,
 }: LiteratureTabProps) {
@@ -51,6 +56,7 @@ export function LiteratureTab({
   const [studyType, setStudyType] = React.useState<CerLiteratureStudyType>('any');
   const [localRefusal, setLocalRefusal] = React.useState<string | null>(null);
   const { searching, result, requestError, search } = useCerLiteratureSearch();
+  const { rowState, recordError, recordNotes, record } = useCerLiteratureRecorder(programId);
 
   const sourceLiterature = useSampleRows<LiveLiteratureBucket | KitLiteratureBucket>(
     literature && literature.length > 0 ? literature : null,
@@ -95,19 +101,20 @@ export function LiteratureTab({
               <div>
                 <div className="t">Search PubMed</div>
                 <div className="s">
-                  Results are not recorded to the project corpus — recording requires a persistence
-                  route that does not exist yet
+                  Record hits to the organization corpus per row — entries are stored unscreened
+                  (include/exclude appraisal is not persisted)
                 </div>
               </div>
               <div className="actions">
                 <button
                   className="section-more"
-                  title="Have AnA run the search with her search_literature tool and appraise the results in conversation"
+                  title="Have AnA run the search with search_literature, appraise the results, and record the keepers to the corpus with record_literature"
                   onClick={() =>
                     onAskAna(
                       `Search PubMed with search_literature for ${programTitle ?? 'this device'} literature` +
                         (query.trim().length >= 2 ? ` (query: "${query.trim()}")` : '') +
-                        ' and appraise the results for the CER — scientific validity, relevance, and weighting per MEDDEV 2.7/1.',
+                        ' and appraise the results for the CER — scientific validity, relevance, and weighting per MEDDEV 2.7/1. ' +
+                        'Record the relevant hits to the corpus with record_literature.',
                     )
                   }
                 >
@@ -197,55 +204,96 @@ export function LiteratureTab({
               )}
             </div>
             {result?.available && result.articles.length > 0 && (
-              <div className="tbl-scroll">
-                <table className="tbl">
-                  <thead>
-                    <tr>
-                      <th>PMID</th>
-                      <th>Title</th>
-                      <th>Journal</th>
-                      <th>Published</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.articles.map((a) => (
-                      <tr key={a.pmid}>
-                        <td>
-                          <a
-                            className="k-num"
-                            href={a.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Open on PubMed"
-                          >
-                            {a.pmid}
-                          </a>
-                        </td>
-                        <td>
-                          <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
-                            {a.title || 'Untitled record'}
-                            <AskAnaChip
-                              onAsk={() =>
-                                onAskAna(
-                                  `Appraise PMID ${a.pmid} ("${a.title || 'untitled'}") for the CER — ` +
-                                    'scientific validity, relevance to the intended purpose, and evidence weighting per MEDDEV 2.7/1 Rev 4.',
-                                )
-                              }
-                              label={`Appraise PMID ${a.pmid} with AnA`}
-                            />
-                          </div>
-                          <div className="k-holder">
-                            {a.authors || 'Authors not listed'}
-                            {a.doi ? ` · ${a.doi}` : ''}
-                          </div>
-                        </td>
-                        <td style={{ fontSize: 11, color: 'var(--text-300)' }}>{a.journal || '—'}</td>
-                        <td style={{ fontSize: 11, color: 'var(--text-300)' }}>{a.pubDate || '—'}</td>
+              <>
+                {recordError && (
+                  <div
+                    role="alert"
+                    style={{ padding: '6px 16px', fontSize: 11, color: 'var(--err, #c0392b)' }}
+                  >
+                    {recordError}
+                  </div>
+                )}
+                {recordNotes.length > 0 && (
+                  <div
+                    role="status"
+                    style={{ padding: '6px 16px', fontSize: 11, color: 'var(--text-300)' }}
+                  >
+                    Recorded — {recordNotes.join('; ')}. The corpus chart refreshes on reload.
+                  </div>
+                )}
+                <div className="tbl-scroll">
+                  <table className="tbl">
+                    <thead>
+                      <tr>
+                        <th>PMID</th>
+                        <th>Title</th>
+                        <th>Journal</th>
+                        <th>Published</th>
+                        <th>Corpus</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {result.articles.map((a) => (
+                        <tr key={a.pmid}>
+                          <td>
+                            <a
+                              className="k-num"
+                              href={a.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Open on PubMed"
+                            >
+                              {a.pmid}
+                            </a>
+                          </td>
+                          <td>
+                            <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
+                              {a.title || 'Untitled record'}
+                              <AskAnaChip
+                                onAsk={() =>
+                                  onAskAna(
+                                    `Appraise PMID ${a.pmid} ("${a.title || 'untitled'}") for the CER — ` +
+                                      'scientific validity, relevance to the intended purpose, and evidence weighting per MEDDEV 2.7/1 Rev 4.',
+                                  )
+                                }
+                                label={`Appraise PMID ${a.pmid} with AnA`}
+                              />
+                            </div>
+                            <div className="k-holder">
+                              {a.authors || 'Authors not listed'}
+                              {a.doi ? ` · ${a.doi}` : ''}
+                            </div>
+                          </td>
+                          <td style={{ fontSize: 11, color: 'var(--text-300)' }}>{a.journal || '—'}</td>
+                          <td style={{ fontSize: 11, color: 'var(--text-300)' }}>{a.pubDate || '—'}</td>
+                          <td>
+                            {rowState[a.pmid] === 'recorded' ? (
+                              <span style={{ fontSize: 11, color: 'var(--text-300)' }}>Recorded</span>
+                            ) : (
+                              <button
+                                className="section-more"
+                                disabled={rowState[a.pmid] === 'recording'}
+                                title={
+                                  rowState[a.pmid] === 'failed'
+                                    ? 'Recording failed — retry'
+                                    : 'Record this hit to the organization literature corpus'
+                                }
+                                onClick={() => void record([a])}
+                              >
+                                {rowState[a.pmid] === 'recording'
+                                  ? 'Recording…'
+                                  : rowState[a.pmid] === 'failed'
+                                    ? 'Retry'
+                                    : 'Record'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
             {result?.available && result.articles.length === 0 && (
               <div
@@ -297,8 +345,8 @@ export function LiteratureTab({
                   <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
                     No literature corpus indexed yet
                   </div>
-                  Run a literature search and record the protocol via AnA to populate the
-                  year-bucketed corpus.
+                  Search PubMed on the left and record hits to the corpus — entries whose title or
+                  abstract mention the product name appear in this year-bucketed chart.
                 </div>
               ) : (
                 sourceLiterature.map((l) => (

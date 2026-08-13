@@ -127,8 +127,8 @@ export function renderDataOriginsPdf(
   meta: DataOriginsPdfMeta = {},
 ): Promise<Buffer> {
   // pdfkit ships no type definitions, so the constructor and the drawing API
-  // are reached through `any` — the same pattern documentExportService and
-  // cerGenerator already use for this dependency. Kept to one place here.
+  // are reached through `any` — the same pattern documentExportService
+  // already uses for this dependency. Kept to one place here.
   const stamp = documentDate(report.generatedAt);
   const doc: any = new (PDFDocument as any)({
     size: 'LETTER',

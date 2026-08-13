@@ -672,7 +672,8 @@ export const C2C_MIGRATION_FILES = [
   // So the ten live tables are EXTRACTED into one canonical migration and the
   // tree stays quarantined. The extraction also fixes two definition-vs-consumer
   // mismatches that provisioning alone would not have: `templates` had no
-  // `sections` column though cerGenerator selects it, and `doc_sections` keyed on
+  // `sections` column though the (since-deleted, D11b) cerGenerator selected
+  // it, and `doc_sections` keyed on
   // `section_id` though command-executor selects `id`. Verified on a real
   // PostgreSQL 16: applies twice, and every consumer's actual query executes.
   'db/migrations/20260801_consolidated_tree_reconciliation.sql',
