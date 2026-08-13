@@ -278,7 +278,10 @@ describe('AIGateway', () => {
     };
 
     it('records NO temperature for a reasoning-only model — it was never sent', async () => {
-      expect(await auditedTemperature('claude-opus-4-7', { temperature: 0.5 })).toBeNull();
+      // undefined on the entry; GatewayAuditLogger coalesces to NULL in the
+      // column (`entry.temperature ?? null`), so the stored provenance is
+      // "not applicable" rather than a number nobody sent.
+      expect(await auditedTemperature('claude-opus-4-7', { temperature: 0.5 })).toBeUndefined();
     });
 
     it('records the real temperature for a model that does accept sampling', async () => {

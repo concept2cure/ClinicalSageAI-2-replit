@@ -1912,9 +1912,13 @@ export class AIGateway {
         // provenance record that is confidently wrong is worse than one that
         // says "not applicable", because only the first gets trusted.
         //
-        // Record the EFFECTIVE value: null when the model rejects sampling.
+        // Record the EFFECTIVE value: omitted when the model rejects sampling.
+        // `undefined`, not `null`, because GatewayAuditEntry.temperature is
+        // `number | undefined`; the writer coalesces it (`entry.temperature ??
+        // null`), so the column still stores NULL — the DB outcome is identical
+        // and the type is honest.
         temperature: this.isReasoningOnlyModel(response.model)
-          ? null
+          ? undefined
           : request.temperature ?? 0.7,
         seed: request.seed,
         promptHash: this.hashPrompt(request.messages),
