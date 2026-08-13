@@ -353,7 +353,7 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'fileCheck',
     group: 'device',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/510k-workflow', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms'],
+    apiPrefixes: ['/api/510k/estar', '/api/510k/device', '/api/cerv2', '/api/cerv2-sections', '/api/fda-forms'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,

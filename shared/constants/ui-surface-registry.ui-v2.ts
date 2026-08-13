@@ -362,7 +362,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'device',
     icon: 'stethoscope',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/mdx', '/api/510k-workflow', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
+    apiPrefixes: ['/api/mdx', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
     anaToolFamilies: [],
     sharedContract: '@shared/types/predicate-intelligence',
     discoveryCatalog: null,
