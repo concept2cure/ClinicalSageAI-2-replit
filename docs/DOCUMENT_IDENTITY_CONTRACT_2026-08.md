@@ -1,9 +1,13 @@
 # Document Identity Contract — proposal awaiting approval
 
-**Status:** PROPOSAL. Nothing here is implemented. `RECONCILE.md` §6 records that a
-previous identity/alias/placement registry was **reverted in full** and set readiness
-to 0/100 "pending an approved interface contract". This document is that contract,
-written to be approved, amended, or rejected — not to be assumed.
+**Status: APPROVED 2026-08-13** (product owner, this session). Option C below is the
+approved approach. `RECONCILE.md` §6 recorded that a previous identity/alias/placement
+registry was **reverted in full** pending "an approved interface contract" — this is
+that contract, and this approval is the gate it was waiting on.
+
+Implementation lands in two ordered slices, each independently revertible:
+**C1 — program anchor** (fixes consequences 1, 2, 5), then **C2 — alias map**
+(fixes 3, 4). Section 5's verification applies to both.
 
 **Decision owners:** DB owner + product. **Author:** GA remediation workstream, 2026-08-13.
 
