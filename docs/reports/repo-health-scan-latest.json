@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-13T04:35:20.662Z",
+  "generatedAt": "2026-08-13T04:59:13.389Z",
   "git": {
-    "sha": "c20097fd6e52d3e3a6e45f8f1f98bd053152f0f6",
+    "sha": "0c40d21ff82e37ac896f6ad699ce06d80b436de4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2533,6 +2533,10 @@
         "lines": 1751
       },
       {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1735
+      },
+      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
@@ -2543,10 +2547,6 @@
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
-      },
-      {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1628
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",
