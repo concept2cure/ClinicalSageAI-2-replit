@@ -15,9 +15,14 @@
  */
 
 import { useCallback } from 'react';
-import { useFetchJson } from './useFetchJson';
+import { buildAuthHeaders, useFetchJson } from './useFetchJson';
 
-const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
+/** Mutators need the same Bearer + x-organization-id headers as the read
+ *  path — cookies alone 401 at the global /api gate (see buildAuthHeaders). */
+const jsonHeaders = (): Record<string, string> => ({
+  'Content-Type': 'application/json',
+  ...buildAuthHeaders(),
+});
 
 /* ─── Registration ──────────────────────────────────────────────────── */
 
@@ -88,7 +93,7 @@ export function useEstarRegistration(): UseEstarRegistrationResult {
         const res = await fetch('/api/510k/estar/registration', {
           method: 'PUT',
           credentials: 'include',
-          headers: JSON_HEADERS,
+          headers: jsonHeaders(),
           body: JSON.stringify(patch),
         });
         if (!res.ok) return null;
@@ -167,7 +172,7 @@ export async function assessFilingReadiness(
     const res = await fetch('/api/510k/estar/filing-readiness', {
       method: 'POST',
       credentials: 'include',
-      headers: JSON_HEADERS,
+      headers: jsonHeaders(),
       body: JSON.stringify(body),
     });
     if (!res.ok) return null;
@@ -241,7 +246,7 @@ export function useEstarSubmissions(
         const res = await fetch('/api/510k/estar/submissions', {
           method: 'POST',
           credentials: 'include',
-          headers: JSON_HEADERS,
+          headers: jsonHeaders(),
           body: JSON.stringify(input),
         });
         if (!res.ok) return null;
@@ -261,7 +266,7 @@ export function useEstarSubmissions(
         const res = await fetch(`/api/510k/estar/submissions/${encodeURIComponent(id)}`, {
           method: 'PATCH',
           credentials: 'include',
-          headers: JSON_HEADERS,
+          headers: jsonHeaders(),
           body: JSON.stringify({ status: nextStatus, ...extra }),
         });
         if (!res.ok) return null;

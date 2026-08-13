@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import archiver from 'archiver';
+import { createHash } from 'crypto';
 import { PassThrough } from 'stream';
 import { z } from 'zod';
 import { stylePacks } from '../export/stylePacks/config';
@@ -28,7 +29,16 @@ import {
   assessEstarFilingReadiness,
   type FilingLeaf,
 } from '../services/pathway-engines/estar/estar-filing-readiness';
-import { loadDeviceContentLeaves } from '../services/pathway-engines/estar/estar-content-leaves';
+import {
+  loadDeviceContentLeaves,
+  loadAuthoredDeviceSections,
+  sectionsToEditorJson,
+} from '../services/pathway-engines/estar/estar-content-leaves';
+import { and, eq } from 'drizzle-orm';
+import { db } from '../db';
+import { fda510kProjects } from '../../shared/schema';
+import { regulatoryPrograms } from '../../shared/schema/programs';
+import auditService from '../services/auditService';
 import {
   getEstarRegistration,
   upsertEstarRegistration,
@@ -82,17 +92,104 @@ const attachmentSchema = z.object({
   mimeType: z.string().optional(),
 });
 
-const requestSchema = z.object({
-  meta: z.object({
+/**
+ * Export meta accepts either the legacy numeric PM-spine project id or a
+ * program identifier (`ident`: numeric fda510kProjects.id, regulatoryPrograms
+ * UUID, or program code — the same 3-way contract as the document-preview
+ * route). At least one is required so every export resolves to a real,
+ * org-owned project/program before anything renders.
+ */
+const exportMetaSchema = z
+  .object({
     id: z.string().min(1),
     submissionName: z.string().optional(),
-    projectId: z.coerce.number().int().positive(),
+    projectId: z.coerce.number().int().positive().optional(),
+    ident: z.string().min(1).optional(),
     title: z.string().optional(),
     ctdSection: z.string().optional(),
-  }),
-  content: z.any(),
-  attachments: z.array(attachmentSchema).optional(),
-});
+  })
+  .refine((m) => m.projectId !== undefined || m.ident !== undefined, {
+    message: 'meta.projectId or meta.ident is required',
+  });
+
+const requestSchema = z
+  .object({
+    meta: exportMetaSchema,
+    /** TipTap editor JSON. Optional when useProjectContent loads it server-side. */
+    content: z.any().optional(),
+    /** Assemble content from the org's authored cerv2_510k_sections (same
+     *  source filing-readiness uses) instead of a client-supplied payload. */
+    useProjectContent: z.boolean().optional(),
+    /** Narrow useProjectContent to one document's sections when known. */
+    documentId: z.coerce.number().int().positive().optional(),
+    attachments: z.array(attachmentSchema).optional(),
+  })
+  .refine((b) => b.content !== undefined || b.useProjectContent === true, {
+    message: 'content or useProjectContent is required',
+  });
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+interface ProjectAnchor {
+  /** Numeric PM-spine project id when one exists — required for artifact-registry placement. */
+  anchorProjectId: number | null;
+  /** The resolved regulatoryPrograms UUID when the ident named a program. */
+  programUuid: string | null;
+  title: string | null;
+}
+
+/**
+ * Resolve the export's project anchor, org-scoped, mirroring the
+ * document-preview ident contract: numeric → fda510kProjects.id (GA path,
+ * carries the numeric anchor the artifact registry needs), UUID → programs.id,
+ * else → programs.code. Returns null when nothing in this org matches — the
+ * caller must 404, never export against an unresolved project.
+ *
+ * A UUID/code program resolves WITHOUT a numeric anchor: the artifact registry
+ * (concept2cure_artifacts.project_id → projects.id FK) predates the program
+ * spine and has no mapping for it. Until the document-identity contract
+ * (RECONCILE.md §6) lands, those exports are delivered + audit-logged but
+ * explicitly not registry-placed — see the /build handler.
+ */
+async function resolveProjectAnchor(
+  orgId: number,
+  meta: z.infer<typeof exportMetaSchema>,
+): Promise<ProjectAnchor | null> {
+  const ident = meta.ident ?? (meta.projectId !== undefined ? String(meta.projectId) : '');
+  if (!ident) return null;
+
+  if (/^\d+$/.test(ident)) {
+    try {
+      const [row] = await db
+        .select({ id: fda510kProjects.id, deviceName: fda510kProjects.deviceName })
+        .from(fda510kProjects)
+        .where(and(eq(fda510kProjects.id, Number(ident)), eq(fda510kProjects.organizationId, orgId)))
+        .limit(1);
+      if (row) return { anchorProjectId: row.id, programUuid: null, title: row.deviceName ?? null };
+    } catch {
+      /* fall through */
+    }
+    return null;
+  }
+
+  const byUuid = UUID_RE.test(ident);
+  try {
+    const [row] = await db
+      .select({ id: regulatoryPrograms.id, name: regulatoryPrograms.name })
+      .from(regulatoryPrograms)
+      .where(
+        and(
+          byUuid ? eq(regulatoryPrograms.id, ident) : eq(regulatoryPrograms.code, ident),
+          eq(regulatoryPrograms.organizationId, orgId),
+        ),
+      )
+      .limit(1);
+    if (row) return { anchorProjectId: null, programUuid: row.id, title: row.name ?? null };
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
 
 const MAX_ATTACHMENTS = 50;
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
@@ -186,7 +283,27 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
     });
   }
 
-  const { meta, content, attachments = [] } = validation.data;
+  const { meta, useProjectContent, documentId, attachments = [] } = validation.data;
+  let { content } = validation.data;
+
+  const anchor = await resolveProjectAnchor(getOrganizationId(req), meta);
+  if (!anchor) {
+    return res.status(404).json({ error: 'Project not found in your organization' });
+  }
+
+  if (content === undefined && useProjectContent) {
+    const sections = await loadAuthoredDeviceSections(getOrganizationId(req), { documentId });
+    if (sections.length === 0) {
+      return res.status(422).json({
+        error: 'NO_AUTHORED_CONTENT',
+        message:
+          'No authored 510(k) sections found for this organization' +
+          (documentId ? ` (document ${documentId})` : '') +
+          ' — author section content before exporting a draft package.',
+      });
+    }
+    content = sectionsToEditorJson(sections);
+  }
 
   if (attachments.length > MAX_ATTACHMENTS) {
     return res.status(400).json({
@@ -247,36 +364,83 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
       });
     }
 
-    const consequence = await createGovernedExportConsequence({
+    // This route produces a ZIP of rendered section PDFs, NOT the official FDA
+    // eSTAR interactive PDF that CDRH ingests. `officialEstarPdf: false` keeps
+    // that honest so no downstream surface presents this as a submittable eSTAR.
+    const exportMetadata = {
+      format: 'zip',
+      attachmentCount: attachments.length,
+      package: 'eSTAR',
+      officialEstarPdf: false,
+      programId: anchor.programUuid ?? undefined,
+      formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
+      formattingWarnings: (formattingReport as { warnings?: number } | undefined)?.warnings ?? 0,
+    };
+
+    if (anchor.anchorProjectId !== null) {
+      const consequence = await createGovernedExportConsequence({
+        organizationId: getOrganizationId(req),
+        projectId: anchor.anchorProjectId,
+        userId: getUserId(req),
+        title: meta.title || meta.submissionName || `${meta.id} — 510(k) content package (draft)`,
+        contentForArtifact: typeof content === 'string' ? content : JSON.stringify(content),
+        sourceType: 'export_estar_zip',
+        ctdSection: meta.ctdSection || 'm1.5',
+        suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
+        backendRoute: 'POST /api/510k/estar/build',
+        binaryOutput: zipBuffer,
+        mimeType: 'application/zip',
+        filename,
+        metadata: exportMetadata,
+      });
+
+      // The advisory formatting report rides alongside the governed consequence so
+      // the UI can surface "N formatting issues to fix before submitting" without
+      // blocking the draft export.
+      return res.status(200).json({ ...consequence, formattingReport: formattingReport ?? null });
+    }
+
+    // Program-spine (UUID) project: the artifact registry cannot place this
+    // export yet (concept2cure_artifacts.project_id FK → projects.id predates
+    // the program spine; the document-identity contract — RECONCILE.md §6 —
+    // owns the mapping). Deliver the ZIP and audit-log the export with its
+    // SHA-256 so provenance is preserved; say plainly that registry placement
+    // is pending rather than pretending it happened.
+    const zipSha256 = createHash('sha256').update(zipBuffer).digest('hex');
+    await auditService.logAction({
       organizationId: getOrganizationId(req),
-      projectId: meta.projectId,
       userId: getUserId(req),
-      title: meta.title || meta.submissionName || `${meta.id} — 510(k) content package (draft)`,
-      contentForArtifact: typeof content === 'string' ? content : JSON.stringify(content),
-      sourceType: 'export_estar_zip',
-      ctdSection: meta.ctdSection || 'm1.5',
-      suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
-      backendRoute: 'POST /api/510k/estar/build',
-      binaryOutput: zipBuffer,
-      mimeType: 'application/zip',
-      filename,
-      // This route produces a ZIP of rendered section PDFs, NOT the official FDA
-      // eSTAR interactive PDF that CDRH ingests. `officialEstarPdf: false` keeps
-      // that honest so no downstream surface presents this as a submittable eSTAR.
-      metadata: {
-        format: 'zip',
-        attachmentCount: attachments.length,
-        package: 'eSTAR',
-        officialEstarPdf: false,
-        formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
-        formattingWarnings: (formattingReport as { warnings?: number } | undefined)?.warnings ?? 0,
+      action: 'EXPORT_GENERATED',
+      resourceType: 'estar_content_package',
+      resourceId: anchor.programUuid ?? meta.id,
+      details: {
+        backendRoute: 'POST /api/510k/estar/build',
+        sourceType: 'export_estar_zip',
+        filename,
+        sha256: zipSha256,
+        artifactRegistry: 'unplaced_pending_document_identity_contract',
+        ...exportMetadata,
       },
     });
 
-    // The advisory formatting report rides alongside the governed consequence so
-    // the UI can surface "N formatting issues to fix before submitting" without
-    // blocking the draft export.
-    return res.status(200).json({ ...consequence, formattingReport: formattingReport ?? null });
+    return res.status(200).json({
+      governed: false,
+      audited: true,
+      source_type: 'export_estar_zip',
+      artifact_id: null,
+      artifact_registry:
+        'unplaced — artifact registry requires a PM-spine project row; ' +
+        'export is audit-logged with its SHA-256 (pending document-identity contract)',
+      program_id: anchor.programUuid,
+      sha256: zipSha256,
+      downloadable_output_ref: {
+        encoding: 'base64',
+        mime_type: 'application/zip',
+        filename,
+        data: zipBuffer.toString('base64'),
+      },
+      formattingReport: formattingReport ?? null,
+    });
   } catch (error: any) {
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
@@ -412,13 +576,7 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
 });
 
 const officialSchema = z.object({
-  meta: z.object({
-    id: z.string().min(1),
-    submissionName: z.string().optional(),
-    projectId: z.coerce.number().int().positive(),
-    title: z.string().optional(),
-    ctdSection: z.string().optional(),
-  }),
+  meta: exportMetaSchema,
   type: z.enum(ESTAR_TYPES),
   variant: z.enum(ESTAR_VARIANTS),
   /** Canonical field values to write into the official eSTAR AcroForm. */
@@ -449,6 +607,11 @@ router.post('/official', authMiddleware, requireEditorAccess, async (req, res) =
   const { meta, type, variant, data, flatten } = validation.data;
 
   try {
+    const anchor = await resolveProjectAnchor(getOrganizationId(req), meta);
+    if (!anchor) {
+      return res.status(404).json({ error: 'Project not found in your organization' });
+    }
+
     const result = await fillEstarSubmission({
       type,
       variant: templateVariantFor(type, variant),
@@ -469,31 +632,74 @@ router.post('/official', authMiddleware, requireEditorAccess, async (req, res) =
     }
 
     const filename = `${sanitizeFilename(meta.id)}_eSTAR.pdf`;
-    const consequence = await createGovernedExportConsequence({
+    const pdfBuffer = Buffer.from(result.pdfBytes);
+    // The real submittable artifact was produced — assert it truthfully.
+    const officialMetadata = {
+      format: 'pdf',
+      package: 'eSTAR',
+      officialEstarPdf: true,
+      descriptorId: result.descriptorId,
+      filledFields: result.filledFields,
+      skippedFields: result.skippedFields,
+      programId: anchor.programUuid ?? undefined,
+    };
+
+    if (anchor.anchorProjectId !== null) {
+      const consequence = await createGovernedExportConsequence({
+        organizationId: getOrganizationId(req),
+        projectId: anchor.anchorProjectId,
+        userId: getUserId(req),
+        title: meta.title || meta.submissionName || `${meta.id} — official FDA eSTAR`,
+        contentForArtifact: JSON.stringify({ type, variant, descriptorId: result.descriptorId, data }),
+        sourceType: 'export_estar_pdf',
+        ctdSection: meta.ctdSection || 'm1.5',
+        suggestedPlacement: 'Module 1 / official FDA eSTAR (submittable)',
+        backendRoute: 'POST /api/510k/estar/official',
+        binaryOutput: pdfBuffer,
+        mimeType: 'application/pdf',
+        filename,
+        metadata: officialMetadata,
+      });
+
+      return res.status(200).json(consequence);
+    }
+
+    // Program-spine project without a registry anchor — same audited-delivery
+    // contract as /build (see that handler's comment; RECONCILE.md §6).
+    const pdfSha256 = createHash('sha256').update(pdfBuffer).digest('hex');
+    await auditService.logAction({
       organizationId: getOrganizationId(req),
-      projectId: meta.projectId,
       userId: getUserId(req),
-      title: meta.title || meta.submissionName || `${meta.id} — official FDA eSTAR`,
-      contentForArtifact: JSON.stringify({ type, variant, descriptorId: result.descriptorId, data }),
-      sourceType: 'export_estar_pdf',
-      ctdSection: meta.ctdSection || 'm1.5',
-      suggestedPlacement: 'Module 1 / official FDA eSTAR (submittable)',
-      backendRoute: 'POST /api/510k/estar/official',
-      binaryOutput: Buffer.from(result.pdfBytes),
-      mimeType: 'application/pdf',
-      filename,
-      // The real submittable artifact was produced — assert it truthfully.
-      metadata: {
-        format: 'pdf',
-        package: 'eSTAR',
-        officialEstarPdf: true,
-        descriptorId: result.descriptorId,
-        filledFields: result.filledFields,
-        skippedFields: result.skippedFields,
+      action: 'EXPORT_GENERATED',
+      resourceType: 'estar_official_pdf',
+      resourceId: anchor.programUuid ?? meta.id,
+      details: {
+        backendRoute: 'POST /api/510k/estar/official',
+        sourceType: 'export_estar_pdf',
+        filename,
+        sha256: pdfSha256,
+        artifactRegistry: 'unplaced_pending_document_identity_contract',
+        ...officialMetadata,
       },
     });
 
-    return res.status(200).json(consequence);
+    return res.status(200).json({
+      governed: false,
+      audited: true,
+      source_type: 'export_estar_pdf',
+      artifact_id: null,
+      artifact_registry:
+        'unplaced — artifact registry requires a PM-spine project row; ' +
+        'export is audit-logged with its SHA-256 (pending document-identity contract)',
+      program_id: anchor.programUuid,
+      sha256: pdfSha256,
+      downloadable_output_ref: {
+        encoding: 'base64',
+        mime_type: 'application/pdf',
+        filename,
+        data: pdfBuffer.toString('base64'),
+      },
+    });
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),

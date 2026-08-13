@@ -8,6 +8,7 @@ import { I } from '../icons';
 import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
 import type { Program } from '../data/programs';
 import { useEstarReadiness, useK510EstarSections, useK510Predicates, useK510SeMatrix } from '../hooks/useK510';
+import { useEstarExport } from '../hooks/useEstarExport';
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
@@ -41,6 +42,26 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const estarReadiness = useEstarReadiness('510k', 'device');
   const officialReady = estarReadiness.readiness?.ready ?? false;
   const officialBlockers = estarReadiness.readiness?.blockers ?? [];
+
+  /* Real export actions — POST /api/510k/estar/build and /official. The
+     package assembles server-side from the org's authored sections; the
+     response's base64 payload downloads in-browser. */
+  const estarExport = useEstarExport();
+  const exportStatus = estarExport.busy
+    ? 'Exporting…'
+    : estarExport.outcome
+      ? estarExport.outcome.ok
+        ? `Downloaded ${estarExport.outcome.filename ?? 'package'}` +
+          (estarExport.outcome.formattingErrors + estarExport.outcome.formattingWarnings > 0
+            ? ` · ${estarExport.outcome.formattingErrors} formatting errors, ${estarExport.outcome.formattingWarnings} warnings to fix before submitting`
+            : '') +
+          (estarExport.outcome.governed ? '' : ' · audit-logged; artifact registry placement pending')
+        : `Export failed — ${
+            estarExport.outcome.blockers.length
+              ? estarExport.outcome.blockers.join(' · ')
+              : estarExport.outcome.error ?? 'unknown error'
+          }`
+      : null;
 
   const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
   const sourceSeRows     = useSampleRows(seMatrix.rows, K510_SE_ROWS);
@@ -94,20 +115,23 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         <button
           className="section-more"
           style={{ marginLeft: 8 }}
-          onClick={() =>
-            onAskAna(
-              `Assemble the 510(k) content package for ${program?.code ?? 'this project'} as a draft ZIP — ` +
-                `Module 6 PDF + Form FDA 3514 + required attachments. Note: this is a content package, ` +
-                `not the official FDA eSTAR PDF that CDRH ingests.`,
-            )
+          disabled={estarExport.busy || !program}
+          title={
+            program
+              ? 'Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests'
+              : 'Select a 510(k) program first'
           }
+          onClick={() => {
+            if (!program) return;
+            void estarExport.exportDraftPackage({ id: program.id, code: program.code, title: program.title });
+          }}
         >
           Export 510(k) package {I.download}
         </button>
         <button
           className="section-more"
           style={{ marginLeft: 8 }}
-          disabled={!officialReady || estarReadiness.loading}
+          disabled={!officialReady || estarReadiness.loading || estarExport.busy || !program}
           title={
             estarReadiness.loading
               ? 'Checking official eSTAR availability…'
@@ -117,17 +141,20 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                     officialBlockers.join(' · ') || 'template not vendored / field map not populated'
                   }`
           }
-          onClick={() =>
-            onAskAna(
-              `Generate the OFFICIAL FDA eSTAR interactive PDF for ${program?.code ?? 'this project'} ` +
-                `via the governed export plane (POST /api/510k/estar/official) — the submittable artifact ` +
-                `CDRH ingests, not the draft content ZIP.`,
-            )
-          }
+          onClick={() => {
+            if (!program) return;
+            void estarExport.exportOfficialEstar({ id: program.id, code: program.code, title: program.title });
+          }}
         >
           Generate official eSTAR (PDF) {I.download}
         </button>
       </div>
+
+      {exportStatus && (
+        <div className="section-sub" role="status" style={{ marginTop: 4 }}>
+          {exportStatus}
+        </div>
+      )}
 
       <div className="stage-strip">
         {K510_STAGES.map((s, i) => {
