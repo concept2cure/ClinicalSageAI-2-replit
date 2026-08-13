@@ -1,17 +1,21 @@
 /**
- * useIvd — live data hooks for IvdSurface, adapting the IVDR backend
- * (/api/ivdr/*) into the kit's IVD shapes. Mirrors useK510.ts: each hook
- * returns `rows: T[] | null` (null while loading / on non-2xx) so the surface
- * falls back to the data/ivd.ts fixtures and never renders empty.
+ * useIvd — live data hooks for IvdSurface, adapting the IVDR backend into the
+ * kit's IVD shapes. Mirrors useK510.ts: each hook returns `rows: T[] | null`
+ * (null while loading / on non-2xx) so the surface falls back to the
+ * data/ivd.ts fixtures and never renders empty.
  *
- *  useIvdClassifications()       — GET /api/ivdr/classifications (org-scoped)
+ *  useIvdClassifications()       — GET /api/mdx/ivdr/classifications
+ *                                  (THE classification list API after the D11d
+ *                                  IVDR consolidation; the duplicate list at
+ *                                  /api/ivdr/classifications was deleted)
  *  useIvdValidations()           — GET /api/ivdr/validations (org-scoped)
  *  useIvdClinicalEvidence()      — GET /api/ivdr/clinical-evidence (org-scoped)
  *  useIvdGsprMatrix(projectId)   — GET /api/ivdr/gspr-checklist/:projectId/matrix
  *
- * The IVDR list endpoints are org-scoped (no program id) — the surface's
- * program only scopes the GSPR matrix. Adapters read snake_case columns with
- * camelCase fallbacks so a schema rename degrades to fixture, not a crash.
+ * Classification rows carry the CANONICAL column names (ivdr_class /
+ * companion_diagnostic / self_test / near_patient_test); the adapter keeps the
+ * deprecated shape-1 spellings as read fallbacks so a not-yet-reconciled
+ * database degrades to fixture, not a crash.
  */
 
 import type {
@@ -39,9 +43,15 @@ interface ServerClassification {
   id?: number | string;
   device_name?: string; deviceName?: string;
   intended_purpose?: string; intendedPurpose?: string;
+  /** Canonical class column; `classification` is the deprecated shape-1 name. */
+  ivdr_class?: string; ivdrClass?: string;
   classification?: string;
+  classification_rule?: string; classificationRule?: string;
+  companion_diagnostic?: boolean; companionDiagnostic?: boolean;
   is_cdx?: boolean; isCdx?: boolean;
+  self_test?: boolean; selfTest?: boolean;
   is_self_test?: boolean; isSelfTest?: boolean;
+  near_patient_test?: boolean; nearPatientTest?: boolean;
   is_near_patient?: boolean; isNearPatient?: boolean;
   rule_trace?: unknown; ruleTrace?: unknown;
 }
@@ -53,20 +63,20 @@ function topRule(trace: unknown): string | undefined {
   return typeof label === 'string' ? label : undefined;
 }
 
-function adaptClassification(c: ServerClassification): IvdClassification | null {
+export function adaptClassification(c: ServerClassification): IvdClassification | null {
   const device = c.device_name ?? c.deviceName;
   if (!device) return null;
-  const cls = String(c.classification ?? '').toUpperCase();
+  const cls = String(c.ivdr_class ?? c.ivdrClass ?? c.classification ?? '').toUpperCase();
   const classification = (['A', 'B', 'C', 'D'].includes(cls) ? cls : 'B') as IvdClass;
   return {
     id: String(c.id ?? device),
     device,
     intendedPurpose: c.intended_purpose ?? c.intendedPurpose ?? '',
     classification,
-    rule: topRule(c.rule_trace ?? c.ruleTrace),
-    selfTest: c.is_self_test ?? c.isSelfTest,
-    nearPatient: c.is_near_patient ?? c.isNearPatient,
-    cdx: c.is_cdx ?? c.isCdx,
+    rule: c.classification_rule ?? c.classificationRule ?? topRule(c.rule_trace ?? c.ruleTrace),
+    selfTest: c.self_test ?? c.selfTest ?? c.is_self_test ?? c.isSelfTest,
+    nearPatient: c.near_patient_test ?? c.nearPatientTest ?? c.is_near_patient ?? c.isNearPatient,
+    cdx: c.companion_diagnostic ?? c.companionDiagnostic ?? c.is_cdx ?? c.isCdx,
   };
 }
 
@@ -82,13 +92,16 @@ export interface UseIvdRows<T> {
  *                  organisation-wide portfolio view.
  */
 export function useIvdClassifications(programId?: string | null): UseIvdRows<IvdClassification> {
-  const { data, loading, error, refresh } = useFetchJson<{ classifications?: ServerClassification[] }>(
+  /* Canonical envelope: { data: rows, meta } (server/lib/api-response ok()). */
+  const { data, loading, error, refresh } = useFetchJson<{ data?: ServerClassification[] }>(
     programId
-      ? `/api/ivdr/classifications?program_id=${encodeURIComponent(programId)}`
-      : '/api/ivdr/classifications',
+      ? `/api/mdx/ivdr/classifications?program_id=${encodeURIComponent(programId)}`
+      : '/api/mdx/ivdr/classifications',
   );
   if (!data) return { rows: null, loading, error, refresh };
-  const rows = (data.classifications ?? [])
+  /* `data.data ?` proves the field exists, not that it is a LIST — guard the
+     shape before mapping. */
+  const rows = (Array.isArray(data.data) ? data.data : [])
     .map(adaptClassification)
     .filter((r): r is IvdClassification => r !== null);
   /* A resolved-but-empty result returns [] rather than null: null means

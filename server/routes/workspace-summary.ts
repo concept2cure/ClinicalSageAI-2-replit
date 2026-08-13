@@ -154,10 +154,14 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
     );
 
     // ── 9. Pending validations (open QC issues, advisory flags) ────────────
+    // `validation_status` never existed on this table in any migration shape —
+    // the predicate 42703'd and the guarded query silently reported 0 pending
+    // reviews on every workspace load. `status` is the real lifecycle column
+    // (D11d IVDR consolidation, 2026-08-13).
     const pendingRes = await sq(
       `SELECT COUNT(*) AS n FROM ivdr_analytical_validations
        WHERE organization_id = $1
-         AND (status = 'in_progress' OR status = 'pending' OR validation_status = 'pending')`,
+         AND status IN ('in_progress', 'pending')`,
       [orgId]
     );
     const pendingReviews = parseInt(pendingRes.rows[0]?.n || '0', 10);

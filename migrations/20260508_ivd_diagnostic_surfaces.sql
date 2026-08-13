@@ -87,6 +87,10 @@ CREATE INDEX IF NOT EXISTS ivd_clin_perf_org_idx     ON ivd_clinical_performance
 CREATE INDEX IF NOT EXISTS ivd_clin_perf_program_idx ON ivd_clinical_performance (program_id);
 
 -- ─── EU IVDR classification (Reg 2017/746 Annex VIII) ─────────────────
+-- THE canonical creator of ivdr_classifications (D11d IVDR consolidation,
+-- 2026-08-13): the rival shape-1 definition in 001_create_ivdr_tables.sql is
+-- deleted, and legacy databases are reconciled to this shape (plus the three
+-- module columns below) by 20260813c_ivdr_schema_reconciliation.sql.
 CREATE TABLE IF NOT EXISTS ivdr_classifications (
   id                serial PRIMARY KEY,
   organization_id   integer NOT NULL REFERENCES organizations(id),
@@ -95,6 +99,11 @@ CREATE TABLE IF NOT EXISTS ivdr_classifications (
   ivdr_class        text NOT NULL,            -- 'A' | 'B' | 'C' | 'D'
   classification_rule text,                   -- '1'..'7' per Annex VIII
   rationale         text,
+  -- Module columns written by the Annex VIII rule engine (ivdr-routes.ts);
+  -- no shape-2 equivalent existed, so they are canonical additions.
+  intended_purpose  text,
+  rule_trace        jsonb DEFAULT '[]'::jsonb,
+  analytes          jsonb DEFAULT '[]'::jsonb,
   companion_diagnostic boolean DEFAULT false, -- triggers Rule 3 considerations
   self_test         boolean DEFAULT false,    -- triggers Rule 4
   near_patient_test boolean DEFAULT false,    -- triggers Rule 4

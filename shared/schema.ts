@@ -18833,6 +18833,14 @@ export const ivdrClassifications = pgTable(
     ivdrClass:               text('ivdr_class').notNull(),
     classificationRule:      text('classification_rule'),
     rationale:               text('rationale'),
+    /* Module columns written by the Annex VIII rule engine (ivdr-routes.ts).
+       Canonical additions from the D11d IVDR consolidation (2026-08-13) —
+       the legacy shape-1 names (classification / is_cdx / is_self_test /
+       is_near_patient) are deprecated, backfilled by
+       migrations/20260813c_ivdr_schema_reconciliation.sql, and unwritten. */
+    intendedPurpose:         text('intended_purpose'),
+    ruleTrace:               jsonb('rule_trace').default('[]'),
+    analytes:                jsonb('analytes').default('[]'),
     companionDiagnostic:     boolean('companion_diagnostic').default(false),
     selfTest:                boolean('self_test').default(false),
     nearPatientTest:         boolean('near_patient_test').default(false),

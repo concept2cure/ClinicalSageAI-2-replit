@@ -925,6 +925,38 @@ export const C2C_MIGRATION_FILES = [
   // steps below (C-33: the sweep has to see everything the set creates).
   'migrations/20260813b_tenant_export_receipts.sql',
 
+  // ── IVDR consolidation, D11d (added 2026-08-13) ───────────────────────────
+  // ivdr_classifications was CREATE TABLE IF NOT EXISTS'd by three files with
+  // two incompatible column shapes, so the surviving shape was decided by
+  // migration order per environment (ledger C-29; duplicate-table-ddl
+  // baseline). None of the IVDR creators was on THIS list, so an
+  // already-provisioned database never received the tables at all and every
+  // /api/ivdr surface 503'd or 500'd.
+  //
+  // ORDER MATTERS, and it is deliberately reconciliation-FIRST:
+  //   20260813c  reconciles a pre-existing legacy (shape-1) table to the
+  //              canonical shape — adds program_id BEFORE 20260508 attempts an
+  //              index over it — backfills legacy → canonical column values,
+  //              deprecates the legacy names, creates ivdr_gspr_assessments
+  //              (previously runtime DDL), and hardens the module detail
+  //              tables. Every statement no-ops where the tables are absent.
+  //   20260508   THE canonical creator: ivdr_classifications (canonical
+  //              shape), ivdr_per_documents, cdx_pairings/concordance,
+  //              ivd_analytical_performance / ivd_clinical_performance, CLIA,
+  //              LDT. All CREATE TABLE/INDEX IF NOT EXISTS — no-ops wherever
+  //              push or history already provisioned them.
+  //   001        the IVDR module detail tables (analytical validations,
+  //              clinical evidence, CDx workflows + immutable histories) —
+  //              FK-dependent on ivdr_classifications, hence after 20260508.
+  //              Its rival shape-1 CREATE of ivdr_classifications is deleted,
+  //              which is also what lets install-fresh apply it (it was
+  //              classified-skipped before this consolidation).
+  // All three precede the isolation tail (C-33) so the sweep policies the
+  // org-keyed tables they create.
+  'migrations/20260813c_ivdr_schema_reconciliation.sql',
+  'migrations/20260508_ivd_diagnostic_surfaces.sql',
+  'migrations/001_create_ivdr_tables.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

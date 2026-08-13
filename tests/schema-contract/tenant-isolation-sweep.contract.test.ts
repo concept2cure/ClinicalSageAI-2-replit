@@ -76,6 +76,11 @@ async function baseSchemaFixture(): Promise<PGlite> {
   for (const m of journal.matchAll(/CREATE TABLE "([a-z0-9_]+)" \([\s\S]*?\n\);/g)) {
     await safe(m[0].replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS '));
   }
+  // regulatory_programs is a BASE_SCHEMA_SENTINELS entry: deploy-migrate's
+  // preflight REFUSES to run the set unless it exists (it comes from the raw
+  // overlay, not the journal). The D11d IVDR entries FK it, so the fixture
+  // must present it the way a real deploy does.
+  await safe(readMig('migrations/20260524_program_workbench_schema.sql'));
   return pg;
 }
 

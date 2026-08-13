@@ -1,16 +1,24 @@
 /**
- * GET /api/ivdr/{classifications,validations,clinical-evidence} — programme scoping.
+ * GET /api/ivdr/{validations,clinical-evidence} — programme scoping, and the
+ * D11d classification-list convergence.
  *
- * The IVD workbench names one diagnostic programme in its header, but three
- * of its four panels read the whole organisation: only the GSPR matrix was
- * scoped. A user looking at one assay could read another assay's Class C
- * determination, its limit of detection, or its clinical sensitivity, and
- * attribute all three to the device in front of them.
+ * The IVD workbench names one diagnostic programme in its header, but its
+ * panels read the whole organisation: a user looking at one assay could read
+ * another assay's Class C determination, its limit of detection, or its
+ * clinical sensitivity, and attribute all three to the device in front of
+ * them.
  *
  * `program_id` is optional so the portfolio-wide view still works.
  * Validations and clinical evidence reach a programme through their
  * classification, so they scope by joining rather than by a column of
- * their own.
+ * their own — and since the D11d IVDR consolidation the join reads the
+ * CANONICAL column names (ivdr_class / companion_diagnostic), aliased to the
+ * historical response keys.
+ *
+ * The classification LIST endpoint was deleted in that consolidation:
+ * /api/mdx/ivdr/classifications is the one list API over this store, and
+ * useIvdClassifications calls it. This file pins the removal so the duplicate
+ * cannot silently return.
  *
  * A malformed program_id is rejected rather than ignored — silently
  * falling back to the unscoped list for a typo'd UUID is exactly how a
@@ -41,6 +49,9 @@ function app(org: number | null = 5, actor = true) {
         (req as any).userId = 42;
       }
       (req as any).tenantContext = { organizationId: org };
+      /* The bootstrap wrapper (requireIVDRAccess) grants these before the
+         router runs; the classify handler checks them. */
+      (req as any).ivdrPermissions = new Set(['*']);
     }
     next();
   });
@@ -61,37 +72,11 @@ beforeEach(() => {
 });
 
 describe('IVDR programme scoping', () => {
-  describe('classifications', () => {
-    it('stays organisation-wide when no programme is given', async () => {
+  describe('classifications (list converged to /api/mdx/ivdr, D11d)', () => {
+    it('no longer serves a duplicate list — /api/mdx/ivdr/classifications is the one list API', async () => {
       const res = await request(app()).get('/api/ivdr/classifications');
-      expect(res.status).toBe(200);
-      expect(res.body.meta.scope).toBe('organization');
-
-      const { sql, args } = callFor('ivdr_classifications');
-      expect(sql).not.toMatch(/program_id/);
-      expect(args).toEqual([5]);
-    });
-
-    it('filters on program_id when given', async () => {
-      const res = await request(app()).get(`/api/ivdr/classifications?program_id=${PROGRAM}`);
-      expect(res.status).toBe(200);
-      expect(res.body.meta.scope).toBe('program');
-
-      const { sql, args } = callFor('ivdr_classifications');
-      expect(sql).toMatch(/AND program_id = \$2/);
-      expect(args).toEqual([5, PROGRAM]);
-    });
-
-    it('422s a malformed program_id rather than silently unscoping', async () => {
-      const res = await request(app()).get('/api/ivdr/classifications?program_id=not-a-uuid');
-      expect(res.status).toBe(422);
+      expect(res.status).toBe(404);
       expect(query).not.toHaveBeenCalled();
-    });
-
-    it('treats an empty program_id as absent', async () => {
-      const res = await request(app()).get('/api/ivdr/classifications?program_id=');
-      expect(res.status).toBe(200);
-      expect(res.body.meta.scope).toBe('organization');
     });
   });
 
@@ -112,6 +97,17 @@ describe('IVDR programme scoping', () => {
       await request(app()).get(`/api/ivdr/validations?program_id=${PROGRAM}`);
       const { sql } = callFor('ivdr_analytical_validations');
       expect(sql).toMatch(/v\.organization_id = \$1/);
+    });
+
+    it('reads the CANONICAL classification columns, aliased to the historical keys', async () => {
+      await request(app()).get('/api/ivdr/validations');
+      const { sql } = callFor('ivdr_analytical_validations');
+      /* One vocabulary after the D11d consolidation: the deprecated shape-1
+         names must never be read directly again. */
+      expect(sql).toMatch(/c\.ivdr_class AS classification/);
+      expect(sql).toMatch(/c\.companion_diagnostic AS is_cdx/);
+      expect(sql).not.toMatch(/c\.classification\b/);
+      expect(sql).not.toMatch(/c\.is_cdx\b/);
     });
 
     it('422s a malformed program_id', async () => {
@@ -138,11 +134,51 @@ describe('IVDR programme scoping', () => {
       expect(sql).toMatch(/e\.organization_id = \$1/);
     });
 
+    it('reads the CANONICAL classification columns, aliased to the historical keys', async () => {
+      await request(app()).get('/api/ivdr/clinical-evidence');
+      const { sql } = callFor('ivdr_clinical_evidence');
+      expect(sql).toMatch(/c\.ivdr_class AS classification/);
+      expect(sql).toMatch(/c\.companion_diagnostic AS is_cdx/);
+      expect(sql).not.toMatch(/c\.classification\b/);
+      expect(sql).not.toMatch(/c\.is_cdx\b/);
+    });
+
     it('422s a malformed program_id', async () => {
       const res = await request(app()).get('/api/ivdr/clinical-evidence?program_id=%20');
       expect(res.status).toBe(422);
       expect(query).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('POST /api/ivdr/classify — canonical column vocabulary (D11d)', () => {
+  it('persists through the canonical shape-2 names, never the deprecated shape-1 ones', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
+    const res = await request(app()).post('/api/ivdr/classify').send({
+      deviceName: 'Assay X',
+      intendedPurpose: 'Qualitative detection of a biomarker',
+      isCompanionDiagnostic: true,
+      analytes: ['Biomarker'],
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+
+    const insert = query.mock.calls.find((c) => String(c[0]).includes('INSERT INTO ivdr_classifications'));
+    expect(insert).toBeDefined();
+    const sql = String(insert![0]).replace(/\s+/g, ' ');
+    expect(sql).toContain('ivdr_class');
+    expect(sql).toContain('companion_diagnostic');
+    expect(sql).toContain('self_test');
+    expect(sql).toContain('near_patient_test');
+    expect(sql).toContain('notified_body_required');
+    /* Canonical module columns retained from the rule engine. */
+    expect(sql).toContain('intended_purpose');
+    expect(sql).toContain('rule_trace');
+    expect(sql).toContain('analytes');
+    /* The deprecated shape-1 spellings must be unwritten. */
+    expect(sql).not.toMatch(/\bis_cdx\b/);
+    expect(sql).not.toMatch(/\bis_self_test\b/);
+    expect(sql).not.toMatch(/\bis_near_patient\b/);
+    expect(sql).not.toMatch(/\(classification[,)]|,\s*classification[,)]/);
   });
 });
 
