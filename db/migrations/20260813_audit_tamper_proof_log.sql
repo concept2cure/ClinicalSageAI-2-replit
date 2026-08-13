@@ -1,3 +1,21 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Give the 21 CFR Part 11 tamper-evident audit store a real table, so
+--          it exists on a provisioned, least-privileged database.
+--
+-- eCTD/CTD Context:
+--   - Module(s): cross-cutting — every module whose records are audited
+--   - Integrity Risk Addressed: absent audit trail. The store a QA unit
+--     inspects first did not exist, and the platform reported itself healthy.
+--
+-- Determinism Contract:
+--   - The hash chain (previous_hash / content_hash / chain_hash) is the
+--     evidence pointer; the immutability trigger and withheld UPDATE/DELETE
+--     grants are what make it non-repudiable.
+-- =============================================================================
+--
 -- 20260813_audit_tamper_proof_log.sql
 --
 -- Own audit.tamper_proof_log in a migration, so the 21 CFR Part 11 tamper-proof

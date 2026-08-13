@@ -1,3 +1,23 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Give the shared knowledge graph a tenant key and RLS, so one
+--          sponsor's extracted document entities stop surfacing to another.
+--
+-- eCTD/CTD Context:
+--   - Module(s): cross-cutting — entities are extracted from any module's
+--     source documents (protocols, CSRs, CMC narratives)
+--   - Integrity Risk Addressed: tenant isolation. Semantic search returned
+--     nearest-neighbour entities across organizations; on a platform holding
+--     unannounced programmes the entity NAMES are the confidential part.
+--
+-- Determinism Contract:
+--   - Rows that cannot be attributed keep organization_id NULL and are visible
+--     to NOBODY (fail closed) rather than to everybody. Unattributed history is
+--     preserved on disk for deliberate attribution or purge, never served.
+-- =============================================================================
+--
 -- 20260813_knowledge_graph_tenant_keys.sql
 --
 -- Give the shared knowledge graph a tenant key, so one organization's document
