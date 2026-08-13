@@ -7,8 +7,11 @@
 
 import { Router } from 'express';
 import predictiveSectionService from '../services/predictiveSectionService';
+import { getPool } from '../db';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
+const pool = getPool();
 
 /**
  * POST /api/predictive-sections/suggestions
@@ -110,100 +113,63 @@ router.get('/templates/:sectionCode', async (req, res) => {
     const { sectionCode } = req.params;
     const { submissionType = 'IND', regulatoryRegion = 'FDA' } = req.query;
 
-    // Mock template data - in production, this would query a template database
-    const templates = {
-      '2.5': {
-        sectionCode: '2.5',
-        title: 'Clinical Overview',
-        templates: [
-          {
-            id: 'clinical-overview-standard',
-            name: 'Standard Clinical Overview',
-            description: 'ICH M4 compliant clinical overview template',
-            sections: [
-              'Product Development Background',
-              'Clinical Pharmacology',
-              'Efficacy Assessment',
-              'Safety Assessment',
-              'Benefit-Risk Analysis',
-            ],
-          },
-          {
-            id: 'clinical-overview-pediatric',
-            name: 'Pediatric Clinical Overview',
-            description: 'Template for pediatric indications',
-            sections: [
-              'Pediatric Development Strategy',
-              'Age-Appropriate Formulation',
-              'Pediatric Clinical Pharmacology',
-              'Efficacy in Pediatric Population',
-              'Safety in Pediatric Population',
-            ],
-          },
-        ],
-      },
-      '2.7': {
-        sectionCode: '2.7',
-        title: 'Clinical Summary',
-        templates: [
-          {
-            id: 'clinical-summary-standard',
-            name: 'Standard Clinical Summary',
-            description: 'Comprehensive clinical summary template',
-            sections: [
-              'Summary of Biopharmaceutic Studies',
-              'Summary of Clinical Pharmacology Studies',
-              'Summary of Clinical Efficacy',
-              'Summary of Clinical Safety',
-              'Literature References',
-            ],
-          },
-        ],
-      },
-      '510k.2': {
-        sectionCode: '510k.2',
-        title: 'Device Description',
-        templates: [
-          {
-            id: '510k-device-description',
-            name: '510(k) Device Description',
-            description: 'Standard device description template',
-            sections: [
-              'Device Name and Classification',
-              'Intended Use Statement',
-              'Device Description',
-              'Substantial Equivalence Comparison',
-            ],
-          },
-        ],
-      },
-    };
-
-    const sectionTemplates = templates[sectionCode as keyof typeof templates];
-
-    if (!sectionTemplates) {
-      return res.json({
-        success: true,
-        sectionCode,
-        templates: [],
-        message: 'No templates available for this section',
-      });
+    // This route previously answered from a hardcoded object literal — three
+    // invented template definitions for sections 2.5, 2.7 and 510k.2, with
+    // invented ids ('clinical-overview-pediatric') that resolve to no stored
+    // template — and reported an honest-looking empty list for every other
+    // section. An author picking one of those ids got a template the platform
+    // does not have. The real catalog is `document_templates` (org-scoped,
+    // keyed by module/region), so read it.
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
     }
+
+    // `module` carries the eCTD/section code and `region` the agency. Both are
+    // nullable in the catalog, so a template with an unset region still matches
+    // a region-qualified request rather than disappearing from it.
+    const result = await pool.query(
+      `SELECT id, name, description, category, module, region, version, tags
+         FROM document_templates
+        WHERE organization_id = $1
+          AND status = 'active'
+          AND module = $2
+          AND (region IS NULL OR region = $3)
+        ORDER BY name`,
+      [Number(organizationId), String(sectionCode), String(regulatoryRegion)],
+    );
+
+    const templates = result.rows.map((row) => ({
+      id: String(row.id),
+      name: row.name,
+      description: row.description,
+      category: row.category,
+      version: row.version,
+      tags: Array.isArray(row.tags) ? row.tags : [],
+    }));
 
     res.json({
       success: true,
       sectionCode,
-      title: sectionTemplates.title,
-      templates: sectionTemplates.templates,
+      templates,
       submissionType,
       regulatoryRegion,
+      // Honest empty state: the org has published no template for this section.
+      // It is NOT a claim that no such template could exist.
+      message: templates.length === 0 ? 'No templates published for this section' : undefined,
     });
   } catch (error: any) {
-    console.error('Error fetching templates:', error);
-    res.status(500).json({
-      error: 'Failed to fetch templates',
-      message: error.message,
-    });
+    // A catalog read that failed is not an empty catalog — see the sibling
+    // reads in this codebase. 42P01 means the template store was never
+    // provisioned, which is an operator condition, not "no templates".
+    console.error('[predictive-sections] template catalog read failed:', error?.message);
+    if (error?.code === '42P01') {
+      return res.status(503).json({
+        error: 'Template catalog is not provisioned',
+        code: 'TEMPLATE_STORE_UNPROVISIONED',
+      });
+    }
+    res.status(500).json({ error: 'Failed to fetch templates' });
   }
 });
 

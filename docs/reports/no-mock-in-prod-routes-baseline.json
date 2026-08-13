@@ -1,15 +1,11 @@
 {
-  "generatedAt": "2026-07-18T19:08:59.497Z",
+  "generatedAt": "2026-08-13T02:38:42.489Z",
   "findings": [
     "server/routes/auth.ts: contains mock/simulated/placeholder markers in route handler scope",
     "server/routes/authoring.router.ts: contains mock/simulated/placeholder markers in route handler scope",
     "server/routes/document-intelligence-routes.ts: contains mock/simulated/placeholder markers in route handler scope",
     "server/routes/ectd-export.ts: contains mock/simulated/placeholder markers in route handler scope",
     "server/routes/ind-database.routes.ts: contains mock/simulated/placeholder markers in route handler scope",
-    "server/routes/predictive-sections.ts: contains mock/simulated/placeholder markers in route handler scope",
-    "server/routes/programs.ts: contains mock/simulated/placeholder markers in route handler scope",
-    "server/routes/real-world-evidence.ts: contains mock/simulated/placeholder markers in route handler scope",
-    "server/routes/shadow-review.routes.ts: contains mock/simulated/placeholder markers in route handler scope",
     "server/routes/sso.ts: contains mock/simulated/placeholder markers in route handler scope",
     "server/routes/submissionCenter.routes.ts: contains mock/simulated/placeholder markers in route handler scope"
   ]

@@ -230,9 +230,14 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
   const livePrea = useLiveRows<PedPrea>('/api/biopharma/prea-milestones');
   const prea = livePrea.rows;
 
-  /* AnswerLead computation */
+  /* AnswerLead computation.
+     `nextMs.ms` is read through a local rather than inline: these rows come off a
+     real SELECT, and a nullable/absent `milestone` column makes `.toLowerCase()`
+     throw through SurfaceBoundary — turning a partially-populated row into
+     "this surface stopped unexpectedly". (hostilePayloadProbe pins this.) */
   const drafts = plans.filter((p) => String(p.status).includes('draft'));
   const nextMs = prea[0];
+  const nextMsLabel = nextMs?.ms ? String(nextMs.ms).toLowerCase() : null;
   const topDraft = drafts[0];
 
   return (
@@ -249,10 +254,10 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
           eyebrow="Where do your pediatric obligations stand -- and what's next"
           headline={drafts.length
             ? <>{drafts.length} pediatric {drafts.length === 1 ? 'plan is' : 'plans are'} still in draft -- the closest gate is <b>{topDraft.kind} for {topDraft.product}</b> ({topDraft.due}).</>
-            : <>Your pediatric plans are filed -- the next thing to watch is the {nextMs ? nextMs.ms.toLowerCase() : 'upcoming milestone'}.</>}
+            : <>Your pediatric plans are filed -- the next thing to watch is the {nextMsLabel ?? 'upcoming milestone'}.</>}
           body={drafts.length
             ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main program on track. The age-range extrapolation is the part reviewers scrutinize most -- get that right and the plan moves.</>
-            : <>{nextMs ? <>The {nextMs.ms.toLowerCase()} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</> : <>No milestones are overdue -- you're in good standing on your pediatric commitments.</>}</>}
+            : <>{nextMsLabel ? <>The {nextMsLabel} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</> : <>No milestones are overdue -- you're in good standing on your pediatric commitments.</>}</>}
           reassure={drafts.length ? "You don't have to draft the extrapolation rationale from scratch -- I'll write the first pass with you." : "You're on top of your pediatric commitments. I'll flag anything before it slips."}
           action={{
             label: drafts.length ? 'Draft the extrapolation rationale' : 'Check upcoming milestones',
@@ -355,6 +360,9 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
   const awaiting = des.filter((d) => d.status === 'requested' || d.status === 'planned' || String(d.date).includes('pending'));
   const designated = des.filter((d) => d.status === 'designated');
   const topPending = awaiting[0];
+  // Same nullable-column hazard as Pediatric's milestone label: `indication` is
+  // free text on the real record and may be absent.
+  const topPendingInd = topPending?.indication ? String(topPending.indication).toLowerCase() : null;
 
   return (
     <BpComposer
@@ -369,7 +377,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
           tone="calm"
           eyebrow="Where do your rare-disease designations stand"
           headline={topPending
-            ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPending.indication.toLowerCase()} -- {String(topPending.date).includes('pending') ? 'awaiting an FDA decision' : 'ready to file'}.</>
+            ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingInd ?? 'indication not recorded'} -- {String(topPending.date).includes('pending') ? 'awaiting an FDA decision' : 'ready to file'}.</>
             : <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>}
           body={topPending
             ? <>Orphan status brings 7-year exclusivity, fee waivers, and RPD-voucher eligibility -- real value worth getting right. The prevalence evidence and scientific rationale are what carry the application; that's where I can help most.</>
@@ -508,6 +516,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
   const highChg = cmc.filter((c) => c.risk === 'high');
   const nextRen = [...ren].sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
   const topChg = highChg[0];
+  const topChgTitle = topChg?.title ? String(topChg.title) : null;
 
   return (
     <BpComposer
@@ -525,7 +534,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
           tone={highChg.length ? 'urgent' : 'calm'}
           eyebrow="What needs your attention across the approved portfolio"
           headline={highChg.length
-            ? <>A <b>high-risk CMC change</b> is in play -- {topChg.title.toLowerCase()} -- and it decides your filing path.</>
+            ? <>A <b>high-risk CMC change</b> is in play -- {topChgTitle ? topChgTitle.toLowerCase() : 'an unnamed change'} -- and it decides your filing path.</>
             : <>Your post-approval portfolio is steady -- {inReview.length} {inReview.length === 1 ? 'supplement' : 'supplements'} in agency review, next renewal {nextRen ? nextRen.due : 'scheduled'}.</>}
           body={highChg.length
             ? <>Under ICH Q12 this is the difference between a PACMP and a prior-approval supplement -- get the classification right and you avoid a costly re-file. {inReview.length ? <>{inReview.length} {inReview.length === 1 ? 'supplement is' : 'supplements are'} already in review.</> : null}</>
@@ -534,7 +543,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
           action={{
             label: highChg.length ? 'Classify the change against ICH Q12' : 'Prepare the next renewal',
             onClick: () => ask(highChg.length
-              ? ('Assess ' + topChg.title + ' against ICH Q12 -- PACMP eligible or prior-approval supplement?')
+              ? ('Assess ' + (topChgTitle ?? 'the open high-risk CMC change') + ' against ICH Q12 -- PACMP eligible or prior-approval supplement?')
               : ('Prepare the ' + (nextRen ? nextRen.authority + ' ' + nextRen.next : 'next') + ' renewal for ' + (nextRen ? nextRen.product : 'the lead product'))),
           }}
           secondary="Or work supplements and change control below."
@@ -683,8 +692,12 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   /* AnswerLead computation */
   const ranked = [...sigs].sort((a, b) => (b.prr || 0) - (a.prr || 0));
   const top = ranked[0];
+  // `term` is a MedDRA preferred term off the real record and `prr` a computed
+  // float; either can be absent on a partially-populated row, and both are read
+  // through string/number methods below.
+  const topTerm = top?.term ? String(top.term) : null;
   const agg = aggs.find((a) => a.status === 'drafting') || aggs[0];
-  const highPrr = top && top.prr >= 3;
+  const highPrr = Boolean(topTerm) && typeof top.prr === 'number' && top.prr >= 3;
 
   return (
     <BpComposer
@@ -700,8 +713,8 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
           tone={highPrr ? 'urgent' : 'calm'}
           eyebrow="Is anything in your safety data asking for action right now"
           headline={highPrr
-            ? <>Yes -- <b>{top.term.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{top.prr}</b> across {top.count} cases.</>
-            : <>Nothing is alarming today -- the highest signal is {top ? top.term.toLowerCase() : 'within expected range'} (PRR {top ? top.prr : '--'}), still within routine monitoring.</>}
+            ? <>Yes -- <b>{topTerm?.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{top.prr}</b> across {top.count} cases.</>
+            : <>Nothing is alarming today -- the highest signal is {topTerm?.toLowerCase() ?? 'within expected range'} (PRR {top?.prr ?? '--'}), still within routine monitoring.</>}
           body={highPrr
             ? <>A PRR above 3 with this many cases is worth a real causality read, not a wait-and-see. This is about patients on the drug now -- pulling the case narratives and running the assessment tells you whether a label change is warranted. {agg ? <>The {agg.cycle} is also in {agg.status} for the {agg.due} window.</> : null}</>
             : <>You're keeping watch across FAERS and EudraVigilance and nothing crosses the threshold for expedited action. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that's the next scheduled obligation.</> : null}</>}
@@ -709,7 +722,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
           action={{
             label: highPrr ? 'Adjudicate this signal now' : 'Continue the aggregate report',
             onClick: () => ask(highPrr
-              ? ('Adjudicate the ' + top.term + ' signal on ' + top.product + ' -- pull every case narrative, run causality assessment, and advise whether a label update is warranted')
+              ? ('Adjudicate the ' + topTerm + ' signal on ' + top.product + ' -- pull every case narrative, run causality assessment, and advise whether a label update is warranted')
               : ('Continue drafting the ' + (agg ? agg.cycle : 'open aggregate report') + ' -- focus on the §15 risk evaluation')),
             alt: highPrr && agg ? { label: 'Work the ' + agg.cycle, onClick: () => ask('Continue drafting the ' + agg.cycle + ' §15 risk evaluation') } : undefined,
           }}
@@ -734,11 +747,11 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
              REAL top-ranked signal is, and is omitted entirely when there is
              none — an adjudicate button for a signal that does not exist is the
              fixture surviving as a verb. */
-          foot={top ? (
+          foot={topTerm ? (
             <SpAsk
               onAsk={ask}
-              cmd={`Adjudicate the ${top.term} signal on ${top.product} -- pull every case narrative, run causality assessment, suggest label update.`}
-              label={`Adjudicate the ${top.term.toLowerCase()} signal`}
+              cmd={`Adjudicate the ${topTerm} signal on ${top.product} -- pull every case narrative, run causality assessment, suggest label update.`}
+              label={`Adjudicate the ${topTerm.toLowerCase()} signal`}
             />
           ) : undefined}
         >
@@ -750,7 +763,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
                 <span className="sp-tag">{s.product}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{s.term}</span>
-                  <span className="sp-row-s">{s.count} cases · <span className={s.prr >= 3 ? 'sp-tone-err' : s.prr >= 2 ? 'sp-tone-warn' : ''}>PRR {s.prr.toFixed(1)}</span>{s.owner ? <> · owner {s.owner}</> : null}{s.age ? <> · {s.age}</> : null}</span>
+                  <span className="sp-row-s">{s.count} cases · <span className={s.prr >= 3 ? 'sp-tone-err' : s.prr >= 2 ? 'sp-tone-warn' : ''}>PRR {typeof s.prr === 'number' ? s.prr.toFixed(1) : '--'}</span>{s.owner ? <> · owner {s.owner}</> : null}{s.age ? <> · {s.age}</> : null}</span>
                 </span>
                 {pill(s.status)}
               </div>
