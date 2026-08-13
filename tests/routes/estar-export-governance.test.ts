@@ -61,6 +61,24 @@ vi.mock('../../server/services/export/governedExportConsequence', () => ({
   createGovernedExportConsequence: mockGovernedConsequence,
 }));
 
+// resolveProjectAnchor() reads through requestDb(req), not the shared `db`, so
+// its fda510k_projects / regulatory_programs lookups are filtered by RLS as well
+// as by their explicit organizationId predicates (ci:requestdb-coverage requires
+// it for tenant-facing routes). Mocking only '../../server/db' left the real
+// requestDb in place, which throws MissingRequestDbContextError on a request
+// that never went through the auth boundary — so every case in this file failed
+// on a router change that is otherwise correct. Mock the accessor the route
+// actually uses; the query shape below is unchanged.
+vi.mock('../../server/db/requestDb', () => ({
+  requestDb: vi.fn(() => ({
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({ limit: vi.fn(async () => mockResolveRows()) })),
+      })),
+    })),
+  })),
+}));
+
 vi.mock('../../server/db', () => ({
   db: {
     select: vi.fn(() => ({
