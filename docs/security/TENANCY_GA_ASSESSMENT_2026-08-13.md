@@ -181,7 +181,7 @@ environment default rather than silently disabling a revenue control.
 
 ---
 
-## 2.5 Second pass — three surfaces bypassed the lifecycle guard entirely
+## 2.5 Second pass — four surfaces bypassed the lifecycle guard, and the ratchet that ends it
 
 Found on a follow-up sweep, after the guard had shipped. Both are the same
 mistake in different clothes: the guard is Express middleware on the `/api`
@@ -261,6 +261,57 @@ The other jobs were surveyed rather than assumed: `retentionCron` notifies
 `externalIntelligenceSweep`, `scheduleOfEventsSweep`, `driftSentinelSweep`) run
 estate-wide under a system scope with no per-tenant outward effect. `taskDueSweep`
 was the one that needed the filter.
+
+### 2.5.4 Socket.IO — a third transport, same gap
+
+`server/socketServer.ts` is separate from the hocuspocus socket and carries live
+task, notification, compliance and timer traffic. Its tenant ISOLATION is good —
+rooms derive from the verified handshake principal, and a `check-security-patterns`
+rule blocks namespace-global publishes — but isolation and entitlement are
+different questions, and a suspended organization's users could still connect and
+receive the feed.
+
+Closed at the handshake. Refuses for `read_only` as well as `deny`: unlike the
+hocuspocus socket there is no per-connection read-only mode to downgrade into —
+this namespace is a live event feed and every handler on it publishes — so the
+honest options are connect or do not. Read access to the same data remains on
+HTTP, which `read_only` permits.
+
+### 2.5.5 The generalizable fix — a ratchet, not a fifth code review
+
+Four surfaces, found one at a time, none related to the others. Finding the fifth
+by reading code again is not a strategy.
+
+`scripts/ci/check-tenant-entry-points.mjs` makes the surface **enumerable**. It
+discovers files matching known entry-point shapes — scheduled sweeps, workers,
+socket transports, alternative-auth routers — and requires each either to
+reference the lifecycle vocabulary or to sit in a baseline **with a written
+reason**. Same idiom as `check-tenant-isolation.mjs` and
+`audit-requestdb-coverage.mjs`, because that idiom is already proven here and a
+second pattern for the same job is just another thing to remember.
+
+It found 16 entry points: 4 now consider entitlement, 12 are baselined. Writing
+those 12 justifications was itself the exercise — three turned out to be false
+positives of the matcher (session-authed routers behind the boundary), two are
+**deliberately unconditional** (audit-chain integrity and retention must run *for*
+suspended tenants, not despite them), six have no per-tenant fan-out at all, and
+one — SCIM — is a genuine open product decision rather than an oversight.
+`server/workers/ivdr-pack-worker.ts` was the one that turned out to need the check
+and got it rather than a justification.
+
+Each baseline entry carries a **content digest**. A justification is true of the
+code as it stood; "this sweep has no per-tenant fan-out" stops being true the
+moment someone adds one, and nothing else would notice. A changed file re-flags
+for re-justification.
+
+Verified by mutation, both arms: a new unguarded sweep fails the gate, and
+appending a line to a baselined file fails it for drift.
+
+**The lesson, stated plainly.** A control mounted on one transport is not a
+platform control. This gate does not prove any individual check is correct — the
+contract tests beside each surface do that — but it does mean a new entry point
+cannot ship having never considered the question, which is exactly how all four
+arrived.
 
 **The generalizable lesson.** A control mounted on one transport is not a
 platform control. The remaining alternative-auth surfaces were enumerated and
