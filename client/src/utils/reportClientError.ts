@@ -50,8 +50,13 @@ export function reportClientError(error: unknown, context: ClientErrorContext): 
   // first — removing it in favour of a remote-only report would make the app
   // quieter to debug, not safer.
   try {
+    // The first console argument is a FORMAT string in every browser console
+    // (%s/%d substitution), so it must be a constant — interpolating
+    // context.boundary into it would let a %-token in that value forge the log
+    // line (Semgrep unsafe-formatstring). The boundary rides as its own
+    // argument instead.
     // eslint-disable-next-line no-console
-    console.error(`[${context.boundary}] uncaught client error:`, error, context.componentStack ?? '');
+    console.error('[client-error] uncaught in boundary:', context.boundary, error, context.componentStack ?? '');
   } catch {
     /* A console that throws is not worth a second attempt. */
   }

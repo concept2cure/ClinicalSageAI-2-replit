@@ -57,7 +57,15 @@ function expectNoRetiredProgram() {
   for (const s of RETIRED) expect(document.body.textContent).not.toContain(s);
 }
 
-beforeEach(() => apiRequest.mockReset());
+// Braces, not an implicit return: `mockReset()` returns the mock itself, and
+// vitest invokes anything a beforeEach RETURNS as a cleanup hook after the
+// test — i.e. it called `apiRequest()` bare. Five tests shrugged that off; the
+// 403 test's mock made the stray call reject, and vitest pinned the unhandled
+// "Forbidden" on an assertion that had already passed (the DOM contained the
+// error state it was looking for). The component was never wrong — the hook was.
+beforeEach(() => {
+  apiRequest.mockReset();
+});
 afterEach(cleanup);
 
 describe('Home — the lead programme is real or absent, never invented', () => {

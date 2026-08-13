@@ -6,12 +6,12 @@
  */
 
 import { Router } from 'express';
+import { sql } from 'drizzle-orm';
 import predictiveSectionService from '../services/predictiveSectionService';
-import { getPool } from '../db';
+import { requestDb } from '../db/requestDb';
 import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
-const pool = getPool();
 
 /**
  * POST /api/predictive-sections/suggestions
@@ -128,16 +128,22 @@ router.get('/templates/:sectionCode', async (req, res) => {
     // `module` carries the eCTD/section code and `region` the agency. Both are
     // nullable in the catalog, so a template with an unset region still matches
     // a region-qualified request rather than disappearing from it.
-    const result = await pool.query(
-      `SELECT id, name, description, category, module, region, version, tags
-         FROM document_templates
-        WHERE organization_id = $1
-          AND status = 'active'
-          AND module = $2
-          AND (region IS NULL OR region = $3)
-        ORDER BY name`,
-      [Number(organizationId), String(sectionCode), String(regulatoryRegion)],
-    );
+    //
+    // requestDb(req), not the shared pool: the request-scoped client carries
+    // app.current_tenant_id, so the catalog read is filtered by RLS as well as
+    // by the explicit organization_id predicate below (which stays as
+    // belt-and-braces, and as documentation of intent). The requestdb-coverage
+    // ratchet enforces this for new tenant-facing routes — the shared-pool
+    // version of this read was the one new route above its baseline.
+    const db = requestDb(req);
+    const result = await db.execute(sql`
+      SELECT id, name, description, category, module, region, version, tags
+        FROM document_templates
+       WHERE organization_id = ${Number(organizationId)}
+         AND status = 'active'
+         AND module = ${String(sectionCode)}
+         AND (region IS NULL OR region = ${String(regulatoryRegion)})
+       ORDER BY name`);
 
     const templates = result.rows.map((row) => ({
       id: String(row.id),
