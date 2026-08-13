@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import { IndFormsPanel } from './IndFormsPanel';
@@ -24,8 +25,11 @@ import '../styles/project-home-v2.css';
    coauthor_documents) to exactly the keys this surface renders. drugName /
    productName / indication / sponsorName / submissionType are `| null` and rendered
    null-safe — never fabricated (indication has no column and is honestly null;
-   sponsor is the tenant org). targetReceiptOffsetDays defaults to 14; forms/sections
-   are always arrays (the assembler returns [] when nothing is authored yet). */
+   sponsor is the tenant org). targetReceiptDate is the org's RECORDED
+   regulatory_programs.target_submission_date (resolved by identity match) or an
+   honest null — the clock card then says "no target date set" instead of
+   projecting from an invented offset. forms/sections are always arrays (the
+   assembler returns [] when nothing is authored yet). */
 interface IndlChecklist {
   code: string;
   drugName: string | null;
@@ -33,9 +37,17 @@ interface IndlChecklist {
   indication: string | null;
   sponsorName: string | null;
   submissionType: string | null;
-  targetReceiptOffsetDays: number;
+  targetReceiptDate: string | null;
   forms: IndlForm[];
   sections: IndlSection[];
+}
+
+/* The assembled IND cover letter (POST /api/ind-lifecycle/cover-letter) —
+   deterministic server model; `gaps` are the SERVER's verdict on missing
+   required fields, never a client guess. */
+interface CoverLetterResult {
+  body: string;
+  gaps: string[];
 }
 
 /* Stable module-level empty seeds: useLiveRows synthesizes a fresh [] every
@@ -70,23 +82,35 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   // unresolved (loading or failed load) so the readiness memo below is stable.
   const forms = checklist?.forms ?? EMPTY_FORMS;
   const sections = checklist?.sections ?? EMPTY_SECTIONS;
-  const offsetDays = checklist?.targetReceiptOffsetDays ?? 14;
+  const targetReceiptDate = checklist?.targetReceiptDate ?? null;
 
   const R = useMemo(() => indlReadiness(sections, forms), [sections, forms]);
 
-  /* 30-day regulatory clock -- a PROJECTION until FDA receipt (not yet filed). */
-  const clock = useMemo<IndlClockState>(() => {
-    const receipt = new Date(Date.now() + offsetDays * 86400000).toISOString();
-    return indlClock(receipt);
-  }, [offsetDays]);
+  /* 30-day regulatory clock -- a PROJECTION from the org's RECORDED target
+     submission date (regulatory_programs.target_submission_date). When no
+     target date is set the clock is null and the card says so — nothing is
+     projected from an invented offset. */
   const receiptDate = useMemo(
-    () => new Date(Date.now() + offsetDays * 86400000),
-    [offsetDays],
+    () => (targetReceiptDate ? new Date(targetReceiptDate) : null),
+    [targetReceiptDate],
+  );
+  const clock = useMemo<IndlClockState | null>(
+    () => (receiptDate ? indlClock(receiptDate.toISOString()) : null),
+    [receiptDate],
   );
   const clearDate = useMemo(
     () => (clock ? new Date(clock.thirtyDayDate) : null),
     [clock],
   );
+
+  /* Cover-letter exemplar — the one deliverable wired end-to-end (POST
+     /api/ind-lifecycle/cover-letter + /pdf). The other deliverables' buttons
+     honestly hand their prompt to AnA. */
+  const [cl, setCl] = useState<{ busy: boolean; model: CoverLetterResult | null; error: string }>({
+    busy: false,
+    model: null,
+    error: '',
+  });
   const fmt = (d: Date | null) =>
     d
       ? d.toLocaleDateString([], {
@@ -158,13 +182,68 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   /* checklist is a real, non-null row from here down. */
   const prog = checklist;
   const drug = prog.drugName ?? prog.code;
-  const cst = INDL_CLOCK_STATUS[clock ? clock.status : 'submitted'] || {
-    label: '--',
-    tone: 'info',
-  };
+  // Honest chip: with no recorded target date there is no clock state to name.
+  const cst = clock
+    ? INDL_CLOCK_STATUS[clock.status] || { label: '--', tone: 'info' }
+    : { label: 'No target date', tone: 'info' };
   const formsDone = forms.filter((f) => f.done).length;
   const deliverables = INDL_DELIVERABLES.filter((d) => d.group === tab);
   const stLabel = INDL_STATUS_LABEL;
+
+  /* Cover-letter exemplar handlers — real POSTs against the real routes
+     (server/routes/ind-lifecycle/documents.routes.ts). Identity comes from the
+     loaded checklist only; a failure is reported honestly, never as success. */
+  const coverLetterPayload = () => ({
+    sponsorName: prog.sponsorName ?? '',
+    drugName: drug,
+    submissionType: 'original',
+  });
+  const failMsg = (e: unknown) =>
+    e instanceof Error && e.message ? e.message : 'request failed';
+  const assembleCoverLetter = async () => {
+    setCl({ busy: true, model: null, error: '' });
+    try {
+      const res = await apiRequest('POST', '/api/ind-lifecycle/cover-letter', coverLetterPayload());
+      if (!res.ok) {
+        setCl({ busy: false, model: null, error: 'Could not assemble the cover letter — sign in and retry.' });
+        return;
+      }
+      const json = (await res.json().catch(() => null)) as { body?: unknown; gaps?: unknown } | null;
+      if (json && typeof json.body === 'string') {
+        setCl({
+          busy: false,
+          model: { body: json.body, gaps: Array.isArray(json.gaps) ? json.gaps.map(String) : [] },
+          error: '',
+        });
+      } else {
+        setCl({ busy: false, model: null, error: 'Could not assemble the cover letter — unexpected response shape.' });
+      }
+    } catch (e) {
+      setCl({ busy: false, model: null, error: 'Could not assemble the cover letter — ' + failMsg(e) + '.' });
+    }
+  };
+  const downloadCoverLetterPdf = async () => {
+    setCl((s) => ({ ...s, busy: true, error: '' }));
+    try {
+      const res = await apiRequest('POST', '/api/ind-lifecycle/cover-letter/pdf', coverLetterPayload());
+      if (!res.ok) {
+        setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — sign in and retry.' }));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ind-cover-letter.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setCl((s) => ({ ...s, busy: false }));
+    } catch (e) {
+      setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — ' + failMsg(e) + '.' }));
+    }
+  };
 
   return (
     <div className="page-inner indl" data-screen-label="IND Lifecycle">
@@ -230,11 +309,19 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         }
         body={
           R.ready ? (
-            <>
-              Once you file, the 30-day safe-to-proceed clock runs to{' '}
-              <b>{fmt(clearDate)}</b> absent a clinical hold (312.40(b)). I
-              will keep the lifecycle documents current from there.
-            </>
+            clearDate ? (
+              <>
+                Once you file, the 30-day safe-to-proceed clock runs to{' '}
+                <b>{fmt(clearDate)}</b> absent a clinical hold (312.40(b)). I
+                will keep the lifecycle documents current from there.
+              </>
+            ) : (
+              <>
+                Once you file, the 30-day safe-to-proceed clock runs from FDA
+                receipt absent a clinical hold (312.40(b)). Set a target
+                submission date on the program to project it here.
+              </>
+            )
           ) : (
             <>
               {R.requiredSections.total - R.requiredSections.completed}{' '}
@@ -489,7 +576,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             <div className="indl-clock-rows">
               <div>
                 <span>Target FDA receipt</span>
-                <b>{fmt(receiptDate)}</b>
+                <b>{receiptDate ? fmt(receiptDate) : 'No target date set'}</b>
               </div>
               <div>
                 <span>30-day clears</span>
@@ -501,10 +588,21 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             </div>
             <p className="indl-clock-note">
-              {clock ? clock.rationale : ''}{' '}
-              <span className="indl-proj">
-                Projection until FDA receipt.
-              </span>
+              {clock ? (
+                <>
+                  {clock.rationale}{' '}
+                  <span className="indl-proj">
+                    Projection from the program's recorded target submission
+                    date, until FDA receipt.
+                  </span>
+                </>
+              ) : (
+                <>
+                  No target submission date is recorded for this program, so
+                  there is nothing to project. Set a target submission date on
+                  the regulatory program and the 30-day clock projects from it.
+                </>
+              )}
             </p>
           </div>
 
@@ -545,23 +643,78 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="indl-ref">{d.ref}</span>
                   </div>
                   <div className="indl-dcard-desc">{d.desc}</div>
-                  <div className="indl-dcard-acts">
-                    <button
-                      className="btn primary sm"
-                      onClick={() => ask(d.ask)}
-                    >
-                      {I.sparkles} Assemble
-                    </button>
-                    <span className="indl-route mono">
-                      {d.route.replace('POST ', '')}
-                    </span>
-                  </div>
+                  {/* The cover letter is wired end-to-end (real POST + PDF).
+                      The other cards' buttons hand their prompt to AnA and say
+                      so — no printed route, no dead affordance. */}
+                  {d.id === 'cover-letter' ? (
+                    <>
+                      <div className="indl-dcard-acts">
+                        <button
+                          className="btn primary sm"
+                          disabled={cl.busy}
+                          onClick={() => void assembleCoverLetter()}
+                        >
+                          {I.fileText} {cl.busy ? 'Assembling…' : 'Assemble now'}
+                        </button>
+                        <button
+                          className="btn ghost sm"
+                          disabled={cl.busy}
+                          onClick={() => void downloadCoverLetterPdf()}
+                        >
+                          {I.download} PDF
+                        </button>
+                        <button
+                          className="btn ghost sm"
+                          onClick={() => ask(d.ask)}
+                        >
+                          {I.sparkles} Ask AnA
+                        </button>
+                      </div>
+                      {cl.error && (
+                        <div className="indl-dcard-desc" role="status">
+                          {cl.error}
+                        </div>
+                      )}
+                      {cl.model && (
+                        <div className="indl-dcard-desc" role="status">
+                          <pre
+                            style={{
+                              whiteSpace: 'pre-wrap',
+                              maxHeight: 220,
+                              overflowY: 'auto',
+                              margin: '6px 0 0',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            {cl.model.body}
+                          </pre>
+                          {cl.model.gaps.length > 0 && (
+                            <div style={{ marginTop: 6 }}>
+                              Missing before filing:{' '}
+                              {cl.model.gaps.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="indl-dcard-acts">
+                      <button
+                        className="btn primary sm"
+                        onClick={() => ask(d.ask)}
+                        title="Sends this request to AnA in the rail"
+                      >
+                        {I.sparkles} Ask AnA
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
             <div className="indl-deliv-foot">
-              Each assembles deterministically, renders to a
-              submission-ready PDF leaf, and files as an eCTD sequence.
+              The cover letter assembles here end-to-end from this IND's
+              recorded identity. The other documents assemble deterministically
+              on the server — ask AnA and it runs them with you.
             </div>
           </div>
         </aside>

@@ -31,6 +31,7 @@ CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, title text
 CREATE TABLE ectd_sequences (id serial PRIMARY KEY, organization_id int, submission_id int, deleted_at timestamptz);
 CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, document_table text, document_id int, deleted_at timestamptz);
 CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);
+CREATE TABLE regulatory_programs (id serial PRIMARY KEY, organization_id int, name text, code text, program_type text, product_name text, target_submission_date timestamptz, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 `;
 
 // [section code, coauthor status]. Forms are m1.1.1/.2/.3.
@@ -46,8 +47,28 @@ beforeAll(async () => {
 }, 60_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
-  await pglite.exec(`DELETE FROM submissions; DELETE FROM ectd_sequences; DELETE FROM submission_leaves; DELETE FROM coauthor_documents;`);
+  await pglite.exec(`DELETE FROM submissions; DELETE FROM ectd_sequences; DELETE FROM submission_leaves; DELETE FROM coauthor_documents; DELETE FROM regulatory_programs;`);
 });
+
+/** Seed an IND regulatory program (the store that records the target date). */
+async function seedProgram(
+  org: number,
+  opts: { productName?: string | null; name?: string; code?: string; programType?: string; target?: string | null; deleted?: boolean } = {},
+): Promise<void> {
+  await pglite.query(
+    `INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_name, target_submission_date, deleted_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [
+      org,
+      opts.name ?? 'BX-301 IND program',
+      opts.code ?? 'IND-2026-001',
+      opts.programType ?? 'IND',
+      opts.productName === undefined ? 'BX-301' : opts.productName,
+      opts.target === undefined ? '2026-10-01T00:00:00Z' : opts.target,
+      opts.deleted ? new Date() : null,
+    ],
+  );
+}
 
 /** Seed a full IND with the submission → sequence → leaf → coauthor doc linkage. */
 async function seedIND(org: number, opts: { withLeaves?: boolean } = {}): Promise<number> {
@@ -92,7 +113,9 @@ describe('assembleOrgIndChecklists', () => {
     expect(ind.indication).toBeNull();
     expect(ind.sponsorName).toBe('Concept2Cure');
     expect(ind.submissionType).toBe('IND');
-    expect(ind.targetReceiptOffsetDays).toBe(14);
+    // No regulatory program is seeded → no recorded target date. Honest null,
+    // never an invented offset.
+    expect(ind.targetReceiptDate).toBeNull();
 
     // Forms — 1571/1572 complete (approved), 3674 open (draft). Form sections are
     // NOT duplicated into the section list.
@@ -153,5 +176,46 @@ describe('assembleOrgIndChecklists', () => {
   it('ignores non-IND submissions', async () => {
     await pglite.query(`INSERT INTO submissions (organization_id, title, product_name, application_type) VALUES ($1,'A BLA','BLA-9','bla')`, [ORG]);
     expect(await assembleOrgIndChecklists(ORG)).toEqual([]);
+  });
+});
+
+describe('assembleOrgIndChecklists — targetReceiptDate (regulatory_programs)', () => {
+  it("resolves the org's RECORDED target_submission_date by identity match", async () => {
+    await seedIND(ORG);
+    await seedProgram(ORG); // product_name 'BX-301' matches the submission's product
+    const rows = await assembleOrgIndChecklists(ORG) as any[];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].targetReceiptDate).toBe('2026-10-01T00:00:00.000Z');
+  });
+
+  it('matches on the program name/code when product names differ', async () => {
+    await seedIND(ORG);
+    // The program's name equals the submission TITLE ('BX-301 (anti-BCMA mAb)').
+    await seedProgram(ORG, { productName: null, name: 'BX-301 (anti-BCMA mAb)', target: '2027-01-15T00:00:00Z' });
+    const rows = await assembleOrgIndChecklists(ORG) as any[];
+    expect(rows[0].targetReceiptDate).toBe('2027-01-15T00:00:00.000Z');
+  });
+
+  it('returns null when the matching program records no target date', async () => {
+    await seedIND(ORG);
+    await seedProgram(ORG, { target: null });
+    const rows = await assembleOrgIndChecklists(ORG) as any[];
+    expect(rows[0].targetReceiptDate).toBeNull();
+  });
+
+  it('returns null when no program matches the submission identity', async () => {
+    await seedIND(ORG);
+    await seedProgram(ORG, { productName: 'ZX-9', name: 'ZX-9 IND', code: 'IND-ZX9' });
+    const rows = await assembleOrgIndChecklists(ORG) as any[];
+    expect(rows[0].targetReceiptDate).toBeNull();
+  });
+
+  it('never resolves across tenants, program type, or soft-deleted programs', async () => {
+    await seedIND(ORG);
+    await seedProgram(OTHER); // right identity, wrong org
+    await seedProgram(ORG, { programType: 'NDA' }); // right identity, wrong program type
+    await seedProgram(ORG, { deleted: true }); // right identity, soft-deleted
+    const rows = await assembleOrgIndChecklists(ORG) as any[];
+    expect(rows[0].targetReceiptDate).toBeNull();
   });
 });
