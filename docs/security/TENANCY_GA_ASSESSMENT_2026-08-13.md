@@ -277,6 +277,40 @@ this namespace is a live event feed and every handler on it publishes — so the
 honest options are connect or do not. Read access to the same data remains on
 HTTP, which `read_only` permits.
 
+### 2.5.6 SCIM — the asymmetry, decided
+
+Left open in the first pass as needing a product call. Decided here, with the
+default chosen deliberately and made reversible without a deploy.
+
+SCIM is mounted at `/scim/v2` — outside `/api`, with its own bearer token — so
+the lifecycle guard never runs for it. A suspended organization's IdP could keep
+**creating** users on a tenancy nobody may log into and nobody is paying for.
+
+The behaviour is **asymmetric**, which is why it is a decision rather than a
+copy of the HTTP rule:
+
+- **Provisioning (create / activate) STOPS.** Adding a seat to a suspended tenant
+  grows something unusable and, on a seat-licensed product, unbillable. An
+  activating `PATCH` counts — re-activation is provisioning wearing a PATCH.
+- **Deprovisioning (delete / deactivate) ALWAYS CONTINUES.** An IdP removing a
+  user is a **security** action: a departed employee, or a compromised account.
+  Blocking it because the tenant is behind on an invoice would turn a billing
+  state into a security incident — and it is the direction an administrator
+  reaches for *during* a suspension.
+- **Reads always continue.** An IdP reconciling its view changes nothing.
+
+It uses the BACKGROUND rule (`allow` only), not the HTTP one: a `read_only`
+tenant must not gain seats either, and there is no safe verb here — every guarded
+route creates or re-activates.
+
+`SCIM_PROVISIONING_ON_SUSPENDED_TENANT=allow` restores the previous behaviour.
+The default is `block` because that is the defensible position, but this is a
+product judgement and the operator gets to override it.
+
+Mutation-verified in both directions, which is what keeps an asymmetry honest:
+disabling the guard fails the two provisioning assertions, and extending it to
+`DELETE` fails the deprovisioning one.
+
 ### 2.5.5 The generalizable fix — a ratchet, not a fifth code review
 
 Four surfaces, found one at a time, none related to the others. Finding the fifth
@@ -318,9 +352,7 @@ platform control. The remaining alternative-auth surfaces were enumerated and
 dispositioned: Stripe webhooks must stay open (that is how a suspended tenant
 pays its way back), Firecrawl webhooks are signature-verified ingestion,
 `/api/csp-report` carries no tenant data, and the auth/health/setup paths carry
-none either. SCIM (`/scim/v2`) is left deliberately: provisioning for a suspended
-tenant arguably *should* stop while deprovisioning *should* continue, and that
-distinction wants a product decision rather than a guess.
+none either. SCIM (`/scim/v2`) is now **closed** — see §2.5.6.
 
 ---
 
