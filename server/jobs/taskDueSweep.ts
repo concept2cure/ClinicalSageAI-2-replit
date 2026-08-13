@@ -21,6 +21,7 @@
 import { and, asc, eq, isNull, isNotNull, inArray, lt, or, sql } from 'drizzle-orm';
 import { createScopedLogger } from '../utils/logger.js';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { filterTenantsForBackgroundWork } from '../services/tenant/tenant-lifecycle';
 
 const logger = createScopedLogger('task-due-sweep');
 
@@ -55,7 +56,72 @@ export interface TaskDueSweepSummary {
   scanned: number;
   dueSoonNotified: number;
   overdueNotified: number;
+  /** Rows skipped because their organization is not entitled to operate. */
+  skippedNotEntitled: number;
   errors: number;
+}
+
+
+/**
+ * Claim and send the notification for one task. Returns the class notified, or
+ * null when the row was not due, was already notified, or was claimed by a
+ * concurrent sweep.
+ *
+ * Extracted from `runTaskDueSweep` so that function stays inside the
+ * lines-per-function budget after the tenant-entitlement filter was added.
+ */
+async function notifyOneTask(
+  row: {
+    taskId: string;
+    organizationId: number;
+    assigneeId: number | null;
+    title: string;
+    dueDate: Date | null;
+    metadata: unknown;
+  },
+  now: number,
+  deps: { db: any; unifiedTasks: any; notifyTaskEvent: (p: any) => void }
+): Promise<'overdue' | 'due-soon' | null> {
+  const { db, unifiedTasks, notifyTaskEvent } = deps;
+  const cls = classifyDue(row.dueDate, now);
+  if (!cls || alreadyNotified(row.metadata, cls)) return null;
+
+  const marker = cls === 'overdue' ? 'overdueNotifiedAt' : 'dueSoonNotifiedAt';
+  const nextMetadata = {
+    ...((row.metadata ?? {}) as Record<string, unknown>),
+    [marker]: new Date(now).toISOString(),
+  };
+  // Stamp BEFORE notifying: a duplicate suppression beats a duplicate
+  // notification if the process dies between the two. The guarded UPDATE is also
+  // the concurrency arbiter — with two replicas (or overlapping sweeps) both can
+  // pass the read, but only ONE update affects a row. The loser MUST NOT notify,
+  // so the result is checked, not ignored.
+  const stamped = await db
+    .update(unifiedTasks)
+    .set({ metadata: nextMetadata, updatedAt: new Date() })
+    .where(
+      and(
+        eq(unifiedTasks.taskId, row.taskId),
+        eq(unifiedTasks.organizationId, row.organizationId),
+        sql`COALESCE(${unifiedTasks.metadata} ->> ${marker}, '') = ''`
+      )
+    )
+    .returning({ taskId: unifiedTasks.taskId });
+  if (!stamped.length) return null; // another sweep claimed this notification
+
+  notifyTaskEvent({
+    organizationId: row.organizationId,
+    recipientUserId: row.assigneeId,
+    category: 'task_update',
+    severity: cls === 'overdue' ? 'warning' : 'info',
+    title: cls === 'overdue' ? `Overdue: ${row.title}` : `Due soon: ${row.title}`,
+    body:
+      cls === 'overdue'
+        ? 'This task has passed its due date.'
+        : 'This task is due within 48 hours.',
+    taskId: row.taskId,
+  });
+  return cls;
 }
 
 /** One sweep across every open, dated, assigned task in every organization. */
@@ -65,6 +131,7 @@ export async function runTaskDueSweep(): Promise<TaskDueSweepSummary> {
       scanned: 0,
       dueSoonNotified: 0,
       overdueNotified: 0,
+      skippedNotEntitled: 0,
       errors: 0,
     };
 
@@ -128,51 +195,29 @@ export async function runTaskDueSweep(): Promise<TaskDueSweepSummary> {
     summary.scanned = rows.length;
     if (!rows.length) return summary;
 
+    // TENANT LIFECYCLE. This sweep selects across EVERY organization and sends
+    // notifications, and it runs on no transport — so the HTTP lifecycle guard
+    // never saw it. Before this filter a suspended organization's users kept
+    // receiving automated mail about work every HTTP route would refuse them,
+    // and the platform kept spending on tenants that are not paying.
+    //
+    // Resolved ONCE per distinct organization rather than per row: at a 500-row
+    // limit the posture cache makes repeats cheap, but the round-trips are not
+    // free. Skipped tenants are counted, not logged per row — a suspended tenant
+    // with 200 due tasks should produce one summary number, not 200 log lines.
+    const allowedOrgs = await filterTenantsForBackgroundWork(rows.map(r => r.organizationId));
+
     const { notifyTaskEvent } = await import('../services/tasking/task-side-effects');
 
     for (const row of rows) {
       try {
-        const cls = classifyDue(row.dueDate, now);
-        if (!cls || alreadyNotified(row.metadata, cls)) continue;
-
-        const marker = cls === 'overdue' ? 'overdueNotifiedAt' : 'dueSoonNotifiedAt';
-        const nextMetadata = {
-          ...((row.metadata ?? {}) as Record<string, unknown>),
-          [marker]: new Date(now).toISOString(),
-        };
-        // Stamp BEFORE notifying: a duplicate suppression beats a duplicate
-        // notification if the process dies between the two. The guarded UPDATE
-        // is also the concurrency arbiter — with two replicas (or overlapping
-        // sweeps) both can pass the read, but only ONE update affects a row.
-        // The loser MUST NOT notify, so the result is checked, not ignored.
-        const stamped = await db
-          .update(unifiedTasks)
-          .set({ metadata: nextMetadata, updatedAt: new Date() })
-          .where(
-            and(
-              eq(unifiedTasks.taskId, row.taskId),
-              eq(unifiedTasks.organizationId, row.organizationId),
-              // Concurrency guard: only stamp if still unstamped.
-              sql`COALESCE(${unifiedTasks.metadata} ->> ${marker}, '') = ''`
-            )
-          )
-          .returning({ taskId: unifiedTasks.taskId });
-        if (!stamped.length) continue; // another sweep claimed this notification
-
-        notifyTaskEvent({
-          organizationId: row.organizationId,
-          recipientUserId: row.assigneeId,
-          category: 'task_update',
-          severity: cls === 'overdue' ? 'warning' : 'info',
-          title: cls === 'overdue' ? `Overdue: ${row.title}` : `Due soon: ${row.title}`,
-          body:
-            cls === 'overdue'
-              ? 'This task has passed its due date.'
-              : 'This task is due within 48 hours.',
-          taskId: row.taskId,
-        });
-        if (cls === 'overdue') summary.overdueNotified += 1;
-        else summary.dueSoonNotified += 1;
+        if (!allowedOrgs.has(row.organizationId)) {
+          summary.skippedNotEntitled += 1;
+          continue;
+        }
+        const notified = await notifyOneTask(row, now, { db, unifiedTasks, notifyTaskEvent });
+        if (notified === 'overdue') summary.overdueNotified += 1;
+        else if (notified === 'due-soon') summary.dueSoonNotified += 1;
       } catch {
         summary.errors += 1; // per-task best-effort
       }

@@ -181,7 +181,7 @@ environment default rather than silently disabling a revenue control.
 
 ---
 
-## 2.5 Second pass — two transports bypassed the lifecycle guard entirely
+## 2.5 Second pass — three surfaces bypassed the lifecycle guard entirely
 
 Found on a follow-up sweep, after the guard had shipped. Both are the same
 mistake in different clothes: the guard is Express middleware on the `/api`
@@ -225,6 +225,42 @@ making a document readable over one transport but not the other buys nothing.
 Where no `connectionConfig` is available to downgrade with, it fails closed
 rather than admitting a writer. The check sits *after* membership, so a revoked
 user is refused for revocation and never learns the tenant's billing state.
+
+### 2.5.3 Background work — a suspended tenant kept being notified
+
+The third instance of the same pattern, and the one that needed a different
+answer rather than the same check.
+
+`server/jobs/taskDueSweep.ts` selects open, dated, assigned tasks across **every
+organization** and calls `notifyTaskEvent`. It runs on no transport, so no guard
+saw it. A suspended organization's users kept receiving automated mail about work
+that every HTTP route, the public API and the collaboration socket would all now
+refuse them — mail whose links lead to a 403. On the AI-backed sweeps the same
+gap is a spend problem: model budget burned on tenants that are not paying.
+
+Closed with `filterTenantsForBackgroundWork`, resolved once per distinct
+organization rather than per row (a 500-row sweep dominated by one tenant must
+not issue 500 lookups), and reported as a `skippedNotEntitled` count rather than
+a log line per row.
+
+**Background work needed different semantics, not the same check.** Two
+deliberate divergences from the HTTP rule, both pinned by test because getting
+either backwards is silent:
+
+- `read_only` is a **NO**. There is no read-only background job — a sweep exists
+  to write, notify, or bill. Treating it as "go ahead" would let a past-due
+  tenant keep generating notifications and spend, which is what the state exists
+  to stop.
+- An unreadable posture is a **SKIP, not an error**. A sweep has no caller to
+  receive a 503; doing nothing this tick and retrying next is the safe failure,
+  where alerting would turn a database blip into a cron alert storm.
+
+The other jobs were surveyed rather than assumed: `retentionCron` notifies
+*platform* admins with an estate summary, not tenants, and the remaining sweeps
+(`auditChainIntegritySweep`, `corpusIngestionSweep`, `regulatoryHorizonScan`,
+`externalIntelligenceSweep`, `scheduleOfEventsSweep`, `driftSentinelSweep`) run
+estate-wide under a system scope with no per-tenant outward effect. `taskDueSweep`
+was the one that needed the filter.
 
 **The generalizable lesson.** A control mounted on one transport is not a
 platform control. The remaining alternative-auth surfaces were enumerated and
