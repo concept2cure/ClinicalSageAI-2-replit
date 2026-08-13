@@ -409,13 +409,21 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="pj-card" style={{ marginBottom: 14 }}>
             <div className="pj-card-b">
-              <div className="pj-seclbl" style={{ marginTop: 0 }}>
+              {/* The visible section label is the field's programmatic label.
+                  It was never associated before, and the field passed the
+                  accessible-name ratchet only because its fabricated default
+                  value leaked into the textarea's textContent — remove the
+                  fixture and the field announces as nothing. aria-labelledby
+                  points at the text already on screen, so there is one label,
+                  not a duplicate, and the layout is unchanged. */}
+              <div className="pj-seclbl" id="dr-query-label" style={{ marginTop: 0 }}>
                 Research question
               </div>
               <textarea
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 rows={2}
+                aria-labelledby="dr-query-label"
                 placeholder="e.g. Precedent accelerated approvals on an overall-response-rate endpoint in second-line NSCLC"
                 style={{
                   width: '100%',
