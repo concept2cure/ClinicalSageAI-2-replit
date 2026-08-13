@@ -901,6 +901,24 @@ export const C2C_MIGRATION_FILES = [
   // tenant-facing data.
   'db/migrations/20260813_ai_gateway_audit_log.sql',
 
+  // ── Parent-scoped RLS for child tables (added 2026-08-13) ────────────────
+  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
+  // readable by every tenant. Found mechanically against a provisioned
+  // database: of 937 public base tables, 195 have no tenant column, 170 of
+  // those have no RLS at all, 78 of those are referenced by server SQL, and 21
+  // of those carry an FK to a table that IS tenant-keyed. chat_messages is the
+  // sharpest: every tenant's conversation bodies.
+  //
+  // The FK is the evidence of ownership, so these get a PARENT-scoped policy
+  // rather than an organization_id column of their own — a copied tenant key is
+  // a second source of truth that can drift from the parent.
+  //
+  // Placed with the other pre-sweep entries: it only ALTERs, but "the isolation
+  // steps are the tail of the set" is an invariant (C-33), not a case-by-case
+  // judgement. The sweep will not touch these tables anyway — it keys on an
+  // org column they do not have, and it never replaces an existing policy.
+  'db/migrations/20260813_child_table_parent_scoped_rls.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
