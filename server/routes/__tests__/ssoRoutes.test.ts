@@ -3,10 +3,15 @@ import { vi } from 'vitest';
 
 // vi.hoisted to set env vars before any module load.
 vi.hoisted(() => {
-  // SSO helper routes branch on `isDev = NODE_ENV === 'development'`.
-  // The dev-mode path redirects 302 to the callback (what the test
-  // expects); production returns 501 SSO_NOT_IMPLEMENTED.
+  // The SSO dev stubs gate on isDevAuthAllowed(), which requires BOTH
+  // NODE_ENV=development AND an explicit ALLOW_DEV_AUTH=1. Setting only the
+  // first is what the callback used to accept, and that single-factor form let
+  // any non-production deployment mint a real JWT for an unauthenticated
+  // caller — see the header of server/routes/sso.ts. The dev-path cases below
+  // opt in to BOTH; the case that asserts the security property clears the
+  // second and expects no token.
   process.env.NODE_ENV = 'development';
+  process.env.ALLOW_DEV_AUTH = '1';
   process.env.DATABASE_URL_DEV =
     process.env.DATABASE_URL_DEV || 'postgresql://test:test@localhost:5432/test';
   process.env.DATABASE_URL =
@@ -36,6 +41,7 @@ vi.mock('../../db', () => {
 });
 
 
+import { beforeEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import ssoRoutes from '../sso';
@@ -44,6 +50,17 @@ describe('SSO helper routes', () => {
   const app = express();
   app.use(express.json());
   app.use('/api/auth/sso', ssoRoutes);
+
+  // tests/setup.ts resets NODE_ENV to 'test' around each case, so the env must
+  // be re-established HERE to hold at request time. It previously did not need
+  // to: sso.ts captured the decision once at module load, so the hoisted value
+  // survived the reset and the gate was never actually exercised by a request.
+  // The route now consults isDevAuthAllowed() per request, which is what makes
+  // the negative case below meaningful.
+  beforeEach(() => {
+    process.env.NODE_ENV = 'development';
+    process.env.ALLOW_DEV_AUTH = '1';
+  });
 
   it('GET /api/auth/sso/:provider/initiate should redirect to callback', async () => {
     const res = await request(app).get('/api/auth/sso/microsoft/initiate');
@@ -62,5 +79,25 @@ describe('SSO helper routes', () => {
     expect(res.headers.location).toBeDefined();
     expect(res.headers.location).toMatch(/sso_token=/);
     expect(res.headers.location).toMatch(/sso_email=/);
+  });
+
+  // ── The security property ────────────────────────────────────────────────
+  // This callback signs a genuine 24-hour JWT (userId 1, organizationId 2,
+  // role client_user) with the PRODUCTION secret and never verifies the `code`
+  // it is handed. It used to be gated on NODE_ENV === 'development' alone, so
+  // any deployment whose NODE_ENV was not exactly 'production' — a preview box,
+  // a Replit container, a staging service whose env drifted — served
+  // credentials to unauthenticated callers. Two factors are required now, and
+  // this pins the second one: with ALLOW_DEV_AUTH absent, no token is minted.
+  it('mints NO token when ALLOW_DEV_AUTH is not explicitly set, even in development', async () => {
+    delete process.env.ALLOW_DEV_AUTH;
+
+    const initiate = await request(app).get('/api/auth/sso/microsoft/initiate');
+    expect(initiate.status).toBe(501);
+
+    const callback = await request(app).get('/api/auth/sso/microsoft/callback?code=dev');
+    expect(callback.status).toBe(501);
+    expect(callback.headers.location).toBeUndefined();
+    expect(JSON.stringify(callback.body)).not.toMatch(/sso_token|eyJ/);
   });
 });
