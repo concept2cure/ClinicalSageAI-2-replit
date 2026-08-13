@@ -72,6 +72,14 @@ import { DocCanvas } from './EditorCanvas';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
+import {
+  EDITOR_TARGET_DOC_LABELS,
+  clearEditorTarget,
+  describeEditorTarget,
+  matchEditorTargetSection,
+  peekEditorTarget,
+  type EditorTarget,
+} from '../editorTarget';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 
@@ -305,6 +313,26 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
 
   const [toast, fireToast] = useToast();
 
+  /* ── Editor deep-link target (window.C2C_EDITOR_TARGET) ──
+     Set by a workbench click ("Open §11 in editor", a CER Generator row) via
+     v2/editorTarget.ts, the same set-navigate-consume idiom as C2C_CONVO.
+     Peeked in the initializer (pure — safe under StrictMode double-render),
+     CLEARED on mount: the channel is one-shot, so a target that isn't honoured
+     now can never ambush a later, unrelated visit to the editor. */
+  const [editorTarget] = useState<EditorTarget | null>(() => peekEditorTarget());
+  /** The honest miss: why the deep-link did not open what it named. Rendered
+   *  as a dismissible notice over the DEFAULT view — never a silent
+   *  wrong-document open. */
+  const [targetNotice, setTargetNotice] = useState<string | null>(null);
+  /** The section the deep-link resolved, consumed by loadSections so the
+   *  refetch that follows a document switch selects the target section
+   *  instead of the document's first. Doc-scoped: a stale in-flight load of a
+   *  DIFFERENT document must neither consume it nor act on it. */
+  const targetSectionRef = useRef<{ docId: string; sectionId: string } | null>(null);
+  useEffect(() => {
+    clearEditorTarget();
+  }, []);
+
   const activeDoc = docs.find((d) => d.id === activeDocId) ?? null;
   const activeSection = sections.find((s) => s.id === activeSectionId) ?? null;
   const dirty = activeSection != null && draft !== savedContent;
@@ -414,7 +442,20 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
     const list = Array.isArray(body.sections) ? body.sections : [];
     setSections(list);
     setSectionsState('ready');
-    setActiveSectionId((cur) => (cur && list.some((s) => s.id === cur) ? cur : list[0]?.id ?? null));
+    // A deep-link resolution may have named the section this load should land
+    // on. Selected HERE, after setSections, so the buffer-sync effect below
+    // reads the section's real content — selecting it before the list arrived
+    // would sync an empty buffer over a section that has text. Consumed only
+    // by a load of the document it names: a stale in-flight load of another
+    // document must not swallow the target.
+    const target = targetSectionRef.current;
+    const landTarget =
+      target != null && target.docId === docId && list.some((s) => s.id === target.sectionId);
+    if (target != null && target.docId === docId) targetSectionRef.current = null;
+    setActiveSectionId((cur) => {
+      if (landTarget) return target!.sectionId;
+      return cur && list.some((s) => s.id === cur) ? cur : list[0]?.id ?? null;
+    });
   }, []);
 
   useEffect(() => {
@@ -428,6 +469,114 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
     setDraft(content);
     setSavedContent(content);
   }, [activeSectionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── Honour the deep-link target ──
+     One attempt per mount, once the document list is ready and the governed
+     outline has settled. FAIL CLOSED at every step: a target scoped to a
+     different program, a target whose family contradicts this project's
+     governed dossier, or a section no document in scope holds, all land on
+     the DEFAULT view with a notice that says so — resolving a near-miss into
+     the wrong document would be worse than an honest miss.
+
+     One-shot via refs rather than by nulling the state inside the effect:
+     a dep-change cleanup would cancel the in-flight search the moment the
+     state write re-ran the effect. `aliveRef` guards only real unmount. */
+  const targetAttemptedRef = useRef(false);
+  const aliveRef = useRef(true);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
+  const [treeScrollNonce, setTreeScrollNonce] = useState(0);
+  useEffect(() => {
+    if (targetAttemptedRef.current) return;
+    if (!editorTarget || docsState === 'loading' || filing.loading) return;
+    targetAttemptedRef.current = true;
+    const t = editorTarget;
+    // A hand-off that named no section carried only program scope, which
+    // window.C2C_PROJECT already delivered. Nothing more was claimed.
+    if (!t.sectionCode && !t.sectionLabel) return;
+    const family = EDITOR_TARGET_DOC_LABELS[t.docType];
+    const wanted = describeEditorTarget(t);
+    if (docsState === 'error') {
+      // The tree pane already reports the failed read; this says what it cost.
+      setTargetNotice(
+        `Couldn’t open ${wanted} — the document list failed to load, so nothing was resolved. ` +
+          'Retry once documents load.',
+      );
+      return;
+    }
+    if (t.programId && t.programId !== projectIdForOutline) {
+      setTargetNotice(
+        `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different program'}, ` +
+          'which is not the project this editor is scoped to. Open that project and retry. ' +
+          'Showing the editor’s default view instead.',
+      );
+      return;
+    }
+    if (filing.document && filing.document.doc_type !== t.docType) {
+      setTargetNotice(
+        `Couldn’t open ${wanted} — this project’s governed dossier is ` +
+          `${filing.document.doc_type.toUpperCase()}, not ${family}. ` +
+          'Showing the editor’s default view instead.',
+      );
+      return;
+    }
+    void (async () => {
+      // The docs list is program-scoped (or the org's current filter); a
+      // program's dossier is one or a few documents, so the search is bounded
+      // defensively rather than paged.
+      for (const d of docs.slice(0, 8)) {
+        const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
+          `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`,
+        );
+        if (!aliveRef.current) return;
+        if (!ok || !body) continue;
+        const match = matchEditorTargetSection(
+          Array.isArray(body.sections) ? body.sections : [],
+          t,
+        );
+        if (match) {
+          // Route the selection through loadSections (via targetSectionRef) so
+          // the section is selected only once its list — and therefore its
+          // content — is in state. Selecting directly here could sync an empty
+          // buffer over a section that has text.
+          targetSectionRef.current = { docId: d.id, sectionId: match.id };
+          if (d.id === activeDocId) void loadSections(d.id);
+          else setActiveDocId(d.id);
+          setTreeScrollNonce((n) => n + 1);
+          fireToast(`Opened ${match.code} · ${match.title} — from the ${family} workspace.`);
+          return;
+        }
+      }
+      if (!aliveRef.current) return;
+      setTargetNotice(
+        `Couldn’t find ${wanted} in the ${family} documents in scope ` +
+          `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
+          'the section may not be drafted here yet, or may sit under another status.',
+      );
+    })();
+  }, [
+    editorTarget,
+    docsState,
+    docs,
+    filing.loading,
+    filing.document,
+    projectIdForOutline,
+    status,
+    activeDocId,
+    loadSections,
+    fireToast,
+  ]);
+
+  /* Bring the deep-linked section's tree row into view once it is active.
+     Re-runs as the tree fills in; a no-op when nothing is active yet. */
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!treeScrollNonce) return;
+    const row = rootRef.current?.querySelector<HTMLElement>('.ed-tree-row[data-active]');
+    if (row && typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'nearest' });
+  }, [treeScrollNonce, activeSectionId, sections]);
 
   /* ── Load the right-rail data for the active section on demand ── */
   const loadHistory = useCallback(async (sectionId: string) => {
@@ -653,7 +802,7 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
     : null;
 
   return (
-    <div className="ed" data-comments={rail != null || undefined}>
+    <div className="ed" ref={rootRef} data-comments={rail != null || undefined}>
       {/* ── Left: document + section tree ── */}
       <aside className="ed-tree">
         <div className="ed-tree-h">
@@ -869,6 +1018,30 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
             )}
           </div>
         </header>
+
+        {/* ── The deep-link's honest miss ──
+            A workbench click named a section this canvas could not open. The
+            DEFAULT view renders underneath — stated, dismissible, and never a
+            silently-wrong document. */}
+        {targetNotice && (
+          <div
+            className="scaf-note"
+            role="status"
+            style={{
+              display: 'flex',
+              gap: 10,
+              alignItems: 'baseline',
+              padding: '8px 16px',
+              fontSize: 12,
+              borderBottom: '1px solid var(--c2c-line,#e4e7ec)',
+            }}
+          >
+            <span style={{ flex: 1, minWidth: 0 }}>{targetNotice}</span>
+            <button className="nda-open" onClick={() => setTargetNotice(null)}>
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <div className="ed-doc-scroll">
           <div className="ed-doc-inner">

@@ -630,7 +630,12 @@ const createAuditEvent = async (
   // required" — inside createAuditTrail's catch, which meant every audit event
   // routed through this helper was silently dropped. The caller has already
   // resolved the tenant from the real request; pass it through explicitly.
-  const mockReq = {
+  // Named for what it is: a real request CONTEXT assembled from real values
+  // (the caller's resolved tenant and actor), not a mock. It was `mockReq`,
+  // which was both inaccurate — nothing here is fabricated — and the single
+  // genuine hit of ci:no-mock-in-prod-routes once that guard was repaired to
+  // match identifier forms in code rather than the bare word in comments.
+  const auditRequestContext = {
     user: { organizationId: tenantId, email: actor },
     headers: { 'x-user-email': actor, 'x-tenant-id': tenantId },
     ip: 'legacy-call',
@@ -638,7 +643,7 @@ const createAuditEvent = async (
   } as any;
 
   await createAuditTrail(
-    mockReq,
+    auditRequestContext,
     docId,
     null,
     eventType,

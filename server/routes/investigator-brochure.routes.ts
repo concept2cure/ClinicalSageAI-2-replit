@@ -108,19 +108,34 @@ router.get('/', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    // Fail closed to the deterministic skeleton — never 500, never fabricate IB
-    // content. A missing store (42P01) is surfaced via meta.pendingStore.
-    const data = skeletonRows();
-    return res.json({
-      data,
-      meta: {
-        count: data.length,
-        productName: null,
-        completeness: completenessOf(data),
-        provisioned: false,
-        source: 'nonclinical_studies',
-        pendingStore: (err as { code?: string })?.code === '42P01',
-      },
+    // A missing store (42P01) fails closed to the deterministic skeleton — the
+    // ICH E6 section outline with every section unrendered — and declares that
+    // via meta.pendingStore. Never fabricated IB content.
+    //
+    // Every other error is now a 5xx. The skeleton carries a real completeness
+    // percentage, and serving it after a failed assembly reported a computed IB
+    // readiness figure that no query backed. A number an author trusts must
+    // come from data that was actually read.
+    if ((err as { code?: string })?.code === '42P01') {
+      const data = skeletonRows();
+      return res.json({
+        data,
+        meta: {
+          count: data.length,
+          productName: null,
+          completeness: completenessOf(data),
+          provisioned: false,
+          source: 'nonclinical_studies',
+          pendingStore: true,
+        },
+      });
+    }
+    console.error(
+      '[investigator-brochure] IB section assembly failed:',
+      err instanceof Error ? err.message : String(err),
+    );
+    return res.status(500).json({
+      error: { code: 'INTERNAL', message: 'Failed to assemble Investigator Brochure sections.' },
     });
   }
 });

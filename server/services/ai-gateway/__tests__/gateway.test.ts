@@ -250,6 +250,44 @@ describe('AIGateway', () => {
       expect(params.thinking).toBeUndefined();
     });
 
+    // ── The provenance record must match what was SENT ──────────────────
+    // The two cases above prove temperature is never transmitted to a
+    // reasoning-only model. The audit ledger recorded it anyway —
+    // `temperature: request.temperature ?? 0.7` — under a comment claiming to
+    // describe "which params + prompt produced this output". So the Part 11
+    // reproducibility record asserted a sampling parameter that never left the
+    // process, and anyone replaying the call from that record would set 0.7
+    // against a model that does no sampling. A provenance record that is
+    // confidently wrong is worse than one that says "not applicable", because
+    // only the first gets trusted.
+    const auditedTemperature = async (
+      model: string,
+      request: Partial<GatewayRequest>
+    ): Promise<number | null | undefined> => {
+      const logged: any[] = [];
+      (gateway as any).config.auditEnabled = true;
+      (gateway as any).auditLogger = { log: async (e: any) => { logged.push(e); } };
+      await (gateway as any).logAudit(
+        buildTestRequest(request),
+        { requestId: 'r-1', provider: 'anthropic', model, cached: false, deterministic: false,
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 } },
+        'quality',
+        true
+      );
+      return logged[0]?.temperature;
+    };
+
+    it('records NO temperature for a reasoning-only model — it was never sent', async () => {
+      // undefined on the entry; GatewayAuditLogger coalesces to NULL in the
+      // column (`entry.temperature ?? null`), so the stored provenance is
+      // "not applicable" rather than a number nobody sent.
+      expect(await auditedTemperature('claude-opus-4-7', { temperature: 0.5 })).toBeUndefined();
+    });
+
+    it('records the real temperature for a model that does accept sampling', async () => {
+      expect(await auditedTemperature('claude-sonnet-4-6', { temperature: 0.5 })).toBe(0.5);
+    });
+
     it('uses adaptive thinking (no budget_tokens) for Opus 4.7', () => {
       const params = buildParams('claude-opus-4-7', {
         thinking: { enabled: true, budgetTokens: 8000 },

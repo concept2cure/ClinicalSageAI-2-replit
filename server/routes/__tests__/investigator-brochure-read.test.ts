@@ -156,12 +156,16 @@ describe('GET /api/investigator-brochure', () => {
     expect(byNum('4').status).toBe('missing');
   });
 
-  it('fails closed to the skeleton on an unexpected store error (never 500)', async () => {
+  // Regression: this used to assert 200 + the skeleton for an unexpected error.
+  // The skeleton carries a computed `completeness` percentage, so a failed
+  // assembly was answered with an IB readiness figure that no query backed —
+  // a number an author would reasonably act on. A missing store (asserted
+  // above) may still degrade; a real fault must not.
+  it('500s on an unexpected store error — never a 200 skeleton', async () => {
     assembleOrgIBSections.mockRejectedValueOnce(new Error('connection reset'));
     const res = await request(appWith(7)).get('/api/investigator-brochure');
-    expect(res.status).toBe(200);
-    expect(res.body.data.length).toBeGreaterThan(0);
-    expect(res.body.meta.provisioned).toBe(false);
-    expect(res.body.meta.pendingStore).toBe(false);
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('INTERNAL');
+    expect(res.body.data).toBeUndefined();
   });
 });

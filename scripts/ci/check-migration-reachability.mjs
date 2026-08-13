@@ -175,7 +175,103 @@ function walk(dir, test, acc = []) {
 // (tests/schema-contract/migration-reachability-guard.contract.test.ts, ledger
 // C-35). Everything below runs only when this file is the entry point — importing
 // it must not walk the repo or call process.exit.
-export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION, sqlishSegments };
+
+// ── The reference scan, as a reusable unit ──────────────────────────────────
+// Same qualification rule as the creator side — see the note above. A reference to
+// `regulatory.information_requests` must resolve to that table, not to a phantom
+// relation named after its schema.
+/**
+ * Keywords after which FROM/UPDATE is NOT introducing a relation. Each entry is
+ * a phantom this parser actually produced, found by resolving its output against
+ * a live database (check-tables-against-live-schema.mjs):
+ *
+ *   FOR UPDATE SKIP LOCKED         → a table named `skip`
+ *   … IS DISTINCT FROM expected_prev → a table named `expected_prev`
+ *   EXTRACT(YEAR FROM created_at)  → a table named `created_at`
+ *
+ * All three are row-locking or expression syntax, never a relation. The
+ * sibling guard (check-unbacked-tables.mjs) carries the same FOR-UPDATE
+ * lookbehind for the same reason; the other two were invisible until every
+ * extracted name had to resolve to a real relation.
+ */
+const NOT_A_RELATION_LEAD =
+  String.raw`(?<!\bFOR\s)(?<!\bFOR\s{2})(?<!\bDISTINCT\s)(?<!\bDISTINCT\s{2})` +
+  String.raw`(?<!\b(?:YEAR|MONTH|DAY|HOUR|MINUTE|SECOND|EPOCH|DOW|DOY|WEEK|QUARTER|ISODOW|ISOYEAR|CENTURY|DECADE|MILLENNIUM|MICROSECONDS|MILLISECONDS|TIMEZONE|TIMEZONE_HOUR|TIMEZONE_MINUTE|JULIAN)\s)`;
+
+const REF_RE = new RegExp(
+  NOT_A_RELATION_LEAD +
+    // `INTO` must be `INSERT INTO`. A bare INTO also appears inside VALUES
+    // prose — `'AnA batch draft accepted into document'` yielded a table called
+    // `document` — and in PL/pgSQL's `SELECT … INTO <variable>`, which names a
+    // variable, not a relation.
+    String.raw`(?:\bFROM|\bJOIN|\bINSERT\s+INTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?`,
+  'gi',
+);
+
+/**
+ * Names a single query binds for itself: CTEs (`WITH x AS (…)`, and each further
+ * `, y AS (…)`) plus window definitions, which share the syntax. Lowercased, to
+ * match the reference side.
+ */
+export function cteNames(sql) {
+  const out = new Set();
+  for (const m of sql.matchAll(/(?:\bWITH|,)\s+(?:RECURSIVE\s+)?([a-zA-Z_][\w]*)\s+AS\s*\(/gi)) {
+    out.add(m[1].toLowerCase());
+  }
+  return out;
+}
+
+/**
+ * Every table the server's raw SQL names, mapped to the files that name it.
+ *
+ * Exported, and used by this guard through the export, because a SECOND guard
+ * asks the same question against a live database
+ * (check-tables-against-live-schema.mjs). Two copies of this parser is exactly
+ * how the pair would drift: the regexes here carry three rounds of hard-won
+ * corrections (schema-qualified capture, comment stripping, prose rejection),
+ * and a private copy in the sibling guard would start out identical, then
+ * silently stop matching what this one matches — leaving the two guards
+ * disagreeing about which tables the server even references, with no test able
+ * to tell which one is right.
+ *
+ * @param {string} [dir] absolute directory to scan; defaults to server/
+ * @returns {Map<string, Set<string>>} qualified table name -> repo-relative files
+ */
+export function referencedTables(dir = path.join(repoRoot, 'server')) {
+  const referenced = new Map();
+  for (const abs of walk(dir, (n) => n.endsWith('.ts') && !/\.test\.|\.spec\./.test(n))) {
+    const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
+    // Only SQL-looking string segments — never the whole file. See sqlishSegments.
+    for (const raw of sqlishSegments(read(abs))) {
+      // Comments inside a query are prose, and prose discusses joins: the line
+      // `-- fails to match and the LEFT JOIN yields a null name.` inside a
+      // template literal registered a table called `yields`. The CREATE side has
+      // stripped comments since C-35; the reference side had not, and nothing
+      // could see it until every name had to resolve against a real database.
+      const segment = stripSqlComments(raw);
+      // A CTE is defined by the query itself, so `WITH ranked AS (…) SELECT …
+      // FROM ranked` references no storage at all. This guard's own finding rule
+      // hid the omission — a CTE name is never in `deadCreators`, so it could
+      // never become a finding here — but the live-schema guard resolves every
+      // referenced name against a real database, where `ranked`, `latest`,
+      // `descendants` and two dozen other CTE names come back as missing tables.
+      // Filtering them at the source keeps both guards honest; the alternative
+      // is a baseline full of entries no migration can ever satisfy.
+      const ctes = cteNames(segment);
+      REF_RE.lastIndex = 0;
+      for (const m of segment.matchAll(REF_RE)) {
+        if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
+        const t = qualify(m[1], m[2]);
+        if (!m[1] && ctes.has(t)) continue; // unqualified name bound by this query
+        if (!referenced.has(t)) referenced.set(t, new Set());
+        referenced.get(t).add(rel);
+      }
+    }
+  }
+  return referenced;
+}
+
+export { qualify, tablesIn, stripSqlComments, NOT_A_RELATION, sqlishSegments, REF_RE, repoRoot };
 
 const isEntryPoint =
   process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
@@ -236,30 +332,9 @@ for (const abs of walk(path.join(repoRoot, 'server'), (n) => n.endsWith('.ts')))
 }
 
 // ── 2. Tables the server actually queries ───────────────────────────────────
-// Same qualification rule as the creator side — see the note above. A reference to
-// `regulatory.information_requests` must resolve to that table, not to a phantom
-// relation named after its schema.
-const REF_RE = new RegExp(
-  String.raw`(?:\bFROM|\bJOIN|\bINTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?`,
-  'gi',
-);
-const referenced = new Map(); // table -> Set(files)
-for (const abs of walk(
-  path.join(repoRoot, 'server'),
-  (n) => n.endsWith('.ts') && !/\.test\.|\.spec\./.test(n),
-)) {
-  const rel = path.relative(repoRoot, abs).split(path.sep).join('/');
-  // Only SQL-looking string segments — never the whole file. See sqlishSegments.
-  for (const segment of sqlishSegments(read(abs))) {
-    REF_RE.lastIndex = 0;
-    for (const m of segment.matchAll(REF_RE)) {
-      if (NOT_A_RELATION.has((m[2] || '').toLowerCase())) continue;
-      const t = qualify(m[1], m[2]);
-      if (!referenced.has(t)) referenced.set(t, new Set());
-      referenced.get(t).add(rel);
-    }
-  }
-}
+// The scan itself lives in `referencedTables` above, so this guard and the
+// live-schema guard cannot drift apart on what "the server references" means.
+const referenced = referencedTables(); // table -> Set(files)
 
 // ── 3. The finding: referenced, created ONLY by a deploy-dead migration ─────
 const findings = {};

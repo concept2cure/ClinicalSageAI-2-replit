@@ -22,11 +22,15 @@ import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import type { EditorSectionRef } from '../../v2/editorTarget';
 
 export interface K510SurfaceProps {
   program: Program | null;
   onAskAna: (text: string) => void;
-  onOpenEditor?: (id: string | number) => void;
+  /** Open the one document editor, on the named section when one is given.
+   *  Code + label both travel: the editor matches by code first, by title as
+   *  the fallback, and reports an honest miss with the label otherwise. */
+  onOpenEditor?: (section?: EditorSectionRef) => void;
 }
 
 export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProps) {
@@ -131,7 +135,16 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
             {program ? program.dueLabel : 'FDA filing · 41 days'}
           </div>
         </div>
-        <button className="section-more" onClick={() => onOpenEditor && onOpenEditor(11)}>
+        <button
+          className="section-more"
+          onClick={() =>
+            onOpenEditor &&
+            onOpenEditor({
+              code: 11,
+              label: sourceEstar.find((s) => s.id === 11)?.label ?? 'Substantial Equivalence Discussion',
+            })
+          }
+        >
           Open §11 in editor {I.arrowRight}
         </button>
         <button
@@ -545,7 +558,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 <React.Fragment key={s.id}>
                   <button
                     className={`estar-row ${s.blocker ? 'blocker' : ''}`}
-                    onClick={() => onOpenEditor && onOpenEditor(s.id)}
+                    onClick={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
                     title={`Open ${s.label} in editor`}
                   >
                     <div className="estar-num">§{String(s.id).padStart(2, '0')}</div>
@@ -560,7 +573,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                   {s.draft ? (
                     <AnaDraftBanner
                       draft={s.draft}
-                      onRefine={() => onOpenEditor && onOpenEditor(s.id)}
+                      onRefine={() => onOpenEditor && onOpenEditor({ code: s.id, label: s.label })}
                       onAccepted={estar.refresh}
                     />
                   ) : null}

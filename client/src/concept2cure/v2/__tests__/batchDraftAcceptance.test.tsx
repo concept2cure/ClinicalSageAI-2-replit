@@ -324,6 +324,87 @@ describe('sample prose is never written to a regulated document', () => {
   });
 });
 
+/**
+ * The offline sample path must not leave timers running after unmount.
+ *
+ * ── The failure this replaces ────────────────────────────────────────────────
+ * The offline fallback schedules one timer per selected section plus a final
+ * one that moves to 'review', each calling setCards/setPhase. None was
+ * cancelled. React 18 does not warn about setState-after-unmount, so nothing
+ * showed in the browser — but in CI the run ended, jsdom tore the environment
+ * down, and a pending timer fired into a destroyed global:
+ *
+ *   ReferenceError: window is not defined
+ *     ❯ dispatchSetState  react-dom-client.development.js
+ *     ❯ Timeout._onTimeout  BatchDraft.tsx:500
+ *
+ * vitest reports that as an unhandled error and exits non-zero — with all
+ * 18,621 tests passing. Integration Tests was red for a run in which nothing
+ * failed.
+ *
+ * ── Why this asserts the timer count and not the error ───────────────────────
+ * The delays are 300 + idx*150 ms, so whether teardown wins the race depends on
+ * machine speed; the failure did not reproduce locally in repeated runs of the
+ * file. Chasing the race would give a test that is green for the wrong reason
+ * most of the time. The invariant underneath it is not racy at all: after
+ * unmount there must be NO timer left holding this component's setState. That
+ * is exactly what fake timers can count.
+ */
+describe('the offline draft path cleans up after itself', () => {
+  it('leaves no pending timers behind when the surface unmounts mid-draft', async () => {
+    // No token → connected() is false → the surface takes the sample path.
+    sessionStorage.clear();
+    spineBody = spine({
+      tree: leaves([
+        { id: '7', num: '2.7.1', title: 'Summary of Clinical Efficacy' },
+        { id: '8', num: '2.7.2', title: 'Summary of Clinical Safety' },
+      ]),
+    });
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { container, unmount } = renderSurface();
+
+      await waitFor(() => expect(container.querySelectorAll('.bd-pick-item').length).toBeGreaterThan(0));
+      await waitFor(() =>
+        expect(
+          (container.querySelector('.bd-pick-actions .bd-primary') as HTMLButtonElement).disabled,
+        ).toBe(false),
+      );
+      const baseline = vi.getTimerCount();
+
+      fireEvent.click(container.querySelector('.bd-pick-actions .bd-primary') as HTMLButtonElement);
+
+      // Drafting schedules more than BatchDraft's own timers — the data layer
+      // reacts to each setCards commit — so a global count cannot be attributed
+      // to one component. OWNED is what this surface schedules itself: one
+      // timer per selected section plus the one that advances to 'review'.
+      const OWNED = 3; // 2 sections + review
+      const whileDrafting = vi.getTimerCount();
+      expect(
+        whileDrafting - baseline,
+        'the sample path scheduled nothing — this test is not exercising it',
+      ).toBeGreaterThanOrEqual(OWNED);
+
+      // Leave before they fire: the ordinary act of navigating away mid-draft.
+      unmount();
+
+      // Assert the OWNED ones are gone, and say nothing about the others.
+      // An earlier draft of this test asserted an absolute zero and failed at 4
+      // against a working fix — it was measuring the whole tree's timers, not
+      // this component's. Anything BatchDraft leaves pending holds setState on a
+      // component that no longer exists, which is what fired into a torn-down
+      // jsdom and killed the CI run.
+      expect(
+        vi.getTimerCount(),
+        'timers scheduled by the offline draft survived unmount',
+      ).toBeLessThanOrEqual(whileDrafting - OWNED);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('the framework picker is remembered or stated — never guessed', () => {
   it('presets the framework the documents recorded', async () => {
     spineBody = spine({ framework: 'fda_510k', tree: leaves([{ id: '7', num: '1.1', title: 'Cover letter' }]) });

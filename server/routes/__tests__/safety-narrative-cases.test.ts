@@ -69,4 +69,28 @@ describe('GET /api/safety-narratives/cases', () => {
     expect(res.body.data).toEqual([]);
     expect(res.body.meta.count).toBe(0);
   });
+
+  // The empty list above is a SAFETY CLAIM: "this org has no serious adverse
+  // events awaiting a report". The route must never make that claim off a read
+  // it could not complete — an unreadable PV store answered with `[]` is
+  // indistinguishable from a clean worklist, and it is the reading under which
+  // a 7-/15-day expedited-reporting clock runs out unnoticed. So a failed read
+  // is a 5xx, with 42P01 called out as an operator (unmigrated) condition.
+  it('503s when the adverse-event store is not provisioned (42P01)', async () => {
+    assembleOrgSaeCases.mockRejectedValueOnce(
+      Object.assign(new Error('relation "adverse_events" does not exist'), { code: '42P01' }),
+    );
+    const res = await request(appWith(7)).get('/api/safety-narratives/cases');
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('AE_STORE_UNPROVISIONED');
+    expect(res.body.data).toBeUndefined();
+  });
+
+  it('500s on any other read failure — never a 200 empty worklist', async () => {
+    assembleOrgSaeCases.mockRejectedValueOnce(new Error('connection reset'));
+    const res = await request(appWith(7)).get('/api/safety-narratives/cases');
+    expect(res.status).toBe(500);
+    expect(res.body.error.code).toBe('INTERNAL');
+    expect(res.body.data).toBeUndefined();
+  });
 });

@@ -30,10 +30,14 @@ import type {
   PathwayKey,
   SectionTarget,
 } from '../../types';
+import type { EditorSectionRef } from '../../../v2/editorTarget';
 
 type PaneTab = 'workspace' | 'audit' | 'correspondence' | 'approvals' | 'files';
 type OpenSection = (t: SectionTarget) => void;
-type OpenEditor = (id: string | number) => void;
+/** Hand off to the one document editor. A section ref deep-links the editor to
+ *  that section (via the host's window.C2C_EDITOR_TARGET channel); calling with
+ *  nothing is plain navigation. */
+type OpenEditor = (section?: EditorSectionRef) => void;
 
 interface PaneCounts {
   audit: number;
@@ -737,7 +741,13 @@ export function DossierDrawer({ open, target, pathway, documentId = null, onClos
             <span>·</span>
             <span>v{version}</span>
           </span>
-          <button className="dd-foot-edit" onClick={() => { onOpenEditor?.(safeTarget.id); onClose(); }}>
+          <button
+            className="dd-foot-edit"
+            onClick={() => {
+              onOpenEditor?.({ code: safeTarget.id, label: safeTarget.label });
+              onClose();
+            }}
+          >
             {I.edit} Open in editor
           </button>
         </div>

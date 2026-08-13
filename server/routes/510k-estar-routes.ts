@@ -158,6 +158,13 @@ async function resolveProjectAnchor(
   orgId: number,
   meta: z.infer<typeof exportMetaSchema>,
 ): Promise<ProjectAnchor | null> {
+  // requestDb(req), not the shared `db`: the request-scoped client carries
+  // app.current_tenant_id, so these lookups are filtered by RLS as well as by
+  // the explicit organizationId predicates below (kept as belt-and-braces, and
+  // as documentation of intent). ci:requestdb-coverage enforces this for
+  // tenant-facing routes and was failing on this file — it reads
+  // fda510k_projects and regulatory_programs, both tenant-keyed.
+  const db = requestDb(req);
   const ident = meta.ident ?? (meta.projectId !== undefined ? String(meta.projectId) : '');
   if (!ident) return null;
 

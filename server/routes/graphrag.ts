@@ -25,6 +25,7 @@ import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { clampGraphRagBounds } from './graphrag-util.js';
 import { getPool } from '../db';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -692,6 +693,25 @@ router.post('/ingest', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'documentId and content are required' });
   }
 
+  // Every node and edge this handler writes is now tenant-keyed.
+  //
+  // knowledge_graph_nodes / _edges carried NO tenant column until
+  // db/migrations/20260813_knowledge_graph_tenant_keys.sql, so one org's
+  // extracted entity NAMES were reachable by another org's semantic search —
+  // the confidential part, on a platform holding unannounced programmes. The
+  // tables now have organization_id with RLS enabled and FORCED, and the policy
+  // compares organization_id against the session tenant.
+  //
+  // That makes supplying it mandatory rather than optional: an INSERT with a
+  // NULL organization_id is refused by WITH CHECK (NULL = tenant is NULL, never
+  // true), so writing without it would fail every ingest at the database rather
+  // than silently storing unattributed rows. Fail fast here, with a reason,
+  // instead of surfacing a row-level-security error from deep inside the loop.
+  const organizationId = getSecureOrgId(req);
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required to ingest into the knowledge graph' });
+  }
+
   try {
     const startTime = Date.now();
 
@@ -704,8 +724,8 @@ router.post('/ingest', async (req: Request, res: Response) => {
       try {
         await pool.query(
           `
-          INSERT INTO knowledge_graph_nodes (id, entity_type, name, description, metadata, confidence, source_document_id, created_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+          INSERT INTO knowledge_graph_nodes (id, entity_type, name, description, metadata, confidence, source_document_id, organization_id, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
           ON CONFLICT (id) DO UPDATE SET metadata = EXCLUDED.metadata, confidence = GREATEST(knowledge_graph_nodes.confidence, EXCLUDED.confidence)
         `,
           [
@@ -716,6 +736,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
             entity.metadata || {},
             entity.confidence || 0.7,
             body.documentId,
+            organizationId,
           ]
         );
         nodesCreated++;
@@ -731,8 +752,8 @@ router.post('/ingest', async (req: Request, res: Response) => {
       try {
         await pool.query(
           `
-          INSERT INTO knowledge_graph_edges (id, source_id, target_id, relationship_type, weight, metadata, created_at)
-          VALUES ($1, $2, $3, $4, $5, $6, NOW())
+          INSERT INTO knowledge_graph_edges (id, source_id, target_id, relationship_type, weight, metadata, organization_id, created_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
           ON CONFLICT (id) DO NOTHING
         `,
           [
@@ -742,6 +763,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
             rel.relationshipType,
             rel.weight || 1.0,
             rel.metadata || {},
+            organizationId,
           ]
         );
         edgesCreated++;

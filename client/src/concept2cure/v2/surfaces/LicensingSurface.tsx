@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, liveMutateOrNull, connected } from '../dataConnect';
+import { EmptyState, useLiveData, liveMutateOrNull, type DataResult } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 // Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
 // LIC_ARCHETYPES / licBundle are the product's fixed pricing catalog — the same
@@ -52,10 +52,9 @@ function lim(n: number): string | number {
 /* -- Billing API helper (mirrors kit runtime setup) -- */
 
 interface BillingApi {
-  checkout(body: Record<string, unknown>): Promise<{ checkoutUrl?: string } | null>;
-  dtcCheckout(body: Record<string, unknown>): Promise<{ checkoutUrl?: string } | null>;
-  portal(returnUrl: string): Promise<{ portalUrl?: string } | null>;
-  connected(): boolean;
+  checkout(body: Record<string, unknown>): Promise<DataResult<{ checkoutUrl?: string }>>;
+  dtcCheckout(body: Record<string, unknown>): Promise<DataResult<{ checkoutUrl?: string }>>;
+  portal(returnUrl: string): Promise<DataResult<{ portalUrl?: string }>>;
 }
 
 // Subscription STATUS is read fixture-free via useLiveData in the component.
@@ -67,21 +66,21 @@ interface BillingApi {
 // from this surface. dataConnect's header states the rule these now follow: the
 // kit global collapses onto apiRequest on port, and no second fetch convention
 // is introduced.
+//
+// The full DataResult is kept (rather than `.then(r => r.data)`) so a failure can
+// be REPORTED. It could not be before: a rejected checkout resolved to `null`,
+// which fell into the `else` arm of `if (r && r.checkoutUrl)` and fired the toast
+// "Checkout started". The user was told their checkout had begun when the server
+// had refused it.
 const billing: BillingApi = {
   checkout(body) {
-    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/checkout', body)
-      .then((r) => r.data);
+    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/checkout', body);
   },
   dtcCheckout(body) {
-    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/dtc-checkout', body)
-      .then((r) => r.data);
+    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/dtc-checkout', body);
   },
   portal(returnUrl) {
-    return liveMutateOrNull<{ portalUrl?: string }>('POST', '/api/billing/portal', { returnUrl })
-      .then((r) => r.data);
-  },
-  connected() {
-    return connected();
+    return liveMutateOrNull<{ portalUrl?: string }>('POST', '/api/billing/portal', { returnUrl });
   },
 };
 
@@ -93,7 +92,6 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const [arch, setArch] = useState('virtual_biotech');
   const [seats, setSeats] = useState(5);
   const [toast, fireToast] = useToast();
-  const live = billing.connected();
 
   // Per-org subscription STATUS is real persisted data: GET /api/billing/status
   // reads the organizations row (server getSubscriptionStatus) and reconciles
@@ -118,44 +116,39 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       model === 'dtc'
         ? { tier, billingCycle: cycle }
         : { tier, billingCycle: cycle, seats };
-    if (live) {
-      (model === 'dtc' ? billing.dtcCheckout(body) : billing.checkout(body))
-        .then((r: any) => {
-          if (r && r.checkoutUrl) window.open(r.checkoutUrl, '_blank');
-          else fireToast('Checkout started');
-        })
-        .catch(() => fireToast('Checkout failed'));
-    } else {
-      fireToast(
-        'Sample · would POST /' +
-          (model === 'dtc' ? 'dtc-checkout' : 'checkout') +
-          ' · ' +
-          tier +
-          ' · ' +
-          cycle +
-          (model === 'b2b' ? ' · ' + seats + ' seats' : ''),
-      );
-    }
+    /* Always the real endpoint, and only ever the real outcome.
+       This used to be gated on `connected()` (a session token in local storage),
+       and when that read false it fired "Sample · would POST /dtc-checkout · …"
+       and did nothing. That is a mock action on a runtime path: the button
+       narrated a request it never made, in a tone that reads like a dry run
+       rather than a failure, so a real customer whose token lived somewhere this
+       check could not see simply could not buy anything and was never told.
+       The request now goes out; if it is refused, the refusal is what is shown. */
+    (model === 'dtc' ? billing.dtcCheckout(body) : billing.checkout(body)).then((r) => {
+      if (r.data?.checkoutUrl) {
+        window.open(r.data.checkoutUrl, '_blank');
+        return;
+      }
+      // No URL back means no checkout was created — never report one that was not.
+      fireToast(r.error ? 'Checkout failed · ' + r.error : 'Checkout did not return a payment link');
+    });
   };
 
   const managePortal = () => {
-    if (live) {
-      billing
-        .portal(window.location.href)
-        .then((r: any) => {
-          if (r && r.portalUrl) window.open(r.portalUrl, '_blank');
-        })
-        .catch(() => fireToast('Portal unavailable'));
-    } else {
-      fireToast('Sample · would POST /portal (Stripe customer portal)');
-    }
+    billing.portal(window.location.href).then((r) => {
+      if (r.data?.portalUrl) {
+        window.open(r.data.portalUrl, '_blank');
+        return;
+      }
+      fireToast(r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable');
+    });
   };
 
   return (
     <div className="sp" style={{ maxWidth: 1120 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Admin · /api/billing {live ? '· live' : ''}</div>
+          <div className="sp-eyebrow">Admin · /api/billing</div>
           <h1 className="sp-title">Plans &amp; licensing</h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by
@@ -447,9 +440,11 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="scaf-note" style={{ marginTop: 16 }}>
-        {I.shieldCheck} Prices, limits, credits and features are read from the
-        codebase pricing config (services/billing.ts). Checkout &amp; management
-        run through Stripe ({live ? 'live' : 'sample'}).
+        {I.shieldCheck} Prices, limits, credits and features are the product&rsquo;s fixed
+        catalog, mirrored from the same config the backend charges against
+        (services/billing.ts) — identical for every organization, not per-tenant data.
+        Your plan, seats and renewal above are read from your organization&rsquo;s billing
+        record. Checkout &amp; management run through Stripe.
       </div>
       <C2CToast msg={toast} />
     </div>

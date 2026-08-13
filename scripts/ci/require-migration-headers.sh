@@ -28,7 +28,31 @@ echo "🔍 Checking migrations for eCTD regulatory audit headers..."
 echo "   (Scope: 2026+ date-prefixed migrations + vault prerequisite)"
 echo ""
 
-# Determine base ref for changed-file scope
+# ─────────────────────────────────────────────────────────────────────────────
+# Determine base ref for changed-file scope.
+#
+# This used to fall back, when NONE of the three candidates resolved, to
+# `git diff --name-only -- db/migrations/*.sql` with no ref — the WORKING-TREE
+# diff, which on a clean CI checkout is empty by construction. So the fallback
+# could only ever produce "✅ No migration changes detected", and the header
+# requirement was never enforced on a single pull request.
+#
+# That fallback was reached on every run. `origin/main` does not exist in this
+# repo, and the Lint job checked out at the default fetch-depth of 1, so
+# `HEAD~1` was not present either. Observed on the run for commit 262f349,
+# which ADDS db/migrations/20260813_ai_gateway_audit_log.sql:
+#
+#   Run ./scripts/ci/require-migration-headers.sh
+#   ✅ No migration changes detected in current diff scope.
+#
+# The proof it had been inert: two migrations merged through it earlier in the
+# same PR carried no header at all.
+#
+# The workflow now checks out with fetch-depth: 0 so a base is resolvable, and
+# an unresolvable base is a hard error here. "I could not determine what
+# changed" is not "nothing changed", and a guard that cannot tell the two apart
+# will always report the reassuring one.
+# ─────────────────────────────────────────────────────────────────────────────
 BASE_REF=""
 if [[ -n "${GITHUB_BASE_REF:-}" ]] && git rev-parse --verify "origin/${GITHUB_BASE_REF}" >/dev/null 2>&1; then
   BASE_REF="origin/${GITHUB_BASE_REF}"
@@ -38,17 +62,24 @@ elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
   BASE_REF="HEAD~1"
 fi
 
-CHANGED_MIGRATIONS=""
-if [[ -n "$BASE_REF" ]]; then
-  CHANGED_MIGRATIONS=$(git diff --name-only "$BASE_REF"...HEAD -- "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true)
-else
-  CHANGED_MIGRATIONS=$(git diff --name-only -- "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true)
+if [[ -z "$BASE_REF" ]]; then
+  echo "❌ Cannot resolve a base ref to diff against."
+  echo "   Tried: origin/\${GITHUB_BASE_REF} (${GITHUB_BASE_REF:-unset}), origin/main, HEAD~1."
+  echo ""
+  echo "   Refusing to report success for a scope that was never computed."
+  echo "   In CI this means the checkout has no history — set fetch-depth: 0 on"
+  echo "   the job running this guard."
+  exit 1
 fi
 
+CHANGED_MIGRATIONS=$(git diff --name-only "$BASE_REF"...HEAD -- "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true)
+
 if [[ -z "$CHANGED_MIGRATIONS" ]]; then
-  echo "✅ No migration changes detected in current diff scope."
+  echo "✅ No migration changes detected vs ${BASE_REF}."
   exit 0
 fi
+
+echo "   (Base: ${BASE_REF})"
 
 while IFS= read -r f; do
   [[ -z "$f" ]] && continue

@@ -16,7 +16,7 @@ import { useGlobalRiCatalog } from '@/hooks/useGlobalRiCatalog';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
-import { liveGetOrNull, EmptyState } from '../dataConnect';
+import { liveGetOrNull, EmptyState, useLiveRows } from '../dataConnect';
 import {
   ANA_MODES,
   NAV_TIERS_V2,
@@ -30,6 +30,76 @@ import type { GlobalRiCatalog, EnrichedGlobalRiCapability } from '@shared/types/
 import '../styles/surfaces-v2.css';
 
 /* ════════════ Home — AnA-first landing (centered composer) ════════════ */
+
+/**
+ * One row of the real programme portfolio, as GET /api/c2c/projects projects it
+ * from `regulatory_programs` (server/routes/c2c/projects.ts). Home only needs
+ * the identity fields; the Projects surface reads the same route for the full
+ * card. Declared here rather than imported so Home does not pull the whole
+ * Projects module (and its New-Project wizard) into the landing chunk.
+ */
+interface HomeProgram {
+  id: string;
+  title: string;
+  code: string;
+  status: string;
+  ws: string;
+}
+
+/**
+ * The lead-programme line under the greeting.
+ *
+ * This block used to render `SEGMENT_CONTEXT[segment].program` — a constant. For
+ * a biotech tenant that constant read 'BX-301 — BLA · 351(a)', so the FIRST
+ * authenticated screen named a drug programme the organization had never
+ * created, while Projects (one click away, reading the same database) correctly
+ * reported none. Fabricated programme identity is a data-integrity defect in a
+ * regulated tool, so the constant is gone and this reads the real portfolio.
+ *
+ * Four honest states, no fixture: loading, the real lead programme, "No programs
+ * yet", or a failed read said plainly. An active programme is preferred as the
+ * lead (that is what "what am I working on" means); if none is active the first
+ * row still beats showing nothing.
+ */
+function HomeLeadProgram({ onNav }: { onNav: (id: string) => void }) {
+  const { rows, loading, error, empty } = useLiveRows<HomeProgram>('/api/c2c/projects');
+
+  if (loading) {
+    return <div className="landing-segctx-prog">Loading your programs…</div>;
+  }
+  if (error) {
+    return (
+      <div className="landing-segctx-prog">
+        <span className="ico">{I.alertTriangle}</span>
+        Couldn&rsquo;t load your programs
+      </div>
+    );
+  }
+  if (empty) {
+    return (
+      <div className="landing-segctx-prog">
+        <span className="ico">{I.gitBranch}</span>
+        No programs yet
+      </div>
+    );
+  }
+
+  const lead = rows.find((p) => p.status === 'active') ?? rows[0];
+  const others = rows.length - 1;
+  return (
+    <button
+      type="button"
+      className="landing-segctx-prog"
+      onClick={() => onNav('projects')}
+      title="Open the project portfolio"
+    >
+      <span className="ico">{I.gitBranch}</span>
+      {lead.code ? `${lead.code} — ${lead.title}` : lead.title}
+      {others > 0 && <span className="landing-segctx-tag">+{others} more</span>}
+    </button>
+  );
+}
+
 export function Home({
   onNav,
   onAsk,
@@ -107,10 +177,7 @@ export function Home({
               <span className="landing-segctx-cat">{ctx.label}</span>
               <span className="landing-segctx-tag">{ctx.tagline}</span>
             </div>
-            <div className="landing-segctx-prog">
-              <span className="ico">{I.gitBranch}</span>
-              {ctx.program}
-            </div>
+            <HomeLeadProgram onNav={onNav} />
             <div className="landing-segctx-paths">
               {ctx.pathways.map((p, i) => (
                 <span key={i} className="landing-segctx-path">

@@ -444,81 +444,52 @@ router.delete('/:id', async (req: Request, res: Response) => {
  * GET /api/programs/:id/milestones
  * Get all milestones for a program
  */
-router.get('/:id/milestones', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    // Mock response
-    const milestones = [
-      {
-        id: 'ms-001',
-        programId: id,
-        name: 'Literature Review Complete',
-        description: 'Complete systematic literature review for clinical evidence',
-        category: 'evidence',
-        targetDate: '2026-02-15T00:00:00Z',
-        actualDate: '2026-02-10T00:00:00Z',
-        status: 'completed',
-        progress: 100,
-      },
-      {
-        id: 'ms-002',
-        programId: id,
-        name: 'Performance Testing Complete',
-        description: 'Complete all bench testing and performance validation',
-        category: 'evidence',
-        targetDate: '2026-03-01T00:00:00Z',
-        status: 'in_progress',
-        progress: 65,
-      },
-      {
-        id: 'ms-003',
-        programId: id,
-        name: 'CER Draft Complete',
-        description: 'Complete first draft of Clinical Evaluation Report',
-        category: 'authoring',
-        targetDate: '2026-04-15T00:00:00Z',
-        status: 'pending',
-        progress: 0,
-        dependsOn: ['ms-001', 'ms-002'],
-      },
-    ];
-
-    res.json({ success: true, data: milestones });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch milestones' },
-    });
-  }
+router.get('/:id/milestones', (_req: Request, res: Response) => {
+  // NOT IMPLEMENTED — and it must say so rather than answer.
+  //
+  // This handler used to return a hardcoded three-milestone plan ("Literature
+  // Review Complete", "CER Draft Complete") with invented target/actual dates
+  // and progress percentages, echoed back under the caller's programId so it
+  // read as that program's real schedule. A programme manager cannot tell that
+  // from a plan the platform actually tracks, and a submission timeline built
+  // on invented dates is the worst kind of wrong.
+  //
+  // There is no milestone store keyed to this router's programs: `:id` here is
+  // a `cer_projects` integer id, while `program_milestones.program_id` is a
+  // `regulatory_programs` UUID — a different program entity. The canonical,
+  // DB-backed milestone read lives at GET /api/regulatory-programs/:id/milestones
+  // (server/routes/regulatory-programs.ts). Send callers there.
+  return res.status(501).json({
+    success: false,
+    error: {
+      code: 'NOT_IMPLEMENTED',
+      message:
+        'Milestones are not tracked for this program type. Use GET /api/regulatory-programs/:id/milestones, which reads the governed milestone store.',
+    },
+  });
 });
 
 /**
  * POST /api/programs/:id/milestones
  * Create a new milestone
  */
-router.post('/:id/milestones', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const data = req.body;
-
-    const milestone = {
-      id: crypto.randomUUID(),
-      programId: id,
-      ...data,
-      status: 'pending',
-      progress: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    res.status(201).json({ success: true, data: milestone });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to create milestone' },
-    });
-  }
+router.post('/:id/milestones', (_req: Request, res: Response) => {
+  // NOT IMPLEMENTED — and it must say so rather than pretend.
+  //
+  // This handler used to answer 201 Created with a freshly minted UUID and the
+  // caller's own body echoed back, having written NOTHING. The client saw a
+  // successful create, showed the milestone, and lost it on the next reload —
+  // a write that reports success without durability is indistinguishable from
+  // data loss. There is no milestone store keyed to this router's programs
+  // (see the GET above), so refuse the write instead of faking it.
+  return res.status(501).json({
+    success: false,
+    error: {
+      code: 'NOT_IMPLEMENTED',
+      message:
+        'Creating milestones is not supported for this program type; nothing would be persisted.',
+    },
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -529,57 +500,27 @@ router.post('/:id/milestones', async (req: Request, res: Response) => {
  * GET /api/programs/:id/activity
  * Get activity timeline for a program
  */
-router.get('/:id/activity', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    // Mock response
-    const activities = [
-      {
-        id: 'act-001',
-        programId: id,
-        activityType: 'evidence_added',
-        entityType: 'evidence',
-        entityId: 'ev-001',
-        title: 'Literature evidence added',
-        description: 'Added clinical study: "Long-term outcomes of cardiac monitoring devices"',
-        userName: 'Dr. Sarah Chen',
-        userRole: 'lead',
-        timestamp: '2026-01-25T14:30:00Z',
-      },
-      {
-        id: 'act-002',
-        programId: id,
-        activityType: 'milestone_completed',
-        entityType: 'milestone',
-        entityId: 'ms-001',
-        title: 'Milestone completed',
-        description: 'Literature Review Complete',
-        userName: 'John Smith',
-        userRole: 'author',
-        timestamp: '2026-02-10T16:45:00Z',
-      },
-      {
-        id: 'act-003',
-        programId: id,
-        activityType: 'status_changed',
-        entityType: 'program',
-        entityId: id,
-        title: 'Status updated',
-        description: 'Program status changed from draft to active',
-        userName: 'Dr. Sarah Chen',
-        userRole: 'lead',
-        timestamp: '2026-01-20T09:15:00Z',
-      },
-    ];
-
-    res.json({ success: true, data: activities });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch activity' },
-    });
-  }
+router.get('/:id/activity', (_req: Request, res: Response) => {
+  // NOT IMPLEMENTED — and it must say so rather than answer.
+  //
+  // This handler used to return a hardcoded activity feed attributing actions
+  // to invented people ("Dr. Sarah Chen", lead; "John Smith", author) at
+  // invented timestamps, stamped with the caller's programId. That is a
+  // fabricated attribution record on a regulated program — the exact artefact
+  // an auditor would read as evidence of who did what and when.
+  //
+  // The real feed is `program_activity_log` / `audit_logs`, neither of which is
+  // reachable from this router's `cer_projects` integer id. The canonical read
+  // is GET /api/regulatory-programs/:id/activity
+  // (server/routes/regulatory-programs.ts).
+  return res.status(501).json({
+    success: false,
+    error: {
+      code: 'NOT_IMPLEMENTED',
+      message:
+        'Activity history is not tracked for this program type. Use GET /api/regulatory-programs/:id/activity, which reads the audit log.',
+    },
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

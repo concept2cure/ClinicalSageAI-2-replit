@@ -14,8 +14,14 @@
  * cite indices and follow-up suggestions are not part of the provenance chain → []
  * (never fabricated). See evidence-asks-view-assembler.
  *
- * Org scoped; 403 without org context; fails closed to null on 42P01 so an
- * unprovisioned store never 500s.
+ * Org scoped; 403 without org context.
+ *
+ * A FAILED read is never reported as "this org has never asked anything". The
+ * evidence ask IS the provenance record behind a grounded answer, so `data:
+ * null` has to mean "the chain is empty", never "we could not read the chain" —
+ * those are different claims about whether evidence exists. An unprovisioned
+ * trace store answers 503 (operator action: run the AI-trace migrations); any
+ * other fault answers 500.
  */
 import { Router, type Request, type Response } from 'express';
 import { assembleOrgEvidenceAsks } from '../services/evidence/evidence-asks-view-assembler';
@@ -63,8 +69,19 @@ router.get('/', async (req: Request, res: Response) => {
     return res.json({ data, meta: { count: asks.length, source: 'ai_retrieval_runs' } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.json({ data: null, meta: { count: 0, pendingStore: true } });
+      console.error('[evidence-asks] AI trace store not provisioned — failing closed');
+      return res.status(503).json({
+        error: {
+          code: 'EVIDENCE_TRACE_STORE_UNPROVISIONED',
+          message:
+            'The AI retrieval/generation trace store is not provisioned in this deployment; evidence asks cannot be read.',
+        },
+      });
     }
+    console.error(
+      '[evidence-asks] evidence ask read failed:',
+      err instanceof Error ? err.message : String(err),
+    );
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read evidence ask.' } });
   }
 });

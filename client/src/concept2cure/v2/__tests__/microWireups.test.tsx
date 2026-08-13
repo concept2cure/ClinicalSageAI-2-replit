@@ -114,6 +114,18 @@ describe('PrecedentEngine — saved queries', () => {
   it('saves the current query via POST with the JSON round-trip + normalized scope', async () => {
     render(<PrecedentEngine {...props()} />);
     await screen.findByRole('button', { name: /Save query/ });
+
+    // Type the product code rather than relying on a seeded one. The form used
+    // to start pre-filled with an INVENTED programme (therapeutic area
+    // 'Diabetes', product code 'QBJ') and this assertion read that constant
+    // back out — so it proved the fabrication round-tripped, not that a user's
+    // input does. The seed is gone (see the header of PrecedentEngine.tsx: the
+    // surface was speaking invented product context back to the user and into
+    // the AnA conversation as their own words), so the test now supplies the
+    // value the way a person would. Strictly stronger: it now shows the save
+    // carries USER input.
+    fireEvent.change(screen.getByLabelText('Product code'), { target: { value: 'QBJ' } });
+
     fireEvent.click(screen.getByRole('button', { name: /Save query/ }));
     await waitFor(() => {
       const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/saved-precedent-queries/');

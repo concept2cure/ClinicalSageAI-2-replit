@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
@@ -37,8 +37,8 @@ import '../styles/project-home-v2.css';
 interface TaskItem {
   taskId: string;
   title: string;
-  /** Real project FK as a string; '' when unattached. Does NOT match the
-   *  TB_PROJECTS slugs — see the projects/roster follow-up flag. */
+  /** Real project FK as a string (the numeric projects.id); '' when unattached.
+   *  Resolved to a programme name against GET /api/projects — see projLabel. */
   project: string;
   moduleType: string;
   taskType: string;
@@ -123,6 +123,94 @@ function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => str
   };
 }
 
+/* ── Automation — the organization's REAL configured rules ────────────────────
+   GET /api/project-rules (server/routes/project-rules.ts) lists the
+   `project_rules` rows for the signed-in organization, active ones by default.
+
+   The panel this replaces was hard-coded prose in the JSX: "24 trigger event
+   types -- 9 action types defined in project-rules", followed by four strings —
+   task_overdue -> escalate, review_completed -> advance_stage,
+   approval_rejected -> create_task, deadline_approaching -> send_notification —
+   typeset exactly like a list of the automation this organization has running.
+
+   Nothing read them from anywhere, and both counts were also simply wrong: the
+   route's own vocabulary is 20 trigger events and 8 action types. So an
+   authenticated user was shown invented figures about their own tenant, and an
+   organization with no rules at all was shown four it does not have. Same four
+   honest states as every other slice on this board: loading, the real rules,
+   "none configured", or a failed read said plainly. */
+interface RuleRow {
+  rule_id: string;
+  name: string;
+  description: string | null;
+  trigger_event: string;
+  /** jsonb `actions` — each entry carries a `type` from the route's actionTypes. */
+  actions: Array<{ type?: string }> | null;
+  is_active: boolean;
+}
+
+/** The action types a rule fires, from its stored jsonb. Never inferred. */
+function ruleActions(r: RuleRow): string {
+  const types = (Array.isArray(r.actions) ? r.actions : [])
+    .map(a => (a && typeof a.type === 'string' ? a.type : ''))
+    .filter(Boolean);
+  return types.length ? types.join(' + ') : '—';
+}
+
+function AutomationCard() {
+  // The payload is `{ rules, total }` — no `data` key, so the envelope unwrapper
+  // leaves it alone. The guard turns a 200 of some other shape into the error
+  // branch rather than a silent "no rules configured", which would be a lie.
+  const rules = useLiveData<{ rules: RuleRow[]; total: number }>(
+    '/api/project-rules',
+    ['/api/project-rules'],
+    hasKeys<{ rules: RuleRow[]; total: number }>('rules'),
+  );
+  const rows = Array.isArray(rules.data?.rules) ? rules.data!.rules : [];
+
+  return (
+    <div className="tb-an-card">
+      <div className="tb-an-h">Automation</div>
+      {rules.loading ? (
+        <div className="tb-an-auto">Loading this organization&rsquo;s rules…</div>
+      ) : rules.error ? (
+        <>
+          <div className="tb-an-auto">Couldn&rsquo;t load the automation rules.</div>
+          <div className="tb-an-foot" data-warn="true">{I.alertTriangle} {rules.error}</div>
+        </>
+      ) : rows.length === 0 ? (
+        <div className="tb-an-auto">
+          No active automation rules are configured for this organization.
+        </div>
+      ) : (
+        <>
+          <div className="tb-an-auto">
+            <b>{rows.length}</b> active rule{rows.length === 1 ? '' : 's'} in{' '}
+            <code>project-rules</code>.
+          </div>
+          <div className="tb-an-auto-rules">
+            {rows.slice(0, 8).map(r => (
+              <span key={r.rule_id} title={r.description || r.name}>
+                {r.trigger_event} -&gt; {ruleActions(r)}
+              </span>
+            ))}
+          </div>
+          {rows.length > 8 && (
+            <div className="tb-an-foot">…and {rows.length - 8} more.</div>
+          )}
+        </>
+      )}
+      {/* Verified, not assumed: `getRulesEngine()` is called only from the
+          project-rules routes (create / dry-run). No event source in the server
+          dispatches to it, so a stored rule does not fire on its own. */}
+      <div className="tb-an-foot" data-warn="true">
+        {I.alertTriangle} Rules are stored; the background executor is not yet wired, so
+        nothing here fires on its own.
+      </div>
+    </div>
+  );
+}
+
 /* ── Main surface ── */
 
 export function TaskBoard({ onAsk }: SurfaceViewProps) {
@@ -132,10 +220,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      empty state, or an honest error state — never the fixture. The old window.C2C
      in-browser store was seeded from the TB_TASKS fixture (CollabLauncher.tsx),
      so reading it presented fixture data as the board; that read is retired here.
-     New task now POSTs the real persisted create (POST /api/tasks/tasks) with a
-     real project + assignee and the board refetches, so created tasks appear
-     live. Start workflow / Move still write to the in-browser window.C2C store
-     only (flagged for the actions pass) and do not persist. */
+     New task POSTs the real persisted create (POST /api/tasks/tasks) with a real
+     project + assignee; Move PATCHes through the server task state machine
+     (including the 428 §11.50 signature ceremony); Start workflow POSTs
+     /tasks/from-template/:templateId. All three refetch the board, so what you
+     see after an action is what the server actually stored — no client-built
+     rows, no window.C2C write-back. */
   const [reloadKey, setReloadKey] = useState(0);
   const liveTasks = useLiveRows<TaskItem>('/api/task-management/board', [
     '/api/task-management/board',
@@ -489,14 +579,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               ))}
               <div className="tb-an-foot">Auto-assign on a saved task balances workload server-side via <code>getOptimalAssignee()</code>; the per-module default shown here does not.</div>
             </div>
-            <div className="tb-an-card">
-              <div className="tb-an-h">Automation</div>
-              <div className="tb-an-auto"><b>24</b> trigger event types -- <b>9</b> action types defined in <code>project-rules</code>.</div>
-              <div className="tb-an-auto-rules">
-                <span>task_overdue -&gt; escalate</span><span>review_completed -&gt; advance_stage</span><span>approval_rejected -&gt; create_task</span><span>deadline_approaching -&gt; send_notification</span>
-              </div>
-              <div className="tb-an-foot" data-warn="true">{I.alertTriangle} Rules are stored; the background executor is not yet wired.</div>
-            </div>
+            <AutomationCard />
           </div>
         </div>
       )}
@@ -518,14 +601,31 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {/* Honest engineering reality (forensic report gaps) */}
+      {/* Honest engineering reality.
+          Every bullet here is re-verified against the server, because three of
+          the four this replaces had gone false while still being shown to
+          authenticated users — and the audit one was the dangerous kind of
+          false. It read "task-audit.ts … is coded but NOT CALLED from task
+          mutation handlers -- task creates/transitions are currently
+          unaudited", telling a user of a Part 11 tool that their governed
+          actions left no ledger entry. `auditTaskAction` is imported and
+          awaited on every mutation this board fires: create, transition
+          (unifiedTasks.routes.ts), archive, link, assign, notify and
+          from-template (taskManagement.routes.ts).
+          Likewise "Notifications: stub only (io.to('tasks').emit commented
+          out)" — that expression appears nowhere in the server; assignment,
+          transition and create all call `notifyTaskEvent`
+          (services/tasking/task-side-effects.ts). And the route note pointed at
+          a client file, `taskingService.ts`, that does not exist in this
+          repository. The index count is dropped rather than corrected (it was
+          8, the table declares 9): a number nothing reads is a number that goes
+          quietly wrong. */}
       <details className="tb-gaps">
         <summary>Engineering reality -- backend status</summary>
         <ul>
-          <li><b>Canonical store</b> is <code>unifiedTasks</code> (8 indexes). Section tasks live in <code>projectTasks</code> (own state machine); pyramid tasks are <b>in-memory only</b> (no persistence table); legacy WBS in <code>project_tasks</code>. No reconciliation service -- origin shown per card.</li>
-          <li><b>Audit:</b> <code>task-audit.ts</code> (writes the Part-11 <code>c2c_ana_actions</code> ledger) is coded but <b>not called</b> from task mutation handlers -- task creates/transitions are currently unaudited.</li>
-          <li><b>Notifications:</b> stub only (<code>io.to('tasks').emit</code> commented out). Section assignments notify; unified tasks do not.</li>
-          <li><b>Route note:</b> client <code>taskingService.ts</code> targets <code>/api/regulatory/tasks/*</code> while routes mount at <code>/api/task-management/*</code> (path reconciliation pending).</li>
+          <li><b>Canonical store</b> is <code>unifiedTasks</code>. Section tasks live in <code>projectTasks</code> (own state machine); pyramid tasks are <b>in-memory only</b> (no persistence table); legacy WBS in <code>project_tasks</code>. No reconciliation service -- origin shown per card.</li>
+          <li><b>Audit:</b> every mutation on this board is written to the Part-11 <code>c2c_ana_actions</code> ledger through <code>task-audit.ts</code> -- create, transition (including the e-signature manifestation), archive, dependency link, auto-assign and from-template.</li>
+          <li><b>Automation:</b> rules are stored and can be dry-run, but no event source dispatches to the rules engine, so a stored rule never fires on its own.</li>
         </ul>
       </details>
       </>
@@ -663,9 +763,17 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
             {t.blocks.map(d => <div key={d} className="tb-dep-row dn">{I.arrowRight} blocks <b>{dep(d)}</b></div>)}
           </div>
         )}
+        {/* Same correction as the board's engineering-reality block: this said
+            the change "would not be written to the c2c_ana_actions ledger",
+            beside the very buttons that write it. Advance/Move back PATCH
+            /api/tasks/tasks/:taskId, and that handler awaits
+            `auditTaskAction({ command: 'task.transition' })` — with the §11.50
+            manifestation in the payload when the transition was signed. Archive
+            is audited as `task.delete`. Telling a regulated user their action is
+            unaudited when it is audited is not a conservative error. */}
         <div className="tb-detail-sec">
           <div className="tb-detail-sec-h">Audit</div>
-          <div className="tb-detail-note" data-warn="true">{I.alertTriangle} <code>task-audit.ts</code> is coded but not yet wired to this mutation path -- this change would not be written to the <code>c2c_ana_actions</code> ledger.</div>
+          <div className="tb-detail-note">{I.shieldCheck} Advancing, moving back or archiving this task is recorded in the Part-11 <code>c2c_ana_actions</code> ledger with your identity, the from/to state and any reason you give.</div>
         </div>
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>

@@ -10,6 +10,7 @@ import { createScopedLogger } from '../utils/logger';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { getSamlProvider, SAMLValidationError, type SAMLConfig } from '../services/saml-provider';
 import { runWithTenantScope } from '../db/tenantStore';
+import { isDevAuthAllowed } from '../auth/dev-auth-policy';
 
 const logger = createScopedLogger('sso');
 const router = Router();
@@ -27,7 +28,35 @@ router.use((req, _res, next) =>
     next
   )
 );
-const isDev = process.env.NODE_ENV === 'development';
+/**
+ * Dev-only SSO stub gate.
+ *
+ * This was `process.env.NODE_ENV === 'development'` — ONE environment variable
+ * standing between an unauthenticated request and a genuine, production-signed
+ * JWT. The `/:provider/callback` handler below mints a 24-hour token for
+ * userId 1 / organizationId 2 WITHOUT verifying the `code` at all, so any
+ * deployment where NODE_ENV is not explicitly 'production' — a preview box, a
+ * Replit container, a staging service whose env drifted — turned
+ * `GET /api/auth/sso/anything/callback` into a credential-minting endpoint
+ * requiring no credentials.
+ *
+ * That single-factor form is exactly what server/auth/dev-auth-policy.ts exists
+ * to forbid: dev-auth shortcuts require BOTH NODE_ENV=development AND an
+ * explicit ALLOW_DEV_AUTH=1, "so staging, beta, e2e, and production ... cannot
+ * enable these paths by accident". The policy's own header says any new
+ * dev-auth shortcut MUST gate behind isDevAuthAllowed().
+ *
+ * It slipped the CI guard because check-no-dev-auth-in-prod.mjs matched only
+ * the NEGATIVE spelling (`NODE_ENV !== 'production'`); this file used the
+ * positive one and read as clean. The guard now matches both — see that file.
+ *
+ * Consulted PER REQUEST rather than captured once at module load: a constant
+ * frozen at import time cannot be exercised by a test that sets the env after
+ * importing the router, and it silently ignores any later change to the
+ * process environment. The policy is cheap to evaluate.
+ *
+ * @compliance 21 CFR Part 11 §11.10(d) — limit system access to authorized individuals
+ */
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SAML CONFIG STORE
@@ -575,7 +604,7 @@ router.get('/:provider/initiate', (req: Request, res: Response) => {
   const { provider } = req.params;
 
   // In dev mode, immediately redirect to our callback with a test code
-  if (isDev) {
+  if (isDevAuthAllowed()) {
     const code = 'dev-sso-code';
     const callbackUrl = `/api/auth/sso/${provider}/callback?code=${encodeURIComponent(code)}`;
     return res.redirect(302, callbackUrl);
@@ -593,7 +622,7 @@ router.get('/:provider/callback', (req: Request, res: Response) => {
   const { code } = req.query;
 
   // For dev mode, accept the mock code and return a token + user info
-  if (isDev) {
+  if (isDevAuthAllowed()) {
     // SECURITY: JWT must include organizationId so downstream tenant middleware
     // derives the org context from the token, not from user-supplied headers.
     const token = jwt.sign(

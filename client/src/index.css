@@ -181,10 +181,10 @@
    "Radix override colors pin generic Tailwind palette". Fallback hexes
    are the canonical values (no drift). */
 [role='switch'][aria-checked='true'] {
-  background-color: var(--success, #788c5d) !important;
+  background-color: var(--success, #5e6d49) !important;
 }
 [role='switch'][aria-checked='false'] {
-  background-color: var(--error, #b93a3a) !important;
+  background-color: var(--error, #b63939) !important;
 }
 [role='switch'][aria-checked='true'] span,
 [role='switch'][aria-checked='false'] span {
@@ -193,11 +193,11 @@
 [role='switch'][aria-checked='true']:hover {
   /* Slightly darkened success — filter keeps the hover derived from the
      canonical token rather than a hardcoded second color. */
-  background-color: var(--success, #788c5d) !important;
+  background-color: var(--success, #5e6d49) !important;
   filter: brightness(0.9);
 }
 [role='switch'][aria-checked='false']:hover {
-  background-color: var(--error, #b93a3a) !important;
+  background-color: var(--error, #b63939) !important;
   filter: brightness(0.9);
 }
 

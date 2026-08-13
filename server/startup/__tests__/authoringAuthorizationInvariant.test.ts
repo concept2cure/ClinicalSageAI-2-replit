@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Pool } from 'pg';
 import { assertAuthoringAuthorizationReady } from '../authoringAuthorizationInvariant';
+import { getTenantScope } from '../../db/tenantStore';
 
 const REQUIRED = [
   'doc_permissions_role_check',
@@ -99,5 +100,40 @@ describe('authoring authorization startup invariant', () => {
     await expect(
       assertAuthoringAuthorizationReady(poolWith({ documents: true, permissions: false })),
     ).rejects.toThrow(/doc_permissions is absent/i);
+  });
+
+  // ── The boot-failure regression ────────────────────────────────────────────
+  // Every query above reads a system catalog and touches no tenant row, but
+  // pool instrumentation blocks ANY unscoped pool.query once RLS_ENFORCE=on —
+  // the only value production accepts. Unscoped, this invariant threw
+  // "[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope" out
+  // of registerPreStartRoutes, where nothing catches it, and the production
+  // build died of an uncaughtException before it ever listened. Reproduced on
+  // PostgreSQL 16 against a fully provisioned database with the runtime
+  // connected as the non-superuser app_service role.
+  //
+  // Asserting the scope is present at query time (not merely that the function
+  // resolves) is what makes this a real guard: the whole failure mode was a
+  // query issued with no scope in effect.
+  it('issues every catalog query inside a system tenant scope', async () => {
+    const scopesSeen: (string | undefined)[] = [];
+    const pool = {
+      query: vi.fn(async (sql: string) => {
+        scopesSeen.push(getTenantScope()?.tenantId);
+        return poolWith().query(sql as never) as never;
+      }),
+    } as unknown as Pool;
+
+    await expect(assertAuthoringAuthorizationReady(pool)).resolves.toBeUndefined();
+
+    expect(scopesSeen.length).toBeGreaterThan(0);
+    // '0' is the system tenant (runWithSystemTenantScope). `undefined` here
+    // means an unscoped query — the exact condition that broke production boot.
+    expect(scopesSeen.every(tenantId => tenantId === '0')).toBe(true);
+  });
+
+  it('leaves no ambient scope behind for whatever runs next at startup', async () => {
+    await assertAuthoringAuthorizationReady(poolWith());
+    expect(getTenantScope()).toBeUndefined();
   });
 });

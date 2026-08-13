@@ -30,6 +30,7 @@ import { authMiddleware } from '../auth.js';
 import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
 import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvariant';
+import { assertAiProvenanceLedgerForProduction } from './aiProvenanceLedgerInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
 
@@ -137,6 +138,12 @@ export async function registerPreStartRoutes(
   // already approved it. Keep the legacy function inert until it is deleted from
   // the large router in a dedicated decomposition PR.
   await assertAuthoringAuthorizationReady(pool);
+
+  // The AI provenance ledger must be writable before any route that can reach
+  // the gateway is mounted. Fails closed in production, warns elsewhere — see
+  // server/startup/aiProvenanceLedgerInvariant.ts for what it was covering up.
+  await assertAiProvenanceLedgerForProduction();
+
   if (process.env.AUTH_ENFORCE_SECTION_PERMS === '1') {
     console.warn(
       '[authoring] AUTH_ENFORCE_SECTION_PERMS is retired; canonical mandatory object authorization is active.',

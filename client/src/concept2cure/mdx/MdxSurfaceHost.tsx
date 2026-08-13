@@ -31,6 +31,11 @@
 import * as React from 'react';
 
 import type { SurfaceViewProps } from '../v2/surfaceViews';
+import {
+  clearEditorTarget,
+  setEditorTarget,
+  type EditorSectionRef,
+} from '../v2/editorTarget';
 import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
@@ -138,19 +143,53 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
   );
 
   /**
-   * Open the one editor.
+   * Open the one editor — on the section the click named, when it named one.
    *
-   * Plain navigation, deliberately. An earlier version sent
-   * `document-authoring#<docType>`, which reads as though the editor opens on
-   * that document type — it does not. wouter navigates with `history.pushState`
-   * and reads `location.pathname`, so the browser strips the fragment before
-   * the router sees it, and `DocumentAuthoring` reads no hash anyway. The
-   * editor opened on its default either way; only the code claimed otherwise.
+   * An earlier version sent `document-authoring#<docType>`: wouter navigates on
+   * `location.pathname`, so the fragment never reached the router and every
+   * click landed on the editor's default view while the code claimed otherwise.
+   * The context now travels the way this shell already moves context between
+   * surfaces — a typed window channel plus navigation, the same shape as
+   * `window.C2C_PROJECT` (set two callbacks up) and `window.C2C_CONVO`
+   * (V2App.startShellConversation):
    *
-   * Per-doc-type entry needs `DocumentAuthoring` to accept and honour a type,
-   * which is a change to that surface rather than a string appended here.
+   *   1. The program hand-off mirrors `openProgram` exactly: REPLACE
+   *      `window.C2C_PROJECT` with the program whose section is being opened,
+   *      so the editor's document scope, filing outline and data room all
+   *      agree on which program the click meant.
+   *   2. The section rides `window.C2C_EDITOR_TARGET` (v2/editorTarget.ts,
+   *      one-shot, TTL-guarded). `DocumentAuthoring` consumes it on mount and
+   *      either opens the named document+section or says honestly that it
+   *      could not — never a silent wrong-document open.
+   *
+   * A click with no section (PmaSurface's plain "Open module editor") CLEARS
+   * the channel instead of writing to it, so an older target cannot ride along
+   * with a navigation that never named one. With no resolvable program and no
+   * section this collapses to the plain navigation it always was — nothing is
+   * claimed that cannot be honoured.
    */
-  const openEditor = React.useCallback(() => onNav('document-authoring'), [onNav]);
+  const openEditor = React.useCallback(
+    (section?: EditorSectionRef) => {
+      if (typeof window !== 'undefined' && programForContext) {
+        // REPLACE, never merge — same rule and same reason as openProgram above.
+        window.C2C_PROJECT = { id: String(programForContext.id), title: programForContext.title };
+      }
+      const docType = programForContext?.pathway ?? PATHWAY_ANCHOR[nav] ?? null;
+      if (docType && section && (section.code != null || section.label)) {
+        setEditorTarget({
+          docType,
+          code: section.code,
+          label: section.label,
+          programId: programForContext ? String(programForContext.id) : null,
+          programTitle: programForContext?.title ?? null,
+        });
+      } else {
+        clearEditorTarget();
+      }
+      onNav('document-authoring');
+    },
+    [onNav, programForContext, nav],
+  );
 
   let surface: React.ReactNode;
   switch (nav) {
@@ -161,7 +200,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       surface = <PmaSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
       break;
     case 'device-cer':
-      surface = <CerSurface program={programForContext} onAskAna={onAsk} />;
+      surface = <CerSurface program={programForContext} onAskAna={onAsk} onOpenEditor={openEditor} />;
       break;
     case 'device-diagnostics':
       surface = (

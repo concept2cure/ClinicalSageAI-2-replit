@@ -77,9 +77,25 @@ router.get('/:market', async (req: Request, res: Response) => {
     const provided = rows.map((r) => String(r.component_code));
     return res.json({ data: buildPayload(market, provided), meta: { count: provided.length } });
   } catch (err) {
-    // Fail closed to the honest empty-provided assessment (all required missing).
-    const pendingStore = (err as { code?: string })?.code === '42P01';
-    return res.json({ data: buildPayload(market, []), meta: { count: 0, pendingStore } });
+    // An unprovisioned store fails closed to the honest empty-provided
+    // assessment (all required components missing) — a conservative and TRUE
+    // statement about a deployment that has assembled nothing yet.
+    //
+    // A real query failure is not that. Reporting "nothing assembled" when the
+    // component query broke pushes the assessment in the SAFE direction for a
+    // reviewer, but it is still a fabricated readiness verdict derived from a
+    // failed read — and the same handler would report `ready` transitions off
+    // data the database never returned. Surface the fault instead.
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.json({ data: buildPayload(market, []), meta: { count: 0, pendingStore: true } });
+    }
+    console.error(
+      '[maa-module1] component read failed:',
+      err instanceof Error ? err.message : String(err),
+    );
+    return res.status(500).json({
+      error: { code: 'INTERNAL', message: 'Failed to read MAA Module 1 components.' },
+    });
   }
 });
 

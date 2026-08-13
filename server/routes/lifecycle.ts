@@ -162,9 +162,11 @@ router.get('/calendar', async (req, res) => {
  * Read-side projection of the governed recurring-obligation store into the
  * Lifecycle surface's "Renewal cycles" shape ({ data: RenewalView[] }), enriched
  * with the deterministic urgency bucket. Recurring reporting/renewal types only.
- * Fails CLOSED to an empty list (never 500, never fabricated) when the store is
- * absent or errors, so the surface shows its sample fallback — the whole point
- * of the surface's live ?? fixture guard.
+ * An ABSENT store (42P01) degrades to an empty list with pendingStore, so the
+ * surface shows its sample fallback — the point of the surface's live ?? fixture
+ * guard. Any other error is a 500: a renewal list that failed to load must not
+ * be rendered as "no renewals due", which is exactly how a missed regulatory
+ * renewal deadline goes unnoticed.
  */
 router.get('/renewals', async (req, res) => {
   const orgId = resolveOrgId(req);
@@ -180,8 +182,10 @@ router.get('/renewals', async (req, res) => {
     const data = projectRenewalObligations(enriched, today());
     res.json({ data, meta: { count: data.length } });
   } catch (err) {
-    const pendingStore = (err as { code?: string } | null)?.code === '42P01';
-    res.json({ data: [], meta: { count: 0, pendingStore } });
+    if ((err as { code?: string } | null)?.code === '42P01') {
+      return res.json({ data: [], meta: { count: 0, pendingStore: true } });
+    }
+    return fail(res, err);
   }
 });
 

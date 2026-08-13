@@ -13,10 +13,6 @@
 
 export interface Choice { v: string; l: string }
 export interface ToneMap { l: string; t: string }
-export interface ScSubmission {
-  id: string; program: string; region: string; appType: string;
-  pathway: string; stage: string; status: string; seqCount: number;
-}
 export interface ScSequence { seq: string; type: string; status: string; region: string; leaves: number; updated: string }
 export interface ScLeaf { path: string; title: string; op: string; module: string }
 export interface ScFinding { id: string; rule: string; severity: string; status: string; loc: string; msg: string }
@@ -91,38 +87,13 @@ export const SC_LENSES = [
   { v: 'nb_ivdr', l: 'Notified Body (IVDR)' },
 ];
 
-export const SC_SUBMISSIONS_RAW = [
-  {
-    id: 'sub-204',
-    program: 'BX-204',
-    region: 'fda',
-    appType: 'nda',
-    pathway: 'ectd_v40',
-    stage: 'original',
-    status: 'assembling',
-    seqCount: 2,
-  },
-  {
-    id: 'sub-204-eu',
-    program: 'BX-204',
-    region: 'eu',
-    appType: 'maa',
-    pathway: 'ectd_v322',
-    stage: 'planning',
-    status: 'draft',
-    seqCount: 0,
-  },
-  {
-    id: 'sub-301',
-    program: 'BX-301',
-    region: 'fda',
-    appType: 'bla',
-    pathway: 'ectd_v40',
-    stage: 'original',
-    status: 'draft',
-    seqCount: 1,
-  },
-];
+/* SC_SUBMISSIONS_RAW / SC_SUBMISSIONS are deleted.
+   They were the kit's sample portfolio — 'BX-204' (NDA 212345, MAA) and
+   'BX-301' (BLA, FDA) — and they were the last thing in the client still
+   carrying the BX-301 identity as data. The Submission Center was migrated to
+   GET /api/submissions some time ago and stopped importing them; nothing else
+   ever did, including the tests. A dead sample programme is one import away from
+   being live again, so it goes rather than sits. */
 
 export const SC_SEQUENCES_RAW = [
   {
@@ -233,7 +204,6 @@ export const SC_CROSSREGION_RAW = [
     note: 'Reusable from the FDA sequence with regional wrappers.',
   },
 ];
-export const SC_SUBMISSIONS: ScSubmission[] = SC_SUBMISSIONS_RAW;
 export const SC_SEQUENCES: ScSequence[] = SC_SEQUENCES_RAW;
 export const SC_FINDINGS: ScFinding[] = SC_FINDINGS_RAW;
 export const SC_SHADOW: ScShadow[] = SC_SHADOW_RAW;
