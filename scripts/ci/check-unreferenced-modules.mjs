@@ -84,6 +84,15 @@ export const REFERENCE_ROOTS = ['server', 'client/src', 'shared', 'scripts', 'te
 export const ENTRY_POINTS = [
   'server/index.ts',
   'client/src/main.tsx',
+  // Reached without an import specifier this scanner can see: its source is
+  // fs.readFileSync-pinned (repo-root-relative paths, not module paths) by the
+  // regulatory-honesty contracts in tests/fda-submission-honesty.contract.test.ts
+  // and tests/audit-medium-fabrication-attribution.test.ts, which assert the
+  // service never fabricates an FDA transmission. Its only RUNTIME consumer
+  // (server/routes/medical-device-routes.js) was deleted in the Phase 1
+  // consolidation; deleting this file is deferred until those honesty pins are
+  // re-homed, because deleting it today would break the tests that read it.
+  'server/services/medicalDeviceService.ts',
 ];
 
 const SOURCE_EXT = ['.ts', '.tsx', '.js', '.jsx'];
