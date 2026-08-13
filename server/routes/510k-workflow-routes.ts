@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Request, Response } from 'express';
 import type { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { and, eq, sql } from 'drizzle-orm';
@@ -16,6 +17,51 @@ const getStorage = async () => memStorage;
 export function create510kWorkflowRoutes(pool: Pool): Router {
   const router = Router();
   const db = drizzle(pool);
+
+  // SECURITY: shared cross-tenant read guard for the GET endpoints below.
+  // Mirrors the save handler's convention exactly: the org identity comes from
+  // the verified JWT via getSecureOrgId (never headers/body), and a projectId
+  // whose fda510kProjects row belongs to a DIFFERENT org is answered with 404
+  // — never 403 — so a cross-tenant probe cannot confirm the project exists.
+  // Returns the caller's org id when the read may proceed, or null after the
+  // denial response has already been written.
+  const authorizeProjectRead = async (
+    req: Request,
+    res: Response,
+    projectId: string
+  ): Promise<string | null> => {
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      res.status(401).json({ success: false, error: 'Organization context required' });
+      return null;
+    }
+
+    const numericProjectId = parseInt(projectId);
+    if (Number.isNaN(numericProjectId)) {
+      // fda510kProjects keys projects by integer id — a non-numeric id has no
+      // owning row to verify, so fail closed rather than erroring in SQL.
+      res.status(404).json({ success: false, error: 'Project not found' });
+      return null;
+    }
+
+    // Same cross-tenant IDOR guard as the save handler: if a project with this
+    // projectId exists under a DIFFERENT org, do not disclose it — 404.
+    const crossOrgProject = await db
+      .select()
+      .from(fda510kProjects)
+      .where(
+        and(
+          eq(fda510kProjects.projectId, numericProjectId),
+          sql`${fda510kProjects.organizationId} <> ${parseInt(organizationId)}`
+        )
+      );
+    if (crossOrgProject.length > 0) {
+      res.status(404).json({ success: false, error: 'Project not found' });
+      return null;
+    }
+
+    return organizationId;
+  };
 
   // POST /:projectId — save workflow data
   router.post('/:projectId', async (req, res) => {
@@ -303,6 +349,9 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
     const section = (req.query.section as string) || 'default';
 
     try {
+      // SECURITY: cross-tenant IDOR guard (see authorizeProjectRead above).
+      if (!(await authorizeProjectRead(req, res, projectId))) return;
+
       const rows = await db
         .select()
         .from(fda510kStageProgress)
@@ -359,13 +408,12 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   // GET /:projectId — get 510k workflow data
   router.get('/:projectId', async (req, res) => {
     const { projectId } = req.params;
-    const organizationId = getSecureOrgId(req);
-
-    if (!organizationId) {
-      return res.status(400).json({ success: false, error: 'Organization ID required' });
-    }
 
     try {
+      // SECURITY: cross-tenant IDOR guard (see authorizeProjectRead above).
+      const organizationId = await authorizeProjectRead(req, res, projectId);
+      if (!organizationId) return;
+
       const storage = await getStorage();
       // Return workflow data based on project
       const workflowData = {
@@ -463,6 +511,9 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
     const { stage, userId, startDate, endDate } = req.query;
 
     try {
+      // SECURITY: cross-tenant IDOR guard (see authorizeProjectRead above).
+      if (!(await authorizeProjectRead(req, res, projectId))) return;
+
       const auditTrail = await FDA510kComplianceTracker.getAuditTrail(projectId, {
         stage: stage as string,
         userId: userId ? parseInt(userId as string) : undefined,
@@ -482,6 +533,9 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
     const { projectId } = req.params;
 
     try {
+      // SECURITY: cross-tenant IDOR guard (see authorizeProjectRead above).
+      if (!(await authorizeProjectRead(req, res, projectId))) return;
+
       const lineage = await FDA510kComplianceTracker.getDataLineage(projectId);
       res.status(200).json(lineage);
     } catch (error) {
@@ -496,6 +550,9 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
     const { documentId } = req.query;
 
     try {
+      // SECURITY: cross-tenant IDOR guard (see authorizeProjectRead above).
+      if (!(await authorizeProjectRead(req, res, projectId))) return;
+
       const versions = await FDA510kComplianceTracker.getVersionHistory(
         projectId,
         (documentId as string) || `510K_${projectId}`
@@ -512,6 +569,9 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
     const { projectId } = req.params;
 
     try {
+      // SECURITY: cross-tenant IDOR guard (see authorizeProjectRead above).
+      if (!(await authorizeProjectRead(req, res, projectId))) return;
+
       const report = await FDA510kComplianceTracker.generateComplianceReport(projectId);
       res.status(200).json({
         success: true,

@@ -545,80 +545,47 @@ router.post(
 );
 
 /**
- * Submit 510(k) to FDA (production-ready endpoint)
+ * LEGACY: Submit 510(k) to FDA — permanently disabled (410 Gone).
+ *
+ * This handler used to FABRICATE an FDA agency response: it minted a synthetic
+ * `ACK<timestamp>` identifier and a synthetic K-number, reported a fabricated
+ * "received" status with a 90-day review estimate, answered
+ * "510(k) submitted to FDA successfully", and wrote submissionStatus
+ * 'submitted' to the database — all with no gateway transport and no
+ * environment gate. Every transmit path in this platform fails closed instead
+ * (see server/services/ESGSubmissionService.ts), so the fabrication is gone,
+ * with NO simulation branch: no environment may hand a user a fake agency
+ * receipt. Nothing is sent to FDA here and no submission status is changed.
+ *
+ * NOTE (zero-duplication, later phase): this same path is also registered
+ * earlier in this file (validate + e-sign only, `transmitted: false`), and
+ * Express dispatches to that earlier registration. This 410 replaces the
+ * fabricating handler so the fabrication cannot reactivate if the earlier
+ * registration is ever removed; consolidating the duplicate registration is
+ * deferred to the route-cleanup phase.
+ *
+ * To track a real eSTAR filing honestly, use the eSTAR filing tracker
+ * (POST /api/510k/estar/submissions): it records the lifecycle of a filing
+ * you make to FDA through official channels — it does not transmit either.
  */
 router.post(
   '/510k/:submissionId/submit',
   authenticateJWT,
   requireOrganization,
-  async (req, res) => {
-    try {
-      const submissionId = parseInt(req.params.submissionId);
-      const { testSubmission = false } = req.body;
-
-      // First generate the final eStar XML package
-      const generator = (await import('../services/fda510kDocumentGenerator.js')).default;
-      const eStarPackage = await generator.generate510kPackage(
-        submissionId,
-        req.organizationId,
-        'ESTAR'
-      );
-
-      // Validate completeness
-      if (!eStarPackage.validationStatus?.isComplete) {
-        return res.status(400).json({
-          error: 'Submission is incomplete',
-          validationErrors: eStarPackage.validationStatus,
-        });
-      }
-
-      // Update submission status
-      await medicalDeviceService.update510kSubmission(
-        req.organizationId,
-        submissionId,
-        {
-          submissionStatus: testSubmission ? 'test_submitted' : 'submitted',
-          submittedAt: new Date(),
-          submittedBy: req.userId,
-          eStarPackagePath: eStarPackage.path,
-        },
-        req.userId
-      );
-
-      // In production, this would integrate with FDA Gateway or CDRH Portal
-      // For now, we'll simulate the submission
-      const fdaResponse = {
-        success: true,
-        acknowledgmentNumber: `ACK${Date.now()}`,
-        submissionTrackingNumber: `K${new Date().getFullYear()}${String(submissionId).padStart(
-          6,
-          '0'
-        )}`,
-        estimatedReviewTime: '90 days',
-        status: testSubmission ? 'Test Submission Received' : 'Submission Received',
-        nextSteps: [
-          'FDA will send an acknowledgment letter within 2 business days',
-          'Substantive review will begin after administrative review',
-          'You will be notified if additional information is needed',
-        ],
-      };
-
-      res.json({
-        success: true,
-        message: '510(k) submitted to FDA successfully',
-        fdaResponse,
-        documentPackage: {
-          eStarPath: eStarPackage.path,
-          generatedAt: eStarPackage.generatedAt,
-        },
-      });
-    } catch (error) {
-      console.error('Error submitting 510(k) to FDA:', error);
-      res.status(500).json({
-        error: 'Failed to submit 510(k) to FDA',
-        details: error.message,
-      });
-    }
+  (req, res) => {
+    return res.status(410).json({
+      error: 'FDA_TRANSMISSION_NOT_AVAILABLE',
+      message:
+        'Direct FDA transmission is not available on this legacy route, in any environment. ' +
+        'It previously returned a fabricated FDA agency response without transmitting anything; ' +
+        'that behavior has been removed with no simulation fallback. Nothing was sent to FDA ' +
+        'and no submission status was changed.',
+      transmitted: false,
+      trackFilingsAt: 'POST /api/510k/estar/submissions',
+      detail:
+        'The eSTAR filing tracker records the lifecycle of a filing made to FDA through ' +
+        'official channels; it does not transmit to FDA.',
+    });
   }
 );
 
