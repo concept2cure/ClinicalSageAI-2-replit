@@ -14819,7 +14819,10 @@ export const fda510kSubmissionPackages = pgTable(
     fdaAcknowledgmentNumber: text('fda_acknowledgment_number'),
 
     // Package Status
-    status: text('status').default('draft'), // draft, ready, submitted, accepted, rejected
+    // draft, ready, submitted, accepted, rejected, simulated
+    // ('simulated' = local dev/test dry run — NOTHING was transmitted to FDA;
+    // it must never be promoted to a status implying a real transmission)
+    status: text('status').default('draft'),
     isLocked: boolean('is_locked').default(false),
     lockedAt: timestamp('locked_at'),
 

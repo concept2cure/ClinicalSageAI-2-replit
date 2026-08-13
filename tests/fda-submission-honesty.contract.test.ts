@@ -91,6 +91,15 @@ describe('the simulated ESG response cannot be mistaken for a real one', () => {
     expect(src).toMatch(/submittedAt: response\.status === 'accepted' \? new Date\(\) : null/);
   });
 
+  it('persists a simulated run under its own honest package status', () => {
+    // A simulated run must not leave the package stuck at 'ready' (a dead
+    // transition) nor promote it to anything implying a real transmission.
+    // Behavioural coverage of the full mapping lives in
+    // server/services/__tests__/esg-submission-status.test.ts.
+    expect(src).toMatch(/response\.simulated \|\| response\.status === 'simulated_not_transmitted'/);
+    expect(src).toMatch(/status: 'simulated'/);
+  });
+
   it('no longer emits a document that reads as an FDA acknowledgement', async () => {
     // Asserted on the ACTUAL bytes rather than the source: this is the artifact
     // a sponsor could archive, and it is the exact hazard that

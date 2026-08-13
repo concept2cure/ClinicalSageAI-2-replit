@@ -13,9 +13,10 @@
  * thin. Changing the purchased-seat count is a governed action (admin-only,
  * reason-for-change, 21 CFR Part 11 audit) — see setSeatsPurchased.
  *
- * Enforcement is env-gated to avoid a surprise behavior change on existing
- * tenants: SEAT_LIMIT_ENFORCEMENT=enforce blocks over-seat adds; anything else
- * (default) is REPORT-ONLY — the decision is computed and surfaced, never blocks.
+ * Enforcement posture (SEAT_LIMIT_ENFORCEMENT): 'enforce' blocks over-seat adds,
+ * 'report' computes and surfaces the decision without blocking. Unset defaults to
+ * ENFORCE in production and report-only elsewhere — see isSeatEnforcementOn for
+ * why the production default is no longer report-only.
  */
 
 import { pool } from '../db.js';
@@ -82,9 +83,47 @@ export function evaluateSeats(args: { seatsPurchased: number; seatsUsed: number;
   };
 }
 
-/** Whether seat over-allocation should actually BLOCK (vs report-only). */
-export function isSeatEnforcementOn(): boolean {
-  return (process.env.SEAT_LIMIT_ENFORCEMENT || '').toLowerCase() === 'enforce';
+/**
+ * Whether seat over-allocation should actually BLOCK (vs report-only).
+ *
+ * ── Why the default changed ───────────────────────────────────────────────────
+ * This used to be `=== 'enforce'`, i.e. OFF unless an operator opted in — and no
+ * deployment manifest in the repository set the variable, so the control shipped
+ * inert. That is the same shape of defect the RLS rollout spent months closing
+ * (`db/rlsEnforcement.ts`): a control that is built, tested, documented, and
+ * switched off in every environment that matters.
+ *
+ * For a seat-licensed product this is not only a control gap, it is direct
+ * revenue leakage: `seats_purchased` is what the customer pays for, and nothing
+ * stopped an organization from adding the (N+1)th member. It also removes the
+ * upsell signal — a tenant that silently runs 40 users on a 25-seat contract
+ * never generates the expansion conversation.
+ *
+ * The posture now mirrors `readEnforcementMode`:
+ *
+ *   production, unset            → ENFORCE. Safe by default.
+ *   production, 'report'         → report-only. An explicit, greppable decision
+ *                                  for the migration window while over-seat
+ *                                  tenants are reconciled with their contracts.
+ *   non-production, unset        → report-only, so local and CI work is not
+ *                                  gated on seeding a realistic seat count.
+ *   any env, 'enforce'           → ENFORCE.
+ *
+ * `report` is deliberately spelled out rather than accepting any non-'enforce'
+ * string: a typo must not silently disable a revenue control.
+ */
+export function isSeatEnforcementOn(env: NodeJS.ProcessEnv = process.env): boolean {
+  const raw = (env.SEAT_LIMIT_ENFORCEMENT || '').trim().toLowerCase();
+  if (raw === 'enforce') return true;
+  if (raw === 'report') return false;
+  if (raw !== '') {
+    logger.warn(
+      'Unrecognized SEAT_LIMIT_ENFORCEMENT value; falling back to the environment default. ' +
+        "Use 'enforce' or 'report'.",
+      { value: raw }
+    );
+  }
+  return (env.NODE_ENV ?? '').toLowerCase() === 'production';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

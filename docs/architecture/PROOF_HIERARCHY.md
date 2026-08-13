@@ -175,8 +175,9 @@ Per the July 2026 quality audit and this pass, so no rung is overstated:
   consistent*, not the migration set *complete*.
 - **Tier 5 (browser) now has a fixture-independent proof that is EXECUTED per
   PR.** Most of the ~30 Playwright specs in `tests/e2e/` depend on a seeded demo
-  project (e.g. `510k-founder-path` needs the `demo-510k` beta fixture) and had no
-  login step, so they proved nothing when that fixture was absent.
+  project (e.g. the since-deleted `510k-founder-path` spec needed a `demo-510k`
+  beta fixture no route ever served) and had no login step, so they proved
+  nothing when that fixture was absent.
   `authenticated-app-smoke.e2e.spec.ts` (above) removes both dependencies: it
   authenticates via the real dev-login flow and asserts on stable authenticated
   surfaces, with a negative control proving the guard bites. Two gates now stand

@@ -6,7 +6,7 @@
     "tenant-contract": 11,
     "golden-journeys": 6,
     "export-contract": 8,
-    "e2e-browser": 28
+    "e2e-browser": 27
   },
   "inventory": {
     "schema-contract": [
@@ -68,7 +68,6 @@
       "tests/export-contract/zip-export.proof.test.ts"
     ],
     "e2e-browser": [
-      "tests/e2e/510k-founder-path.e2e.spec.ts",
       "tests/e2e/authenticated-app-smoke.e2e.spec.ts",
       "tests/e2e/authoring.e2e.spec.ts",
       "tests/e2e/beta-core-pulse.e2e.ts",

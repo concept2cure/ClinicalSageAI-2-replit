@@ -35,20 +35,37 @@ vi.mock('../../utils/jwtVerify', () => ({
   verifyJwtWithRotation: vi.fn(() => decoded),
 }));
 
-// The membership decision. Both authMiddleware (inline) and orgMembership
-// (behind authenticateToken) read organization_users via this chainable `db`.
+// TWO decisions are read through this chainable `db`, and the fixture has to
+// model both or one silently answers for the other:
+//
+//   • MEMBERSHIP — organization_users. Read by authMiddleware (inline) and by
+//     orgMembership (behind authenticateToken). Projection: { role[, orgUuid] }.
+//   • LIFECYCLE POSTURE — organizations. Read by the tenant lifecycle guard,
+//     which now runs at the tail of both chains. Projection: { status,
+//     paymentStatus }.
+//
+// They are told apart by the projection passed to `select()`, which is the only
+// thing distinguishing them here (the real drizzle tables are not mocked).
 // `getPool` backs the lazy request client, which never acquires here (no query).
 let membershipRows: Array<Record<string, unknown>> = [{ role: 'editor', orgUuid: null }];
-function chain(): any {
+let organizationRows: Array<Record<string, unknown>> = [
+  { status: 'active', paymentStatus: 'active' },
+];
+function chain(rows: () => Array<Record<string, unknown>>): any {
   const c: any = {};
   c.from = () => c;
   c.leftJoin = () => c;
   c.where = () => c;
-  c.limit = () => Promise.resolve(membershipRows);
+  c.limit = () => Promise.resolve(rows());
   return c;
 }
 vi.mock('../../db', () => ({
-  db: { select: () => chain() },
+  db: {
+    select: (projection?: Record<string, unknown>) =>
+      projection && 'status' in projection
+        ? chain(() => organizationRows)
+        : chain(() => membershipRows),
+  },
   getPool: () => ({
     connect: async () => ({ query: async () => ({ rows: [] }), release: () => undefined }),
   }),
@@ -56,6 +73,7 @@ vi.mock('../../db', () => ({
 
 import { getTenantScope } from '../../db/tenantStore';
 import { invalidateOrgMembershipCache } from '../orgMembership';
+import { invalidateTenantPosture } from '../../services/tenant/tenant-lifecycle';
 
 // The REAL authenticateToken lives in auth.ts, but a stale auth.js legacy twin
 // shadows it under vitest's .js-first resolution (documented in orgMembership.ts).
@@ -130,10 +148,12 @@ function drive(mw: Middleware, authorization?: string): Promise<DriveResult> {
 
 beforeEach(() => {
   membershipRows = [{ role: 'editor', orgUuid: null }];
+  organizationRows = [{ status: 'active', paymentStatus: 'active' }];
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
-  // orgMembership keeps a module-level TTL cache; clear it so a member decision
-  // from one test cannot satisfy the next (e.g. the revoked case).
+  // Both controls keep a module-level TTL cache; clear them so a decision from
+  // one test cannot satisfy the next (e.g. the revoked and suspended cases).
   invalidateOrgMembershipCache();
+  invalidateTenantPosture();
 });
 
 describe('authenticateToken opens a tenant scope on the member path', () => {
@@ -190,5 +210,62 @@ describe('authMiddleware (global /api gate) opens a tenant scope', () => {
     expect(r.status).toBe(401);
     expect(r.reachedHandler).toBe(false);
     expect(r.scoped).toBe(false);
+  });
+});
+
+/**
+ * The tenant lifecycle guard runs at the tail of BOTH auth chains. Its policy is
+ * unit-tested in services/tenant/__tests__/tenant-lifecycle.test.ts and its own
+ * behaviour in tenantLifecycleGuard.test.ts; what is proven here is the wiring —
+ * that a valid token belonging to a live member of a SUSPENDED organization is
+ * refused, on both entry points, rather than reaching the handler.
+ *
+ * Before this guard existed, every assertion below passed with status 200: an
+ * organization suspended for non-payment, for a terminated contract, or in
+ * response to a security incident kept full read and write access to the
+ * platform.
+ */
+describe('the tenant lifecycle guard runs on both auth chains', () => {
+  it('authenticateToken refuses a live member of a suspended organization', async () => {
+    organizationRows = [{ status: 'suspended', paymentStatus: 'active' }];
+    const { authenticateToken } = await importRealMiddlewareAuth();
+
+    const r = await drive(authenticateToken, 'Bearer x');
+
+    expect(r.status).toBe(403);
+    expect(r.reachedHandler).toBe(false);
+  });
+
+  it('authMiddleware refuses a live member of a suspended organization', async () => {
+    organizationRows = [{ status: 'suspended', paymentStatus: 'active' }];
+    const { authMiddleware } = await import('../../auth');
+
+    const r = await drive(authMiddleware as unknown as Middleware, 'Bearer x');
+
+    expect(r.status).toBe(403);
+    expect(r.reachedHandler).toBe(false);
+  });
+
+  it('a past-due organization still reaches the handler on a safe verb', async () => {
+    // read_only, not deny: the customer keeps sight of their own regulatory
+    // record and can export it. Only mutations are blocked.
+    organizationRows = [{ status: 'active', paymentStatus: 'past_due' }];
+    const { authenticateToken } = await importRealMiddlewareAuth();
+
+    const r = await drive(authenticateToken, 'Bearer x');
+
+    expect(r.status).toBe(200);
+    expect(r.reachedHandler).toBe(true);
+    expect(r.scoped).toBe(true);
+  });
+
+  it('refuses fail-closed when the organization row cannot be read', async () => {
+    organizationRows = [];
+    const { authenticateToken } = await importRealMiddlewareAuth();
+
+    const r = await drive(authenticateToken, 'Bearer x');
+
+    expect(r.status).toBe(403); // TENANT_NOT_FOUND
+    expect(r.reachedHandler).toBe(false);
   });
 });

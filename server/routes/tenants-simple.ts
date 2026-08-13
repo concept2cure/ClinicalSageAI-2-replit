@@ -10,6 +10,13 @@ import { requirePlatformAdmin, isPlatformAdmin } from '../middleware/requirePlat
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertCanAdmitNewTenant } from '../db/tenantAdmission';
+import { pool } from '../db';
+import {
+  cancelDeletion,
+  OffboardingStateError,
+  purgeTenant,
+  requestDeletion,
+} from '../services/tenant/tenant-offboarding';
 import { getSslConfig } from '../db/ssl';
 
 const log = createScopedLogger('tenants-simple');
@@ -327,8 +334,36 @@ router.get('/:tenantId/users', async (req, res) => {
 });
 
 /**
- * DELETE /api/tenants/:id
- * Delete an organization and all its related data
+ * Map an offboarding state error to an HTTP status.
+ *
+ *   404 — the organization does not exist.
+ *   422 — the request is well-formed but a PRECONDITION of the lifecycle is
+ *         unmet (no export evidence, retention window still open). The caller
+ *         can retry the same request once it satisfies the precondition.
+ *   409 — the organization is in a state that conflicts with the request
+ *         (already purged, not scheduled for deletion). Retrying will not help.
+ */
+function offboardingHttpStatus(code: string): number {
+  if (code === 'TENANT_NOT_FOUND') return 404;
+  if (code === 'EXPORT_EVIDENCE_REQUIRED' || code === 'RETENTION_WINDOW_OPEN') return 422;
+  return 409;
+}
+
+/**
+ * DELETE /api/tenants/:id — request offboarding.
+ *
+ * This used to be an immediate cascade delete. It is now the ENTRY POINT to a
+ * governed lifecycle: the organization moves to `pending_deletion` (read-only
+ * but fully exportable) and a retention clock starts. Destruction is a separate,
+ * later, explicitly-authorized act — see POST /:id/purge.
+ *
+ * The change is deliberate and not merely defensive. This platform stores IND
+ * applications, 510(k) submissions and clinical protocols; 21 CFR Part 11
+ * §11.10(e) requires deletion of such records to remain reconstructable from the
+ * audit trail, and the standard MSA commits to a data-return window before
+ * destruction. A single API call that cascaded both away could satisfy neither.
+ *
+ * See services/tenant/tenant-offboarding.ts for the state machine.
  */
 router.delete('/:id', requirePlatformAdmin, async (req, res) => {
   try {
@@ -337,7 +372,8 @@ router.delete('/:id', requirePlatformAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Invalid organization ID' });
     }
 
-    // SAFETY: Require explicit confirmation header for destructive tenant deletion
+    // SAFETY: explicit confirmation header, unchanged from the previous
+    // destructive handler — offboarding a tenant is still not a casual action.
     const confirmation = req.headers['x-confirm-delete'] as string;
     if (confirmation !== `delete-org-${tenantId}`) {
       return res.status(400).json({
@@ -346,58 +382,134 @@ router.delete('/:id', requirePlatformAdmin, async (req, res) => {
       });
     }
 
-    // Use transaction with postgres
-    await sql.begin(async sql => {
-      // Check if organization exists
-      const checkResult = await sql`SELECT id, name FROM organizations WHERE id = ${tenantId}`;
-
-      if (checkResult.length === 0) {
-        throw new Error('Organization not found');
-      }
-
-      const orgName = checkResult[0].name;
-
-      // Delete related data in the correct order to handle foreign key constraints
-
-      // 1. Delete projects (if projects table exists)
-      try {
-        await sql`DELETE FROM projects WHERE organization_id = ${tenantId}`;
-        log.debug(`Deleted projects for organization ${tenantId}`);
-      } catch (error) {
-        log.debug('Projects table might not exist or already empty:', (error as any).message);
-      }
-
-      // 2. Delete organization_users relationships
-      await sql`DELETE FROM organization_users WHERE organization_id = ${tenantId}`;
-      // Every membership in this org just vanished — revoke cached
-      // auth-middleware membership results immediately.
-      invalidateOrgMembershipCache(undefined, tenantId);
-      log.debug(`Deleted organization_users for organization ${tenantId}`);
-
-      // 3. Delete client_workspaces
-      try {
-        await sql`DELETE FROM client_workspaces WHERE organization_id = ${tenantId}`;
-        log.debug(`Deleted client_workspaces for organization ${tenantId}`);
-      } catch (error) {
-        log.debug(
-          'Client workspaces table might not exist or already empty:',
-          (error as any).message
-        );
-      }
-
-      // 4. Finally delete the organization itself
-      await sql`DELETE FROM organizations WHERE id = ${tenantId}`;
-      log.debug(`Deleted organization ${tenantId}: ${orgName}`);
-
-      res.json({
-        success: true,
-        message: `Organization "${orgName}" and all its data have been permanently deleted`,
-        deletedOrganizationId: tenantId,
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    if (!reason) {
+      return res.status(400).json({
+        error: { code: 'REASON_REQUIRED', message: 'A reason for offboarding is required' },
       });
+    }
+
+    const record = await requestDeletion(pool, {
+      organizationId: tenantId,
+      requestedByUserId: Number(req.user?.userId ?? req.user?.id ?? 0),
+      reason,
+      retentionDays:
+        typeof req.body?.retentionDays === 'number' ? req.body.retentionDays : undefined,
+    });
+
+    res.json({
+      success: true,
+      message:
+        `Organization "${record.name}" is scheduled for deletion. Its data remains readable ` +
+        `and exportable until the retention window closes.`,
+      organizationId: record.organizationId,
+      status: record.status,
+      purgeEligibleAt: record.purgeEligibleAt,
     });
   } catch (error) {
-    log.error('Error deleting organization:', error);
-    res.status(500).json({ error: 'Failed to delete organization' });
+    if (error instanceof OffboardingStateError) {
+      return res
+        .status(offboardingHttpStatus(error.code))
+        .json({ error: { code: error.code, message: error.message } });
+    }
+    log.error('Error scheduling organization deletion:', error);
+    res.status(500).json({ error: 'Failed to schedule organization deletion' });
+  }
+});
+
+/**
+ * POST /api/tenants/:id/cancel-deletion — call off a scheduled offboarding.
+ *
+ * Available at any point before the purge runs. A retention window that cannot
+ * be cancelled turns a mis-click into a lost customer.
+ */
+router.post('/:id/cancel-deletion', requirePlatformAdmin, async (req, res) => {
+  try {
+    const tenantId = parseInt(String(req.params.id));
+    if (isNaN(tenantId)) {
+      return res.status(400).json({ error: 'Invalid organization ID' });
+    }
+
+    const record = await cancelDeletion(pool, {
+      organizationId: tenantId,
+      cancelledByUserId: Number(req.user?.userId ?? req.user?.id ?? 0),
+    });
+
+    res.json({
+      success: true,
+      message: `Deletion of "${record.name}" has been cancelled.`,
+      organizationId: record.organizationId,
+      status: record.status,
+    });
+  } catch (error) {
+    if (error instanceof OffboardingStateError) {
+      return res
+        .status(offboardingHttpStatus(error.code))
+        .json({ error: { code: error.code, message: error.message } });
+    }
+    log.error('Error cancelling organization deletion:', error);
+    res.status(500).json({ error: 'Failed to cancel organization deletion' });
+  }
+});
+
+/**
+ * POST /api/tenants/:id/purge — destroy a tenant's data.
+ *
+ * The irreversible step, separated from DELETE on purpose. Refuses unless the
+ * tenant is already pending deletion, the retention window has closed (or an
+ * explicit override reason is supplied), and a final export digest proves the
+ * data-return obligation was discharged.
+ *
+ * The organization ROW survives in status `purged`, carrying the offboarding
+ * evidence. Deleting it would delete the audit trail of the deletion.
+ */
+router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
+  try {
+    const tenantId = parseInt(String(req.params.id));
+    if (isNaN(tenantId)) {
+      return res.status(400).json({ error: 'Invalid organization ID' });
+    }
+
+    const confirmation = req.headers['x-confirm-purge'] as string;
+    if (confirmation !== `purge-org-${tenantId}`) {
+      return res.status(400).json({
+        error: 'Irreversible operation requires confirmation',
+        hint: `Set header x-confirm-purge: purge-org-${tenantId}`,
+      });
+    }
+
+    const finalExportDigest =
+      typeof req.body?.finalExportDigest === 'string' ? req.body.finalExportDigest.trim() : '';
+    const overrideReason =
+      typeof req.body?.overrideRetentionWindowReason === 'string'
+        ? req.body.overrideRetentionWindowReason.trim()
+        : undefined;
+
+    const record = await purgeTenant(pool, {
+      organizationId: tenantId,
+      purgedByUserId: Number(req.user?.userId ?? req.user?.id ?? 0),
+      preconditions: { finalExportDigest, overrideRetentionWindowReason: overrideReason },
+    });
+
+    // Every membership in this org just vanished — revoke cached
+    // auth-middleware membership results immediately.
+    invalidateOrgMembershipCache(undefined, tenantId);
+
+    res.json({
+      success: true,
+      message: `Organization "${record.name}" has been purged.`,
+      organizationId: record.organizationId,
+      status: record.status,
+      purgedAt: record.purgedAt,
+    });
+  } catch (error) {
+    if (error instanceof OffboardingStateError) {
+      return res
+        .status(offboardingHttpStatus(error.code))
+        .json({ error: { code: error.code, message: error.message } });
+    }
+    log.error('Error purging organization:', error);
+    res.status(500).json({ error: 'Failed to purge organization' });
   }
 });
 

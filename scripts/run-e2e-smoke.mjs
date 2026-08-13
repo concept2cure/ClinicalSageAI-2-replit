@@ -8,7 +8,7 @@
  * ProtectedRoute → authenticated surfaces, plus a negative control that proves
  * the guard bites without a session).
  *
- * Prerequisites (same as `npm run beta:proof`):
+ * Prerequisites:
  *   - A provisioned Postgres reachable at DATABASE_URL (defaults to the local
  *     concept2cure-ri DB). The schema must already exist; this script only seeds
  *     the admin login user (idempotent) — it does not run migrations.

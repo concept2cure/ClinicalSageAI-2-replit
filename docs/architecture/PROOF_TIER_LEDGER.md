@@ -5,7 +5,7 @@
 > `scripts/ci/check-proof-tier.mjs` refuses to let shrink. See
 > `docs/architecture/PROOF_HIERARCHY.md` for what each tier means.
 
-**78 proof files** across 5 inventoried categories.
+**77 proof files** across 5 inventoried categories.
 
 | Category | Tier(s) | Count |
 |---|---|--:|
@@ -13,7 +13,7 @@
 | `tenant-contract` | tiers 2-4 (contract / tenant isolation) | 11 |
 | `golden-journeys` | tiers 3-7 (DB → export reopen → external qualification) | 6 |
 | `export-contract` | tiers 6-7 (export reopen → external qualification) | 8 |
-| `e2e-browser` | tier 5 (browser workflow) | 28 |
+| `e2e-browser` | tier 5 (browser workflow) | 27 |
 
 ## `schema-contract` — tier 2 (schema contract) (25)
 
@@ -77,9 +77,8 @@
 - `tests/export-contract/xlsx-export.proof.test.ts`
 - `tests/export-contract/zip-export.proof.test.ts`
 
-## `e2e-browser` — tier 5 (browser workflow) (28)
+## `e2e-browser` — tier 5 (browser workflow) (27)
 
-- `tests/e2e/510k-founder-path.e2e.spec.ts`
 - `tests/e2e/authenticated-app-smoke.e2e.spec.ts`
 - `tests/e2e/authoring.e2e.spec.ts`
 - `tests/e2e/beta-core-pulse.e2e.ts`
