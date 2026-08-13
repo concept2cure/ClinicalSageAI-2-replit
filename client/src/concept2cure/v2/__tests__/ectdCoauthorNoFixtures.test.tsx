@@ -260,6 +260,44 @@ describe('EctdCoauthor — honest error state', () => {
   });
 });
 
+describe('EctdCoauthor — tree search really filters (no dead input)', () => {
+  /* The "Find section..." input used to be a literal noop (onChange={() => {}}).
+     It now filters the loaded backbone client-side on title / section number,
+     with an honest no-match note. */
+  beforeEach(() => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/coauthor/documents') return ok(REAL_DOCS);
+      return ok({});
+    });
+  });
+
+  it('filters by title and section number, says so on no match, and clears', async () => {
+    render(<EctdCoauthor {...props()} />);
+    await screen.findByText('Drug Product — ZX-9');
+
+    const input = screen.getByLabelText('Find a section') as HTMLInputElement;
+
+    // Title match: only the safety document's module remains in the tree.
+    fireEvent.change(input, { target: { value: 'safety' } });
+    expect(screen.getByText('Integrated Summary of Safety')).toBeTruthy();
+    expect(screen.queryByText('Drug Product — ZX-9')).toBeNull();
+
+    // Section-number match.
+    fireEvent.change(input, { target: { value: '3.2.P' } });
+    expect(screen.getByText('Drug Product — ZX-9')).toBeTruthy();
+    expect(screen.queryByText('Integrated Summary of Safety')).toBeNull();
+
+    // No match → an honest note naming the query, never a silent empty tree.
+    fireEvent.change(input, { target: { value: 'zzz-nothing' } });
+    expect(screen.getByText(/No sections match "zzz-nothing"/)).toBeTruthy();
+
+    // Clearing restores the full backbone.
+    fireEvent.change(input, { target: { value: '' } });
+    expect(screen.getByText('Drug Product — ZX-9')).toBeTruthy();
+    expect(screen.getByText('Integrated Summary of Safety')).toBeTruthy();
+  });
+});
+
 describe('EctdCoauthor — no fabricated validation or compliance results', () => {
   it('reports validation as unavailable rather than inventing findings', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {

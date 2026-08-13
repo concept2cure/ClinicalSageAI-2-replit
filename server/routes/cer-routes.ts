@@ -2,7 +2,9 @@ import express from 'express';
 import { z } from 'zod';
 import fs from 'fs';
 import path from 'path';
-import { pool } from '../db';
+import crypto from 'crypto';
+import { requestDb } from '../db/requestDb';
+import { cerReports } from '../../shared/schema';
 import { getGateway } from '../services/ai-gateway';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
@@ -339,59 +341,88 @@ router.post('/faers/generate-narrative', async (req, res) => {
   }
 });
 
+// Save a FAERS-derived CER narrative.
+//
+// PRE-FIX this handler was dishonest three ways:
+//   1. The raw INSERT named columns (title, content TEXT, ndc_code,
+//      product_name, manufacturer) that the real cer_reports schema
+//      (shared/schema.ts — report_id NOT NULL UNIQUE, device_name NOT NULL,
+//      organization_id NOT NULL, json section columns) does not have, so it
+//      failed on EVERY request and "continued with file storage".
+//   2. The file was written to the FLAT data/cer_reports/ directory, while
+//      GET /reports/:id reads only the per-tenant org-{orgId}/ subdirectory —
+//      a saved report could never be read back.
+//   3. No tenant scoping at all on the write.
+//
+// NOW: the insert matches the real schema — report_id generated
+// (FAERS-<uuid>), the drug/NDC narrative maps onto the product-naming columns
+// (deviceName ← productName, falling back to the NDC identifier;
+// deviceManufacturer ← manufacturer) and the json `content`/`metadata`
+// columns; organization comes from the verified JWT. The write runs on the
+// request-scoped Drizzle client (requestDb). The per-tenant file copy is what
+// GET /reports/:id serves, so it is written under org-{orgId}/ using the same
+// report id. A DB failure is REPORTED in the response (database.saved=false +
+// reason), never silently swallowed as full success.
 router.post('/faers/save-report', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const reportData = saveReportSchema.parse(req.body);
 
-    // In production, you would save this to your database
-    // For now, we'll create a simplified in-memory storage solution
-    const report: typeof reportData & {
-      id: string;
-      created_at: string;
-      db_id?: unknown;
-    } = {
-      id: Date.now().toString(),
+    const reportId = `FAERS-${crypto.randomUUID()}`;
+    const createdAt = new Date();
+    const user = (req as any).user;
+    const userId = Number(user?.id ?? user?.userId);
+
+    const report = {
+      id: reportId,
       ...reportData,
-      created_at: new Date().toISOString(),
+      created_at: createdAt.toISOString(),
     };
 
-    // Create directory if it doesn't exist
-    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports');
+    // Per-tenant file copy — the storage GET /reports/:id actually reads.
+    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports', `org-${guard.orgId}`);
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
+    fs.writeFileSync(path.join(reportsDir, `${reportId}.json`), JSON.stringify(report, null, 2));
 
-    // Save report to file
-    const filePath = path.join(reportsDir, `${report.id}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(report, null, 2));
-
-    // Also insert into database for production-like behavior
+    let database: { saved: boolean; id?: number; reason?: string };
     try {
-      const result = await pool.query(
-        `INSERT INTO cer_reports (title, content, ndc_code, product_name, manufacturer, metadata, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id`,
-        [
-          report.title,
-          report.content,
-          report.ndcCode,
-          report.productName || null,
-          report.manufacturer || null,
-          report.metadata || {},
-          report.created_at,
-        ]
-      );
-
-      (report as any).db_id = result.rows[0].id;
+      const [row] = await requestDb(req)
+        .insert(cerReports)
+        .values({
+          organizationId: guard.orgId,
+          reportId,
+          deviceName: reportData.productName?.trim() || `NDC ${reportData.ndcCode}`,
+          deviceManufacturer: reportData.manufacturer ?? null,
+          cerStatus: 'draft',
+          status: 'draft',
+          content: { title: reportData.title, narrative: reportData.content },
+          metadata: {
+            ...(reportData.metadata ?? {}),
+            ndcCode: reportData.ndcCode,
+            source: 'FAERS',
+            reportKind: 'faers_drug_safety_narrative',
+          },
+          ...(Number.isFinite(userId) ? { createdBy: userId, updatedBy: userId } : {}),
+        })
+        .returning({ id: cerReports.id });
+      database = { saved: true, id: row.id };
     } catch (dbError) {
-      console.error('Note: Database insert failed, but continuing with file storage:', dbError);
-      // We'll still consider this a success since we saved to file
+      const reason = dbError instanceof Error ? dbError.message : String(dbError);
+      cerLog.error('cer_reports insert failed for FAERS save-report', { reason, orgId: guard.orgId });
+      database = { saved: false, reason };
     }
 
     res.status(201).json({
-      id: report.id,
+      id: reportId,
       saved: true,
-      message: 'CER report saved successfully',
+      database,
+      message: database.saved
+        ? 'CER report saved'
+        : 'CER report saved to tenant file storage only — database insert failed',
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -402,10 +433,19 @@ router.post('/faers/save-report', async (req, res) => {
   }
 });
 
-// Get a list of saved CER reports
+// Get a list of saved CER reports.
+//
+// Org-scoped to the caller's per-tenant directory (org-{orgId}/), matching
+// the save + single-report read paths. The legacy FLAT data/cer_reports/
+// files (written before tenant scoping existed) carry no org attribution, so
+// they are deliberately NOT listed — showing them to every tenant would be a
+// cross-tenant leak; fail closed instead.
 router.get('/reports', async (req, res) => {
   try {
-    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports');
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports', `org-${guard.orgId}`);
     if (!fs.existsSync(reportsDir)) {
       return res.json({ reports: [] });
     }

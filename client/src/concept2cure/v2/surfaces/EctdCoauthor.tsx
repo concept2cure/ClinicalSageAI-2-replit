@@ -197,6 +197,9 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({});
+  // Tree search — a real client-side filter over the loaded documents
+  // (title / eCTD section number), never a dead input.
+  const [treeQuery, setTreeQuery] = useState('');
   const [treeCollapsed, setTreeCollapsed] = useState(false);
   const [focus, setFocus] = useState(false);
   const [tab, setTab] = useState<'document' | 'validation' | 'compliance'>('document');
@@ -293,6 +296,23 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     }));
   }, [docs]);
 
+  /* The tree the sidebar renders: all modules, or — while searching — only the
+     modules holding a document whose title or section number matches. */
+  const treeFilter = treeQuery.trim().toLowerCase();
+  const visibleModules = useMemo(() => {
+    if (!treeFilter) return treeModules;
+    return treeModules
+      .map((mod) => ({
+        ...mod,
+        docs: mod.docs.filter(
+          (d) =>
+            (d.title || '').toLowerCase().includes(treeFilter) ||
+            (d.moduleNumber || '').toLowerCase().includes(treeFilter),
+        ),
+      }))
+      .filter((mod) => mod.docs.length > 0);
+  }, [treeModules, treeFilter]);
+
   /* KPIs derived from the REAL rows only (never hardcoded). Readiness weights
      approved/finalized fully and review/in-progress at half. */
   const total = docs.length;
@@ -369,22 +389,24 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
       {/* eCTD tree */}
       <aside className="ec-tree">
         <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1--5</span></div>
-        <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." onChange={() => { /* noop */ }} /></div>
+        <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." value={treeQuery} onChange={(e) => setTreeQuery(e.target.value)} /></div>
         {loading ? (
           <div className="ec-empty">Loading eCTD documents…</div>
         ) : error ? (
           <div className="ec-empty sp-tone-warn">Couldn't load eCTD documents.</div>
         ) : docs.length === 0 ? (
           <div className="ec-empty">No eCTD documents yet.</div>
+        ) : visibleModules.length === 0 ? (
+          <div className="ec-empty">No sections match "{treeQuery.trim()}". Clear the search to see the full backbone.</div>
         ) : (
-          treeModules.map((mod) => (
+          visibleModules.map((mod) => (
             <div key={mod.m} className="ec-tree-mod">
               <button className="ec-tree-row" onClick={() => toggleModule(mod.m)}>
-                <span className="ec-caret" data-open={!!openModules[mod.m]}>{I.chevronRight || '›'}</span>
+                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>{I.chevronRight || '›'}</span>
                 <span className="ec-tnum">M{mod.m}</span>
                 <span className="ec-tlabel">{mod.title}</span>
               </button>
-              {openModules[mod.m] && (
+              {(treeFilter ? true : openModules[mod.m]) && (
                 <div className="ec-tree-children">
                   {mod.docs.map((d) => (
                     <button key={d.id} className="ec-tree-row" data-active={activeId === d.id} onClick={() => { setActiveId(d.id); setTab('document'); }}>

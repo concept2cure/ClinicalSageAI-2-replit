@@ -57,7 +57,9 @@ export interface SafetySignal {
   id: string;
   source: 'FAERS' | 'MAUDE' | 'Eudamed' | 'Literature' | 'Spontaneous';
   event: string;
-  count: number;
+  /** Supporting adverse-event case count (per-signal, per-program scope);
+   *  null when the signal has no MedDRA PT linkage — rendered as "—". */
+  count: number | null;
   severity: 'critical' | 'serious' | 'moderate' | 'low';
   status: 'included' | 'excluded' | 'review';
   detectedAt: string;

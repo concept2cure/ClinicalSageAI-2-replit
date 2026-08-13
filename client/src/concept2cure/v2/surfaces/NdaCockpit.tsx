@@ -28,15 +28,6 @@ interface NdaM1Doc {
   _new?: boolean;
 }
 
-interface NdaClockStep {
-  id: string;
-  label: string;
-  day: string;
-  date: string;
-  st: string;
-  note?: string;
-}
-
 interface NdaRtfItem {
   id?: string;
   sev: string;
@@ -64,18 +55,22 @@ interface BlaAssessment {
    Refuse-to-File risk log, and the BLA 351(a) biologics assessments are all read
    fixture-free from their real, org-scoped stores (see the hooks below) — real
    data, an honest empty state, or an honest failed-load state, never a
-   fabricated stand-in. The PDUFA review-clock steps below remain the surface's
-   own local list: there is no clock store to read (nda-cockpit.routes.ts and
-   bla-workbench.ts back every other panel; neither exposes a clock). */
+   fabricated stand-in. There is NO review-clock store (nda-cockpit.routes.ts and
+   bla-workbench.ts back every other panel; neither exposes a clock), so the
+   PDUFA clock tab renders an honest "no review clock recorded" state instead of
+   the invented submission/PDUFA dates it used to hardcode. Likewise the header
+   names only the program actually open in the shell (window.C2C_PROJECT) — it
+   never invents an application number, pathway, or review designation. */
 
-const NDA_CLOCK: NdaClockStep[] = [
-  { id: 'sub', label: 'Submission received', day: 'Day 0', date: '14 Jul 2026', st: 'done' },
-  { id: 'file', label: 'Filing decision (RTF / 74-day letter)', day: 'Day 60', date: '12 Sep 2026', st: 'current', note: 'Filing review — RTF risk assessment open' },
-  { id: 'mid', label: 'Mid-cycle communication', day: '~Day 150', date: 'Dec 2026', st: 'upcoming' },
-  { id: 'late', label: 'Late-cycle meeting', day: '~Day 240', date: 'Mar 2027', st: 'upcoming' },
-  { id: 'adcom', label: 'Advisory committee (if convened)', day: '~Day 270', date: 'Apr 2027', st: 'upcoming' },
-  { id: 'goal', label: 'PDUFA goal date (action)', day: 'Day 304', date: '14 May 2027', st: 'goal' },
-];
+/** The open program's display name from the shell's runtime project channel
+ *  (window.C2C_PROJECT — the same convention every project-aware v2 surface
+ *  reads). Null when no project is open; the header then claims nothing. */
+function readProgramName(): string | null {
+  const p = (window as unknown as { C2C_PROJECT?: { title?: unknown; code?: unknown } }).C2C_PROJECT;
+  const title = typeof p?.title === 'string' && p.title.trim() ? p.title.trim() : null;
+  const code = typeof p?.code === 'string' && p.code.trim() ? p.code.trim() : null;
+  return title ?? code;
+}
 
 /* Biologics (BLA 351(a)) science-engine assessments — the biosimilar/biologic
    analytical-similarity, comparability, immunogenicity, and RTF/CRL filing-risk
@@ -130,13 +125,15 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => {
     onNav && onNav(id);
   };
+  /* The open program's real name (or null) — the only identity this surface
+     may claim. */
+  const progName = readProgramName();
   /* Real rows — the org's CTD module (M1–M5) readiness, assembled from the real
      eCTD submission core (submissions where application_type IN ('nda','bla') +
      ectd_sequences + submission_leaves + coauthor_documents) by
      GET /api/nda-cockpit/modules. Fixture-free: real data, an honest empty
      state, or an honest failed-load state — never a fabricated stand-in. The
-     overall % ready is derived from the loaded rows. The M1 worklist, PDUFA
-     clock, and RtF log stay the surface's own lists. */
+     overall % ready is derived from the loaded rows. */
   const modulesLive = useLiveRows<NdaModule>('/api/nda-cockpit/modules');
   const modules = modulesLive.rows;
   const overall = modules.length
@@ -302,7 +299,6 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk'], ['bla', 'BLA biologics']];
 
   /* Context-aware human lead */
-  const clockNow = NDA_CLOCK.find(s => s.st === 'current') || NDA_CLOCK.find(s => s.st === 'goal');
   const highs = rtf.filter(r => r.sev === 'high');
   const topHigh = highs[0] || rtf.find(r => r.sev === 'med');
   const gateMod = modules.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
@@ -311,19 +307,19 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const lead = (
     <AnswerLead
       tone={highs.length ? 'urgent' : 'calm'}
-      eyebrow="Are you ready to file NDA 212345 — and what stands in the way"
+      eyebrow={'Are you ready to file ' + (progName ? 'the ' + progName + ' NDA' : 'this NDA') + ' — and what stands in the way'}
       headline={highs.length && topHigh
-        ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the {clockNow ? clockNow.label.toLowerCase() : 'filing'} door.</>
+        ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
         : <>You're <b>{overall}% ready</b> to file &mdash; no Refuse-to-File blockers left, {openItems} items to tidy before you submit.</>}
       body={highs.length && topHigh
         ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()} &mdash; and the same review that refuses today accepts. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
-        : <>You're at the {clockNow ? clockNow.label.toLowerCase() : 'filing'} step ({clockNow ? clockNow.date : '—'}). The remaining items are administrative, not structural &mdash; you're through the hard part.</>}
+        : <>The remaining items are administrative, not structural &mdash; close them out and the package is fileable.</>}
       reassure={highs.length ? "This is fixable before Day 74. I'll draft each remediation with you, one at a time." : "You're close. I'll help you close out the last items and assemble the sequence."}
       action={{
         label: highs.length ? 'Fix the filing risks with AnA' : 'Draft the final readiness plan',
         onClick: () => ask && ask(highs.length && topHigh
           ? 'Draft a mitigation plan for the ' + topHigh.area + ' Refuse-to-File risk: ' + topHigh.text
-          : 'Draft the final NDA 212345 readiness plan for the open administrative items'),
+          : 'Draft the final readiness plan for the open administrative items on this NDA program'),
         alt: { label: 'See Refuse-to-File risks', onClick: () => setTab('rtf') },
       }}
       secondary="Or work the readiness detail below."
@@ -338,16 +334,16 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             Pharma {I.dot} filing
           </div>
           <h1 className="reg-title">NDA filing cockpit</h1>
-          <p className="reg-intro">BX-204 {I.dot} NDA 212345 {I.dot} 505(b)(1) {I.dot} standard review. The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
+          <p className="reg-intro">{progName ? <>{progName} {I.dot} </> : null}The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
         </div>
-        {ask && <button className="reg-cta" onClick={() => ask('Assess NDA 212345 filing readiness and the top Refuse-to-File risks')}>{I.sparkles} Assess with AnA</button>}
+        {ask && <button className="reg-cta" onClick={() => ask('Assess filing readiness and the top Refuse-to-File risks for this NDA program')}>{I.sparkles} Assess with AnA</button>}
       </div>
 
       {lead}
 
       <div className="reg-kpis">
         <div className="reg-kpi"><div className="reg-kpi-v">{overall}%</div><div className="reg-kpi-l">Application readiness</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">Day 60</div><div className="reg-kpi-l">Filing review {I.dot} PDUFA Day 304</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">&mdash;</div><div className="reg-kpi-l">Review clock {I.dot} not started</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v" data-tone="warn">{m1open}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v" data-tone={highs.length ? 'err' : undefined}>{highs.length}</div><div className="reg-kpi-l">High RTF risk</div></div>
       </div>
@@ -431,18 +427,12 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'clock' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span>PDUFA review clock &mdash; standard review (10-month)</span><span className="reg-card-s">Filing Day 60 → action Day 304</span></div>
-          <div className="nda-clock">
-            {NDA_CLOCK.map((s, i) => (
-              <div key={s.id} className="nda-ck-step" data-st={s.st}>
-                <div className="nda-ck-rail"><div className="nda-ck-dot">{s.st === 'done' ? I.check : s.st === 'goal' ? (I.flag || I.target) : i + 1}</div>{i < NDA_CLOCK.length - 1 && <div className="nda-ck-line" />}</div>
-                <div className="nda-ck-b">
-                  <div className="nda-ck-top"><span className="nda-ck-l">{s.label}</span><span className="nda-ck-day">{s.day}</span></div>
-                  <div className="nda-ck-date">{s.date}{s.note ? ' · ' + s.note : ''}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="reg-card-h"><span>PDUFA review clock</span><span className="reg-card-s">Runs from FDA receipt of the filed application</span></div>
+          <EmptyState
+            icon={I.clock || I.fileText}
+            title="No review clock recorded"
+            hint="The review clock starts when FDA accepts the filing. File the application and record the acceptance, and the filing decision, mid- and late-cycle milestones, and the PDUFA goal date appear here from the real dates — nothing is projected or invented."
+          />
         </div>
       )}
 

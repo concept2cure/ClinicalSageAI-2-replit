@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-13T17:21:22.098Z",
+  "generatedAt": "2026-08-13T17:35:59.636Z",
   "git": {
-    "sha": "753cfb9309bf9391cb6decd4c0acaff03541a88e",
+    "sha": "c17bb3f4b4fdb5608f244cb55aaeb8b0654242b6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2129,7 +2129,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 952422
+        "bytes": 954676
       },
       {
         "file": "shared/schema.ts",
@@ -2205,7 +2205,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 120900
+        "bytes": 120942
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2267,7 +2267,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18527
+        "lines": 18585
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2339,7 +2339,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2681
+        "lines": 2683
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2450,6 +2450,10 @@
         "lines": 1927
       },
       {
+        "file": "server/services/ana/evidence-literature-tool-defs.ts",
+        "lines": 1922
+      },
+      {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1900
       },
@@ -2460,10 +2464,6 @@
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1881
-      },
-      {
-        "file": "server/services/ana/evidence-literature-tool-defs.ts",
-        "lines": 1876
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",

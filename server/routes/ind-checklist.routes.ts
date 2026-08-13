@@ -3,7 +3,7 @@
  *
  * GET /api/ind-checklist → the org's IND application(s), each shaped to exactly the
  * keys the v2 IndLifecycle surface consumes ({ code, drugName, productName, indication,
- * sponsorName, submissionType, targetReceiptOffsetDays, forms[], sections[] }), assembled
+ * sponsorName, submissionType, targetReceiptDate, forms[], sections[] }), assembled
  * ENTIRELY from the real, org-scoped eCTD submission core (submissions + ectd_sequences
  * + submission_leaves + coauthor_documents) — the same tables the submission service and
  * the eCTD co-authoring flow write. There is no legacy/seed blob and no fallback: an org

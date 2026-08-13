@@ -55,9 +55,9 @@ const MIN_CASES = 3;
 /** Hard cap on rendered signal rows (this is a surveillance card, not a table). */
 const MAX_ROWS = 25;
 
-// ── Display-shape row types (mirror the surface fixtures) ───────────────────────
+// ── Display-shape row types (mirror the surface's render contract) ──────────────
 
-/** Matches PV_SIG in BiopharmaSpecialty.tsx: { product, term, count, prr, owner, age, status }. */
+/** Matches PvSignal in BiopharmaSpecialty.tsx: { product, term, count, prr, owner, age, status }. */
 interface PvSignalRow {
   product: string;
   term: string;
@@ -70,7 +70,7 @@ interface PvSignalRow {
   status: string;
 }
 
-/** Matches PV_AGG in BiopharmaSpecialty.tsx: { product, cycle, due, by, reviewers, status }. */
+/** Matches PvAgg in BiopharmaSpecialty.tsx: { product, cycle, due, by, reviewers, status }. */
 interface PvAggregateReportRow {
   /** GAP: periodic reports are project-scoped; the model carries no product label. */
   product: string | null;

@@ -404,9 +404,15 @@ function buildSuggestedActions(
       );
       break;
     case 'cer_report':
+      // Both actionTypes name REAL registered AnA tools (the old
+      // generate_cer / generate_lit_search labels had no handler anywhere —
+      // dead affordances). generate_document accepts document_type 'cer';
+      // search_literature + record_literature run and persist the systematic
+      // search. Guarded by the suggested-actions test in
+      // __tests__/intelligence-flow-suggested-actions.test.ts.
       actions.push(
-        { label: 'Generate CER Draft', actionType: 'generate_cer', description: 'Create a Clinical Evaluation Report from collected data' },
-        { label: 'Generate Literature Search Protocol', actionType: 'generate_lit_search', description: 'Create the systematic literature search protocol' },
+        { label: 'Generate CER Draft', actionType: 'generate_document', description: "Create the Clinical Evaluation Report draft from collected data (generate_document with document_type 'cer')" },
+        { label: 'Run & Record Literature Search', actionType: 'search_literature', description: 'Run the systematic PubMed search (search_literature) and record the relevant hits to the corpus (record_literature)' },
       );
       break;
     case 'nda_submission':

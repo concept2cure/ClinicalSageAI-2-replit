@@ -37,8 +37,6 @@ const APPROVED = new Set([
   'server/export/renderers.ts',
   'server/services/documentExportService.ts',
   'server/services/documentQuality/pdfValidationAttachment.ts',
-  'server/services/cerGenerator.ts',
-  'server/services/cerGenerationService.ts',
   'server/services/eSTARValidator.ts',
   'server/services/biotech-artifact-generator.ts',
   'server/services/pmaDocumentGenerator.js',

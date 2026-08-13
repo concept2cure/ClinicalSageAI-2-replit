@@ -8,6 +8,7 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { documents, documentVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
@@ -80,9 +81,9 @@ const saveSchema = z.object({
  *
  * Thin org-authenticated read over the canonical PubMed client
  * (server/services/integrations/pubmed-client.ts — the same client AnA's
- * search_literature tool uses). Read-only: results are NOT persisted to
- * literature_entries (no write path exists for that table outside the seed
- * script), so the UI must present them as an unrecorded search.
+ * search_literature tool uses). The search itself persists nothing
+ * (`recorded: false`); hits become part of the org corpus only through the
+ * explicit POST /literature/record write path below.
  *
  * Honest degradation: a PubMed/network failure answers 200 with
  * { available: false, unavailableReason } and zero articles — never a
@@ -132,6 +133,99 @@ router.get('/literature/search', authMiddleware, async (req, res) => {
       source: 'PubMed',
       totalCount: 0,
       articles: [],
+    });
+  }
+});
+
+/**
+ * POST /api/cerv2/literature/record — record PubMed search hits into the
+ * org's literature corpus (literature_entries), the write path consumed by
+ * the CER workbench's "Record to corpus" action and mirrored by AnA's
+ * record_literature tool (same service logic).
+ *
+ *   - Org comes from the authenticated request, never the body.
+ *   - Idempotent per (org, pmid): re-recording updates instead of duplicating.
+ *   - Writes run on the REQUEST-SCOPED client (requestPgClient — the raw-SQL
+ *     sibling of requestDb, needed because literature_entries has no Drizzle
+ *     schema), so RLS session vars apply; absent context fails closed.
+ *   - `programId` (optional) is validated as visible in the caller's org, but
+ *     the table has no program column — see PROGRAM_BINDING_NOTE. Screening
+ *     state (included/excluded) is NOT accepted: the table cannot represent
+ *     it (SCREENING_STATE_UNSUPPORTED), and a parameter that silently dropped
+ *     data would be a dishonest affordance.
+ */
+const literatureRecordSchema = z.object({
+  programId: z.string().uuid().optional(),
+  entries: z
+    .array(
+      z.object({
+        pmid: z.string().trim().regex(/^\d{1,10}$/, 'pmid must be a numeric PubMed ID'),
+        title: z.string().trim().min(1).max(4000),
+        abstract: z.string().max(50_000).nullish(),
+        journal: z.string().max(1000).nullish(),
+        year: z.coerce.number().int().min(1800).max(2100).nullish(),
+        authors: z
+          .union([z.array(z.string().max(500)).max(100), z.string().max(4000)])
+          .nullish(),
+        doi: z.string().max(300).nullish(),
+        url: z.string().max(1000).nullish(),
+      }),
+    )
+    .min(1)
+    .max(50),
+});
+
+router.post('/literature/record', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrganizationId(req);
+  if (!organizationId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+  const parsed = literatureRecordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+  }
+
+  const { recordLiteratureEntries, SCREENING_STATE_UNSUPPORTED, PROGRAM_BINDING_NOTE } =
+    await import('../services/literature-recording.service');
+
+  try {
+    if (parsed.data.programId) {
+      const { regulatoryPrograms } = await import('../../shared/schema/programs');
+      const [program] = await requestDb(req)
+        .select({ id: regulatoryPrograms.id })
+        .from(regulatoryPrograms)
+        .where(
+          and(
+            eq(regulatoryPrograms.id, parsed.data.programId),
+            eq(regulatoryPrograms.organizationId, organizationId),
+          ),
+        )
+        .limit(1);
+      if (!program) {
+        return res.status(404).json({ error: 'Program not found in your organization' });
+      }
+    }
+
+    const result = await recordLiteratureEntries(
+      requestPgClient(req),
+      organizationId,
+      parsed.data.entries,
+    );
+    return res.json({
+      recorded: true,
+      ...result,
+      screeningState: null,
+      notes: [SCREENING_STATE_UNSUPPORTED, PROGRAM_BINDING_NOTE],
+    });
+  } catch (error) {
+    logger.error('Failed to record literature entries', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      recorded: false,
+      error: `Failed to record literature entries — ${
+        error instanceof Error ? error.message : 'database error'
+      }`,
     });
   }
 });

@@ -1567,6 +1567,64 @@ registerToolHandler('search_literature', async (input) => {
   }
 });
 
+// Record Literature — persist PubMed hits into the org's literature corpus
+// (literature_entries) through the same service the CER workbench's
+// POST /api/cerv2/literature/record uses (ZERO DUPLICATION). Org comes from
+// ToolContext, never from model arguments; without it the tool refuses.
+// Honest limits are relayed from the service constants: entries are stored
+// unscreened (no screening-state column) and org-scoped (no program column).
+registerToolHandler('record_literature', async (input, ctx) => {
+  const organizationId = ctx?.organizationId;
+  if (typeof organizationId !== 'number' || !Number.isInteger(organizationId) || organizationId <= 0) {
+    return JSON.stringify({
+      recorded: false,
+      error: 'Organization context is required to record literature — none is active.',
+    });
+  }
+
+  const rawEntries = Array.isArray(input.entries) ? input.entries : [];
+  if (rawEntries.length === 0) {
+    return JSON.stringify({
+      recorded: false,
+      error: 'No entries supplied — pass the search_literature hits to record (pmid + title each).',
+    });
+  }
+
+  const {
+    recordLiteratureEntries,
+    SCREENING_STATE_UNSUPPORTED,
+    PROGRAM_BINDING_NOTE,
+  } = await import('../literature-recording.service.js');
+
+  try {
+    const { pool } = await import('../../db.js');
+    const result = await recordLiteratureEntries(
+      pool,
+      organizationId,
+      rawEntries.map((e: any) => ({
+        pmid: String(e?.pmid ?? ''),
+        title: String(e?.title ?? ''),
+        abstract: typeof e?.abstract === 'string' ? e.abstract : null,
+        journal: typeof e?.journal === 'string' ? e.journal : null,
+        year: typeof e?.year === 'number' ? e.year : null,
+        authors: Array.isArray(e?.authors) || typeof e?.authors === 'string' ? e.authors : null,
+        doi: typeof e?.doi === 'string' ? e.doi : null,
+        url: typeof e?.url === 'string' ? e.url : null,
+      })),
+    );
+    return JSON.stringify({
+      recorded: true,
+      ...result,
+      notes: [SCREENING_STATE_UNSUPPORTED, PROGRAM_BINDING_NOTE],
+    });
+  } catch (e) {
+    return JSON.stringify({
+      recorded: false,
+      error: `Failed to record literature — ${e instanceof Error ? e.message : 'database error'}`,
+    });
+  }
+});
+
 // Search EUDAMED — live EU medical-device database (EU analogue of FDA device
 // data). The client never throws: a network/HTTP failure yields a typed
 // status:'unavailable' result, which we relay as manual-search guidance.

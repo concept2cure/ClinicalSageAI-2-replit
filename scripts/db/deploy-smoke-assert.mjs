@@ -137,7 +137,9 @@ const TENANT_ALLOWLIST = [
 // enough — its columns must match what the caller selects. Each ran red before
 // its remediation.
 const CONSUMER_QUERIES = [
-  ['templates.sections (cerGenerator, C-39)', `SELECT sections FROM templates WHERE id = 'smoke'`],
+  // The consumer that motivated this probe (cerGenerator.ts) was deleted in
+  // the D11b dead-path purge; the column remains in the shipped migration.
+  ['templates.sections (C-39; ex-cerGenerator, deleted D11b)', `SELECT sections FROM templates WHERE id = 'smoke'`],
   ['doc_sections.id (command-executor, C-39)', `SELECT id, code, title FROM doc_sections WHERE id = '00000000-0000-0000-0000-000000000000'`],
   ['atom quality JOIN (conflictDetection, C-36)', `SELECT a.id, q.overall_score FROM lumen_data_atoms a LEFT JOIN lumen_atom_quality_scores q ON a.id = q.atom_id LIMIT 1`],
   ['sequence-continuity UNION (validator, C-31)', `SELECT sequence_number FROM ectd_compilations WHERE application_number = 'x' UNION SELECT sequence_number FROM ectd_submissions WHERE application_number = 'x'`],
