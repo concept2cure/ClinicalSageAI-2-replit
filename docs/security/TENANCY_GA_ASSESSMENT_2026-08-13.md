@@ -368,10 +368,88 @@ first.
 | R3 | No data-residency pinning (EU/US) | High for EU sponsors | The schema has no region concept. Architectural. |
 | ~~R4~~ | ~~Tenant export covers a subset of resources~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The curated manifest covered 1 of the 8 tables the purge destroys, and the purge's `finalExportDigest` gate accepted **any non-empty string** — a precondition nothing could satisfy honestly. Now: a catalog-driven full export (`GET /api/tenant-export/full`, ~170 tenant-keyed tables discovered from `information_schema`, not a hand-list), an export **receipt** persisted per digest, and a purge that verifies the digest against a receipt **scoped to that organization**. A structural contract test keeps the purge set a subset of the export set. |
 | ~~R5~~ | ~~No audited support-impersonation flow~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The guard now evaluates the posture for platform actors instead of short-circuiting, and writes a `tenant_lifecycle_override` audit entry (severity `critical` on a denied tenant) plus a `platform_override` metric whenever staff proceed past a refusal. Staff are still never blocked — including when the posture is unreadable. |
-| R6 | `max_storage` unenforced | Low–Medium | **Partially mis-triaged in the original register — corrected.** `max_projects` is NOT decoration: `services/atomicQuotaService.js::atomicCreateProject` enforces it inside a transaction with `SELECT … FOR UPDATE`, and both creation routes (`routes/projects-management.ts:244`, `routes/project-hierarchy.ts:229`) go through it. It reads `license.max_projects` rather than `organizations.max_projects`, which is a second source of truth worth reconciling but is a working control. **`max_storage` is genuinely unenforced** — it needs storage accounting that does not exist yet, which is why it is left rather than patched. |
+| ~~R6~~ | ~~`max_storage` unenforced~~ | ~~Low–Medium~~ | **CLOSED 2026-08-13.** The original register also mis-triaged its sibling: `max_projects` is NOT decoration — `services/atomicQuotaService.js::atomicCreateProject` enforces it in a transaction with `SELECT … FOR UPDATE` and both creation routes go through it (it reads `license.max_projects` rather than `organizations.max_projects`, a second source of truth still worth reconciling). `max_storage` genuinely was unenforced, because there was no answer to "how much storage does this tenant use": eleven tables carry both a tenant key and a byte column. Now: catalog-driven accounting (`services/tenant/tenant-storage.ts`), a pure `evaluateStorageQuota`, and `middleware/storageQuotaGuard.ts` mounted in **both** auth chains rather than on each upload route — see §3.1 for why that placement, and why this control fails OPEN while the lifecycle guard fails closed. |
 | ~~R7~~ | ~~Organization switch is not audited~~ | ~~Low~~ | **CLOSED 2026-08-13.** `POST /api/auth/enterprise/select-organization` now writes an `organization_switch` audit event recorded against the DESTINATION org, with the origin org and the role granted in metadata. Authorized-but-unrecorded was the wrong combination for the one endpoint whose job is to move a session between customers' data — a CRO consultant crosses it routinely, and an access review of any one sponsor needs to see when their tenant was entered and by whom. |
 | R8 | Lifecycle posture cache converges across instances only within 60s | Low | Explicit invalidation is wired at every writer, so the mutating instance is immediate; others converge within the TTL. Same trade the membership cache already makes. |
 | ~~R9~~ | ~~`server/routes/tenants.ts` appears unmounted~~ | ~~Low~~ | **CLOSED 2026-08-13.** Confirmed referenced nowhere (it was already carried in `scripts/ci/unreferenced-modules-baseline.json`) and deleted; both ratchets regenerated (unreferenced 109→108, requestdb baseline cleaned). It was the last copy of the ungoverned `db.delete(organizations)` cascade. The only endpoint lost with it is `GET /api/tenants/:id`, which was never reachable. |
+
+### 3.1 R6 in detail — the two decisions worth arguing with
+
+**Why the guard is in the auth chain and not in the upload helpers.**
+`middleware/uploadSafety.ts::assertUploadSafe` looked like the natural home:
+every upload path already calls it. It takes a Buffer, a MIME type and a
+filename — no request, therefore no tenant. Threading an *optional* organization
+id through it would have produced a quota enforced only on whichever of its eight
+call sites someone remembered to update, and enforced on none of the routes
+written next year. That is the same defect as a hand-maintained table list, which
+this codebase has been bitten by twice (the export manifest, R4; the entry-point
+sweep, §2.5). So the check sits where the tenant is already known and every
+authenticated request already passes, keyed on request `Content-Length` read
+before any body parser runs. There is no per-route wiring, therefore nothing to
+forget.
+
+It is also mounted on `/api/v1` (`routes/public-api.ts`), which has **no
+content-bearing write route today** — so it is a no-op on every current path
+there, deliberately. The lifecycle guard had to be retrofitted onto that same
+router (§2.5.1) precisely because a key-authenticated transport is invisible to a
+guard mounted in the session auth chain. Mounting this one now means the first
+`/api/v1` upload route is metered by construction rather than by whoever writes it
+remembering to ask.
+
+The cost of that choice, stated rather than hidden: the guard sees *declared*
+request size, so it is a pre-flight check, not a post-hoc measurement. A chunked
+upload declares no `Content-Length` and is evaluated as zero incoming bytes,
+which degrades the check to "is this tenant already over?" — still a real refusal,
+just not a predictive one. And only content-bearing requests are evaluated
+(multipart, octet-stream, or a body ≥ 1 MiB): a storage limit must block storage,
+not every mutation, or it becomes an unadvertised suspension.
+
+**Why this control fails OPEN when the lifecycle guard fails closed.** They are
+different kinds of control. Entitlement and isolation are security properties, so
+an unreadable posture must never be read as "active" — the lifecycle guard answers
+503. A storage quota is commercial metering; failing closed there means one
+database hiccup stops every upload on the platform, taking out regulated
+submission work for a billing reason. An unmeasurable quota is therefore not
+enforced, but it is counted as `unverified` so the blind spot is visible rather
+than silent.
+
+**Two properties that make the number honest.** The measurement reports itself as
+`partial` — it counts rows the database knows the size of, not object storage it
+has no row for — and an under-count under-blocks, which is the safe direction. And
+admitted bytes are charged against the 30-second usage cache, because a pure TTL
+cache has a hole a bulk importer walks straight through: fifty uploads inside one
+window all evaluated against the same pre-burst figure would leave the quota
+holding on paper and failing in practice.
+
+**Mutation-verified, including one test that was proving nothing.** Six mutations
+were applied and each was caught by the named test: the quota boundary made
+exclusive; the admitted-bytes charge removed; the production enforcement default
+flipped to report; the refusal arm removed; the billing carve-out dropped; the
+fail-OPEN arm made fail-closed. Two more against the accounting itself: dropping
+the tenant `WHERE` clause (tenant A then sees tenant B's bytes), and widening the
+size-column pattern to a bare `size` (a `page_size` column starts being billed as
+storage).
+
+A seventh mutation *survived*, and the finding was in the test rather than the
+code: an assertion claiming a vanished organization row must not read as "limit
+0 GB" could never fail, because a non-positive limit already means unlimited. The
+comment was simply wrong. It is reworded to state what it actually pins.
+
+Separately, three assertions in the contract test were **silently skipping**:
+they guarded on `tablesInFixture.has('file_uploads')`, and `file_uploads` is not
+in the base drizzle journal — it was retrofitted by its own tenancy migration. The
+fixture now applies that migration and the skip-guards are gone, so a table
+missing from the fixture fails loudly instead of quietly reducing the suite to
+nothing. Both are recorded here because "the tests passed" is worth exactly as
+much as the tests were capable of failing.
+
+**Rollout: this one needs reconciliation first.** Unlike `seats_purchased`
+(default 0 = unlimited), `max_storage` defaults to **5 GB** and nothing has ever
+measured a tenant against it, so switching enforcement on can refuse tenants who
+have been quietly over for months — during a submission, which is the worst moment
+available. `npm run report:tenant-storage` prints exactly who would be refused and
+by how much. Ship with `STORAGE_LIMIT_ENFORCEMENT=report` until that list is empty.
+Report mode is not an off switch: it computes, counts and logs every decision.
 
 ---
 
@@ -384,6 +462,9 @@ first.
 | `middleware/__tests__/tenantLifecycleGuard.test.ts` | 16 passed — carve-outs, platform bypass, read-only verb split, fail-closed |
 | `middleware/__tests__/auth-establishes-scope.integration.test.ts` | 9 passed — wiring proof on **both** auth chains |
 | `services/__tests__/seat-licensing.test.ts` | 11 passed — production-default enforcement |
+| `services/tenant/__tests__/tenant-storage.test.ts` | 25 passed — quota boundaries, every spelling of "unlimited", hostile inputs, the burst-through-cache hole |
+| `middleware/__tests__/storageQuotaGuard.test.ts` | 19 passed — which requests are evaluated, carve-outs, report mode, the deliberate fail-OPEN arm |
+| `tests/schema-contract/tenant-storage-accounting.contract.test.ts` | 8 passed — 11 storage tables discovered against the shipped drizzle lineage; two-tenant sum; decoy `size` column rejected |
 | Regression: middleware, db, security, routes, services | 3,141 passed, 25 skipped, 0 failed |
 | `tsc --noEmit`, `eslint` on changed files | clean |
 | `ci:tenant-isolation`, `ci:rls-allowlist-sync` | pass |
