@@ -33,18 +33,34 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SOURCE = readFileSync(join(__dirname, '../taskManagement.routes.ts'), 'utf8');
+/**
+ * The listing logic (org scoping, the preview mapping, and the merge with the
+ * built-in catalog) now lives in a service — taskManagement.routes.ts sits
+ * against the repo-health line gate, so it was extracted. The route keeps only
+ * auth + delegation. These static assertions follow the code.
+ *
+ * NOTE: static matching is why the missing built-in merge shipped unnoticed —
+ * this file can see that code EXISTS, never that it RUNS. The behavioural
+ * coverage lives in task-template-merge.test.ts, which calls the endpoint.
+ */
+const CATALOG = readFileSync(
+  join(__dirname, '../../services/tasking/task-template-catalog.ts'),
+  'utf8',
+);
 
 /** Match code, not the prose about it. */
 function executableOnly(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 }
 
-const LIST = executableOnly(
+const ROUTE = executableOnly(
   SOURCE.slice(
     SOURCE.indexOf("router.get('/templates'"),
     SOURCE.indexOf("router.post('/templates'"),
   ),
 );
+/** Route + service together: the listing behaviour, wherever it now lives. */
+const LIST = ROUTE + '\n' + executableOnly(CATALOG);
 
 describe('the template list exists and is tenant-scoped', () => {
   it('is a real route', () => {
@@ -59,8 +75,8 @@ describe('the template list exists and is tenant-scoped', () => {
   });
 
   it('never takes the organization from the query or body', () => {
-    expect(LIST).not.toMatch(/req\.query\.organizationId/);
-    expect(LIST).not.toMatch(/req\.body/);
+    expect(ROUTE).not.toMatch(/req\.query\.organizationId/);
+    expect(ROUTE).not.toMatch(/req\.body/);
   });
 
   it('excludes retired templates', () => {
@@ -98,7 +114,7 @@ describe('the preview cannot disagree with what gets created', () => {
 
   it('sends the template id the write route accepts', () => {
     // The whole point: the picker must hand back an id this endpoint takes.
-    expect(LIST).toMatch(/templateId:\s*t\.templateId/);
+    expect(LIST).toMatch(/templateId:\s*\w+\.templateId/);
     const WRITE = executableOnly(
       SOURCE.slice(SOURCE.indexOf("router.post('/tasks/from-template/:templateId'")),
     );
