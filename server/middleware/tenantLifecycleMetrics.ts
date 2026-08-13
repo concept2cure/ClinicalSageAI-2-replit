@@ -24,10 +24,18 @@ function getOrCreate<T extends client.Metric<string>>(name: string, factory: () 
  * Every decision the lifecycle guard makes.
  *
  * `decision` — allow | read_only_pass | read_only_block | deny | unverified
+ *              | platform_override
  * `state`    — the resolved TenantLifecycleState
  *
  * A rising `unverified` rate means the posture lookup is failing and tenants are
  * being refused for infrastructure reasons; alert on it separately from `deny`.
+ *
+ * `platform_override` counts requests where platform staff proceeded past a
+ * posture that would have refused an ordinary user. Each one also writes a
+ * `tenant_lifecycle_override` entry to the audit trail. Non-zero is normal
+ * during a support engagement; a sustained rate is worth asking about, since it
+ * means staff are routinely working inside tenants the platform considers
+ * suspended.
  */
 export const tenantLifecycleDecisions = getOrCreate(
   'tenant_lifecycle_decisions_total',

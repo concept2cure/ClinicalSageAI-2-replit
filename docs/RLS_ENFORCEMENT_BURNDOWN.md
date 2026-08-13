@@ -1,8 +1,47 @@
 # RLS Enforcement Burndown — runway to `RLS_ENFORCE=on`
 
-Status: **implementation / live evidence pending** (production boot requires enforcement;
-request and scheduled-worker scopes are implemented; live-policy proof remains pending).
-Owner: unassigned. Relates to `GA_READINESS_PLAN.md` item **0.1** (highest severity).
+Status: **evidence complete** (2026-08-13). Production boot requires enforcement,
+request and scheduled-worker scopes are implemented, and the full-schema
+two-tenant probe — the last outstanding item, and the acceptance criterion for
+`GA_READINESS_PLAN.md` item **0.1** (highest severity) — now runs on every PR.
+
+## The closing evidence (2026-08-13)
+
+`tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` builds the
+real base schema from the drizzle journal, applies the real `0019 → 0020 → 0021`
+chain, seeds **two tenants into 220 of the 222 policied tables**, drops to a
+`NOSUPERUSER NOBYPASSRLS` role and reads every one of them under
+`app.rls_enforce='on'`.
+
+| Assertion | Result |
+|---|---|
+| Tenant A sees no row belonging to tenant B, on any table | ✅ zero leaks |
+| Symmetric — tenant B sees no row belonging to tenant A | ✅ zero leaks |
+| Tenant A still sees its OWN rows (a policy that hides everything is an outage, not isolation) | ✅ |
+| Enforcement ON with no tenant scope → schema reads empty (fail-closed) | ✅ |
+| `app_super_admin` still reads across tenants (the deliberate carve-out for estate-wide jobs) | ✅ |
+| `WITH CHECK` rejects an INSERT aimed at another tenant | ✅ |
+| Every RLS-enabled table is also `FORCE`d (owner-bypass closed — the Neon case) | ✅ |
+
+Two things make this evidence rather than decoration:
+
+- **A negative control ships with it.** The same sweep re-runs with
+  `app.rls_enforce='off'` and asserts the other tenant's rows *are* visible. A
+  probe that cannot see anything reports zero leaks too; this is the assertion
+  that goes red if the seeding, the grant, or `FORCE` ever silently breaks.
+- **Superuser-ness is asserted, not assumed.** PostgreSQL bypasses RLS for
+  superusers regardless of `FORCE`, so a superuser probe would pass every
+  enforce-mode assertion for the wrong reason. `is_superuser` is checked `off`
+  before any isolation claim is made.
+
+Verified to detect the real hazard (ledger C-33 — a table shipping unpoliced):
+dropping `tenant_isolation_policy` from a single table flips that table from
+`FOREIGN=0` to `FOREIGN=1` in the sweep.
+
+It runs in ~8s on PGlite, so it is an ordinary PR check rather than the
+"dedicated enforce-mode job" this document originally scoped — PGlite is a real
+PostgreSQL and supports `CREATE ROLE … NOSUPERUSER NOBYPASSRLS`, `SET ROLE`,
+`FORCE ROW LEVEL SECURITY` and the `current_setting` predicates the policy uses.
 
 This is the map for turning on Postgres Row-Level Security as tenant-isolation
 defense-in-depth. It sizes the work, names the linchpin, and gives a safe order.
@@ -28,7 +67,7 @@ RLS boot-posture hardening, PR #1042).
 | Scheduled job/worker scope | ✅ repository schedulers use named system scope; IVDR work switches to the claimed tenant | `server/jobs/*`; `server/workers/vectorization-worker.ts`; `server/workers/ivdr-pack-worker.ts` |
 | Policy **behaviour** proof (enforce isolates; shadow passes all; WITH CHECK blocks cross-tenant insert; super-admin bypass) | ✅ done, against real Postgres in CI | `server/db/__tests__/rlsPolicy.integration.test.ts` (integration-tests job) |
 | Policy **coverage** gate — every org-keyed base table carries `tenant_isolation_policy` on the fully provisioned **+ deploy-migrated** schema (catches a later C2C-set table shipped unprotected because deploy-migrate does not re-run 0021) | ✅ CI-gated | `scripts/db/rls-coverage-check.sql`; `blank-db-provisioning` job in `.github/workflows/ci.yml` |
-| Live two-tenant probe across the **real** schema's tables under `RLS_ENFORCE=on` (behaviour is proven on a synthetic table; a full-schema cross-table probe in a dedicated enforce-mode job is the remaining evidence) | ⏳ pending | dedicated enforce-mode job (to add) |
+| Live two-tenant probe across the **real** schema's tables under `RLS_ENFORCE=on` | ✅ **done** — 222 policied tables, 220 seeded with two tenants, zero cross-tenant reads; runs on every PR | `tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` |
 
 ## Adopted execution model
 

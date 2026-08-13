@@ -138,6 +138,75 @@ function refuse(res: Response, status: number, code: string, message: string): v
 }
 
 /**
+ * Record that platform staff acted on a tenant the lifecycle posture would have
+ * refused.
+ *
+ * ── Why every request, not once per session ───────────────────────────────────
+ * This deliberately emits per request rather than deduplicating. An access
+ * review of a suspended customer asks "what did staff touch", and the answer has
+ * to be the list of endpoints, not a single "someone logged in" marker. 21 CFR
+ * Part 11 §11.10(e) wants the same completeness of any record-touching action.
+ * Volume is naturally bounded: the event only fires when a tenant is actually in
+ * a refusing state, which is rare and finite.
+ *
+ * ── Why it never throws ───────────────────────────────────────────────────────
+ * Fire-and-forget. An audit-sink outage must not take out staff access during an
+ * incident — that would couple the recovery path to the thing being recovered.
+ * The failure is logged at warn so a silently-dropped audit event is still
+ * visible in the application log.
+ *
+ * The import is lazy for the same reason the posture service's is: this
+ * middleware sits in the chain every route passes through, and must not drag the
+ * audit subsystem (and its database handle) into module-load time.
+ */
+function auditPlatformOverride(req: Request, posture: TenantAccessPosture): void {
+  const actorId = String(req.user?.userId ?? req.user?.id ?? 'unknown');
+  const path = fullPath(req);
+
+  logger.warn('Platform actor overrode a tenant lifecycle refusal', {
+    actorId,
+    organizationId: posture.organizationId,
+    state: posture.state,
+    decision: posture.decision,
+    method: req.method,
+    path,
+  });
+
+  void import('../services/audit/auditLogger')
+    .then(({ logAuditEvent }) =>
+      logAuditEvent({
+        category: 'authorization',
+        // A suspension bypassed on a DENY tenant is the sharper event than one on
+        // a read-only tenant, and reviewers filter on severity.
+        severity: posture.decision === 'deny' ? 'critical' : 'warning',
+        action: 'tenant_lifecycle_override',
+        userId: actorId,
+        organizationId: String(posture.organizationId),
+        resourceType: 'organization',
+        resourceId: String(posture.organizationId),
+        success: true,
+        metadata: {
+          tenantState: posture.state,
+          postureDecision: posture.decision,
+          postureCode: posture.code,
+          method: req.method,
+          path,
+          actorRole: req.user?.role ?? null,
+        },
+        ipAddress: req.ip,
+        userAgent: req.get?.('user-agent'),
+      })
+    )
+    .catch(error => {
+      logger.warn('Failed to record tenant lifecycle override in the audit trail', {
+        actorId,
+        organizationId: posture.organizationId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+}
+
+/**
  * The guard. Safe to mount more than once — a request that has already been
  * evaluated carries `req.tenantPosture` and short-circuits.
  */
@@ -159,12 +228,6 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
     return;
   }
 
-  // Platform staff operate across tenants, including on suspended ones.
-  if (isPlatformActor(req)) {
-    next();
-    return;
-  }
-
   const organizationId = resolveOrganizationId(req);
   if (organizationId === null) {
     // No numeric tenant on this identity — nothing to evaluate. Downstream
@@ -173,9 +236,32 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
     return;
   }
 
+  // Platform staff bypass the REFUSAL, not the EVALUATION.
+  //
+  // An earlier revision short-circuited here before the posture was read, which
+  // made the bypass free but also invisible: staff access to a suspended tenant
+  // left no trace, and "who looked at the suspended customer's data, and what
+  // did they touch" is exactly the question an access review asks. Resolving the
+  // posture first costs one cached lookup and turns the bypass into an audited
+  // override. See auditPlatformOverride below.
+  const platformActor = isPlatformActor(req);
+
   void getTenantAccessPosture(organizationId)
     .then(posture => {
       if (!posture) {
+        if (platformActor) {
+          // Staff must be able to act precisely when the platform is unhealthy —
+          // refusing them on an unreadable posture would lock out the people
+          // whose job is to fix it. Recorded, not blocked.
+          tenantLifecycleDecisions.inc({ decision: 'platform_override', state: 'unknown' });
+          logger.warn('Platform actor proceeding on an unverifiable tenant posture', {
+            organizationId,
+            method: req.method,
+            path,
+          });
+          next();
+          return;
+        }
         // Indeterminate. Never assume active — a suspension must not lapse
         // because a lookup failed. Warning already logged by the service.
         tenantLifecycleDecisions.inc({ decision: 'unverified', state: 'unknown' });
@@ -199,6 +285,18 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
         return;
       }
 
+      // The posture would refuse this request. Platform staff proceed anyway —
+      // that is the bypass working as designed — but the override is recorded.
+      if (platformActor) {
+        tenantLifecycleDecisions.inc({
+          decision: 'platform_override',
+          state: posture.state,
+        });
+        auditPlatformOverride(req, posture);
+        next();
+        return;
+      }
+
       tenantLifecycleDecisions.inc({
         decision: posture.decision === 'deny' ? 'deny' : 'read_only_block',
         state: posture.state,
@@ -217,6 +315,13 @@ export function enforceTenantLifecycle(req: Request, res: Response, next: NextFu
         organizationId,
         error: error instanceof Error ? error.message : String(error),
       });
+      if (platformActor) {
+        // Same reasoning as the unreadable-posture arm above: a crash in this
+        // guard must not lock staff out of the platform they are there to fix.
+        tenantLifecycleDecisions.inc({ decision: 'platform_override', state: 'unknown' });
+        next();
+        return;
+      }
       tenantLifecycleDecisions.inc({ decision: 'unverified', state: 'unknown' });
       refuse(
         res,
