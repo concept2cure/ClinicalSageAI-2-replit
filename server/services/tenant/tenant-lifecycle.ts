@@ -373,6 +373,76 @@ export function peekTenantAccessPosture(organizationId: number): TenantAccessPos
   return null;
 }
 
+/**
+ * Should background work act on this tenant?
+ *
+ * ── Why background work needs its own question ────────────────────────────────
+ * The lifecycle guard is Express middleware. Cron sweeps and workers run on no
+ * transport at all, so nothing was asking. `server/jobs/taskDueSweep.ts` selected
+ * across EVERY organization and sent notifications; a suspended organization's
+ * users kept receiving automated mail about work that every HTTP route would
+ * refuse them, and the platform kept spending compute — and, on the AI-backed
+ * sweeps, model budget — on tenants that are not paying.
+ *
+ * ── Why the answer differs from the HTTP one ──────────────────────────────────
+ * Two deliberate divergences from `decisionPermitsMethod`:
+ *
+ *  1. `read_only` is a NO. There is no read-only background job: a sweep exists
+ *     to write something, notify someone, or bill for something. Treating
+ *     read_only as "go ahead" would let a past-due tenant keep generating
+ *     notifications and spend, which is the thing the state is for.
+ *
+ *  2. An unreadable posture is a SKIP, not an error. On HTTP, failing closed
+ *     means 503 — the caller learns and retries. A sweep has no caller; the
+ *     safe failure is to do nothing this tick and pick the tenant up on the
+ *     next one, once the posture is readable again. Refusing loudly would turn
+ *     a transient database blip into a cron alert storm, and doing the work
+ *     anyway would defeat the control.
+ *
+ * Callers should treat `false` as "skip this tenant, quietly" — not as an error.
+ *
+ * ── Pure core, thin wrapper ───────────────────────────────────────────────────
+ * The decision is `backgroundWorkPermitted`, which takes a posture and does no
+ * I/O — the same shape `seat-licensing.evaluateSeats` uses, and for the same
+ * reason: the policy is what deserves exhaustive testing, and a policy behind a
+ * database call cannot be tested exhaustively. The resolver is injectable so the
+ * batch form can be driven directly rather than through a module mock (which,
+ * for an intra-module call like this one, does not intercept — a lesson learned
+ * by watching four tests pass for the wrong reason).
+ */
+export function backgroundWorkPermitted(posture: TenantAccessPosture | null): boolean {
+  if (!posture) return false;
+  return posture.decision === 'allow';
+}
+
+export async function shouldProcessTenantInBackground(
+  organizationId: number,
+  resolve: (id: number) => Promise<TenantAccessPosture | null> = getTenantAccessPosture
+): Promise<boolean> {
+  return backgroundWorkPermitted(await resolve(organizationId));
+}
+
+/**
+ * Batch form. A sweep typically holds rows for many organizations and wants one
+ * decision per distinct org rather than one per row — the posture cache makes
+ * the repeat lookups cheap, but the round-trips are not free at 500 rows.
+ *
+ * Returns the set of organization ids background work MAY act on.
+ */
+export async function filterTenantsForBackgroundWork(
+  organizationIds: Iterable<number>,
+  resolve: (id: number) => Promise<TenantAccessPosture | null> = getTenantAccessPosture
+): Promise<Set<number>> {
+  const distinct = [...new Set(organizationIds)];
+  const allowed = new Set<number>();
+  await Promise.all(
+    distinct.map(async id => {
+      if (backgroundWorkPermitted(await resolve(id))) allowed.add(id);
+    })
+  );
+  return allowed;
+}
+
 /** True when the decision permits the given HTTP method. */
 export function decisionPermitsMethod(decision: TenantAccessDecision, method: string): boolean {
   if (decision === 'allow') return true;
