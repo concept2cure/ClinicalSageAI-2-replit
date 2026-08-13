@@ -1301,6 +1301,14 @@ export default function createIVDRRoutes(pool: Pool): Router {
   // ═══════════════════════════════════════════════════════════════════════════
 
   // In-memory store for submission package generation status (with TTL cleanup)
+  //
+  // TODO(phase-2): move job tracking to a durable store. The binder build
+  // queue (ivdr_pack_build_jobs) is NOT a clean fit: ivdr-pack-worker claims
+  // any QUEUED row via FOR UPDATE SKIP LOCKED with no pack_type filter and
+  // runs a binder pack build on it, so parking submission-package jobs there
+  // would hand them to the wrong worker. Until the Phase-2 rebuild lands,
+  // jobs are lost on process restart and every response declares
+  // jobDurability: 'ephemeral' so callers cannot mistake this for a queue.
   const submissionJobs: Record<string, { status: string; startedAt: string; completedAt?: string; manifest?: any; error?: string }> = {};
 
   // Periodically clean up completed/failed jobs older than 1 hour
@@ -1319,41 +1327,124 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
   /**
    * POST /api/ivdr/submission-package/:projectId
-   * Generate a submission package gathering all IVDR data for the project
+   * Generate a submission package gathering the project's IVDR data.
+   *
+   * :projectId is the regulatory programme UUID. Classifications carry it
+   * directly (program_id, added idempotently by 20260524_ivdr_cdx.sql);
+   * validations, clinical evidence and CDx workflows reach it through their
+   * classification, mirroring the scoped list endpoints above. Rows with no
+   * programme assignment (legacy 001-shape data) are excluded and counted —
+   * never silently attributed to the requested project.
    */
   router.post('/submission-package/:projectId', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
-      const { projectId } = req.params;
+      const { projectId } = req.params as { projectId: string };
       const userId = (req as any).userId || 'system';
       const jobKey = `${orgId}-${projectId}`;
 
-      // Mark job as in-progress
+      /* A malformed project id is rejected rather than ignored — silently
+         falling back to an org-wide gather is exactly the defect this
+         endpoint had (every project's data in every project's package). */
+      if (!UUID_RE.test(projectId)) {
+        return res.status(422).json({
+          error: 'projectId must be a regulatory programme UUID',
+          code: 'IVDR_SUBMISSION_BAD_PROJECT',
+        });
+      }
+
+      /* Fail closed on ownership: the programme must exist in this
+         organisation before anything is gathered (same convention as
+         ownsProgram in mdx-ivdr.ts). A cross-tenant probe gets 404 —
+         never data, and never a 403 that confirms the project exists. */
+      const ownership = await pool.query(
+        `SELECT 1 FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          LIMIT 1`,
+        [projectId, orgId]
+      );
+      if (ownership.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Project not found in this organization',
+          code: 'IVDR_SUBMISSION_PROJECT_NOT_FOUND',
+        });
+      }
+
+      // Mark job as in-progress (ephemeral — see TODO(phase-2) at the Map)
       submissionJobs[jobKey] = { status: 'generating', startedAt: new Date().toISOString() };
 
-      // Gather all IVDR data for the project in parallel
-      const [classifications, validations, evidence, cdxWorkflows, gsprAssessment] = await Promise.all([
+      // Gather the project's IVDR data in parallel
+      const [classifications, validations, evidence, cdxWorkflows, gsprAssessment, unassignedResult] = await Promise.all([
         pool.query(
-          `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT * FROM ivdr_classifications
+            WHERE organization_id = $1 AND program_id = $2
+            ORDER BY created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
-          `SELECT * FROM ivdr_analytical_validations WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT v.* FROM ivdr_analytical_validations v
+            LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
+            WHERE v.organization_id = $1 AND c.program_id = $2
+            ORDER BY v.created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
-          `SELECT * FROM ivdr_clinical_evidence WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT e.* FROM ivdr_clinical_evidence e
+            LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
+            WHERE e.organization_id = $1 AND c.program_id = $2
+            ORDER BY e.created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
-          `SELECT * FROM ivdr_cdx_workflows WHERE organization_id = $1 ORDER BY created_at DESC`,
-          [orgId]
+          `SELECT w.* FROM ivdr_cdx_workflows w
+            LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
+            WHERE w.organization_id = $1 AND c.program_id = $2
+            ORDER BY w.created_at DESC`,
+          [orgId, projectId]
         ).catch(() => ({ rows: [] })),
         pool.query(
           `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
           [projectId, orgId]
         ).catch(() => ({ rows: [] })),
+        /* Rows this organisation owns that cannot be attributed to ANY
+           programme — no classification link, or a classification whose
+           program_id is NULL (the legacy 001-shape). They are excluded from
+           every project's package; count them so the exclusion is visible,
+           not silent. */
+        pool.query(
+          `SELECT
+             (SELECT COUNT(*)::int FROM ivdr_classifications
+               WHERE organization_id = $1 AND program_id IS NULL) AS classifications,
+             (SELECT COUNT(*)::int FROM ivdr_analytical_validations v
+               LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
+               WHERE v.organization_id = $1 AND c.program_id IS NULL) AS validations,
+             (SELECT COUNT(*)::int FROM ivdr_clinical_evidence e
+               LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
+               WHERE e.organization_id = $1 AND c.program_id IS NULL) AS evidence,
+             (SELECT COUNT(*)::int FROM ivdr_cdx_workflows w
+               LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
+               WHERE w.organization_id = $1 AND c.program_id IS NULL) AS cdx`,
+          [orgId]
+        ).catch(() => null),
       ]);
+
+      /* Honest empty state: null means the counts could not be computed
+         (e.g. table missing), NOT that nothing was excluded. */
+      const unassignedRow = unassignedResult?.rows?.[0] ?? null;
+      const unassigned = unassignedRow
+        ? {
+            classifications: Number(unassignedRow.classifications) || 0,
+            analyticalValidations: Number(unassignedRow.validations) || 0,
+            clinicalEvidence: Number(unassignedRow.evidence) || 0,
+            companionDiagnostics: Number(unassignedRow.cdx) || 0,
+          }
+        : null;
+      const unassignedTotal = unassigned
+        ? unassigned.classifications +
+          unassigned.analyticalValidations +
+          unassigned.clinicalEvidence +
+          unassigned.companionDiagnostics
+        : null;
 
       // Build the structured manifest
       const manifest = {
@@ -1364,6 +1455,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           projectId,
           organizationId: orgId,
           regulatoryFramework: 'IVDR EU 2017/746',
+          scope: 'project',
         },
         sections: {
           classification: {
@@ -1386,6 +1478,14 @@ export default function createIVDRRoutes(pool: Pool): Router {
             available: gsprAssessment.rows.length > 0,
             assessment: gsprAssessment.rows[0] || null,
           },
+        },
+        exclusions: {
+          unassignedRecordsExcluded: unassignedTotal,
+          bySection: unassigned,
+          message:
+            unassignedTotal === null
+              ? 'Unassigned-record counts unavailable'
+              : `${unassignedTotal} unassigned records excluded (no program assignment)`,
         },
         completeness: {
           hasClassification: classifications.rows.length > 0,
@@ -1412,6 +1512,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
       return res.status(201).json({
         status: 'completed',
         projectId,
+        jobDurability: 'ephemeral',
+        unassignedRecordsExcluded: unassignedTotal,
         manifest,
       });
     } catch (error: any) {
@@ -1438,9 +1540,13 @@ export default function createIVDRRoutes(pool: Pool): Router {
 
       const job = submissionJobs[jobKey];
       if (!job) {
+        /* Jobs live in process memory only (see TODO(phase-2) at the Map):
+           a restart forgets them, so "not found" may mean "lost". Declare
+           the durability so callers can tell the two apart. */
         return res.status(404).json({
           error: 'No submission package job found for this project',
           code: 'IVDR_SUBMISSION_NOT_FOUND',
+          jobDurability: 'ephemeral',
         });
       }
 
@@ -1451,6 +1557,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
         completedAt: job.completedAt || null,
         hasManifest: !!job.manifest,
         error: job.error || null,
+        jobDurability: 'ephemeral',
       });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_SUBMISSION_STATUS_ERROR', 'Submission package status');

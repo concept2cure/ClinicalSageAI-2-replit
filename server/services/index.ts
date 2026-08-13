@@ -36,7 +36,6 @@ export { default as cortexPrimeService } from './cortexPrimeService';
 // FDA / REGULATORY SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { eSTARValidator } from './eSTARValidator';
 export { default as FDAFormGenerator } from './FDAFormGenerator';
 export { default as part11ComplianceService } from './part11ComplianceService';
 export { RegulatoryIntelligenceService } from './regulatory-intelligence-service';
@@ -132,7 +131,6 @@ export const SERVICE_REGISTRY = {
 
   // FDA
   'fda.service': 'fdaService',
-  'fda.estar': 'eSTARValidator',
   'fda.forms': 'FDAFormGenerator',
   'fda.510k': 'fda510kDocumentGenerator',
 

@@ -6,12 +6,13 @@
  * approvals panes + DossierDrawer activity), `surfaces/pathway/FilesTreePane.tsx`
  * (synthesised Correspondence / Approvals / Audit branches), and
  * `store/dossierStore.ts` (`activityForSection` merges the seed audit slice
- * with live edits).
+ * with live edits — sample mode only).
  *
- * Per the canonical direction (kit is the only UI; no divergence), these are
- * the kit fixtures verbatim — not adapted to a live API. The closed-enum
- * `AUDIT_KIND_META` taxonomy is shared by every display path regardless of
- * data source.
+ * These are the kit fixtures verbatim, including a *synthesized* Part 11 audit
+ * hash-chain (`chain()` below). They are canonical sample content: reachable
+ * only through the explicit sample-mode boundary (../lib/sampleMode), never as
+ * a fallback for missing live data. The closed-enum `AUDIT_KIND_META` taxonomy
+ * is shared by every display path regardless of data source.
  */
 
 import type {

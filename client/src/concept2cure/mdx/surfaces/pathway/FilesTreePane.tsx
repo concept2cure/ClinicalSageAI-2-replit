@@ -4,7 +4,11 @@
  *
  * Every surface (dossier, correspondence, approvals, audit, sources) is a
  * folder under Files/. The Dossier branch is the live in-memory store; the
- * other branches are synthesised at render time from PATHWAY_TABS_DATA.
+ * Correspondence / Approvals / Audit branches are synthesised at render time
+ * from the caller's resolved `tabs` bundle (usePathwayTabsData) — live rows,
+ * or fixtures only in explicit sample mode, so the tree can never show a
+ * synthesized Part 11 audit file as if it were real. The kit's example
+ * Sources/ placeholder dirs are likewise sample-mode only.
  *
  * Single-pane layout: tree on the left, preview on the right. Selecting a node
  * updates the preview + breadcrumb. "Open in dossier" routes a body.md to the
@@ -13,17 +17,18 @@
 
 import * as React from 'react';
 import { I } from '../../icons';
-import { PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
+import { useSampleMode } from '../../components/DataGate';
 import { DossierStore } from '../../store/dossierStore';
 import type {
   Approval,
   Correspondence,
   DossierAttachment,
   PathwayKey,
+  PathwayTabsBundle,
   SectionTarget,
 } from '../../types';
 
-const PATHWAY_LABEL_FS: Record<string, string> = { k510: '510(k)', pma: 'PMA', cer: 'CER' };
+const PATHWAY_LABEL_FS: Record<string, string> = { k510: '510(k)', pma: 'PMA', cer: 'CER', ivd: 'IVDR' };
 
 interface TreeNode {
   name: string;
@@ -58,9 +63,10 @@ function slug(s: string | undefined): string {
   return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
 }
 
-/* Build the tree as a nested object. */
-function buildTree(pathway: PathwayKey): TreeNode {
-  const data = PATHWAY_TABS_DATA[pathway];
+/* Build the tree as a nested object. `data` is the caller's resolved
+   Audit / Correspondence / Approvals bundle (already sample-gated);
+   `sampleOn` additionally gates the kit's example Sources/ placeholders. */
+function buildTree(pathway: PathwayKey, data: PathwayTabsBundle, sampleOn: boolean): TreeNode {
   const root = DossierStore.rootFor(pathway) || `Files/Dossier/${pathway}`;
   const programLabel = root.replace(/^Files\/Dossier\//, '');
 
@@ -110,21 +116,24 @@ function buildTree(pathway: PathwayKey): TreeNode {
     return { name: fname, kind: 'file', fileKind: 'approval', path: `Files/Approvals/${fname}`, data: a };
   });
 
-  /* — Audit branch (synth, single ndjson) — */
-  const auditChildren: TreeNode[] = [{
+  /* — Audit branch (synth, single ndjson) — only materialised when there are
+     events to list; an empty tenant gets an honestly empty Audit/ dir rather
+     than a zero-event file claiming a hash chain exists. */
+  const auditChildren: TreeNode[] = (data.audit || []).length ? [{
     name: 'audit-trail.ndjson',
     kind: 'file',
     fileKind: 'audit',
     path: 'Files/Audit/audit-trail.ndjson',
-    data: data.audit || [],
-  }];
+    data: data.audit,
+  }] : [];
 
-  /* — Sources placeholder — */
-  const sourcesChildren: TreeNode[] = [
+  /* — Sources — the kit's example placeholder dirs appear only in explicit
+     sample mode; a live workspace shows an empty Sources/ dir until cited. */
+  const sourcesChildren: TreeNode[] = sampleOn ? [
     { name: 'predicates/', kind: 'dir', path: 'Files/Sources/predicates', children: [], placeholder: true },
     { name: 'literature/', kind: 'dir', path: 'Files/Sources/literature', children: [], placeholder: true },
     { name: 'signals/',    kind: 'dir', path: 'Files/Sources/signals',    children: [], placeholder: true },
-  ];
+  ] : [];
 
   return {
     name: 'Files',
@@ -369,11 +378,20 @@ function PreviewDir({ node }: { node: TreeNode }) {
 /* ─── Main pane ───────────────────────────────────────────── */
 export interface FilesTreePaneProps {
   pathway: PathwayKey;
+  /** Resolved Audit / Correspondence / Approvals rows from usePathwayTabsData
+   *  — live backend rows, or fixtures only in explicit sample mode. */
+  tabs: PathwayTabsBundle;
   onOpenSection: (t: SectionTarget) => void;
 }
 
-export function FilesTreePane({ pathway, onOpenSection }: FilesTreePaneProps) {
-  const tree = React.useMemo(() => buildTree(pathway), [pathway]);
+export function FilesTreePane({ pathway, tabs, onOpenSection }: FilesTreePaneProps) {
+  const sampleOn = useSampleMode();
+  const tree = React.useMemo(
+    () => buildTree(pathway, tabs, sampleOn),
+    /* The bundle object is rebuilt per render; its member arrays are stable. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pathway, tabs.audit, tabs.correspondence, tabs.approvals, sampleOn],
+  );
   const root = DossierStore.rootFor(pathway) || '';
 
   const defaultOpen = React.useMemo<Record<string, boolean>>(() => ({

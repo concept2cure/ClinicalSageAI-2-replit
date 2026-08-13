@@ -9,15 +9,20 @@
  * `/api/approval-workflows/pending`) and adapts each response to the kit's
  * `AuditEvent` / `Correspondence` / `Approval` shapes.
  *
- * Resilience: every bucket falls back to the kit fixtures (`PATHWAY_TABS_DATA`)
- * when its query has no data (loading / error / undeployed / empty), so the panes
- * never render empty or throw. `live.*` reports which buckets are real.
+ * Data honesty: live data wins when present. The kit fixtures
+ * (`PATHWAY_TABS_DATA`) — which include a *synthesized* Part 11 audit
+ * hash-chain — render only when the user has explicitly enabled sample mode
+ * (../lib/sampleMode, force-disabled in production builds). In every other
+ * case a bucket resolves to an empty collection, and `states.*` carries the
+ * honest DataState (loading / error / idle / empty) for the pane's DataGate.
+ * `live.*` reports which buckets are real.
  *
  * Scope note: the Files tree + DossierDrawer document content are still served by
  * the in-memory `dossierStore`. Backing those with real document content is an
  * async store refactor tracked as the next increment.
  */
 
+import * as React from 'react';
 import {
   useAuditTrail,
   useCorrespondence,
@@ -29,6 +34,8 @@ import type {
   PendingApproval,
 } from '../../services/programTabsService';
 import { PATHWAY_TABS_DATA } from '../data/pathwayTabs';
+import { toDataState, type DataState } from '../lib/dataState';
+import { useSampleRows } from '../lib/useSampleRows';
 import type {
   Approval,
   AuditEvent,
@@ -141,15 +148,29 @@ function num(v: unknown): number | undefined {
   return undefined;
 }
 
+/** Operator-facing message for a failed query, or null when there is none. */
+function errorMessage(e: unknown): string | null {
+  if (!e) return null;
+  return e instanceof Error ? e.message : String(e);
+}
+
 export interface PathwayTabsLive extends PathwayTabsBundle {
-  /** Which buckets resolved from the backend (true) vs fixture fallback (false). */
+  /** Which buckets resolved from the backend (true) vs sample/empty (false). */
   live: { audit: boolean; correspondence: boolean; approvals: boolean };
+  /** Honest per-bucket state for DataGate — loading / error / idle / empty / ready. */
+  states: {
+    audit: DataState<AuditEvent[]>;
+    correspondence: DataState<Correspondence[]>;
+    approvals: DataState<Approval[]>;
+  };
+  /** Per-bucket refetch, wired to DataGate's retry affordance. */
+  refresh: { audit: () => void; correspondence: () => void; approvals: () => void };
 }
 
 /**
- * Live Audit / Correspondence / Approvals for a pathway program, with kit-fixture
- * fallback. `programId` is the canonical project id (anchors audit + scopes
- * correspondence); approvals are user/org-scoped server-side.
+ * Live Audit / Correspondence / Approvals for a pathway program. `programId` is
+ * the canonical project id (anchors audit + scopes correspondence); approvals
+ * are user/org-scoped server-side. Fixtures appear only in explicit sample mode.
  */
 export function usePathwayTabsData(pathway: PathwayKey, programId?: string | null): PathwayTabsLive {
   const fixtures = PATHWAY_TABS_DATA[pathway];
@@ -158,15 +179,60 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
   const corrQ = useCorrespondence(programId ?? null);
   const apprQ = useApprovalsPending();
 
-  const liveAudit = auditQ.data?.events?.length ? adaptAudit(auditQ.data.events) : null;
-  const liveCorr = corrQ.data?.length ? adaptCorrespondence(corrQ.data) : null;
-  const liveAppr = apprQ.data?.length ? adaptApprovals(apprQ.data) : null;
+  /* Memoized so the adapted arrays keep a stable identity across renders —
+     FilesTreePane keys its tree memo on these. */
+  const liveAudit = React.useMemo(
+    () => (auditQ.data?.events?.length ? adaptAudit(auditQ.data.events) : null),
+    [auditQ.data],
+  );
+  const liveCorr = React.useMemo(
+    () => (corrQ.data?.length ? adaptCorrespondence(corrQ.data) : null),
+    [corrQ.data],
+  );
+  const liveAppr = React.useMemo(
+    () => (apprQ.data?.length ? adaptApprovals(apprQ.data) : null),
+    [apprQ.data],
+  );
+
+  /* The sample-mode guard the other surfaces obey: live rows win; the kit
+     fixtures render only when the user explicitly turned sample mode on
+     (never possible in a production build); otherwise the bucket is empty
+     and the pane renders its honest state — never a synthesized audit chain. */
+  const audit = useSampleRows(liveAudit, fixtures.audit);
+  const correspondence = useSampleRows(liveCorr, fixtures.correspondence);
+  const approvals = useSampleRows(liveAppr, fixtures.approvals);
 
   return {
-    audit: liveAudit ?? fixtures.audit,
-    correspondence: liveCorr ?? fixtures.correspondence,
-    approvals: liveAppr ?? fixtures.approvals,
+    audit,
+    correspondence,
+    approvals,
     corrLabel: fixtures.corrLabel,
     live: { audit: !!liveAudit, correspondence: !!liveCorr, approvals: !!liveAppr },
+    states: {
+      /* `query.data ? live ?? [] : null` keeps toDataState's precedence exact:
+         a resolved feed with zero rows is `empty`, an unresolved one is
+         `idle` / `loading` / `error`. */
+      audit: toDataState<AuditEvent[]>(
+        auditQ.data ? liveAudit ?? [] : null,
+        auditQ.isLoading,
+        errorMessage(auditQ.error),
+      ),
+      correspondence: toDataState<Correspondence[]>(
+        corrQ.data ? liveCorr ?? [] : null,
+        corrQ.isLoading,
+        errorMessage(corrQ.error),
+        { idleReason: 'Select a program to load its correspondence.' },
+      ),
+      approvals: toDataState<Approval[]>(
+        apprQ.data ? liveAppr ?? [] : null,
+        apprQ.isLoading,
+        errorMessage(apprQ.error),
+      ),
+    },
+    refresh: {
+      audit: () => void auditQ.refetch(),
+      correspondence: () => void corrQ.refetch(),
+      approvals: () => void apprQ.refetch(),
+    },
   };
 }

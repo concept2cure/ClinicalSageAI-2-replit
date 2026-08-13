@@ -187,15 +187,15 @@ first.
 
 | # | Gap | Severity | Note |
 |---|---|---|---|
-| R1 | Full-schema two-tenant probe under `RLS_ENFORCE=on` | High | Tracked in `docs/RLS_ENFORCEMENT_BURNDOWN.md`; behaviour is proven on a synthetic table, the cross-table probe is the remaining evidence. Not re-opened here. |
+| ~~R1~~ | ~~Full-schema two-tenant probe under `RLS_ENFORCE=on`~~ | ~~High~~ | **CLOSED 2026-08-13.** `tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` — 222 policied tables, 220 seeded with two tenants, zero cross-tenant reads, ships with a negative control. Closes GA plan item 0.1. |
 | R2 | No per-tenant encryption keys (BYOK/CMK) | High for regulated buyers | Frequently a hard requirement in pharma procurement. Needs a key-hierarchy design, not a patch. |
 | R3 | No data-residency pinning (EU/US) | High for EU sponsors | The schema has no region concept. Architectural. |
 | R4 | Tenant export covers a subset of resources | Medium | `tenant-export.service.ts` is explicitly BETA-scoped and in-memory; the purge path now depends on it, so it should be widened and streamed before the first contractual offboarding. |
-| R5 | No audited support-impersonation flow | Medium | Platform admins bypass the lifecycle guard by role. That is correct, but the bypass is not itself recorded as an impersonation event. |
+| ~~R5~~ | ~~No audited support-impersonation flow~~ | ~~Medium~~ | **CLOSED 2026-08-13.** The guard now evaluates the posture for platform actors instead of short-circuiting, and writes a `tenant_lifecycle_override` audit entry (severity `critical` on a denied tenant) plus a `platform_override` metric whenever staff proceed past a refusal. Staff are still never blocked — including when the posture is unreadable. |
 | R6 | Quotas beyond seats (`max_projects`, `max_storage`) still unenforced | Medium | Seats are the contracted unit and are now enforced; the other two remain decoration. |
 | R7 | Organization switch is not audited | Low | Membership is validated (`authEnterprise.ts`), but the switch emits no audit event. |
 | R8 | Lifecycle posture cache converges across instances only within 60s | Low | Explicit invalidation is wired at every writer, so the mutating instance is immediate; others converge within the TTL. Same trade the membership cache already makes. |
-| R9 | `server/routes/tenants.ts` appears unmounted | Low | `/api/tenants` resolves to `tenants-simple.ts`. The dead file still contains a hard delete; it should be removed or its status settled. |
+| ~~R9~~ | ~~`server/routes/tenants.ts` appears unmounted~~ | ~~Low~~ | **CLOSED 2026-08-13.** Confirmed referenced nowhere (it was already carried in `scripts/ci/unreferenced-modules-baseline.json`) and deleted; both ratchets regenerated (unreferenced 109→108, requestdb baseline cleaned). It was the last copy of the ungoverned `db.delete(organizations)` cascade. The only endpoint lost with it is `GET /api/tenants/:id`, which was never reachable. |
 
 ---
 

@@ -33,6 +33,24 @@ vi.mock('../../server/services/export/governedExportConsequence', () => ({
   createGovernedExportConsequence: mockGovernedConsequence,
 }));
 
+// The export routes resolve the project anchor org-scoped before producing
+// anything; resolve the tests' meta.projectId to an in-org GA project row.
+vi.mock('../../server/db', () => ({
+  db: {
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => ({
+          limit: vi.fn(async () => [{ id: 33, deviceName: 'Test Device' }]),
+        })),
+      })),
+    })),
+  },
+}));
+
+vi.mock('../../server/services/auditService', () => ({
+  default: { logAction: vi.fn(async () => undefined) },
+}));
+
 import estarRoutes from '../../server/routes/510k-estar-routes';
 // The field map is a mutable singleton; tests populate then restore it to
 // exercise the "template + verified map present → real official PDF" path

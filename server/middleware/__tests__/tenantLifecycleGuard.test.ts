@@ -92,14 +92,78 @@ describe('carve-outs', () => {
 });
 
 describe('platform actors', () => {
-  it('bypasses the guard for a platform super_admin', async () => {
-    // Support has to be able to operate on a suspended tenant to un-suspend it.
+  const staff = { userId: '1', organizationId: '42', role: 'super_admin' };
+
+  it('lets a platform super_admin through on a healthy tenant', async () => {
     const next = vi.fn();
-    const req = makeReq({ user: { userId: '1', organizationId: '42', role: 'super_admin' } });
-    enforceTenantLifecycle(req, makeRes(), next);
+    enforceTenantLifecycle(makeReq({ user: staff }), makeRes(), next);
     await settle();
     expect(next).toHaveBeenCalledOnce();
-    expect(getTenantAccessPosture).not.toHaveBeenCalled();
+  });
+
+  it('lets a platform super_admin through a DENY posture — the bypass', async () => {
+    // Support has to be able to operate on a suspended tenant to un-suspend it.
+    getTenantAccessPosture.mockResolvedValue(
+      posture({ decision: 'deny', state: 'suspended', code: 'TENANT_SUSPENDED' })
+    );
+    const next = vi.fn();
+    const res = makeRes();
+    enforceTenantLifecycle(makeReq({ user: staff, method: 'POST' }), res, next);
+    await settle();
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.statusCode).toBe(0);
+  });
+
+  it('EVALUATES the posture rather than skipping it, so the bypass is auditable', async () => {
+    // The bypass short-circuited before the lookup in an earlier revision, which
+    // made staff access to a suspended tenant leave no trace at all. "Who looked
+    // at the suspended customer's data, and what did they touch" is precisely
+    // what an access review asks, so the posture must be read even when the
+    // answer cannot refuse the request.
+    getTenantAccessPosture.mockResolvedValue(
+      posture({ decision: 'deny', state: 'suspended', code: 'TENANT_SUSPENDED' })
+    );
+    const next = vi.fn();
+    enforceTenantLifecycle(makeReq({ user: staff }), makeRes(), next);
+    await settle();
+    expect(getTenantAccessPosture).toHaveBeenCalledWith(42);
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it('proceeds — not 503 — when the posture is unreadable', async () => {
+    // Staff must be able to act precisely when the platform is unhealthy.
+    // Refusing here would lock out the people whose job is to fix it.
+    getTenantAccessPosture.mockResolvedValue(null);
+    const next = vi.fn();
+    const res = makeRes();
+    enforceTenantLifecycle(makeReq({ user: staff }), res, next);
+    await settle();
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.statusCode).toBe(0);
+  });
+
+  it('proceeds when the posture lookup throws', async () => {
+    getTenantAccessPosture.mockRejectedValue(new Error('db is on fire'));
+    const next = vi.fn();
+    const res = makeRes();
+    enforceTenantLifecycle(makeReq({ user: staff }), res, next);
+    await settle();
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.statusCode).toBe(0);
+  });
+
+  it('recognises a platform role carried in the roles array', async () => {
+    getTenantAccessPosture.mockResolvedValue(posture({ decision: 'deny', code: 'TENANT_SUSPENDED' }));
+    const next = vi.fn();
+    const res = makeRes();
+    enforceTenantLifecycle(
+      makeReq({ user: { userId: '1', organizationId: '42', roles: ['viewer', 'platform_admin'] } }),
+      res,
+      next
+    );
+    await settle();
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.statusCode).toBe(0);
   });
 
   it('does NOT bypass for an org-scoped admin', async () => {

@@ -63,6 +63,37 @@ interface ClinicalEvidenceSource {
   quality: number;
 }
 
+/**
+ * Conformity vocabulary for essential-requirement assessments.
+ *
+ * Aligned with the honest, evidence-first stance of
+ * server/services/cer/cerConformanceValidator.ts and the free-text `status`
+ * column of shared/schema.ts cer_essential_requirements: a requirement is
+ * NEVER marked as conforming without evidence recorded for the report. The
+ * strongest evidence-derived status is "evidence linked, assessment pending" —
+ * an actual conformity verdict requires expert clinical judgement and is never
+ * auto-asserted by this service.
+ */
+export const CONFORMITY_NOT_ASSESSED = 'Not assessed — no linked evidence';
+export const CONFORMITY_EVIDENCE_LINKED =
+  'Evidence linked — conformity assessment pending expert review';
+
+/** Minimal shape of a cer_clinical_evidence row used for evidence derivation. */
+interface LinkedEvidenceLike {
+  title?: string | null;
+}
+
+/** One evidence-derived essential-requirement assessment row. */
+interface EssentialRequirementAssessment {
+  requirement: string;
+  description: string;
+  conformity: string;
+  /** What documentation WOULD demonstrate conformity (informational, not a claim). */
+  expectedEvidence: string;
+  /** Titles of evidence rows actually recorded for this report. Empty = none. */
+  linkedEvidence: string[];
+}
+
 class CerGenerationService {
   private readonly templateEngine: Map<string, Function>;
   
@@ -84,7 +115,10 @@ class CerGenerationService {
         deviceClass: data.deviceClass,
         intendedPurpose: data.intendedPurpose,
         clinicalEvaluation: `This Clinical Evaluation Report (CER) for ${data.deviceName} has been prepared in accordance with ${data.regulatoryFramework} requirements.`,
-        conclusion: `Based on the clinical data analyzed, ${data.deviceName} demonstrates an acceptable benefit-risk profile for its intended use.`,
+        // Draft-honest: a benefit-risk verdict must be derived from the
+        // documented benefit-risk analysis and linked clinical evidence — it is
+        // never asserted at generation time, when no evidence is linked yet.
+        conclusion: `Draft — the benefit-risk conclusion for ${data.deviceName} has not yet been established. It must be supported by the documented benefit-risk analysis and the clinical evidence linked to this report.`,
         date: new Date().toISOString().split('T')[0]
       }
     }));
@@ -104,15 +138,14 @@ class CerGenerationService {
       }
     }));
 
-    // Essential Requirements Template
+    // Essential Requirements Template — evidence-derived and fail-closed:
+    // when no linked evidence is supplied (the default), every requirement is
+    // reported as "Not assessed", never as conforming.
     engine.set('essential_requirements', (data: any) => ({
       title: 'Essential Requirements',
-      content: {
-        generalRequirements: this.generateGeneralRequirements(data),
-        designRequirements: this.generateDesignRequirements(data),
-        informationRequirements: this.generateInformationRequirements(data),
-        clinicalRequirements: this.generateClinicalRequirements(data)
-      }
+      content: this.buildEssentialRequirementsContent(
+        Array.isArray(data?.linkedEvidence) ? data.linkedEvidence : []
+      )
     }));
 
     // Clinical Background Template
@@ -270,6 +303,10 @@ class CerGenerationService {
 
       // Update CER report statistics
       await this.updateCerStatistics(cerReportId);
+
+      // Re-derive the evidence-linked sections from the rows actually recorded
+      // so the report never claims more (or less) evidence than the DB holds.
+      await this.refreshEvidenceDerivedSections(cerReportId, cer);
 
       return newEvidence;
     } catch (error) {
@@ -530,6 +567,11 @@ class CerGenerationService {
       targetPopulation: device.targetPopulation
     });
 
+    // A newly generated CER cannot have linked clinical evidence yet: evidence
+    // rows in cer_clinical_evidence reference the report id, which does not
+    // exist until the insert in generateCER. Every evidence-derived section
+    // therefore starts in its honest empty state ("none recorded") and is
+    // refreshed from the DB as evidence is added (see addClinicalEvidence).
     structure.essentialRequirements = this.templateEngine.get('essential_requirements')!(device);
     structure.clinicalBackground = this.templateEngine.get('clinical_background')!(device);
     structure.riskBenefitAnalysis = this.templateEngine.get('risk_benefit_analysis')!(device);
@@ -537,7 +579,7 @@ class CerGenerationService {
     structure.clinicalEvidence = {
       title: 'Clinical Evidence',
       content: {
-        overview: 'Clinical evidence compiled from multiple sources',
+        overview: 'No clinical evidence has been recorded for this report. Sources appear here as evidence is added.',
         sources: []
       }
     };
@@ -545,8 +587,8 @@ class CerGenerationService {
     structure.literatureReview = {
       title: 'Literature Review',
       content: {
-        searchStrategy: 'Systematic literature search conducted',
-        databases: ['PubMed', 'EMBASE', 'Cochrane'],
+        searchStrategy: 'No literature search has been recorded for this report.',
+        databases: [],
         results: []
       }
     };
@@ -554,61 +596,126 @@ class CerGenerationService {
     structure.conclusions = {
       title: 'Conclusions',
       content: {
-        summary: `The clinical evaluation demonstrates that ${device.deviceName} meets all applicable requirements.`,
-        benefitRisk: 'The benefit-risk analysis is favorable.',
-        recommendations: 'Continue post-market surveillance as planned.'
+        summary: `Draft conclusions for ${device.deviceName}: essential-requirement conformity has not been assessed and no clinical evidence has been linked yet.`,
+        benefitRisk: 'Benefit-risk determination pending — see the Risk-Benefit Analysis section for the evidence-derived verdict.',
+        recommendations: 'Record clinical evidence, complete the literature review, and perform the conformity assessment before this CER is finalized.'
       }
     };
 
     return structure;
   }
 
-  private generateGeneralRequirements(data: any): any[] {
+  /**
+   * Build the evidence-derived essential-requirements section.
+   *
+   * Fail-closed contract:
+   * - Every requirement defaults to "Not assessed — no linked evidence".
+   * - The ONLY requirement with a real evidence linkage in the data model is
+   *   ER 14 (clinical evaluation): cer_clinical_evidence rows recorded for the
+   *   report ARE the clinical data of the evaluation. When such rows exist,
+   *   ER 14 is upgraded to "Evidence linked — conformity assessment pending
+   *   expert review" — never to an outright conformity claim.
+   * - ER 1/2/3/13 have NO evidence-linkage model in the schema (evidence rows
+   *   reference the report, not individual requirements, and design/labeling
+   *   documentation is not captured). Rather than inventing a linkage, they
+   *   always remain "Not assessed" and are surfaced in the gaps list.
+   */
+  private buildEssentialRequirementsContent(linkedEvidence: LinkedEvidenceLike[]): {
+    assessmentBasis: string;
+    generalRequirements: EssentialRequirementAssessment[];
+    designRequirements: EssentialRequirementAssessment[];
+    informationRequirements: EssentialRequirementAssessment[];
+    clinicalRequirements: EssentialRequirementAssessment[];
+    gaps: string[];
+  } {
+    const generalRequirements = this.generateGeneralRequirements();
+    const designRequirements = this.generateDesignRequirements();
+    const informationRequirements = this.generateInformationRequirements();
+    const clinicalRequirements = this.generateClinicalRequirements(linkedEvidence);
+
+    const all = [
+      ...generalRequirements,
+      ...designRequirements,
+      ...informationRequirements,
+      ...clinicalRequirements
+    ];
+    const gaps = all
+      .filter(r => r.conformity === CONFORMITY_NOT_ASSESSED)
+      .map(r => `${r.requirement} (${r.description}): no linked evidence — conformity not assessed`);
+
+    return {
+      assessmentBasis:
+        'Evidence-derived assessment: a requirement is only marked as supported when evidence ' +
+        'recorded for this report is linked to it; all other requirements remain "Not assessed". ' +
+        'No conformity is asserted without evidence.',
+      generalRequirements,
+      designRequirements,
+      informationRequirements,
+      clinicalRequirements,
+      gaps
+    };
+  }
+
+  private generateGeneralRequirements(): EssentialRequirementAssessment[] {
     return [
       {
         requirement: 'ER 1',
         description: 'Devices shall be designed and manufactured to be suitable for their intended purpose',
-        conformity: 'Conforms',
-        evidence: 'Design verification and validation documentation'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Design verification and validation documentation',
+        linkedEvidence: []
       },
       {
         requirement: 'ER 2',
         description: 'Devices shall be safe and effective',
-        conformity: 'Conforms',
-        evidence: 'Clinical evaluation and risk management file'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Clinical evaluation and risk management file',
+        linkedEvidence: []
       }
     ];
   }
 
-  private generateDesignRequirements(data: any): any[] {
+  private generateDesignRequirements(): EssentialRequirementAssessment[] {
     return [
       {
         requirement: 'ER 3',
         description: 'Chemical, physical and biological properties',
-        conformity: 'Conforms',
-        evidence: 'Material safety data and biocompatibility testing'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Material safety data and biocompatibility testing',
+        linkedEvidence: []
       }
     ];
   }
 
-  private generateInformationRequirements(data: any): any[] {
+  private generateInformationRequirements(): EssentialRequirementAssessment[] {
     return [
       {
         requirement: 'ER 13',
         description: 'Information supplied with the device',
-        conformity: 'Conforms',
-        evidence: 'Instructions for use and labeling'
+        conformity: CONFORMITY_NOT_ASSESSED,
+        expectedEvidence: 'Instructions for use and labeling',
+        linkedEvidence: []
       }
     ];
   }
 
-  private generateClinicalRequirements(data: any): any[] {
+  private generateClinicalRequirements(
+    linkedEvidence: LinkedEvidenceLike[]
+  ): EssentialRequirementAssessment[] {
+    // Only rows with a real title count as evidence — blank/placeholder rows
+    // never upgrade the status (fail closed).
+    const titles = linkedEvidence
+      .map(e => (typeof e?.title === 'string' ? e.title.trim() : ''))
+      .filter(t => t.length > 0);
+
     return [
       {
         requirement: 'ER 14',
         description: 'Clinical evaluation',
-        conformity: 'Conforms',
-        evidence: 'This clinical evaluation report'
+        conformity: titles.length > 0 ? CONFORMITY_EVIDENCE_LINKED : CONFORMITY_NOT_ASSESSED,
+        expectedEvidence:
+          'Clinical data recorded for this report (clinical investigations, literature, post-market surveillance, registries, real-world evidence)',
+        linkedEvidence: titles
       }
     ];
   }
@@ -636,7 +743,75 @@ class CerGenerationService {
 
   private generateRiskBenefitConclusion(data: any): string {
     const ratio = this.calculateBenefitRiskRatio(data);
-    return `Based on the analysis, the benefit-risk ratio is ${ratio.toLowerCase()}. The clinical benefits outweigh the residual risks when the device is used as intended.`;
+    const base = `Based on the analysis, the benefit-risk ratio is ${ratio.toLowerCase()}.`;
+    // The "benefits outweigh the risks" claim is only made when the
+    // evidence-derived ratio actually supports it — never for an
+    // indeterminate ("needs review") or balanced analysis.
+    if (ratio === 'Highly favorable' || ratio === 'Favorable') {
+      return `${base} The documented clinical benefits outweigh the residual risks when the device is used as intended.`;
+    }
+    return `${base} A favorable benefit-risk conclusion cannot be drawn from the documented benefits and risks at this time.`;
+  }
+
+  /**
+   * Rebuild the evidence-derived report sections (clinical evidence sources and
+   * the essential-requirements assessment) from the cer_clinical_evidence rows
+   * actually stored for the report.
+   *
+   * The essential-requirements section is only regenerated while it is still
+   * the machine-generated, evidence-derived assessment (identified by its
+   * `assessmentBasis` marker) — a manually authored section is never
+   * overwritten.
+   */
+  private async refreshEvidenceDerivedSections(
+    cerReportId: number,
+    currentCer: CerReport
+  ): Promise<void> {
+    const evidenceRows = await db
+      .select()
+      .from(cerClinicalEvidence)
+      .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
+
+    const sources = evidenceRows.map(row => ({
+      type: row.evidenceType,
+      title: row.title,
+      authors: row.authors,
+      year: row.year,
+      patients: row.patients,
+      findings: row.findings,
+      relevance: row.relevance,
+      quality: row.quality
+    }));
+
+    const currentEr = currentCer.essentialRequirements as
+      | { content?: { assessmentBasis?: unknown } }
+      | null;
+    const erIsMachineGenerated = currentEr == null || currentEr?.content?.assessmentBasis != null;
+
+    await db
+      .update(cerReports)
+      .set({
+        clinicalEvidence: {
+          title: 'Clinical Evidence',
+          content: {
+            overview:
+              sources.length > 0
+                ? `${sources.length} clinical evidence source(s) recorded for this report.`
+                : 'No clinical evidence has been recorded for this report. Sources appear here as evidence is added.',
+            sources
+          }
+        },
+        ...(erIsMachineGenerated
+          ? {
+              essentialRequirements: {
+                title: 'Essential Requirements',
+                content: this.buildEssentialRequirementsContent(evidenceRows)
+              }
+            }
+          : {}),
+        updatedAt: new Date()
+      })
+      .where(eq(cerReports.id, cerReportId));
   }
 
   private async updateCerStatistics(cerReportId: number): Promise<void> {
@@ -646,7 +821,7 @@ class CerGenerationService {
       .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
 
     const patientSum = await db
-      .select({ total: sql`sum(number_of_patients)` })
+      .select({ total: sql`sum(${cerClinicalEvidence.patients})` })
       .from(cerClinicalEvidence)
       .where(eq(cerClinicalEvidence.cerReportId, cerReportId));
 

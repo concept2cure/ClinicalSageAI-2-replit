@@ -101,4 +101,76 @@ export async function loadDeviceContentLeaves(
   }
 }
 
-export default { sectionsToLeaves, loadDeviceContentLeaves };
+/** An authored section projected for document assembly (title + body). */
+export interface AuthoredDeviceSection {
+  title: string;
+  content: string;
+}
+
+/**
+ * Pure: project authored sections onto the editor-JSON shape the export
+ * renderers consume (extractSectionsFromEditor): an H1 heading node per
+ * section followed by paragraph nodes split on blank lines. Only authored
+ * sections appear — an empty section is never invented into the document,
+ * so the renderer's per-section "content not found" fallback stays honest.
+ */
+export function sectionsToEditorJson(sections: AuthoredDeviceSection[]): {
+  type: 'doc';
+  content: Array<Record<string, unknown>>;
+} {
+  const content: Array<Record<string, unknown>> = [];
+  for (const s of sections) {
+    content.push({
+      type: 'heading',
+      attrs: { level: 1 },
+      content: [{ type: 'text', text: s.title }],
+    });
+    for (const para of s.content.split(/\n{2,}/)) {
+      const text = para.trim();
+      if (!text) continue;
+      content.push({ type: 'paragraph', content: [{ type: 'text', text }] });
+    }
+  }
+  return { type: 'doc', content };
+}
+
+/**
+ * Load a tenant's authored device sections (title + body) for assembly.
+ * Same org-scoped query and honesty rules as loadDeviceContentLeaves —
+ * only content-bearing sections return; [] on any query failure.
+ */
+export async function loadAuthoredDeviceSections(
+  organizationId: number,
+  opts: LoadDeviceContentLeavesOptions = {},
+): Promise<AuthoredDeviceSection[]> {
+  try {
+    const where =
+      opts.documentId !== undefined
+        ? and(
+            eq(cerv2510kSections.organizationId, organizationId),
+            eq(cerv2510kSections.documentId, opts.documentId),
+          )
+        : eq(cerv2510kSections.organizationId, organizationId);
+
+    const rows = await db
+      .select({
+        sectionTitle: cerv2510kSections.sectionTitle,
+        sectionKey: cerv2510kSections.sectionKey,
+        content: cerv2510kSections.content,
+      })
+      .from(cerv2510kSections)
+      .where(where)
+      .orderBy(asc(cerv2510kSections.displayOrder));
+
+    return rows
+      .filter((r) => (r.content ?? '').trim().length > 0)
+      .map((r) => ({
+        title: String(r.sectionTitle || r.sectionKey || 'Untitled section'),
+        content: String(r.content),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export default { sectionsToLeaves, loadDeviceContentLeaves, sectionsToEditorJson, loadAuthoredDeviceSections };

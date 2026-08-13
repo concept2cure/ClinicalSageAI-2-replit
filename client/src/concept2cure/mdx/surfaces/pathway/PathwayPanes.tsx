@@ -5,14 +5,17 @@
  *
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs
- * render from PATHWAY_TABS_DATA + the in-memory dossier store. The drawer is a
- * preview surface — "Open in editor" hands off to the existing route.
+ * render live backend data through DataGate (honest loading / error / empty
+ * states), with the kit fixtures reachable only in explicit sample mode. The
+ * drawer is a preview surface — "Open in editor" hands off to the existing
+ * route.
  */
 
 import * as React from 'react';
 import { I } from '../../icons';
 import { AUDIT_KIND_META, PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
 import { DossierStore, useSection } from '../../store/dossierStore';
+import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
@@ -961,8 +964,12 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   const [tab, setTab] = React.useState<PaneTab>('workspace');
   const [drawerTarget, setDrawerTarget] = React.useState<SectionTarget | null>(null);
   const [drafterCorr, setDrafterCorr] = React.useState<Correspondence | null>(null);
-  // Live backend data (audit / correspondence / approvals) with kit-fixture fallback.
+  // Live backend data (audit / correspondence / approvals); fixtures only in
+  // explicit sample mode, honest empty states otherwise.
   const data = usePathwayTabsData(pathway, programId);
+  // Fixtures handed to DataGate's `sample` prop — rendered solely when the
+  // user has switched sample mode on, and always under the standing banner.
+  const fixtures = PATHWAY_TABS_DATA[pathway];
   // Async-seed the dossier store (Files tree + drawer) from the real backend.
   const dossier = useDossierHydration(pathway, programId);
 
@@ -993,11 +1000,41 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
       <PathwayTabBar tab={tab} setTab={setTab} pathway={pathway} counts={counts} />
       <div className="pwt-pane">
         {tab === 'workspace' && workspace}
-        {tab === 'audit' && <AuditTrailPane pathway={pathway} events={data.audit} onOpenSection={openSection} />}
-        {tab === 'correspondence' && (
-          <CorrespondencePane pathway={pathway} items={data.correspondence} onOpenSection={openSection} onAskAna={onAskAna} onDraftResponse={(c) => setDrafterCorr(c)} />
+        {tab === 'audit' && (
+          <DataGate
+            state={data.states.audit}
+            label="audit events"
+            onRetry={data.refresh.audit}
+            sample={fixtures.audit}
+            emptyHint="Part 11 events are recorded here as sections are edited, reviewed, and signed."
+          >
+            {(events) => <AuditTrailPane pathway={pathway} events={events} onOpenSection={openSection} />}
+          </DataGate>
         )}
-        {tab === 'approvals' && <ApprovalsPane approvals={data.approvals} onOpenSection={openSection} />}
+        {tab === 'correspondence' && (
+          <DataGate
+            state={data.states.correspondence}
+            label="correspondence"
+            onRetry={data.refresh.correspondence}
+            sample={fixtures.correspondence}
+            emptyHint="Agency and notified-body letters appear here once received for this program."
+          >
+            {(items) => (
+              <CorrespondencePane pathway={pathway} items={items} onOpenSection={openSection} onAskAna={onAskAna} onDraftResponse={(c) => setDrafterCorr(c)} />
+            )}
+          </DataGate>
+        )}
+        {tab === 'approvals' && (
+          <DataGate
+            state={data.states.approvals}
+            label="approvals"
+            onRetry={data.refresh.approvals}
+            sample={fixtures.approvals}
+            emptyHint="Approval requests appear here when a section or submission is routed for e-signature."
+          >
+            {(approvals) => <ApprovalsPane approvals={approvals} onOpenSection={openSection} />}
+          </DataGate>
+        )}
         {tab === 'files' && (
           <>
             {dossier.status === 'loading' && <div role="status">Loading dossier files…</div>}
@@ -1008,6 +1045,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
               <FilesTreePane
                 key={`ftp-${pathway}-${dossier.version}`}
                 pathway={pathway}
+                tabs={data}
                 onOpenSection={openSection}
               />
             )}
