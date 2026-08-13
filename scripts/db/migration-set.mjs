@@ -852,6 +852,20 @@ export const C2C_MIGRATION_FILES = [
   // than by RLS — so the ordering costs it nothing.
   'db/migrations/20260813_audit_tamper_proof_log.sql',
 
+  // ── Knowledge-graph tenant keys (added 2026-08-13) ────────────────────────
+  // knowledge_graph_nodes / _edges / lumen_knowledge_graph_edges carried NO
+  // tenant column and no RLS, while their siblings (extracted_graph_edges,
+  // rag_knowledge_graph, section_graph_nodes) all carry organization_id WITH
+  // RLS — drift, not design. server/routes/graphrag.ts writes document entities
+  // into them and reads them back with no tenant predicate, so one tenant's
+  // extracted entity names were reachable by another's semantic search.
+  //
+  // BEFORE the two isolation steps, like every other table-creating/altering
+  // migration: the sweep must see the organization_id this adds. It is also why
+  // the policy here and the sweep's cannot conflict — both are guarded on
+  // pg_policies, so whichever runs first wins and the other no-ops.
+  'db/migrations/20260813_knowledge_graph_tenant_keys.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
