@@ -173,6 +173,14 @@ jobs:
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
 
+      - name: Guardrails — every tenant entry point considers entitlement
+        # Isolation asks "can A see B's data"; this asks "may A be operating at
+        # all", on every way INTO tenant data — not just the /api chain the
+        # lifecycle guard is mounted on. Four surfaces (the public API, two
+        # sockets, a cron sweep) were found bypassing that guard one at a time;
+        # this makes the surface enumerable instead of found-by-reading.
+        run: npm run ci:tenant-entry-points
+
       - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
         # The production deploy registers a pinned task-def revision
         # (image @sha256:<digest>) and updates the service by ARN.

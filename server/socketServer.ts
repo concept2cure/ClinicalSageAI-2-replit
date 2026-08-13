@@ -2,6 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server } from 'http';
 import { createScopedLogger } from './utils/logger.js';
 import { verifyJwtWithRotation } from './utils/jwtVerify.js';
+import { shouldProcessTenantInBackground } from './services/tenant/tenant-lifecycle.js';
 // Twin-safe imports: tokenType has no `.js` counterpart, and the two socket/*
 // modules are `.ts`-only, so every resolver (tsc, vite/vitest, tsx) binds the
 // same file. `./middleware/auth` is deliberately NOT imported — it has a stale
@@ -222,33 +223,61 @@ export function initializeSocketServer(server: Server) {
 
   // Authentication middleware — extract orgId from JWT for tenant isolation
   ioInstance.use((socket: AuthenticatedSocket, next) => {
-    try {
-      const token = socket.handshake.auth?.token || socket.handshake.query?.token;
-      if (!token) {
-        return next(new Error('Missing bearer token'));
-      }
+    void (async () => {
+      try {
+        const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+        if (!token) {
+          return next(new Error('Missing bearer token'));
+        }
 
-      const decoded = verifyJwtWithRotation(token as string) as any;
-      if (!decoded.organizationId || !decoded.userId) {
-        return next(new Error('Invalid token claims'));
-      }
-      // Refresh / MFA-challenge / MFA-partial tokens are signed with the SAME
-      // secret as access tokens; the access path must reject them explicitly or
-      // a half-authenticated session can open a collaboration socket.
-      const nonAccess = nonAccessTokenReason(decoded);
-      if (nonAccess) {
-        log.warn(`[Socket.io] Rejected non-access token (${nonAccess}) for ${socket.id}`);
-        return next(new Error('Invalid token claims'));
-      }
+        const decoded = verifyJwtWithRotation(token as string) as any;
+        if (!decoded.organizationId || !decoded.userId) {
+          return next(new Error('Invalid token claims'));
+        }
+        // Refresh / MFA-challenge / MFA-partial tokens are signed with the SAME
+        // secret as access tokens; the access path must reject them explicitly or
+        // a half-authenticated session can open a collaboration socket.
+        const nonAccess = nonAccessTokenReason(decoded);
+        if (nonAccess) {
+          log.warn(`[Socket.io] Rejected non-access token (${nonAccess}) for ${socket.id}`);
+          return next(new Error('Invalid token claims'));
+        }
 
-      socket.orgId = String(decoded.organizationId);
-      socket.authUserId = String(decoded.userId);
-      socket.authEmail = decoded.email != null ? String(decoded.email) : undefined;
-      next();
-    } catch (err: any) {
-      log.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message}`);
-      next(new Error('Invalid token'));
-    }
+        // TENANT LIFECYCLE. Socket.IO is a THIRD transport, alongside HTTP and
+        // the hocuspocus collaboration socket, and no Express middleware runs for
+        // it — so the lifecycle guard never saw it. Tenant ISOLATION here is
+        // solid (rooms derive from the verified principal, and a
+        // check-security-patterns rule blocks namespace-global publishes), but
+        // isolation and entitlement are different questions: a suspended
+        // organization's users could still connect and receive live task,
+        // notification, compliance and timer traffic.
+        //
+        // Refuses for read_only as well as deny. Unlike the hocuspocus socket
+        // there is no per-connection read-only mode to downgrade into — this
+        // namespace is a live event feed, and every handler on it publishes — so
+        // the honest options are connect or do not. Read access to the same data
+        // remains available over HTTP, which read_only permits.
+        const organizationId = Number(decoded.organizationId);
+        const entitled =
+          Number.isSafeInteger(organizationId) &&
+          organizationId > 0 &&
+          (await shouldProcessTenantInBackground(organizationId));
+        if (!entitled) {
+          log.warn(
+            `[Socket.io] Refused connection for org ${decoded.organizationId} — tenant not entitled`
+          );
+          return next(new Error('Organization is not active'));
+        }
+
+        socket.orgId = String(decoded.organizationId);
+        socket.authUserId = String(decoded.userId);
+        socket.authEmail = decoded.email != null ? String(decoded.email) : undefined;
+        next();
+      } catch (err: any) {
+        log.warn(`[Socket.io] Auth failed for ${socket.id}: ${err?.message}`);
+        next(new Error('Invalid token'));
+      }
+    })();
   });
 
   ioInstance.on('connection', (socket: AuthenticatedSocket) => {
