@@ -43,7 +43,8 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const CATALOG_MIGRATIONS = [
   'db/migrations/20260810_reconcile_module_catalog.sql',
   'migrations/20260814j_catalog_missing_product_surfaces.sql',
-  'migrations/20260814k_catalog_honest_module_descriptions.sql',
+  'migrations/20260814k_catalog_mission_control.sql',
+  'migrations/20260814l_catalog_honest_module_descriptions.sql',
 ];
 
 /** The migration that owns the table's shape. */
