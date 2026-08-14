@@ -120,7 +120,12 @@ export const TB_MOD: Record<string, string> = {
 export const TB_COLS: BoardColumn[] = [
   { id: 'pending', label: 'To do', tone: 'idle' },
   { id: 'in-progress', label: 'In progress', tone: 'ai' },
-  { id: 'blocked', label: 'Blocked', tone: 'warn' },
+  // 'err', not 'warn': blocked work is stuck and needs intervention, review is
+  // healthy work awaiting a reader. Both carried 'warn' at first, which made the
+  // two column dots the identical amber — indistinguishable in the one place a
+  // board is scanned fastest. The palette's semantic split is amber = attention,
+  // red = critical (kdot[data-tone="err"], app-v2.css:457).
+  { id: 'blocked', label: 'Blocked', tone: 'err' },
   { id: 'review', label: 'In review', tone: 'warn' },
   { id: 'completed', label: 'Done', tone: 'ok' },
 ];

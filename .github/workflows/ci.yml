@@ -186,6 +186,15 @@ jobs:
         # ONLY control. Zero baseline — all 43 routes pass today.
         run: npm run ci:org-path-param-guards
 
+      - name: Guardrails — every biostat form field is one the server reads
+        # The workbench declares its calculators as data; the handlers read
+        # req.body untyped and ignore anything unrecognised. So a mistyped key
+        # does not throw and does not 400 — the form renders, the request
+        # succeeds, the server silently uses its default, and the user is shown
+        # a number computed from an input they believe they supplied. No type in
+        # either language spans that boundary. Zero baseline.
+        run: npm run ci:biostat-calculator-keys
+
       - name: Guardrails — no tenant-blind Drizzle models
         # Sibling to the gate above, and deliberately separate: that one checks
         # the TYPE of a declared tenant column and cannot see one that is

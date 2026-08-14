@@ -19,8 +19,12 @@ import {
        dueDate, estimatedHours, dependencies[], tags[].
      - Polymorphic origin: sourceEntityType + sourceEntityId.
      - Auto-assign: getOptimalAssignee() (workload-balanced).
-     - Honest gaps: task-audit.ts coded but unwired; notifications
-       stubbed.
+     - task-audit.ts IS wired: POST /api/tasks/tasks writes a
+       hash-chained ledger entry (auditTaskAction) and a persisted
+       notification (notifyTaskEvent) on every create. This comment
+       used to say both were stubbed; that was left behind when they
+       were wired, and the same stale claim reached the user-facing
+       banner below. Remaining gap is email delivery only.
 
    This module owns ONE shared store (C2C) so a task created from
    the editor, a submission, a safety case or the board all land in
@@ -546,8 +550,16 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           board only". That is no longer true — the task is persisted — so the
           warning is gone rather than left to contradict the behaviour. What is
           still honest to say is the residual backend gap. */}
-      <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>The task is saved to your org board. Assignee notifications and the task audit trail (<code>task-audit.ts</code>) are still stubbed server-side, so no one is emailed yet.
+      {/* This banner used to claim the audit trail and notifications were
+          "stubbed server-side". That was false for the very call it decorates:
+          POST /api/tasks/tasks writes a hash-chained ledger entry via
+          auditTaskAction and a persisted notification via notifyTaskEvent
+          (taskManagement.routes.ts). TaskBoard's equivalent copy was corrected
+          when that landed; this one was missed and kept asserting a governed
+          action was ungoverned — the worst direction for a claim to be wrong in
+          a Part 11 product. What remains true is only the delivery gap. */}
+      <div className="cl-note">
+        <span className="ico">{I.check}</span>Saved to your org board, recorded in the Part 11 audit trail, and the assignee is notified in the app. Email delivery is not wired up yet.
       </div>
       {saveErr && (
         <div className="cl-warn" role="alert">
@@ -741,7 +753,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
                   <span className="ico">{I.messageSquare}</span>Collaborate
                 </button>
               </div>
-              <button className="cl-x" onClick={() => setOpen(false)}>{I.close}</button>
+              <button className="cl-x" onClick={() => setOpen(false)} aria-label="Close">{I.close}</button>
             </div>
             <div className="cl-body">
               {tab === 'task'

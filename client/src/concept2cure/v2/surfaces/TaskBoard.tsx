@@ -532,8 +532,13 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         </div>
       </div>
 
+      {/* data-cols below is required, not decorative: .tb-kanban defaults to a
+          4-column grid and only [data-cols="5"] widens it (app-v2.css:452,459).
+          Adding the Blocked column made this five, so without the attribute
+          row-major auto-placement wrapped "Done" onto a second row. Driven off
+          TB_COLS.length so it cannot drift again if a column is added. */}
       {view === 'board' && (
-        <div className="tb-kanban">
+        <div className="tb-kanban" data-cols={String(TB_COLS.length)}>
           {TB_COLS.map(col => {
             const items = byCol(col.id);
             return (
@@ -735,7 +740,7 @@ interface TaskDetailProps {
 
 function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr, onArchived }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
-  const owner = { n: nameOf(t.assignee) || '?', t: '' };
+  const owner = nameOf(t.assignee) || 'Unassigned';
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
 
   // Two-step archive (soft delete). This is the ONLY removal verb: the server
@@ -774,7 +779,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
       <div className="tb-detail" onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
-          <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-detail-chips">
           <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
@@ -787,7 +792,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
         <div className="tb-detail-grid">
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
           <div><label>Phase</label><span>{t.phase || '—'}</span></div>
-          <div><label>Owner</label><span>{owner.n} -- {owner.t}</span></div>
+          <div><label>Assignee</label><span>{owner}</span></div>
           <div><label>Assigned by</label><span>{nameOf(t.assignedBy) || '--'}</span></div>
           <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
           <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
@@ -1036,7 +1041,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
       <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks -- new</span><h3>New task</h3></div>
-          <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-form">
           <div className="tb-field full"><label>Title<i>*</i></label><input type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset" /></div>
@@ -1219,7 +1224,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
       <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates -- from-template</span><h3>Start a workflow</h3></div>
-          <button className="tb-detail-x" onClick={onClose}>{I.close}</button>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
 
         {templates.loading ? (
