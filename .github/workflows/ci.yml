@@ -179,6 +179,13 @@ jobs:
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
         run: npm run ci:tenant-column-types
 
+      - name: Guardrails — no tenant-blind Drizzle models
+        # Sibling to the gate above, and deliberately separate: that one checks
+        # the TYPE of a declared tenant column and cannot see one that is
+        # ABSENT. A model missing the column leaves every route built on it
+        # structurally unable to filter by tenant.
+        run: npm run ci:tenant-blind-models
+
       - name: Guardrails — WCAG AA contrast on design tokens
         # Contrast is arithmetic on two hex values, so this cannot drift into
         # false positives. It caught --error never being declared for dark mode:
