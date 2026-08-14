@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T22:48:33.666Z",
+  "generatedAt": "2026-08-14T22:55:17.987Z",
   "git": {
-    "sha": "a6271e7de77046d75d300dd5a8420bba39f9ecb5",
+    "sha": "b4cc9997902e78e58274d8139686dfbe60509a1e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2204,7 +2204,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 124024
+        "bytes": 123214
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2401,16 +2401,16 @@
         "lines": 2166
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2164
-      },
-      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
         "lines": 2151
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2132
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
