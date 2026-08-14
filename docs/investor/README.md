@@ -51,6 +51,20 @@ document.querySelectorAll('section').forEach((s, i) =>
   console.log(i + 1, Math.round(s.getBoundingClientRect().height / 3.7795) + 'mm'));
 ```
 
+## The branch of truth
+
+`concept2cure-v2` is the only branch any claim in this paper may be derived from.
+Fetch it, merge it, and verify zero source drift before measuring anything:
+
+```bash
+git fetch origin concept2cure-v2 && git merge origin/concept2cure-v2
+git diff --name-only origin/concept2cure-v2...HEAD   # expect only docs/investor
+```
+
+This is not procedural fussiness. A revision of this paper published nine already-fixed
+items as open because it was measured from a base 16 commits behind. On a codebase moving
+at this rate, a day-old base is a materially different product.
+
 ## Before claiming anything works
 
 `docs/GA_COMPLETION_LEDGER_2026-08.md` is the authority on what actually

@@ -10,14 +10,21 @@ declarations under `shared/`. Surfaces are `.tsx` files under
 `client/src/concept2cure/v2/surfaces/`. Regenerate with the commands in
 [Refreshing this document](#refreshing-this-document).
 
-**Measured at** `concept2cure-v2`, 2026-08-14.
+**Branch of truth.** `concept2cure-v2` is the only branch these figures may be
+derived from. Anything measured on a feature branch is provisional — a working
+branch drifts behind, and an assessment taken from a stale base reports fixed
+items as open. Before re-deriving: `git fetch origin concept2cure-v2`, merge it,
+and confirm `git diff --name-only origin/concept2cure-v2...HEAD` shows only your
+own documents.
+
+**Measured at** `concept2cure-v2`, 2026-08-14, with zero source drift verified.
 
 | Dimension | Count |
 |---|--:|
 | Service directories | 215 |
 | Service files (non-test) | 1,527 + 264 loose top-level |
 | Lines in `server/services` | ~519,000 |
-| Route modules | 465 |
+| Route modules / handlers | 465 / 3,545 |
 | Client surfaces (`v2/surfaces`) | 107 |
 | Tables provisioned from blank | 931 |
 | RLS policies | 787 |
@@ -154,6 +161,10 @@ dictionary licences.
 ## Refreshing this document
 
 ```bash
+# FIRST: confirm you are on the branch of truth
+git fetch origin concept2cure-v2 && git merge origin/concept2cure-v2
+git diff --name-only origin/concept2cure-v2...HEAD   # expect only your own docs
+
 # service directories by size
 python3 - <<'EOF'
 import os
@@ -175,6 +186,10 @@ grep -roh "export const [a-zA-Z0-9_]* = pgTable" shared/ --include="*.ts" \
 # client surfaces
 ls client/src/concept2cure/v2/surfaces/*.tsx | wc -l
 
-# route modules
+# route modules and handlers
 find server/routes -name "*.ts" ! -path "*__tests__*" | wc -l
+grep -rhoE "(router|app)\.(get|post|put|patch|delete)\(" server/routes/ --include="*.ts" | wc -l
+
+# CI guard scripts (scripts only — scripts/ci also holds JSON baselines)
+ls scripts/ci/*.mjs scripts/ci/*.sh | wc -l
 ```

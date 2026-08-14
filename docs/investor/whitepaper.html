@@ -469,7 +469,7 @@
         matter: eCTD assembly and lifecycle operations, eSTAR generation,
         substantial-equivalence reasoning, clinical evaluation, study design, risk-based
         monitoring, biostatistics, CMC, quality management, labeling, pharmacovigilance,
-        and thirteen agency transports. Exposed through <strong>3,846 route handlers</strong>
+        and thirteen agency transports. Exposed through <strong>3,545 route handlers</strong>
         in 465 modules.
       </div>
     </div>
@@ -1771,11 +1771,11 @@
       <tr><td>TypeScript modules / lines</td><td class="num">5,053 / 1.44M</td><td>~1.64M lines across 7,805 files counting all languages</td></tr>
       <tr><td>Tables provisioned from blank</td><td class="num">931</td><td>Single idempotent installer, verified exit 0</td></tr>
       <tr><td>Row-level security policies</td><td class="num">787</td><td>Correct USING / WITH CHECK semantics, FORCE RLS</td></tr>
-      <tr><td>Route modules / handlers</td><td class="num">465 / 3,846</td><td>Behind a global default-deny boundary</td></tr>
+      <tr><td>Route modules / handlers</td><td class="num">465 / 3,545</td><td>Behind a global default-deny boundary</td></tr>
       <tr><td>Client surfaces</td><td class="num">107</td><td>The product's actual screens</td></tr>
       <tr><td>Registered AnA tools</td><td class="num">359</td><td>Across 13 capability categories</td></tr>
       <tr><td>Test files / assertions passing</td><td class="num">1,694 / 19,181</td><td>Unit, route, database, security, golden-journey</td></tr>
-      <tr><td>CI guard scripts / workflows</td><td class="num">79 / 19</td><td>Architectural invariants — see Section 23</td></tr>
+      <tr><td>CI guard scripts / workflows</td><td class="num">66 / 19</td><td>Architectural invariants — see Section 23</td></tr>
     </tbody>
   </table>
 
@@ -1818,7 +1818,7 @@
   <div class="section-num">Section 23</div>
   <h1 class="section-title">Invariants enforced by machine</h1>
   <p class="deck">
-    79 CI guard scripts that do not check style. They check the architectural properties that
+    66 CI guard scripts that do not check style. They check the architectural properties that
     would otherwise decay silently — which is what makes a system this size qualifiable rather
     than re-auditable on every release.
   </p>
@@ -1984,7 +1984,7 @@
       <tr><td><strong>eCTD assembly, spine-backed</strong></td><td>Real ICH v3.2.2 backbone, MD5 manifest, genuine byte-stable PDF leaves. 30 test files across 50 services.</td></tr>
       <tr><td><strong>Authentication boundary</strong></td><td>Default-deny mounted once ahead of all routes; algorithm-pinned JWT; the audit's escalation, MFA and SSO bypasses all closed.</td></tr>
       <tr><td><strong>AI gateway policy path</strong></td><td>Single chokepoint with a CI gate against bypass, two policy passes, placement resolution, boot-invariant ledger. 14 tests across 21 services.</td></tr>
-      <tr><td><strong>CI invariant system</strong></td><td>79 gates enforcing architectural properties. Independently the strongest asset in the repository.</td></tr>
+      <tr><td><strong>CI invariant system</strong></td><td>66 gates enforcing architectural properties. Independently the strongest asset in the repository.</td></tr>
       <tr><td><strong>Part 11 signature binding</strong></td><td>The live verification path re-derives the bound content digest through the same shared evaluator as the canonical validator; a document changed after signing reports invalid, and an unbound signature reports that it attests to no content. One write path, regression-tested.</td></tr>
       <tr><td><strong>Ingest extraction</strong></td><td>Fails rather than inventing when it cannot read a file, hashes what it actually stores, and its entry point works. Test-locked against regression to fabrication.</td></tr>
       <tr><td><strong>Filing traceability</strong></td><td>A filed eCTD leaf pins the source it shipped, and the end-to-end lineage dossier is reachable over an API route in JSON and XML.</td></tr>
