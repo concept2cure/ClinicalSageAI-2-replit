@@ -442,7 +442,10 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      answering that question. Published as the nouns and numbers a user would
      point at, never raw API bodies and never anything the screen is hiding. */
   const anaContext = useMemo(() => {
-    const overdue = list.filter(t => t.status !== 'completed' && t.due.includes('overdue'));
+    // `t.due` is server data, not a local invariant: a task row without it is a
+    // plausible response and must not crash the board. Same class as the
+    // ectd-compile defect — the guard has to cover the member, not the container.
+    const overdue = list.filter(t => t.status !== 'completed' && String(t.due ?? '').includes('overdue'));
     const sel0 = sel;
     return {
       summary:

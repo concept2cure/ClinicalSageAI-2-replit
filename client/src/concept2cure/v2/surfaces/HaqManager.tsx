@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -241,6 +242,64 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
     s === 'approved' ? 'complete' : s === 'in-review' ? 'review' : 'draft';
   const stLbl = (s: string) =>
     s === 'approved' ? 'Approved' : s === 'in-review' ? 'In review' : 'Draft';
+
+  /* WHAT ANA SEES HERE. An agency question has a clock on it, so the round's
+     due date and remaining days travel — "what is due first" is the question
+     most often asked on this screen, and it cannot be answered from a question
+     list alone.
+
+     Question TEXT is deliberately not published. The summary carries counts,
+     disciplines and status; the verbatim agency wording stays on the screen.
+     This channel is sent on every turn and is bounded server-side, so putting
+     a letter's full text through it would crowd out the rest of the context
+     for no gain — AnA can be asked about a specific question, and the
+     surface's own affordances hand it over deliberately when that happens. */
+  const anaContext = useMemo(
+    () => ({
+      summary: roundsState.loading
+        ? 'HAQ manager, still loading agency question rounds.'
+        : roundsState.error
+          ? 'HAQ manager could not load the governed question store — rounds are unavailable, not absent.'
+          : rounds.length === 0
+            ? 'HAQ manager: no agency question rounds logged yet.'
+            : `HAQ manager: ${rounds.length} round(s)` +
+              (round ? `, "${round.id}" from ${round.agency} selected (${round.type}, due ${round.due})` : '') +
+              `; ${qs.length} question(s), ${approved} approved (${pct}%).`,
+      facts: {
+        roundsState: roundsState.loading ? 'loading' : roundsState.error ? 'error' : rounds.length === 0 ? 'empty' : 'ready',
+        roundCount: rounds.length,
+        ...(round
+          ? {
+              selectedRoundId: round.id,
+              agency: round.agency,
+              authority: round.authority,
+              submission: round.submission,
+              roundType: round.type,
+              receivedOn: round.received,
+              responseDue: round.due,
+              clockDaysRemaining: round.clockDays,
+            }
+          : {}),
+        questionCount: qs.length,
+        questionsApproved: approved,
+        percentApproved: pct,
+        disciplines: [...new Set(qs.map((q) => q.disc).filter(Boolean))],
+        severities: [...new Set(qs.map((q) => q.tone).filter(Boolean))],
+        openBySeverity: qs.filter((q) => q.status !== 'approved').reduce<Record<string, number>>(
+          (acc, q) => ({ ...acc, [q.tone || 'unspecified']: (acc[q.tone || 'unspecified'] ?? 0) + 1 }),
+          {},
+        ),
+      },
+      availableActions: [
+        'Explain which questions are on the critical path for the response clock',
+        'Decompose an agency question into what it is actually asking for',
+        'Draft a response to a question, grounded on locked evidence',
+        'Log an agency question',
+      ],
+    }),
+    [roundsState.loading, roundsState.error, rounds, round, qs, approved, pct],
+  );
+  usePublishSurfaceContext('haq-manager', anaContext);
 
   return (
     <div className="cv-body">

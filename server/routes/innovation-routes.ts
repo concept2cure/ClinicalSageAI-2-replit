@@ -149,7 +149,14 @@ const PROGRAM_ORG_SOURCES: readonly string[] = [
   'SELECT 1 FROM regulatory_programs WHERE id::text = $1 AND organization_id::text = $2 LIMIT 1',
 ];
 
-async function programBelongsToOrg(programId: string, orgId: number): Promise<boolean> {
+/**
+ * Exported so non-route callers can reuse this check rather than writing a
+ * fourth copy of it. `server/routes/pdev/pdev-routes.ts` already carries a
+ * second, and AnA's submission-readiness tool needs the same guarantee: a
+ * program id supplied by a model must be proven to belong to the caller's org
+ * before anything is read for it.
+ */
+export async function programBelongsToOrg(programId: string, orgId: number): Promise<boolean> {
   for (const source of PROGRAM_ORG_SOURCES) {
     const rows = await guardQuery(source, [programId, String(orgId)]);
     if (rows && rows.length > 0) return true;

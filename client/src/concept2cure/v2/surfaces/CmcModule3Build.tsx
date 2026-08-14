@@ -219,10 +219,26 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
 
   const detectContradictions = () =>
     run('contradictions', 'POST', '/api/cmc/module3-os/contradictions/' + encodeURIComponent(projectId!), {}, (json) => {
-      const found = (json as { contradictions?: unknown[] })?.contradictions?.length ?? 0;
-      return found === 0
-        ? 'Contradiction sweep complete — nothing found across specifications, methods, stability, batches and comparability.'
-        : `Contradiction sweep complete — ${found} ${found === 1 ? 'finding' : 'findings'} recorded.`;
+      const body = json as {
+        contradictions?: unknown[];
+        tasks?: { created?: number; existing?: number; error?: string };
+      };
+      const found = body?.contradictions?.length ?? 0;
+      if (found === 0) {
+        return 'Contradiction sweep complete — nothing found across specifications, methods, stability, batches and comparability.';
+      }
+      /* Each finding is now raised as work on the shared task board. Say what
+         happened to it: "3 findings recorded" and a silently empty board is the
+         gap this closes, and a tasking failure must not read as a success. */
+      const t = body?.tasks;
+      const tail = t?.error
+        ? ' Tasks could NOT be raised on the board — the findings stand, but nobody is holding them yet.'
+        : t?.created
+          ? ` ${t.created} raised as ${t.created === 1 ? 'a task' : 'tasks'}${t.existing ? `, ${t.existing} already open` : ''}.`
+          : t?.existing
+            ? ` All ${t.existing === 1 ? 'of it is' : 'of them are'} already open as ${t.existing === 1 ? 'a task' : 'tasks'}.`
+            : '';
+      return `Contradiction sweep complete — ${found} ${found === 1 ? 'finding' : 'findings'} recorded.${tail}`;
     });
 
   const resolveContradiction = async (values: Record<string, string>) => {

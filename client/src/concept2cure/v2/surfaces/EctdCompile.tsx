@@ -30,11 +30,12 @@
  * resolves it; a program with no linked section store gets the server's own
  * blocker text, not a silent 0%.)
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 interface ModuleReadiness {
@@ -217,6 +218,62 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
   }, [identPath, submissionType, region, fireToast, loadStatus, loadHistory]);
+
+  /* WHAT ANA SEES HERE. Published ABOVE the no-program early return, because
+     `usePublishSurfaceContext` is a hook and a hook below a conditional return
+     would run on some renders and not others. The no-program case is also the
+     one most worth telling AnA about: "open a program first" is the correct
+     answer to "why can't I compile?", and she cannot give it if this surface
+     goes silent exactly when it has nothing.
+
+     `submissionReady` is reported alongside its blockers on purpose. This
+     surface learned once that a compiled backbone is not a submittable package;
+     handing the conversation the flag without the reasons would relearn it. */
+  const anaContext = useMemo(
+    () => ({
+      summary: ident == null
+        ? 'eCTD compile, with no program open — nothing can be assembled until one is.'
+        : `eCTD compile for ${region} (${submissionType}). Readiness is ${statusState}` +
+          (status ? `, overall ${status.overallReadiness}%` : '') +
+          (findings ? `; ${findings.length} validation finding(s)` : '; not yet validated') + '.',
+      facts: {
+        programOpen: ident != null,
+        region,
+        submissionType,
+        readinessState: statusState,
+        ...(status
+          ? {
+              overallReadinessPct: status.overallReadiness,
+              modulesTotal: status.modules?.length ?? 0,
+              sectionsRequired: status.totalRequired,
+              sectionsCompleted: status.totalCompleted,
+              contentComplete: status.contentComplete ?? null,
+              submissionReady: status.submissionReady,
+              submissionBlockers: status.submissionBlockers ?? [],
+            }
+          : {}),
+        validationRun: findings !== null,
+        ...(findings
+          ? {
+              findingsTotal: findings.length,
+              findingsBlocking: findings.filter((f) => f.severity === 'error').length,
+            }
+          : {}),
+        lastCompileStatus: compileResult?.status ?? null,
+        leafFilesRendered: compileResult?.leafFilesRendered ?? null,
+        priorCompilations: history.length,
+      },
+      availableActions: [
+        'Explain what compiling this sequence will and will not produce',
+        'Triage the validation findings (blocking vs advisory, and fix order)',
+        'Explain why the package is not yet submittable',
+        'Validate before compiling',
+        'Compile the eCTD backbone',
+      ],
+    }),
+    [ident, region, submissionType, statusState, status, findings, compileResult, history.length],
+  );
+  usePublishSurfaceContext('ectd-compile', anaContext);
 
   // ── No program open ── (the server resolves UUID / code / numeric idents, so
   // the only honest dead-end left is having no program at all)
