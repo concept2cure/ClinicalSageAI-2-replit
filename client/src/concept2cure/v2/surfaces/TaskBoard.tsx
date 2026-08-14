@@ -5,6 +5,7 @@ import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   // TB_PROJECTS (three invented programmes) is gone — the board, the project
   // filter, the detail label and the workflow picker all read the org's real
@@ -434,6 +435,52 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       byMod, byPri, byAsg,
     };
   }, [list]);
+
+  /* What AnA can see of this screen. Until now she was told the user was on
+     "task-board" and nothing more, so "what should I do next?" had to be
+     answered from the message text — on the one surface whose entire purpose is
+     answering that question. Published as the nouns and numbers a user would
+     point at, never raw API bodies and never anything the screen is hiding. */
+  const anaContext = useMemo(() => {
+    const overdue = list.filter(t => t.status !== 'completed' && t.due.includes('overdue'));
+    const sel0 = sel;
+    return {
+      summary:
+        `Task board for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
+        `${stats.blocked} blocked, ${overdue.length} overdue, ${stats.appr} awaiting approval.` +
+        (sel0 ? ` The task "${sel0.title}" (${sel0.taskId}) is open in the detail panel.` : ''),
+      facts: {
+        view,
+        totals: {
+          all: stats.total, open: stats.open, blocked: stats.blocked,
+          overdue: overdue.length, criticalPath: stats.crit,
+          regulatoryImpact: stats.reg, awaitingApproval: stats.appr,
+        },
+        // Enough to name a task back to the user, not the whole row set.
+        blockedTasks: list.filter(t => t.blocked).slice(0, 8)
+          .map(t => ({ taskId: t.taskId, title: t.title, dependsOn: t.dependsOn })),
+        overdueTasks: overdue.slice(0, 8).map(t => ({ taskId: t.taskId, title: t.title, due: t.due })),
+        selectedTask: sel0
+          ? {
+              taskId: sel0.taskId, title: sel0.title, status: sel0.status,
+              priority: sel0.priority, blocked: sel0.blocked,
+              approvalRequired: sel0.approvalRequired, approvalStatus: sel0.approvalStatus,
+              signatureCount: sel0.approvalHistory.length,
+              dependsOn: sel0.dependsOn, blocks: sel0.blocks,
+            }
+          : null,
+      },
+      availableActions: [
+        'Open a task to see its detail, dependencies and signatures',
+        'Advance or move a task back through pending → in-progress → review → completed',
+        'Create a task, or start a workflow from a template',
+        'Archive a task (requires a reason, written to the audit trail)',
+        'Complete an approval-gated task (requires a PIN e-signature)',
+        'Filter the board by module, priority, assignee or search text',
+      ],
+    };
+  }, [list, stats, sel, view]);
+  usePublishSurfaceContext('task-board', anaContext);
 
   /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
   const critChain = useMemo(() => {

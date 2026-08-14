@@ -1,6 +1,7 @@
 /**
  * Deepening tools — deterministic engines exposed to AnA:
- *   assess_batch_poolability -> cmc/shelf-life-poolability.assessBatchPoolability
+ *   assess_batch_poolability          -> cmc/shelf-life-poolability.assessBatchPoolability
+ *   assess_recorded_batch_poolability -> cmc/recorded-stability.assessRecordedPoolability
  *   assess_benefit_risk      -> regulatory/benefit-risk.assessBenefitRisk
  *
  * @module server/services/ana/deepeningTools
@@ -41,6 +42,37 @@ export const ASSESS_BATCH_POOLABILITY: AnaTool = {
   },
 };
 
+/**
+ * The same ICH Q1E decision, but over the studies ON FILE.
+ *
+ * ASSESS_BATCH_POOLABILITY above needs every (time, value) point supplied in the
+ * call, so it can only answer once a user has pasted their data in. That is the
+ * wrong shape for the question a CMC lead actually asks — "are my primary
+ * batches combinable?" — because the answer is already in the stability
+ * register. This variant takes study ids and reads the recorded series, so the
+ * assessment runs against the system of record rather than a transcription.
+ *
+ * It also inherits the eligibility refusals (one product, one storage condition,
+ * distinct batches, one acceptance criterion per attribute), which the
+ * points-in-the-call form cannot check because it never sees the studies.
+ */
+export const ASSESS_RECORDED_BATCH_POOLABILITY: AnaTool = {
+  name: 'assess_recorded_batch_poolability',
+  description:
+    'Decide whether stability batches ALREADY RECORDED in the CMC stability register can be combined into one overall shelf life, per ICH Q1E. Takes stability study ids and reads each study\'s recorded pull-point results — use this instead of assess_batch_poolability whenever the data are on file, which is the normal case. Refuses and says why when the studies span products or storage conditions, repeat a batch, or disagree on an acceptance criterion. Returns per-attribute ANCOVA F-tests, the pooled-vs-shortest-batch decision, and the supported shelf life. Nothing is written: this is evidence for a shelf-life claim, not the claim. DETERMINISTIC. ' + NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_ids: {
+        type: 'array',
+        description: 'At least 2 stability study ids, from the same product and storage condition. Look them up first if the user named batches rather than ids.',
+        items: { type: 'number' },
+      },
+    },
+    required: ['study_ids'],
+  },
+};
+
 // Benefit/risk item shape, inlined into both arrays (the AnA schema type does
 // not support $ref/$defs).
 const BR_ITEM_SCHEMA = {
@@ -71,4 +103,4 @@ export const ASSESS_BENEFIT_RISK: AnaTool = {
 };
 
 /** Deepening tools, spread into ALL_ANA_TOOLS. */
-export const DEEPENING_TOOLS: AnaTool[] = [ASSESS_BATCH_POOLABILITY, ASSESS_BENEFIT_RISK];
+export const DEEPENING_TOOLS: AnaTool[] = [ASSESS_BATCH_POOLABILITY, ASSESS_RECORDED_BATCH_POOLABILITY, ASSESS_BENEFIT_RISK];

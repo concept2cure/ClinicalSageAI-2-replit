@@ -27,7 +27,19 @@ import {
   insertDrugSubstanceSchema,
   insertDrugProductSchema,
 } from '../../../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
+/* Reading a stability programme's recorded series, and the ICH Q1E poolability
+   assessment over it, both live in services/cmc/recorded-stability. The
+   eligibility rules there are the safety story for a shelf-life claim and have
+   two callers — this route and AnA's `assess_recorded_batch_poolability` tool —
+   so there is exactly one copy of them. */
+import {
+  readRecordedStabilityResults,
+  parseNumeric,
+  parseAcceptanceCriterion,
+  groupByParameter,
+  assessRecordedPoolability,
+} from '../../services/cmc/recorded-stability';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
 
@@ -131,88 +143,6 @@ function respondWriteError(
     error: message,
   });
   return res.status(500).json({ success: false, error: fallback });
-}
-
-/* ── Reading a stability study's recorded series ─────────────────────────────
- *
- * The stability surface appends each pull-point result to
- * `stability_data.results`. These readers are deliberately tolerant of the
- * shapes a json column can hold (parsed object, JSON string, or a bare array
- * from an older writer) and deliberately intolerant of guessing: a value that
- * cannot be read as a number reads as null, never as zero, and an acceptance
- * criterion that cannot be parsed yields no limit rather than a default one.
- * A fabricated limit here would silently produce a shelf-life number, which is
- * the single most consequential value this module computes. */
-
-interface StabilityPointRecord {
-  timePoint?: unknown;
-  parameter?: unknown;
-  result?: unknown;
-  specification?: unknown;
-}
-
-function readRecordedStabilityResults(value: unknown): StabilityPointRecord[] {
-  let raw = value;
-  if (typeof raw === 'string' && raw.trim()) {
-    try {
-      raw = JSON.parse(raw);
-    } catch {
-      return [];
-    }
-  }
-  const list = Array.isArray(raw)
-    ? raw
-    : raw && typeof raw === 'object' && Array.isArray((raw as { results?: unknown }).results)
-      ? (raw as { results: unknown[] }).results
-      : [];
-  return list.filter(
-    (r): r is StabilityPointRecord => Boolean(r) && typeof r === 'object'
-  );
-}
-
-/** The first finite number in a recorded value ("98.4%" → 98.4), else null. */
-function parseNumeric(value: unknown): number | null {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  const m = String(value ?? '').match(/-?\d+(?:\.\d+)?/);
-  if (!m) return null;
-  const n = Number(m[0]);
-  return Number.isFinite(n) ? n : null;
-}
-
-/**
- * An acceptance criterion as recorded → the limit and which way the attribute
- * trends toward it.
- *
- *   "<= 2.0%"          → upper limit 2.0, attribute increasing toward it
- *   ">= 95.0%"         → lower limit 95.0, attribute decreasing toward it
- *   "95.0 – 105.0%"    → a two-sided range; the LOWER bound is taken, because a
- *                        potency/assay range is limited in practice by decay.
- *
- * Returns null when nothing numeric is recorded — the caller then reports the
- * parameter as not estimable and says why.
- */
-function parseAcceptanceCriterion(
-  candidates: unknown[]
-): { limit: number; direction: 'increasing' | 'decreasing' } | null {
-  for (const candidate of candidates) {
-    const text = String(candidate ?? '').trim();
-    if (!text) continue;
-    const numbers = (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number).filter(Number.isFinite);
-    if (numbers.length === 0) continue;
-
-    if (/(?:<=|≤|<|nmt|not more than|max)/i.test(text)) {
-      return { limit: numbers[0], direction: 'increasing' };
-    }
-    if (/(?:>=|≥|>|nlt|not less than|min)/i.test(text)) {
-      return { limit: numbers[0], direction: 'decreasing' };
-    }
-    if (numbers.length >= 2) {
-      // A range: the attribute is bounded on both sides, and the failure mode a
-      // shelf life is set by is the decreasing one.
-      return { limit: Math.min(...numbers), direction: 'decreasing' };
-    }
-  }
-  return null;
 }
 
 /**
@@ -1250,15 +1180,25 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
       });
     }
 
-    // Group by the attribute being trended. Q1E fits ONE attribute at a time.
-    const byParameter = new Map<string, StabilityPointRecord[]>();
-    for (const r of series) {
-      const key = String(r.parameter || '').trim();
-      if (!key) continue;
-      const list = byParameter.get(key) ?? [];
-      list.push(r);
-      byParameter.set(key, list);
+    /* `storage_conditions` is an ARRAY, and results carry no per-result
+       condition. A study placed at more than one condition therefore has ONE
+       undifferentiated series spanning two degradation regimes, and a straight
+       line through it describes neither. This is a refusal and not a caveat
+       because the output is a month count someone sets a registered shelf life
+       from — a footnote on a plausible-looking number does not survive being
+       copied into a summary. */
+    const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
+      .map(c => String(c ?? '').trim())
+      .filter(Boolean);
+    if (placedAt.length > 1) {
+      return res.status(409).json({
+        success: false,
+        error: `This study is placed at ${placedAt.length} storage conditions (${placedAt.join(', ')}) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. Register one study per condition to fit a shelf life.`,
+      });
     }
+
+    // Group by the attribute being trended. Q1E fits ONE attribute at a time.
+    const byParameter = groupByParameter(series);
 
     const maxTime = Number.isFinite(study.duration) && (study.duration as number) > 0
       ? Math.max(120, (study.duration as number) * 2)
@@ -1345,6 +1285,81 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
     });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to estimate shelf life');
+  }
+});
+
+/**
+ * POST /api/cmc/stability-studies/poolability
+ * Can these batches be combined into ONE shelf-life claim? — ICH Q1E ANCOVA.
+ *
+ * ── Why this route exists ─────────────────────────────────────────────────────
+ * `services/cmc/shelf-life-poolability.ts` implements the ICH Q1E combinability
+ * test exactly — the sequential slope-equality then intercept-equality F-tests at
+ * α = 0.25, with the F-quantiles from the project's tested F-CDF — and it has
+ * been reachable only as an AnA tool that takes hand-supplied numbers. So the
+ * decision that governs whether a registered shelf life may be one pooled figure
+ * or must fall back to the shortest batch could not be run against the studies of
+ * record. This route runs it on the recorded data, per attribute.
+ *
+ * ── The refusals are the design ───────────────────────────────────────────────
+ * A poolability result asserted from mismatched inputs is worse than none, so
+ * this route stops rather than guesses:
+ *   • every study must share ONE storage condition. Q1E combinability is assessed
+ *     within a storage condition; pooling 25°C with 40°C fits a line through two
+ *     different degradation regimes and the F-tests would be meaningless;
+ *   • batch numbers must be distinct. Two studies on the same batch are replicate
+ *     testing of one batch, not two batches, and treating them as two understates
+ *     between-batch variability — the exact error the test exists to detect;
+ *   • an attribute is assessed only where ≥ 2 batches recorded it, and where those
+ *     batches agree on the acceptance criterion. Disagreement is reported as a
+ *     data conflict to resolve, never averaged away;
+ *   • nothing is written. The pooled figure is evidence for the shelf life a
+ *     person claims on the close-out form, not the claim itself.
+ */
+const poolabilityRequest = z.object({
+  studyIds: z.array(z.coerce.number().int().positive()).min(2).max(30),
+});
+
+router.post('/stability-studies/poolability', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const { studyIds } = poolabilityRequest.parse(req.body ?? {});
+    const wanted = Array.from(new Set(studyIds));
+    if (wanted.length < 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'Poolability compares batches, so it needs at least two DIFFERENT studies.',
+      });
+    }
+
+    const studies = await db
+      .select({
+        id: stabilityStudies.id,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        storageConditions: stabilityStudies.storageConditions,
+        duration: stabilityStudies.duration,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(inArray(stabilityStudies.id, wanted), eq(stabilityStudies.organizationId, orgId)));
+
+    if (studies.length !== wanted.length) {
+      const found = new Set(studies.map(s => s.id));
+      return res.status(404).json({
+        success: false,
+        error: `Stability ${wanted.filter(id => !found.has(id)).length === 1 ? 'study' : 'studies'} not found: ${wanted.filter(id => !found.has(id)).join(', ')}`,
+      });
+    }
+
+    const outcome = await assessRecordedPoolability(studies);
+    if (!outcome.ok) {
+      return res.status(outcome.status).json({ success: false, error: outcome.error });
+    }
+    return res.json({ success: true, data: outcome.data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess batch poolability');
   }
 });
 

@@ -5,9 +5,47 @@ import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 const names = ALL_ANA_TOOLS.map(t => t.name);
 
 describe('deepening tools — registration', () => {
-  it.each(['assess_batch_poolability', 'assess_benefit_risk'])('%s is defined and registered', (name) => {
+  it.each([
+    'assess_batch_poolability',
+    'assess_recorded_batch_poolability',
+    'assess_benefit_risk',
+  ])('%s is defined and registered', (name) => {
     expect(names).toContain(name);
     expect(typeof getToolHandler(name)).toBe('function');
+  });
+});
+
+/**
+ * The variant that reads the stability register rather than taking pasted
+ * numbers. Its assessment and every eligibility refusal live in
+ * services/cmc/recorded-stability and are covered there and at the route; what
+ * matters HERE is the boundary the tool owns — tenant scope, and not answering
+ * from a partial set.
+ */
+describe('assess_recorded_batch_poolability', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('assess_recorded_batch_poolability')!(input, ctx as never);
+
+  it('refuses without an organization context rather than reading across tenants', async () => {
+    expect(await call({ study_ids: [1, 2] })).toMatch(/organization context is required/i);
+  });
+
+  it('needs at least two distinct ids', async () => {
+    for (const study_ids of [[1], [1, 1], [], ['x'], [0, -3]]) {
+      const out = JSON.parse(await call({ study_ids }, { organizationId: 101 }));
+      expect(out.status).toBe('needs_parameters');
+    }
+  });
+
+  it('will not assess a partial set when an id is not in this organization', async () => {
+    // No study exists for these ids under org 101, so every id is unresolved.
+    // Answering from what WAS found would silently narrow the question the user
+    // asked, and a pooled verdict over a subset is a different claim.
+    const out = JSON.parse(await call({ study_ids: [90001, 90002] }, { organizationId: 101 }));
+    expect(['not_found', 'error']).toContain(out.status ?? 'error');
+    if (out.status === 'not_found') {
+      expect(out.message).toMatch(/do not assess a partial set/);
+    }
   });
 });
 
