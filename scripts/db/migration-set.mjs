@@ -1047,6 +1047,32 @@ export const C2C_MIGRATION_FILES = [
   // missing either.
   'migrations/20260814c_pmcf_enrollment_records.sql',
 
+  // ── Document alias map, GA ledger L10 / identity contract slice C2 ───────
+  // c2c_document_aliases — the identity-only bridge between a canonical
+  // document uuid and each store's native key. Fixes consequences 3 and 4 of
+  // docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md: a filed snapshot can record
+  // real lineage back to its source instead of prose, and editor deep-links
+  // resolve by identity rather than by title — title matching is not identity,
+  // since two sections legitimately share a title and a rename breaks the link
+  // silently.
+  //
+  // HOLDS NO ATTRIBUTES, and that is the whole design. The registry that owned
+  // identity AND metadata AND placement was built here once and reverted
+  // because it competed with the stores that already own those things. The
+  // invariant is enforced by scripts/ci/check-document-alias-attribute-free.mjs
+  // rather than by intention — the way it would erode is one reasonable-looking
+  // column at a time, not a decision to rebuild the registry.
+  //
+  // MUST stay ABOVE the isolation sweep below: a NEW integer-keyed tenant table
+  // that the sweep attaches tenant_isolation_policy to. Below it, the table
+  // would be provisioned cross-tenant readable under RLS_ENFORCE=on — and a
+  // caller who knows a native id would learn another tenant's canonical
+  // identity. FK-free by the same reasoning as its neighbours, and for a
+  // reason particular to it: `native_id` is text precisely because it addresses
+  // several stores with different key types, so it could not carry a REFERENCES
+  // even if every target table were present on every database.
+  'migrations/20260814d_document_alias_map.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

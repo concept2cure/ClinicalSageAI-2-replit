@@ -87,6 +87,16 @@ jobs:
         # `open` row names as its deliverable is reported, never failed.
         run: npm run check:ledger
 
+      - name: Document alias map holds identities only
+        # Hard gate. c2c_document_aliases is an identity map, not a registry.
+        # The registry that owned identity AND metadata AND placement was built
+        # here once and reverted, because it competed with the stores that
+        # already own those things. It would come back one reasonable-looking
+        # column at a time — a title "just for debugging", a status "so we
+        # don't have to join" — each defensible alone, the set being the
+        # reverted design. This says no once, to all of them.
+        run: npm run ci:document-alias-attribute-free
+
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh
 
