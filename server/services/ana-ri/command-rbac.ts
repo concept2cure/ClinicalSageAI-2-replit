@@ -308,9 +308,12 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
     effect: 'write', object: 'document_section', minRole: 'member', requiresConfirmation: true,
   },
   'k510_workflow.preflight': { effect: 'read', object: 'k510_workflow' },
-  // Transmits to the FDA ESG. Highest-impact mutation on this surface.
+  // Transmits to the FDA ESG. Highest-impact mutation on this surface — the one
+  // action the platform cannot undo, so it carries the full Part 11 tier:
+  // reason-for-change AND a server-verified manifested e-signature.
   'k510_workflow.transmit': {
     effect: 'write', object: 'k510_workflow', minRole: 'manager', requiresConfirmation: true,
+    requiresReasonForChange: true, requiresSignature: true,
   },
   'k510_workflow.document_preview': { effect: 'read', object: 'k510_workflow' },
 

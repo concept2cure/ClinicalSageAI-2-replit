@@ -1571,8 +1571,11 @@ registerToolHandler('search_literature', async (input) => {
 // (literature_entries) through the same service the CER workbench's
 // POST /api/cerv2/literature/record uses (ZERO DUPLICATION). Org comes from
 // ToolContext, never from model arguments; without it the tool refuses.
-// Honest limits are relayed from the service constants: entries are stored
-// unscreened (no screening-state column) and org-scoped (no program column).
+// Honest limits are relayed from the service constants: entries enter the
+// corpus unscreened and org-scoped (no program column). Screening is a separate
+// governed act with its own reviewer attribution, recorded through
+// POST /api/cerv2/literature/screen (literature-screening.service) — this tool
+// records bibliography only and says so rather than implying an appraisal.
 registerToolHandler('record_literature', async (input, ctx) => {
   const organizationId = ctx?.organizationId;
   if (typeof organizationId !== 'number' || !Number.isInteger(organizationId) || organizationId <= 0) {
@@ -1592,7 +1595,7 @@ registerToolHandler('record_literature', async (input, ctx) => {
 
   const {
     recordLiteratureEntries,
-    SCREENING_STATE_UNSUPPORTED,
+    SCREENING_RECORDED_SEPARATELY,
     PROGRAM_BINDING_NOTE,
   } = await import('../literature-recording.service.js');
 
@@ -1615,7 +1618,7 @@ registerToolHandler('record_literature', async (input, ctx) => {
     return JSON.stringify({
       recorded: true,
       ...result,
-      notes: [SCREENING_STATE_UNSUPPORTED, PROGRAM_BINDING_NOTE],
+      notes: [SCREENING_RECORDED_SEPARATELY, PROGRAM_BINDING_NOTE],
     });
   } catch (e) {
     return JSON.stringify({

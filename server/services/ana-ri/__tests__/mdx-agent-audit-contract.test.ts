@@ -93,16 +93,29 @@ const { dbMockFactory } = vi.hoisted(() => ({
 // works no matter how vitest keys the cache.
 vi.mock('../../db', () => dbMockFactory());
 vi.mock('../../../db', () => dbMockFactory());
-const { ESGSubmissionService } = vi.hoisted(() => ({
-  // Regular function (not arrow) so `new ESGSubmissionService()` in the
-  // handler works — an arrow vi.fn throws "is not a constructor".
-  ESGSubmissionService: vi.fn(function () {
-    return {
-      submitToFDA: vi.fn(async () => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
-    };
-  }),
+// The 510(k) transmit handler runs the shared governed transmit that ends at
+// the real FDA ESG AS2 gateway. Stubbed here so the audit-shape probe does not
+// need a gateway; the honest-refusal and reaches-the-real-gateway behaviour is
+// pinned in ./mdx-command-handlers.test.ts and
+// ./mdx-esg-transmit-gateway.test.ts.
+vi.mock('../../submission-gateways/governed-transmit', () => ({
+  executeGovernedTransmit: vi.fn(async () => ({
+    result: {
+      transmittalId: 7,
+      transmissionId: '<mdn-1@sponsor>',
+      status: 'received',
+      transport: 'as2',
+      httpStatus: 200,
+      ackReceivedAt: null,
+      message: 'FDA ESG AS2 transmit accepted.',
+    },
+    bundle: { sha256: 'a'.repeat(64), sizeBytes: 10, format: 'estar' },
+    ledgerWriteFailed: false,
+  })),
 }));
-vi.mock('../../ESGSubmissionService', () => ({ default: ESGSubmissionService }));
+vi.mock('../../../routes/c2c/actions', () => ({
+  recordGovernedAction: vi.fn(async () => ({ actionId: 'act_1', auditId: 'aud_1' })),
+}));
 vi.mock('../../gspr-postmarket/gspr.service', () => ({
   upsertMapping: (...a: any[]) => (svc.upsertMapping as any)(...a),
 }));
@@ -189,11 +202,26 @@ const PROBES: Probe[] = [
     tool: 'k510_workflow.transmit',
     expectedAction: 'agent.ana.k510_workflow.transmit',
     invoke: () =>
-      esgTransmit(CTX, {
-        projectId: 99,
-        confirm: 'yes-transmit',
-        reason: 'pre-flight green; sign-off complete; all blockers cleared',
-      }),
+      esgTransmit(
+        {
+          ...CTX,
+          // Transmit additionally requires a server-verified Part 11 signature
+          // (PART11_ESIGN_COMMANDS) — the handler refuses without one whatever
+          // the tenant's enforcement flag says.
+          signoff: {
+            reasonForChange: 'RA + QA sign-off complete; transmitting cleared package',
+            signatureVerified: true,
+            signaturePurpose: 'approval',
+            verifiedAt: new Date('2026-08-14T10:00:00.000Z'),
+          },
+        },
+        {
+          packageId: 42,
+          environment: 'production',
+          confirm: 'yes-transmit',
+          reason: 'pre-flight green; sign-off complete; all blockers cleared',
+        },
+      ),
   },
   {
     tool: 'gspr.mapping.upsert',

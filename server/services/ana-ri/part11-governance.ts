@@ -33,6 +33,15 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   'sign_document',
   'submit_document',
   'create_submission_package',
+  // Transmitting a 510(k) package to the FDA ESG. The MOST consequential entry
+  // here: it puts bytes on a real agency endpoint and nothing in this platform
+  // can un-send them. Membership makes POST /api/ana-ri/governed-action the only
+  // dispatch that can carry it (that route refuses any command not in this set),
+  // which is what supplies the server-verified re-authentication the submission
+  // gateway demands. The handler additionally requires the verified sign-off
+  // UNCONDITIONALLY — it does not consult the tenant's anaPart11Enforce flag,
+  // because a tenant opt-out must not be able to un-gate an agency transmission.
+  'k510_workflow.transmit',
   // Applying AnA's onboarding proposals writes the organization profile on the
   // client's behalf, so it is governed: a reason-for-change is required and the
   // action is recorded. It is deliberately NOT in the e-sign set below — it
@@ -73,6 +82,7 @@ export const PART11_ESIGN_COMMANDS: ReadonlySet<string> = new Set<string>([
   'sign_document',
   'submit_document',
   'create_submission_package',
+  'k510_workflow.transmit',
 ]);
 
 /** Minimum meaningful reason-for-change length (trimmed). */
@@ -92,6 +102,18 @@ export interface Part11Signoff {
   signatureId?: number;
   /** §11.50 signature meaning (authorship/review/approval/responsibility/release). */
   signaturePurpose?: string;
+  /**
+   * The instant the server VERIFIED the signer's re-authentication for THIS
+   * dispatch. Stamped by the route at the moment verification succeeded, never
+   * by a handler and never by the client.
+   *
+   * Handlers that hand a human gate onward — the FDA ESG transmit handler
+   * passes it to the submission gateway as `reauthVerifiedAt` — need the actual
+   * verification time, not "now". Synthesising it inside the handler would put
+   * a fabricated governance timestamp on an irreversible agency transmission,
+   * so those handlers fail closed when it is absent.
+   */
+  verifiedAt?: Date;
 }
 
 /** Does this command require a Part 11 sign-off (at least a reason-for-change)? */

@@ -37,8 +37,8 @@ vi.mock('../../server/db/requestDb', () => ({
 
 vi.mock('../../server/services/literature-recording.service', () => ({
   recordLiteratureEntries: mockRecord,
-  SCREENING_STATE_UNSUPPORTED:
-    'literature_entries has no screening-state or metadata column — entries are stored unscreened',
+  SCREENING_RECORDED_SEPARATELY:
+    'entries enter the corpus unscreened — include/exclude appraisal is recorded separately',
   PROGRAM_BINDING_NOTE: 'entries are recorded to the organization corpus',
 }));
 

@@ -1001,6 +1001,78 @@ export const C2C_MIGRATION_FILES = [
   // (20260524_program_workbench_schema.sql) is deliberately not on this path.
   'migrations/20260814_projects_regulatory_program_anchor.sql',
 
+  // ── Literature screening trail, GA ledger L4 (added 2026-08-14) ──────────
+  // literature_screening_decisions — the MEDDEV 2.7/1 Rev 4 include/exclude
+  // appraisal record. Literature search and recording were already end-to-end,
+  // but `literature_entries` is purely bibliographic (no status column, no
+  // jsonb), so a reviewer's decision and its exclusion reason were lost with
+  // the session and the write path said so out loud rather than faking it.
+  // The screening trail is the part a notified body audits.
+  //
+  // MUST be on this list, not merely in migrations/: the root tree reaches only
+  // fresh databases, and it is the EXISTING ones running clinical evaluations.
+  // Until it lands, POST /api/cerv2/literature/screen refuses 422 with the real
+  // reason (relation absent) — it never pretends to have persisted a decision.
+  //
+  // MUST stay ABOVE the isolation sweep below: this is the entry that creates a
+  // NEW integer-keyed tenant table, and the sweep is what attaches
+  // tenant_isolation_policy to it. Below the sweep it would be provisioned
+  // cross-tenant readable under RLS_ENFORCE=on. No dependency on any entry
+  // above — it is FK-free by the same reasoning as 20260814 (its parents
+  // `literature_entries` and `regulatory_programs` differ in column type across
+  // lineages / reach no durable applier respectively).
+  'migrations/20260814b_literature_screening_decisions.sql',
+
+  // ── PMCF enrolment progress, GA ledger L5 (added 2026-08-14) ─────────────
+  // pmcf_enrollment_records — the EU MDR Annex XIV Part B §6.2 / MDCG 2020-7
+  // execution evidence behind the CER's post-market section. The PMCF PLAN was
+  // already real (post_market_documents + pmcf-plan-generator.ts); what a
+  // notified body actually audits is plan-vs-actual — which activities were
+  // committed to, how many subjects are enrolled against each planned sample
+  // size, as of when. That had no backend at all, so the workbench rendered kit
+  // fixtures behind the sample gate and said so in prose.
+  //
+  // MUST be on this list, not merely in migrations/: the root tree reaches only
+  // fresh databases, and it is the EXISTING ones carrying CE-marked devices
+  // under active follow-up. Until it lands, the read path answers 422 naming
+  // the unapplied migration and the write path refuses — neither pretends.
+  //
+  // MUST stay ABOVE the isolation sweep below: this creates a NEW integer-keyed
+  // tenant table and the sweep is what attaches tenant_isolation_policy to it.
+  // Below the sweep it would be provisioned cross-tenant readable under
+  // RLS_ENFORCE=on. No dependency on any entry above — FK-free by the same
+  // reasoning as 20260814b, and for a stronger reason: BOTH of its would-be
+  // parents (`regulatory_programs`, `post_market_documents`) are absent from
+  // this list, so a REFERENCES would abort the whole set on any database
+  // missing either.
+  'migrations/20260814c_pmcf_enrollment_records.sql',
+
+  // ── Document alias map, GA ledger L10 / identity contract slice C2 ───────
+  // c2c_document_aliases — the identity-only bridge between a canonical
+  // document uuid and each store's native key. Fixes consequences 3 and 4 of
+  // docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md: a filed snapshot can record
+  // real lineage back to its source instead of prose, and editor deep-links
+  // resolve by identity rather than by title — title matching is not identity,
+  // since two sections legitimately share a title and a rename breaks the link
+  // silently.
+  //
+  // HOLDS NO ATTRIBUTES, and that is the whole design. The registry that owned
+  // identity AND metadata AND placement was built here once and reverted
+  // because it competed with the stores that already own those things. The
+  // invariant is enforced by scripts/ci/check-document-alias-attribute-free.mjs
+  // rather than by intention — the way it would erode is one reasonable-looking
+  // column at a time, not a decision to rebuild the registry.
+  //
+  // MUST stay ABOVE the isolation sweep below: a NEW integer-keyed tenant table
+  // that the sweep attaches tenant_isolation_policy to. Below it, the table
+  // would be provisioned cross-tenant readable under RLS_ENFORCE=on — and a
+  // caller who knows a native id would learn another tenant's canonical
+  // identity. FK-free by the same reasoning as its neighbours, and for a
+  // reason particular to it: `native_id` is text precisely because it addresses
+  // several stores with different key types, so it could not carry a REFERENCES
+  // even if every target table were present on every database.
+  'migrations/20260814d_document_alias_map.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

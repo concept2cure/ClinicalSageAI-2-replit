@@ -10,9 +10,11 @@
  * transmission that never happened.
  *
  * In the Phase 1 consolidation the whole route file was deleted (zero client
- * callers; the canonical 510(k) surface is /api/510k/estar/* + /api/510k/device/*
- * and the honest transmission seam is ESGSubmissionService — see
- * tests/fda-submission-honesty.contract.test.ts). An earlier version of this
+ * callers; the canonical 510(k) surface is /api/510k/estar/* + /api/510k/device/*,
+ * and the one transmission seam is the shared governed transmit —
+ * server/services/submission-gateways/governed-transmit.ts onto the real AS2
+ * gateway in fda-esg.ts; see tests/fda-submission-honesty.contract.test.ts).
+ * An earlier version of this
  * file exercised the router's layers; with the router gone, this contract pins
  * the deletion itself so the fabrication cannot quietly return:
  *

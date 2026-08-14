@@ -30,20 +30,16 @@ import {
   type Region, type GatewayName,
 } from '../services/submission-gateways';
 import {
-  findActiveTransmittal,
   rollbackTransmittal,
   RollbackNotPermittedError,
 } from '../services/submission-gateways/fda-esg';
-import { recordGovernedAction, verifyReauth } from './c2c/actions';
-import { getBundle } from '../services/submission-bundle-storage';
 import {
-  bundleTrustEnforced,
-  hasUnsafePathSyntax,
-  isBundleStorageKey,
-  isPathWithinBundleRoot,
-} from '../services/submission-gateways/bundle-namespace';
-import { promises as fsp } from 'fs';
-import { dirname } from 'path';
+  executeGovernedTransmit,
+  GovernedTransmitRefusal,
+  GovernedTransmitInternalError,
+  BUNDLE_FORMAT_SET,
+} from '../services/submission-gateways/governed-transmit';
+import { recordGovernedAction, verifyReauth } from './c2c/actions';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
@@ -61,40 +57,9 @@ function getUserId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/**
- * Rematerialize a bundle's local file from durable storage if it is missing.
- *
- * Bundles are local-first, but ephemeral containers can recycle between assemble
- * and transmit. If the local file at bundle.path is gone AND the descriptor
- * records a durable S3 copy, download it back to bundle.path before the gateway
- * reads it. No-op when the local file is present, when there is no storage
- * descriptor, or when provider is 'local'. A genuinely-missing local file with
- * no durable copy is left for the gateway's integrity gate to refuse (422).
- */
-async function ensureBundleLocal(bundle: {
-  path: string;
-  storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
-}): Promise<void> {
-  try {
-    await fsp.access(bundle.path);
-    return; // local file present — nothing to do
-  } catch {
-    // local file missing — fall through to durable rematerialization
-  }
-  if (bundle.storage?.provider !== 's3') return; // no durable copy to restore
-  const buf = await getBundle(bundle.storage.key);
-  await fsp.mkdir(dirname(bundle.path), { recursive: true });
-  await fsp.writeFile(bundle.path, buf);
-}
-
 const REGION_SET   = ['fda', 'ema', 'pmda', 'ca'] as const;
 const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] as const;
 const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const SHA256_RE    = /^[0-9a-f]{64}$/i;
-
-/** Transmit formats a bundle descriptor may declare. */
-const BUNDLE_FORMAT_SET = ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] as const;
-type BundleFormat = typeof BUNDLE_FORMAT_SET[number];
 
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
 
@@ -200,7 +165,7 @@ const transmitBody = z.object({
     path:        z.string().min(1),
     sha256:      z.string().regex(/^[0-9a-f]{64}$/i),
     sizeBytes:   z.number().int().nonnegative(),
-    format:      z.enum(['ectd', 'estar', 'eudamed_register', 'pmda_ectd']),
+    format:      z.enum(BUNDLE_FORMAT_SET),
     displayName: z.string().optional(),
   }).optional(),
   metadata: z.record(z.unknown()).optional(),
@@ -244,264 +209,34 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
   // TransmitAuthorization in server/services/submission-gateways/types.ts.
   const reauthVerifiedAt = new Date();
 
-  // ─── C2C-SUB-003: the bundle descriptor is a trust boundary ──────────
-  //
-  // A descriptor names the bytes that get shipped to a real regulator. When it
-  // comes from the request body the client picks BOTH the server-side path and
-  // the digest it will be checked against, so every downstream control
-  // (package ownership, structural validation, hash/size verification) is
-  // satisfied by construction while reading an arbitrary server-readable file.
-  //
-  // Outside a declared local development/test environment the ONLY admissible
-  // source is the server-generated descriptor the tenant-scoped assemble route
-  // persisted on c2c_submission_packages.metadata.bundle. Fail closed: an
-  // unset, blank or unknown NODE_ENV refuses the client descriptor.
-  if (p.bundle && bundleTrustEnforced()) {
-    return clientError(
-      res,
-      422,
-      'Client-supplied bundle descriptors are not accepted in this environment; ' +
-      'transmit a tenant-owned packageId (POST /api/submission-ops/packages/:packageId/assemble first).',
-    );
-  }
-
-  // Resolve the bundle. In dev/test an explicit `bundle` in the body still wins
-  // (back-compat for local flows); the guard above makes that branch
-  // unreachable everywhere else. Otherwise, if a `packageId` is provided, load
-  // the stored bundle descriptor that the assemble endpoint persisted on
-  // c2c_submission_packages.metadata.bundle under the caller's org.
-  let bundle: {
-    path: string;
-    sha256: string;
-    sizeBytes: number;
-    format: BundleFormat;
-    displayName?: string;
-    storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
-    validation?: { errorCount: number; warningCount?: number; infoCount?: number; findings?: unknown[] };
-  } | null = p.bundle ?? null;
-
-  if (!bundle && p.packageId != null) {
-    try {
-      const { rows } = await pool.query<{ metadata: any }>(
-        `SELECT metadata FROM c2c_submission_packages
-          WHERE id = $1 AND org_id = $2`,
-        [p.packageId, orgId],
-      );
-      const stored = rows[0]?.metadata?.bundle;
-      // Shape-check the stored descriptor rather than trusting the JSONB blob:
-      // sha256 must be a real 64-hex digest, sizeBytes a non-negative integer,
-      // and format one of the known transmit formats. A malformed descriptor is
-      // treated as "no bundle" (422 below), never coerced.
-      if (
-        stored &&
-        typeof stored.path === 'string' &&
-        typeof stored.sha256 === 'string' &&
-        SHA256_RE.test(stored.sha256) &&
-        typeof stored.sizeBytes === 'number' &&
-        Number.isInteger(stored.sizeBytes) &&
-        stored.sizeBytes >= 0 &&
-        BUNDLE_FORMAT_SET.includes(stored.format)
-      ) {
-        bundle = {
-          path:        stored.path,
-          sha256:      stored.sha256,
-          sizeBytes:   stored.sizeBytes,
-          format:      stored.format as BundleFormat,
-          displayName: typeof stored.displayName === 'string' ? stored.displayName : undefined,
-          // Carry the durable-storage descriptor (if any) so ensureBundleLocal can
-          // rematerialize the local file after a container recycle. Not passed to
-          // the gateway — the gateway contract stays path/sha256/sizeBytes/format.
-          storage:     stored.storage && typeof stored.storage === 'object' ? stored.storage : undefined,
-          // Carry internal eCTD structural validation findings (if any) so the
-          // transmit hard-gate can block on error-severity findings.
-          validation:  stored.validation && typeof stored.validation === 'object' ? stored.validation : undefined,
-        };
-      }
-    } catch (err) {
-      return serverError(res, log, 'transmit-load-bundle', err);
-    }
-  }
-
-  if (!bundle) {
-    return clientError(
-      res,
-      422,
-      'No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.',
-    );
-  }
-
-  // Path-syntax guard — unconditional, every environment. A `..` component or
-  // an embedded NUL is never a legitimate assembled-bundle location, whatever
-  // produced the descriptor.
-  if (hasUnsafePathSyntax(bundle.path)) {
-    return clientError(
-      res,
-      422,
-      'Bundle path is not a well-formed bundle location; re-assemble the package before transmitting.',
-    );
-  }
-
-  // ─── C2C-SUB-003: trusted-descriptor gate ────────────────────────────
-  // Runs AFTER the re-auth gate (governance order unchanged) and BEFORE
-  // ensureBundleLocal — which writes to bundle.path — so neither the read nor
-  // the write can escape the namespace.
-  if (bundleTrustEnforced()) {
-    // (a) Structural-validation evidence. MISSING evidence is UNKNOWN, and
-    //     UNKNOWN is blocking — it is NOT "zero errors". Only the assemble
-    //     route writes this block, so requiring it also proves the descriptor
-    //     is server-generated rather than reconstructed.
-    if (!bundle.validation || typeof bundle.validation.errorCount !== 'number') {
-      return clientError(
-        res,
-        422,
-        'Bundle carries no internal structural-validation evidence, so its structural state is UNKNOWN; ' +
-        're-assemble the package before transmitting.',
-      );
-    }
-    // (b) Namespace confinement. Defence in depth even for a stored descriptor:
-    //     if metadata.bundle were ever tampered with, the path still cannot
-    //     leave the directory the assemble route writes to.
-    //     NOTE: lexical confinement — a symlink planted inside the root is not
-    //     detected. Out of scope for the request-body vector; realpath()
-    //     hardening is a separate, filesystem-level change.
-    if (!isPathWithinBundleRoot(bundle.path)) {
-      return clientError(
-        res,
-        422,
-        'Bundle path is outside the permitted submission-bundle storage namespace; ' +
-        're-assemble the package before transmitting.',
-      );
-    }
-    // (c) Durable-copy key confinement — ensureBundleLocal fetches this key and
-    //     writes the bytes to disk, so it must stay inside the bundle prefix.
-    if (bundle.storage?.provider === 's3' && !isBundleStorageKey(bundle.storage.key)) {
-      return clientError(
-        res,
-        422,
-        'Bundle durable-storage key is outside the permitted submission-bundle namespace.',
-      );
-    }
-  }
-
-  // Internal eCTD structural-validation hard-gate. If the stored descriptor
-  // recorded error-severity findings at assemble-time, refuse the transmit and
-  // return the findings so the caller can re-assemble after fixing. Warnings do
-  // NOT block. The `?? 0` fallback is reachable ONLY in a declared local
-  // development/test environment — gate (a) above guarantees the field is
-  // present everywhere else. Note: this is INTERNAL structural validation only,
-  // not an agency validator.
-  const errorCount = bundle.validation?.errorCount ?? 0;
-  if (errorCount > 0) {
-    return clientError(
-      res,
-      422,
-      `Bundle failed eCTD structural validation (${errorCount} error${errorCount === 1 ? '' : 's'}); re-assemble after fixing.`,
-      { findings: bundle.validation?.findings ?? [] },
-    );
-  }
-
-  // Rematerialize the local bundle file from durable storage if a container
-  // recycle lost it since assembly. No-op for local-only descriptors.
   try {
-    await ensureBundleLocal(bundle);
-  } catch (err) {
-    return serverError(res, log, 'transmit-rematerialize-bundle', err);
-  }
-
-  // Per-package transmit lock (FIX 7). Refuse a second transmit against the
-  // same (org, package_id, bundle_sha256) while a prior attempt is still
-  // active (pending|in_transit|received). Terminal states (rejected,
-  // rolled_back, completed) are excluded by findActiveTransmittal so a
-  // rolled-back package CAN be intentionally re-transmitted. The DB-level
-  // partial unique index (sub_trans_active_lock_idx) is the backstop for
-  // races between this check and the gateway's INSERT. Cross-tenant double-
-  // transmit is allowed by design (CMO scenario).
-  try {
-    const active = await findActiveTransmittal({
-      organizationId: orgId,
-      packageId:      p.packageId ?? null,
-      bundleSha256:   bundle.sha256,
-    });
-    if (active) {
-      return clientError(
-        res,
-        409,
-        `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
-        `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
-        { transmittalId: active.id, status: active.status },
-      );
-    }
-  } catch (err) {
-    return serverError(res, log, 'transmit-active-lock-check', err);
-  }
-
-  try {
-    const gw = getGateway(region, gateway);
-    const result = await gw.transmit({
+    const outcome = await executeGovernedTransmit({
+      region,
+      gateway,
       organizationId: orgId,
       userId,
       programId:      p.programId ?? null,
       packageId:      p.packageId ?? null,
-      bundle: {
-        path:        bundle.path,
-        sha256:      bundle.sha256,
-        sizeBytes:   bundle.sizeBytes,
-        format:      bundle.format,
-        displayName: bundle.displayName,
-      },
       environment:    p.environment,
       submissionType: p.submissionType,
-      metadata:       { ...(p.metadata ?? {}), environment: p.environment },
-      authorization: {
-        kind: 'governed-http',
-        actorUserId: userId,
-        reason: p.reason,
-        reauthVerifiedAt,
-      },
+      metadata:       p.metadata,
+      reason:         p.reason,
+      reauthVerifiedAt,
+      clientBundle:   p.bundle ?? null,
+      recordGovernedAction,
+      log,
+      surface: 'submission-gateway',
     });
-
-    // Record the governed sign AFTER the external transmit succeeds. The
-    // external transmit is irreversible, so if the ledger write fails we log
-    // it and still return the transmit result (the gateway already accepted
-    // the package). The transmittal row written by gw.transmit() remains the
-    // authoritative external record in that edge case.
-    try {
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        await recordGovernedAction(client, {
-          orgId,
-          userId,
-          command: 'sign',
-          target: `submission:${p.packageId ?? p.programId ?? 'pkg'}`,
-          reason: p.reason,
-          payload: {
-            meaning: 'submission',
-            region,
-            gateway,
-            bundleSha256: bundle.sha256,
-            transactionId: (result as any)?.transactionId ?? null,
-          },
-          domain: 'mdx',
-          surface: 'submission-gateway',
-        });
-        await client.query('COMMIT');
-      } catch (ledgerErr) {
-        try { await client.query('ROLLBACK'); } catch { /* noop */ }
-        throw ledgerErr;
-      } finally {
-        client.release();
-      }
-    } catch (ledgerErr: any) {
-      log.error('transmit-ledger-write-failed-after-successful-transmit', {
-        message: ledgerErr?.message,
-        region,
-        gateway,
-      });
-    }
-
-    return created(res, result);
+    return created(res, outcome.result);
   } catch (err: unknown) {
+    // Honest pre-transmit refusals: nothing left the platform, so there is no
+    // transmittal, no acknowledgement and no agency identifier to report.
+    if (err instanceof GovernedTransmitRefusal) {
+      return clientError(res, err.httpStatus, err.message, err.details);
+    }
+    if (err instanceof GovernedTransmitInternalError) {
+      return serverError(res, log, err.stage, err.cause);
+    }
     if (err instanceof CredentialError) {
       return clientError(res, 412, err.message);
     }

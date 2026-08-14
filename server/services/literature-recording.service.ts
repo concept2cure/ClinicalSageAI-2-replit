@@ -33,8 +33,11 @@
  *                 previous record supplied) instead of duplicating it. The
  *                 table has no unique constraint on that key, so idempotency
  *                 is update-first-then-insert in application logic.
- *   HONEST LIMITS Screening state and program binding are NOT representable:
- *                 see SCREENING_STATE_UNSUPPORTED / PROGRAM_BINDING_NOTE.
+ *   HONEST LIMITS Program binding is NOT representable: see PROGRAM_BINDING_NOTE.
+ *                 Screening state is not stored HERE either, but it is no longer
+ *                 unrepresentable — it lives in its own table with its own
+ *                 actor, stage and timestamp. See SCREENING_RECORDED_SEPARATELY
+ *                 and literature-screening.service.ts (GA ledger L4).
  */
 
 /** pg-style executor: the request-scoped client (requestPgClient(req)) or the
@@ -74,14 +77,25 @@ export const LITERATURE_SOURCE_NAME = 'PubMed';
 
 /**
  * literature_entries has NO status column and NO jsonb/metadata column — every
- * column is a scalar bibliographic field. Included/excluded/pending screening
- * state therefore CANNOT be represented without a schema migration, which this
- * write path deliberately does not add. Exported so the HTTP route and the AnA
- * tool state the same limitation verbatim instead of each inventing wording.
+ * column is a scalar bibliographic field, so a screening decision still cannot
+ * be stored on the corpus row. That is now a shape statement, not a capability
+ * gap: the decision lives in `literature_screening_decisions`, keyed on the
+ * corpus entry plus the appraisal stage and the deciding reviewer
+ * (server/services/literature-screening.service.ts, GA ledger L4).
+ *
+ * Recording an article therefore leaves it UNSCREENED — which is the truth, not
+ * a limitation: an article that has just entered the corpus has had no
+ * appraisal. Exported so the HTTP route and the AnA tool point at the screening
+ * path in the same words instead of each inventing wording.
+ *
+ * Supersedes the former SCREENING_STATE_UNSUPPORTED constant, which asserted
+ * that MEDDEV include/exclude appraisal "is not persisted". That is no longer
+ * true, and a stale honesty note is just a lie with good manners.
  */
-export const SCREENING_STATE_UNSUPPORTED =
-  'literature_entries has no screening-state or metadata column — entries are stored ' +
-  'unscreened; MEDDEV include/exclude appraisal is not persisted';
+export const SCREENING_RECORDED_SEPARATELY =
+  'entries enter the corpus unscreened — include/exclude appraisal is recorded separately, ' +
+  'per appraisal stage and reviewer, through the literature screening path ' +
+  '(POST /api/cerv2/literature/screen)';
 
 /**
  * literature_entries has no program/project column either. Entries are

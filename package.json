@@ -103,6 +103,7 @@
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
+    "ci:document-alias-attribute-free": "node scripts/ci/check-document-alias-attribute-free.mjs",
     "ci:tenant-column-types": "node scripts/ci/check-tenant-column-types.mjs",
     "ci:tenant-blind-models": "node scripts/ci/check-tenant-blind-models.mjs",
     "ci:org-path-param-guards": "node scripts/ci/check-org-path-param-guards.mjs",

@@ -120,6 +120,18 @@ const TENANT_SCOPED_TABLES = new Set([
   'translation_segments',
   'glossary_terms',
   'translation_memory_entries',
+  // CER literature corpus + its MEDDEV 2.7/1 Rev 4 screening trail (GA ledger
+  // L4). Both are raw-SQL-only — neither has a Drizzle definition in
+  // shared/schema.ts — so they are exactly the case this gate exists for: the
+  // query-builder analysis that covers most tables cannot see them at all.
+  // A screening decision is per-organization governance evidence; an unfiltered
+  // read would put one manufacturer's appraisal of an article into another
+  // manufacturer's clinical evaluation. All current access is through
+  // literature-recording.service.ts / literature-screening.service.ts, every
+  // statement of which carries organization_id, so adding them here tightens
+  // the gate with no new findings.
+  'literature_entries',
+  'literature_screening_decisions',
 ]);
 
 // ─── Tenant-filter signals ──────────────────────────────────────────────────

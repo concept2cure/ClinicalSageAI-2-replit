@@ -346,7 +346,8 @@ export const MDX_WORKFLOWS: MdxWorkflow[] = [
     ],
     pitfalls: [
       'Transmitting without the cover letter / 510(k) summary — FDA will RTA you for incomplete submission.',
-      'Confirming the transmit too quickly — the platform requires confirm="yes-transmit" + reason ≥ 30 chars; that delay is a feature.',
+      'Confirming the transmit too quickly — the platform requires confirm="yes-transmit" + reason ≥ 30 chars, an explicit environment, AND a server-verified Part 11 e-signature (the chat dispatch is refused and must be re-submitted through the governed-action route); that delay is a feature.',
+      'Passing a 510(k) project id — transmit takes the id of a LOCKED, ASSEMBLED submission package. An un-assembled package has no transmittable bytes and is refused.',
     ],
     surfaces: ['k510'],
     tools: ['k510_workflow.preflight', 'k510_workflow.transmit'],

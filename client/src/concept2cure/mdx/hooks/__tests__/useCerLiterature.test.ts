@@ -17,6 +17,12 @@ import {
   searchCerLiterature,
   articleToRecordEntry,
   recordCerLiterature,
+  screeningReadUrl,
+  screeningKey,
+  fetchCerScreening,
+  screenCerLiterature,
+  SCREENING_STAGES,
+  SCREENING_DECISIONS,
 } from '../useCerLiterature';
 import type { CerLiteratureArticle } from '../useCerLiterature';
 
@@ -191,6 +197,173 @@ describe('recordCerLiterature', () => {
     fetchMock.mockRejectedValueOnce(new Error('network down'));
     const offline = await recordCerLiterature([articleToRecordEntry(ARTICLE)]);
     expect(offline.recorded).toBe(false);
+    expect(offline.error).toMatch(/could not be reached/);
+  });
+});
+
+/* ─── Screening / appraisal (MEDDEV 2.7/1 Rev 4) ─────────────────────── */
+
+const STORED_DECISION = {
+  id: 'd1',
+  pmid: '38012345',
+  title: 'CGM outcomes in adults',
+  literatureEntryId: 'e1',
+  programId: null,
+  stage: 'title_abstract' as const,
+  decision: 'included' as const,
+  exclusionReason: null,
+  decidedBy: 42,
+  decidedAt: '2026-08-14T10:00:00.000Z',
+};
+
+describe('screening vocabulary', () => {
+  it('mirrors the two MEDDEV/PRISMA passes the server names, rather than re-inventing them', () => {
+    expect(SCREENING_STAGES).toEqual(['title_abstract', 'full_text']);
+    expect(SCREENING_DECISIONS).toEqual(['included', 'excluded', 'pending']);
+  });
+
+  it('keys a decision by pmid AND stage — one article carries one per pass', () => {
+    expect(screeningKey('38012345', 'title_abstract')).toBe('38012345::title_abstract');
+    expect(screeningKey('38012345', 'full_text')).not.toBe(
+      screeningKey('38012345', 'title_abstract'),
+    );
+  });
+});
+
+describe('screeningReadUrl (query contract)', () => {
+  it('reads the whole scope trail when nothing is narrowed', () => {
+    expect(screeningReadUrl()).toBe('/api/cerv2/literature/screening');
+    expect(screeningReadUrl(null, [])).toBe('/api/cerv2/literature/screening');
+  });
+
+  it('carries the program scope and the on-screen pmids', () => {
+    expect(screeningReadUrl('prog-1', ['38012345', ' 12345678 ', ''])).toBe(
+      '/api/cerv2/literature/screening?programId=prog-1&pmids=38012345%2C12345678',
+    );
+  });
+});
+
+describe('fetchCerScreening', () => {
+  it('sends auth headers and returns the stored decisions', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ available: true, decisions: [STORED_DECISION] }));
+    const result = await fetchCerScreening('prog-1', ['38012345']);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/cerv2/literature/screening?programId=prog-1&pmids=38012345');
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe('Bearer test-token');
+    expect(headers['x-organization-id']).toBe('7');
+    expect(result.available).toBe(true);
+    expect(result.decisions).toEqual([STORED_DECISION]);
+  });
+
+  it('passes the honest store-absent degradation through untouched', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        available: false,
+        unavailableReason: 'the literature screening store is not provisioned on this database',
+        decisions: [],
+      }),
+    );
+    const result = await fetchCerScreening();
+    expect(result.available).toBe(false);
+    expect(result.unavailableReason).toMatch(/not provisioned/);
+  });
+
+  it('reports a failed request as unavailable, NOT as an empty trail', async () => {
+    // The distinction is the whole point: an empty trail means "nothing has
+    // been screened", which is a claim about the evidence base.
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    const offline = await fetchCerScreening();
+    expect(offline.available).toBe(false);
+    expect(offline.error).toMatch(/could not be reached/);
+
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: 'boom' }, false, 500));
+    const failed = await fetchCerScreening();
+    expect(failed.available).toBe(false);
+    expect(failed.error).toMatch(/boom/);
+  });
+});
+
+describe('screenCerLiterature', () => {
+  it('POSTs the decision with auth headers and the program scope', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ screened: true, outcome: 'created', decision: STORED_DECISION }),
+    );
+    const outcome = await screenCerLiterature(
+      { pmid: '38012345', stage: 'title_abstract', decision: 'included' },
+      'prog-1',
+    );
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/cerv2/literature/screen');
+    expect(init.method).toBe('POST');
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe('Bearer test-token');
+    expect(headers['Content-Type']).toBe('application/json');
+    const body = JSON.parse(String(init.body));
+    expect(body).toEqual({
+      pmid: '38012345',
+      stage: 'title_abstract',
+      decision: 'included',
+      programId: 'prog-1',
+    });
+    expect(outcome.screened).toBe(true);
+    expect(outcome.decision).toEqual(STORED_DECISION);
+  });
+
+  it('sends the reason only on an exclusion — the server rejects a stale one', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ screened: true, decision: STORED_DECISION }));
+
+    await screenCerLiterature({
+      pmid: '38012345',
+      stage: 'full_text',
+      decision: 'excluded',
+      exclusionReason: 'not the subject device',
+    });
+    let body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1].body));
+    expect(body.exclusionReason).toBe('not the subject device');
+
+    await screenCerLiterature({
+      pmid: '38012345',
+      stage: 'full_text',
+      decision: 'pending',
+      exclusionReason: 'left over from the editor',
+    });
+    body = JSON.parse(String((fetchMock.mock.calls[1] as [string, RequestInit])[1].body));
+    expect(body).not.toHaveProperty('exclusionReason');
+  });
+
+  it('relays a 422 refusal with its code and the server text', async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          screened: false,
+          code: 'ENTRY_NOT_IN_CORPUS',
+          error: "PMID 38012345 — that article is not in this organization's literature corpus",
+        },
+        false,
+        422,
+      ),
+    );
+    const refused = await screenCerLiterature({
+      pmid: '38012345',
+      stage: 'title_abstract',
+      decision: 'included',
+    });
+    expect(refused.screened).toBe(false);
+    expect(refused.code).toBe('ENTRY_NOT_IN_CORPUS');
+    expect(refused.error).toMatch(/not in this organization's literature corpus/);
+  });
+
+  it('never reports an optimistic success when the request fails', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    const offline = await screenCerLiterature({
+      pmid: '38012345',
+      stage: 'title_abstract',
+      decision: 'included',
+    });
+    expect(offline.screened).toBe(false);
     expect(offline.error).toMatch(/could not be reached/);
   });
 });

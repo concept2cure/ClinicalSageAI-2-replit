@@ -753,7 +753,14 @@ router.post('/upload', upload.array('files'), async (req: Request, res: Response
 
 router.get('/context/:projectId', async (req: Request, res: Response) => {
   if (!requireToken(res)) return;
-  const { projectId } = req.params;
+  // Typed `string | string[]`. `String()` on an array joins with a comma, which
+  // would smuggle a separator into a path this route deliberately keeps to ONE
+  // segment — the very property the encoding below exists to preserve. A param
+  // that is not a single string is refused rather than flattened.
+  const projectId = req.params.projectId;
+  if (typeof projectId !== 'string' || projectId.length === 0) {
+    return res.status(400).json({ error: 'projectId must be a single path segment' });
+  }
 
   try {
     const qp: Record<string, string> = {};
