@@ -1,7 +1,7 @@
 # Investor technical white paper
 
-A 14-page technical white paper on the platform, written for prospective investors.
-Cover, contents, and twelve content sections — one section per page.
+A 15-page technical white paper on the platform, written for prospective investors.
+Cover, contents, and thirteen content sections — one section per page.
 
 | File | Role |
 |---|---|
@@ -30,7 +30,7 @@ sans — but line breaks shift, and the section-per-page fit is not guaranteed.
 Each `<section>` must fit inside one printed page. The printable box on US Letter
 at the configured margins is **254mm tall by 186mm wide**; a section taller than
 that silently spills onto a second sheet and pushes the whole document out of
-shape. After any content change, re-render and confirm the page count is still 14:
+shape. After any content change, re-render and confirm the page count is still 15:
 
 ```bash
 python3 -c "from pypdf import PdfReader; \
@@ -52,13 +52,12 @@ Every quantitative claim is derived from this repository or from the independent
 registrations, the AnA capability manifest, the installer's provisioned table and
 policy counts, and that audit's executed evidence. Nothing is estimated for
 effect. When the platform changes materially, the figures in Sections 04 and 08
-and the state tables in Sections 06, 07 and 09 need re-deriving, not just
+and the state tables in Sections 06, 07 and 10 need re-deriving, not just
 re-wording.
 
-**Section 09 is the load-bearing one, and it decays fastest.** It pairs each of
+**Section 10 is the load-bearing one, and it decays fastest.** It pairs each of
 the audit's severe findings with the state of that mechanism in the code, and
-every row was confirmed by reading current source rather than a changelog. Two
-rules when editing it. First, re-verify the same way — a remediation claim taken
+every row was confirmed by reading current source rather than a changelog. Two rules when editing it. First, re-verify the same way — a remediation claim taken
 from a commit message is exactly the kind of assertion this document exists to
 avoid. Second, do not reintroduce the audit's aggregate scores as current state:
 they were a 2026-08-10 snapshot, substantial work has landed since, and no second

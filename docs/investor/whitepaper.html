@@ -78,9 +78,8 @@
   <div class="section-num">Contents</div>
   <h1 class="section-title">What this document covers</h1>
   <p class="deck">
-    A technical assessment of the platform as it exists in code today — its architecture,
-    its intelligence layer, the compliance machinery, and the verified state of every
-    severe finding an outside audit raised against it.
+    A technical assessment of the platform as it exists in code today, and the verified
+    state of every severe finding an outside audit raised against it.
   </p>
 
   <ol class="toc-list toc-compact">
@@ -91,23 +90,22 @@
     <li><span class="toc-n">05</span><span class="toc-t">The intelligence layer<span class="toc-d">AnA, the AI gateway, and the RIM — a deterministic layer that learns without a model.</span></span><span class="toc-p">07</span></li>
     <li><span class="toc-n">06</span><span class="toc-t">Trust architecture<span class="toc-d">Part 11 mechanisms, tenant isolation, and where each one genuinely stands.</span></span><span class="toc-p">08</span></li>
     <li><span class="toc-n">07</span><span class="toc-t">Regulatory coverage<span class="toc-d">Three journeys over one shared chain: intake to transmission.</span></span><span class="toc-p">09</span></li>
-    <li><span class="toc-n">08</span><span class="toc-t">Engineering scale and the quality system<span class="toc-d">What exists, and how architectural invariants are enforced by machine.</span></span><span class="toc-p">10</span></li>
-    <li><span class="toc-n">09</span><span class="toc-t">Independent audit and verified remediation<span class="toc-d">What an outside audit found, and the state of each finding in the code today.</span></span><span class="toc-p">11</span></li>
-    <li><span class="toc-n">10</span><span class="toc-t">Defensibility and moat<span class="toc-d">Which advantages compound, which are merely current, and which are not yet built.</span></span><span class="toc-p">12</span></li>
-    <li><span class="toc-n">11</span><span class="toc-t">Roadmap to general availability<span class="toc-d">A dependency-ordered programme with evidence gates a buyer's reviewers accept.</span></span><span class="toc-p">13</span></li>
-    <li><span class="toc-n">12</span><span class="toc-t">Risks, and what to underwrite<span class="toc-d">What could go wrong, and what an investment is actually buying.</span></span><span class="toc-p">14</span></li>
+    <li><span class="toc-n">08</span><span class="toc-t">Chemistry, manufacturing, and controls<span class="toc-d">The Module 3 compiler, the deterministic CMC engines, and why post-approval change is recurring.</span></span><span class="toc-p">10</span></li>
+    <li><span class="toc-n">09</span><span class="toc-t">Engineering scale and the module portfolio<span class="toc-d">What exists, the domain modules behind the journeys, and invariants enforced by machine.</span></span><span class="toc-p">11</span></li>
+    <li><span class="toc-n">10</span><span class="toc-t">Independent audit and verified remediation<span class="toc-d">What an outside audit found, and the state of each finding in the code today.</span></span><span class="toc-p">12</span></li>
+    <li><span class="toc-n">11</span><span class="toc-t">Defensibility and moat<span class="toc-d">Which advantages compound, which are merely current, and which are not yet built.</span></span><span class="toc-p">13</span></li>
+    <li><span class="toc-n">12</span><span class="toc-t">Roadmap to general availability<span class="toc-d">A dependency-ordered programme with evidence gates a buyer's reviewers accept.</span></span><span class="toc-p">14</span></li>
+    <li><span class="toc-n">13</span><span class="toc-t">Risks, and what to underwrite<span class="toc-d">What could go wrong, and what an investment is actually buying.</span></span><span class="toc-p">15</span></li>
   </ol>
 
   <div class="callout">
     <div class="c-label">A note on method</div>
     <p style="margin:0">
       Every quantitative claim here is derived from the repository as it stands today.
-      Where a figure comes from the August audit instead, it is dated and identified as
-      such — that audit was a point-in-time snapshot, substantial work has landed since,
-      and its aggregate scores are reported as history rather than current state.
-      <strong>Section 09 gives the audit's severe findings and the verified state of each
-      one now.</strong> A vendor selling into regulated life sciences is bought or
-      rejected on whether its claims survive scrutiny, so these are written to be
+      Figures drawn from the August audit are dated as such: that audit was a snapshot,
+      substantial work has landed since, and its aggregate scores are reported as history
+      rather than current state. A vendor selling into regulated life sciences is bought
+      or rejected on whether its claims survive scrutiny, so these are written to be
       checked.
     </p>
   </div>
@@ -156,7 +154,7 @@
     superuser connection, an eCTD path emitting zero leaf files. In the four days that
     followed, <strong>149 commits</strong> landed as a direct remediation programme.
     <strong>Fourteen of the severe mechanisms it named were re-checked in the code for
-    this paper and found closed</strong>, including every one above. Section 09 gives the
+    this paper and found closed</strong>, including every one above. Section 10 gives the
     finding-by-finding state.
   </p>
 
@@ -179,7 +177,7 @@
     engineering items; a first filing additionally depends on licensed agency templates,
     validator licences, gateway credentials, and a qualification signed by a competent
     person. The audit's estimate — a caveated design-partner pilot in weeks, a defensible
-    first paying pharma customer in months — is the working plan, and Section 11 sets it
+    first paying pharma customer in months — is the working plan, and Section 12 sets it
     out. Its aggregate scores are not restated here as current, because they were a
     snapshot and no second audit has re-measured them.
   </p>
@@ -373,7 +371,7 @@
       Every vendor above has something this platform does not: paying customers, executed
       submissions, and a validation history. Architecture spanning the chain is a real
       advantage only once it is trustworthy enough to be bought, which is what Sections
-      09 through 11 are about. The competitive claim in this paper is about product shape,
+      10 through 12 are about. The competitive claim in this paper is about product shape,
       not market position.
     </p>
   </div>
@@ -518,7 +516,7 @@
       the assistant actually gathered that turn. Claims absent from that corpus are
       surfaced as unsupported. <strong>The verdict is advisory: it is shown to the user,
       not used to block or rewrite the answer.</strong> Binding retrieval-verified
-      citations into the document itself is Phase 2 work in Section 11.
+      citations into the document itself is Phase 2 work in Section 12.
     </p>
   </div>
 
@@ -708,15 +706,105 @@
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 10 · SCALE & QUALITY SYSTEM ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 10 · CMC ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>08 · Engineering scale and the quality system</span><span class="rh-num">10</span></div>
+  <div class="running-head"><span>08 · Chemistry, manufacturing, and controls</span><span class="rh-num">10</span></div>
 
   <div class="section-num">Section 08</div>
-  <h1 class="section-title">Engineering scale and the quality system</h1>
+  <h1 class="section-title">Chemistry, manufacturing, and controls</h1>
+  <p class="deck">
+    CMC is where a submission meets manufacturing reality. It is also where a one-time
+    filing becomes a continuing relationship — every manufacturing change for the life of
+    the product has to be classified, justified, and reported.
+  </p>
+
+  <h2>The Module 3 compiler — the provenance argument, concretely</h2>
+  <p>
+    Source objects — specifications, analytical methods, stability studies, batch records,
+    manufacturing processes, container-closure and comparability data — compile
+    deterministically into the CTD 3.2.S drug-substance and 3.2.P drug-product
+    subsections. Every compiled section carries a content hash, a staleness flag with a
+    stated reason, and <strong>per-section lineage recording which source object produced
+    it and that source's hash at the moment of compilation</strong>.
+  </p>
+  <p>
+    That last property is the platform's central claim made specific: when a stability
+    study or a specification changes, every Module 3 section derived from it is marked
+    stale <em>and told why</em>, rather than silently drifting out of date until a reviewer
+    finds the inconsistency. Elsewhere in this paper provenance is an architectural
+    principle; here it is a compiler.
+  </p>
+
+  <h2>Deterministic engines, not model calls</h2>
+  <p>
+    The CMC module follows the same doctrine as the RIM — the judgments a reviewer will
+    challenge are computed, reproducible, and citable, not generated.
+  </p>
+  <div class="grid-2">
+    <div class="card card-olive">
+      <h3>SUPAC / variations classifier</h3>
+      <p style="margin:0">
+        A pure function — no database, no model, no side effects. A proposed manufacturing
+        change returns an FDA reporting category (Annual Report, CBE-0, CBE-30, or prior
+        approval), a SUPAC tier, an EMA variation class (IA / IAIN / IB / II),
+        bioequivalence requirements, the impacted CTD sections, and citations to the
+        controlling guidance. Grounded in SUPAC-IR/MR/SS, 21 CFR 314.70, ICH Q12, and EC
+        No 1234/2008.
+      </p>
+    </div>
+    <div class="card card-olive">
+      <h3>Shelf-life estimation — ICH Q1E</h3>
+      <p style="margin:0">
+        Ordinary least-squares fit of the stability attribute against time, solved to where
+        the one-sided 95% confidence limit meets the specification limit, with the
+        t-quantile evaluated against a tested Student-t distribution so the result
+        reproduces exactly. The code states its own scope limit: single attribute, single
+        factor; batch poolability is a separate module rather than an implied capability.
+      </p>
+    </div>
+    <div class="card card-olive">
+      <h3>ICH compliance checker</h3>
+      <p style="margin:0">
+        Deterministic evaluation of a project's real stored data against Q1A(R2), Q2(R1),
+        Q3A/Q3B, Q3D(R2), Q6A/Q6B, Q8(R2), Q9, and Q10 — the guidelines most frequently
+        cited when FDA refuses to file.
+      </p>
+    </div>
+    <div class="card card-olive">
+      <h3>Quality-by-design analyzer</h3>
+      <p style="margin:0">
+        Derives critical quality attributes from specification test parameters, impurity
+        profiles, and stability indicators, and critical process parameters from
+        manufacturing process records and in-process controls — from the project's actual
+        data, replacing type-string heuristics wherever a real project exists.
+      </p>
+    </div>
+  </div>
+
+  <div class="callout callout-accent">
+    <div class="c-label">Why this module carries commercial weight</div>
+    <p style="margin:0">
+      A submission platform sells once per filing. A change-control system is used
+      continuously for the commercial life of the product: every process change, site
+      transfer, supplier substitution, and scale-up must be classified against both FDA and
+      EMA rules and reported in the right category. The change-control store is org-scoped
+      and real, and its verdicts are <em>computed by the classifier at read time rather
+      than stored</em> — so a change in the rules re-projects every historical change
+      rather than leaving stale conclusions in the database. That is the difference between
+      a submission tool and a regulatory system of record.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ PAGE 11 · SCALE & QUALITY SYSTEM ═══════════════════════ -->
+<section class="page">
+  <div class="running-head"><span>09 · Engineering scale and the module portfolio</span><span class="rh-num">11</span></div>
+
+  <div class="section-num">Section 09</div>
+  <h1 class="section-title">Engineering scale and the module portfolio</h1>
   <p class="deck">
     Scale alone is not an asset. Scale that stays modifiable, under mechanical invariant
-    enforcement, in a domain that cannot be compressed — that is an asset.
+    enforcement, in a domain that cannot be compressed — that is.
   </p>
 
   <h2>What exists, counted</h2>
@@ -729,11 +817,9 @@
       <tr><td>Tables provisioned from blank</td><td class="num">931</td><td>Single idempotent installer, verified exit 0</td></tr>
       <tr><td>Row-level security policies</td><td class="num">787</td><td>Correct USING / WITH CHECK semantics, FORCE RLS</td></tr>
       <tr><td>API route handlers / modules</td><td class="num">3,846 / 389</td><td>Behind a global default-deny boundary</td></tr>
-      <tr><td>Domain service directories</td><td class="num">217</td><td>Regulatory subject matter, not framework code</td></tr>
       <tr><td>Registered AnA tools</td><td class="num">359</td><td>Across 13 capability categories</td></tr>
       <tr><td>Test files / assertions passing</td><td class="num">1,694 / 19,181</td><td>Unit, route, database, security, and golden-journey suites</td></tr>
       <tr><td>CI guard scripts / workflows</td><td class="num">79 / 19</td><td>Governance, security, and schema-integrity gates</td></tr>
-      <tr><td>TypeScript error debt</td><td class="num">2,598 → 0</td><td>Held at zero by a no-regression gate</td></tr>
     </tbody>
   </table>
 
@@ -741,45 +827,51 @@
   <p>
     The CI guard scripts are the unusual asset. They do not check style; they check
     architectural invariants that would otherwise decay silently — that no code bypasses
-    the AI gateway, that the editor's save path cannot skip the lineage gate, that data
-    models are not tenant-blind, that no duplicate table definitions exist, that
-    migrations are reachable, that no mock data or development authentication path reaches
-    production, that JWT verification stays algorithm-pinned, that interface compliance
-    claims are qualified, and that the completion ledger cannot claim done without
-    evidence.
+    the AI gateway, that the save path cannot skip the lineage gate, that data models are
+    not tenant-blind, that migrations are reachable, that no mock data or development
+    authentication path reaches production, that JWT verification stays algorithm-pinned,
+    and that the completion ledger cannot claim done without evidence.
   </p>
 
   <div class="callout callout-amber">
     <div class="c-label">Where the quality system was itself weak</div>
     <p style="margin:0">
       The August audit's most consequential finding was about this layer: a global
-      database mock installed across all test files meant the two "database-backed,
-      safety-critical" jobs ran against a stub, measured coverage sat at 5–13% on the
-      request path, and no CI job ever ran in the RLS-enforced mode production mandates.
-      That is why the other blockers shipped green. The mock is now gone and golden-journey
-      tests drive all three regulatory journeys end to end — but raising coverage and
-      making the browser tier real remain open, and the audit rightly called this the
-      single highest-leverage investment because it protects every other fix.
+      database mock across all test files meant the two "database-backed, safety-critical"
+      jobs ran against a stub, request-path coverage sat at 5–13%, and no CI job ran in the
+      RLS-enforced mode production mandates. That is why the other blockers shipped green.
+      The mock is gone and golden-journey tests now drive all three journeys end to end,
+      but raising coverage and making the browser tier real remain open — the audit rightly
+      called this the highest-leverage investment, because it protects every other fix.
     </p>
   </div>
 
-  <h2>What the auditor said was worth protecting</h2>
+  <h2>The domain modules behind the journeys</h2>
   <p>
-    Faithful regulatory outlines — PMA against 21 CFR 814.20(b), EU CTA against CTR
-    536/2014, MDR Annex II, CTD Modules 2–5 — judged better than most competitors' first
-    attempts. Correct biostatistics: the Lan-DeMets solver reproduces textbook
-    O'Brien-Fleming and Pocock boundaries exactly. Exemplary licensed-terminology handling,
-    failing closed with an explicit licence requirement rather than risking copyright
-    exposure. And what the audit called institutional honesty in the code: endpoints that
-    refuse to self-certify, and comments that name their own gaps.
+    The three journeys are the products; these are the engines behind them, alongside CMC
+    (Section 08) and preclinical. The August audit judged this material faithful to source
+    — PMA against 21 CFR 814.20(b), EU CTA against CTR 536/2014, MDR Annex II, CTD
+    Modules 2–5 — and better than most competitors' first attempts.
   </p>
+  <table>
+    <thead><tr><th style="width:24%">Module</th><th class="num" style="width:8%">Svcs</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Global RI</strong></td><td class="num">48</td><td>Multi-market registration intelligence and market-specific specifications</td></tr>
+      <tr><td><strong>Report engine</strong></td><td class="num">38</td><td>Immutable sealed report records, lineage-trace reporting, portfolio and regional renderers</td></tr>
+      <tr><td><strong>IND lifecycle</strong></td><td class="num">36</td><td>Amendments, annual reports, briefing books, cross-references, E2B(R3) ICSR composition and gateway transport</td></tr>
+      <tr><td><strong>IVD knowledge</strong></td><td class="num">28</td><td>Standards, legal, regulatory and scientific knowledge for diagnostics</td></tr>
+      <tr><td><strong>Biostatistics</strong></td><td class="num">24</td><td>Group-sequential boundaries, BOIN dose finding, enrolment forecasting, external control, analytical and clinical performance</td></tr>
+      <tr><td><strong>Pathway engines</strong></td><td class="num">22</td><td>eSTAR, PreSTAR, PMA, MDR/IVDR, CTIS, PMDA, and device-assembly manifests</td></tr>
+      <tr><td><strong>Precedent intelligence</strong></td><td class="num">22</td><td>Approval precedent and refuse-to-file pattern libraries</td></tr>
+    </tbody>
+  </table>
 </section>
 
 <!-- ═══════════════════════ PAGE 11 · AUDIT & REMEDIATION ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>09 · Independent audit and verified remediation</span><span class="rh-num">11</span></div>
+  <div class="running-head"><span>10 · Independent audit and verified remediation</span><span class="rh-num">12</span></div>
 
-  <div class="section-num">Section 09</div>
+  <div class="section-num">Section 10</div>
   <h1 class="section-title">Independent audit and verified remediation</h1>
   <p class="deck">
     The platform was audited across fifteen domains on 10 August 2026 by running it, and
@@ -831,16 +923,16 @@
       is an independent re-scoring: the audit's headline counts were a 10 August snapshot,
       superseded by the work above, and no second audit has re-measured them. Treat the
       aggregate as history and this table as evidence. What remains genuinely open is
-      listed in Section 11.
+      listed in Section 12.
     </p>
   </div>
 </section>
 
 <!-- ═══════════════════════ PAGE 12 · DEFENSIBILITY ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>10 · Defensibility and moat</span><span class="rh-num">12</span></div>
+  <div class="running-head"><span>11 · Defensibility and moat</span><span class="rh-num">13</span></div>
 
-  <div class="section-num">Section 10</div>
+  <div class="section-num">Section 11</div>
   <h1 class="section-title">Defensibility and moat</h1>
   <p class="deck">
     Four candidate advantages, sorted honestly by whether they compound, whether they are
@@ -923,9 +1015,9 @@
 
 <!-- ═══════════════════════ PAGE 13 · ROADMAP ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>11 · Roadmap to general availability</span><span class="rh-num">13</span></div>
+  <div class="running-head"><span>12 · Roadmap to general availability</span><span class="rh-num">14</span></div>
 
-  <div class="section-num">Section 11</div>
+  <div class="section-num">Section 12</div>
   <h1 class="section-title">Roadmap to general availability</h1>
   <p class="deck">
     Sequenced so each phase unblocks the next and produces evidence a buyer's reviewers
@@ -990,9 +1082,9 @@
 
 <!-- ═══════════════════════ PAGE 14 · RISKS ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>12 · Risks, and what to underwrite</span><span class="rh-num">14</span></div>
+  <div class="running-head"><span>13 · Risks, and what to underwrite</span><span class="rh-num">15</span></div>
 
-  <div class="section-num">Section 12</div>
+  <div class="section-num">Section 13</div>
   <h1 class="section-title">Risks, and what to underwrite</h1>
   <p class="deck">
     What could go wrong, stated at the same standard as the rest of this document.
