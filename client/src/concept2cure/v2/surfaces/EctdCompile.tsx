@@ -143,7 +143,12 @@ function readProjectIdent(): { ident: string | null; title?: string; code?: stri
 const REGIONS = ['FDA', 'EMA'] as const;
 const SUB_TYPES = ['initial', 'amendment'] as const;
 
-export function EctdCompile(_props: SurfaceViewProps) {
+export function EctdCompile({ onAsk }: SurfaceViewProps) {
+  /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
+     so a publisher staring at a validation finding — the moment they most need
+     to know what a rule means and whether it blocks the filing — had no way to
+     ask. The prompts name the artefact on screen rather than the page. */
+  const ask = onAsk;
   const proj = readProjectIdent();
   const ident = proj.ident;
   const identPath = ident != null ? encodeURIComponent(ident) : null;
@@ -232,7 +237,17 @@ export function EctdCompile(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Compile &amp; Export eCTD</span>
-          <span className="s">{proj.title ?? `Project ${ident}`}{proj.code ? ' · ' + proj.code : ''}</span>
+          <span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {proj.title ?? `Project ${ident}`}{proj.code ? ' · ' + proj.code : ''}
+            {ask && (
+              <button
+                className="reg-cta"
+                onClick={() => ask(`Explain what compiling this sequence for ${region} will and will not produce — which module 1 regional requirements apply, what the backbone and checksums cover, and what would still be missing before it could be transmitted.`)}
+              >
+                {I.sparkles} Explain this compilation
+              </button>
+            )}
+          </span>
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Region</label>
@@ -342,7 +357,7 @@ export function EctdCompile(_props: SurfaceViewProps) {
       {/* ── Validation findings ── */}
       {findings && (
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Validation findings</span><span className="s">{findings.length}</span></div>
+          <div className="pj-card-h"><span className="t">Validation findings</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{findings.length}{ask && findings.length > 0 && <button className="reg-cta" onClick={() => ask(`Triage these eCTD validation findings for ${region}: which are blocking versus advisory, what each rule actually requires, and the order to fix them in. Do not claim a finding is resolved without evidence.`)}>{I.sparkles} Triage findings</button>}</span></div>
           <div className="pj-card-b" style={{ padding: 0 }}>
             {findings.length === 0 ? (
               <div style={{ padding: 16 }}><EmptyState icon={I.checkCircle} title="No findings" hint="No blocking or advisory issues were raised for the selected region." /></div>
