@@ -134,15 +134,25 @@ suite a transposed coefficient, a wrong tail or a mis-signed spending function
 ships green — and these numbers go into the SAP, the protocol and the submission,
 where a regulator will reproduce them.
 
-Rounds 1–5 (§2.4 and §3) add **160 reference tests in `tests/biostat/`**, every
+Rounds 1–6 (§2.4 and §3) add **194 reference tests in `tests/biostat/`**, every
 expectation verified against a published table, a closed form or hand computation
-*before* being written, and every file mutation-verified by exit code. Production
-defects were found in five functions — `winRatioAnalysis`,
-`computeDiagnosticAccuracy`, `estimateImprecision`, `assessRealTimeStability`,
-`assessAcceleratedStability` — and all five are the same class: a non-finite
-value that `JSON.stringify` turns into `null` silently. Nothing else was wrong.
-The mathematics was already right in every round; what was missing was anything
-that would notice if it stopped being.
+*before* being written, and every file mutation-verified by exit code.
+
+Defects were found in nine functions, in two distinct classes:
+
+- **A non-finite value that `JSON.stringify` turns into `null` silently** —
+  `winRatioAnalysis`, `computeDiagnosticAccuracy`, `estimateImprecision`,
+  `assessRealTimeStability`, `assessAcceleratedStability`, `covariateBalance`,
+  `computeGammaPoissonEbgm`. Seven functions, one root cause, invisible in
+  process because the values look fine until they are serialized.
+- **A quantity that was wrong rather than unrepresentable** — `covariateBalance`
+  and the parallel implementation in `external-control-arm-service` reported a
+  covariate with no overlap as perfectly balanced, and `tippingPointBias`
+  reported the sweep's range endpoint instead of the tipping point. Both
+  overstated the strength of the sponsor's position.
+
+Every other computation checked in six rounds was already correct. What was
+missing was anything that would notice if it stopped being.
 
 ### 2.3 Verifying the mathematics
 
@@ -327,11 +337,73 @@ Stated rather than implied.
   J−1, returning the search bound instead of null, and reverting both stability
   fields to Infinity.
 
-- **~20 biostat endpoints remain shape-tested only.** External-control borrowing,
-  enrollment forecasting, BOIN beyond the round-2 cases, signal
-  disproportionality, and the remaining CLSI families (EP06 linearity, EP12
-  qualitative dose-response, EP25 shelf-life regression, EP28 reference
-  intervals) are still unpinned, and each deserves the same treatment.
+- **Round 6 pinned external-control borrowing and post-market signal detection,
+  and found four defects — all four flattering the sponsor.**
+  `tests/biostat/external-control-and-signal-reference.test.ts`, 34 tests, plus 5
+  in `server/services/__tests__/external-control-arm-claims.test.ts`. These two
+  families bracket the lifecycle: borrowing is how a single-arm trial defends its
+  comparison at submission; disproportionality screening is how a safety signal
+  is found after approval.
+
+  **1. A perfectly separating covariate was reported as perfectly balanced.**
+  `covariateBalance` computed SMD = (x̄_t − x̄_c)/pooled SD and returned **0** when
+  the pooled SD was zero. A covariate present in 100% of treated subjects and 0%
+  of the external control has a pooled SD of exactly zero — so it came back
+  `standardizedMeanDifference: 0, balanced: true`. The single worst balance
+  failure, the case where there is no overlap for any adjustment to work on, was
+  indistinguishable from perfect agreement, and it contributed 0 to the maximum
+  SMD so it could not even pull the verdict down.
+
+  **The same defect existed in a second, independently written implementation.**
+  `server/services/external-control-arm-service.ts` had the identical
+  `pooledSd > 0 ? … : 0`, and there a separator could carry `overallQuality` to
+  `'good'` in the *regulatory package generator*. Both are fixed the same way:
+  `standardizedMeanDifference` (resp. `standardizedDifference`) becomes
+  `number | null` with an explicit `perfectlySeparating` flag, the maximum is
+  taken over the covariates that have one, and a separator forces the verdict to
+  `poor`. The service's balance computation was extracted to an exported pure
+  function so it could be proved without a database standing in for one — the
+  split that file's own header already describes for its two prose functions.
+
+  **2. `tippingPointBias` reported the sweep's range endpoint, not the tipping
+  point.** It returned the first grid point differing from the unbiased
+  conclusion, scanning left to right. The sweep is two-sided and centred on zero,
+  so when both extremes differ from the base — the ordinary shape — that rule
+  returns `biasMin`: a number that moves when the default range moves and is
+  unrelated to the data. In the pinned fixture it reported a tolerable bias of
+  **15 where the conclusion actually flips at 7.8**, i.e. it presented the result
+  as roughly twice as robust to unmeasured confounding as it is. Now the smallest
+  |bias| that overturns the conclusion, which is both what the docstring promised
+  and what a reviewer is asking. The sibling `tippingPointBorrow` in the same
+  file already used the correct rule for its one-directional question; that
+  disagreement is what made the defect visible, and it is left alone.
+
+  **3–4. Two more non-finite wire values.** `varianceRatio` was `NaN` whenever the
+  control variance is zero — ordinary in a registry cohort where a covariate is
+  constant — and `relativeReportRatio` was `Infinity` when the product has no
+  reports at all, where the honest answer is the indeterminate 0/0.
+
+  Everything else was correct, and pinned: both borrowing posteriors as exact
+  precision-weighted averages (including the cross-implementation check that
+  **commensurate τ² = 0 reproduces the power prior at a0 = 1 exactly**, two
+  differently parameterized methods agreeing at their common limit), PRR = 18 and
+  ROR = 22.25 by hand, the Yates χ² derived rather than quoted, BCPNN IC from its
+  definition, and the property that makes the Bayesian methods worth running:
+  **three co-reports give PRR 9 and fire the EMA criterion, while the shrunken
+  EB05 is 1.25 and does not clear the MGPS threshold of 2** — the divergence the
+  consolidated panel exists to surface.
+
+  Mutation-verified by exit code: 14 mutations on the stats modules, 3 on the
+  service, 17 killed. Among them — reverting each of the four defects, PRR
+  computed as an odds ratio, the Yates continuity correction dropped, the EMA
+  `a ≥ 3` count gate removed, EBGM returning the posterior mean instead of the
+  geometric mean, and the power prior forgetting to discount by a0.
+
+- **~15 biostat endpoints remain shape-tested only.** Enrollment forecasting,
+  Bayesian device design, BOIN beyond the round-2 cases, and the remaining CLSI
+  families (EP06 linearity, EP07 interference, EP12 qualitative dose-response,
+  EP25 shelf-life regression, EP28 reference intervals) are still unpinned, and
+  each deserves the same treatment.
 - `server/routes/programs.ts` unmounted — flagged, not diagnosed.
 - PM automation rules (1 reader) and escalation paths (3) — candidates for the
   "built but not wired" pattern, not confirmed.

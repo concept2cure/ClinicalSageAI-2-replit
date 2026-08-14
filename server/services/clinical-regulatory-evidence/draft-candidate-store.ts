@@ -44,12 +44,32 @@ export interface DraftCandidateSource {
   title: string | null;
 }
 
+/**
+ * What produced a draft. Parked server-side with the source chunks for the same
+ * reason they are: round-tripped through the client, "which model wrote this"
+ * stops being a fact and becomes a claim the client could forge.
+ */
+export interface DraftGenerator {
+  model: string | null;
+  provider: string | null;
+  /** SHA-256 of the prompt actually sent. The authoring route composes its
+   *  prompt inline, so there is no version to name — a digest is a real
+   *  identifier where a made-up version number would only look like one. */
+  promptSha256: string | null;
+  /** Set where a route genuinely has a versioned prompt file. */
+  promptVersion?: string | null;
+  generatedAt: string;
+}
+
 export interface DraftCandidate {
   id: string;
   sectionId: string;
   content: string;
   sources: DraftCandidateSource[];
   createdBy: string | null;
+  /** null when the draft predates generator capture, or the route did not
+   *  supply one — never a guess at the current default model. */
+  generator: DraftGenerator | null;
 }
 
 /**
@@ -67,6 +87,7 @@ export async function createDraftCandidate(
   sources: DraftCandidateSource[],
   createdBy: string | null,
   exec: Queryable = defaultExec,
+  generator: DraftGenerator | null = null,
 ): Promise<{ id: string; expiresAt: string }> {
   try {
     await exec.query(
@@ -80,10 +101,17 @@ export async function createDraftCandidate(
 
   const { rows } = await exec.query<{ id: string; expires_at: string }>(
     `INSERT INTO authoring_ai_draft_candidates
-       (section_id, organization_id, content, sources, created_by, expires_at)
-     VALUES ($1, $2, $3, $4::jsonb, $5, NOW() + INTERVAL '2 hours')
+       (section_id, organization_id, content, sources, created_by, generator, expires_at)
+     VALUES ($1, $2, $3, $4::jsonb, $5, $6::jsonb, NOW() + INTERVAL '2 hours')
      RETURNING id, expires_at`,
-    [sectionId, orgId, content, JSON.stringify(sources ?? []), createdBy],
+    [
+      sectionId,
+      orgId,
+      content,
+      JSON.stringify(sources ?? []),
+      createdBy,
+      generator ? JSON.stringify(generator) : null,
+    ],
   );
   return { id: rows[0].id, expiresAt: String(rows[0].expires_at) };
 }
@@ -106,10 +134,11 @@ export async function consumeDraftCandidate(
     content: string;
     sources: unknown;
     created_by: string | null;
+    generator: unknown;
   }>(
     `DELETE FROM authoring_ai_draft_candidates
       WHERE id = $1 AND organization_id = $2 AND section_id = $3 AND expires_at >= NOW()
-      RETURNING id, section_id, content, sources, created_by`,
+      RETURNING id, section_id, content, sources, created_by, generator`,
     [draftId, orgId, sectionId],
   );
   if (rows.length === 0) return null;
@@ -130,13 +159,40 @@ export async function consumeDraftCandidate(
       title: s.title ?? null,
     }));
 
+  /* Same tolerance as `sources` above: jsonb usually arrives parsed, but a
+     string is possible. An unparseable value becomes null rather than a
+     partially-populated generator — half a provenance record invites a reader
+     to trust the half that is there. */
+  let generator: DraftGenerator | null = null;
+  const g =
+    typeof r.generator === 'string' ? safeParseObject(r.generator) : (r.generator as any);
+  if (g && typeof g === 'object') {
+    generator = {
+      model: typeof g.model === 'string' ? g.model : null,
+      provider: typeof g.provider === 'string' ? g.provider : null,
+      promptSha256: typeof g.promptSha256 === 'string' ? g.promptSha256 : null,
+      promptVersion: typeof g.promptVersion === 'string' ? g.promptVersion : null,
+      generatedAt: typeof g.generatedAt === 'string' ? g.generatedAt : '',
+    };
+  }
+
   return {
     id: r.id,
     sectionId: r.section_id,
     content: r.content,
     sources,
     createdBy: r.created_by,
+    generator,
   };
+}
+
+function safeParseObject(s: string): Record<string, unknown> | null {
+  try {
+    const v = JSON.parse(s);
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : null;
+  } catch {
+    return null;
+  }
 }
 
 function safeParseArray(s: string): any[] {

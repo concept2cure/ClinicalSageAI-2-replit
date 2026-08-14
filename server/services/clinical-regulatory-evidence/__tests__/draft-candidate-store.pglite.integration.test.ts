@@ -46,6 +46,9 @@ beforeAll(async () => {
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG_A},'a'), (${ORG_B},'b');`);
   await pglite.exec(migration('db/migrations/20260809_source_attribution_draft_candidates.sql'));
+  // The generator column (GA ledger L33) — applied here so the store is tested
+  // against the schema it actually writes to, rather than an earlier one.
+  await pglite.exec(migration('migrations/20260814i_draft_candidate_generator.sql'));
 }, 90_000);
 
 afterAll(async () => {
@@ -105,5 +108,49 @@ describe('draft-candidate store', () => {
     );
     const staleId = rows[0].id;
     expect(await consumeDraftCandidate(ORG_A, SECTION, staleId, exec)).toBeNull();
+  });
+
+  /* ── Generator capture (GA ledger L33) ───────────────────────────────────
+     Model, provider and prompt digest existed at draft time and reached only
+     the browser, so "what produced this text?" survived about as long as the
+     tab. They are parked server-side with the source chunks for the same
+     reason those are: a generator round-tripped through the client would be a
+     client claim, and which model wrote a regulatory section must not be
+     forgeable. */
+  it('carries the generator from park to accept', async () => {
+    const generator = {
+      model: 'claude-opus-5',
+      provider: 'anthropic',
+      promptSha256: 'a'.repeat(64),
+      generatedAt: '2026-08-14T10:00:00.000Z',
+    };
+    const { id } = await createDraftCandidate(
+      ORG_A, SECTION, 'drafted body', [], 'user-1', undefined, generator,
+    );
+    const claimed = await consumeDraftCandidate(ORG_A, SECTION, id);
+    expect(claimed?.generator).toMatchObject(generator);
+  });
+
+  it('reports no generator rather than guessing one', async () => {
+    // Drafts parked before this column existed, and routes that supply none.
+    // A default from the model registry would attribute text to a model that
+    // may never have seen it.
+    const { id } = await createDraftCandidate(ORG_A, SECTION, 'body', [], 'user-1');
+    const claimed = await consumeDraftCandidate(ORG_A, SECTION, id);
+    expect(claimed?.generator).toBeNull();
+  });
+
+  it('does not half-populate a generator it cannot read', async () => {
+    const { id } = await createDraftCandidate(
+      ORG_A, SECTION, 'body', [], 'user-1', undefined,
+      { model: 'm', provider: null, promptSha256: null, generatedAt: '2026-08-14T10:00:00.000Z' },
+    );
+    const claimed = await consumeDraftCandidate(ORG_A, SECTION, id);
+    // Absent fields are null, not omitted — a reader can tell "not recorded"
+    // from "not applicable" without guessing which it is.
+    expect(claimed?.generator).toEqual({
+      model: 'm', provider: null, promptSha256: null, promptVersion: null,
+      generatedAt: '2026-08-14T10:00:00.000Z',
+    });
   });
 });

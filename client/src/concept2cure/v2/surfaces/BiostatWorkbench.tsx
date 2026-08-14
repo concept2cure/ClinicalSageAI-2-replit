@@ -8,24 +8,41 @@
  *   • Statistical defensibility (server/routes/statistical-defensibility.ts,
  *     mounted /api/statistical-defensibility — deterministic, no DB):
  *       POST /assess          — reviewer-risk assessment of a study's statistics
- *                               (overall score/rating, critical/major issues,
- *                               reviewer-risk level, recommendations)
- *       POST /reviewer-risks  — the specific reviewer objections to expect
  *   • Design-stats calculators (server/routes/biostat-design-stats.ts under
- *     /api/biostat, org-scoped):
- *       POST /assurance       — Bayesian assurance (unconditional power) for a
- *                               two-sample mean comparison
+ *     /api/biostat, org-scoped): FIFTEEN deterministic engines, declared as data
+ *     in `biostatCalculators.ts` and rendered by one generic form below.
  *
- * The defensibility tools are pure server-side math and are usable immediately;
- * the assurance calculator requires a signed-in org and surfaces a 401 honestly.
- * Results are rendered only from the server's response — the in-browser
- * normal-approximation engine is not used here. Nothing is fabricated.
+ * ── Why this file used to reach one engine out of fifteen ────────────────────
+ * The calculators were built, mounted, unit-tested and reference-pinned, and the
+ * workbench called exactly one of them (assurance). Group-sequential OC, MMRM
+ * sizing, RMST, win ratio, BOIN, MRMC, Bayesian device sizing, multiplicity,
+ * external-control sensitivity, enrollment forecasting, event projection and
+ * diagnostic sizing were all running and unreachable from the product.
+ *
+ * They are now all reachable. The forms are generated from the registry rather
+ * than hand-written, so the sixteenth engine costs a data entry, not a new form.
+ *
+ * ── What is NOT done here ────────────────────────────────────────────────────
+ * Results are rendered from the server's response only — no in-browser
+ * statistics, and nothing is fabricated. Where an engine returns a value the
+ * generic renderer cannot tabulate (a nested grid, a memo), the raw response is
+ * shown rather than silently dropped. The defensibility tools are pure math and
+ * work immediately; the design calculators require a signed-in org and surface a
+ * 401 honestly rather than showing an empty result.
  */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import {
+  CALCULATORS,
+  buildRequestBody,
+  initialValues,
+  isFieldVisible,
+  type Calculator,
+  type CalculatorField,
+} from './biostatCalculators';
 import '../styles/project-home-v2.css';
 
 interface Defensibility {
@@ -47,12 +64,23 @@ function C2CToast({ msg }: { msg: string }) {
   if (!msg) return null;
   return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
 }
-async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null }> {
+async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
   try {
     const res = await apiRequest('POST', path, body);
     const parsed = (await res.json().catch(() => null)) as any;
-    return { ok: res.ok, status: res.status, data: (parsed?.data ?? null) as T | null };
-  } catch { return { ok: false, status: 0, data: null }; }
+    return {
+      ok: res.ok,
+      status: res.status,
+      data: (parsed?.data ?? null) as T | null,
+      // Servers here report failures as { error } or { message }; surfacing the
+      // server's own words beats a generic "calculation failed", because the
+      // usual cause is a domain constraint the form cannot check locally (an
+      // information fraction not ending at 1, a covariance ordering violation).
+      error: typeof parsed?.error === 'string' ? parsed.error
+        : typeof parsed?.message === 'string' ? parsed.message
+        : null,
+    };
+  } catch { return { ok: false, status: 0, data: null, error: null }; }
 }
 function issueText(x: any): string {
   if (typeof x === 'string') return x;
@@ -64,15 +92,202 @@ function ratingTone(r: string | undefined) {
   if (v.includes('moderate') || v.includes('medium') || v.includes('fair')) return 'warn';
   return 'ok';
 }
-/** Render the numeric fields of an engine result as a labeled table. */
-function numericRows(obj: Record<string, any> | null): Array<[string, string]> {
-  if (!obj) return [];
-  const out: Array<[string, string]> = [];
-  for (const [k, v] of Object.entries(obj)) {
-    if (typeof v === 'number' && Number.isFinite(v)) out.push([k, String(Math.round(v * 10000) / 10000)]);
-    else if (typeof v === 'boolean') out.push([k, v ? 'yes' : 'no']);
+
+/** Insert spaces before capitals so `posteriorSe` reads as `posterior Se`. */
+function humanize(key: string): string {
+  return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+}
+
+function fmt(v: number): string {
+  if (Number.isInteger(v)) return String(v);
+  const abs = Math.abs(v);
+  // Very small and very large magnitudes lose all their information under fixed
+  // rounding — a variance of 4.3e-4 must not render as "0".
+  if (abs !== 0 && (abs < 1e-3 || abs >= 1e7)) return v.toExponential(4);
+  return String(Math.round(v * 1e6) / 1e6);
+}
+
+type Row = [string, string];
+
+/**
+ * Flatten a result object into labeled scalar rows, descending into nested
+ * objects. Arrays of numbers are joined; anything else is left to the raw view
+ * so nothing is quietly dropped.
+ */
+function scalarRows(value: unknown, prefix = '', depth = 0): Row[] {
+  if (depth > 3 || value === null || value === undefined) return [];
+  if (typeof value === 'number') return [[prefix || 'value', Number.isFinite(value) ? fmt(value) : String(value)]];
+  if (typeof value === 'boolean') return [[prefix || 'value', value ? 'yes' : 'no']];
+  if (typeof value === 'string') return value.length <= 120 ? [[prefix || 'value', value]] : [];
+  if (Array.isArray(value)) {
+    if (value.every(v => typeof v === 'number')) {
+      return [[prefix, (value as number[]).map(fmt).join(', ')]];
+    }
+    return [];
+  }
+  if (typeof value === 'object') {
+    const out: Row[] = [];
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      // Provenance is a reproducibility record, not a result; it has its own row.
+      if (k === 'provenance') continue;
+      out.push(...scalarRows(v, prefix ? `${prefix} · ${humanize(k)}` : humanize(k), depth + 1));
+    }
+    return out;
+  }
+  return [];
+}
+
+/** Tabular sub-results (OC grids, decision tables, tipping grids) worth showing as tables. */
+function objectTables(value: unknown): Array<{ label: string; rows: Record<string, unknown>[] }> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  const out: Array<{ label: string; rows: Record<string, unknown>[] }> = [];
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (k === 'provenance') continue;
+    if (Array.isArray(v) && v.length > 0 && v.every(r => r && typeof r === 'object' && !Array.isArray(r))) {
+      out.push({ label: humanize(k), rows: v as Record<string, unknown>[] });
+    }
   }
   return out;
+}
+
+function cell(v: unknown): string {
+  if (typeof v === 'number') return Number.isFinite(v) ? fmt(v) : String(v);
+  if (typeof v === 'boolean') return v ? 'yes' : 'no';
+  if (v === null || v === undefined) return '—';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
+function Field({ field, value, onChange }: { field: CalculatorField; value: string; onChange: (v: string) => void }) {
+  const common = { className: 'c2c-input', value, onChange: (e: any) => onChange(e.target.value) };
+  return (
+    <label style={{ fontSize: 12, display: 'block' }}>
+      <span>{field.label}{field.optional ? <span style={{ color: 'var(--c2c-dim,#667085)' }}> (optional)</span> : null}</span>
+      {field.kind === 'select' ? (
+        <select {...common} style={{ height: 30 }}>
+          {(field.options ?? []).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      ) : field.kind === 'rows' ? (
+        <textarea {...common} rows={Math.max(3, (value.match(/\n/g)?.length ?? 0) + 2)} style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, resize: 'vertical' }} placeholder={field.placeholder} />
+      ) : (
+        <input {...common} style={{ height: 30 }} placeholder={field.placeholder} />
+      )}
+      {field.hint && <span style={{ display: 'block', fontSize: 11, color: 'var(--c2c-dim,#667085)', marginTop: 2 }}>{field.hint}</span>}
+    </label>
+  );
+}
+
+function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m: string) => void }) {
+  const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
+  const [result, setResult] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+  const [showRaw, setShowRaw] = useState(false);
+
+  const visible = useMemo(() => calc.fields.filter(f => isFieldVisible(f, values)), [calc, values]);
+  const rows = useMemo(() => scalarRows(result), [result]);
+  const tables = useMemo(() => objectTables(result), [result]);
+  const provenance = result?.provenance ?? null;
+
+  const run = useCallback(async () => {
+    const { body, errors } = buildRequestBody(calc, values);
+    if (errors.length > 0) { fireToast(errors[0]); return; }
+    setBusy(true);
+    try {
+      const res = await readData(`/api/biostat${calc.path}`, body);
+      if (!res.ok || res.data === null) {
+        fireToast(
+          res.status === 401
+            ? 'Sign in to your tenant to run the design calculators.'
+            : res.error ?? `Calculation failed (HTTP ${res.status}).`
+        );
+        return;
+      }
+      setResult(res.data);
+    } finally { setBusy(false); }
+  }, [calc, values, fireToast]);
+
+  const reset = useCallback(() => { setValues(initialValues(calc)); setResult(null); }, [calc]);
+
+  return (
+    <div className="pj-card">
+      <div className="pj-card-h">
+        <span className="t">{calc.title}</span>
+        <span className="s">{calc.subtitle}</span>
+      </div>
+      <div className="pj-card-b">
+        <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginBottom: 12, lineHeight: 1.5 }}>{calc.about}</div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10, marginBottom: 12 }}>
+          {visible.map(f => (
+            <Field key={f.key} field={f} value={values[f.key] ?? ''} onChange={v => setValues(s => ({ ...s, [f.key]: v }))} />
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="btn primary" style={{ height: 32 }} onClick={run} disabled={busy}>
+            {I.zap} {busy ? 'Computing…' : 'Compute'}
+          </button>
+          <button className="btn" style={{ height: 32 }} onClick={reset} disabled={busy}>Reset</button>
+          {result && <button className="btn" style={{ height: 32 }} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
+        </div>
+
+        {result !== null && (
+          <div style={{ marginTop: 12 }}>
+            {rows.length === 0 && tables.length === 0 ? (
+              <EmptyState icon={I.beaker} title="Computed" hint="The engine returned a result with no scalar fields to tabulate — open the raw response to see it." />
+            ) : (
+              <>
+                {rows.length > 0 && (
+                  <table className="reg-tbl"><tbody>
+                    {rows.map(([k, v]) => (
+                      <tr key={k}><td>{k}</td><td style={{ textAlign: 'right' }} className="mono">{v}</td></tr>
+                    ))}
+                  </tbody></table>
+                )}
+                {tables.map(t => (
+                  <div key={t.label} style={{ marginTop: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>{t.label}</div>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className="reg-tbl">
+                        <thead><tr>{Object.keys(t.rows[0]).map(h => <th key={h}>{humanize(h)}</th>)}</tr></thead>
+                        <tbody>
+                          {t.rows.slice(0, 60).map((r, i) => (
+                            <tr key={i}>{Object.keys(t.rows[0]).map(h => <td key={h} className="mono">{cell(r[h])}</td>)}</tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {t.rows.length > 60 && (
+                      <div style={{ fontSize: 11, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>
+                        Showing 60 of {t.rows.length} rows — the full table is in the raw response.
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+
+            {provenance && (
+              // Shown because these numbers go into an SAP or a submission and a
+              // reviewer will ask how they were produced. The hash is over the
+              // inputs, so the same hash means the same computation.
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--c2c-dim,#667085)' }}>
+                {provenance.method} · {provenance.engine} {provenance.engineVersion}
+                {provenance.inputsSha256 ? <> · inputs <span className="mono">{String(provenance.inputsSha256).slice(0, 12)}</span></> : null}
+                {provenance.reproducible ? ' · reproducible' : null}
+              </div>
+            )}
+
+            {showRaw && (
+              <pre style={{ marginTop: 10, maxHeight: 320, overflow: 'auto', background: 'var(--c2c-surface-2,#f9fafb)', padding: 10, borderRadius: 6, fontSize: 11 }}>
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'];
@@ -80,15 +295,12 @@ const PHASES = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'];
 export function BiostatWorkbench(_props: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
-  // Defensibility assessment.
   const [asmt, setAsmt] = useState({ studyPhase: 'Phase 3', indication: '', studyDesign: '', primaryEndpoint: '', sampleSize: '' });
   const [asmtRes, setAsmtRes] = useState<Defensibility | null>(null);
   const [asmtBusy, setAsmtBusy] = useState(false);
 
-  // Assurance calculator.
-  const [asr, setAsr] = useState({ priorMean: '', priorSd: '', nPerArm: '' });
-  const [asrRes, setAsrRes] = useState<Record<string, any> | null>(null);
-  const [asrBusy, setAsrBusy] = useState(false);
+  const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
+  const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
 
   const runAssess = useCallback(async () => {
     if (!asmt.indication || !asmt.studyDesign || !asmt.primaryEndpoint) { fireToast('Enter indication, study design, and primary endpoint.'); return; }
@@ -104,23 +316,12 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
     } finally { setAsmtBusy(false); }
   }, [asmt, fireToast]);
 
-  const runAssurance = useCallback(async () => {
-    const nums = { priorMean: Number(asr.priorMean), priorSd: Number(asr.priorSd), nPerArm: Number(asr.nPerArm) };
-    if (![nums.priorMean, nums.priorSd, nums.nPerArm].every((x) => Number.isFinite(x)) || nums.nPerArm <= 0) { fireToast('Enter prior mean, prior SD, and n per arm.'); return; }
-    setAsrBusy(true);
-    try {
-      const { ok, status, data } = await readData<Record<string, any>>('/api/biostat/assurance', nums);
-      if (!ok || !data) { fireToast(status === 401 ? 'Sign in to your tenant to run the assurance calculator.' : `Calculation failed (HTTP ${status}).`); return; }
-      setAsrRes(data);
-    } finally { setAsrBusy(false); }
-  }, [asr, fireToast]);
-
   return (
     <div className="cm-body">
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Biostatistics workbench</span><span className="s">Real defensibility engine + design calculators</span></div>
+        <div className="pj-card-h"><span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span></div>
         <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--c2c-dim,#667085)' }}>
-          Reviewer-risk assessment and the design calculators run on the server’s statistical engine — not a client-side approximation.
+          Every calculation below runs on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser.
         </div>
       </div>
 
@@ -161,27 +362,29 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
         </div>
       </div>
 
-      {/* Assurance calculator */}
+      {/* Design calculators */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Assurance (Bayesian power)</span><span className="s">Two-sample means</span></div>
+        <div className="pj-card-h"><span className="t">Design calculators</span><span className="s">Choose an engine</span></div>
         <div className="pj-card-b">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 8, marginBottom: 10 }}>
-            <label style={{ fontSize: 12 }}>Prior mean (effect)<input className="c2c-input" style={{ height: 30 }} value={asr.priorMean} onChange={(e) => setAsr({ ...asr, priorMean: e.target.value })} placeholder="e.g. 0.4" /></label>
-            <label style={{ fontSize: 12 }}>Prior SD<input className="c2c-input" style={{ height: 30 }} value={asr.priorSd} onChange={(e) => setAsr({ ...asr, priorSd: e.target.value })} placeholder="e.g. 0.15" /></label>
-            <label style={{ fontSize: 12 }}>n per arm<input className="c2c-input" style={{ height: 30 }} inputMode="numeric" value={asr.nPerArm} onChange={(e) => setAsr({ ...asr, nPerArm: e.target.value.replace(/\D/g, '') })} placeholder="e.g. 120" /></label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {CALCULATORS.map(c => (
+              <button
+                key={c.id}
+                className={'btn' + (c.id === activeId ? ' primary' : '')}
+                style={{ height: 28, fontSize: 12 }}
+                onClick={() => setActiveId(c.id)}
+              >
+                {c.title}
+              </button>
+            ))}
           </div>
-          <button className="btn primary" style={{ height: 32 }} onClick={runAssurance} disabled={asrBusy}>{I.zap} {asrBusy ? 'Computing…' : 'Compute assurance'}</button>
-          {asrRes && (
-            numericRows(asrRes).length === 0 ? (
-              <div style={{ marginTop: 10 }}><EmptyState icon={I.beaker} title="Computed" hint="The engine returned a result with no scalar fields to tabulate." /></div>
-            ) : (
-              <table className="reg-tbl" style={{ marginTop: 10 }}><tbody>
-                {numericRows(asrRes).map(([k, v]) => (<tr key={k}><td>{k}</td><td style={{ textAlign: 'right' }} className="mono">{v}</td></tr>))}
-              </tbody></table>
-            )
-          )}
         </div>
       </div>
+
+      {/* Remounted per calculator so form state never leaks between engines —
+          a leftover value under a key the next engine also uses would be sent
+          silently. */}
+      <CalculatorPanel key={active.id} calc={active} fireToast={fireToast} />
 
       <C2CToast msg={toast} />
     </div>

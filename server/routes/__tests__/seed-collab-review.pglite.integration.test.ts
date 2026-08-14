@@ -115,8 +115,13 @@ CREATE TABLE concept2cure_review_tasks (
   created_by_name TEXT NOT NULL,
   assigned_to_id INTEGER REFERENCES users(id), assigned_to_name TEXT,
   title TEXT NOT NULL, description TEXT,
+  -- The domain AFTER migrations/20260814h_review_task_type_domain_repair.sql.
+  -- Before that repair two overlapping CHECKs intersected to exclude
+  -- 'approval_task'; the repair drops the narrowing one so 0001's intended
+  -- domain governs. See review-task-type-domain.pglite.integration.test.ts,
+  -- which reproduces the broken state and proves the repair.
   task_type TEXT NOT NULL DEFAULT 'review_task'
-    CHECK (task_type IN ('change_request','follow_up','review_task')),
+    CHECK (task_type IN ('change_request','follow_up','review_task','approval_task')),
   status TEXT NOT NULL DEFAULT 'open'
     CHECK (status IN ('open','in_progress','resolved','closed')),
   due_at TIMESTAMPTZ,
@@ -235,7 +240,11 @@ describe('my-queue (the surface a demo signs in and looks at)', () => {
 
   it('returns the open/in-progress review tasks assigned to the admin, due first', async () => {
     const r = await pg.query<Record<string, unknown>>(MY_QUEUE_TASKS_SQL, [ADMIN.id, ORG.id]);
-    expect(r.rows.map(x => x.task_id)).toEqual(['ga-demo-rtask-001', 'ga-demo-rtask-002']);
+    // ORDER BY due_at ASC: rtask-001 is overdue (-2d), then 002 (+3d), then the
+    // approval task 005 (+4d).
+    expect(r.rows.map(x => x.task_id)).toEqual([
+      'ga-demo-rtask-001', 'ga-demo-rtask-002', 'ga-demo-rtask-005',
+    ]);
     // rtask-001 is deliberately overdue so the derived overdueTasks counter
     // (concept2cure.ts:16086-16094) has something to count.
     expect(new Date(String(r.rows[0].due_at)).getTime()).toBeLessThan(Date.now());
@@ -296,19 +305,34 @@ describe('thread comments', () => {
 });
 
 describe('review task types', () => {
-  it("never seeds 'approval_task' — the overlapping CHECKs make it un-insertable", async () => {
+  it('covers every value in the repaired domain', async () => {
     const r = await pg.query<{ task_type: string }>(
       'SELECT DISTINCT task_type FROM concept2cure_review_tasks ORDER BY task_type'
     );
-    expect(r.rows.map(x => x.task_type)).toEqual(['change_request', 'follow_up', 'review_task']);
+    expect(r.rows.map(x => x.task_type)).toEqual([
+      'approval_task', 'change_request', 'follow_up', 'review_task',
+    ]);
+  });
 
-    // And prove the constraint really does reject it, so this is a fact about
-    // the schema rather than a habit of the seed.
+  it("gives my-queue's approvalsNeeded counter something to count", async () => {
+    // The counter (concept2cure.ts:16086-16094) selects task_type =
+    // 'approval_task' among the caller's active tasks. It was structurally
+    // stuck at 0 until the domain repair, so a non-zero here is the whole
+    // point of seeding one.
+    const r = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM concept2cure_review_tasks
+        WHERE org_id = ${ORG.id} AND assigned_to_id = ${ADMIN.id}
+          AND status IN ('open','in_progress') AND task_type = 'approval_task'`
+    );
+    expect(r.rows[0].n).toBeGreaterThan(0);
+  });
+
+  it('still rejects a value outside the domain', async () => {
     await expect(
       pg.query(
         `INSERT INTO concept2cure_review_tasks
            (task_id, org_id, project_id, artifact_id, created_by_id, created_by_name, title, task_type)
-         VALUES ('probe-approval', ${ORG.id}, 9, 11, 1, 'JM Smith', 'probe', 'approval_task')`
+         VALUES ('probe-bogus', ${ORG.id}, 9, 11, 1, 'JM Smith', 'probe', 'not_a_type')`
       )
     ).rejects.toThrow();
   });
