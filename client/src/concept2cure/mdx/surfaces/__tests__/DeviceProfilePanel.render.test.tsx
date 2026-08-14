@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { DeviceProfilePanel } from '../DeviceProfilePanel';
+import { DeviceProfilePanel, standardsStatusLine } from '../DeviceProfilePanel';
 
 /**
  * Mount tests for the device-profile intake card.
@@ -145,6 +145,154 @@ describe('DeviceProfilePanel — honest states', () => {
     fireEvent.click(screen.getByText('Look up classification'));
     await waitFor(() =>
       expect(screen.getByText(/No openFDA classification matched/)).toBeTruthy(),
+    );
+  });
+
+});
+
+/**
+ * The recognized-standards half. The dataset is a vendored FDA export that is
+ * not in this repository, so the state these tests care most about is the one
+ * this deployment is actually in: the list is not held, and the panel says so
+ * instead of showing a plausible set of standards.
+ */
+const STANDARD = {
+  recognitionNumber: '99-001',
+  sdo: 'FIXTURE-SDO',
+  designationNumber: 'FIXTURE A-1',
+  title: 'First fixture standard',
+  extentOfRecognition: 'Clauses 1 to 4 only.',
+  recognitionStatus: 'transition',
+  transitionEndDate: '2027-01-01',
+};
+
+const PROVENANCE = {
+  source: 'FDA CDRH Recognized Consensus Standards Database',
+  sourceUrl: 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/search.cfm',
+  recognitionListNumber: 'TEST-FIXTURE-000',
+  publishedOn: '2026-01-15',
+  retrievedOn: '2026-01-20',
+  retrievedBy: 'fixture',
+};
+
+async function openStandards(standardsBody: unknown) {
+  mockFetch((url) => {
+    if (url.includes('/device/standards')) return okJson(standardsBody);
+    return okJson({ profile: PROFILE });
+  });
+  render(<DeviceProfilePanel ident={PROFILE.id} />);
+  await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+  fireEvent.click(screen.getByText('Edit'));
+  fireEvent.click(screen.getByText('Recognized standards'));
+}
+
+describe('standardsStatusLine — the three states stay three', () => {
+  it('names an absent dataset as unavailable, quoting the server reason', () => {
+    expect(
+      standardsStatusLine({
+        productCode: 'MDS',
+        available: false,
+        unavailableReason: 'the dataset has not been vendored',
+        datasetLoaded: false,
+        standards: [],
+        matched: 0,
+        source: 'fda-recognized-consensus-standards',
+      }),
+    ).toBe('Recognized standards unavailable — the dataset has not been vendored');
+  });
+
+  it("calls a loaded-but-empty answer the list's answer, not a gap", () => {
+    const line = standardsStatusLine({
+      productCode: 'MDS',
+      available: true,
+      datasetLoaded: true,
+      standards: [],
+      matched: 0,
+      source: 'fda-recognized-consensus-standards',
+    });
+    expect(line).toMatch(/holds no consensus standard against product code MDS/);
+    expect(line).toMatch(/not a gap in the lookup/);
+  });
+
+  it('counts real hits and cites the recognition list they came from', () => {
+    expect(
+      standardsStatusLine({
+        productCode: 'MDS',
+        available: true,
+        datasetLoaded: true,
+        standards: [STANDARD],
+        matched: 1,
+        provenance: PROVENANCE,
+        source: 'fda-recognized-consensus-standards',
+      }),
+    ).toBe('1 recognized standard for product code MDS · FDA Recognition List TEST-FIXTURE-000');
+  });
+
+  it('distinguishes a failed request from the server saying "unavailable"', () => {
+    expect(standardsStatusLine(null)).toMatch(/could not reach the server/);
+  });
+});
+
+describe('DeviceProfilePanel — recognized standards', () => {
+  it('shows nothing about standards until asked', async () => {
+    mockFetch(() => okJson({ profile: PROFILE }));
+    render(<DeviceProfilePanel ident={PROFILE.id} />);
+    await waitFor(() => expect(screen.getByText(/code MDS/)).toBeTruthy());
+    fireEvent.click(screen.getByText('Edit'));
+    expect(screen.queryByText('FDA recognized consensus standards')).toBeNull();
+  });
+
+  it('says the list is not held rather than showing a plausible one', async () => {
+    await openStandards({
+      productCode: 'MDS',
+      available: false,
+      unavailableReason:
+        'The FDA recognized-consensus-standards dataset has not been vendored — expected /repo/assets/fda-recognized-standards/fda-recognized-consensus-standards.json',
+      datasetLoaded: false,
+      standards: [],
+      matched: 0,
+      source: 'fda-recognized-consensus-standards',
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Recognized standards unavailable — .*has not been vendored/)).toBeTruthy(),
+    );
+    /* No provenance footer, because there is no source to cite. */
+    expect(screen.queryByText(/Recognition is FDA's/)).toBeNull();
+  });
+
+  it('renders FDA fields verbatim, with the extent of recognition and the source', async () => {
+    await openStandards({
+      productCode: 'MDS',
+      available: true,
+      datasetLoaded: true,
+      standards: [STANDARD],
+      matched: 1,
+      provenance: PROVENANCE,
+      source: 'fda-recognized-consensus-standards',
+    });
+
+    await waitFor(() => expect(screen.getByText(/1 recognized standard/)).toBeTruthy());
+    expect(screen.getByText(/FIXTURE A-1 · FIXTURE-SDO · recognition 99-001 · transition/)).toBeTruthy();
+    expect(screen.getByText('First fixture standard')).toBeTruthy();
+    expect(screen.getByText('Extent of recognition: Clauses 1 to 4 only.')).toBeTruthy();
+    expect(screen.getByText(/Transition ends 2027-01-01/)).toBeTruthy();
+    expect(screen.getByText(/Recognition is FDA's/)).toBeTruthy();
+  });
+
+  it('reports a loaded list that holds nothing for this code as exactly that', async () => {
+    await openStandards({
+      productCode: 'MDS',
+      available: true,
+      datasetLoaded: true,
+      standards: [],
+      matched: 0,
+      provenance: PROVENANCE,
+      source: 'fda-recognized-consensus-standards',
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/holds no consensus standard against product code MDS/)).toBeTruthy(),
     );
   });
 });

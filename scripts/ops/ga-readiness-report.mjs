@@ -111,6 +111,11 @@ const ESTAR_DESCRIPTORS = [
   { id: '513g-prestar', file: 'PreSTAR-513g.pdf' },
 ];
 
+// server/services/fda-recognized-standards/recognized-standards-dataset.ts —
+// RECOGNIZED_STANDARDS_DEFAULT_DIR + RECOGNIZED_STANDARDS_DATASET_FILE.
+const RECOGNIZED_STANDARDS_DIR = 'assets/fda-recognized-standards';
+const RECOGNIZED_STANDARDS_FILE = 'fda-recognized-consensus-standards.json';
+
 // server/services/submission-gateways/index.ts — REGISTRY, and each gateway's
 // credential preflight (the vars whose absence throws CredentialError).
 const GATEWAY_CREDENTIALS = [
@@ -259,6 +264,63 @@ function record(r) {
     gate: 'server/services/ectd/schema-bundler.ts requiredSchemasForVersion + assessSchemaReadiness (ECTD_REQUIRE_RPS_SCHEMA)',
     owner: 'Procurement (ICH implementation package licence)',
     unblock: 'Obtain the ICH eCTD v4.0 implementation package; drop rps-message.xsd in and record its SHA-256 in assets/ectd-schema/checksums.txt.',
+  });
+}
+
+{
+  // FDA recognized consensus standards. openFDA has no endpoint for this, so
+  // the mapping can only come from a vendored FDA export. Observed by reading
+  // the file the loader reads and validating the same two things the loader
+  // treats as load-bearing: a provenance block and at least one record. The
+  // probe deliberately does NOT re-implement the loader's full record
+  // validation — it would drift. It reports presence and gross usability; the
+  // loader is the authority, and its verdict is visible in the route response.
+  const dir = env.FDA_RECOGNIZED_STANDARDS_DIR || path.join(repoRoot, RECOGNIZED_STANDARDS_DIR);
+  const file = path.join(dir, RECOGNIZED_STANDARDS_FILE);
+
+  let status = 'blocked';
+  let observed;
+  if (!fs.existsSync(file)) {
+    observed = `${RECOGNIZED_STANDARDS_FILE} absent in ${dir} — no product-code → standards mapping is possible`;
+  } else {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const records = Array.isArray(parsed?.standards) ? parsed.standards : null;
+      const listNo = parsed?.provenance?.recognitionListNumber;
+      if (records === null) {
+        observed = `${file} parsed but has no "standards" array`;
+      } else if (records.length === 0) {
+        observed = `${file} parsed but "standards" is empty`;
+      } else if (typeof listNo !== 'string' || listNo.trim() === '') {
+        observed = `${file} holds ${records.length} record(s) but no provenance.recognitionListNumber — the loader rejects an unprovenanced list`;
+      } else {
+        const codes = new Set();
+        for (const r of records) {
+          if (Array.isArray(r?.productCodes)) for (const c of r.productCodes) codes.add(String(c).toUpperCase());
+        }
+        status = 'ready';
+        observed = `${records.length} recognition record(s) across ${codes.size} product code(s), FDA Recognition List ${listNo.trim()}, in ${dir}`;
+      }
+    } catch (err) {
+      observed = `${file} is present but unreadable or not valid JSON: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  record({
+    id: 'fda-recognized-standards',
+    group: 'Licensed agency artifacts',
+    label: 'FDA recognized consensus standards dataset (product code → standards)',
+    status,
+    // Advisory, not blocker: a 510(k) can be filed with standards identified by
+    // hand. Absence costs the intake-time mapping competitors surface, not the
+    // filing itself, and marking it `blocker` would dilute the set that gates
+    // the deploy pipeline exit code.
+    severity: 'advisory',
+    observed,
+    gate: "server/services/fda-recognized-standards/recognized-standards-dataset.ts loadRecognizedStandardsDataset — a missing or malformed dataset is reported ABSENT (never partially loaded); recognized-standards.service.ts returns available:false and GET /api/510k/device/standards passes that through labelled",
+    owner: 'Procurement / Regulatory Ops (acquire + normalize the FDA export)',
+    unblock:
+      'Export the CDRH Recognized Consensus Standards database, normalize it into the documented shape with a provenance block, and drop it at the path above. Never infer a product-code association FDA does not publish — see assets/fda-recognized-standards/README.md.',
   });
 }
 

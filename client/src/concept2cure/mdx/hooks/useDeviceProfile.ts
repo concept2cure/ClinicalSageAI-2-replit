@@ -7,11 +7,17 @@
  *   useDeviceProfile(ident)      GET /api/510k/device/profile?ident=
  *                                + save()  PUT /api/510k/device/profile?ident=
  *   lookupClassification(query)  GET /api/510k/device/classification (openFDA)
+ *   lookupRecognizedStandards()  GET /api/510k/device/standards (vendored FDA
+ *                                recognition list — NOT an openFDA dataset)
  *
  * Honest by construction: the classification lookup passes the server's
  * { available:false, unavailableReason } through untouched — a failed lookup
  * never fabricates a product code or device class, and an unmappable openFDA
- * device_class maps to null (leave the field alone) rather than a guess.
+ * device_class maps to null (leave the field alone) rather than a guess. The
+ * standards lookup keeps `datasetLoaded` separate from `standards.length` so a
+ * surface can tell "we do not hold FDA's list" apart from "FDA lists nothing
+ * for this code" — collapsing those two into one empty table is the failure
+ * mode the whole path is built to avoid.
  */
 
 import { useCallback } from 'react';
@@ -160,6 +166,92 @@ export async function lookupClassification(
     const res = await fetch(url, { credentials: 'include', headers: jsonHeaders() });
     if (!res.ok) return null;
     return (await res.json()) as ClassificationLookupResult;
+  } catch {
+    return null;
+  }
+}
+
+/* ─── FDA recognized consensus standards (vendored list, never inferred) ─── */
+
+export interface RecognizedStandardView {
+  recognitionNumber: string;
+  sdo: string;
+  designationNumber: string;
+  title: string;
+  extentOfRecognition: string;
+  specialtyTaskGroup?: string;
+  recognitionStatus?: string;
+  transitionEndDate?: string;
+}
+
+export interface RecognizedStandardsProvenanceView {
+  source: string;
+  sourceUrl: string;
+  recognitionListNumber: string;
+  publishedOn: string;
+  retrievedOn: string;
+  retrievedBy: string;
+}
+
+export interface RecognizedStandardsResult {
+  productCode: string | null;
+  available: boolean;
+  /** Set when available=false — why no answer could be produced. */
+  unavailableReason?: string;
+  /** Whether the vendored dataset loaded at all. Never infer this from
+   *  standards.length — an empty list from a LOADED dataset is a real answer. */
+  datasetLoaded: boolean;
+  standards: RecognizedStandardView[];
+  matched: number;
+  provenance?: RecognizedStandardsProvenanceView;
+  source: 'fda-recognized-consensus-standards';
+}
+
+export interface RecognizedStandardsQuery {
+  /** Program ident — the server resolves its product code, org-scoped. */
+  ident?: string | null;
+  /** An explicit product code; wins over the program's own when both are sent. */
+  productCode?: string | null;
+}
+
+/**
+ * Build the /standards query string. Pure + exported so the query contract is
+ * unit-testable without a DOM. Null when neither term is usable (the server
+ * 400s an empty query).
+ */
+export function recognizedStandardsUrl(query: RecognizedStandardsQuery): string | null {
+  const params = new URLSearchParams();
+  if (query.ident?.trim()) params.set('ident', query.ident.trim());
+  if (query.productCode?.trim()) params.set('productCode', query.productCode.trim());
+  const qs = params.toString();
+  return qs ? `/api/510k/device/standards?${qs}` : null;
+}
+
+/**
+ * GET /standards — the FDA recognition list for a product code. Passes the
+ * server's labelled envelope through untouched. Returns null only when the
+ * request itself failed (network error / non-2xx) — never a fabricated
+ * standard, and never a silently-empty list standing in for an error.
+ */
+export async function lookupRecognizedStandards(
+  query: RecognizedStandardsQuery,
+): Promise<RecognizedStandardsResult | null> {
+  const url = recognizedStandardsUrl(query);
+  if (!url) {
+    return {
+      productCode: null,
+      available: false,
+      unavailableReason: 'Select a program or enter a product code first',
+      datasetLoaded: false,
+      standards: [],
+      matched: 0,
+      source: 'fda-recognized-consensus-standards',
+    };
+  }
+  try {
+    const res = await fetch(url, { credentials: 'include', headers: jsonHeaders() });
+    if (!res.ok) return null;
+    return (await res.json()) as RecognizedStandardsResult;
   } catch {
     return null;
   }

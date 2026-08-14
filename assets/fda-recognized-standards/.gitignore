@@ -1,0 +1,18 @@
+# The vendored FDA recognition-list export is NOT committed by default.
+#
+# It is a bulk agency export superseded on every new FDA Recognition List, and
+# keeping it out of git means a hand-written list of standards cannot arrive as
+# an ordinary-looking commit. Committing it is a deliberate, reviewed asset
+# acquisition (`git add -f`) that must carry the provenance block — see
+# README.md "Vendoring policy".
+fda-recognized-consensus-standards.json
+*.json
+
+# Everything else here IS committed.
+!.gitignore
+!README.md
+
+# Guard: never let scratch/derived files ride along with an acquisition drop.
+*.tmp
+*.bak
+*.orig

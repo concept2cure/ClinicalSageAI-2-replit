@@ -16,7 +16,9 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import {
   useDeviceProfile,
   lookupClassification,
+  lookupRecognizedStandards,
   classificationQueryUrl,
+  recognizedStandardsUrl,
   deviceProfileUrl,
   romanDeviceClass,
   type DeviceProfileView,
@@ -212,6 +214,92 @@ describe('classificationQueryUrl (query contract)', () => {
   it('is null with no usable terms', () => {
     expect(classificationQueryUrl({})).toBeNull();
     expect(classificationQueryUrl({ productCode: '   ' })).toBeNull();
+  });
+});
+
+describe('recognizedStandardsUrl (query contract)', () => {
+  it('sends both terms so the server can prefer the typed code over the saved one', () => {
+    expect(recognizedStandardsUrl({ ident: 'BX-204', productCode: ' MDS ' })).toBe(
+      '/api/510k/device/standards?ident=BX-204&productCode=MDS',
+    );
+  });
+
+  it('encodes the ident and accepts either term alone', () => {
+    expect(recognizedStandardsUrl({ ident: 'BX 204/α' })).toBe(
+      '/api/510k/device/standards?ident=BX+204%2F%CE%B1',
+    );
+    expect(recognizedStandardsUrl({ productCode: 'MDS' })).toBe(
+      '/api/510k/device/standards?productCode=MDS',
+    );
+  });
+
+  it('is null with no usable terms', () => {
+    expect(recognizedStandardsUrl({})).toBeNull();
+    expect(recognizedStandardsUrl({ ident: '  ', productCode: null })).toBeNull();
+  });
+});
+
+describe('lookupRecognizedStandards (vendored FDA list, never inferred)', () => {
+  it('keeps datasetLoaded distinct from an empty list', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        productCode: 'MDS',
+        available: true,
+        datasetLoaded: true,
+        standards: [],
+        matched: 0,
+        source: 'fda-recognized-consensus-standards',
+      }),
+    );
+    const result = await lookupRecognizedStandards({ productCode: 'MDS' });
+    expect(result?.available).toBe(true);
+    expect(result?.datasetLoaded).toBe(true);
+    expect(result?.matched).toBe(0);
+  });
+
+  it('passes the unavailable envelope through untouched', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        productCode: 'MDS',
+        available: false,
+        unavailableReason: 'The FDA recognized-consensus-standards dataset has not been vendored',
+        datasetLoaded: false,
+        standards: [],
+        matched: 0,
+        source: 'fda-recognized-consensus-standards',
+      }),
+    );
+    const result = await lookupRecognizedStandards({ ident: 'BX-204' });
+    expect(result?.available).toBe(false);
+    expect(result?.datasetLoaded).toBe(false);
+    expect(result?.unavailableReason).toMatch(/not been vendored/);
+  });
+
+  it('sends the same auth headers as the read path', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ available: true, datasetLoaded: true, standards: [], matched: 0 }),
+    );
+    await lookupRecognizedStandards({ productCode: 'MDS' });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe('Bearer test-token');
+    expect(headers['x-organization-id']).toBe('7');
+  });
+
+  it('returns null when the request itself fails — never a made-up standard', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    expect(await lookupRecognizedStandards({ productCode: 'MDS' })).toBeNull();
+
+    fetchMock.mockResolvedValueOnce(jsonResponse({ error: 'boom' }, false, 500));
+    expect(await lookupRecognizedStandards({ productCode: 'MDS' })).toBeNull();
+  });
+
+  it('refuses an unusable query without issuing a request', async () => {
+    const empty = await lookupRecognizedStandards({});
+    expect(empty?.available).toBe(false);
+    expect(empty?.datasetLoaded).toBe(false);
+    expect(empty?.unavailableReason).toMatch(/program or enter a product code/);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

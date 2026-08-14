@@ -9,6 +9,14 @@
  * server's unavailableReason, a rejected save says "Not saved", and no field
  * is ever filled from a guess (unmappable device classes are left alone).
  *
+ * The recognized-standards lookup sits beside it because it answers the other
+ * half of intake: once the product code is known, which consensus standards has
+ * FDA recognized for it. That list comes from a vendored FDA dataset, so the
+ * panel renders three distinct states and never merges them — the dataset is
+ * not held, the dataset is held and lists nothing for this code, or here is
+ * FDA's list. An empty table that could mean either of the first two would be
+ * the dishonest rendering.
+ *
  * Uses the kit's section/pma-mod classes for visual consistency
  * (EstarFilingPanel is the reference idiom).
  */
@@ -18,11 +26,13 @@ import { useEffect, useState } from 'react';
 import {
   useDeviceProfile,
   lookupClassification,
+  lookupRecognizedStandards,
   romanDeviceClass,
   type DeviceProfilePatch,
   type DeviceProfileView,
   type DeviceClass,
   type RegulatoryPath,
+  type RecognizedStandardsResult,
 } from '../hooks/useDeviceProfile';
 
 const DEVICE_CLASSES: DeviceClass[] = ['I', 'II', 'III'];
@@ -76,6 +86,32 @@ export function profilePatch(profile: DeviceProfileView | null, form: FormState)
   return patch;
 }
 
+/**
+ * The one-line verdict above the standards list. Pure + exported so the three
+ * states stay pinned by a test rather than by however the JSX happens to read.
+ *
+ * `null` means "the request itself failed" — distinct again from the server's
+ * own honest unavailable, because a network error is not evidence about FDA's
+ * list either way.
+ */
+export function standardsStatusLine(result: RecognizedStandardsResult | null): string {
+  if (!result) return 'Standards lookup failed — could not reach the server';
+  if (!result.available) {
+    return `Recognized standards unavailable — ${result.unavailableReason ?? 'unknown reason'}`;
+  }
+  if (result.matched === 0) {
+    return (
+      `FDA's recognition list holds no consensus standard against product code ` +
+      `${result.productCode ?? '—'}. This is the list's answer, not a gap in the lookup.`
+    );
+  }
+  const list = result.provenance?.recognitionListNumber;
+  return (
+    `${result.matched} recognized standard${result.matched === 1 ? '' : 's'} for product code ` +
+    `${result.productCode ?? '—'}${list ? ` · FDA Recognition List ${list}` : ''}`
+  );
+}
+
 const fieldLabelStyle: React.CSSProperties = {
   fontSize: 11,
   color: 'var(--text-300)',
@@ -104,11 +140,20 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
   const [saving, setSaving] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [standardsBusy, setStandardsBusy] = useState(false);
+  /* undefined = never asked. null = the request failed. Otherwise the server's
+     labelled envelope, rendered as-is. */
+  const [standards, setStandards] = useState<RecognizedStandardsResult | null | undefined>(
+    undefined,
+  );
 
   /* Re-seed the form whenever the loaded profile changes (program switch,
      refresh after save) — never mid-edit from a stale render. */
   useEffect(() => {
     setForm(formFromProfile(profile));
+    /* A standards answer belongs to the product code it was asked for. Drop it
+       on a program switch rather than let it sit under the next device. */
+    setStandards(undefined);
   }, [profile]);
 
   const patch = profilePatch(profile, form);
@@ -173,6 +218,17 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
         cls ?? (top.deviceClass || '—')
       } · reg ${top.regulationNumber || '—'} — review and Save`,
     );
+  }
+
+  async function onLookupStandards() {
+    if (standardsBusy) return;
+    setStandardsBusy(true);
+    /* Send the typed code when there is one so an operator can check a code
+       before saving it; otherwise let the server read the saved profile. */
+    const typed = form.productCode.trim();
+    const result = await lookupRecognizedStandards({ ident, productCode: typed || null });
+    setStandards(result);
+    setStandardsBusy(false);
   }
 
   return (
@@ -278,12 +334,68 @@ export function DeviceProfilePanel({ ident }: DeviceProfilePanelProps) {
             >
               {lookingUp ? 'Looking up…' : 'Look up classification'}
             </button>
+            <button
+              className="section-more"
+              disabled={standardsBusy}
+              title="Look up the consensus standards FDA recognizes for this product code"
+              onClick={() => void onLookupStandards()}
+            >
+              {standardsBusy ? 'Looking up…' : 'Recognized standards'}
+            </button>
             {status && (
               <span className="section-sub" role="status" style={{ margin: 0 }}>
                 {status}
               </span>
             )}
           </div>
+
+          {standards !== undefined && (
+            <div style={{ marginTop: 12, borderTop: '1px solid var(--border-100)', paddingTop: 10 }}>
+              <div style={fieldLabelStyle}>FDA recognized consensus standards</div>
+              <div className="section-sub" role="status" style={{ margin: '0 0 8px' }}>
+                {standardsStatusLine(standards)}
+              </div>
+              {standards?.available && standards.matched > 0 && (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {standards.standards.map((s) => (
+                    <div
+                      key={`${s.recognitionNumber}·${s.designationNumber}`}
+                      style={{
+                        border: '1px solid var(--border-100)',
+                        borderRadius: 6,
+                        padding: '8px 10px',
+                      }}
+                    >
+                      <div style={{ fontSize: 12, color: 'var(--text-200)' }}>
+                        {s.designationNumber}
+                        {s.sdo ? ` · ${s.sdo}` : ''}
+                        {` · recognition ${s.recognitionNumber}`}
+                        {s.recognitionStatus ? ` · ${s.recognitionStatus}` : ''}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-300)', marginTop: 2 }}>
+                        {s.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 4 }}>
+                        Extent of recognition: {s.extentOfRecognition}
+                      </div>
+                      {s.transitionEndDate && (
+                        <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 2 }}>
+                          Transition ends {s.transitionEndDate}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {standards?.provenance && (
+                <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 8 }}>
+                  Source: {standards.provenance.source} · retrieved{' '}
+                  {standards.provenance.retrievedOn}. Recognition is FDA's; whether a standard
+                  applies to this device remains the submitter's determination.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </>

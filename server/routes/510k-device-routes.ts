@@ -8,6 +8,9 @@
  *                                               reduced predicate fallback when the
  *                                               predicate-intelligence shadow
  *                                               service is not configured
+ *   GET  /api/510k/device/standards?...         FDA recognized consensus standards
+ *                                               for the profile's product code, from
+ *                                               the vendored recognition list
  *
  * Profile reads/writes are org-scoped against regulatory_programs (uuid or
  * program code ident, mirroring the estar-route resolver). openFDA lookups are
@@ -15,6 +18,12 @@
  * empty results, never fabricated rows. Fallback predicate results carry
  * source:'openfda' + reduced:true so no surface can present them as the full
  * predicate-intelligence engine (no SE scoring, no evidence cells).
+ *
+ * The standards lookup is NOT an openFDA call — openFDA has no recognized-
+ * consensus-standards endpoint. It reads the vendored FDA recognition list
+ * (assets/fda-recognized-standards/) and reports an explicitly labelled
+ * unavailable state when that dataset has not been dropped in, rather than
+ * offering a plausible list of standards nobody at FDA published.
  */
 
 import { Router, type Request } from 'express';
@@ -29,6 +38,7 @@ import {
   searchDeviceClassification,
   search510kClearances,
 } from '../services/integrations/openfda-device-client';
+import { lookupRecognizedStandards } from '../services/fda-recognized-standards/recognized-standards.service';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('510k-device-routes');
@@ -179,6 +189,53 @@ router.get('/predicates', async (req, res) => {
   // reduced:true — real FDA clearance records, but NOT the predicate-
   // intelligence engine (no SE scoring, no evidence). Surfaces must label it.
   return res.status(200).json({ ...result, reduced: true });
+});
+
+const standardsQuerySchema = z
+  .object({
+    ident: z.string().min(1).optional(),
+    productCode: z.string().min(1).max(50).optional(),
+  })
+  .refine((q) => q.ident || q.productCode, {
+    message: 'ident or productCode is required',
+  });
+
+/**
+ * Recognized consensus standards for a device's product code.
+ *
+ * Org-scoped two ways, and both matter. The caller must carry an organization
+ * (403 otherwise), and when `ident` is supplied the program is resolved through
+ * the same `findProgram` used by /profile — request-scoped client, explicit
+ * organization_id predicate — so a program in another tenant answers 404 and
+ * never leaks its product code. An explicit `productCode` wins over the
+ * program's own, which lets the intake panel look up a code the operator has
+ * typed but not yet saved.
+ *
+ * Answers 200 with a labelled envelope rather than an error when there is no
+ * product code or no vendored dataset: those are honest states the surface has
+ * to render, not request failures.
+ */
+router.get('/standards', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const parsed = standardsQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid query', details: parsed.error.flatten() });
+  }
+
+  try {
+    let productCode = parsed.data.productCode?.trim() || null;
+    if (parsed.data.ident) {
+      const program = await findProgram(req, orgId, parsed.data.ident);
+      if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
+      if (!productCode) productCode = program.productCode ?? null;
+    }
+    const result = await lookupRecognizedStandards(productCode);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    logger.error('recognized standards lookup failure', { err: error?.message });
+    return res.status(500).json({ error: 'RECOGNIZED_STANDARDS_LOOKUP_FAILED' });
+  }
 });
 
 export default router;
