@@ -24,7 +24,7 @@ disagree, the command is right and this file is stale.
 Measured 2026-08-14 on `concept2cure-v2`:
 
 ```bash
-node scripts/ops/ledger-check.mjs          # 54 rows: 19 done, 28 open, 6 in-flight, 1 blocked
+node scripts/ops/ledger-check.mjs          # 55 rows: 19 done, 29 open, 6 in-flight, 1 blocked
 node scripts/ops/ga-readiness-report.mjs   # 3/40 ready · 18 blockers · 19 advisories
 npm run ci:surface-discoverability         # 119 renderable: 93 catalogued, 26 contextual
 ```
@@ -205,7 +205,7 @@ rather than by construction*, which is the state that decays silently.
 | **L38** | `artifactVersionStore` writes `updated_at`, which no migration creates. Either the column joins the migration set or the writer stops naming it. |
 | **L10** | D8 C2 — attribute-free alias map plus the CI gate enforcing the invariant. |
 | **L46** | **Do this one first, and before Phase 0's chain verification.** Fifteen serializers feed hashes and signatures and they disagree; one emits invalid JSON, one sorts only the top level. The canonicalizer, its golden vectors and `ci:canonicalizers` have landed — what remains is re-pointing 15 call sites, which is a *data* decision per site, not a refactor: a stored hash written by the old copy stops reproducing under the new one. |
-| **L54** | The §11.10(e) audit export signs `queryFilters`, `chainIntegrity` and `compliance` as `{}`. Fix with the canonicalizer, and decide what happens to signatures on exports already issued. |
+| **L55** | The §11.10(e) audit export signs `queryFilters`, `chainIntegrity` and `compliance` as `{}`. Fix with the canonicalizer, and decide what happens to signatures on exports already issued. |
 | **L47** | Rename the ungoverned `openai-service` so a governed and an ungoverned call cannot be selected by directory depth. Holding action; the burndown is the real fix. |
 | **L48** | Delete one of the two 1,134-line eCTD template catalogs and re-point its importer. |
 | **L49** | Collapse three Define-XML generators to one with a version parameter. |
@@ -214,7 +214,7 @@ rather than by construction*, which is the state that decays silently.
 **Gate:** one INSERT site per substrate, one verifier, **one canonicalizer**, and a CI gate
 for each — so the next writer cannot reintroduce the second one.
 
-**On the shape of this phase.** L46–L54 came from a duplication sweep, and what it mostly
+**On the shape of this phase.** L46–L53 and L55 came from a duplication sweep, and what it mostly
 found was that the obvious failure modes are already governed: 3 empty catch blocks in
 6,228, zero absolute route collisions, no backup or `-old` files, and dead modules already
 held by a ratcheting gate at 107. What is *not* governed is duplication of the small
@@ -224,7 +224,7 @@ gate asks whether a function exists twice.
 `ci:canonicalizers` closes that gap for the first of the three, and it is worth recording
 what happened when it ran. A hand search had found nine copies. The gate found fifteen,
 including seven in the Part 11 and audit-export paths, and one of those turned out to be
-L54 — a tamper-evident export signing three of its own fields as `{}`. The gate paid for
+L55 — a tamper-evident export signing three of its own fields as `{}`. The gate paid for
 itself in under an hour, which is the argument for writing the other two.
 
 ---
