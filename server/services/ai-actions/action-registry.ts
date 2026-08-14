@@ -160,12 +160,39 @@ const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const MAX_IDEMPOTENCY_ENTRIES = 1000;
 const idempotencyCache = new Map<string, { response: AIActionResponse; expiresAt: number }>();
 
-function computeIdempotencyKey(request: AIActionRequest, userId: number): string {
+/**
+ * Idempotency key — scoped to the ORGANIZATION as well as the user.
+ *
+ * The org was missing, and `userId` alone does not stand in for it: a user can
+ * belong to more than one organization and switch between them
+ * (`POST /api/auth/enterprise/select-organization`), which is the normal working
+ * pattern for a CRO consultant serving several sponsors. Without the org in the
+ * key, the same person running the same action on a colliding targetId in two
+ * sponsors' tenancies shares one cache entry for the 5-minute TTL.
+ *
+ * Confidentiality impact is bounded — both organizations are ones this user may
+ * already access — but the record integrity impact is not. A cached response is
+ * returned with its ORIGINAL `provenance.organizationId`, so an action executed
+ * in sponsor B's context can return a result attributed to sponsor A. Under
+ * 21 CFR Part 11 that is a record with the wrong attribution, which is worse
+ * than a slow response. The same window also outlives a membership revocation
+ * by up to the TTL.
+ *
+ * Both neighbouring idempotency caches (`routes/ana-ri/chat.ts`,
+ * `routes/csr-intelligence-routes.ts`) already key on tenant + user; this was
+ * the one that did not.
+ */
+function computeIdempotencyKey(
+  request: AIActionRequest,
+  userId: number,
+  organizationId: number
+): string {
   const payload = JSON.stringify({
     actionType: request.actionType,
     targetType: request.targetType,
     targetId: request.targetId,
     projectId: request.projectId,
+    organizationId,
     userId,
   });
   return crypto.createHash('sha256').update(payload).digest('hex').slice(0, 16);
@@ -339,7 +366,7 @@ export async function dispatchAction(
 
   // 5. Idempotency check (for non-read actions with same params)
   if (!options.forceExecution && request.actionType !== 'run_validation') {
-    const idempotencyKey = computeIdempotencyKey(request, options.user.userId);
+    const idempotencyKey = computeIdempotencyKey(request, options.user.userId, options.user.organizationId);
     const cached = getCachedResponse(idempotencyKey);
     if (cached) {
       return { ...cached, provenance: { ...cached.provenance, actionId } };
@@ -431,7 +458,7 @@ export async function dispatchAction(
 
   // 10. Cache successful responses for idempotency
   if (response.success && request.actionType !== 'run_validation') {
-    const idempotencyKey = computeIdempotencyKey(request, options.user.userId);
+    const idempotencyKey = computeIdempotencyKey(request, options.user.userId, options.user.organizationId);
     cacheResponse(idempotencyKey, response);
   }
 
