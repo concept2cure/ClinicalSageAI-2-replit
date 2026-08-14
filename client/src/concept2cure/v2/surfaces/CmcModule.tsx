@@ -52,6 +52,7 @@ import {
   C2CToast,
   cmcProjectId,
   cmcProjectUuid,
+  cmcWriteError,
   cmcWriteFailed,
   cmcWriteThrew,
   useToast,
@@ -149,8 +150,34 @@ const CMC_SUGGEST: Record<string, string[]> = {
   stability: ['Project shelf life from the long-term data with an ICH Q1E fit', 'Show every study trending toward a limit', 'Draft the stability summary for §3.2.S.7'],
   batch: ['Summarize deviations across the last 10 batches', 'Show batches still pending release', 'Trend yield across drug-product batches'],
   change: ['Classify this change and give me the filing path per market', 'What comparability work does this change oblige?', 'Which §3.2 sections does this change make stale?'],
+  global: ['Which of my open changes needs a prior-approval supplement?', 'Summarise the filing burden of these changes across all six markets', 'Which markets can I implement in before approval?'],
+  pathway: ['Summarise every governed action taken on this Module 3', 'Which contradictions were resolved, and how?', 'Draft an audit-trail summary for an inspector'],
   copilot: ['Explain ICH Q6B expectations for charge-variant specs', 'Draft a method-validation justification for sub-visible particles', 'What evidence supports a 24-month shelf-life claim?'],
 };
+
+/**
+ * The module's capability prompt list — every capability reachable by talking to
+ * AnA, in human language rather than system vocabulary.
+ *
+ * Chat-first design §2a: for every specialised surface there must be a
+ * corresponding human-language prompt. Each tab carries its own starters above;
+ * this is the one place that lists the module's whole surface area, so a
+ * capability added to a tab is reachable without having to know which tab
+ * implements it.
+ */
+const CMC_CAPABILITY_PROMPTS: string[] = [
+  ...CMC_SUGGEST.copilot,
+  'Reconcile drug-substance specs across CSR-201 and §3.2.S.4.1',
+  'Compile Module 3 and tell me which sections are still blocked',
+  'What is blocking the final export gate on this program?',
+  'Explain each open contradiction and what would resolve it',
+  'Which CQAs have no validated analytical method controlling them?',
+  'Run the ICH compliance check and turn the findings into a remediation plan',
+  'Generate the drug-substance control strategy and tell me what a reviewer would challenge',
+  'What shelf life do my stability data actually support, and what limits it?',
+  'Which QC results are still awaiting second-person review?',
+  'Which markets need a prior-approval supplement for the scale-up?',
+];
 
 /* ── Change-simulator canonical config (real regulatory reference — KEEP) ── */
 
@@ -418,7 +445,7 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
     <div className="cm-body">
       <CmHead title="Module 3 overview" meta={`${port.length} submissions -- RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
       {board.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the Module 3 board…</div>
+        <EmptyState icon={I.beaker} title="Loading the Module 3 board…" busy testId="cmc-board-loading" />
       ) : board.error ? (
         <EmptyState
           tone="error"
@@ -618,7 +645,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
               {!projectId ? (
                 <EmptyState icon={I.clipboardList} title="Open a program to manage its specifications" hint="Release and shelf-life limits are recorded per project in the governed specifications file (§3.2.S.4.1 / §3.2.P.5.1). Open a program, then create or review its specifications here." />
               ) : live.loading ? (
-                <EmptyState icon={I.clipboardList} title="Loading specifications…" />
+                <EmptyState icon={I.clipboardList} title="Loading specifications…" busy />
               ) : live.error ? (
                 <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file (GET /api/cmc/specifications) didn’t respond. Sign in to your tenant and retry." />
               ) : (
@@ -721,6 +748,41 @@ function stabConditionText(codes: string[] | null | undefined): string | undefin
   return named || (codes[0] ? STAB_STORAGE_LABEL[codes[0]] : undefined);
 }
 
+/* ── ICH Q1E estimate (POST /api/cmc/stability-studies/:id/shelf-life) ──
+   The estimator itself is `services/cmc/shelf-life.ts`: an ordinary
+   least-squares fit of the attribute against time, solved to where the
+   one-sided 95% confidence limit meets the specification limit. It is
+   deterministic and tested, and it had no HTTP route in the CMC family until
+   now — so the single calculation a stability programme exists to produce could
+   not be reached from the product.
+
+   Every field below can say "not estimable, and here is why": a parameter with
+   too few numeric points, or with no recorded acceptance criterion for the
+   confidence bound to intersect, is reported as such rather than dropped or
+   given a default limit. */
+interface Q1eEstimate {
+  parameter: string;
+  estimable: boolean;
+  reason?: string;
+  shelfLife?: number;
+  specLimit?: number;
+  direction?: 'increasing' | 'decreasing';
+  pointsUsed?: number;
+  pointsRecorded?: number;
+  pointsUsable?: number;
+  exceedsEvaluatedRange?: boolean;
+  regression?: { slope: number; intercept: number; r2: number; residualSd: number; n: number; df: number };
+  notes?: string[];
+}
+interface Q1eReport {
+  basis: string;
+  scopeLimit: string;
+  maxTimeEvaluated: number;
+  limitingParameter: string | null;
+  supportedShelfLife: number | null;
+  estimates: Q1eEstimate[];
+}
+
 /** Sort pull points numerically — '12' must follow '9', not precede it. */
 function byTimePoint(a: StabilityResult, b: StabilityResult): number {
   const na = parseFloat(a.timePoint);
@@ -745,6 +807,11 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
   const [registering, setRegistering] = useState(false);
   const [recording, setRecording] = useState<StabilityStudyApiRow | null>(null);
   const [closing, setClosing] = useState<StabilityStudyApiRow | null>(null);
+  /* ICH Q1E estimates, keyed by study. Held per study rather than globally
+     because the estimate belongs to the batch and condition it was fitted from —
+     a shelf life is not a property of the programme. */
+  const [q1e, setQ1e] = useState<Record<number, Q1eReport>>({});
+  const [estimating, setEstimating] = useState<number | null>(null);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [toast, fireToast] = useToast();
   const { user } = useAuth();
@@ -812,6 +879,42 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     }
   };
 
+  /**
+   * Run the ICH Q1E fit over what this study has actually recorded.
+   *
+   * The result is EVIDENCE, not a claim: it is never written to the study's
+   * `shelf_life` column. That column holds the shelf life the organisation
+   * claims, which is a regulatory decision a person makes on the close-out form
+   * after reading this.
+   */
+  const estimateQ1e = async (study: StabilityStudyApiRow) => {
+    if (estimating != null) return;
+    setEstimating(study.id);
+    try {
+      const res = await apiRequest('POST', '/api/cmc/stability-studies/' + study.id + '/shelf-life', {});
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(cmcWriteError(json, res.status), 'error');
+        return;
+      }
+      const report = (json as { data?: Q1eReport })?.data;
+      if (!report) { fireToast('The estimate returned an unexpected shape — reload and retry.', 'error'); return; }
+      setQ1e((m) => ({ ...m, [study.id]: report }));
+      const notEstimable = report.estimates.filter((e) => !e.estimable).length;
+      fireToast(
+        report.supportedShelfLife != null
+          ? `Q1E: ${report.supportedShelfLife} months supported, limited by ${report.limitingParameter}` +
+            (notEstimable ? ` · ${notEstimable} parameter${notEstimable === 1 ? '' : 's'} not estimable` : '') + '.'
+          : 'Q1E could not estimate any parameter on this study — see the reason against each below.',
+        report.supportedShelfLife != null ? 'ok' : 'error',
+      );
+    } catch (e) {
+      fireToast(cmcWriteThrew('shelf-life estimate', e), 'error');
+    } finally {
+      setEstimating(null);
+    }
+  };
+
   const closeOut = async (v: Record<string, string>) => {
     if (!closing) return;
     const study = closing;
@@ -867,7 +970,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
               {live.loading ? (
-                <EmptyState icon={I.barChart} title="Loading stability studies…" />
+                <EmptyState icon={I.barChart} title="Loading stability studies…" busy />
               ) : live.error ? (
                 <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register (GET /api/cmc/stability-studies) didn’t respond. Sign in to your tenant and retry." />
               ) : (
@@ -911,6 +1014,15 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                         <td><span className={'rd-chip tone-' + stabStatusTone(r.status)}>{r.status || 'draft'}</span></td>
                         <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                           <button className="nda-open" onClick={() => setRecording(r)}>{I.plus} Result</button>
+                          <button
+                            className="nda-open"
+                            style={{ marginLeft: 6 }}
+                            onClick={() => void estimateQ1e(r)}
+                            disabled={estimating != null || results.length === 0}
+                            title={results.length === 0 ? 'Record pull-point results first — there is nothing to fit' : 'Fit ICH Q1E over this study’s recorded results'}
+                          >
+                            {I.sigma} {estimating === r.id ? 'Fitting…' : 'Estimate Q1E'}
+                          </button>
                           <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setClosing(r)}>{I.checkCircle} Shelf life</button>
                         </td>
                       </tr>
@@ -968,29 +1080,90 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                 {' '}longest pull point recorded: {Math.max(...allResults.map((r) => parseFloat(r.timePoint) || 0))} months
               </div>
               <table className="reg-tbl">
-                <thead><tr><th>Study</th><th>Condition</th><th>Longest pull</th><th>Within limits</th><th>Recorded shelf life</th></tr></thead>
+                <thead><tr><th>Study</th><th>Condition</th><th>Longest pull</th><th>Within limits</th><th>Q1E estimate</th><th>Recorded shelf life</th></tr></thead>
                 <tbody>
                   {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).map((r) => {
                     const res = readStabilityResults(r.stabilityData);
                     const longest = Math.max(...res.map((x) => parseFloat(x.timePoint) || 0));
                     const bad = res.filter((x) => !x.withinSpecification).length;
+                    const fit = q1e[r.id];
                     return (
                       <tr key={r.id}>
                         <td style={{ fontWeight: 600 }}>{r.studyTitle || r.productName}</td>
                         <td>{stabConditionText(r.storageConditions) || '--'}</td>
                         <td>{longest} mo</td>
                         <td><span className={'rd-chip tone-' + (bad ? 'err' : 'ok')}>{res.length - bad}/{res.length}</span></td>
+                        <td>
+                          {!fit ? (
+                            <span className="cm-meta">not run</span>
+                          ) : fit.supportedShelfLife == null ? (
+                            <span className="sp-tone-warn">not estimable</span>
+                          ) : (
+                            <>
+                              <b>{fit.supportedShelfLife} mo</b>
+                              <div className="cm-meta">limited by {fit.limitingParameter}</div>
+                            </>
+                          )}
+                        </td>
                         <td>{r.shelfLife || <span className="cm-meta">not set</span>}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
+
+              {/* Per-parameter detail for every study that has been fitted —
+                  including, explicitly, the parameters that could NOT be fitted
+                  and the reason each one could not. A Q1E table that silently
+                  omits the attributes it failed on reads as a cleaner result
+                  than the data support. */}
+              {rows.filter((r) => q1e[r.id]).map((r) => {
+                const fit = q1e[r.id];
+                return (
+                  <div key={r.id} style={{ marginTop: 14 }}>
+                    <div className="cm-sub-head">
+                      ICH Q1E — {r.studyTitle || r.productName} · batch {r.batchNumber || '--'}
+                    </div>
+                    <table className="reg-tbl cm-subtable">
+                      <thead>
+                        <tr><th>Parameter</th><th>Estimate</th><th>Spec limit</th><th>Trend</th><th>Points</th><th>R²</th><th>Detail</th></tr>
+                      </thead>
+                      <tbody>
+                        {fit.estimates.map((e, i) => (
+                          <tr key={i}>
+                            <td style={{ fontWeight: 600 }}>{e.parameter}</td>
+                            <td>
+                              {e.estimable ? (
+                                <>
+                                  <b>{e.shelfLife} mo</b>
+                                  {e.exceedsEvaluatedRange && (
+                                    <div className="cm-meta">stays within spec across the whole {fit.maxTimeEvaluated}-month search</div>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="sp-tone-warn">not estimable</span>
+                              )}
+                            </td>
+                            <td>{e.estimable ? e.specLimit : '--'}</td>
+                            <td>{e.estimable ? e.direction : '--'}</td>
+                            <td>{e.estimable ? e.pointsUsed : `${e.pointsUsable ?? 0}/${e.pointsRecorded ?? 0}`}</td>
+                            <td>{e.regression ? e.regression.r2 : '--'}</td>
+                            <td className="cm-meta">{e.estimable ? (e.notes ?? []).join(' ') : e.reason}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="cm-meta">{fit.basis}. {fit.scopeLimit}</div>
+                  </div>
+                );
+              })}
+
               <div className="cm-meta" style={{ marginTop: 10 }}>
-                This is what is <b>recorded</b>. A shelf-life claim under ICH Q1E is a statistical
-                extrapolation over the primary batches, with poolability tested first — it is not
-                computed here, and no shelf life is projected beyond what a study has been closed
-                out with. Ask AnA to draft the §3.2.S.7 / §3.2.P.8 summary from this evidence.
+                The estimate is <b>evidence, not a claim</b>: it is computed from this study’s own
+                recorded results and is never written to the study’s shelf life. Setting the shelf
+                life the organisation stands behind is a regulatory decision made on the close-out
+                form. Batch poolability (ICH Q1E ANCOVA across the primary batches) is a separate
+                assessment and is not implied by a single-study fit.
               </div>
             </>
           )}
@@ -1112,7 +1285,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
               {!projectId ? (
                 <EmptyState icon={I.grid} title="Open a program to manage its batch records" hint="Manufactured batches with their yield, deviations, and disposition are recorded per project in the governed batch file. Open a program, then log or release its batches here." />
               ) : live.loading ? (
-                <EmptyState icon={I.grid} title="Loading batch records…" />
+                <EmptyState icon={I.grid} title="Loading batch records…" busy />
               ) : live.error ? (
                 <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file (GET /api/cmc/batch-records) didn’t respond. Sign in to your tenant and retry." />
               ) : (
@@ -1229,7 +1402,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
 
   return (
     <div className="cm-body">
-      <CmHead title="Change simulator" meta="Model a CMC change -> filing path across markets -- SUPAC / ICH Q12" ask={ask} />
+      <CmHead title="Change control" meta="Model a CMC change -> filing path across markets -- SUPAC / ICH Q12" ask={ask} suggest={CMC_SUGGEST.change} />
       <div className="pj-card">
         <div className="pj-card-b">
           <div className="de-field"><label className="de-label">Change type</label>
@@ -1353,6 +1526,7 @@ function CmGlobal({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
         title="Global filings"
         meta="What each market requires for the changes already under control -- SUPAC / ICH Q12 / Reg. 1234-2008"
         ask={ask}
+        suggest={CMC_SUGGEST.global}
       />
       <div className="pj-card">
         <div className="pj-card-h">
@@ -1363,7 +1537,7 @@ function CmGlobal({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
           {open.length === 0 ? (
             <div style={{ padding: 12 }}>
               {live.loading ? (
-                <EmptyState icon={I.globe} title="Loading the change register…" />
+                <EmptyState icon={I.globe} title="Loading the change register…" busy />
               ) : live.error ? (
                 <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the change register" hint="GET /api/cmc/change-control didn’t respond, so the per-market filing paths cannot be computed. Sign in to your tenant and retry." />
               ) : (
@@ -1501,7 +1675,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
 
   return (
     <div className="cm-body">
-      <CmHead title="Program records" meta="Agency correspondence, approval gates and the audit chain" ask={ask} />
+      <CmHead title="Program records" meta="Agency correspondence, approval gates and the audit chain" ask={ask} suggest={CMC_SUGGEST.pathway} />
       {!projectId ? (
         <div className="pj-card">
           <div className="pj-card-b">
@@ -1593,7 +1767,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
               {contradictions.rows.length === 0 ? (
                 <div style={{ padding: 12 }}>
                   {contradictions.loading ? (
-                    <EmptyState icon={I.shieldAlert} title="Loading contradiction history…" />
+                    <EmptyState icon={I.shieldAlert} title="Loading contradiction history…" busy />
                   ) : contradictions.error ? (
                     <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradiction history" hint={contradictions.error} />
                   ) : (
@@ -1650,7 +1824,7 @@ function CmCopilot({ ask }: { ask: (text: string) => void }) {
     <div className="cm-body">
       <CmHead title="CMC copilot" meta="Ask the Module 3 expert -- grounded in ICH Q-series and your quality data" ask={ask} />
       <div className="pj-card"><div className="pj-card-b">
-        {CMC_SUGGEST.copilot.concat(['Reconcile drug-substance specs across CSR-201 and §3.2.S.4.1', 'Which markets need a prior-approval supplement for the scale-up?']).map((q, i) => (
+        {CMC_CAPABILITY_PROMPTS.map((q, i) => (
           <button key={i} className="cm-copilot-q" onClick={() => ask(q)}><span className="ico">{I.sparkles}</span><span className="t">{q}</span></button>
         ))}
       </div></div>

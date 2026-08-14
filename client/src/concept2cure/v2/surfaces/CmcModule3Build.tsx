@@ -297,13 +297,15 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
       />
 
       {build.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the Module 3 build state…</div>
+        <EmptyState icon={I.layers} title="Loading the Module 3 build state…" busy testId="m3-build-loading" />
       ) : build.error ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn’t load the Module 3 build state"
           hint="GET /api/cmc/module3-os/build-state didn’t respond. It aggregates canonical source objects, compiled sections, contradictions and governed artifacts for this project — sign in and retry."
+          retry={bump}
+          testId="m3-build-error"
         />
       ) : (
         <>
@@ -378,9 +380,9 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
               {open.length === 0 ? (
                 <div style={{ padding: 12 }}>
                   {contradictions.loading ? (
-                    <EmptyState icon={I.shieldAlert} title="Loading contradictions…" />
+                    <EmptyState icon={I.shieldAlert} title="Loading contradictions…" busy />
                   ) : contradictions.error ? (
-                    <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradictions" hint={contradictions.error} />
+                    <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradictions" hint={contradictions.error} retry={bump} />
                   ) : (
                     <EmptyState
                       icon={I.shieldCheck}

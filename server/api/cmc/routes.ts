@@ -133,6 +133,88 @@ function respondWriteError(
   return res.status(500).json({ success: false, error: fallback });
 }
 
+/* ── Reading a stability study's recorded series ─────────────────────────────
+ *
+ * The stability surface appends each pull-point result to
+ * `stability_data.results`. These readers are deliberately tolerant of the
+ * shapes a json column can hold (parsed object, JSON string, or a bare array
+ * from an older writer) and deliberately intolerant of guessing: a value that
+ * cannot be read as a number reads as null, never as zero, and an acceptance
+ * criterion that cannot be parsed yields no limit rather than a default one.
+ * A fabricated limit here would silently produce a shelf-life number, which is
+ * the single most consequential value this module computes. */
+
+interface StabilityPointRecord {
+  timePoint?: unknown;
+  parameter?: unknown;
+  result?: unknown;
+  specification?: unknown;
+}
+
+function readRecordedStabilityResults(value: unknown): StabilityPointRecord[] {
+  let raw = value;
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  const list = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object' && Array.isArray((raw as { results?: unknown }).results)
+      ? (raw as { results: unknown[] }).results
+      : [];
+  return list.filter(
+    (r): r is StabilityPointRecord => Boolean(r) && typeof r === 'object'
+  );
+}
+
+/** The first finite number in a recorded value ("98.4%" → 98.4), else null. */
+function parseNumeric(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const m = String(value ?? '').match(/-?\d+(?:\.\d+)?/);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * An acceptance criterion as recorded → the limit and which way the attribute
+ * trends toward it.
+ *
+ *   "<= 2.0%"          → upper limit 2.0, attribute increasing toward it
+ *   ">= 95.0%"         → lower limit 95.0, attribute decreasing toward it
+ *   "95.0 – 105.0%"    → a two-sided range; the LOWER bound is taken, because a
+ *                        potency/assay range is limited in practice by decay.
+ *
+ * Returns null when nothing numeric is recorded — the caller then reports the
+ * parameter as not estimable and says why.
+ */
+function parseAcceptanceCriterion(
+  candidates: unknown[]
+): { limit: number; direction: 'increasing' | 'decreasing' } | null {
+  for (const candidate of candidates) {
+    const text = String(candidate ?? '').trim();
+    if (!text) continue;
+    const numbers = (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number).filter(Number.isFinite);
+    if (numbers.length === 0) continue;
+
+    if (/(?:<=|≤|<|nmt|not more than|max)/i.test(text)) {
+      return { limit: numbers[0], direction: 'increasing' };
+    }
+    if (/(?:>=|≥|>|nlt|not less than|min)/i.test(text)) {
+      return { limit: numbers[0], direction: 'decreasing' };
+    }
+    if (numbers.length >= 2) {
+      // A range: the attribute is bounded on both sides, and the failure mode a
+      // shelf life is set by is the decreasing one.
+      return { limit: Math.min(...numbers), direction: 'decreasing' };
+    }
+  }
+  return null;
+}
+
 /**
  * Strip the tenant key from a validated update body. The organization scope is
  * taken from the authenticated context and must never be settable by the caller.
@@ -1106,6 +1188,163 @@ router.post('/control-strategy', async (req, res) => {
       success: false,
       error: error instanceof Error ? error.message : 'Control strategy generation failed',
     });
+  }
+});
+
+/**
+ * POST /api/cmc/stability-studies/:id/shelf-life
+ * Estimate the shelf life a study's OWN recorded data support, by ICH Q1E.
+ *
+ * ── Why this route exists ─────────────────────────────────────────────────────
+ * `services/cmc/shelf-life.ts` is a tested, deterministic ICH Q1E estimator —
+ * ordinary least squares of the attribute against time, solved to where the
+ * one-sided 95% confidence limit meets the specification limit, with the
+ * t-quantile taken from the project's tested Student-t CDF so the number
+ * reproduces exactly. It has never had an HTTP route in the CMC family, so the
+ * one calculation a stability programme exists to produce could not be reached
+ * from the product, and a shelf life could only ever be typed in by hand.
+ *
+ * The estimator needs a per-timepoint series. That is exactly what the stability
+ * surface now records into `stability_data.results`, so this route reads the
+ * study's own series, groups it by parameter, and estimates per parameter.
+ *
+ * ── What it refuses to do ─────────────────────────────────────────────────────
+ * Nothing is invented to make an estimate possible:
+ *   • a parameter needs ≥ 3 usable points and a numeric specification limit, or
+ *     it is reported as not estimable WITH THE REASON — never dropped, and never
+ *     given a default limit;
+ *   • the spec limit and trend direction are read from what was recorded
+ *     ("<= 2.0%" ⇒ increasing toward an upper limit of 2.0), and a criterion
+ *     that cannot be parsed is reported as such;
+ *   • the estimate is NOT written to `shelf_life`. That column is the shelf life
+ *     the organisation CLAIMS, which is a regulatory decision a person makes on
+ *     the close-out form. This route computes evidence for that decision.
+ *   • ICH Q1E batch poolability (ANCOVA across batches) is a separate concern —
+ *     `services/cmc/shelf-life-poolability.ts` — and this single-study estimate
+ *     says so rather than implying a pooled claim.
+ */
+router.post('/stability-studies/:id/shelf-life', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    const orgId = getOrgId(req);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        storageConditions: stabilityStudies.storageConditions,
+        duration: stabilityStudies.duration,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
+
+    const { estimateShelfLife } = await import('../../services/cmc/shelf-life');
+    const series = readRecordedStabilityResults(study.stabilityData);
+    if (series.length === 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'This study has no recorded pull-point results — there is nothing to fit.',
+      });
+    }
+
+    // Group by the attribute being trended. Q1E fits ONE attribute at a time.
+    const byParameter = new Map<string, StabilityPointRecord[]>();
+    for (const r of series) {
+      const key = String(r.parameter || '').trim();
+      if (!key) continue;
+      const list = byParameter.get(key) ?? [];
+      list.push(r);
+      byParameter.set(key, list);
+    }
+
+    const maxTime = Number.isFinite(study.duration) && (study.duration as number) > 0
+      ? Math.max(120, (study.duration as number) * 2)
+      : 120;
+
+    const estimates: Array<Record<string, unknown>> = [];
+    for (const [parameter, points] of byParameter) {
+      const usable = points
+        .map(p => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
+        .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
+      const criterion = parseAcceptanceCriterion(points.map(p => p.specification));
+
+      if (usable.length < 3) {
+        estimates.push({
+          parameter,
+          estimable: false,
+          reason: `ICH Q1E regression needs at least 3 numeric timepoints; ${usable.length} of ${points.length} recorded ${points.length === 1 ? 'result is' : 'results are'} numeric.`,
+          pointsRecorded: points.length,
+          pointsUsable: usable.length,
+        });
+        continue;
+      }
+      if (!criterion) {
+        estimates.push({
+          parameter,
+          estimable: false,
+          reason:
+            'No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. "<= 2.0%" or ">= 95.0%") on the pull-point results.',
+          pointsRecorded: points.length,
+          pointsUsable: usable.length,
+        });
+        continue;
+      }
+
+      try {
+        const result = estimateShelfLife({
+          data: usable,
+          specLimit: criterion.limit,
+          direction: criterion.direction,
+          maxTime,
+        });
+        estimates.push({
+          parameter,
+          estimable: true,
+          specLimit: criterion.limit,
+          direction: criterion.direction,
+          pointsUsed: usable.length,
+          ...result,
+        });
+      } catch (e) {
+        estimates.push({
+          parameter,
+          estimable: false,
+          reason: e instanceof Error ? e.message : String(e),
+          pointsRecorded: points.length,
+          pointsUsable: usable.length,
+        });
+      }
+    }
+
+    // The programme-level answer is the most constraining attribute, which is
+    // what a shelf-life claim is actually limited by.
+    const estimable = estimates.filter(e => e.estimable) as Array<{ parameter: string; shelfLife: number }>;
+    const limiting = estimable.length
+      ? estimable.reduce((min, e) => (e.shelfLife < min.shelfLife ? e : min))
+      : null;
+
+    return res.json({
+      success: true,
+      data: {
+        studyId: study.id,
+        studyTitle: study.studyTitle,
+        productName: study.productName,
+        batchNumber: study.batchNumber,
+        storageConditions: study.storageConditions,
+        basis: 'ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit',
+        scopeLimit:
+          'Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.',
+        maxTimeEvaluated: maxTime,
+        limitingParameter: limiting ? limiting.parameter : null,
+        supportedShelfLife: limiting ? limiting.shelfLife : null,
+        estimates,
+      },
+    });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to estimate shelf life');
   }
 });
 

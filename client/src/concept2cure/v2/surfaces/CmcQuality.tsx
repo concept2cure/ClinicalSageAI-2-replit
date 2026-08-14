@@ -272,7 +272,7 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
 
       {/* ── CQAs / CPPs ── */}
       {qbd.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Deriving CQAs and CPPs from this project’s data…</div>
+        <EmptyState icon={I.sigma} title="Deriving CQAs and CPPs from this project’s data…" busy testId="cmc-qbd-loading" />
       ) : qbd.error ? (
         <EmptyState
           tone="error"

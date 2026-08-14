@@ -279,9 +279,9 @@ export function RegisterCard<T>({
         {rows.length === 0 ? (
           <div style={{ padding: 12 }}>
             {live.loading ? (
-              <EmptyState icon={icon} title={loadingTitle} />
+              <EmptyState icon={icon} title={loadingTitle} busy testId={`register-loading-${title}`} />
             ) : live.error ? (
-              <EmptyState tone="error" icon={I.alertTriangle} title={errorTitle} hint={errorHint} />
+              <EmptyState tone="error" icon={I.alertTriangle} title={errorTitle} hint={errorHint} testId={`register-error-${title}`} />
             ) : (
               <EmptyState icon={icon} title={emptyTitle} hint={emptyHint} />
             )}

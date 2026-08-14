@@ -505,17 +505,43 @@ export function EmptyState({
   hint,
   icon,
   tone = 'idle',
+  busy = false,
+  retry,
+  retryLabel = 'Retry',
+  testId,
 }: {
   title: string;
   hint?: React.ReactNode;
   icon?: React.ReactNode;
   tone?: 'idle' | 'error';
+  /** The panel is standing in for content that is still loading. */
+  busy?: boolean;
+  /** A recovery path for a failed load. UI standards §8: errors always have one. */
+  retry?: () => void;
+  retryLabel?: string;
+  testId?: string;
 }) {
+  /* UI standards §10 (non-negotiable): a failed load is announced assertively as
+     an alert; a loading or empty panel is a polite status. Without these the
+     three states this component exists to distinguish are indistinguishable to
+     a screen reader — it silently swaps text in a plain div. */
+  const isError = tone === 'error';
   return (
-    <div className={`c2c-empty-state tone-${tone}`}>
-      {icon && <span className="c2c-empty-ic">{icon}</span>}
+    <div
+      className={`c2c-empty-state tone-${tone}`}
+      role={isError ? 'alert' : 'status'}
+      aria-live={isError ? 'assertive' : 'polite'}
+      aria-busy={busy || undefined}
+      data-testid={testId}
+    >
+      {icon && <span className="c2c-empty-ic" aria-hidden="true">{icon}</span>}
       <div className="c2c-empty-t">{title}</div>
       {hint && <div className="c2c-empty-h">{hint}</div>}
+      {retry && (
+        <button type="button" className="c2c-empty-retry" onClick={retry}>
+          {retryLabel}
+        </button>
+      )}
     </div>
   );
 }
