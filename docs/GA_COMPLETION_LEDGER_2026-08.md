@@ -80,9 +80,33 @@ engineering" never becomes "not tracked".
 | L15 | Blockers B1–B21 — eSTAR templates + field maps, eCTD DTDs, LORENZ licence, gateway credentials, MedDRA, the enforcement flags, the FDA recognition list (B21, the procurement half of L6) | proc | open | `node scripts/ops/ga-readiness-report.mjs` |
 | L16 | Consultant / CRO channel — multi-client workspaces and per-submission pricing. A product decision, unstarted | prod | open | `docs/COMPETITIVE_LANDSCAPE_2026-08.md` §moat |
 
+## 5. Data lineage — findings from the 2026-08-14 traceability audit
+
+The question asked: *as source documents come in, get processed, and are deployed by AnA
+or the editor into an IND filing, can we trace with certainty what changed, when, why, who
+approved it, and get back to the source document?*
+
+Answer: **strong from draft to approval, broken at both ends.** The editor cannot save
+content without clause-level provenance (`lineage-gate.ts`, enforced in-transaction and
+structurally gated in CI), and a user can select text and ask where it came from
+(`/api/data-origins/selection`, wired into `EditorCanvas.tsx`). What does not hold is the
+ingest end and the filing end. Each row below was verified by reading the code, not from a
+report.
+
+| ID | Item | Owner | State | Evidence |
+|---|---|---|---|---|
+| L18 | **Extraction fabricates content when it cannot read the file.** `extractText` returns `` `[Extracted content from …]` `` when no artifact row matches, and `` `[Pending extraction from …]` `` from a bare catch — then the caller hashes that string and stores it as a governed `category:'extracted'` artifact. The catch fires reliably: the second query reads a table named `uploads`, which no migration creates. **Latent, not live** — the pipeline's only entry point 500s (L19), so it cannot run today. Fixing that route without fixing this would begin writing invented content as governed evidence; they must land together | eng | open | `server/services/autoExtractionPipeline.ts` |
+| L19 | **The extraction pipeline's only HTTP entry point returns 500 unconditionally.** `audit-services.ts:388` passes one object to `queueExtraction(fileId, fileName, fileSize, …)`, which is positional, so `fileName` is undefined and `detectFileType` throws. No other caller exists anywhere | eng | open | `server/routes/audit-services.ts` |
+| L20 | **Two `content_hash` values can never verify.** The main artifact stores `content` truncated to 100k but hashes the untruncated text, so any document over 100k chars is permanently reported tampered. The table artifact stores an **MD5 of a different object** in a column the audit report verifies as SHA-256, so it never matches. Both surface as false tamper alarms in `verifyIntegrityChain` | eng | open | `server/services/autoExtractionPipeline.ts` |
+| L21 | **Source documents are not versioned.** `cre_evidence_sources.version` exists and no caller ever passes it; there is no `previous_version_id`, no `is_current`, no update path. A revised protocol becomes a second unlinked row, so a fact cannot be told it rests on superseded content | eng | open | `server/services/clinical-regulatory-evidence/evidence-spine.service.ts` |
+| L22 | **The correctly-modelled provenance tables have zero writers.** `evidence_sources` / `evidence_claims` carry exactly what is missing elsewhere — version chain, `is_current`, `page_number`, `section_reference`, `sentence_index` — and nothing inserts into either. Two live services read them, so they query permanently empty tables | eng | open | `shared/schema.ts` |
+| L23 | **A filed eCTD leaf does not pin what it shipped.** `submission_leaves` has `document_table` / `document_id` / `checksum` but no version column, the document pointer is optional and client-supplied, and the IND path passes none at all — only a checksum when available. So from a filed IND leaf you cannot traverse back to the document, let alone the source | eng | open | `server/services/ind-lifecycle/ind-lifecycle-persistence.ts` |
+| L24 | **The end-to-end lineage dossier is unreachable.** `lineage-dossier.ts` assembles precisely the answer to the question above — every iteration, the decisions, AnA's reasoning per turn, the data lineage — and has no production caller; only its own tests and one type import | eng | open | `server/services/ana/lineage-dossier.ts` |
+| L25 | **No stored hash is ever checked against the source bytes.** The byte reader never loads the checksum, and no job sweeps for it. `verifyIntegrityChain` verifies the extracted-text artifact, not the originating document | eng | open | `server/services/ana/uploaded-file-access.ts` |
+
 ---
 
-## 5. The rule that keeps this file honest
+## 6. The rule that keeps this file honest
 
 A row moves to `done` when a command proves it, and the command goes in the Evidence
 column. Not when an agent reports success — agents have reported success for work that
