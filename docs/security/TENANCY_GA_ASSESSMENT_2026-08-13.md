@@ -647,3 +647,43 @@ Two supporting decisions:
 
 Mutation-verified by restoring the original whole-vault search: four assertions
 fail, including the cross-tenant read and the cross-tenant delete.
+
+### 7.3 In-process caches — enumerated, not spot-checked
+
+§1 recorded org-keyed caches as "spot-checked". Spot-checking is how the one
+that is wrong survives, so all **23** module-level caches in `server/` were
+enumerated and their key composition read.
+
+**22 were correct.** Several carry an explicit comment saying why — `deadline-radar`
+keys on `${organizationId}:${clientWorkspaceId}`, `csr-intelligence-routes` has a
+header reading "Build a cache key that cannot serve one tenant's numbers to
+another", and `ana-ri/chat.ts` scopes its idempotency key to tenant *and* user so
+"a client-supplied idempotency_key can never replay another org's cached
+response". Prior work had clearly been here.
+
+**One was not.** `services/ai-actions/action-registry.ts::computeIdempotencyKey`
+hashed `(actionType, targetType, targetId, projectId, userId)` — **no
+organization**. `userId` does not stand in for it: a user can belong to several
+organizations and switch between them
+(`POST /api/auth/enterprise/select-organization`), which is precisely how a CRO
+consultant serving several sponsors works. Same person, same action, colliding
+`targetId` — ids are per-table serials, so collisions across tenancies are
+ordinary — meant one shared cache entry for the 5-minute TTL.
+
+The confidentiality impact is bounded: both organizations are ones that user may
+already reach. **The record-integrity impact is not.** A cached response is
+replayed with its ORIGINAL `provenance.organizationId`, so an action executed in
+sponsor B's context can return attributed to sponsor A — a misattributed record
+under 21 CFR Part 11 §11.10(b). The same window also outlives a membership
+revocation by up to the TTL.
+
+Fixed by adding the organization to the hashed payload, matching the two
+neighbouring caches that already did it.
+
+**What the tests here do and do not prove.** The key function is module-private,
+so the property tests reproduce its composition — which means they cannot detect
+the implementation drifting away from them. A separate assertion reads
+`action-registry.ts` and fails if `organizationId` leaves the hashed payload;
+mutation-testing confirms it is the *only* one of the five that catches the
+original defect. Recorded because a suite that looks thorough while being unable
+to fail is the specific thing this workstream keeps finding.
