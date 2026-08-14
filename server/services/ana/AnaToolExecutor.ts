@@ -16053,7 +16053,7 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
       status: 'navigation_ready',
       directive: res.directive,
       instruction:
-        'A navigation directive was produced; the UI will move to this screen. Tell the user where you are taking them. Project-scoped screens require an active project.',
+        'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });

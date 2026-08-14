@@ -1286,6 +1286,21 @@
 .c2c-v2 .ana-next-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:5px 9px;border:1px solid var(--border);border-radius:999px;color:var(--accent-200);}
 .c2c-v2 .ana-next-chip:hover{background:var(--accent-000);}
 .c2c-v2 .ana-next-chip svg{font-size:12px;}
+/* Executed-action chips. The inert ones report what AnA already did; the
+   navigation one is an offer, so it is the only <button> among them and the
+   only one that carries a focus ring. Tokens only — `ci:token-cascade` and
+   `ci:check-phantom-tokens` both read this file. */
+.c2c-v2 .ana-msg-executed{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.c2c-v2 .ana-exec-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;color:var(--text-300);background:var(--bg-000);}
+.c2c-v2 .ana-exec-chip svg{font-size:12px;}
+.c2c-v2 .ana-exec-chip.is-done{color:var(--success);}
+.c2c-v2 .ana-exec-chip.is-err{color:var(--warning);}
+.c2c-v2 .ana-exec-chip.is-nav{color:var(--accent-200);border-color:var(--accent-100);cursor:pointer;transition:background 200ms ease-out;}
+.c2c-v2 .ana-exec-chip.is-nav:hover{background:var(--accent-000);}
+.c2c-v2 .ana-exec-chip.is-nav:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .ana-exec-chip.is-nav{transition:none;}
+}
 .c2c-v2 .ana-msg-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 .c2c-v2 .ana-chip-gov{display:inline-flex;align-items:center;margin-left:3px;color:var(--text-400);}
 .c2c-v2 .ana-chip-gov svg{font-size:10px;}

@@ -24,9 +24,9 @@ disagree, the command is right and this file is stale.
 Measured 2026-08-14 on `concept2cure-v2`:
 
 ```bash
-node scripts/ops/ledger-check.mjs          # 42 rows: 17 done, 20 open, 4 in-flight, 1 blocked
+node scripts/ops/ledger-check.mjs          # 43 rows: 19 done, 19 open, 4 in-flight, 1 blocked
 node scripts/ops/ga-readiness-report.mjs   # 3/40 ready · 18 blockers · 19 advisories
-npm run ci:surface-discoverability         # 118 renderable: 92 catalogued, 26 contextual
+npm run ci:surface-discoverability         # 119 renderable: 93 catalogued, 26 contextual
 ```
 
 **The shape of the remaining work is not construction.** In case after case the mechanism
