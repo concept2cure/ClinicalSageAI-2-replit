@@ -1073,6 +1073,25 @@ export const C2C_MIGRATION_FILES = [
   // even if every target table were present on every database.
   'migrations/20260814d_document_alias_map.sql',
 
+  // ── Submission leaf source pin, GA ledger L23 (added 2026-08-14) ─────────
+  // Two nullable columns on submission_leaves recording the SHA-256 of the
+  // source document's content at the moment a leaf was filed, and when that was
+  // taken. The leaf already carried `document_id` (which resolves to the
+  // document as it is NOW) and `checksum` (MD5 of RENDERED bytes, for the eCTD
+  // index) — neither answers "is the document behind this filed leaf still what
+  // went to the agency?".
+  //
+  // ADD COLUMN only, no backfill, and the absence of a backfill is the point: a
+  // pin computed today from current content would manufacture agreement for
+  // every existing leaf, including any whose document has since been edited —
+  // exactly the case the column exists to detect. Pre-existing leaves report
+  // "not pinned", which is true.
+  //
+  // Position is not load-bearing (it creates no table, so the isolation sweep
+  // below has nothing to attach), but it stays with its siblings above the
+  // sweep for readability.
+  'migrations/20260814e_submission_leaf_source_pin.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
