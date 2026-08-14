@@ -51,6 +51,8 @@ import {
   assessAcceleratedStability,
 } from '../../server/services/stats/analytical-performance-extensions';
 import { mrmcReadersForPower } from '../../server/services/stats/mrmc';
+import { covariateBalance } from '../../server/services/stats/external-control';
+import { computeGammaPoissonEbgm } from '../../server/services/stats/signal-disproportionality';
 
 /** Every non-finite number in an object graph, with its dotted path. */
 function nonFiniteFields(value: unknown, path = ''): string[] {
@@ -167,6 +169,27 @@ const CASES: Array<{ name: string; run: () => unknown }> = [
         storageTemperatureC: 25,
         degradationThreshold: 0.1,
       }),
+  },
+  {
+    // Round 6 additions: covariateBalance returned NaN for a zero-variance
+    // control, and computeGammaPoissonEbgm returned Infinity for a product with
+    // no reports at all.
+    name: 'covariateBalance — a covariate constant in the external control',
+    run: () =>
+      covariateBalance([
+        { name: 'age', type: 'continuous', treatment: [50, 52, 54], control: [70, 70, 70] },
+      ]),
+  },
+  {
+    name: 'covariateBalance — a covariate that perfectly separates the arms',
+    run: () =>
+      covariateBalance([
+        { name: 'priorTherapy', type: 'binary', treatment: [1, 1], control: [0, 0] },
+      ]),
+  },
+  {
+    name: 'computeGammaPoissonEbgm — product with no reports (E = 0)',
+    run: () => computeGammaPoissonEbgm({ a: 0, b: 0, c: 10, d: 100 }),
   },
   {
     name: 'mrmcReadersForPower — target unreachable within the search bound',
