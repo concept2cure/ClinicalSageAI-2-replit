@@ -1,7 +1,7 @@
 # Investor technical white paper
 
-A 15-page technical white paper on the platform, written for prospective investors.
-Cover, contents, and thirteen content sections — one section per page.
+A 14-page technical white paper on the platform, written for prospective investors.
+Cover, contents, and twelve content sections — one section per page.
 
 | File | Role |
 |---|---|
@@ -30,7 +30,7 @@ sans — but line breaks shift, and the section-per-page fit is not guaranteed.
 Each `<section>` must fit inside one printed page. The printable box on US Letter
 at the configured margins is **254mm tall by 186mm wide**; a section taller than
 that silently spills onto a second sheet and pushes the whole document out of
-shape. After any content change, re-render and confirm the page count is still 15:
+shape. After any content change, re-render and confirm the page count is still 14:
 
 ```bash
 python3 -c "from pypdf import PdfReader; \
@@ -52,16 +52,18 @@ Every quantitative claim is derived from this repository or from the independent
 registrations, the AnA capability manifest, the installer's provisioned table and
 policy counts, and that audit's executed evidence. Nothing is estimated for
 effect. When the platform changes materially, the figures in Sections 04 and 08
-and the state tables in Sections 06, 07 and 10 need re-deriving, not just
+and the state tables in Sections 06, 07 and 09 need re-deriving, not just
 re-wording.
 
-**Sections 09 and 10 are the load-bearing ones.** Section 09 reports the audit's
-unfavourable findings — 32 P0, 106 P1, average domain maturity 4.1/10, and a
-not-ready-for-GA verdict. Section 10 reports what has closed since, and every row
-in it was re-verified by reading the current code rather than taken from a status
-report. If you update Section 10, re-verify the same way; a remediation claim
-sourced from a changelog is exactly the kind of assertion this document exists to
-avoid making.
+**Section 09 is the load-bearing one, and it decays fastest.** It pairs each of
+the audit's severe findings with the state of that mechanism in the code, and
+every row was confirmed by reading current source rather than a changelog. Two
+rules when editing it. First, re-verify the same way — a remediation claim taken
+from a commit message is exactly the kind of assertion this document exists to
+avoid. Second, do not reintroduce the audit's aggregate scores as current state:
+they were a 2026-08-10 snapshot, substantial work has landed since, and no second
+audit has re-measured them. The paper says so explicitly; keep it that way unless
+a fresh audit exists to cite.
 
 The paper deliberately states open gaps and names their owners, mirroring
 `docs/GA_COMPLETION_LEDGER_2026-08.md`. That posture is the point: the same CI

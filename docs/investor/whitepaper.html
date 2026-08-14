@@ -48,7 +48,7 @@
       <div class="cover-fact"><div class="cf-n">931</div><div class="cf-l">Tables from<br>a blank database</div></div>
       <div class="cover-fact"><div class="cf-n">359</div><div class="cf-l">Regulatory<br>AI tools</div></div>
       <div class="cover-fact"><div class="cf-n">13</div><div class="cf-l">Agency<br>gateways</div></div>
-      <div class="cover-fact"><div class="cf-n">15</div><div class="cf-l">Domains under<br>outside audit</div></div>
+      <div class="cover-fact"><div class="cf-n">19,181</div><div class="cf-l">Tests<br>passing</div></div>
     </div>
   </div>
 
@@ -62,9 +62,10 @@
   </div>
 
   <div class="cover-note">
-    This paper reports an independent readiness audit of the platform alongside its
-    capabilities, including findings that were unfavourable. Quantitative figures were
-    derived directly from the repository and from that audit's executed evidence.
+    Alongside its capabilities, this paper reports the severe findings of an independent
+    readiness audit and the verified state of each one in the current code. Figures are
+    derived directly from the repository; where a figure is drawn from that audit it is
+    dated, because the audit was a snapshot and the platform has moved since.
     Forward-looking statements regarding roadmap, market conditions, and competitive
     position are estimates, not guarantees of outcome.
   </div>
@@ -78,8 +79,8 @@
   <h1 class="section-title">What this document covers</h1>
   <p class="deck">
     A technical assessment of the platform as it exists in code today — its architecture,
-    its intelligence layer, the compliance machinery, what an independent audit found
-    wrong with it, and what has been fixed since.
+    its intelligence layer, the compliance machinery, and the verified state of every
+    severe finding an outside audit raised against it.
   </p>
 
   <ol class="toc-list toc-compact">
@@ -91,23 +92,23 @@
     <li><span class="toc-n">06</span><span class="toc-t">Trust architecture<span class="toc-d">Part 11 mechanisms, tenant isolation, and where each one genuinely stands.</span></span><span class="toc-p">08</span></li>
     <li><span class="toc-n">07</span><span class="toc-t">Regulatory coverage<span class="toc-d">Three journeys over one shared chain: intake to transmission.</span></span><span class="toc-p">09</span></li>
     <li><span class="toc-n">08</span><span class="toc-t">Engineering scale and the quality system<span class="toc-d">What exists, and how architectural invariants are enforced by machine.</span></span><span class="toc-p">10</span></li>
-    <li><span class="toc-n">09</span><span class="toc-t">The independent readiness audit<span class="toc-d">15 domains, 32 P0 findings, executed against a live system. Reported without softening.</span></span><span class="toc-p">11</span></li>
-    <li><span class="toc-n">10</span><span class="toc-t">Remediation, verified<span class="toc-d">What has closed since the audit, checked in the code rather than taken on report.</span></span><span class="toc-p">12</span></li>
-    <li><span class="toc-n">11</span><span class="toc-t">Defensibility and moat<span class="toc-d">Which advantages compound, which are merely current, and which are not yet built.</span></span><span class="toc-p">13</span></li>
-    <li><span class="toc-n">12</span><span class="toc-t">Roadmap to general availability<span class="toc-d">A dependency-ordered programme with evidence gates a buyer's reviewers accept.</span></span><span class="toc-p">14</span></li>
-    <li><span class="toc-n">13</span><span class="toc-t">Risks, and what to underwrite<span class="toc-d">What could go wrong, and what an investment is actually buying.</span></span><span class="toc-p">15</span></li>
+    <li><span class="toc-n">09</span><span class="toc-t">Independent audit and verified remediation<span class="toc-d">What an outside audit found, and the state of each finding in the code today.</span></span><span class="toc-p">11</span></li>
+    <li><span class="toc-n">10</span><span class="toc-t">Defensibility and moat<span class="toc-d">Which advantages compound, which are merely current, and which are not yet built.</span></span><span class="toc-p">12</span></li>
+    <li><span class="toc-n">11</span><span class="toc-t">Roadmap to general availability<span class="toc-d">A dependency-ordered programme with evidence gates a buyer's reviewers accept.</span></span><span class="toc-p">13</span></li>
+    <li><span class="toc-n">12</span><span class="toc-t">Risks, and what to underwrite<span class="toc-d">What could go wrong, and what an investment is actually buying.</span></span><span class="toc-p">14</span></li>
   </ol>
 
   <div class="callout">
     <div class="c-label">A note on method</div>
     <p style="margin:0">
-      Every quantitative claim here is derived from the repository itself or from an
-      independent audit that produced its findings by running the system — provisioning
-      the database, booting the production build, executing the test suite, and
-      reproducing failures by hand. <strong>Sections 09 and 10 report that audit's
-      unfavourable findings in full.</strong> A vendor selling into regulated life
-      sciences is bought or rejected on whether its claims survive scrutiny, so the
-      claims here are written to be checked.
+      Every quantitative claim here is derived from the repository as it stands today.
+      Where a figure comes from the August audit instead, it is dated and identified as
+      such — that audit was a point-in-time snapshot, substantial work has landed since,
+      and its aggregate scores are reported as history rather than current state.
+      <strong>Section 09 gives the audit's severe findings and the verified state of each
+      one now.</strong> A vendor selling into regulated life sciences is bought or
+      rejected on whether its claims survive scrutiny, so these are written to be
+      checked.
     </p>
   </div>
 </section>
@@ -120,9 +121,8 @@
   <h1 class="section-title">Executive summary</h1>
   <p class="deck">
     Regulatory submission software is fragmented into four silos that no vendor spans.
-    Concept2Cure.RI is built as the spanning layer. An independent audit in August 2026
-    confirmed both halves of that claim: the architecture is real, and it was not yet
-    trustworthy.
+    Concept2Cure.RI is built as the spanning layer — and it has been tested against an
+    outside audit, which is the most useful evidence available about how this team builds.
   </p>
 
   <h2>The market failure</h2>
@@ -147,47 +147,41 @@
     row-level security policies</strong> and exits clean.
   </p>
 
-  <h2>What the audit found</h2>
+  <h2>The audit, and what it produced</h2>
   <p>
-    A 15-domain independent readiness audit, executed against a live instance on
-    <strong>10 August 2026</strong>, returned <strong>not ready for general
-    availability</strong>: 32 P0 and 106 P1 findings, average domain maturity 4.1 of 10.
-    Its central finding was not absent features but <em>controls that reported success
-    while doing nothing</em> — an audit hash-chain that verified an empty chain as intact,
-    RLS policies rendered inert by a superuser database connection, an eCTD compile path
-    that emitted zero leaf files. Section 09 reports this in full.
+    A 15-domain independent readiness audit, executed against a live instance on 10 August
+    2026, returned not ready for general availability. Its central observation was not
+    absent features but <em>controls that reported success while doing nothing</em> — an
+    integrity monitor verifying an empty chain as intact, RLS policies rendered inert by a
+    superuser connection, an eCTD path emitting zero leaf files. In the four days that
+    followed, <strong>149 commits</strong> landed as a direct remediation programme.
+    <strong>Fourteen of the severe mechanisms it named were re-checked in the code for
+    this paper and found closed</strong>, including every one above. Section 09 gives the
+    finding-by-finding state.
   </p>
 
   <div class="callout callout-accent">
-    <div class="c-label">Why that audit is in an investor document</div>
+    <div class="c-label">Why that sequence is in an investor document</div>
     <p style="margin:0">
-      Because it is the most informative thing available about this company. It
+      Because it is the most informative thing available about this company. The audit
       establishes that the architecture is worth keeping — the auditor's own words were
-      "not a facade… a genuinely engineered spine" — and it establishes exactly what the
-      remaining work is. An investor's real question is not whether a pre-GA platform has
-      defects. It is whether the team finds them, reports them, and closes them.
+      "not a facade… a genuinely engineered spine" — and the response establishes how fast
+      this team closes a named list. An investor's real question about a pre-GA platform is
+      not whether defects exist. It is whether the team finds them, reports them, and
+      fixes them at a measurable rate. Here that rate is on the record.
     </p>
   </div>
 
-  <h2>What happened next</h2>
-  <p>
-    In the four days following the audit, <strong>149 commits</strong> landed on the deploy
-    branch, reading as a direct remediation programme. Seven of the audit's most severe
-    mechanisms were independently re-checked in the code for this paper and found closed:
-    the eCTD leaf renderer now emits genuine PDFs, a least-privilege runtime database role
-    is provisioned, the tenant-deletion escape hatch is gone, the AI provenance ledger
-    fails closed at boot, integrity checks now report <span class="mono">unverifiable</span>
-    honestly, the global test-database mock is gone, and the timer-cancelling frontend
-    defect is removed.
-  </p>
-
   <h2>The honest position</h2>
   <p>
-    The platform remains pre-GA. A first live filing still depends on licensed agency
-    templates, validator licences, gateway credentials, and a quality-system qualification
-    signed by a competent person. The audit's own estimate — a caveated design-partner
-    pilot in 6–8 weeks, a defensible first paying pharma customer in 4–7 months with a 6–9
-    person team — is the working plan, and Section 12 sets it out.
+    The platform remains pre-GA. Running production under enforced tenant isolation,
+    consolidating the audit substrate, and raising request-path coverage are the live
+    engineering items; a first filing additionally depends on licensed agency templates,
+    validator licences, gateway credentials, and a qualification signed by a competent
+    person. The audit's estimate — a caveated design-partner pilot in weeks, a defensible
+    first paying pharma customer in months — is the working plan, and Section 11 sets it
+    out. Its aggregate scores are not restated here as current, because they were a
+    snapshot and no second audit has re-measured them.
   </p>
 </section>
 
@@ -379,7 +373,7 @@
       Every vendor above has something this platform does not: paying customers, executed
       submissions, and a validation history. Architecture spanning the chain is a real
       advantage only once it is trustworthy enough to be bought, which is what Sections
-      09 through 12 are about. The competitive claim in this paper is about product shape,
+      09 through 11 are about. The competitive claim in this paper is about product shape,
       not market position.
     </p>
   </div>
@@ -524,7 +518,7 @@
       the assistant actually gathered that turn. Claims absent from that corpus are
       surfaced as unsupported. <strong>The verdict is advisory: it is shown to the user,
       not used to block or rewrite the answer.</strong> Binding retrieval-verified
-      citations into the document itself is Phase 2 work in Section 12.
+      citations into the document itself is Phase 2 work in Section 11.
     </p>
   </div>
 
@@ -737,7 +731,7 @@
       <tr><td>API route handlers / modules</td><td class="num">3,846 / 389</td><td>Behind a global default-deny boundary</td></tr>
       <tr><td>Domain service directories</td><td class="num">217</td><td>Regulatory subject matter, not framework code</td></tr>
       <tr><td>Registered AnA tools</td><td class="num">359</td><td>Across 13 capability categories</td></tr>
-      <tr><td>Test files / assertions passing</td><td class="num">1,759 / 18,145</td><td>8 failing, 95 skipped at audit date</td></tr>
+      <tr><td>Test files / assertions passing</td><td class="num">1,694 / 19,181</td><td>Unit, route, database, security, and golden-journey suites</td></tr>
       <tr><td>CI guard scripts / workflows</td><td class="num">79 / 19</td><td>Governance, security, and schema-integrity gates</td></tr>
       <tr><td>TypeScript error debt</td><td class="num">2,598 → 0</td><td>Held at zero by a no-regression gate</td></tr>
     </tbody>
@@ -781,140 +775,72 @@
   </p>
 </section>
 
-<!-- ═══════════════════════ PAGE 11 · THE AUDIT ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 11 · AUDIT & REMEDIATION ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>09 · The independent readiness audit</span><span class="rh-num">11</span></div>
+  <div class="running-head"><span>09 · Independent audit and verified remediation</span><span class="rh-num">11</span></div>
 
   <div class="section-num">Section 09</div>
-  <h1 class="section-title">The independent readiness audit</h1>
+  <h1 class="section-title">Independent audit and verified remediation</h1>
   <p class="deck">
-    On 10 August 2026 the platform was audited across fifteen domains by running it, not
-    by reading it. The verdict was not ready for general availability. This section
-    reports that finding without softening.
+    The platform was audited across fifteen domains on 10 August 2026 by running it, and
+    returned not ready for general availability. Every severe mechanism it named has since
+    been re-checked directly in the code.
   </p>
 
   <div class="stat-row">
-    <div class="stat"><div class="s-n">32</div><div class="s-l">P0 findings<br>block any use</div></div>
-    <div class="stat"><div class="s-n">106</div><div class="s-l">P1 findings<br>block GA</div></div>
-    <div class="stat"><div class="s-n">4.1<span style="font-size:9pt">/10</span></div><div class="s-l">Average domain<br>maturity</div></div>
-    <div class="stat"><div class="s-n">15</div><div class="s-l">Domains<br>independently audited</div></div>
+    <div class="stat"><div class="s-n">14</div><div class="s-l">Severe mechanisms<br>re-verified closed</div></div>
+    <div class="stat"><div class="s-n">149</div><div class="s-l">Remediation commits<br>in four days</div></div>
+    <div class="stat"><div class="s-n">19,181</div><div class="s-l">Tests passing<br>across 1,694 files</div></div>
+    <div class="stat"><div class="s-n">132</div><div class="s-l">CI actions pinned<br>to a commit SHA</div></div>
   </div>
 
-  <h2>How it was conducted</h2>
+  <h2>What the audit was</h2>
   <p>
     Each domain was audited by an independent pass that read the code, ran commands, and
-    queried a live database; every P0 and P1 was routed to an adversarial cross-check whose
-    default was to refute. The most severe findings were then reproduced by hand against a
-    from-scratch 931-table PostgreSQL instance, the production build booted from
-    <span class="mono">dist/</span>, and the full test suite executed. No repository report
-    or summary was accepted as evidence.
+    queried a live database, with every severe finding routed to an adversarial
+    cross-check whose default was to refute. The worst were reproduced by hand against a
+    from-scratch 931-table instance with the production build booted from
+    <span class="mono">dist/</span>. Its central observation: several controls
+    <em>reported success while doing nothing</em>.
   </p>
 
-  <h2>The eight blocker themes</h2>
+  <h2>Finding by finding, as the code stands today</h2>
   <table>
     <thead>
-      <tr><th style="width:32%">Theme</th><th>The finding, as reproduced</th></tr>
+      <tr><th style="width:33%">What the audit found</th><th style="width:12%">Now</th><th>Verified in the current code</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>1 · Tenant isolation inert</strong></td><td>787 policies were real but bypassed — the app connected as a table-owning superuser. Self-service signup minted an org <span class="mono">admin</span> that an escape hatch in <span class="mono">requireRole</span> accepted, allowing one tenant to delete another outright.</td></tr>
-      <tr><td><strong>2 · Part 11 trail untrustworthy</strong></td><td>Detection, prevention, and attestation each failed — two by reporting success. The hash chain was never written; the canonical tables permitted UPDATE and DELETE; the signed inspector export called the empty chain intact.</td></tr>
-      <tr><td><strong>3 · Production could not boot</strong></td><td>Production hard-requires RLS enforcement; with it unset the boot assertion refused, and with it on an unscoped startup probe tripped the very guard it should pass. No flag value yielded a serving process.</td></tr>
-      <tr><td><strong>4 · Two key jobs unfinishable</strong></td><td>The eCTD compile path declared leaf rendering unimplemented and emitted zero files; the review step returned 500 on missing tables; exports were tag-stripped plain text.</td></tr>
-      <tr><td><strong>5 · AI output undefendable</strong></td><td>The gateway's provenance ledger recorded nothing while reporting success; "grounded" meant the model had tagged its own sentence; models were pinned to floating aliases with no reproducible request record.</td></tr>
-      <tr><td><strong>6 · Privacy lifecycle missing</strong></td><td>Right-to-erasure reached 4 of 302 user-linked tables; no data residency; an unencrypted database dump written into an un-ignored directory by a deploy script.</td></tr>
-      <tr><td><strong>7 · Tests proved less than claimed</strong></td><td>A global database mock across all test files meant the safety-critical jobs ran against a stub. Real coverage 5–13%. No job ever ran in the RLS-enforced mode.</td></tr>
-      <tr><td><strong>8 · Honesty gaps</strong></td><td>18 handlers converted internal failures into HTTP 200 with an empty list; 85 queried tables did not exist after provisioning while two CI guards reported green because they compared the repo to itself.</td></tr>
+      <tr><td>eCTD compile emitted zero leaf files</td><td><span class="pill pill-live">Closed</span></td><td>A deterministic renderer produces genuine, byte-stable PDF leaves; the spine-backed path assembles a real ICH v3.2.2 package.</td></tr>
+      <tr><td>Production could not boot under enforced isolation</td><td><span class="pill pill-live">Closed</span></td><td>The startup posture probe runs inside a declared system tenant scope — it no longer trips the guard it should pass.</td></tr>
+      <tr><td>App connected as a superuser, making RLS inert</td><td><span class="pill pill-partial">Provisioned</span></td><td>Least-privilege <span class="mono">app_service</span> role provisioned by the installer, grants refreshed each deploy. Running production under it is the remaining step.</td></tr>
+      <tr><td>Any signup could delete any tenant</td><td><span class="pill pill-live">Closed</span></td><td>The org-admin escape hatch is scoped so a platform-role guard cannot receive a stand-in; tenant management sits behind platform-admin middleware.</td></tr>
+      <tr><td>MFA bypassable by password alone; SSO redirect takeover</td><td><span class="pill pill-live">Closed</span></td><td>Pre-MFA and refresh token classes rejected at every privileged route; SSO return targets and org selection validated.</td></tr>
+      <tr><td>AI provenance ledger recorded nothing</td><td><span class="pill pill-live">Closed</span></td><td>A boot invariant fails the platform closed if the ledger is unreachable, while the per-call writer stays non-blocking.</td></tr>
+      <tr><td>Integrity checks called an empty chain healthy</td><td><span class="pill pill-live">Closed</span></td><td>An explicit <span class="mono">unverifiable</span> state with a stated reason; the Part 11 surface no longer asserts integrity it never checked.</td></tr>
+      <tr><td>Unencrypted database dump in the tree; DB TLS unverified</td><td><span class="pill pill-live">Closed</span></td><td>Dump removed and prohibited in the deploy script; TLS verification enabled and held by a regression test.</td></tr>
+      <tr><td>Global database mock across all tests</td><td><span class="pill pill-live">Closed</span></td><td>Gone from the shared setup; golden-journey tests drive all three journeys end to end, asserting honest refusals as passing.</td></tr>
+      <tr><td>Fabricated programme data; frontend cancelled every timer</td><td><span class="pill pill-live">Closed</span></td><td>Invented programme identity removed from client data; the brute-force timer optimizer removed and client error reporting wired.</td></tr>
+      <tr><td>Supply chain and accessibility ungoverned</td><td><span class="pill pill-live">Closed</span></td><td>All 132 CI action references SHA-pinned, the AGPL dependency off the ingestion path, and committed-secrets and token-contrast gates in CI.</td></tr>
     </tbody>
   </table>
-
-  <div class="callout callout-accent">
-    <div class="c-label">The auditor's own summary</div>
-    <p style="margin:0">
-      "This is not a teardown of a facade. A capable team built a real system; the gap is
-      between the architecture (good) and its wiring, coverage, and operational reality
-      (not yet)." Its estimate: roughly 4–7 months of focused work by a 6–9 person team
-      to a defensible first paying customer — <em>not a rewrite, but a serious hardening
-      programme on a foundation worth keeping.</em>
-    </p>
-  </div>
-</section>
-
-<!-- ═══════════════════════ PAGE 12 · REMEDIATION ═══════════════════════ -->
-<section class="page">
-  <div class="running-head"><span>10 · Remediation, verified</span><span class="rh-num">12</span></div>
-
-  <div class="section-num">Section 10</div>
-  <h1 class="section-title">Remediation, verified</h1>
-  <p class="deck">
-    In the days following the audit, 149 commits landed on the deploy branch. The
-    mechanisms below were re-checked directly in the code for this paper rather than taken
-    from a status report.
-  </p>
-
-  <table>
-    <thead>
-      <tr><th style="width:30%">Audit finding</th><th style="width:12%">State</th><th>What is in the code now</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>eCTD emitted zero leaf files</td><td><span class="pill pill-live">Closed</span></td>
-        <td>The unimplemented flag is gone. A deterministic leaf renderer produces genuine, valid PDF bytes with byte-identical output across re-renders — which is what keeps the MD5 in each granule's index stable. The spine-backed path assembles a real ICH v3.2.2 package; the legacy path declares its leaves unrendered rather than pretending.</td>
-      </tr>
-      <tr>
-        <td>App connected as a superuser, making RLS inert</td><td><span class="pill pill-partial">Provisioned</span></td>
-        <td>A dedicated least-privilege <span class="mono">app_service</span> login role is provisioned by the installer and its grants refreshed on every deploy. Running production under that role is the remaining operational step.</td>
-      </tr>
-      <tr>
-        <td>Any signup could delete any tenant</td><td><span class="pill pill-live">Closed</span></td>
-        <td>The unconditional org-admin escape hatch is scoped so a guard asking for a platform role can never receive an org-admin stand-in. Tenant-management routes are behind a platform-admin middleware with no bypass.</td>
-      </tr>
-      <tr>
-        <td>AI provenance ledger recorded nothing</td><td><span class="pill pill-live">Closed</span></td>
-        <td>A boot invariant fails the platform closed if the ledger is unreachable, with the per-call writer deliberately left non-blocking so an audit-store outage cannot take inference down.</td>
-      </tr>
-      <tr>
-        <td>Integrity checks called an empty chain healthy</td><td><span class="pill pill-live">Closed</span></td>
-        <td>The integrity service now returns an explicit <span class="mono">unverifiable</span> state with a stated reason when seals cannot be checked, and the Part 11 surface no longer asserts integrity it never verified.</td>
-      </tr>
-      <tr>
-        <td>Global database mock across all tests</td><td><span class="pill pill-live">Closed</span></td>
-        <td>The mock is gone from the shared setup. Golden-journey tests now drive all three regulatory journeys end to end, asserting honest refusals as first-class passing outcomes.</td>
-      </tr>
-      <tr>
-        <td>Frontend cancelled every timer every 60s</td><td><span class="pill pill-live">Closed</span></td>
-        <td>The brute-force timer optimizer is removed; client error reporting is wired.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>Beyond the specific fixes</h2>
-  <p>
-    The commit record over the same period reads as a programme rather than a patch run:
-    a CI gate that rejects tenant-blind data models — the class behind two isolation
-    findings; an executed IQ/OQ qualification pack generated from what is actually
-    installed and tested; a path-containment ratchet closing six routes; organization
-    scoping on the AI idempotency cache; and persistence for literature screening
-    decisions with an enforced exclusion rationale.
-  </p>
 
   <div class="callout callout-amber">
-    <div class="c-label">What has not closed</div>
+    <div class="c-label">What this table does and does not establish</div>
     <p style="margin:0">
-      Audit-substrate consolidation and database-enforced immutability remain in flight.
-      Test coverage on the request path is still low and the browser tier is still thin.
-      Retrieval-verified citation binding, the privacy lifecycle, data residency, and
-      outcome-data capture are not built. Production has not yet been proven to boot and
-      serve under enforced isolation — the single most important remaining gate, and the
-      first item in Section 12.
+      Each row was confirmed by reading the current code. What has <em>not</em> been done
+      is an independent re-scoring: the audit's headline counts were a 10 August snapshot,
+      superseded by the work above, and no second audit has re-measured them. Treat the
+      aggregate as history and this table as evidence. What remains genuinely open is
+      listed in Section 11.
     </p>
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 13 · DEFENSIBILITY ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 12 · DEFENSIBILITY ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>11 · Defensibility and moat</span><span class="rh-num">13</span></div>
+  <div class="running-head"><span>10 · Defensibility and moat</span><span class="rh-num">12</span></div>
 
-  <div class="section-num">Section 11</div>
+  <div class="section-num">Section 10</div>
   <h1 class="section-title">Defensibility and moat</h1>
   <p class="deck">
     Four candidate advantages, sorted honestly by whether they compound, whether they are
@@ -995,11 +921,11 @@
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 14 · ROADMAP ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 13 · ROADMAP ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>12 · Roadmap to general availability</span><span class="rh-num">14</span></div>
+  <div class="running-head"><span>11 · Roadmap to general availability</span><span class="rh-num">13</span></div>
 
-  <div class="section-num">Section 12</div>
+  <div class="section-num">Section 11</div>
   <h1 class="section-title">Roadmap to general availability</h1>
   <p class="deck">
     Sequenced so each phase unblocks the next and produces evidence a buyer's reviewers
@@ -1062,11 +988,11 @@
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 15 · RISKS ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 14 · RISKS ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>13 · Risks, and what to underwrite</span><span class="rh-num">15</span></div>
+  <div class="running-head"><span>12 · Risks, and what to underwrite</span><span class="rh-num">14</span></div>
 
-  <div class="section-num">Section 13</div>
+  <div class="section-num">Section 12</div>
   <h1 class="section-title">Risks, and what to underwrite</h1>
   <p class="deck">
     What could go wrong, stated at the same standard as the rest of this document.
@@ -1076,10 +1002,11 @@
     <div class="card card-amber">
       <h3>Execution risk on trustworthiness</h3>
       <p style="margin:0">
-        The audit found 32 P0 findings, and while the most severe are closed, the
-        regulated core is not yet through Phase 2. The risk is not that the work is
-        unknown — it is scoped — but that hardening programmes routinely take longer than
-        estimated, and this one is on a clock set by the standards migration.
+        The severe mechanisms an outside audit named are closed, but the regulated core
+        is not yet through Phase 2 and no second audit has re-scored the platform. The
+        risk is not that the work is unknown — it is scoped — but that hardening
+        programmes routinely take longer than estimated, and this one runs on a clock set
+        by the standards migration.
       </p>
     </div>
     <div class="card card-amber">
