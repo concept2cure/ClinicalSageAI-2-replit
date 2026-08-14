@@ -55,9 +55,27 @@ describe('computeDiagnosticAccuracy', () => {
     expect(r.specificityCi.upper).toBeGreaterThan(r.specificity);
   });
 
-  it('LR+ is infinite at perfect specificity', () => {
+  it('LR+ is UNDEFINED (null) at perfect specificity, not Infinity', () => {
+    // Behaviour change, made deliberately — this test previously pinned
+    // `Infinity`. Two reasons:
+    //
+    //  1. `JSON.stringify(Infinity)` is `null`, so the API emitted
+    //     `"lrPositive": null` regardless. Returning Infinity did not preserve
+    //     the information, it just made the wire value accidental instead of
+    //     intentional, and gave the type an assurance it could not keep.
+    //  2. This module ALREADY uses explicit null for undefined quantities —
+    //     `calculateClinical2x2` returns null for sensitivity/specificity/ppv/npv
+    //     and is tested for it ("represents undefined denominators explicitly
+    //     for persistence/UI consumers"). computeDiagnosticAccuracy was the
+    //     outlier, not the standard.
+    //
+    // Perfect specificity is ordinary in a small IVD validation study, so this
+    // is a routine path, not a corner case. `specificity` is in the same object
+    // for a caller that needs to explain the null.
     const r = computeDiagnosticAccuracy({ tp: 50, fp: 0, fn: 5, tn: 50 });
-    expect(r.lrPositive).toBe(Infinity);
+    expect(r.specificity).toBe(1);
+    expect(r.lrPositive).toBeNull();
+    expect(JSON.parse(JSON.stringify(r)).lrPositive).toBeNull();
   });
 
   it('rejects degenerate or invalid tables', () => {

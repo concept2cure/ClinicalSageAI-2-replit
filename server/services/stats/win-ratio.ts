@@ -95,7 +95,13 @@ export interface WinRatioResult {
    * and `ties` remain available for the caller to distinguish the cases.
    */
   winRatio: number | null;
-  winOdds: number;
+  /**
+   * (wins + ties/2) / (losses + ties/2), or NULL when the denominator is zero —
+   * i.e. no losses AND no ties, so every pair was a win. Same JSON reasoning as
+   * `winRatio`. Found by the sweep in tests/biostat/json-wire-contract.test.ts
+   * AFTER winRatio had been fixed by hand, which is the argument for the sweep.
+   */
+  winOdds: number | null;
   netBenefit: number;
   /** Finkelstein–Schoenfeld standardized statistic for the net benefit. */
   z: number;
@@ -135,6 +141,18 @@ function covariance(xs: number[], ys: number[]): number {
  * `treatment` and `control` are arrays of subjects; each subject's `levels`
  * align with `hierarchy`.
  */
+/**
+ * A ratio, or null when its denominator is zero.
+ *
+ * Shared by `winRatio` and `winOdds` so the undefined case is expressed once.
+ * Extracted rather than inlined twice: two ternaries inside `winRatioAnalysis`
+ * pushed it past the complexity limit, and one named helper reads better than a
+ * lint suppression.
+ */
+function ratioOrNull(numerator: number, denominator: number): number | null {
+  return denominator > 0 ? numerator / denominator : null;
+}
+
 export function winRatioAnalysis(
   treatment: Subject[],
   control: Subject[],
@@ -175,8 +193,8 @@ export function winRatioAnalysis(
   const z = varDelta > 0 ? netBenefit / Math.sqrt(varDelta) : 0;
   const pValue = 2 * (1 - normalCdf(Math.abs(z)));
 
-  const winRatio = losses > 0 ? wins / losses : null;
-  const winOdds = (wins + ties / 2) / (losses + ties / 2);
+  const winRatio = ratioOrNull(wins, losses);
+  const winOdds = ratioOrNull(wins + ties / 2, losses + ties / 2);
 
   // Win-ratio CI via delta method on log(WR), with U-statistic variances of the
   // win and loss proportions and their covariance.
