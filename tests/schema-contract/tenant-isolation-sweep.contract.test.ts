@@ -255,6 +255,38 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
     expect(rows.map((r) => r.table_name), 'unpoliced tenant tables').toEqual([]);
   }, T);
 
+  it('policies electronic_signatures — the Part 11 record that had no tenant key', async () => {
+    // Named rather than left to the sweep above, because the failure mode was
+    // INVISIBLE to that check. The sweep policies tables that carry a tenant
+    // column and silently skips those that do not, so a table with no tenant key
+    // is not "unpoliced" by that query — it is simply absent from it. The
+    // 21 CFR Part 11 §11.50/§11.70 signature record sat in exactly that blind
+    // spot: shared/schema.ts declared organization_id, signature-persistence.ts
+    // threw without it, and no migration ever created it.
+    //
+    // Asserting the COLUMN separately from the POLICY is the point: drop the
+    // column and the generic sweep assertion still passes.
+    const col = await pg.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'electronic_signatures' AND column_name = 'organization_id'`,
+    );
+    expect(col.rows, 'electronic_signatures lost its tenant key').toHaveLength(1);
+
+    const policy = await pg.query(
+      `SELECT 1 FROM pg_policies
+        WHERE tablename = 'electronic_signatures' AND policyname = 'tenant_isolation_policy'`,
+    );
+    expect(policy.rows, 'Part 11 signatures are not tenant-isolated').toHaveLength(1);
+
+    // FORCE matters here more than almost anywhere: without it the table owner
+    // bypasses the policy, and the owner is the role the application connects as
+    // on a stock deployment.
+    const forced = await pg.query<{ relforcerowsecurity: boolean }>(
+      `SELECT relforcerowsecurity FROM pg_class WHERE relname = 'electronic_signatures'`,
+    );
+    expect(forced.rows[0]?.relforcerowsecurity, 'RLS not FORCED — the owner bypasses it').toBe(true);
+  }, T);
+
   it('actually blocks a cross-tenant read on a table it sweeps', async () => {
     // End-to-end, not just "a policy row exists". A dedicated table is used
     // rather than an arbitrary real one: the real tables carry their own NOT NULL

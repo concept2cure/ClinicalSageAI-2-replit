@@ -9,6 +9,14 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+
+/**
+ * Version ids are `randomUUID()` (see storage-provider.generateVersionId), so an
+ * exact shape check is available — and an exact check is what makes this a
+ * whitelist rather than a traversal blocklist. Ids reach here from request
+ * payloads, including model-authored AI action payloads.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 import {
   IStorageProvider,
   StoragePutOptions,
@@ -74,8 +82,8 @@ export class LocalStorageProvider implements IStorageProvider {
     return { vaultFileId, vaultVersionId, sizeBytes, sha256, provider: 'local' };
   }
 
-  async get(vaultVersionId: string): Promise<StorageGetResult | null> {
-    const verPath = this.findVersionDir(vaultVersionId);
+  async get(vaultVersionId: string, orgId: number): Promise<StorageGetResult | null> {
+    const verPath = this.findVersionDir(vaultVersionId, orgId);
     if (!verPath) return null;
 
     const metaPath = path.join(verPath, '_meta.json');
@@ -95,8 +103,8 @@ export class LocalStorageProvider implements IStorageProvider {
     };
   }
 
-  async delete(vaultVersionId: string): Promise<boolean> {
-    const verPath = this.findVersionDir(vaultVersionId);
+  async delete(vaultVersionId: string, orgId: number): Promise<boolean> {
+    const verPath = this.findVersionDir(vaultVersionId, orgId);
     if (!verPath) return false;
 
     fs.rmSync(verPath, { recursive: true, force: true });
@@ -145,7 +153,11 @@ export class LocalStorageProvider implements IStorageProvider {
     return results.sort((a, b) => b.storedAt.localeCompare(a.storedAt));
   }
 
-  async getSignedUrl(vaultVersionId: string, ttlSeconds = 900): Promise<StorageSignedUrlResult> {
+  async getSignedUrl(
+    vaultVersionId: string,
+    orgId: number,
+    ttlSeconds = 900
+  ): Promise<StorageSignedUrlResult> {
     // Local provider generates a local path-based "URL" — not truly signed
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
     return {
@@ -163,17 +175,34 @@ export class LocalStorageProvider implements IStorageProvider {
     }
   }
 
-  private findVersionDir(vaultVersionId: string): string | null {
+  /**
+   * Resolve a version id to a directory **within one organization's subtree**.
+   *
+   * This used to iterate over every org directory under VAULT_ROOT and return
+   * the first match, which made `get`/`delete` cross-tenant by construction: any
+   * caller holding a version id reached any tenant's bytes. The search is now
+   * rooted at the caller's org, so a foreign id simply does not resolve and is
+   * indistinguishable from one that never existed.
+   *
+   * `vaultVersionId` is validated before it is joined onto a path. It arrives
+   * from request payloads (including model-authored AI action payloads), and
+   * `path.join(root, '../../etc/passwd')` escapes the org root — a traversal that
+   * the old whole-vault search made irrelevant but this org-rooted one would
+   * otherwise expose. Version ids are randomUUIDs, so the pattern is exact
+   * rather than a blocklist.
+   */
+  private findVersionDir(vaultVersionId: string, orgId: number): string | null {
+    if (!UUID_RE.test(vaultVersionId)) return null;
+    if (!Number.isSafeInteger(orgId) || orgId <= 0) return null;
     if (!fs.existsSync(VAULT_ROOT)) return null;
 
-    const orgs = fs.readdirSync(VAULT_ROOT, { withFileTypes: true }).filter(d => d.isDirectory());
-    for (const org of orgs) {
-      const orgPath = path.join(VAULT_ROOT, org.name);
-      const projects = fs.readdirSync(orgPath, { withFileTypes: true }).filter(d => d.isDirectory());
-      for (const proj of projects) {
-        const verPath = path.join(orgPath, proj.name, 'versions', vaultVersionId);
-        if (fs.existsSync(verPath)) return verPath;
-      }
+    const orgPath = path.join(VAULT_ROOT, String(orgId));
+    if (!fs.existsSync(orgPath)) return null;
+
+    const projects = fs.readdirSync(orgPath, { withFileTypes: true }).filter(d => d.isDirectory());
+    for (const proj of projects) {
+      const verPath = path.join(orgPath, proj.name, 'versions', vaultVersionId);
+      if (fs.existsSync(verPath)) return verPath;
     }
     return null;
   }
