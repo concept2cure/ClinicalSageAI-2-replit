@@ -760,7 +760,20 @@ router.get('/context/:projectId', async (req: Request, res: Response) => {
     if (req.query.max_chars_per_doc) qp.max_chars_per_doc = String(req.query.max_chars_per_doc);
     if (req.query.max_total_chars) qp.max_total_chars = String(req.query.max_total_chars);
 
-    const result = await proxyJson(`/knowledge/project-context/${projectId}`, 'GET', undefined, qp);
+    // encodeURIComponent, not the bare param. `projectId` is interpolated into a
+    // path that is then resolved with `new URL(path, shadowUrl())`, and URL
+    // resolution APPLIES `../` segments. Express decodes %2F in a route param,
+    // so a request for `/context/..%2F..%2Fadmin` arrives here as `../../admin`
+    // and resolved to `http://<shadow>/admin` — an authenticated proxy to any
+    // endpoint on the internal service, not just the one this route names.
+    // Encoding keeps the traversal inert: it stays `..%2F..%2Fadmin`, one path
+    // segment, exactly as intended.
+    const result = await proxyJson(
+      `/knowledge/project-context/${encodeURIComponent(projectId)}`,
+      'GET',
+      undefined,
+      qp
+    );
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     console.error('[knowledge-base] context proxy error:', err.message);

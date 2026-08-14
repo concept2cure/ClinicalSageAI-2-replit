@@ -687,3 +687,59 @@ the implementation drifting away from them. A separate assertion reads
 mutation-testing confirms it is the *only* one of the five that catches the
 original defect. Recorded because a suite that looks thorough while being unable
 to fail is the specific thing this workstream keeps finding.
+
+### 7.4 An authenticated proxy reached any internal-service endpoint — HIGH
+
+`GET /api/knowledge-base/context/:projectId` (mounted by
+`bootstrap/register-document-routes.ts:259`) built its upstream path by
+interpolation and then resolved it:
+
+```ts
+new URL(`/knowledge/project-context/${projectId}`, shadowUrl())
+```
+
+`new URL` **applies** `../` segments during resolution, and Express **decodes
+`%2F`** inside a route param. So:
+
+```
+GET /api/knowledge-base/context/..%2F..%2Fadmin
+  → projectId === '../../admin'
+  → proxied to http://<shadow-service>/admin
+```
+
+Any endpoint on the internal shadow service, reachable by any authenticated user,
+through a route that names exactly one. The service is not otherwise exposed, so
+this route *was* the way in.
+
+**Why it survived review.** Two things look protective and one of them genuinely
+is. The `/knowledge/...` prefix does defeat a protocol-relative host override — a
+`projectId` of `//evil.com` resolves to `http://<shadow>/knowledge//evil.com`, not
+to `evil.com`, so the destination host really is pinned. And a single route param
+looks like it cannot contain a slash. `%2F` is why it can, and the prefix does
+nothing about traversal *within* the host.
+
+**Closed by** `encodeURIComponent`, which keeps the value one inert path segment
+(`..%2F..%2Fadmin` stays encoded through `new URL`). Verified end-to-end against a
+real Express router rather than by reasoning about the decoding: the probe sent
+`..%2F..%2Fadmin` over HTTP, observed the handler receive `../../admin`, and
+observed the resolved upstream become `/admin`.
+
+It is the only occurrence — `new URL(<interpolated path>, base)` appears nowhere
+else in `server/`.
+
+### 7.5 SSRF — checked, and already sound
+
+Reported because a negative result is worth as much as a finding here. 43
+outbound `fetch`/`axios` sites were reviewed. The tenant-controlled sinks are
+guarded:
+
+| Sink | Control |
+|---|---|
+| Webhook delivery targets | `utils/ssrfGuard.isSafePublicUrl` — https-only, rejects private/loopback/link-local/unique-local and the 169.254.169.254 metadata address |
+| Connector base + token URLs | the same shared guard |
+| Firecrawl scraping | per-tenant domain allowlist, **fail-closed** — an enabled tenant with an empty allowlist is refused with a distinct `allowlist_required` reason rather than defaulting to allow |
+
+Everything else resolves against a server constant (NCBI, CrossRef, openFDA) with
+`encodeURIComponent`'d identifiers. `ssrfGuard` even documents its own limit —
+hostname inspection does not defeat DNS rebinding, so it is applied both at
+storage time and before each fetch. No change was needed.
