@@ -15854,6 +15854,78 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
   }
 });
 
+/* The Submission Readiness Twin, which shipped with five live routes and no
+   caller anywhere in the client.
+
+   Two things this handler owns beyond the service call:
+
+   1. TENANT PROOF. The program id comes from the model, so it must be proven to
+      belong to the caller's org before anything is read. It reuses the same
+      `programBelongsToOrg` the innovation routes use rather than a fourth copy
+      of that query.
+
+   2. "NOT ASSESSED" vs "SCORED ZERO". getDashboard returns getEmptyDashboard()
+      — overallScore 0, approvalProbability 0, no criteria — when no assessment
+      exists. That payload is indistinguishable from a genuinely terrible
+      program, and a model handed it will report a zero readiness score as fact.
+      It is detected here and returned as a different status entirely. */
+registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read submission readiness.';
+  const programId = typeof input.program_id === 'string' ? input.program_id.trim() : '';
+  if (!programId) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'program_id is required.' });
+  }
+  const submissionType = typeof input.submission_type === 'string' && input.submission_type.trim()
+    ? input.submission_type.trim() : 'IND';
+  const agency = typeof input.agency === 'string' && input.agency.trim()
+    ? input.agency.trim() : 'FDA';
+
+  try {
+    const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
+    if (!(await programBelongsToOrg(programId, Number(orgId)))) {
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No program "${programId}" in this organization. Do not report a readiness score; confirm the program with the user.`,
+      });
+    }
+
+    const [{ default: SubmissionReadinessTwinService }, { getPool }] = await Promise.all([
+      import('../innovation/submission-readiness-twin-service.js'),
+      import('../../db.js'),
+    ]);
+    const service = new SubmissionReadinessTwinService(getPool() as any);
+    const dashboard = await service.getDashboard(programId, submissionType, agency);
+
+    /* The empty dashboard is a zero-valued object, not an absence. Reporting it
+       verbatim would state a 0% readiness score and a 0% approval probability
+       for a program that has simply never been assessed. Zero evaluated criteria
+       is the same signal `report-os/prediction/model-adapters` uses to refuse. */
+    const neverAssessed = (dashboard?.criteriaProgress?.total ?? 0) === 0;
+    if (neverAssessed) {
+      return JSON.stringify({
+        status: 'not_assessed',
+        programId,
+        submissionType,
+        agency,
+        message: `No readiness assessment has been run for this program against ${submissionType}/${agency}. This is NOT a score of zero — say that no assessment exists and offer to run one, and do not state a readiness percentage or approval probability.`,
+      });
+    }
+
+    return JSON.stringify({
+      status: 'ok',
+      programId,
+      submissionType,
+      agency,
+      dashboard,
+      instruction:
+        'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `get_submission_readiness_twin failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Structured benefit-risk assessment (BRAT-style) — deterministic decision aid.
 registerToolHandler('assess_benefit_risk', async (input: Record<string, unknown>) => {
   try {
@@ -16053,7 +16125,7 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
       status: 'navigation_ready',
       directive: res.directive,
       instruction:
-        'A navigation directive was produced; the UI will move to this screen. Tell the user where you are taking them. Project-scoped screens require an active project.',
+        'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });

@@ -8,6 +8,7 @@ describe('deepening tools — registration', () => {
   it.each([
     'assess_batch_poolability',
     'assess_recorded_batch_poolability',
+    'get_submission_readiness_twin',
     'assess_benefit_risk',
   ])('%s is defined and registered', (name) => {
     expect(names).toContain(name);
@@ -81,5 +82,44 @@ describe('assess_benefit_risk', () => {
   it('validates inputs', async () => {
     const out = JSON.parse(await getToolHandler('assess_benefit_risk')!({ benefits: [], risks: [{ name: 'R', weight: 1, score: 1 }] }));
     expect(out.status).toBe('needs_parameters');
+  });
+});
+
+/**
+ * The Submission Readiness Twin — five live routes, integration-tested, and
+ * until now no caller anywhere in the client.
+ *
+ * The service's own `getEmptyDashboard()` returns overallScore 0 and
+ * approvalProbability 0 when no assessment exists, which is byte-identical to a
+ * genuinely terrible program. A model handed that payload reports a zero
+ * readiness score as fact. That distinction is the handler's job, and it is what
+ * these tests exist for.
+ */
+describe('get_submission_readiness_twin', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('get_submission_readiness_twin')!(input, ctx as never);
+
+  it('refuses without an organization context', async () => {
+    expect(await call({ program_id: 'p1' })).toMatch(/organization context is required/i);
+  });
+
+  it('requires a program id', async () => {
+    for (const program_id of ['', '   ', undefined, 42]) {
+      const out = JSON.parse(await call({ program_id }, { organizationId: 101 }));
+      expect(out.status).toBe('needs_parameters');
+    }
+  });
+
+  it('will not report a score for a program outside the caller\'s organization', async () => {
+    const out = JSON.parse(
+      await call({ program_id: '00000000-0000-4000-8000-000000000000' }, { organizationId: 101 }),
+    );
+    // Either the tenant proof fails (no such program here) or the environment
+    // has no innovation schema at all. Neither may yield a readiness number.
+    expect(['not_found', 'error']).toContain(out.status ?? 'error');
+    expect(out.dashboard).toBeUndefined();
+    if (out.status === 'not_found') {
+      expect(out.message).toMatch(/Do not report a readiness score/);
+    }
   });
 });

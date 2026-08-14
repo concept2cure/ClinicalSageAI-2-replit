@@ -107,6 +107,18 @@ jobs:
         # and must carry a reason.
         run: npm run ci:surface-discoverability
 
+      - name: AnA can see the screen she is asked about
+        # Ratchet, not a hard requirement. A surface tells AnA what it is showing
+        # via usePublishSurfaceContext; the shell forwards it and the server
+        # renders it into the prompt. That pipeline was completed end to end and
+        # then three surfaces out of 118 called the publisher — so on the other
+        # 115 AnA was handed a live conversation and an empty screen, and would
+        # answer "what should I do next?" from the surface id alone. Nothing
+        # detected it: publisher and consumer were both tested, and the thing
+        # between them was nobody's test. Adoption may rise and may never fall;
+        # the remaining backlog is reported, not failed.
+        run: npm run ci:ana-surface-context
+
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh
 

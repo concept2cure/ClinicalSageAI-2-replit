@@ -44,6 +44,17 @@ export interface AnaChatAction {
   sectionCode?: string;
   executed?: boolean;
   error?: string;
+  /**
+   * Present only when `actionType === 'navigate'`: the registry id of the
+   * screen AnA resolved, produced server-side by `navigate_to` against the
+   * governed navigation contract. The rail renders these as a button the
+   * person activates — AnA offers a destination, it does not take you there.
+   */
+  targetId?: string;
+  /** The directive's path, for any consumer routing by path instead of id. */
+  path?: string;
+  /** Params the target requires (e.g. an intelligence sub-tab). */
+  params?: Record<string, string>;
 }
 
 /** A tool invocation surfaced for transparency/auditability during a turn. */
