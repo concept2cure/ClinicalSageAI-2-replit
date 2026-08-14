@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T04:32:18.342Z",
+  "generatedAt": "2026-08-14T05:07:47.553Z",
   "git": {
-    "sha": "04de944a5f34b5bcf707da72c32191198e192602",
+    "sha": "66dd5514fa328b88ce3c0f8ba3f69d49eb8f9855",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2129,7 +2129,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 957404
+        "bytes": 957636
       },
       {
         "file": "shared/schema.ts",
@@ -2267,7 +2267,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18642
+        "lines": 18645
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2347,7 +2347,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2574
+        "lines": 2581
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
@@ -2451,7 +2451,7 @@
       },
       {
         "file": "server/services/ana/evidence-literature-tool-defs.ts",
-        "lines": 1922
+        "lines": 1924
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
