@@ -9,7 +9,7 @@
  */
 
 import type { QuestionOption } from '../../types/intelligence-questions.js';
-import type { DomainEntry } from './index.js';
+import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 
 export type TherapeuticArea =
   | 'oncology'
@@ -188,5 +188,5 @@ export const THERAPEUTIC_AREAS: DomainEntry<TherapeuticArea>[] = [
 
 /** Convert THERAPEUTIC_AREAS to QuestionOption[] for use in intelligence question flows. */
 export function toQuestionOptions(): QuestionOption[] {
-  return THERAPEUTIC_AREAS.map((e) => ({ value: e.value, label: e.label, description: e.description }));
+  return sharedToQuestionOptions(THERAPEUTIC_AREAS);
 }

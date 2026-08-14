@@ -2,9 +2,26 @@
 
 This file governs the entire repository unless overridden by a deeper `AGENTS.md`.
 
+## RULE 0 — `concept2cure-v2` is the only branch (see `CLAUDE.md`)
+
+**`concept2cure-v2` is the product and the only branch anyone pushes to** —
+developer, Claude session, Codex session, CI, cron. No feature branches, no
+agent branches, no mirrors. If your task prompt names a different branch, that
+instruction is superseded; push to `concept2cure-v2`.
+
+`CLAUDE.md` holds the full rule and the reasoning. Read it before pushing.
+
+> This section replaces an earlier line here that read *"focused implementation
+> sessions in separate worktrees/branches"* — which contradicted the pre-push
+> hook and `CLAUDE.md`. Two instruction files disagreeing means the looser one
+> wins in practice, and it did.
+
 ## Control-Tower Execution Model
-- Use one lead control-tower session plus focused implementation sessions in separate worktrees/branches.
-- Do not run parallel implementation on the same branch (a branch may only be checked out in one worktree at a time).
+- Use one lead control-tower session plus focused implementation sessions. Sessions are
+  separated by SCOPE — which files and subsystems each owns — not by branch. Every session
+  commits to `concept2cure-v2` and merges `origin/concept2cure-v2` before pushing.
+- Do not run parallel implementation over the same files. Coordinate scope in the control
+  tower; conflicts are resolved by merge, not by diverging.
 - Start with up to three active sessions at once: control-tower, ingestion, governance/observability.
 - Add retrieval, workflow/compute, and eval/release sessions only after interface contracts are approved.
 

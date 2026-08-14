@@ -118,17 +118,39 @@ unseeded one, and treating either as "no CRL risk" is precisely the failure this
 ADR exists to prevent. Pinned by
 `server/services/__tests__/precedent-crl-store-fallback.test.ts`.
 
-**This does not yet reverse the decision.** Three things are still outstanding:
+### Items (1) and (3), closed
 
-1. RTF and advisory-committee analysis are seeded but not yet cut over to read
-   the store — only CRL is. They still read their inline arrays.
-2. EMA question patterns are not seeded at all; that table keys on procedure
-   phase and type with their own vocabularies and needs its own mapping pass.
-3. **No provenance was gained.** The seeded rows carry no citation, because the
-   inline arrays carry none to copy. The schema has the columns
-   (`typical_fda_language`, `deficiency_signals`) and they are NULL. Until the
-   patterns can cite the CRLs they were derived from, this is the same knowledge
-   in a better container — genuinely better, because it can now be updated
-   without a deploy and extended per tenant, but not yet *more defensible*.
+**(1) RTF and advisory-committee are now cut over too**, on the identical
+contract — store wins when it has rows, everything else falls back. All three
+families are asserted together in the fallback test, so wiring a fourth without
+the fallback fails rather than shipping an environment that silently reports no
+regulatory risk.
 
-The decision stands until at least (1) and (3) are done.
+**(3) Provenance could not be *added* — so it was made VISIBLE instead.** No
+citation exists to copy, and inventing one for a regulatory risk table is worse
+than having none. Every pattern now declares `evidenceBasis: 'curated' | 'cited'`:
+`cited` when the row carries the regulatory language it was derived from
+(`typical_fda_language`, or `typical_questions` for advisory committee),
+`curated` otherwise. All 24 seeded and inline patterns are `curated` today, and
+say so.
+
+This is the achievable half of defensibility. A reviewer asking "on what basis?"
+now gets an answer for every pattern, and a tenant that adds a cited pattern is
+visibly distinguishable from the shipped judgement. The field is **required by
+the type**, so a pattern cannot be added without declaring its basis, and it is
+carried onto the OUTPUT type rather than only the internal one — a basis that
+exists only internally answers nobody's question. That last point was caught by
+a test, not by inspection: the field was originally dropped in the mapping to
+the result and would have been decorative.
+
+### Still outstanding
+
+EMA question patterns are not seeded; that table keys on procedure phase and
+type with their own constrained vocabularies and needs its own mapping pass.
+
+**The decision still stands**, and now for a narrower reason than before: the
+store and the inline arrays hold the same knowledge, so switching authority
+would change nothing except which code path serves it. It becomes worth
+revisiting when patterns arrive that are `cited` — at that point the store
+carries something the arrays cannot express, and the better-factored
+implementation wins on evidence rather than on architecture.
