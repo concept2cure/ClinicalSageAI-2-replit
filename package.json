@@ -105,6 +105,7 @@
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
     "ci:tenant-column-types": "node scripts/ci/check-tenant-column-types.mjs",
     "ci:tenant-blind-models": "node scripts/ci/check-tenant-blind-models.mjs",
+    "ci:org-path-param-guards": "node scripts/ci/check-org-path-param-guards.mjs",
     "ci:tenant-blind-models:write-baseline": "node scripts/ci/check-tenant-blind-models.mjs --write-baseline",
     "ci:token-contrast": "node scripts/ci/check-token-contrast.mjs",
     "ci:js-ts-shadows": "node scripts/ci/check-js-ts-shadows.mjs",

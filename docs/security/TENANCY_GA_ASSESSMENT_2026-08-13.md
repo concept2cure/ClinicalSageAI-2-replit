@@ -793,3 +793,54 @@ TYPE of declared tenant columns and by construction cannot see one that is absen
 
 Both failure arms verified by exit code: a new blind model exits 1; a baselined
 model that has been fixed but left in the list exits 1.
+
+### 7.7 Org ids in the URL path — audited completely, all 43 sound
+
+A route that takes a tenant identifier from the path and uses it without
+comparing it to the caller's JWT is the textbook IDOR. **RLS does not backstop
+this class**: six tables sit deliberately on the RLS allowlist
+(`organization_users`, `api_keys`, `stripe_events`, `billing_budgets`,
+`billing_alerts`, `__drizzle_migrations`) because they must be readable *before*
+a tenant context exists — `validateApiKey` resolves which org a key belongs to by
+reading `api_keys` pre-auth, and policing it once broke all API-key
+authentication (ledger C-44). For routes touching those tables the application
+check is the only control there is.
+
+**Result: 43 routes carry an org/tenant path param, and all 43 are guarded.** No
+finding. Recorded because a clean result on the class RLS cannot cover is worth
+as much as a defect.
+
+**The real finding is structural.** The invariant is enforced by **nine**
+different local idioms with no shared helper and no naming convention:
+
+```
+authorizeOrgAccess · enforceOrgScope · requireAuthedOrgId · assertTenantMatchesAuth
+requireOrganizationContext · validateTenantId · orgScope · getOrgId · authedOrgId
+```
+
+Two of them are correct in a different way: `intelligent-reports` and
+`mdx-imports` **ignore the path param entirely** and scope from the token, each
+with a SECURITY comment saying so — a stronger answer than comparing to it.
+
+That fragmentation is what makes the class dangerous to audit. During this review
+**four separate greps each reported "unguarded" routes that were in fact guarded**
+by an idiom the pattern did not know about — including one that looked, for
+several minutes, like a live cross-tenant read of another tenant's user roster. A
+reviewer who stops at the first such result publishes a false vulnerability; one
+who trusts a too-narrow pattern in the other direction misses a real one.
+
+**Closed by** `scripts/ci/check-org-path-param-guards.mjs`
+(`ci:org-path-param-guards`, wired into CI). It encodes the vocabulary once so
+the check is mechanical, with a **zero baseline** — nothing is being papered
+over, and the failure mode this class actually has is a NEW route, which the gate
+now blocks.
+
+**The gate was itself defective on first write, and mutation-testing caught it.**
+The initial version ended each handler's slice at the next *org-param* route, so
+a guard belonging to an unrelated handler in between satisfied the check:
+deleting the real guard from `tenant-users.ts` `GET /:tenantId` still exited 0,
+because two intervening POST handlers each called `authorizeOrgAccess` inside the
+over-long slice. Fixed to end at the next route of any kind. Both arms now
+verified by exit code — a new unguarded route exits 1, and an existing route
+losing its own guard exits 1. A gate that cannot fail is worse than no gate,
+because it is believed.
