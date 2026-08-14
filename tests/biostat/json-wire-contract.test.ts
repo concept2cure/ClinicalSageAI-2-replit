@@ -45,6 +45,12 @@ import { mmrmSampleSize } from '../../server/services/stats/mmrm-design';
 import { assuranceTwoSampleMeans } from '../../server/services/stats/assurance';
 import { expectedEventsByTime } from '../../server/services/stats/event-projection';
 import { clopperPearsonInterval } from '../../server/services/stats/special';
+import { estimateImprecision } from '../../server/services/stats/analytical-performance';
+import {
+  assessRealTimeStability,
+  assessAcceleratedStability,
+} from '../../server/services/stats/analytical-performance-extensions';
+import { mrmcReadersForPower } from '../../server/services/stats/mrmc';
 
 /** Every non-finite number in an object graph, with its dotted path. */
 function nonFiniteFields(value: unknown, path = ''): string[] {
@@ -130,6 +136,51 @@ const CASES: Array<{ name: string; run: () => unknown }> = [
   {
     name: 'clopperPearsonInterval — all successes',
     run: () => clopperPearsonInterval(10, 10, 0.95),
+  },
+  {
+    // Round 5 additions. All three returned NaN or Infinity before that round;
+    // they are kept here so the sweep, not only the round-5 file, would catch a
+    // regression.
+    name: 'estimateImprecision — zero grand mean (CV undefined)',
+    run: () => estimateImprecision({ runs: [[-1, 1], [-1, 1]] }),
+  },
+  {
+    name: 'assessRealTimeStability — flat series (limit never reached)',
+    run: () =>
+      assessRealTimeStability({
+        points: [
+          { time: 0, value: 100 },
+          { time: 90, value: 100 },
+        ],
+        initialValue: 100,
+        maxPercentChange: 10,
+      }),
+  },
+  {
+    name: 'assessAcceleratedStability — extrapolated rate underflows to zero',
+    run: () =>
+      assessAcceleratedStability({
+        points: [
+          { temperatureC: 180, rateConstant: 1e-3 },
+          { temperatureC: 200, rateConstant: 1e300 },
+        ],
+        storageTemperatureC: 25,
+        degradationThreshold: 0.1,
+      }),
+  },
+  {
+    name: 'mrmcReadersForPower — target unreachable within the search bound',
+    run: () =>
+      mrmcReadersForPower({
+        aucDifference: 0.05,
+        varTR: 0.001,
+        varError: 0.002,
+        cov1: 0.001,
+        cov2: 0.0008,
+        cov3: 0.0006,
+        alpha: 0.05,
+        targetPower: 0.9,
+      }),
   },
 ];
 
