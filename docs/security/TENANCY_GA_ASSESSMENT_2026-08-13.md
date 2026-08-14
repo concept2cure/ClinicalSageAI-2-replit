@@ -526,3 +526,47 @@ commercial team needs a reconciliation window first.
 rising means the posture lookup is failing and tenants are being refused for
 infrastructure reasons. Alert on it separately from `decision="deny"`, which is
 the control working.
+
+**Storage enforcement.** Production enforces by default here too, but this one is
+NOT symmetric with seats and the difference is the whole risk. `seats_purchased`
+defaults to 0 (unlimited), so switching seat enforcement on cannot surprise a
+tenant that was never provisioned. `max_storage` defaults to **5 GB** and nothing
+had ever measured a tenant against it, so switching storage enforcement on can
+refuse a customer who has been quietly over for months — during a submission.
+
+Run this first; it prints exactly who would start receiving 413s and by how much:
+
+```
+npm run report:tenant-storage
+```
+
+Ship with `STORAGE_LIMIT_ENFORCEMENT=report` until that list is empty. Report mode
+is a measurement mode, not an off switch: it still computes every decision, counts
+it on `tenant_quota_decisions_total{resource="storage"}` and logs the tenant.
+
+---
+
+## 6. The three switches are machine-checkable
+
+Every enforcement decision in this workstream is a deploy-time variable, and a
+variable documented only in `.env.example` is a variable someone ships wrong. All
+three now appear in `scripts/ops/ga-readiness-report.mjs` under **Tenant
+entitlement switches**, so a release check reports them rather than an operator
+remembering:
+
+| Variable | READY when | BLOCKED when |
+|---|---|---|
+| `SEAT_LIMIT_ENFORCEMENT` | unset, or `enforce` | `report` — over-seat adds counted, never blocked |
+| `STORAGE_LIMIT_ENFORCEMENT` | unset, or `enforce` | `report` — a paid limit deliberately unenforced |
+| `SCIM_PROVISIONING_ON_SUSPENDED_TENANT` | unset, or `block` | `allow` — an IdP can still provision into a suspended tenant |
+
+They deliberately do NOT use that report's `ENFORCEMENT_FLAGS` shape, which is
+ready only on an exact value because unset means OFF there. These three default to
+the *safe* posture in production, so "not set" is genuinely ready, and forcing
+them into that shape would have made the report lie.
+
+Falsified in both directions: each row goes BLOCKED when the control is explicitly
+disabled, and a typo'd value (`repot`) reads READY — which matches the runtime,
+where an unrecognized value falls back to the enforcing default rather than
+silently disabling a paid control. The probe agrees with the code, not with an
+assumption about it.
