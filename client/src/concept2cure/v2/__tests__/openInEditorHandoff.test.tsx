@@ -278,7 +278,9 @@ describe('ReportEngine — Open in editor', () => {
 
 async function simulated(onNav: () => void) {
   render(<CmcModule {...props('cmc-module', onNav)} />);
-  fireEvent.click(screen.getByRole('button', { name: /Change simulator/ }));
+  /* The tab is "Change control": the simulator now sits above the register it
+     models against, rather than being the whole tab. */
+  fireEvent.click(screen.getByRole('button', { name: /Change control/ }));
   const ta = await screen.findByPlaceholderText(/switch the drug-substance supplier/);
   fireEvent.change(ta, { target: { value: 'Move DS manufacture from Site A to Site B; equivalent process.' } });
   fireEvent.click(screen.getByRole('button', { name: /Simulate change/ }));
