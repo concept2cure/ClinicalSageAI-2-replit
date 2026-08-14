@@ -34,6 +34,7 @@ import { getThreadMessages } from '../chat-thread-helpers.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import { decisionLifecycleService } from '../decision-lifecycle-service.js';
 import { buildMdxContextBlock } from './mdx-context-resolver.js';
+import { buildSurfaceContextBlock } from './surface-context-block.js';
 import { loadRelationalOverlay } from './relational-profile-service.js';
 import { buildExternalIntelBlock } from '../external-intelligence/index.js';
 import { getDeadlineRadar, buildDeadlineRadarBlock } from '../ana/deadline-radar.js';
@@ -524,7 +525,22 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     }
   }
 
-  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block + mdxContextBlock;
+  /* ── Active-surface block (EVERY surface) ──
+     A surface publishes what it is showing through
+     client/.../v2/surfaceContext.ts; V2App forwards it to useAnaChat, which
+     sends it as `module_context` on every turn. Until now the only server-side
+     reader was the MDX branch above, so every other surface published into a
+     void — the client half of "AnA can see the screen she is on" shipped
+     without a consumer.
+
+     This is generic on purpose: one block for all surfaces rather than a
+     second special case beside MDX. The payload is CLIENT-CONTROLLED and is
+     entering a system prompt, so buildSurfaceContextBlock fences it, labels it
+     as observed screen state rather than instruction, sanitises every string
+     and bounds the whole thing — see that module's header. */
+  const surfaceContextBlock = buildSurfaceContextBlock(module_context);
+
+  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block + mdxContextBlock + surfaceContextBlock;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
