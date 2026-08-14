@@ -723,7 +723,9 @@ router.post('/demo-analysis', async (req, res) => {
     log.debug(`Analyzing protocol with session ID: ${session_id}`);
 
     // Create session directory if it doesn't exist
-    const sessionDir = path.join(process.cwd(), 'exports', session_id);
+    // basename: session_id arrives from the request and is a path segment here.
+      // Express decodes %2F, so `..%2F..%2F` reaches this as real traversal.
+      const sessionDir = path.join(process.cwd(), 'exports', path.basename(String(session_id)));
     if (!fs.existsSync(sessionDir)) {
       fs.mkdirSync(sessionDir, { recursive: true });
     }
