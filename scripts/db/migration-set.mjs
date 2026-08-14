@@ -53,6 +53,35 @@ import { ensureJournal, recordApplied } from './migration-journal.mjs';
 // 358 migrations because the manifest is not authoritative for anything. Making
 // something consume it is a separate change to how schema ships.
 export const C2C_MIGRATION_FILES = [
+  // ── Golden-journey prerequisites ────────────────────────────────────────────
+  // Seven migrations that tests/golden-journeys provision and depend on, and
+  // that no durable applier ran — the exact drift ci:journey-migration-
+  // reachability exists to catch. They lead the set because later entries
+  // depend on what they create: the c2c_documents family (phase9) is ALTERed by
+  // 20260728_c2c_document_sections_timestamps and _c2c_section_version_author_kind
+  // and read by the 20260804+ rule-pack outlines; regulatory_programs
+  // (program_workbench) is scoped by 20260726_cre_source_program_scope and
+  // anchored by 20260814_projects_regulatory_program_anchor.
+  //
+  // Order within the block is dependency order, which here matches date order:
+  // phase9_backfill reads regulatory_programs and writes the c2c_documents
+  // family, so it follows both; audit_hmac_seal seals the chain columns
+  // mutation_primitives adds to audit_logs, so it follows that.
+  //
+  // Prerequisites all come from drizzle-kit push, which runs before this set:
+  // cerv2_510k_sections, cer_reports, pma_submissions and audit_logs are all
+  // declared in shared/schema.ts. Every ALTER here is ADD COLUMN IF NOT EXISTS
+  // or guarded on information_schema, and the backfill guards each source table
+  // the same way, so the block is safe on a database that already has them and
+  // on one that does not.
+  'migrations/20260506_kit_section_draft_provenance.sql',
+  'migrations/20260524_program_workbench_schema.sql',
+  'migrations/20260527_mutation_primitives.sql',
+  'migrations/20260528_phase9_document_schema.sql',
+  'migrations/20260529_phase9_backfill.sql',
+  'migrations/20260604_shadow_review.sql',
+  'migrations/20260609_audit_hmac_seal.sql',
+  // ── End golden-journey prerequisites ────────────────────────────────────────
   'migrations/20260603_ai_capability_governance.sql',
   'migrations/20260603_pv_operational.sql',
   'migrations/20260603_commitments.sql',
