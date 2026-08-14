@@ -173,6 +173,15 @@ export interface AuditEvent {
   reason?: string;
   hash?: string;
   prev?: string;
+  /** Real per-row integrity for live rows: 'sealed' (chain link + HMAC seal),
+   *  'chained', or 'unchained' — a row that reached the audit table outside the
+   *  chain writer and therefore is not tamper-evident. Absent on fixtures,
+   *  which carry a synthesized chain and make no integrity claim. */
+  chain?: 'sealed' | 'chained' | 'unchained';
+  /** False when the chain predecessor exists but is not this tenant's to show
+   *  (the audit_logs chain is global across tenants). Distinguishes "no
+   *  predecessor available" from "no predecessor". */
+  prevAvailable?: boolean;
   live?: boolean;
 }
 

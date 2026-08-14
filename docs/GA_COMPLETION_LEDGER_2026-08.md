@@ -64,8 +64,8 @@ Ranked. Every row here was at some point described as somebody else's problem; i
 | ID | Item | Owner | State | Evidence |
 |---|---|---|---|---|
 | L10 | **D8 C2** — attribute-free alias map, plus the CI gate that enforces the no-attributes invariant. C1 (the program anchor) shipped | eng | open | `docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md` |
-| L11 | **Audit substrate decision** — `audit_logs` and `audit_events` are both canonical today, chained differently (application vs. trigger), scoped differently (global vs. per-org), and surfaced on two different screens showing disjoint histories. One must become the reference; the other needs a bridge | eng | open | `docs/AUDIT_STORE_INVENTORY_2026-08.md` §1.2 |
-| L12 | **Chain-linkage of the 23 domain-history tables** — `linkDomainHistory` exists with **zero call sites**; every (b) table is chain-orphaned. Items 1–15 are one-line additions; 21–23 want a helper in their own service | eng | open | `docs/AUDIT_STORE_INVENTORY_2026-08.md` §1.3 |
+| L11 | **Audit substrate decision** — decided: `audit_events` is the reference, because its chain is enforced by a BEFORE INSERT trigger and cannot be bypassed, while the `audit_logs` chain skips NULL links and so loses rows silently (it already did, in production). Stage 0 shipped: the Part 11 audit surface no longer asserts integrity it never checked. Stage 1 (bridge) is next; Stage 2 (flip the readers) needs approval | eng | in-flight | `docs/AUDIT_SUBSTRATE_DECISION_2026-08.md` §4 |
+| L12 | **Chain-linkage of the 23 domain-history tables** — `linkDomainHistory` exists with **zero call sites**; every (b) table is chain-orphaned. Blocked on L11: linking them into `audit_logs` would wire 23 tables into the substrate being retired | eng | blocked | `docs/AUDIT_STORE_INVENTORY_2026-08.md` §1.3 |
 | L13 | **43 dead audit tables** — no writer anywhere in the repo. Delete list is written; the deletion is not executed | eng | open | `docs/AUDIT_STORE_INVENTORY_2026-08.md` §5.1 |
 | L14 | **11 write-only audit tables** — rows land, nothing reads them. Delete only with owner sign-off | eng + prod | open | `docs/AUDIT_STORE_INVENTORY_2026-08.md` §5.2 |
 

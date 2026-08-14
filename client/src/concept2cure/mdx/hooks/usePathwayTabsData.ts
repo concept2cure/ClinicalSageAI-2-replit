@@ -73,6 +73,10 @@ function adaptAudit(events: SvcAuditEvent[]): AuditEvent[] {
       reason: e.reason || undefined,
       hash: e.sha || undefined,
       prev: e.prev || undefined,
+      /* Carried through so the pane can state integrity instead of asserting
+         it. The server reads both from the real columns; see mdx-audit.ts. */
+      chain: e.chain as AuditEvent['chain'],
+      prevAvailable: e.prevAvailable,
       sig: signed ? e.sha : undefined,
       signed,
     };

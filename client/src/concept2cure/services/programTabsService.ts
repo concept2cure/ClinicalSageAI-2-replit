@@ -46,9 +46,29 @@ export interface AuditEvent {
   target: string;
   resourceId: string;
   reason: string;
+  /** The row's real `sha256_chain` value; '' when the row was written outside
+   *  the chain (see `chain`). Never synthesized. */
   sha: string;
+  /** Always '' for audit_logs rows: the chain is global across tenants, so the
+   *  predecessor is not this tenant's to show. `prevAvailable` states it. */
   prev: string;
-  chain: string;
+  prevAvailable?: boolean;
+  /** Real per-row integrity: 'sealed' (chained + HMAC), 'chained', or
+   *  'unchained' — a row that reached the table outside the chain writer. */
+  chain: 'sealed' | 'chained' | 'unchained' | string;
+}
+
+/** Honest integrity summary for the audit window (GET /api/mdx/audit). */
+export interface AuditIntegrity {
+  total: number;
+  sealed: number;
+  chained: number;
+  unchained: number;
+  /** 'global' — one chain across all tenants, not one per organization. */
+  chainScope: string;
+  /** False when the chain cannot be walked from a tenant-scoped read. */
+  verifiableHere: boolean;
+  note: string | null;
 }
 
 export interface AuditFilterOption {
@@ -67,6 +87,8 @@ export interface AuditTrail {
   actions: AuditFilterOption[];
   resources: AuditFilterOption[];
   kpis: AuditKpi[];
+  /** Absent on fixture/sample data, which carries no real integrity claim. */
+  integrity?: AuditIntegrity;
 }
 
 export interface AuditFilters {
