@@ -106,6 +106,7 @@
     "ci:rls-allowlist-sync": "node scripts/ci/check-rls-allowlist-sync.mjs",
     "ci:document-alias-attribute-free": "node scripts/ci/check-document-alias-attribute-free.mjs",
     "ci:surface-discoverability": "node scripts/ci/check-surface-discoverability.mjs",
+    "ci:ana-surface-context": "node scripts/ci/check-ana-surface-context.mjs",
     "ci:tenant-column-types": "node scripts/ci/check-tenant-column-types.mjs",
     "ci:tenant-blind-models": "node scripts/ci/check-tenant-blind-models.mjs",
     "ci:org-path-param-guards": "node scripts/ci/check-org-path-param-guards.mjs",

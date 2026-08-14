@@ -20,11 +20,12 @@
  * can be non-finite (division by an empty cell); those are shown as "∞"/"n/a",
  * never a fabricated number.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 interface Overview {
@@ -133,6 +134,52 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
     ['Periodic due', kpi.upcomingPeriodicReports],
     ['Compliance', kpi.complianceRate + '%'],
   ] : [];
+
+  /* WHAT ANA SEES HERE. The affordances above let a user ASK; this lets AnA
+     answer without the user restating their screen. Deliberately the nouns and
+     numbers already rendered — never the raw API bodies, and never a figure the
+     panels are withholding, because the KPI panel distinguishes loading from
+     error from empty rather than showing zero and that distinction has to
+     survive into the conversation. `ovState` travels for exactly that reason:
+     "unavailable" and "zero overdue" are different answers. */
+  const anaContext = useMemo(
+    () => ({
+      summary:
+        `Pharmacovigilance cockpit. Safety KPIs are ${ovState}` +
+        (kpi ? `, ${kpi.overdueReports} report(s) overdue and ${kpi.pendingSignals} signal(s) pending` : '') +
+        `. Regional compliance matrix holds ${matrix.length} row(s).`,
+      facts: {
+        kpiState: ovState,
+        ...(kpi
+          ? {
+              adverseEvents: kpi.totalAdverseEvents,
+              seriousEvents: kpi.seriousEvents,
+              expeditedReports: kpi.expeditedReports,
+              overdueReports: kpi.overdueReports,
+              pendingSignals: kpi.pendingSignals,
+              upcomingPeriodicReports: kpi.upcomingPeriodicReports,
+              complianceRatePct: kpi.complianceRate,
+            }
+          : {}),
+        complianceMatrixRows: matrix.length,
+        // The screener result only exists once the user has run it. Absent is
+        // not "no signal" — saying so keeps AnA from reading a blank as a null
+        // result, the same mistake the compliance table refuses to make.
+        screenerRun: scrRes !== null,
+        ...(scrRes ? { screenerSignalDetected: scrRes.signalDetected } : {}),
+        deadlineCalculated: dlRes !== null,
+      },
+      availableActions: [
+        'Review pharmacovigilance posture (overdue, signals, periodic reports)',
+        'Interpret a disproportionality result (PRR, ROR, chi-square, EBGM, EB05)',
+        'Explain expedited and periodic reporting obligations by region',
+        'Screen a drug-event pair from 2x2 counts',
+        'Calculate a reporting deadline',
+      ],
+    }),
+    [ovState, kpi, matrix.length, scrRes, dlRes],
+  );
+  usePublishSurfaceContext('pv-cockpit', anaContext);
 
   return (
     <div className="cm-body">
