@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import { liveGet, unwrapList, useLiveData, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { evaluateDispatchGate, mergeDispatchGates } from '../fixtures/dispatch-readiness';
 import '../styles/project-home-v2.css';
@@ -122,6 +123,54 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
   );
 
   const loading = discovering || (seqId !== null && live.loading);
+
+  /* WHAT ANA SEES HERE. This surface answers one question — may this sequence
+     be transmitted — and the answer is a hard gate, so the payload carries the
+     BLOCKERS and not just the verdict. "Not cleared" without the reasons is the
+     shape of answer that sends someone hunting; the gate already computes the
+     strings, so they travel.
+
+     `cleared` is never published as true from a missing assessment: with no
+     sequence discovered, `gate` is {cleared:false, blockers:[]}, which would
+     read as "blocked for no reason". The state field distinguishes that from a
+     real refusal, because a gate that cannot be evaluated has not passed. */
+  const anaContext = useMemo(
+    () => ({
+      summary: loading
+        ? 'Dispatch readiness, still evaluating the gate.'
+        : live.error
+          ? 'Dispatch readiness could not be evaluated — the gate is unanswered, which is not the same as cleared.'
+          : seqId === null || !a
+            ? 'Dispatch readiness: no eCTD sequence exists yet for this organization, so there is nothing to clear.'
+            : `Dispatch readiness for sequence ${a.sequenceId} (${a.region}, ${a.sequenceStatus}): ` +
+              (gate.cleared ? 'cleared to dispatch.' : `NOT cleared — ${gate.blockers.length} blocker(s).`),
+      facts: {
+        gateState: loading ? 'evaluating' : live.error ? 'error' : seqId === null || !a ? 'no-sequence' : 'evaluated',
+        ...(a
+          ? {
+              sequenceId: a.sequenceId,
+              region: a.region,
+              sequenceStatus: a.sequenceStatus,
+              cleared: gate.cleared,
+              blockers: gate.blockers,
+              validationErrors: a.validationErrors,
+              unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
+              shadowReviewRunCount: a.shadowReviewRunCount,
+              shadowReviewMissing: a.shadowReviewMissing,
+              externalValidationCleared: a.externalValidation?.cleared ?? null,
+              leafCount: a.leafCount,
+            }
+          : {}),
+      },
+      availableActions: [
+        'Explain why this sequence is not cleared to dispatch',
+        'Explain what each blocker requires before it clears',
+        'Explain what the external validator adds to this gate',
+      ],
+    }),
+    [loading, live.error, seqId, a, gate],
+  );
+  usePublishSurfaceContext('dispatch-readiness', anaContext);
 
   /* the surface's identity — shown in every state */
   const head = (
