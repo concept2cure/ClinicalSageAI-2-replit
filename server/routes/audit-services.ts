@@ -373,27 +373,52 @@ router.post('/keywords/consistency', async (req: Request, res: Response) => {
 
 /**
  * POST /api/audit-services/extraction/queue
- * Queue a file for automatic extraction.
+ * Queue a stored artifact for automatic extraction.
+ *
+ * HISTORY (2026-08-14). This route returned 500 on EVERY call. `queueExtraction`
+ * is positional — `(fileId, fileName, fileSize, projectId, organizationId,
+ * userId, options)` — and this passed it a single object, so `fileName` arrived
+ * undefined and `detectFileType(fileName)` threw on `.split`. It is the
+ * pipeline's only entry point and has no other caller, so the pipeline could
+ * not run at all.
+ *
+ * The body contract was wrong as well as the call: it demanded `fileContent`,
+ * which the pipeline has no parameter for and never reads. Extraction resolves
+ * its source text by artifact id (`concept2cure_artifacts.artifact_id`), so the
+ * route now takes `fileId`.
+ *
+ * Repaired in the SAME change as the fabrication in `extractText`, on purpose.
+ * That function used to answer with an invented placeholder string when it
+ * could not read the source, which the caller then hashed and stored as a
+ * governed `category:'extracted'` artifact. Fixing this route on its own would
+ * have switched on a pipeline that writes fabricated content as evidence — the
+ * bug being latent was the only thing preventing it.
  */
 router.post('/extraction/queue', async (req: Request, res: Response) => {
   try {
     const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
-    const { fileName, fileContent, fileType, projectId, priority } = req.body;
+    const { fileId, fileName, fileSize, projectId, priority } = req.body ?? {};
     const user = (req as any).user;
 
-    if (!fileName || !fileContent) {
-      return res.status(400).json({ error: 'fileName and fileContent are required' });
+    if (!fileId || !fileName) {
+      return res.status(400).json({ error: 'fileId and fileName are required' });
+    }
+    // Tenant comes from the authenticated context, never the body, and its
+    // absence is a refusal rather than an extraction attributed to org 0.
+    const organizationId = Number(user?.organizationId);
+    if (!Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Organization context required' });
     }
 
-    const jobId = await svc.queueExtraction({
-      fileName,
-      fileContent,
-      fileType,
-      projectId: projectId || 0,
-      organizationId: user?.organizationId,
-      userId: user?.id || user?.userId || 0,
-      priority: priority || 5,
-    });
+    const jobId = await svc.queueExtraction(
+      String(fileId),
+      String(fileName),
+      Number.isFinite(Number(fileSize)) ? Number(fileSize) : 0,
+      Number(projectId) || 0,
+      organizationId,
+      Number(user?.id ?? user?.userId) || 0,
+      { priority: Number(priority) || 5 },
+    );
 
     res.json({ success: true, jobId });
   } catch (error: any) {

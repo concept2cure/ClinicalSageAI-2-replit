@@ -793,3 +793,166 @@ TYPE of declared tenant columns and by construction cannot see one that is absen
 
 Both failure arms verified by exit code: a new blind model exits 1; a baselined
 model that has been fixed but left in the list exits 1.
+
+### 7.7 Org ids in the URL path — audited completely, all 43 sound
+
+A route that takes a tenant identifier from the path and uses it without
+comparing it to the caller's JWT is the textbook IDOR. **RLS does not backstop
+this class**: six tables sit deliberately on the RLS allowlist
+(`organization_users`, `api_keys`, `stripe_events`, `billing_budgets`,
+`billing_alerts`, `__drizzle_migrations`) because they must be readable *before*
+a tenant context exists — `validateApiKey` resolves which org a key belongs to by
+reading `api_keys` pre-auth, and policing it once broke all API-key
+authentication (ledger C-44). For routes touching those tables the application
+check is the only control there is.
+
+**Result: 43 routes carry an org/tenant path param, and all 43 are guarded.** No
+finding. Recorded because a clean result on the class RLS cannot cover is worth
+as much as a defect.
+
+**The real finding is structural.** The invariant is enforced by **nine**
+different local idioms with no shared helper and no naming convention:
+
+```
+authorizeOrgAccess · enforceOrgScope · requireAuthedOrgId · assertTenantMatchesAuth
+requireOrganizationContext · validateTenantId · orgScope · getOrgId · authedOrgId
+```
+
+Two of them are correct in a different way: `intelligent-reports` and
+`mdx-imports` **ignore the path param entirely** and scope from the token, each
+with a SECURITY comment saying so — a stronger answer than comparing to it.
+
+That fragmentation is what makes the class dangerous to audit. During this review
+**four separate greps each reported "unguarded" routes that were in fact guarded**
+by an idiom the pattern did not know about — including one that looked, for
+several minutes, like a live cross-tenant read of another tenant's user roster. A
+reviewer who stops at the first such result publishes a false vulnerability; one
+who trusts a too-narrow pattern in the other direction misses a real one.
+
+**Closed by** `scripts/ci/check-org-path-param-guards.mjs`
+(`ci:org-path-param-guards`, wired into CI). It encodes the vocabulary once so
+the check is mechanical, with a **zero baseline** — nothing is being papered
+over, and the failure mode this class actually has is a NEW route, which the gate
+now blocks.
+
+**The gate was itself defective on first write, and mutation-testing caught it.**
+The initial version ended each handler's slice at the next *org-param* route, so
+a guard belonging to an unrelated handler in between satisfied the check:
+deleting the real guard from `tenant-users.ts` `GET /:tenantId` still exited 0,
+because two intervening POST handlers each called `authorizeOrgAccess` inside the
+over-long slice. Fixed to end at the next route of any kind. Both arms now
+verified by exit code — a new unguarded route exits 1, and an existing route
+losing its own guard exits 1. A gate that cannot fail is worse than no gate,
+because it is believed.
+
+### 7.8 The tenant header is a detector, not an input — and one thing it is not
+
+`utils/tenantContext.ts` reads `x-organization-id` / `?organizationId`. It does
+**not** trust them, and the construction is worth calling out as a pattern to
+copy: the client-supplied value is compared against the JWT and, on mismatch,
+raises a `tenant_header_mismatch` security alert — then the JWT value is used
+regardless. The attack vector is turned into an impersonation detector. Every
+other org-from-request read in `server/` is either that helper or a comment
+recording where a `req.query.organizationId` IDOR was already fixed
+(`decision-lineage`, `document-routes`, `client-branding`).
+
+**What is NOT a boundary, stated so nobody assumes it is.** Three lines below,
+`clientWorkspaceId` *is* taken from `x-client-workspace-id` / query and used
+unvalidated. That is not a cross-tenant hole — every workspace-scoped table
+(`client_workspaces`, `client_workspace_settings`, `client_security_settings`,
+`projects`) carries a tenant column and is policied, so RLS confines the query to
+the caller's org even where the handler filters on workspace id alone.
+
+But there is **no workspace-level membership or ACL anywhere in the schema**, and
+nothing restricts which workspace a user may select. So within one organization,
+any member can scope themselves to any workspace. That is coherent with the
+model this platform actually implements — the boundary is the ORGANIZATION, a CRO
+serving several sponsors gets one org per sponsor, and consultants are multi-org
+members whose switching is membership-validated and audited (R7). It is recorded
+here only because "client workspace" reads like an isolation boundary and is not
+one: if workspace-level isolation is ever sold to a CRO, this is the gap to close
+first, and it is a schema change (a membership table), not a patch.
+
+---
+
+## 8. Security sweep — what was examined beyond the tenancy register
+
+Recorded so the negative results carry weight alongside the fixes. Each row was
+examined against the running code, not the design docs.
+
+| Surface | Result |
+|---|---|
+| Tenant lifecycle / entitlement on every transport | **4 fixed** (§2.5) — session, API key, two sockets, background sweeps |
+| `electronic_signatures` tenant key | **Fixed** (§7.1) — column never created; also broke deploys |
+| Object storage read/delete | **Fixed** (§7.2) — cross-tenant by construction, reachable via model-authored AI payloads |
+| In-process caches (23 enumerated) | **1 fixed** (§7.3) — AI-action idempotency key omitted the org |
+| Internal-service proxy path | **Fixed** (§7.4) — `%2F` + `new URL` traversal to any endpoint |
+| SSRF (43 outbound sinks) | **Clean** (§7.5) — shared guard on webhooks/connectors, fail-closed allowlist on firecrawl |
+| Drizzle model vs physical tenant column | **Gated** (§7.6) — 5 of 701 blind, all baselined with the fix-order trap recorded |
+| Org id in the URL path (43 routes) | **Clean, gated** (§7.7) — all guarded; nine idioms unified into one check |
+| Org id in body/query/header | **Clean** (§7.8) — header is a detector; prior IDORs already fixed |
+| Stripe + Firecrawl webhooks | **Clean** — HMAC/`constructEvent`, raw body preserved, timing-safe, fail closed without a secret |
+| Pre-auth allowlist (18 entries) | **Clean** — first-run setup is rate-limited and self-closing; health/metrics carry their own gate |
+| File-serving sinks (`sendFile`/`createReadStream`) | **Clean** — none takes a request-derived path |
+| Mass assignment into DB writes | **Recorded** (§7.6) — reachable only if the model divergence is "fixed" without adding the org predicate |
+
+Two lessons from the sweep itself, both earned the hard way:
+
+1. **Pattern-matching lies in both directions.** Four greps reported unguarded
+   routes that were guarded; one `(empty = unmounted)` echo printed
+   unconditionally and briefly convinced me a live router was dead. Every finding
+   above was confirmed by reading the handler or executing the behaviour.
+2. **A gate is not evidence until it has failed.** The org-path-param gate passed
+   its own first mutation and silently missed the second; the compliance-claim
+   check I nearly built already existed. Both were caught by mutation-testing
+   with exit codes, not by reading output.
+
+### 7.9 Two corrections to §7.6, and a defect in one of this workstream's own gates
+
+Both found by continuing to probe rather than by re-reading, and both matter more
+than the refactor they were meant to enable.
+
+**1. The CMC routes are not unguarded — the gap is narrower than §7.6 said.**
+`server/api/cmc/projectRoutes.ts` carries a
+`router.param('projectId', …)` that calls `verifyProjectOwnership` for EVERY
+sub-resource route. Eighteen handlers with no visible check are covered by that
+one line. A handler-scoped reading — including the analysis that produced the
+original §7.6 wording — cannot see it.
+
+The real gap is subtler and easier to miss. `router.param` verifies the PARENT:
+a caller cannot reach another org's project. The sub-resource writes then filter
+on the CHILD id alone:
+
+```ts
+db.update(drugProducts).set({ ...req.body }).where(eq(drugProducts.id, productId))
+```
+
+So a caller can pass **their own** `projectId` (which passes `router.param`)
+together with **another tenant's** `productId`, and the write targets the foreign
+row. RLS is the only thing stopping it, since `drug_products` carries
+`organization_id NOT NULL` and is policied — one control deep, which is the whole
+point of recording it. `drug_products` has no `project_id` column, so the write
+cannot be scoped to the verified project; the organization is the predicate to
+use, and it cannot be added until the model exposes the column. The baseline
+entries are corrected to say this.
+
+**2. `check-org-path-param-guards.mjs` had the same blind spot as the analysis
+that produced it.** `router.param` guards were invisible to it, so a correctly
+guarded router was reported as UNGUARDED — demonstrated with a synthetic router
+before fixing. That is the more corrosive direction of failure: a false positive
+on a safe route teaches the next reader that the gate cries wolf, and the true
+positive is then ignored too.
+
+Fixed by collecting params guarded at the router level and treating routes that
+use them as covered — but only when the `router.param` callback itself contains a
+guard idiom, so a param handler that merely parses the id still fails. Three arms
+verified by exit code: a `router.param`-guarded route now exits 0; a
+`router.param` that only parses exits 1; a handler losing its own inline guard
+still exits 1.
+
+**The pattern across this whole sweep.** Five times now, a structural feature
+defeated a text-level analysis — nine guard idioms, an over-long slice, an
+unconditional echo, `router.param`, and a model/DDL split. Every correction came
+from executing the behaviour or reading the whole file, never from re-reading the
+grep. That is the durable lesson, and it is why each gate here is mutation-tested
+by exit code before being believed.

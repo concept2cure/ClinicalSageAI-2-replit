@@ -179,6 +179,13 @@ jobs:
       - name: Guardrails — tenant column types (no TEXT-typed tenant cols)
         run: npm run ci:tenant-column-types
 
+      - name: Guardrails — org path params are checked against the caller
+        # IDOR class. RLS does not backstop it: organization_users, api_keys and
+        # four other tables are deliberately unpoliced so they can be read
+        # pre-auth, so for routes touching them the application check is the
+        # ONLY control. Zero baseline — all 43 routes pass today.
+        run: npm run ci:org-path-param-guards
+
       - name: Guardrails — no tenant-blind Drizzle models
         # Sibling to the gate above, and deliberately separate: that one checks
         # the TYPE of a declared tenant column and cannot see one that is

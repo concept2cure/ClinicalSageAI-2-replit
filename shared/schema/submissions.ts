@@ -152,7 +152,15 @@ export const submissionLeaves = pgTable(
     documentType: text('document_type'), // classifier hint for pathway leaf→slot matching (e.g. 'protocol', 'cer')
     leafGuid: text('leaf_guid'),
     parentLeafId: integer('parent_leaf_id'),
+    /** MD5 of the leaf's RENDERED bytes — the eCTD index-md5 contract. */
     checksum: text('checksum'),
+    /** SHA-256 of the SOURCE document's content when this leaf was written.
+     *  NULL means no pin was taken, which reads as unknown — never as
+     *  unchanged. Distinct from `checksum` above: different algorithm, and
+     *  different subject (source content vs. rendered output). See
+     *  migrations/20260814e_submission_leaf_source_pin.sql. */
+    documentContentSha256: text('document_content_sha256'),
+    documentPinnedAt: timestamp('document_pinned_at', { withTimezone: true }),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
