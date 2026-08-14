@@ -10,21 +10,16 @@
  * (unseeded) computations.
  */
 
-/** Stable stringify: object keys sorted recursively so key order doesn't matter. */
-export function stableKey(value: unknown): string {
-  return JSON.stringify(sortValue(value));
-}
+import { stableStringify } from '../../../shared/canonical-json.js';
 
-function sortValue(v: unknown): unknown {
-  if (Array.isArray(v)) return v.map(sortValue);
-  if (v && typeof v === 'object') {
-    const out: Record<string, unknown> = {};
-    for (const k of Object.keys(v as Record<string, unknown>).sort()) {
-      out[k] = sortValue((v as Record<string, unknown>)[k]);
-    }
-    return out;
-  }
-  return v;
+/**
+ * Stable cache key: object keys sorted recursively so key order doesn't matter.
+ * Delegates to the one canonicalizer — a cache key is not a persisted digest,
+ * so re-pointing it costs at most one miss
+ * (docs/CANONICALIZATION_MIGRATION_2026-08.md).
+ */
+export function stableKey(value: unknown): string {
+  return stableStringify(value);
 }
 
 export class ComputeCache<T = unknown> {

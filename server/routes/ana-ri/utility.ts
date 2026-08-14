@@ -307,6 +307,20 @@ export function mountUtilityRoutes(router: Router): void {
       userId,
       organizationId: numericOrgId,
       part11Enforce: true,
+      // THE ONLY ASSIGNMENT OF THIS FIELD IN THE CODEBASE.
+      //
+      // executeCommands refuses every propose-only command unless it is true,
+      // so this literal is the sole path by which an agent-proposed governed
+      // action can execute. Reaching here means the browser posted to
+      // /api/ana-ri/governed-action after GovernedActionSignoff collected the
+      // user's reason-for-change and — for the e-signature tier — the server
+      // re-verified their credentials above. A person decided; that is the
+      // whole claim this field carries.
+      //
+      // Do not stamp it anywhere else. A second writer would make the guard
+      // conventional rather than structural, and the anti-drift test asserts
+      // the identifier appears in exactly one source file.
+      humanConfirmed: true,
       signoff: {
         reasonForChange,
         // For the reason-only tier there is no e-signature; the gate does not
