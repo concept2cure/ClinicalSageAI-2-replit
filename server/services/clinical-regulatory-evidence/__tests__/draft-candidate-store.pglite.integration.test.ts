@@ -48,7 +48,7 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260809_source_attribution_draft_candidates.sql'));
   // The generator column (GA ledger L33) — applied here so the store is tested
   // against the schema it actually writes to, rather than an earlier one.
-  await pglite.exec(migration('migrations/20260814h_draft_candidate_generator.sql'));
+  await pglite.exec(migration('migrations/20260814i_draft_candidate_generator.sql'));
 }, 90_000);
 
 afterAll(async () => {

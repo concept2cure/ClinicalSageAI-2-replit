@@ -229,8 +229,14 @@ export interface GammaPoissonEbgmResult {
   eb05: number;
   /** 95th percentile of the posterior relative rate. */
   eb95: number;
-  /** Raw relative report ratio RR = a/E (pre-shrinkage). */
-  relativeReportRatio: number;
+  /**
+   * Raw relative report ratio RR = a/E (pre-shrinkage), or null when E = 0 —
+   * which happens when the product has no reports at all, making RR the
+   * indeterminate 0/0 rather than an infinite one. Null, not Infinity: JSON
+   * turns Infinity into null anyway, so returning it would put the same value on
+   * the wire while claiming a type that is not true.
+   */
+  relativeReportRatio: number | null;
   /** Expected count E = (a+b)(a+c)/N under independence. */
   expectedCount: number;
   /** Observed co-report count a. */
@@ -277,7 +283,7 @@ export function computeGammaPoissonEbgm(
     ebgm: round(ebgm),
     eb05: round(eb05),
     eb95: round(eb95),
-    relativeReportRatio: round(e === 0 ? Infinity : a / e),
+    relativeReportRatio: e === 0 ? null : round(a / e),
     expectedCount: round(e),
     observed: a,
     prior: { alpha, beta },

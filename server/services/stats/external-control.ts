@@ -41,14 +41,34 @@ export interface CovariateBalanceEntry {
   covariate: string;
   treatmentMean: number;
   controlMean: number;
-  standardizedMeanDifference: number;
-  varianceRatio: number;
+  /**
+   * Standardized mean difference, or null when the covariate PERFECTLY SEPARATES
+   * the arms — constant within each arm but at different values, so the pooled SD
+   * is zero and the SMD is unbounded rather than zero. See `perfectlySeparating`.
+   */
+  standardizedMeanDifference: number | null;
+  /** Null when the control variance is zero, so the ratio is undefined. */
+  varianceRatio: number | null;
+  /**
+   * True when the covariate takes a single value in each arm and those values
+   * differ — e.g. every treated subject had prior therapy and no external control
+   * did. There is no overlap to adjust for and no comparison to make; this is the
+   * most severe balance failure, not the absence of one.
+   */
+  perfectlySeparating: boolean;
   balanced: boolean;
 }
 
 export interface CovariateBalanceResult {
   covariates: CovariateBalanceEntry[];
-  maxAbsStandardizedMeanDifference: number;
+  /**
+   * Largest |SMD| among covariates that have one. Null only when EVERY covariate
+   * perfectly separates the arms; `allBalanced` is the field to trust, since a
+   * separating covariate has no finite SMD to enter this maximum.
+   */
+  maxAbsStandardizedMeanDifference: number | null;
+  /** Names of the covariates that perfectly separate the arms, if any. */
+  separatingCovariates: string[];
   allBalanced: boolean;
   /** Effective sample size of the (weighted) control, (Σw)² / Σw². */
   controlEffectiveSampleSize: number | null;
@@ -109,8 +129,14 @@ export function covariateBalance(
     } else {
       pooledSd = Math.sqrt((t.variance + c.variance) / 2);
     }
-    const smd = pooledSd > 0 ? (t.mean - c.mean) / pooledSd : 0;
-    const varianceRatio = c.variance > 0 ? t.variance / c.variance : NaN;
+    // A zero pooled SD has two entirely different meanings, and collapsing them
+    // to SMD = 0 reports the worse one as PERFECT BALANCE. If the covariate is
+    // constant at the SAME value in both arms it really is balanced; if it is
+    // constant at DIFFERENT values it separates the arms completely and there is
+    // no overlap to adjust for. The second case is unbounded, not zero.
+    const separates = pooledSd === 0 && t.mean !== c.mean;
+    const smd = separates ? null : pooledSd > 0 ? (t.mean - c.mean) / pooledSd : 0;
+    const varianceRatio = c.variance > 0 ? t.variance / c.variance : null;
 
     return {
       covariate: cov.name,
@@ -118,11 +144,16 @@ export function covariateBalance(
       controlMean: c.mean,
       standardizedMeanDifference: smd,
       varianceRatio,
-      balanced: Math.abs(smd) < threshold,
+      perfectlySeparating: separates,
+      balanced: smd !== null && Math.abs(smd) < threshold,
     };
   });
 
-  const maxAbs = Math.max(...entries.map(e => Math.abs(e.standardizedMeanDifference)));
+  const finiteSmds = entries
+    .map(e => e.standardizedMeanDifference)
+    .filter((v): v is number => v !== null)
+    .map(Math.abs);
+  const maxAbs = finiteSmds.length > 0 ? Math.max(...finiteSmds) : null;
   const weights = covariates[0].controlWeights;
   const inputs = {
     covariates: covariates.map(c => ({
@@ -138,6 +169,7 @@ export function covariateBalance(
   return {
     covariates: entries,
     maxAbsStandardizedMeanDifference: maxAbs,
+    separatingCovariates: entries.filter(e => e.perfectlySeparating).map(e => e.covariate),
     allBalanced: entries.every(e => e.balanced),
     controlEffectiveSampleSize: weights ? effectiveSampleSize(weights) : null,
     threshold,
@@ -270,7 +302,13 @@ export function treatmentEffect(
 
 export interface TippingPoint<K extends string> {
   grid: Array<{ value: number; pValue: number; significant: boolean } & Record<K, number>>;
-  /** First value at which the conclusion flips, or null if it never does. */
+  /**
+   * The value at which the conclusion flips, or null if it never does on the
+   * analyzed range. For a bias sweep this is the SMALLEST |bias| that overturns
+   * the unbiased conclusion — the answer to "how much confounding would it
+   * take?". For a borrowing sweep it is the first a0, scanning down from full
+   * borrowing, at which the conclusion changes.
+   */
   tippingValue: number | null;
   flips: boolean;
   alpha: number;
@@ -308,13 +346,29 @@ export function tippingPointBias(args: TippingBiasArgs): TippingPoint<'bias'> {
   ).significant;
 
   const grid: TippingPoint<'bias'>['grid'] = [];
-  let tippingValue: number | null = null;
   for (let i = 0; i < steps; i++) {
     const bias = biasMin + ((biasMax - biasMin) * i) / (steps - 1);
     const control = powerPriorBorrow({ ...args, meanH: args.meanH + bias });
     const eff = treatmentEffect(args.meanT, args.seT, control, alpha);
     grid.push({ value: bias, bias, pValue: eff.pValue, significant: eff.significant });
-    if (tippingValue === null && eff.significant !== baseSig) tippingValue = bias;
+  }
+
+  // The tipping point is the SMALLEST |bias| that overturns the unbiased
+  // conclusion, not the first grid point that happens to differ from it. The
+  // sweep is two-sided and centred on zero, so scanning left-to-right and taking
+  // the first difference returns whichever range END differs — a number that
+  // moves when `biasMin` moves and is unrelated to the data. That error is not
+  // symmetric: it reports a LARGER tolerable bias than the truth, so a reviewer
+  // reads the result as more robust to unmeasured confounding than it is.
+  let tippingValue: number | null = null;
+  let smallestMagnitude = Infinity;
+  for (const point of grid) {
+    if (point.significant === baseSig) continue;
+    const magnitude = Math.abs(point.bias);
+    if (magnitude < smallestMagnitude) {
+      smallestMagnitude = magnitude;
+      tippingValue = point.bias;
+    }
   }
 
   const inputs = { ...args, alpha, steps, biasMin, biasMax };
@@ -430,12 +484,26 @@ export function renderExternalControlMemo(input: MemoInput): string {
   if (input.balance) {
     lines.push('');
     const b = input.balance;
+    const maxLabel =
+      b.maxAbsStandardizedMeanDifference === null
+        ? 'not defined (every covariate perfectly separates the arms)'
+        : num(b.maxAbsStandardizedMeanDifference);
     lines.push(
       `Covariate balance: maximum absolute standardized mean difference ` +
-        `${num(b.maxAbsStandardizedMeanDifference)} across ${b.covariates.length} ` +
+        `${maxLabel} across ${b.covariates.length} ` +
         `covariates (threshold ${num(b.threshold)}). ` +
         `${b.allBalanced ? 'All covariates balanced.' : 'Some covariates exceed the threshold.'}`,
     );
+    if (b.separatingCovariates.length > 0) {
+      // Named explicitly rather than folded into the maximum: a separating
+      // covariate is not a large SMD, it is the absence of any overlap to adjust
+      // for, and it is the first thing a reviewer needs to see.
+      lines.push(
+        `No overlap on ${b.separatingCovariates.join(', ')}: constant within each ` +
+          `arm at different values, so no adjustment can balance ` +
+          `${b.separatingCovariates.length === 1 ? 'it' : 'them'}.`,
+      );
+    }
     if (b.controlEffectiveSampleSize !== null) {
       lines.push(`Weighted control effective sample size: ${num(b.controlEffectiveSampleSize)}.`);
     }

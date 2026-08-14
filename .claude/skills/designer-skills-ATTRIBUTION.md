@@ -5,12 +5,31 @@ repository and adapted for Concept2Cure:
 
 - `brief-to-tasks/`
 - `design-brief/`
-- `design-flow/`
-- `design-review/`
+- `design-flow/` *(adapted — see C2C override at top of SKILL.md)*
+- `design-review/` *(adapted — see C2C override at top of SKILL.md)*
 - `design-tokens/` *(adapted — see C2C override at top of SKILL.md)*
 - `frontend-design/` *(adapted — see C2C override at top of SKILL.md)*
 - `grill-me/`
 - `information-architecture/`
+
+## Local extension: review subagents
+
+`.claude/agents/` holds six read-only reviewer agents that `design-review` fans
+out to, and that `design-flow` uses in phase 6. They are Concept2Cure-local, not
+vendored, so upstream changes to the skills above will not touch them:
+
+| Agent | Wraps |
+|---|---|
+| `design-reviewer` | the visual critique in `design-review/` |
+| `a11y-auditor` | `accessibility-enforcement/` |
+| `part11-ux-auditor` | `regulatory-compliance-ux/` |
+| `microcopy-reviewer` | `microcopy-tone/` |
+| `motion-auditor` | `motion-discipline/` |
+| `design-system-auditor` | the repo's design CI gates + component registry |
+
+Each agent reads its underlying skill for the standard and holds only operating
+instructions of its own, so the skill stays the single source of truth. None of
+them has `Edit` or `Write`: a review must not rewrite the code it is judging.
 
 ## Upstream
 

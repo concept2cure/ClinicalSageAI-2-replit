@@ -227,7 +227,7 @@ describe('statistical-design tools — deterministic computation', () => {
     expect(out.result.concordance).toBe(3);
     expect(out.result.tier).toBe('strong');
     // Bayesian shrinkage pulls EBGM below the raw relative report ratio.
-    expect(out.result.ebgm.ebgm).toBeLessThan(out.result.ebgm.relativeReportRatio);
+    expect(out.result.ebgm.ebgm).toBeLessThan(out.result.ebgm.relativeReportRatio!);
   });
 
   it('adjust_multiplicity (Holm) rejects only the smallest p when expected', async () => {

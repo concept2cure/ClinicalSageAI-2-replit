@@ -36,6 +36,7 @@ import { describe, it, expect } from 'vitest';
 import {
   describeSynthesisMethod,
   synthesisMethodLimitations,
+  assessCovariateBalanceOfArms,
   type SynthesisMethod,
 } from '../external-control-arm-service';
 
@@ -106,5 +107,66 @@ describe('synthesisMethodLimitations', () => {
   it('adds nothing for methods that carry no evidence-dependent caveat', async () => {
     expect(synthesisMethodLimitations('ipw', NOT_FITTED)).toEqual([]);
     expect(synthesisMethodLimitations('bayesian_borrowing', NOT_FITTED)).toEqual([]);
+  });
+});
+
+describe('assessCovariateBalanceOfArms — no overlap is not perfect balance', () => {
+  /**
+   * The service computed SMD = (x̄_A − x̄_B) / pooled SD and returned 0 when the
+   * pooled SD was zero. A covariate constant within each arm at DIFFERENT values
+   * has a pooled SD of exactly zero, so the single worst balance failure — no
+   * overlap at all, nothing an adjustment could fix — was reported as SMD 0 and
+   * `balanced: true`. It also contributed 0 to the maximum SMD, so it could not
+   * even pull the diagnostics verdict down.
+   *
+   * This is the same defect as in `stats/external-control.ts`, in a second,
+   * independently written implementation. Both are fixed; both are pinned.
+   *
+   * The function was extracted from the service class to be tested directly,
+   * following the split this file's header already describes.
+   */
+  const arm = (demographics: Record<string, number>) => ({ demographics });
+
+  it('flags a covariate constant in each arm at different values', () => {
+    const balance = assessCovariateBalanceOfArms([arm({ age: 50 }), arm({ age: 70 })]);
+    expect(balance).toHaveLength(1);
+    expect(balance[0].covariate).toBe('age');
+    expect(balance[0].standardizedDifference).toBeNull();
+    expect(balance[0].perfectlySeparating).toBe(true);
+    expect(balance[0].balanced).toBe(false);
+  });
+
+  it('still calls a covariate constant at the SAME value balanced', () => {
+    // The control: zero variance is not the problem, zero variance with
+    // different centres is. Without this distinction every constant eligibility
+    // criterion carried as a covariate would fail.
+    const balance = assessCovariateBalanceOfArms([arm({ age: 60 }), arm({ age: 60 })]);
+    expect(balance[0].standardizedDifference).toBe(0);
+    expect(balance[0].perfectlySeparating).toBe(false);
+    expect(balance[0].balanced).toBe(true);
+  });
+
+  it('computes an ordinary SMD unchanged', () => {
+    // Two arms per group so the within-group variance is non-zero.
+    const balance = assessCovariateBalanceOfArms([
+      arm({ age: 50 }), arm({ age: 54 }), arm({ age: 60 }), arm({ age: 64 }),
+    ]);
+    // Group A means 52 (var 8), group B 62 (var 8) ⇒ SMD = −10/√8 = −3.536.
+    expect(balance[0].standardizedDifference).toBeCloseTo(-10 / Math.sqrt(8), 3);
+    expect(balance[0].perfectlySeparating).toBe(false);
+    expect(balance[0].balanced).toBe(false);
+  });
+
+  it('returns nothing when there is too little to compare', () => {
+    expect(assessCovariateBalanceOfArms([arm({ age: 50 })])).toEqual([]);
+    expect(assessCovariateBalanceOfArms([{ demographics: {} }, { demographics: {} }])).toEqual([]);
+    expect(assessCovariateBalanceOfArms([{}, {}])).toEqual([]);
+  });
+
+  it('serializes without a non-finite value in any field', () => {
+    const balance = assessCovariateBalanceOfArms([arm({ age: 50 }), arm({ age: 70 })]);
+    const wire = JSON.parse(JSON.stringify(balance));
+    expect(wire[0].standardizedDifference).toBeNull();
+    expect(wire[0].perfectlySeparating).toBe(true);
   });
 });

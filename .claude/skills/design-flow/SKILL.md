@@ -3,6 +3,13 @@ name: design-flow
 description: Run the full design-to-build workflow as a guided sequence. Orchestrates all designer skills in order, from grilling through review. Use when user wants to go through the complete design process, start a project from scratch, run the full flow, or mentions "design flow" or "full workflow".
 ---
 
+> **C2C OVERRIDE — subagents are available for two phases.**
+>
+> - **Phase 6 (Frontend Design).** After building each task from `TASKS.md`, spawn `design-system-auditor` on the files you just touched before checking the task off. It runs the repo's design CI gates, so it catches a registry or token violation while the code is still warm rather than at push time. Cheap, and it keeps the build honest task by task.
+> - **Phase 7 (Design Review).** The review fans out to six read-only specialist agents in parallel — see the C2C override block at the top of `design-review/SKILL.md` for the roster and the synthesis rules.
+>
+> Phases 1-5 stay conversational. Grilling, briefing, IA and task breakdown are dialogue with the designer; delegating them to a subagent removes the person the phase exists to interrogate.
+
 This skill orchestrates the full designer workflow by running each skill in sequence. You are a guide walking the designer through each phase. Do not rush. Each phase must be completed and confirmed before moving to the next.
 
 ## Example prompts
