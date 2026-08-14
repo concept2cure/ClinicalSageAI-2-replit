@@ -1,11 +1,11 @@
 # Investor technical white paper
 
-A 31-page technical white paper on the platform, written for prospective investors.
-Cover, contents, and 29 content sections — one section per page.
+A 36-page technical white paper on the platform, written for prospective
+investors. Cover, contents, and 34 content sections — one section per page.
 
 There is deliberately no page limit. Earlier revisions were capped at 10 and then
 15 pages, and both times the cap was paid for by omitting whole capability
-domains — CMC, CSR, protocol development, risk-based monitoring, quality, and
+domains — CMC, CSR, protocol development, risk-based monitoring, quality and
 labeling among them. Length is set by what the platform contains.
 
 | File | Role |
@@ -13,14 +13,15 @@ labeling among them. Length is set by what the platform contains.
 | `whitepaper.html` | The document. One `<section>` per page. |
 | `whitepaper.css` | Print stylesheet, built to the platform design system. |
 | `Concept2Cure-RI-Technical-White-Paper.pdf` | The rendered deliverable. |
+| `PLATFORM_INVENTORY.md` | Capability inventory derived from the code. |
 | `fonts/` | Lora + Inter, fetched at build time. Not committed. |
-| `PLATFORM_INVENTORY.md` | Capability inventory derived from the code. Read this before writing about scope. |
 
 ## Building
 
 ```bash
 node scripts/build-investor-whitepaper.mjs --fetch-fonts   # first run
 node scripts/build-investor-whitepaper.mjs                 # subsequent runs
+npm run pack:whitepaper                                    # same thing
 ```
 
 Rendering goes through headless Chromium rather than a PDF library, because the
@@ -31,19 +32,86 @@ Playwright and system locations.
 Without `fonts/` the paper still renders, falling back to the system serif and
 sans — but line breaks shift, and the section-per-page fit is not guaranteed.
 
-## Editing
+---
 
-Each `<section>` must fit inside one printed page. The printable box on US Letter
-at the configured margins is **254mm tall by 186mm wide**; a section taller than
-that silently spills onto a second sheet and pushes the whole document out of
-shape. After any content change, re-render and confirm the page count is still 31:
+## The three rules
+
+These exist because each was learned by getting it wrong in a published
+revision. They are ordered by how expensive the mistake was.
+
+### 1. `concept2cure-v2` is the only branch of truth
+
+Every claim must be derived from it. Fetch, merge, and verify zero drift before
+measuring anything:
 
 ```bash
-python3 -c "from pypdf import PdfReader; \
-  print(len(PdfReader('docs/investor/Concept2Cure-RI-Technical-White-Paper.pdf').pages))"
+git fetch origin concept2cure-v2 && git merge origin/concept2cure-v2
+git diff --name-only origin/concept2cure-v2...HEAD   # expect only docs/investor
 ```
 
-To find *which* section overflowed, measure them in the browser at print width:
+A revision published nine already-fixed items as open because it was measured
+from a base 16 commits behind. On a codebase moving at this rate, a day-old base
+is a materially different product.
+
+Note that the repository's pre-push hook enforces this, but is **silently inert
+in any environment that has not run `npm ci`** — husky is not installed, so the
+hook never fires.
+
+### 2. Verify operation, not intent
+
+`docs/GA_COMPLETION_LEDGER_2026-08.md` is the authority on what actually
+operates; its §5 lineage rows were verified by reading code. Read it before
+marking any control "built", and check it against the deploy branch rather than
+your working branch.
+
+Three drafts overstated Part 11 e-signature and lineage because they were
+assessed from docstrings and CI-gate names — both describe *intent*. A docstring
+says what a module is for; it does not say whether anything calls it. The
+recurring defect shape in this codebase is a correct mechanism with no call site.
+
+### 3. A co-located test ratio is not a coverage measure
+
+Statistics reads 7 tests / 24 services when counted inside
+`server/services/stats`, which looks thin — but six reference suites in
+`tests/biostat/` pin its output against published tables. Before citing a ratio
+as evidence of thin coverage, check whether that domain's tests live somewhere
+else.
+
+### 4. Breadth lives in the schema, not the service names
+
+Read `PLATFORM_INVENTORY.md` before writing about scope. Two drafts understated
+the platform as three submission journeys when the schema spans grant funding
+through post-approval change, omitting CMC, CSR, protocol development,
+risk-based monitoring, IRB, supply chain, QMS/QC and labeling entirely.
+
+The submission chain is the most *legible* part of the codebase, so it is what a
+quick pass finds. Breadth lives in the table families and the 107 client
+surfaces.
+
+---
+
+## Editing
+
+Each `<section>` must fit one printed page. The printable box on US Letter at the
+configured margins is **254mm tall by 186mm wide**; a taller section silently
+spills onto a second sheet and pushes every subsequent page out of alignment with
+its running head.
+
+After any content change, verify both the page count and the alignment:
+
+```bash
+python3 -c "
+from pypdf import PdfReader
+import re
+r = PdfReader('docs/investor/Concept2Cure-RI-Technical-White-Paper.pdf')
+bad = [i+1 for i, p in enumerate(r.pages)
+       for t in [' '.join((p.extract_text() or '').split())]
+       for m in [re.match(r'^(\d\d) · .*?\s(\d+)\s+SECTION', t)]
+       if m and int(m.group(2)) != i+1]
+print('pages', len(r.pages), '| mismatches:', bad or 'NONE')"
+```
+
+To find *which* section overflowed, measure at print width:
 
 ```js
 document.body.style.width = '186mm';
@@ -51,69 +119,49 @@ document.querySelectorAll('section').forEach((s, i) =>
   console.log(i + 1, Math.round(s.getBoundingClientRect().height / 3.7795) + 'mm'));
 ```
 
-## The branch of truth
+### Numbering is generated, not hand-maintained
 
-`concept2cure-v2` is the only branch any claim in this paper may be derived from.
-Fetch it, merge it, and verify zero source drift before measuring anything:
+Section numbers, running heads, page numbers and the contents table are all
+derived from document order by the renumbering pass. Do not edit them by hand.
+Adding a section means inserting a `<!-- ═══ PAGE 0 · TITLE ═══ -->` marker and
+re-running that pass — the `PAGE N ·` prefix is what the splitter matches on, and
+a marker without it is silently absorbed into the previous section.
 
-```bash
-git fetch origin concept2cure-v2 && git merge origin/concept2cure-v2
-git diff --name-only origin/concept2cure-v2...HEAD   # expect only docs/investor
-```
+**Cross-references are not generated.** After any renumbering, re-audit every
+`Section NN` in prose against the actual section titles. A restructure left 32 of
+61 references pointing at a valid but wrong section — they resolve, so nothing
+fails; they are just incorrect.
 
-This is not procedural fussiness. A revision of this paper published nine already-fixed
-items as open because it was measured from a base 16 commits behind. On a codebase moving
-at this rate, a day-old base is a materially different product.
-
-## Before claiming anything works
-
-`docs/GA_COMPLETION_LEDGER_2026-08.md` is the authority on what actually
-operates, and its §5 lineage rows were verified by reading code. Read it before
-marking any control "built" — **and check the ledger against the deploy branch,
-not against the branch you are on.** Nine severe rows closed within hours of the
-ledger being written; a revision of this paper published them as open because it
-was assessed from a base 16 commits behind `concept2cure-v2`. Fetch and merge
-first, then verify each row in the merged tree. Three drafts of this paper overstated Part 11
-e-signature and lineage because they were assessed from docstrings and CI-gate
-names — both of which describe intent. The ledger records that the §11.70 tamper
-check has no production caller, the provenance tables have no writers, and model
-attribution is dropped at draft-accept. Sections 25 and 26 of the paper carry
-that assessment; keep them synchronized with the ledger, not with the docstrings.
-
-## Before writing about scope
-
-Read `PLATFORM_INVENTORY.md` first. It maps every service domain, table family
-and client surface to a lifecycle stage, and it exists because the first drafts
-of this paper twice understated what is built — describing the platform as three
-submission journeys when the schema spans grant funding through post-approval
-change control, and omitting CMC, CSR, protocol development, risk-based
-monitoring, IRB, supply chain, QMS/QC and labeling entirely.
-
-The failure mode is specific and worth naming: the submission chain is the most
-*legible* part of the codebase, so it is what a quick pass finds. Breadth lives
-in the table families and the 107 client surfaces, not in the service names.
+---
 
 ## On the content
 
-Every quantitative claim is derived from this repository or from the independent
-15-domain readiness assessment dated 2026-08-10 — file counts, route
-registrations, the AnA capability manifest, the installer's provisioned table and
-policy counts, and that audit's executed evidence. Nothing is estimated for
-effect. When the platform changes materially, the figures in Sections 04 and 08
-and the state tables in Sections 09, 16–18 and 24 need re-deriving, not just
-re-wording.
+The contents page states the provenance of every figure, split into two classes:
 
-**Sections 24-26 are the load-bearing ones, and it decays fastest.** It pairs each of
-the audit's severe findings with the state of that mechanism in the code, and
-every row was confirmed by reading current source rather than a changelog. Two rules when editing it. First, re-verify the same way — a remediation claim taken
-from a commit message is exactly the kind of assertion this document exists to
-avoid. Second, do not reintroduce the audit's aggregate scores as current state:
-they were a 2026-08-10 snapshot, substantial work has landed since, and no second
-audit has re-measured them. The paper says so explicitly; keep it that way unless
-a fresh audit exists to cite.
+- **Derived from `concept2cure-v2` today** — service, file and line counts,
+  schema declarations, routes and handlers, client surfaces, CI guards, registry
+  contents, navigation reach, per-domain test ratios.
+- **Not re-derivable from source, and attributed** — the 931 tables / 787 RLS
+  policies need a live installer run against Postgres (code-only proxy: 705
+  Drizzle declarations); the passing-test count is from an executed CI run;
+  Section 29's audit is a 10 August snapshot whose aggregates are reported as
+  history; market facts in Sections 02–03 come from a benchmark of public agency
+  notices.
 
-The paper deliberately states open gaps and names their owners, mirroring
-`docs/GA_COMPLETION_LEDGER_2026-08.md`. That posture is the point: the same CI
-gate that polices unqualified compliance claims in the product
+Keep that split honest. If a figure moves from one class to the other — for
+instance because someone runs the installer and re-counts — move it in the note
+too.
+
+**Sections 29 to 31 are load-bearing and decay fastest.** Section 29 pairs each
+of the audit's severe findings with the state of that mechanism in code; Sections
+30 and 31 are the ready/weak assessment. Every row was confirmed by reading
+current source rather than a changelog. Two rules when editing them: re-verify
+the same way, and do not reintroduce the audit's aggregate scores as current
+state — they were a snapshot, substantial work has landed since, and no second
+audit has re-measured them.
+
+The paper deliberately states open gaps and names their owners, mirroring the
+completion ledger. That posture is the point: the same CI gate that polices
+unqualified compliance claims in the product
 (`scripts/ci/check-compliance-claims.mjs`) reflects the standard this document is
 written to.

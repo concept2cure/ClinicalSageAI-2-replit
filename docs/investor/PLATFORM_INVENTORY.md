@@ -53,17 +53,23 @@ Any document that leads with the three journeys is understating the asset.
 
 ## Lifecycle map
 
-Stages are the product lifecycle a sponsor actually moves through. The point of
-this table is coverage breadth: each row is backed by real tables and services,
-not a roadmap entry.
+Stages are the product lifecycle a sponsor actually moves through, in order.
+Onboarding and initialization come first; project management, collaboration and
+tasking are cross-cutting and sit where a client first meets them. Each row is
+backed by real tables and services, not a roadmap entry.
 
 | Stage | Capability | Evidence in code |
 |---|---|---|
+| **Onboarding** | Proposal extraction with verified provenance | `server/services/onboarding` — proposal store, extraction, readiness. The extractor checks each proposed value's excerpt actually occurs in the source and drops it otherwise; the readiness tool is read-only so no model-callable commit can bypass human approval |
+| **Initialization** | Registry-driven project bootstrap | `shared/regulatory/project-bootstrap.ts` — one application type resolves section blueprint, templates, milestones/tasks and readiness expectations. No switch statements: adding a filing type is a registry entry |
 | **Funding** | Grant lifecycle | `grantOpportunities`, `grantProposals`, `grantAwards`, `grantMilestones`, `grantInvoices`, `grantCloseoutRecords` |
 | **Discovery / preclinical** | Nonclinical program, FIH dosing | `server/services/preclinical` (14) — first-in-human dose engine, nonclinical safety assessment, M2.4/M2.6 summaries |
 | **Study design** | Protocol development | 23 `protocol*` tables — objectives, eligibility, schedule of assessments, versions, amendments, deviations, CAPA, budget, milestones, review; `server/services/study-design` (17) |
 | **Ethics** | IRB / EC submissions | `irbSubmissions`, `irbSites`, `irbConsentDocuments`, `irbReviews`, `irbAmendments`, `irbReportableEvents` |
 | **Clinical operations** | Risk-based monitoring | `server/services/rbm` (7) — site risk engine, central statistical monitoring, KRI ingestion/actuation; `rbmRiskAssessments`, `rbmKris`, `rbmKriValues`, `rbmDataRuns`, `rbmMetricObservations` |
+| **Project management** | Charters, milestones, commitments | `projectCharters`, `projectCommitments`, `programMilestones`, `programActivityLog`, `projectIntelligenceSummaries`, `projectPredictions`, `projectWorkflows` |
+| **Collaboration** | CRDT co-authoring, locks, comments | `server/services/collab` — state store keyed on (tenant, document); document-name authorization parses to a typed resource before opening; `collabSectionLocks` |
+| **Tasking** | State machine + Part 11 sign-off | `server/services/tasking` (8) — closed status set, legal transitions, audited reopen; approval-gated completion requires signing-PIN re-auth and §11.50(a)(3) meaning |
 | **Supply** | Supply chain & cold chain | `supplyChainSuppliers`, `supplyChainMaterials`, `supplyChainBatches`, `supplyChainShipments`, `supplyChainTemperatureReadings` |
 | **Study reporting** | Clinical study reports | **27 `csr*` tables — the deepest family in the schema**: endpoints and results, populations, arms, AE, safety summaries, PK, dose-response, biomarkers, statistical analyses, TLFs, cross-study comparison, safety signals, knowledge graph nodes/edges, extraction log, build jobs |
 | **Quality** | QMS and QC | `qmsDocuments`, `qmsTrainingRecords`, `qmsInternalAudits`, `qmsManagementReviews`, `qmsNonconformingProducts`; `qcSpecifications`, `qcOosInvestigations`, `qcBatchReleases`, `qcDeviations`, `qcMicrobiologicalTests`, `qcReferenceStandards` |
@@ -73,11 +79,6 @@ not a roadmap entry.
 | **Labeling** | SmPC, PI, SPL | `server/services/labeling` (5) — SPL generation, PI service, SmPC QRD catalog |
 | **Post-approval** | Change control, variations | CMC change control projected through the SUPAC/variations classifier |
 | **Post-market** | PV, vigilance, registrations | `ind-lifecycle` E2B(R3) ICSR composition + gateway transport; `gspr-postmarket` (6); registration and registry-bridge surfaces |
-| **Onboarding** | Proposal extraction with verified provenance | `server/services/onboarding` — proposal store, extraction, readiness. The extractor checks each proposed value's excerpt actually occurs in the source and drops it otherwise; the readiness tool is read-only so no model-callable commit can bypass human approval |
-| **Initialization** | Registry-driven project bootstrap | `shared/regulatory/project-bootstrap.ts` — one application type resolves section blueprint, templates, milestones/tasks and readiness expectations. No switch statements: adding a filing type is a registry entry |
-| **Project management** | Charters, milestones, commitments | `projectCharters`, `projectCommitments`, `programMilestones`, `programActivityLog`, `projectIntelligenceSummaries`, `projectPredictions`, `projectWorkflows` |
-| **Collaboration** | CRDT co-authoring, locks, comments | `server/services/collab` — state store keyed on (tenant, document); document-name authorization parses to a typed resource before opening; `collabSectionLocks` |
-| **Tasking** | State machine + Part 11 sign-off | `server/services/tasking` (8) — closed status set, legal transitions, audited reopen; approval-gated completion requires signing-PIN re-auth and §11.50(a)(3) meaning |
 | **Correspondence** | HAQ, agency meetings, CRL | HAQ manager and agency-meeting surfaces; CRL ingestion and trigger patterns in `regulatory-precedent-intelligence` |
 
 ---

@@ -651,10 +651,11 @@
       ANDA) and any quoted source text, and checks each against the evidence the assistant
       actually gathered that turn. Claims absent from that corpus are surfaced as
       unsupported. <strong>The verdict is advisory — shown to the user, not used to block or
-      rewrite.</strong> A sharper limit applies underneath it: when retrieval itself fails,
-      both draft paths warn and let the model draft ungrounded, and nothing in the persisted
-      record distinguishes that from a grounded draft. Binding retrieval-verified citations
-      into the document is Phase 2 work (Section 33).
+      rewrite.</strong> Retrieval failure is no longer silent: as of 14 August the draft paths
+      separate "retrieval ran and found nothing", which is a fact about the corpus, from
+      "retrieval failed", which is no fact at all — the latter now reports that the draft is
+      ungrounded and its claims unverified. Binding retrieval-verified citations into the
+      document remains Phase 2 work (Section 33).
     </p>
   </div>
 
@@ -773,11 +774,11 @@
   <h2>What remains open</h2>
   <p>
     Two gaps matter. Model reproducibility is incomplete: dated snapshots are not pinned across
-    the board and the exact request is not fully recorded. More consequentially, the ledger
-    records the <em>call</em>, but which model, provider and prompt produced an <em>accepted
-    draft</em> is never persisted on any surface — all exist at draft time and are dropped at
-    accept. The platform can say what it asked a model; it cannot yet say what produced a given
-    sentence.
+    the board and the exact request is not fully recorded. And while the version ledger now
+    records <em>which AnA action</em> produced a section version, the model, provider and
+    prompt behind an accepted draft are still not persisted — they exist at draft time and are
+    dropped at accept. The platform can say what it asked a model, and which action produced a
+    version; it cannot yet say which model produced a given sentence.
   </p>
 </section>
 
@@ -1155,50 +1156,47 @@
   <div class="section-num">Section 13</div>
   <h1 class="section-title">Collaboration and tasking</h1>
   <p class="deck">
-    Regulatory documents are written by teams under an audit trail. Both halves of that
-    sentence constrain the design — and the tenancy failure they invite is the one this
-    platform has already been caught by once.
+    Regulatory documents are written by teams under an audit trail. Both halves constrain the
+    design — and the tenancy failure they invite is one this platform has been caught by.
   </p>
 
   <h2>Real-time co-authoring</h2>
   <p>
     The editor runs on a CRDT backend with a durable state store keyed on
     <strong>(tenant, document)</strong> as a composite primary key, so a load cannot return
-    another tenant's document even if a caller passes the wrong tenant. The store moves the
-    raw update bytes and never interprets them; decoding belongs to the caller that owns the
-    document. When the backing table is absent, every function reports that distinctly
-    rather than behaving like an empty document — a collaboration server that silently
-    starts every session blank is worse than one that refuses.
+    another tenant's document even if a caller passes the wrong tenant. When the backing
+    table is absent, every function reports that distinctly rather than behaving like an
+    empty document — a collaboration server that silently starts every session blank is
+    worse than one that refuses.
   </p>
 
   <div class="card card-olive">
     <h3>The tenancy hole this closed</h3>
     <p style="margin:0">
-      The collaboration protocol multiplexes documents over one connection and hands the
-      authenticator a document name <em>chosen entirely by the client</em>. That name was
-      once accepted verbatim: the authenticator checked only that the token was signed, then
-      opened whatever was asked for — so any authenticated user of any tenant could open any
-      other tenant's document by knowing or guessing its id. A document name is now parsed
-      into a typed resource before anything else happens, and a name that does not match the
-      grammar is refused. It is a good illustration of the general lesson: the dangerous
-      surface is the one where a client supplies an identifier and the server trusts it.
+      The protocol multiplexes documents over one connection and hands the authenticator a
+      document name <em>chosen entirely by the client</em>. That name was once accepted
+      verbatim: the authenticator checked only that the token was signed — so any
+      authenticated user of any tenant could open any other tenant's document by knowing or
+      guessing its id. A document name is now parsed into a typed resource before anything
+      else happens, and a name that does not match the grammar is refused. The dangerous
+      surface is always the one where a client supplies an identifier and the server trusts
+      it.
     </p>
   </div>
 
   <h2>Section locks and comments</h2>
   <p>
-    Section-level locks prevent two authors editing the same dossier section simultaneously,
-    and threaded review comments carry status — open, resolved, outdated — so a review
-    conversation has a terminal state rather than accumulating. Comments and revisions are
-    part of the record the document journey view reconstructs from.
+    Section-level locks prevent two authors editing the same dossier section at once, and
+    threaded review comments carry status — open, resolved, outdated — so a review has a
+    terminal state. Comments and revisions are part of the record the document journey view
+    reconstructs from.
   </p>
 
   <h2>Tasking, with a real state machine</h2>
   <p>
-    Task status was once free text: any string was accepted, statuses the board had no column
-    for could be minted, and a completed task could be moved back to pending with no record
-    of intent. The domain and its legal transitions are now explicit and shared by every
-    mutation path.
+    Task status was once free text: any string was accepted, and a completed task could be
+    moved back to pending with no record of intent. The domain and its legal transitions are
+    now explicit and shared by every mutation path.
   </p>
   <table>
     <thead><tr><th style="width:30%">Property</th><th>Behaviour</th></tr></thead>
@@ -1224,9 +1222,12 @@
   </div>
 
   <p>
-    Supporting services cover task planning, dependencies, templates and a template catalog,
-    automation, side effects, analytics, and a dedicated task audit path.
+    Supporting services cover task planning, dependencies, templates, automation, side
+    effects, analytics, and a dedicated task audit path. The contract test covering the
+    finer collaboration guarantees — actor spoofing, lock theft, unjoined-document events,
+    cross-tenant leakage — does not currently reach its assertions; see Section 31.
   </p>
+
 </section>
 
 <!-- ═══════════════ PAGE 16 · DOCUMENT BUILD ═══════════════ -->
@@ -2336,41 +2337,35 @@
   <div class="section-num">Section 29</div>
   <h1 class="section-title">Independent audit and verified remediation</h1>
   <p class="deck">
-    The platform was audited across fifteen domains on 10 August 2026 by running it, and
-    returned not ready for general availability. Every severe mechanism it named has since been
-    re-checked directly in the code.
+    Audited across fifteen domains on 10 August 2026 by running the system — each domain read,
+    commanded and queried, every severe finding adversarially cross-checked by a pass whose
+    default was to refute. Verdict: not ready for general availability, with several controls
+    <em>reporting success while doing nothing</em>. Every mechanism it named has since been
+    re-checked in code.
   </p>
 
   <div class="stat-row">
-    <div class="stat"><div class="s-n">14</div><div class="s-l">Severe mechanisms<br>re-verified closed</div></div>
+    <div class="stat"><div class="s-n">17</div><div class="s-l">Severe mechanisms<br>re-verified closed</div></div>
     <div class="stat"><div class="s-n">149</div><div class="s-l">Remediation commits<br>in four days</div></div>
     <div class="stat"><div class="s-n">19,181</div><div class="s-l">Tests passing<br>across 1,694 files</div></div>
     <div class="stat"><div class="s-n">132</div><div class="s-l">CI actions pinned<br>to a commit SHA</div></div>
   </div>
 
-  <h2>What the audit was</h2>
-  <p>
-    Each domain was audited by an independent pass that read the code, ran commands, and queried
-    a live database, with every severe finding routed to an adversarial cross-check whose default
-    was to refute. The worst were reproduced by hand against a from-scratch 931-table instance
-    with the production build booted from <span class="mono">dist/</span>. Its central
-    observation: several controls <em>reported success while doing nothing</em>.
-  </p>
-
   <h2>Finding by finding, as the code stands today</h2>
   <table>
     <thead><tr><th style="width:31%">What the audit found</th><th style="width:11%">Now</th><th>Verified in the current code</th></tr></thead>
     <tbody>
-      <tr><td>eCTD compile emitted zero leaf files</td><td><span class="pill pill-live">Closed</span></td><td>A deterministic renderer produces genuine, byte-stable PDF leaves; the spine-backed path assembles a real ICH v3.2.2 package (Section 22).</td></tr>
-      <tr><td>Production could not boot under enforced isolation</td><td><span class="pill pill-live">Closed</span></td><td>The startup posture probe runs inside a declared system tenant scope — it no longer trips the guard it should pass.</td></tr>
-      <tr><td>App connected as a superuser, making RLS inert</td><td><span class="pill pill-partial">Provisioned</span></td><td>Least-privilege <span class="mono">app_service</span> role provisioned by the installer, grants refreshed each deploy. Running production under it is the remaining step (Section 05).</td></tr>
+      <tr><td>eCTD compile emitted zero leaf files</td><td><span class="pill pill-live">Closed</span></td><td>A deterministic renderer produces byte-stable PDF leaves; the spine-backed path assembles a real ICH v3.2.2 package (Section 22).</td></tr>
+      <tr><td>Production could not boot under enforced isolation</td><td><span class="pill pill-live">Closed</span></td><td>The startup posture probe runs inside a declared system tenant scope, so it no longer trips the guard it should pass.</td></tr>
+      <tr><td>App connected as a superuser, making RLS inert</td><td><span class="pill pill-partial">Provisioned</span></td><td>Least-privilege <span class="mono">app_service</span> role provisioned, grants refreshed each deploy. Running production under it remains (Section 05).</td></tr>
       <tr><td>Any signup could delete any tenant</td><td><span class="pill pill-live">Closed</span></td><td>The org-admin escape hatch is scoped so a platform-role guard cannot receive a stand-in; tenant management sits behind platform-admin middleware.</td></tr>
       <tr><td>MFA bypassable by password alone; SSO redirect takeover</td><td><span class="pill pill-live">Closed</span></td><td>Pre-MFA and refresh token classes rejected at every privileged route; SSO return targets and org selection validated.</td></tr>
-      <tr><td>AI provenance ledger recorded nothing</td><td><span class="pill pill-live">Closed</span></td><td>A boot invariant fails the platform closed if the ledger is unreachable, while the per-call writer stays non-blocking (Section 07).</td></tr>
-      <tr><td>Integrity checks called an empty chain healthy</td><td><span class="pill pill-live">Closed</span></td><td>An explicit <span class="mono">unverifiable</span> state with a stated reason; the Part 11 surface no longer asserts integrity it never checked.</td></tr>
-      <tr><td>Unencrypted database dump in the tree; DB TLS unverified</td><td><span class="pill pill-live">Closed</span></td><td>Dump removed and prohibited in the deploy script; TLS verification enabled and held by a regression test.</td></tr>
+      <tr><td>AI provenance ledger recorded nothing</td><td><span class="pill pill-live">Closed</span></td><td>A boot invariant fails the platform closed if the ledger is unreachable; the per-call writer stays non-blocking (Section 07).</td></tr>
+      <tr><td>Integrity checks called an empty chain healthy</td><td><span class="pill pill-live">Closed</span></td><td>An explicit <span class="mono">unverifiable</span> state with a reason; the Part 11 surface no longer asserts integrity it never checked.</td></tr>
+      <tr><td>Unencrypted database dump in the tree; DB TLS unverified</td><td><span class="pill pill-live">Closed</span></td><td>Dump removed and prohibited in the deploy script; TLS verification enabled, held by a test.</td></tr>
       <tr><td>Global database mock across all tests</td><td><span class="pill pill-live">Closed</span></td><td>Gone from the shared setup; golden-journey tests drive all three journeys end to end (Section 28).</td></tr>
-      <tr><td>Fabricated programme data; frontend cancelled every timer</td><td><span class="pill pill-live">Closed</span></td><td>Invented programme identity removed from client data; the brute-force timer optimizer removed and client error reporting wired.</td></tr>
+      <tr><td>Fabricated programme data; frontend cancelled every timer</td><td><span class="pill pill-live">Closed</span></td><td>Invented programme identity removed; the timer optimizer removed and client error reporting wired.</td></tr>
+      <tr><td>An ungrounded draft looked grounded; AnA could destroy section history</td><td><span class="pill pill-live">Closed</span></td><td>Draft paths now separate retrieval-ran-and-found-nothing from retrieval-failed, reporting the latter as ungrounded. One version path for <span class="mono">cerv2_510k_sections</span> serves the AnA tool and the human route, so an overwrite preserves what it replaced. Both test-pinned.</td></tr>
       <tr><td>Supply chain and accessibility ungoverned</td><td><span class="pill pill-live">Closed</span></td><td>All 132 CI action references SHA-pinned, the AGPL dependency off the ingestion path, and committed-secrets and token-contrast gates in CI.</td></tr>
     </tbody>
   </table>
@@ -2475,12 +2470,14 @@
     <tbody>
       <tr><td><strong>Lineage at the ingest end</strong><br><span class="pill pill-open">Open</span></td>
         <td>The correctly-modelled provenance tables — carrying version chain, current flag, page number, section reference, sentence index — have zero writers, while two live services read them. Source documents carry no version chain, so a revised protocol becomes an unlinked second row and a fact cannot be told it rests on superseded content. The draft-to-filing half of the chain now holds; this half does not.</td></tr>
-      <tr><td><strong>AI attribution at accept</strong><br><span class="pill pill-open">Open</span></td>
-        <td>Model, provider, prompt and prompt version exist at draft time and are discarded when a draft is accepted. On the governed store, accepted AI text is recorded as human-authored. Retrieval failure is silent, so an ungrounded draft is indistinguishable from a grounded one in the persisted record. The gateway records the call; the document does not record what produced it.</td></tr>
+      <tr><td><strong>AI attribution at accept</strong><br><span class="pill pill-partial">Narrowed</span></td>
+        <td>Model, provider and prompt exist at draft time and are still discarded at accept, and accepted AI text is recorded as human-authored on the governed store. Two parts of this closed on 14 August: retrieval failure now reports the draft as ungrounded rather than passing silently, and the version ledger records which AnA action produced a version. What remains is the model itself.</td></tr>
       <tr><td><strong>Navigation</strong><br><span class="pill pill-partial">Thin</span></td>
         <td>19 of 107 surfaces are referenced from a navigation, registry or router file. Most of what is built is not reachable by a user who does not already know it exists.</td></tr>
+      <tr><td><strong>Collaboration contract test</strong><br><span class="pill pill-partial">Blocked</span></td>
+        <td>The socket tenant-isolation contract test — actor spoofing, lock theft, unjoined-document events, and cross-tenant leakage across eleven event types — cannot reach its assertions because the socket server refuses the fixture's connection as not entitled. The guard fires; the finer properties are unproven until the fixture is corrected.</td></tr>
       <tr><td><strong>Test depth, unevenly</strong><br><span class="pill pill-partial">Uneven</span></td>
-        <td>Ratios vary by a factor of four. Strong: evidence spine 21 tests / 17 services, IND lifecycle 31/36, study design 13/17. Thin where it matters most: CMC 6/16, statistics 7/24, submission gateways 10/28 — the last being the irreversible action.</td></tr>
+        <td>Co-located ratios vary by a factor of four. Strong: evidence spine 21 tests / 17 services, IND lifecycle 31/36, study design 13/17. Thin: CMC 6/16 and submission gateways 10/28 — the latter being the irreversible action. Statistics reads 7/24 co-located but is better covered than that suggests: six reference suites in <span class="mono">tests/biostat/</span> pin group-sequential, power and sizing, win ratio, CLSI EP and MRMC against published tables.</td></tr>
       <tr><td><strong>Isolation in production</strong><br><span class="pill pill-partial">Provisioned</span></td>
         <td>The least-privilege role exists and grants are applied, but production has not been demonstrated running under it with a cross-tenant read returning zero rows. This gates a multi-tenant pilot.</td></tr>
       <tr><td><strong>Not built at all</strong><br><span class="pill pill-open">Open</span></td>
