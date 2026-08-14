@@ -1188,7 +1188,7 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260814l_catalog_filing_strategy.sql',
 
   // Same guard: descriptions only, no module added or removed (ledger L41).
-  'migrations/20260814l_catalog_honest_module_descriptions.sql',
+  'migrations/20260814m_catalog_honest_module_descriptions.sql',
 
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
