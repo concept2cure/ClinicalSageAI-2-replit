@@ -12,11 +12,32 @@ unverified it says so.
 
 ### 1.1 Mounting
 
-12 of 13 PM routers are mounted. `server/routes/programs.ts` is **not**, and no
-bootstrap file imports it. That is the same shape as the `tenants.ts` footgun
-closed earlier (R9): an unmounted router is either dead code or a 404'ing feature,
-and both are worth resolving explicitly rather than leaving ambiguous. **Not
-investigated further here** — flagged, not diagnosed.
+12 of 13 PM routers are mounted. `server/routes/programs.ts` is **not** — no
+importer anywhere, and it is already carried in
+`scripts/ci/unreferenced-modules-baseline.json`.
+
+**Diagnosed: dead code, superseded — and no footgun.** Unlike `tenants.ts` (R9),
+which held an ungoverned cascade delete, this router's `DELETE /:id` is a
+tenant-scoped SOFT ARCHIVE (`status: 'archived'`). Its 9 endpoints are covered
+elsewhere:
+
+| Concern | Live surface |
+|---|---|
+| Reads (list, detail, milestones, activity) | `regulatory-programs.ts` → `/api/regulatory-programs`, mounted |
+| Creates | `POST /api/workspace/projects` (`register-advanced-platform-routes.ts:239`), mounted |
+
+No client code references `/api/programs`.
+
+**The finding worth acting on is the inverse of the one expected.** Program
+creation runs through an inline **raw-SQL** route that branches on project type
+and writes `cer_projects` / `fda_510k_projects` directly, while a fully typed,
+zod-validated, Drizzle implementation with the same surface sits unmounted. The
+dead file is the better implementation.
+
+Not resolved here because both dispositions are product calls with real
+consequences: mounting `programs.ts` adds nine live write endpoints with no
+tests, and deleting it discards the stronger implementation in favour of raw SQL.
+Recorded so the decision is made deliberately rather than by neglect.
 
 ### 1.2 Is it one system or three?
 
@@ -46,11 +67,29 @@ decorative:
 | Escalation paths | 3 |
 | Automation rules | **1** |
 
-The two thin ones are worth naming: **automation rules have a single reader** and
-escalation three. A column written by a UI and read by almost nothing is the
-pattern this codebase has been finding all week (`max_storage`,
-`organizations.status`). Neither was traced to a conclusion here — they are
-candidates, not findings.
+**The two thin ones were traced, and they are worse than thin — both are
+WRITE-ONLY.** The counts above are references, not readers, and following them
+resolves the question:
+
+- `automationRules` — its single reference is
+  `taskManagement.routes.ts:113`, `automationRules: jsonValueSchema.optional()`.
+  That is a **zod input field**. The API accepts automation rules, validates
+  their shape and persists them. Nothing anywhere reads the column to act on it.
+- `escalationPath` — three references, none of them a reader:
+  `taskManagement.routes.ts:114` is the same zod input field,
+  `mdx-client-review.ts:124` is a *comment*, and
+  `sop-development.ts:629` is an unrelated `id: 'escalation_path'` in a question
+  flow.
+
+So a customer can configure an escalation path on a task, the API returns 200,
+the value is stored — and nothing ever escalates. Same for automation rules. This
+is the `max_storage` pattern exactly (§R6): a column written by the product,
+read by nothing, presented as a capability.
+
+Not fixed here: an automation/escalation engine is a feature, not a repair, and
+building one uninstructed would be a much larger change than this assessment
+warrants. Named precisely so the choice is explicit — implement it, or stop
+accepting the field.
 
 ### 1.4 Tenancy
 
@@ -189,7 +228,37 @@ Stated rather than implied.
   fail), power sign flipped (8), MMRM rounding down instead of up — a silent
   under-powering of the trial (7), MMRM one-sided by mistake (7).
 
-- **~35 biostat endpoints remain shape-tested only.** Sample-size beyond the one
+- **Round 4 pinned win ratio and event projection — and FOUND A REAL DEFECT.**
+  `tests/biostat/win-ratio-and-projection-reference.test.ts`, 20 tests. Unlike
+  rounds 1–3 this one did not merely confirm correct mathematics.
+
+  `winRatioAnalysis` returned `Infinity` when an arm had zero losses. **JSON
+  serializes `Infinity` to `null`**, so `POST /api/biostat/win-ratio` emitted
+  `"winRatio": null` beside `"success": true` — and the all-ties case (no
+  information at all) emitted exactly the same thing. Overwhelming benefit and
+  no evidence were indistinguishable on the wire, silently, in the primary
+  endpoint of a hierarchical composite design. `ciLower`/`ciUpper` were `NaN`,
+  which serializes to `null` too.
+
+  Fixed: `winRatio` and the CI bounds are now `number | null`, so the wire value
+  is intentional rather than incidental, and `wins`/`losses`/`ties` remain to
+  distinguish the cases. A JSON round-trip regression test pins it at the layer
+  where the defect actually bit — in-process the values looked fine, which is why
+  nothing had noticed.
+
+  **My own probe had hidden it.** The first exploration printed the result
+  through `JSON.stringify`, which showed `null` and looked correct; only the
+  strict test revealed `Infinity`. The viewing method destroyed the evidence.
+
+  **The class is wider than the fix.** `clinical-performance.computeDiagnosticAccuracy`
+  returns `lrPositive: Infinity` whenever specificity = 1 — ordinary in a small
+  IVD validation study — and it reaches the wire as `null` the same way.
+  Demonstrated, not inferred. `analytical-performance-extensions` does the same
+  for `shelfLife` and `predictedShelfLife`. **Not fixed here**: those belong to
+  the IVDR/stability modules with their own consumers and conventions, and
+  changing their contract is the owner's call, not a side effect of this work.
+
+- **~30 biostat endpoints remain shape-tested only.** Sample-size beyond the one
   existing textbook case, assurance, MMRM, MRMC, win ratio, external-control
   borrowing, enrollment/event forecasting and the analytical-performance family
   are still unpinned, and each deserves the same treatment.

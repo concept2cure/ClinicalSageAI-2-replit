@@ -1121,6 +1121,19 @@ export const C2C_MIGRATION_FILES = [
   // sweep for readability.
   'migrations/20260814e_submission_leaf_source_pin.sql',
 
+  // ── Section version AnA backlink, GA ledger L36 (added 2026-08-14) ───────
+  // CREATE OR REPLACE of c2c_snapshot_section_version() so the version trigger
+  // writes ana_action_id — a column declared in the Phase-9 schema with a FK to
+  // c2c_ana_actions and written by nothing since, leaving "which AnA action
+  // produced this version?" permanently unanswerable.
+  //
+  // Function replacement only: no table, no column, no data. It MUST run after
+  // the Phase-9 schema that defines the original function, which it does by
+  // position. The trigger resolves the id against c2c_ana_actions before using
+  // it and writes NULL otherwise, so a stale GUC can never turn a section save
+  // into an FK violation.
+  'migrations/20260814f_section_version_ana_action_backlink.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

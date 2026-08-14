@@ -83,15 +83,36 @@ export interface WinRatioResult {
   losses: number;
   ties: number;
   pairs: number;
-  winRatio: number;
-  winOdds: number;
+  /**
+   * wins / losses, or NULL when it is undefined (no losses, or no informative
+   * pairs at all).
+   *
+   * Deliberately not `Infinity`. A win ratio with zero losses is undefined, not
+   * infinite — and more practically, `JSON.stringify(Infinity)` is `null`, so
+   * returning Infinity meant the API emitted `"winRatio": null` anyway, beside
+   * `"success": true`, with no way for a client to tell "every pair a win" from
+   * "every pair a tie". Both collapsed to the same wire value. `wins`, `losses`
+   * and `ties` remain available for the caller to distinguish the cases.
+   */
+  winRatio: number | null;
+  /**
+   * (wins + ties/2) / (losses + ties/2), or NULL when the denominator is zero —
+   * i.e. no losses AND no ties, so every pair was a win. Same JSON reasoning as
+   * `winRatio`. Found by the sweep in tests/biostat/json-wire-contract.test.ts
+   * AFTER winRatio had been fixed by hand, which is the argument for the sweep.
+   */
+  winOdds: number | null;
   netBenefit: number;
   /** Finkelstein–Schoenfeld standardized statistic for the net benefit. */
   z: number;
   pValue: number;
-  /** Win-ratio confidence interval (delta method on log WR). */
-  ciLower: number;
-  ciUpper: number;
+  /**
+   * Win-ratio confidence interval (delta method on log WR), or NULL when the
+   * ratio is undefined. Previously NaN, which JSON-serializes to null too — this
+   * makes the wire value intentional rather than incidental.
+   */
+  ciLower: number | null;
+  ciUpper: number | null;
   confLevel: number;
   n1: number;
   n2: number;
@@ -120,6 +141,18 @@ function covariance(xs: number[], ys: number[]): number {
  * `treatment` and `control` are arrays of subjects; each subject's `levels`
  * align with `hierarchy`.
  */
+/**
+ * A ratio, or null when its denominator is zero.
+ *
+ * Shared by `winRatio` and `winOdds` so the undefined case is expressed once.
+ * Extracted rather than inlined twice: two ternaries inside `winRatioAnalysis`
+ * pushed it past the complexity limit, and one named helper reads better than a
+ * lint suppression.
+ */
+function ratioOrNull(numerator: number, denominator: number): number | null {
+  return denominator > 0 ? numerator / denominator : null;
+}
+
 export function winRatioAnalysis(
   treatment: Subject[],
   control: Subject[],
@@ -160,8 +193,8 @@ export function winRatioAnalysis(
   const z = varDelta > 0 ? netBenefit / Math.sqrt(varDelta) : 0;
   const pValue = 2 * (1 - normalCdf(Math.abs(z)));
 
-  const winRatio = losses > 0 ? wins / losses : Infinity;
-  const winOdds = (wins + ties / 2) / (losses + ties / 2);
+  const winRatio = ratioOrNull(wins, losses);
+  const winOdds = ratioOrNull(wins + ties / 2, losses + ties / 2);
 
   // Win-ratio CI via delta method on log(WR), with U-statistic variances of the
   // win and loss proportions and their covariance.
@@ -171,9 +204,13 @@ export function winRatioAnalysis(
   const liT = trtLoss.map(l => l / n2);
   const wjC = ctrLoss.map(cl => cl / n1); // treatment-win fraction from control j
   const ljC = ctrWin.map(cw => cw / n1); // treatment-loss fraction from control j
-  let ciLower = NaN;
-  let ciUpper = NaN;
-  if (pW > 0 && pL > 0) {
+  let ciLower: number | null = null;
+  let ciUpper: number | null = null;
+  // `winRatio !== null` REPLACES the old `pL > 0` rather than joining it: pL is
+  // losses/pairs, so pL > 0 ⟺ losses > 0 ⟺ winRatio !== null. Same condition,
+  // same branch count as before the null change — and it narrows the type, which
+  // `pL > 0` cannot do.
+  if (pW > 0 && winRatio !== null) {
     const varPW = variance(wiT) / n1 + variance(wjC) / n2;
     const varPL = variance(liT) / n1 + variance(ljC) / n2;
     const covWL = covariance(wiT, liT) / n1 + covariance(wjC, ljC) / n2;
