@@ -24,7 +24,7 @@ disagree, the command is right and this file is stale.
 Measured 2026-08-14 on `concept2cure-v2`:
 
 ```bash
-node scripts/ops/ledger-check.mjs          # 55 rows: 19 done, 29 open, 6 in-flight, 1 blocked
+node scripts/ops/ledger-check.mjs          # 57 rows: 19 done, 31 open, 6 in-flight, 1 blocked
 node scripts/ops/ga-readiness-report.mjs   # 3/40 ready · 18 blockers · 19 advisories
 npm run ci:surface-discoverability         # 119 renderable: 93 catalogued, 26 contextual
 ```
@@ -226,6 +226,15 @@ what happened when it ran. A hand search had found nine copies. The gate found f
 including seven in the Part 11 and audit-export paths, and one of those turned out to be
 L55 — a tamper-evident export signing three of its own fields as `{}`. The gate paid for
 itself in under an hour, which is the argument for writing the other two.
+
+The sweep also had a scope boundary worth naming, because it was found by asking rather
+than by luck: it scanned exported **functions** and never types. Extending it produced L56,
+which is larger than any single duplicate function — 8 different `Severity` scales, 6
+`RiskLevel`s, 5 `Agency` lists — and L57, 50 import cycles. **Duplication of a type is worse
+than duplication of a function**, because two functions that disagree produce a bug someone
+eventually hits, while two enums that disagree produce two dashboards that quietly report
+different totals and are each internally consistent. Sequence L56 with the Phase 4 journey
+work, not here: the vocabulary has to be settled before a journey can report on it.
 
 ---
 
