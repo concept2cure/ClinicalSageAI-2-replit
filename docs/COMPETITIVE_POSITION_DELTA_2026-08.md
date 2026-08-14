@@ -38,13 +38,13 @@ differentiator. Spanning it in a product is.
 | RTA / completeness validation pre-submission | **Closed** | Filing-readiness + assembly contract with blockers; orphaned pseudo-validator deleted |
 | Predicate identification from live FDA data | **Closed (reduced)** | openFDA client; labelled `reduced` when the external engine is absent — never presented as the full engine |
 | Multi-user authoring, versioning, Part 11 audit | **Closed** | Stronger than any device-side competitor benchmarked |
-| Guidance/standards mapping per product code | **Partial** | Classification lookup closed; standards mapping open |
+| Guidance/standards mapping per product code | **Asset-blocked** | Classification lookup closed (live openFDA). Standards mapping: drop-point + whole-file-validating loader + org-scoped `GET /api/510k/device/standards` + intake panel built and tested; openFDA has no recognized-standards endpoint, so the FDA recognition list is a vendored asset and is unvendored (runbook B21) |
 | Claim-to-source AI traceability | **Closed** | RAG with per-claim citations and surfaced ungrounded claims |
 
 ### CER
 | Table stake | State | Evidence / blocker |
 |---|---|---|
-| Multi-DB literature search, screening, audit trail | **Partial** | Search + recording closed this session; screening state needs a schema column (reported, not faked) |
+| Multi-DB literature search, screening, audit trail | **Closed (single-DB)** | Search + recording + screening all persisted. Screening: `literature_screening_decisions` (migration `20260814b`) holds one current decision per (org, entry, program, appraisal stage) with its reviewer, timestamp and — mandatory on an exclusion, by CHECK constraint — its MEDDEV §8 rationale; the old→new trail is chained through `auditService`. **"Multi-DB" is still one database**: PubMed only (`server/services/integrations/` has no Embase, Cochrane, Scopus or Web of Science client — all four are licensed). The CER flow's own check flags a single-database search as an NB deficiency (`cer-report.ts` `literature_search_fewer_than_2_databases_check`), so this row is not "Closed" outright |
 | MEDDEV 2.7/1 rev 4 + Annex XIV structure | **Closed** | Rule packs + conformance validator + structure check wired to the workbench |
 | AE/vigilance integration | **Closed** | FAERS/MAUDE live; EUDAMED honestly unavailable (no public API exists) |
 | Live evidence tables → NB-acceptable export | **Closed** | Governed PDF/DOCX/ZIP via the MEDDEV style pack |

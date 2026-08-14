@@ -22,7 +22,7 @@ Three verification runs stand behind this document, executed on 2026-08-14:
 | Run | Result |
 |---|---|
 | `node scripts/ops/submission-preflight.mjs` | exit 1 — **0/17 licensed artifacts present** |
-| `node scripts/ops/ga-readiness-report.mjs` | exit 1 — **0/36 rows ready, 18 blockers outstanding** |
+| `node scripts/ops/ga-readiness-report.mjs` | exit 1 — **3/40 rows ready, 18 blockers outstanding** (re-run 2026-08-14 after B21 landed; the 3 ready rows are the tenant entitlement switches, which are ready when *unset*) |
 | `npm run qualify:ectd` | **Overall: PASS** — 5/5 regions+versions, 0 validator errors |
 
 That contrast is the whole story: the engine qualifies green, and every procurement
@@ -281,6 +281,73 @@ every production eSTAR build. **Flip each flag in the same change window as the
 artifact it enforces, never before.** `RLS_ENFORCE=on` is the exception — its
 artifact (the policies) is already provisioned, so it flips independently.
 
+### B21 · FDA recognized consensus standards dataset not vendored
+
+A 510(k) has to declare conformity to the consensus standards FDA recognizes for
+the device, and a submitter's first question at intake is which those are.
+**openFDA has no endpoint for this.** It serves `device/classification.json`,
+`device/510k.json`, MAUDE, recalls, registration/listing and GUDID; FDA publishes
+the recognition database separately, through the CDRH Recognized Consensus
+Standards search
+(<https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfStandards/search.cfm>).
+So this cannot be closed by an API client — it is an acquisition, like B1 and B3.
+
+`assets/fda-recognized-standards/` holds a `README.md` and a `.gitignore`;
+**0 records vendored.** The code half is built and tested:
+`server/services/fda-recognized-standards/recognized-standards-dataset.ts` reads
+the drop-point (or `FDA_RECOGNIZED_STANDARDS_DIR`) and validates it whole-file —
+a malformed or unprovenanced dataset is reported **absent**, never partially
+loaded, because a half-parsed regulatory dataset answers some product codes
+correctly and others with a silent empty.
+`recognized-standards.service.ts` returns one of three explicitly labelled
+outcomes and `GET /api/510k/device/standards` passes them through unchanged:
+dataset-not-held, dataset-held-and-lists-nothing, and here-is-FDA's-list. The
+510(k) intake panel renders all three separately. Nothing anywhere seeds,
+infers, or scores a standard.
+
+**No `*_REQUIRE_*` flag was added, deliberately.** Per B20 those flags convert a
+missing artifact into a hard production block, and each one must gate a real
+artifact-dependent production path. Nothing in a 510(k) build depends on this
+dataset — the gate is the labelled empty state at the query, which is always on.
+An enforcement flag with nothing behind it would be a phantom gate.
+
+**Severity: advisory, not blocker.** A 510(k) can be filed with the standards
+identified by hand. What is lost without the dataset is the intake-time mapping
+Essenvia and Formly surface, not the filing itself, so this row does not gate the
+readiness report's exit code.
+
+**Owner:** **Procurement / Regulatory Ops** — export the CDRH database, normalize
+it into the shape in `assets/fda-recognized-standards/README.md`, record the
+provenance block (source, FDA Recognition List number, publication date,
+retrieval date, retriever). The loader refuses a dataset with no provenance:
+an unsourced recognition list is indistinguishable from someone's notes, and
+this is content a submitter will cite to FDA.
+
+**The rule that governs the acquisition:** never write a standard against a
+product code FDA has not published it against. If FDA publishes no product-code
+association for a standard, `productCodes` is `[]` — an empty list is a true
+statement, and an inferred one is a regulatory claim nobody made. Do not merge in
+a consultant's or a vendor's curated list and present it as FDA's.
+
+**Not the same as the `/api/standards` path.**
+`server/services/regulatory-graph/standards-applicability.service.ts` recommends
+applicability *per program* with deterministic rules and confidence scores over
+the internal `device_test_standards` catalog, and persists human decisions. That
+is a recommender. This is FDA's published fact, keyed by product code, with no
+inference. The first may consume the second later; it must never present the
+second's data as its own recommendations.
+
+**Done means:** the normalized export at
+`assets/fda-recognized-standards/fda-recognized-consensus-standards.json` (or
+`FDA_RECOGNIZED_STANDARDS_DIR`), carrying a provenance block whose
+`recognitionListNumber` matches FDA's current Recognition List. Treat a new FDA
+Recognition List as a fresh acquisition, not a hot-swap.
+**Verify:** `node scripts/ops/ga-readiness-report.mjs --all` — the
+`fda-recognized-standards` row flips from `[ ]` to `[x]` and reports the record
+and product-code counts it observed. Then `GET /api/510k/device/standards?ident=<program>`
+answers `available:true` with `datasetLoaded:true`. Presence is not proof the
+export is current; the recognition-list number against FDA's is the human half.
+
 ---
 
 ## 3. The eSTAR field-map procedure
@@ -429,7 +496,9 @@ Ordered. Each step is a hard precondition for the next.
    live, both boot keys provisioned.
 
 **Not on this path:** eCTD DTDs (B3), eValidator (B4), RPS schema (B14), MedDRA (B6).
-A 510(k) is an eSTAR PDF, not an eCTD sequence.
+A 510(k) is an eSTAR PDF, not an eCTD sequence. The recognized-standards dataset
+(B21) is also not a gate — a submitter can identify their standards by hand; its
+absence costs the intake-time mapping, not the filing.
 
 ### 4b · First real CER (EU MDR Annex XIV)
 
@@ -521,6 +590,7 @@ Every one of these was read in source during this audit:
 | eSTAR scaffold | `510k-estar-routes.ts:543` | 422 `ESTAR_TEMPLATE_UNAVAILABLE`; never guesses field names |
 | Agency validation | `external-validator/index.ts:47–66` | a configured engine that **throws** is reported `ran:false, passed:false` — never a fabricated pass |
 | eValidator gate | `external-validator/gate.ts:52` | "could not run" is itself a blocker under enforcement |
+| Recognized standards | `recognized-standards-dataset.ts` `loadRecognizedStandardsDataset` → `recognized-standards.service.ts` | absent, unparseable or schema-invalid dataset is reported **absent** (never partially loaded); the lookup answers `available:false` with the reason and an empty list, and keeps "dataset not held" distinct from "list holds nothing for this code". No seeded standards anywhere |
 | MedDRA / WHODrug | `medical-coding-service.ts:264,302` | `status:'license_required'`, no code returned |
 | ICSR transmit | `icsr-gateway-transport.ts:181,196,211` | refuses on gaps, refuses when unimplemented, refuses when unconfigured — never a fake ACK |
 | ESG 510(k) | `ESGSubmissionService.ts:350,597` | `not-implemented` in every non-simulation env; simulation opt-in and restricted to `NODE_ENV` exactly `development`/`test` |
@@ -596,5 +666,5 @@ Pair it with the two existing probes:
 | Command | Covers |
 |---|---|
 | `node scripts/ops/submission-preflight.mjs` | the 3 licensed-artifact drop-points, exit-coded |
-| `node scripts/ops/ga-readiness-report.mjs` | the whole GA blocker set (36 rows) |
+| `node scripts/ops/ga-readiness-report.mjs` | the whole GA blocker set (40 rows) |
 | `npm run pilot:go-no-go` | live DB + env gates: schema, RLS posture, demo admin, boot secrets, SMTP, Sentry, PDF export |
