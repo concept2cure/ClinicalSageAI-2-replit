@@ -128,57 +128,38 @@ interface CmcBoardData { portfolio?: CmcPortfolio[]; sections?: CmcSection[] | n
      Quality by design               the control-strategy and ICH-compliance view
      Module 3 build                  regulatory CMC — compile, resolve, export
      Program records                 QA — the provenance chain */
+/* Nine destinations, down from twelve.
+   • Drug substance + Drug product were two ~40-line wrappers over one register
+     each; they are one destination now, exactly as Specifications already
+     carries two registers. Both §3.2.S and §3.2.P material is still here.
+   • Copilot held nothing but chat entry points — a tab existing to launch chat
+     is the pattern chat-first design forbids, and the AnA panel already carries
+     CMC actions on EVERY tab via ANA_SURFACE_CTX. Its prompts moved there, so
+     they went from reachable on one tab to reachable on all nine.
+   • Global filings computed a market matrix from the change-control register and
+     owned no object of its own; it is a per-change expansion inside Change
+     control now, next to the change it describes. */
 const CMC_NAV: CmcNavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'beaker' },
-  { id: 'substance', label: 'Drug substance', icon: 'atom' },
-  { id: 'product', label: 'Drug product', icon: 'beaker' },
+  { id: 'materials', label: 'Substance & product', icon: 'atom' },
   { id: 'specs', label: 'Specifications', icon: 'clipboardList' },
   { id: 'stability', label: 'Stability', icon: 'barChart' },
   { id: 'batch', label: 'Batch records', icon: 'grid' },
   { id: 'change', label: 'Change control', icon: 'gitBranch' },
   { id: 'quality', label: 'Quality by design', icon: 'sigma' },
   { id: 'build', label: 'Module 3 build', icon: 'layers' },
-  { id: 'global', label: 'Global filings', icon: 'globe' },
   { id: 'pathway', label: 'Program records', icon: 'scroll' },
-  { id: 'copilot', label: 'Copilot', icon: 'sparkles' },
 ];
 
 const CMC_SUGGEST: Record<string, string[]> = {
   overview: ['Run the ICH compliance check and show every gap', 'Generate the drug-substance control strategy', 'What is blocking my shelf-life claim?'],
-  substance: ['Draft the §3.2.S.2.2 manufacturing process description', 'What characterisation data does §3.2.S.3.1 still need?', 'Summarise the impurity profile for this substance'],
-  product: ['Draft the §3.2.P.1 composition table', 'What does §3.2.P.2 pharmaceutical development still need?', 'Justify the container closure system for §3.2.P.7'],
+  materials: ['Draft the §3.2.S.2.2 manufacturing process description', 'Summarise the impurity profile for this substance', 'Draft the §3.2.P.1 composition table', 'What does §3.2.P.2 pharmaceutical development still need?'],
   specs: ['Justify the release and shelf-life limits for aggregation', 'Flag any specification without a validated method', 'Compare release vs shelf-life limits across DS and DP'],
   stability: ['Project shelf life from the long-term data with an ICH Q1E fit', 'Are my primary batches combinable for one shelf-life claim?', 'Show every study trending toward a limit', 'Draft the stability summary for §3.2.S.7'],
   batch: ['Summarize deviations across the last 10 batches', 'Show batches still pending release', 'Trend yield across drug-product batches'],
-  change: ['Classify this change and give me the filing path per market', 'What comparability work does this change oblige?', 'Which §3.2 sections does this change make stale?'],
-  global: ['Which of my open changes needs a prior-approval supplement?', 'Summarise the filing burden of these changes across all six markets', 'Which markets can I implement in before approval?'],
+  change: ['Classify this change and give me the filing path per market', 'Which of my open changes needs a prior-approval supplement?', 'Summarise the filing burden of these changes across all six markets', 'Which markets can I implement in before approval?'],
   pathway: ['Summarise every governed action taken on this Module 3', 'Which contradictions were resolved, and how?', 'Draft an audit-trail summary for an inspector'],
-  copilot: ['Explain ICH Q6B expectations for charge-variant specs', 'Draft a method-validation justification for sub-visible particles', 'What evidence supports a 24-month shelf-life claim?'],
 };
-
-/**
- * The module's capability prompt list — every capability reachable by talking to
- * AnA, in human language rather than system vocabulary.
- *
- * Chat-first design §2a: for every specialised surface there must be a
- * corresponding human-language prompt. Each tab carries its own starters above;
- * this is the one place that lists the module's whole surface area, so a
- * capability added to a tab is reachable without having to know which tab
- * implements it.
- */
-const CMC_CAPABILITY_PROMPTS: string[] = [
-  ...CMC_SUGGEST.copilot,
-  'Reconcile drug-substance specs across CSR-201 and §3.2.S.4.1',
-  'Compile Module 3 and tell me which sections are still blocked',
-  'What is blocking the final export gate on this program?',
-  'Explain each open contradiction and what would resolve it',
-  'Which CQAs have no validated analytical method controlling them?',
-  'Run the ICH compliance check and turn the findings into a remediation plan',
-  'Generate the drug-substance control strategy and tell me what a reviewer would challenge',
-  'What shelf life do my stability data actually support, and what limits it?',
-  'Which QC results are still awaiting second-person review?',
-  'Which markets need a prior-approval supplement for the scale-up?',
-];
 
 /* ── Change-simulator canonical config (real regulatory reference — KEEP) ── */
 
@@ -457,11 +438,36 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
       ) : (
         <>
           {cmLead}
-          <div className="cm-kpis">
-            <Kpi l="Submissions" v={port.length} />
-            <Kpi l="RPI average" v={avgRpi == null ? '—' : avgRpi} s="preparedness" />
-            <Kpi l="IR overdue" v={irOverdue} tone={irOverdue ? 'warn' : undefined} />
-            <Kpi l="Sections approved" v={approved + '/' + secs.length} tone={readyTone} />
+          {/* No KPI strip here. `cmLead` immediately above narrates the same
+              four numbers — submissions, RPI, overdue IRs, sections approved —
+              in a sentence that also says which one to act on, and "sections
+              approved" appears a third time in the build-state bar below.
+              Repeating a figure three times does not make it more true. */}
+          {/* Section approvals first: it is the only content on this page a
+              CMC lead can act on. The portfolio and build-state cards below
+              are reference material, and reference material does not go
+              above the thing you came here to do. */}
+          <div className="pj-card">
+            <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed -- 21 CFR §11</span></div>
+            <div className="pj-card-b" style={{ padding: 0 }}>
+              {liveSections === null ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per-project. Select a project to load its approval state." />
+                </div>
+              ) : secs.length === 0 ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState icon={I.fileText} title="No Module 3 sections yet" hint="This project has no governed §3.2 sections yet. They appear here with their approval state once created." />
+                </div>
+              ) : (
+                <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
+                <tbody>{secs.map((s) => (
+                  <tr key={s.key} className={s._new ? 'de-row-new' : undefined}><td className="mono" style={{ fontWeight: 600 }}>{s.key}</td><td>{s.path}</td>
+                    <td><span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span></td>
+                    <td style={{ textAlign: 'right' }}>{s.st === 'approved' ? <span className="cm-meta">{I.check} approved</span> : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}</td>
+                  </tr>))}</tbody></table>
+              )}
+            </div>
+            {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
           </div>
           <div className="pj-card" style={{ marginBottom: 16 }}>
             <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{port.length} submissions</span></div>
@@ -489,28 +495,6 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
               </div>
             </div>
           )}
-          <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed -- 21 CFR §11</span></div>
-            <div className="pj-card-b" style={{ padding: 0 }}>
-              {liveSections === null ? (
-                <div style={{ padding: 12 }}>
-                  <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per-project. Select a project to load its approval state." />
-                </div>
-              ) : secs.length === 0 ? (
-                <div style={{ padding: 12 }}>
-                  <EmptyState icon={I.fileText} title="No Module 3 sections yet" hint="This project has no governed §3.2 sections yet. They appear here with their approval state once created." />
-                </div>
-              ) : (
-                <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
-                <tbody>{secs.map((s) => (
-                  <tr key={s.key} className={s._new ? 'de-row-new' : undefined}><td className="mono" style={{ fontWeight: 600 }}>{s.key}</td><td>{s.path}</td>
-                    <td><span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span></td>
-                    <td style={{ textAlign: 'right' }}>{s.st === 'approved' ? <span className="cm-meta">{I.check} approved</span> : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}</td>
-                  </tr>))}</tbody></table>
-              )}
-            </div>
-            {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
-          </div>
         </>
       )}
       {sign && <C2CForm config={signForm('Section ' + sign.key + ' -- ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}
@@ -888,8 +872,6 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
   const recordedBy = user?.displayName || user?.email || undefined;
 
   const active = rows.filter((r) => String(r.status || '').toUpperCase() === 'ACTIVE').length;
-  const longTerm = rows.filter((r) => String(r.studyType || '').toLowerCase().includes('long')).length;
-  const accel = rows.filter((r) => String(r.studyType || '').toLowerCase().includes('accel')).length;
 
   /* Every recorded result across the programme, and the ones that fell outside
      their acceptance criteria — the number a stability coordinator is actually
@@ -1058,11 +1040,13 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         actions={<button className="nda-open" onClick={() => setRegistering(true)}>{I.plus} Register study</button>}
       />
       <div className="cm-kpis">
-        <Kpi l="Studies" v={rows.length} />
-        <Kpi l="Active" v={active} tone={active ? 'ok' : undefined} />
-        <Kpi l="Long-term" v={longTerm} />
-        <Kpi l="Accelerated" v={accel} />
-        <Kpi l="Results recorded" v={allResults.length} />
+        {/* Two tiles, not six. "Studies", "Long-term" and "Accelerated" were
+            classification counts nobody acts on — the register below is sorted
+            and filterable and answers them better. "Results recorded" is a
+            volume metric, and the shelf-life evidence card already states it in
+            context. What is left is the pair a stability coordinator actually
+            decides on: how much is running, and how much is out of limits. */}
+        <Kpi l="Active studies" v={active} tone={active ? 'ok' : undefined} />
         <Kpi l="Outside limits" v={oos.length} tone={oos.length ? 'err' : 'ok'} />
       </div>
       {oos.length > 0 && (
@@ -1662,61 +1646,52 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
           <CmPush label={'Change-control package -- ' + result.type.label} nav={nav} bar />
         </div>
       )}
+      {/* The market matrix over these same changes — one screen, because "what
+          did I change" and "what does each market require for it" is one
+          question. */}
+      <CmGlobal nav={nav} />
       <C2CToast msg={toast} />
     </div>
   );
 }
 
-/* ═══════════ Drug substance -- Drug product -- Global -- Program records ═══════════ */
+/* ═══════════ Substance & product -- Global matrix -- Program records ═══════════ */
 
 /**
- * §3.2.S. The substances the drug-substance half of Module 3 is written about,
- * with the specifications and methods that control them alongside.
+ * §3.2.S and §3.2.P — the substance and the product, and the two registers whose
+ * evidence each section's control depends on.
  *
- * This was reachable only as one half of a "Blueprint generator" tab whose other
- * half was an empty §3.2 readiness panel. The readiness question is now answered
- * properly by the Module 3 build tab, which reads the real per-section build
- * state; the substance register gets the room it needs to be worked in.
+ * These were two separate tabs, each a wrapper over one register plus a push
+ * bar. They are one destination because they are one question a formulation or
+ * substance scientist works through together, and because Specifications
+ * already establishes the pattern of a tab carrying more than one register.
+ * Nothing was removed: all four registers below are the same components bound to
+ * the same endpoints.
  */
-function CmSubstance({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   return (
     <div className="cm-body">
       <CmHead
-        title="Drug substance"
-        meta="CTD §3.2.S -- the active substance, its manufacture, characterisation and control"
+        title="Substance & product"
+        meta="CTD §3.2.S / §3.2.P -- the active substance and the finished product, their manufacture and control"
         ask={ask}
-        suggest={CMC_SUGGEST.substance}
+        suggest={CMC_SUGGEST.materials}
       />
+      <div className="cm-sub-head">Drug substance — §3.2.S</div>
       <CmDrugSubstances />
       {/* The method library sits with the substance because §3.2.S.4.2 is the
           analytical procedures section: the substance's control depends on it. */}
       <CmMethodLibrary />
-      <div className="pj-card" style={{ marginTop: 16 }}>
-        <div className="pj-card-b" style={{ paddingTop: 4 }}>
-          <CmPush label={'Drug substance data -> §3.2.S'} nav={nav} bar />
-        </div>
-      </div>
-    </div>
-  );
-}
 
-/** §3.2.P. The finished products, their composition and their container closure. */
-function CmProduct({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  return (
-    <div className="cm-body">
-      <CmHead
-        title="Drug product"
-        meta="CTD §3.2.P -- composition, pharmaceutical development, manufacture and control"
-        ask={ask}
-        suggest={CMC_SUGGEST.product}
-      />
+      <div className="cm-sub-head">Drug product — §3.2.P</div>
       <CmDrugProducts />
       {/* Process validation is the §3.2.P.3.5 evidence that the product's
           process does what its description says. */}
       <CmProcessValidation />
+
       <div className="pj-card" style={{ marginTop: 16 }}>
         <div className="pj-card-b" style={{ paddingTop: 4 }}>
-          <CmPush label={'Drug product data -> §3.2.P'} nav={nav} bar />
+          <CmPush label={'Substance & product data -> §3.2.S / §3.2.P'} nav={nav} bar />
         </div>
       </div>
     </div>
@@ -1738,19 +1713,25 @@ function CmProduct({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
    category already recorded on the change is shown next to what the rules say,
    so a disagreement between the two is visible instead of hidden. */
 
-function CmGlobal({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+/**
+ * What each market requires for the changes already under control.
+ *
+ * This was its own tab, and it owned no object: it reads the SAME
+ * change-control register the tab above it reads and reruns the SAME
+ * deterministic rule set the change simulator runs. A market matrix about a set
+ * of changes belongs beside those changes, not one navigation step away from
+ * them — so it renders inside Change control now. Every column, every market and
+ * the comparability register that travelled with it are unchanged; only the
+ * heading it used to carry as a destination is gone.
+ */
+function CmGlobal({ nav }: { nav?: (id: string) => void }) {
   const live = useLiveRows<ChangeControlApiRow>('/api/cmc/change-control');
   const CLOSED = ['implemented', 'closed', 'rejected'];
   const open = live.rows.filter((r) => !CLOSED.includes(String(r.status || '').toLowerCase()));
 
   return (
-    <div className="cm-body">
-      <CmHead
-        title="Global filings"
-        meta="What each market requires for the changes already under control -- SUPAC / ICH Q12 / Reg. 1234-2008"
-        ask={ask}
-        suggest={CMC_SUGGEST.global}
-      />
+    <>
+      <div className="cm-sub-head">Filing path by market — SUPAC / ICH Q12 / Reg. 1234-2008</div>
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Filing path by market</span>
@@ -1825,9 +1806,12 @@ function CmGlobal({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
           </div>
         )}
       </div>
-      {/* Comparability obligations travel with the changes above. */}
-      <CmComparabilityStudies />
-    </div>
+      {/* The comparability register is NOT rendered here. It travelled with this
+          matrix when Global filings was its own tab, but Change control — which
+          now hosts the matrix — already carries it above. Mounting it twice
+          would give the tab two create buttons over one table and two local row
+          states that desync after the first write. */}
+    </>
   );
 }
 
@@ -2042,34 +2026,18 @@ function provenanceDetail(payload: Record<string, unknown> | null): string {
   return parts.join(' · ');
 }
 
-function CmCopilot({ ask }: { ask: (text: string) => void }) {
-  return (
-    <div className="cm-body">
-      <CmHead title="CMC copilot" meta="Ask the Module 3 expert -- grounded in ICH Q-series and your quality data" ask={ask} />
-      <div className="pj-card"><div className="pj-card-b">
-        {CMC_CAPABILITY_PROMPTS.map((q, i) => (
-          <button key={i} className="cm-copilot-q" onClick={() => ask(q)}><span className="ico">{I.sparkles}</span><span className="t">{q}</span></button>
-        ))}
-      </div></div>
-    </div>
-  );
-}
-
 /* ═══════════ CmcModule shell — sub-tab router ═══════════ */
 
 const CMC_SURF: Record<string, React.ComponentType<{ ask: (text: string) => void; nav?: (id: string) => void }>> = {
   overview: CmOverview,
-  substance: CmSubstance,
-  product: CmProduct,
+  materials: CmMaterials,
   specs: CmSpecs,
   stability: CmStability,
   batch: CmBatch,
   change: CmChange,
   quality: CmQuality,
   build: CmModule3Build,
-  global: CmGlobal,
   pathway: CmPathway,
-  copilot: CmCopilot,
 };
 
 export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {

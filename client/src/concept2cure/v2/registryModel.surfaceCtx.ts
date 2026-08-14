@@ -229,10 +229,32 @@ export const ANA_SURFACE_CTX = {
         prompt: 'Summarize the stability trend and the provisional shelf-life.',
       },
     ],
+    /* The module's whole capability surface, in human language.
+       These lived in a "Copilot" sub-tab that held nothing but chat entry
+       points — a tab existing to launch chat is the pattern chat-first design
+       forbids, and it made every prompt below reachable only if you already knew
+       to go there. Here they reach the AnA panel on every CMC tab instead. */
     suggestions: [
       'What is gating Module 3?',
       'Pull the 24-month stability trend',
+      'What is blocking the final export gate on this program?',
+      'Compile Module 3 and tell me which sections are still blocked',
+      'Explain each open contradiction and what would resolve it',
+      'What shelf life do my stability data actually support, and what limits it?',
+      /* Not a duplicate of the line above: that one DERIVES a shelf life from the
+         data, this one VALIDATES a claim already being made. A CMC lead defending
+         a filed 24-month claim is asking the second question, not the first. */
+      'What evidence supports a 24-month shelf-life claim?',
+      'Are my primary batches combinable for one shelf-life claim?',
+      'Which QC results are still awaiting second-person review?',
+      'Which CQAs have no validated analytical method controlling them?',
+      'Run the ICH compliance check and turn the findings into a remediation plan',
+      'Generate the drug-substance control strategy and tell me what a reviewer would challenge',
       'Assess comparability across the post-change lots',
+      'Which markets need a prior-approval supplement for the scale-up?',
+      'Explain ICH Q6B expectations for charge-variant specs',
+      'Draft a method-validation justification for sub-visible particles',
+      'Reconcile drug-substance specs across CSR-201 and §3.2.S.4.1',
     ],
   },
   'submission-center': {
