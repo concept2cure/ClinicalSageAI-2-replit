@@ -148,7 +148,7 @@ const CMC_SUGGEST: Record<string, string[]> = {
   substance: ['Draft the §3.2.S.2.2 manufacturing process description', 'What characterisation data does §3.2.S.3.1 still need?', 'Summarise the impurity profile for this substance'],
   product: ['Draft the §3.2.P.1 composition table', 'What does §3.2.P.2 pharmaceutical development still need?', 'Justify the container closure system for §3.2.P.7'],
   specs: ['Justify the release and shelf-life limits for aggregation', 'Flag any specification without a validated method', 'Compare release vs shelf-life limits across DS and DP'],
-  stability: ['Project shelf life from the long-term data with an ICH Q1E fit', 'Show every study trending toward a limit', 'Draft the stability summary for §3.2.S.7'],
+  stability: ['Project shelf life from the long-term data with an ICH Q1E fit', 'Are my primary batches combinable for one shelf-life claim?', 'Show every study trending toward a limit', 'Draft the stability summary for §3.2.S.7'],
   batch: ['Summarize deviations across the last 10 batches', 'Show batches still pending release', 'Trend yield across drug-product batches'],
   change: ['Classify this change and give me the filing path per market', 'What comparability work does this change oblige?', 'Which §3.2 sections does this change make stale?'],
   global: ['Which of my open changes needs a prior-approval supplement?', 'Summarise the filing burden of these changes across all six markets', 'Which markets can I implement in before approval?'],
@@ -784,6 +784,70 @@ interface Q1eReport {
   estimates: Q1eEstimate[];
 }
 
+/* ── Batch poolability (POST /api/cmc/stability-studies/poolability) ──
+   The question a single-study fit cannot answer: may these batches be combined
+   into ONE registered shelf life, or must the claim fall back to the shortest?
+   ICH Q1E answers it with two sequential ANCOVA F-tests at α = 0.25 — equality
+   of slopes, then, only if that passes, equality of intercepts.
+
+   The engine (`services/cmc/shelf-life-poolability.ts`) was reachable only as
+   an AnA tool taking hand-typed numbers, so the decision could not be run
+   against the studies of record.
+
+   Like the single-study fit, every field can say "not assessable, and why":
+   batches that disagree on the acceptance criterion, an attribute only one
+   batch recorded, a batch with too few numeric points. Each is named. */
+interface AncovaTest {
+  f: number;
+  pValue: number;
+  poolable: boolean;
+  dfNumerator: number;
+  dfDenominator: number;
+}
+interface PoolAssessment {
+  parameter: string;
+  assessable: boolean;
+  reason?: string;
+  specLimit?: number;
+  direction?: 'increasing' | 'decreasing';
+  contributingBatches?: string[];
+  excludedBatches?: Array<{ batchId: string; reason: string }>;
+  conflictingCriteria?: Array<{ batchId: string; limit: number; direction: string }>;
+  slopeTest?: AncovaTest;
+  interceptTest?: AncovaTest | null;
+  poolable?: boolean;
+  decision?: 'pooled' | 'minimum-of-batches';
+  shelfLife?: number;
+  perBatchShelfLives?: Array<{ batchId: string; shelfLife: number; exceedsEvaluatedRange: boolean }>;
+  pooledShelfLife?: number | null;
+  notes?: string[];
+}
+interface PoolReport {
+  basis: string;
+  scopeLimit: string;
+  storageCondition: string | null;
+  batches: string[];
+  limitingParameter: string | null;
+  supportedShelfLife: number | null;
+  limitingDecision: string | null;
+  assessments: PoolAssessment[];
+}
+
+/** An F-test rendered as what it decided, with the statistic kept visible. */
+function AncovaCell({ test }: { test: AncovaTest | null | undefined }) {
+  if (!test) return <span className="cm-meta">not reached</span>;
+  return (
+    <>
+      <span className={'rd-chip tone-' + (test.poolable ? 'ok' : 'err')}>
+        {test.poolable ? 'equal' : 'differ'}
+      </span>
+      <div className="cm-meta">
+        F({test.dfNumerator},{test.dfDenominator}) = {test.f} · p = {test.pValue}
+      </div>
+    </>
+  );
+}
+
 /** Sort pull points numerically — '12' must follow '9', not precede it. */
 function byTimePoint(a: StabilityResult, b: StabilityResult): number {
   const na = parseFloat(a.timePoint);
@@ -813,6 +877,11 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
      a shelf life is not a property of the programme. */
   const [q1e, setQ1e] = useState<Record<number, Q1eReport>>({});
   const [estimating, setEstimating] = useState<number | null>(null);
+  /* Poolability is a property of a SET of batches, so unlike the per-study fit
+     there is one selection and one result at a time. */
+  const [poolPick, setPoolPick] = useState<number[]>([]);
+  const [pool, setPool] = useState<PoolReport | null>(null);
+  const [pooling, setPooling] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [toast, fireToast] = useToast();
   const { user } = useAuth();
@@ -913,6 +982,49 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       fireToast(cmcWriteThrew('shelf-life estimate', e), 'error');
     } finally {
       setEstimating(null);
+    }
+  };
+
+  /**
+   * Run the ICH Q1E combinability test across the selected batches.
+   *
+   * Like the single-study fit this is EVIDENCE. A "pooled" verdict does not set
+   * a shelf life; it establishes that one figure may be claimed for all the
+   * batches rather than the shortest. The claim is still made on the close-out.
+   *
+   * The server owns every eligibility rule (one product, one storage condition,
+   * distinct batches) and returns the reason it refused. Those rules are not
+   * re-implemented here — a client copy would drift, and the copy that drifts
+   * is the one that lets an invalid assessment through.
+   */
+  const assessPoolability = async () => {
+    if (pooling || poolPick.length < 2) return;
+    setPooling(true);
+    try {
+      const res = await apiRequest('POST', '/api/cmc/stability-studies/poolability', {
+        studyIds: poolPick,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setPool(null);
+        fireToast(cmcWriteError(json, res.status), 'error');
+        return;
+      }
+      const report = (json as { data?: PoolReport })?.data;
+      if (!report) { fireToast('The assessment returned an unexpected shape — reload and retry.', 'error'); return; }
+      setPool(report);
+      const notAssessable = report.assessments.filter((a) => !a.assessable).length;
+      fireToast(
+        report.supportedShelfLife != null
+          ? `${report.limitingDecision === 'pooled' ? 'Batches are combinable' : 'Batches are not combinable'} — ${report.supportedShelfLife} months supported, limited by ${report.limitingParameter}` +
+            (notAssessable ? ` · ${notAssessable} attribute${notAssessable === 1 ? '' : 's'} not assessable` : '') + '.'
+          : 'No attribute could be assessed across these batches — see the reason against each below.',
+        report.supportedShelfLife != null ? 'ok' : 'error',
+      );
+    } catch (e) {
+      fireToast(cmcWriteThrew('poolability assessment', e), 'error');
+    } finally {
+      setPooling(false);
     }
   };
 
@@ -1081,7 +1193,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                 {' '}longest pull point recorded: {Math.max(...allResults.map((r) => parseFloat(r.timePoint) || 0))} months
               </div>
               <table className="reg-tbl">
-                <thead><tr><th>Study</th><th>Condition</th><th>Longest pull</th><th>Within limits</th><th>Q1E estimate</th><th>Recorded shelf life</th></tr></thead>
+                <thead><tr><th>Pool</th><th>Study</th><th>Batch</th><th>Condition</th><th>Longest pull</th><th>Within limits</th><th>Q1E estimate</th><th>Recorded shelf life</th></tr></thead>
                 <tbody>
                   {rows.filter((r) => readStabilityResults(r.stabilityData).length > 0).map((r) => {
                     const res = readStabilityResults(r.stabilityData);
@@ -1090,7 +1202,18 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                     const fit = q1e[r.id];
                     return (
                       <tr key={r.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={poolPick.includes(r.id)}
+                            aria-label={`Include ${r.studyTitle || r.productName}${r.batchNumber ? ` (batch ${r.batchNumber})` : ''} in the poolability assessment`}
+                            onChange={(e) =>
+                              setPoolPick((p) => (e.target.checked ? [...p, r.id] : p.filter((x) => x !== r.id)))
+                            }
+                          />
+                        </td>
                         <td style={{ fontWeight: 600 }}>{r.studyTitle || r.productName}</td>
+                        <td>{r.batchNumber || <span className="cm-meta">--</span>}</td>
                         <td>{stabConditionText(r.storageConditions) || '--'}</td>
                         <td>{longest} mo</td>
                         <td><span className={'rd-chip tone-' + (bad ? 'err' : 'ok')}>{res.length - bad}/{res.length}</span></td>
@@ -1159,12 +1282,111 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
                 );
               })}
 
+              {/* ── Batch poolability ──
+                  Sits under the same table its selection is made in, because
+                  the decision to pool is made while reading the per-study fits,
+                  not on a separate screen. */}
+              <div className="cm-sub-head" style={{ marginTop: 18 }}>Batch poolability — ICH Q1E ANCOVA</div>
+              <div className="cm-meta" style={{ marginBottom: 8 }}>
+                Tick two or more batches of the same product at the same storage condition, then
+                assess whether they may be combined into one shelf-life claim. If the slopes or
+                intercepts differ, the claim falls back to the shortest batch.
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  className="nda-open"
+                  disabled={poolPick.length < 2 || pooling}
+                  onClick={assessPoolability}
+                  title={poolPick.length < 2 ? 'Select at least two batches' : 'Run the ICH Q1E combinability test'}
+                >
+                  {I.sigma} {pooling ? 'Assessing…' : 'Assess poolability'}
+                </button>
+                <span className="cm-meta">
+                  {poolPick.length === 0
+                    ? 'No batches selected.'
+                    : `${poolPick.length} batch${poolPick.length === 1 ? '' : 'es'} selected${poolPick.length < 2 ? ' — poolability compares batches, so it needs at least two' : ''}.`}
+                </span>
+                {poolPick.length > 0 && (
+                  <button className="cm-linkish" onClick={() => { setPoolPick([]); setPool(null); }}>
+                    Clear selection
+                  </button>
+                )}
+              </div>
+
+              {pool && (
+                <div style={{ marginTop: 14 }}>
+                  <div className="cm-meta" style={{ marginBottom: 8 }}>
+                    {pool.batches.join(', ')} · {pool.storageCondition || 'condition not recorded'} ·
+                    {' '}{pool.supportedShelfLife != null
+                      ? <>supported shelf life <b>{pool.supportedShelfLife} months</b>, limited by {pool.limitingParameter} ({pool.limitingDecision === 'pooled' ? 'pooled' : 'shortest batch'})</>
+                      : <>no attribute could be assessed</>}
+                  </div>
+                  <table className="reg-tbl cm-subtable">
+                    <thead>
+                      <tr>
+                        <th>Parameter</th><th>Slopes</th><th>Intercepts</th><th>Decision</th>
+                        <th>Shelf life</th><th>Batches</th><th>Detail</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pool.assessments.map((a, i) => (
+                        <tr key={i}>
+                          <td style={{ fontWeight: 600 }}>{a.parameter}</td>
+                          <td>{a.assessable ? <AncovaCell test={a.slopeTest} /> : <span className="cm-meta">--</span>}</td>
+                          <td>{a.assessable ? <AncovaCell test={a.interceptTest} /> : <span className="cm-meta">--</span>}</td>
+                          <td>
+                            {!a.assessable ? (
+                              <span className="sp-tone-warn">not assessable</span>
+                            ) : (
+                              <span className={'rd-chip tone-' + (a.decision === 'pooled' ? 'ok' : 'warn')}>
+                                {a.decision === 'pooled' ? 'combinable' : 'shortest batch'}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            {a.assessable ? (
+                              <>
+                                <b>{a.shelfLife} mo</b>
+                                {a.decision === 'minimum-of-batches' && a.perBatchShelfLives && (
+                                  <div className="cm-meta">
+                                    per batch: {a.perBatchShelfLives.map((p) => `${p.batchId} ${p.shelfLife}`).join(', ')} mo
+                                  </div>
+                                )}
+                              </>
+                            ) : '--'}
+                          </td>
+                          <td className="cm-meta">
+                            {(a.contributingBatches ?? []).join(', ') || '--'}
+                            {(a.excludedBatches ?? []).length > 0 && (
+                              <div>
+                                excluded: {a.excludedBatches!.map((e) => `${e.batchId} (${e.reason})`).join('; ')}
+                              </div>
+                            )}
+                          </td>
+                          <td className="cm-meta">
+                            {a.assessable
+                              ? (a.notes ?? []).join(' ')
+                              : <>
+                                  {a.reason}
+                                  {(a.conflictingCriteria ?? []).length > 0 && (
+                                    <div>
+                                      {a.conflictingCriteria!.map((c) => `${c.batchId}: ${c.direction === 'increasing' ? '≤' : '≥'} ${c.limit}`).join(' vs ')}
+                                    </div>
+                                  )}
+                                </>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="cm-meta">{pool.basis}. {pool.scopeLimit}</div>
+                </div>
+              )}
+
               <div className="cm-meta" style={{ marginTop: 10 }}>
-                The estimate is <b>evidence, not a claim</b>: it is computed from this study’s own
-                recorded results and is never written to the study’s shelf life. Setting the shelf
-                life the organisation stands behind is a regulatory decision made on the close-out
-                form. Batch poolability (ICH Q1E ANCOVA across the primary batches) is a separate
-                assessment and is not implied by a single-study fit.
+                Both figures are <b>evidence, not a claim</b>: they are computed from the recorded
+                results and are never written to a study’s shelf life. Setting the shelf life the
+                organisation stands behind is a regulatory decision made on the close-out form.
               </div>
             </>
           )}
@@ -1921,6 +2143,7 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
         'run the ICH compliance check',
         'generate the control strategy',
         'estimate shelf life from the recorded stability results (ICH Q1E)',
+        'assess whether stability batches are combinable (ICH Q1E ANCOVA poolability)',
       ],
     }),
     [tab, tabLabel, r?.totalSections, r?.approvedSections, r?.staleSections, r?.openCriticalContradictions, r?.exportReady],
