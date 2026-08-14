@@ -860,7 +860,54 @@ async function enrichWithSafety(projectId: string | number): Promise<string> {
     'Safety Intelligence');
 }
 
-async function enrichWithCMC(projectId: string | number): Promise<string> {
+/**
+ * The Module 3 final-export gate, stated as its verdict rather than its inputs.
+ *
+ * The gate fails closed on three things: a section not approved, an approved
+ * section that went stale afterwards, and an open critical contradiction. Giving
+ * the model only the raw counts ("3 of 10 approved") invites it to guess whether
+ * that is enough to file — and the answer is deterministic and knowable here, so
+ * a guess is strictly worse than the fact.
+ *
+ * Exported for tests: this is the judgment in the CMC enrichment, and it must
+ * not claim a pass it has not established or name a blocker that is not real.
+ */
+export function summarizeModule3Gate(input: {
+  totalSections: number;
+  approvedSections: number;
+  staleApprovedSections: number;
+  openContradictionsBySeverity: Array<{ severity: string; count: number }>;
+  openCriticalContradictions: number;
+}): string {
+  const { totalSections, approvedSections, staleApprovedSections, openCriticalContradictions } = input;
+  if (totalSections <= 0) return '';
+
+  const blockers: string[] = [];
+  if (approvedSections < totalSections) {
+    blockers.push(`${totalSections - approvedSections} section(s) not approved`);
+  }
+  if (staleApprovedSections > 0) {
+    blockers.push(`${staleApprovedSections} approved section(s) went stale after approval`);
+  }
+  if (openCriticalContradictions > 0) {
+    blockers.push(`${openCriticalContradictions} open critical contradiction(s)`);
+  }
+
+  const open = input.openContradictionsBySeverity.filter(c => c.count > 0);
+  let out = `\nApproval: ${approvedSections} of ${totalSections} §3.2 sections approved.`;
+  if (open.length > 0) {
+    out += `\nOpen contradictions: ${open.map(c => `${c.severity} (${c.count})`).join(', ')}.`;
+  }
+  out += blockers.length
+    ? `\nFinal export is BLOCKED by: ${blockers.join('; ')}. These are the gate's own conditions — do not suggest exporting until they clear.`
+    : '\nFinal export would pass the gate on the current data.';
+  return out;
+}
+
+async function enrichWithCMC(
+  projectId: string | number,
+  organizationId?: number
+): Promise<string> {
   const memBlock = await enrichWithDomainMemory(projectId, 'CMC',
     ['cmc_assessment', 'manufacturing_change', 'comparability', 'analytical_method'],
     'CMC Intelligence');
@@ -893,6 +940,53 @@ async function enrichWithCMC(projectId: string | number): Promise<string> {
       if (staleSections.length === 0 && sourceCount.length > 0) {
         buildBlock += '\nAll compiled sections are up to date.';
       }
+    }
+
+    /* ── What is actually BLOCKING the submission ──
+       Staleness alone does not answer the question a CMC lead asks first
+       ("what is stopping me filing?"). The final-export gate fails closed on
+       three things: a section not approved, an approved section that went stale
+       afterwards, and an open critical contradiction. Only the second was
+       visible here, so AnA could describe the build and not what it was waiting
+       on — and would fall back to generic advice on the one question the
+       canonical data can answer exactly.
+
+       Org scope is applied when the caller has it, matching the module3-os
+       routes. When it is absent the query still runs project-scoped rather than
+       being dropped: the pre-existing behaviour, not a widening. */
+    const orgScoped = typeof organizationId === 'number' && organizationId > 0;
+    const scope = orgScoped ? ' AND organization_id = $2' : '';
+    const params = orgScoped ? [String(projectId), organizationId] : [String(projectId)];
+
+    const { rows: sections } = await pool.query(
+      `SELECT approval_state, stale FROM cmc_module3_sections
+       WHERE project_id = $1::text::uuid${scope}`,
+      params,
+    );
+    if (sections.length > 0) {
+      const approved = sections.filter((r: any) => r.approval_state === 'approved').length;
+      const staleApproved = sections.filter(
+        (r: any) => r.approval_state === 'approved' && r.stale === true
+      ).length;
+      const { rows: contradictions } = await pool.query(
+        `SELECT severity, COUNT(*)::int AS cnt FROM cmc_contradictions
+         WHERE project_id = $1::text::uuid${scope} AND status <> 'resolved'
+         GROUP BY severity`,
+        params,
+      );
+      const openCritical =
+        contradictions.find((r: any) => r.severity === 'critical')?.cnt ?? 0;
+
+      buildBlock += summarizeModule3Gate({
+        totalSections: sections.length,
+        approvedSections: approved,
+        staleApprovedSections: staleApproved,
+        openContradictionsBySeverity: contradictions.map((r: any) => ({
+          severity: String(r.severity),
+          count: Number(r.cnt) || 0,
+        })),
+        openCriticalContradictions: Number(openCritical) || 0,
+      });
     }
   } catch {
     // Non-blocking — if build-state query fails, proceed with CMC memory only
@@ -1265,7 +1359,7 @@ export async function enrichContextForChat(params: {
       defensibility: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
       design: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
       safety: () => enrichWithSafety(projectId),
-      cmc: () => enrichWithCMC(projectId),
+      cmc: () => enrichWithCMC(projectId, organizationId),
       csr: () => enrichWithCSR(projectId),
       device: () => enrichWithDevice(projectId),
       diagnostics: () => enrichWithDiagnostics(projectId),
@@ -1526,7 +1620,7 @@ export async function enrichContextForChat(params: {
       { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(projectId, organizationId), name: 'simulation' },
       { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(projectId, submissionType, organizationId), name: 'biostatistics' },
       { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(projectId), name: 'safety' },
-      { test: CMC_TRIGGERS, fn: () => enrichWithCMC(projectId), name: 'cmc' },
+      { test: CMC_TRIGGERS, fn: () => enrichWithCMC(projectId, organizationId), name: 'cmc' },
       { test: CSR_TRIGGERS, fn: () => enrichWithCSR(projectId), name: 'csr' },
       { test: DEVICE_TRIGGERS, fn: () => enrichWithDevice(projectId), name: 'device' },
       { test: DIAGNOSTICS_TRIGGERS, fn: () => enrichWithDiagnostics(projectId), name: 'diagnostics' },
