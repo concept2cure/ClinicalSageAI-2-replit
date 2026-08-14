@@ -587,22 +587,39 @@ export async function applyRewrite(
     );
 
     // ── 1. Snapshot the current version BEFORE overwriting ─────────────
+    //
+    // HISTORY (2026-08-14). This statement named `title`, `status`,
+    // `created_by` and `metadata` — none of which exist on
+    // concept2cure_artifact_versions — and omitted `organization_id` and
+    // `content_hash`, both NOT NULL. It raised 42703 inside this transaction,
+    // so the whole apply rolled back: POST /api/ana/submission-chat/apply-rewrite
+    // returned 500 for every call on any migration-provisioned database. No
+    // test covered this module, which is how it survived.
+    //
+    // The columns below are the intersection of BOTH lineages of this table
+    // (migrations/0000_sweet_joseph.sql and
+    // db/migrations/20260311_concept2cure_artifacts.sql). `updated_at` is
+    // deliberately NOT written even though the drizzle definition declares it:
+    // neither SQL migration creates that column, so writing it would fail on
+    // exactly the databases this fix exists to serve.
+    const predecessorContent = typeof row.content === 'string' ? row.content : '';
     const snapshotResult = await client.query(
       `INSERT INTO concept2cure_artifact_versions
-         (artifact_id, version, content, title, status, created_by, metadata)
+         (artifact_id, organization_id, version, content, content_hash,
+          change_description, created_by_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id`,
       [
         row.id,
+        input.organizationId,
         row.version || 1,
-        row.content,
-        row.title,
-        row.status,
+        predecessorContent,
+        // Digest of the PREDECESSOR's own bytes — the row being preserved.
+        // Storing the incoming content's hash here would label the superseded
+        // version with the digest of the text that replaced it.
+        crypto.createHash('sha256').update(predecessorContent, 'utf8').digest('hex'),
+        `Superseded by AnA submission-chat rewrite (new content ${contentHash.slice(0, 12)}…)`,
         input.userId,
-        JSON.stringify({
-          source: 'submission_chat_rewrite_predecessor',
-          predecessorOf: contentHash,
-        }),
       ]
     );
     const versionSnapshotId = String(snapshotResult.rows[0].id);
@@ -640,6 +657,36 @@ export async function applyRewrite(
       ]
     );
 
+    /* ── 2b. A version row for the NEW content ─────────────────────────────
+       Without this the ledger holds only superseded states: the artifact's
+       CURRENT content had no row of its own, so there was nothing for a
+       signature to point at. That is why the e-signature below linked
+       `artifact_version_id` to the PREDECESSOR snapshot while its own comment
+       claimed it was "bound to the NEW version row" — an inspector following
+       the link landed on the text that had just been replaced.
+
+       Now the new version is recorded and the signature points at it. The
+       UNIQUE(artifact_id, version) constraint is satisfied because the
+       predecessor snapshot above carries row.version and this carries
+       row.version + 1. */
+    const newVersionResult = await client.query(
+      `INSERT INTO concept2cure_artifact_versions
+         (artifact_id, organization_id, version, content, content_hash,
+          change_description, created_by_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id`,
+      [
+        row.id,
+        input.organizationId,
+        newVersion,
+        newContent,
+        contentHash,
+        reason || 'AnA submission-chat rewrite',
+        input.userId,
+      ]
+    );
+    const newVersionRowId = String(newVersionResult.rows[0].id);
+
     // Uniform provenance: a submission-chat rewrite is an 'edit' event, in the
     // rewrite transaction. Best-effort via SAVEPOINT so a provenance hiccup rolls
     // back only itself — it never blocks the rewrite nor poisons the transaction
@@ -655,8 +702,11 @@ export async function applyRewrite(
     });
 
     // ── 3. Optional Part 11 e-signature, bound to the NEW version row.
-    // The signature hash combines meaning + signer + timestamp + content
-    // so a recorded signature is immutably tied to a specific version.
+    // The signature hash combines meaning + signer + timestamp + content, and
+    // `artifact_version_id` now resolves to the row holding that same content
+    // (step 2b) rather than to the predecessor snapshot — following the link
+    // and recomputing the hash must land on the same bytes, or the signature
+    // attests to one version while pointing at another.
     let signatureId: string | null = null;
     if (hasSignature && input.signature) {
       const signerName =
@@ -693,7 +743,7 @@ export async function applyRewrite(
         [
           signatureId,
           row.id,
-          versionSnapshotId,
+          newVersionRowId,
           input.organizationId,
           input.signature.meaning,
           input.userId,
