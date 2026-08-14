@@ -57,14 +57,19 @@ export interface ImprecisionResult {
   n: number;
   runCount: number;
   replicatesPerRun: number;
-  /** Within-run (repeatability) SD and CV%. */
+  /**
+   * Within-run (repeatability) SD, and CV% — null when the grand mean is zero,
+   * because a coefficient of *variation* has no meaning without a level to be
+   * relative to. Null rather than NaN: NaN serializes to `null` anyway, but
+   * silently, and a caller cannot tell it apart from a missing field.
+   */
   repeatabilitySd: number;
-  repeatabilityCvPct: number;
+  repeatabilityCvPct: number | null;
   /** Between-run SD (0 when the between-run variance estimate is negative). */
   betweenRunSd: number;
   /** Within-laboratory (total) SD and CV% = sqrt(repeatability² + between-run²). */
   withinLabSd: number;
-  withinLabCvPct: number;
+  withinLabCvPct: number | null;
   /** ANOVA intermediates, exposed so the result is auditable. */
   anova: {
     msWithin: number;
@@ -121,7 +126,7 @@ export function estimateImprecision(args: ImprecisionArgs): ImprecisionResult {
   const repeatabilitySd = Math.sqrt(repeatabilityVar);
   const betweenRunSd = Math.sqrt(betweenRunVar);
   const withinLabSd = Math.sqrt(withinLabVar);
-  const cv = (sd: number) => (grandMean !== 0 ? (sd / Math.abs(grandMean)) * 100 : NaN);
+  const cv = (sd: number) => (grandMean !== 0 ? (sd / Math.abs(grandMean)) * 100 : null);
 
   return {
     grandMean,
