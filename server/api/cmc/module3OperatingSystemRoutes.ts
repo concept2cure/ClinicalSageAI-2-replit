@@ -17,6 +17,10 @@ import {
   sha256CanonicalJson,
   BINDING_BASIS,
 } from '../../services/part11/signature-persistence';
+import { SIGNATURE_MEANINGS } from './specificationRoutes';
+
+/** The §11.50(a)(3) meanings a signature may carry. */
+type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
 
 const router = express.Router();
 
@@ -658,6 +662,16 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
           ? (req.body as any).reason.trim()
           : `Approved Module 3 section ${sectionKey}`;
+      /* §11.50(a)(3): the signed record must show the MEANING of the signature.
+         The signer's form has always offered one and this endpoint always wrote
+         the constant 'approval', so a signature applied as review or
+         responsibility was recorded as an approval. It is parsed here rather
+         than trusted: an unrecognised value falls back to 'approval' (what this
+         endpoint does) instead of writing whatever arrived into a signed
+         record. */
+      const signMeaning = SIGNATURE_MEANINGS.includes((req.body ?? {}).meaning)
+        ? ((req.body as { meaning: SignatureMeaning }).meaning)
+        : 'approval';
 
       // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
       // the same ledger the specification-approve and batch-release endpoints write.
@@ -667,7 +681,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         command: 'sign',
         target: signTarget,
         reason: signReason,
-        payload: { meaning: 'approval', versionNumber, approvedVersionId },
+        payload: { meaning: signMeaning, versionNumber, approvedVersionId },
         domain: 'cmc',
         surface: 'cmc-module3-section-approve',
         idempotencyKey: (req.body ?? {}).idempotencyKey ?? null,
@@ -685,7 +699,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         userId: actorId,
         target: signTarget,
         reason: signReason,
-        payload: { meaning: 'approval' },
+        payload: { meaning: signMeaning },
         actionId: governance.actionId,
         auditId: governance.auditId,
         sha256Chain: governance.sha256Chain,

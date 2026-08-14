@@ -453,6 +453,29 @@ export interface ListState<T> {
  * zero-row load, and `error` is set only on a fetch failure — the three
  * states a list surface renders instead of a "Sample data" fixture.
  */
+/**
+ * The one empty array every non-array payload resolves to.
+ *
+ * `rows` is the natural dependency for the effect a list surface writes to seed
+ * its working set from the live file — `[live.loading, live.error, live.rows]`,
+ * the shape used by the CMC registers, the Module 3 program-records chain,
+ * specifications and batch records. That effect is correct only if `rows`
+ * changes identity exactly when the fetch re-resolves.
+ *
+ * Returning a fresh `[]` literal broke that on the honest-empty path
+ * specifically: when the payload IS an array the reference comes from state and
+ * is stable, but a 204 or a `{ success: true, data: null }` success — both of
+ * which this module's contract explicitly allows — produced a BRAND NEW array
+ * every render. The consumer's effect then fired on every render, set state,
+ * caused a render, and fired again. Measured at 220 effect runs where one was
+ * correct (see liveRowsStability.test.tsx). Nothing throws, so it presents as a
+ * mysteriously slow tab rather than as the unbounded loop it is.
+ *
+ * Frozen so a caller that mutates its rows in place fails loudly here instead of
+ * silently poisoning the empty state of every other surface.
+ */
+const NO_ROWS: readonly never[] = Object.freeze([]);
+
 export function useLiveRows<T>(
   path: string | null,
   deps: React.DependencyList = [path],
@@ -462,7 +485,7 @@ export function useLiveRows<T>(
   // Without a guard a non-array 200 is silently flattened to zero rows, which
   // renders as "nothing here yet" — an empty state that is not true. Pass
   // `isRowsWith(...)` to have that reported as the error it is.
-  const rows = Array.isArray(st.data) ? st.data : [];
+  const rows = Array.isArray(st.data) ? st.data : (NO_ROWS as unknown as T[]);
   return {
     rows,
     loading: st.loading,
@@ -482,17 +505,43 @@ export function EmptyState({
   hint,
   icon,
   tone = 'idle',
+  busy = false,
+  retry,
+  retryLabel = 'Retry',
+  testId,
 }: {
   title: string;
   hint?: React.ReactNode;
   icon?: React.ReactNode;
   tone?: 'idle' | 'error';
+  /** The panel is standing in for content that is still loading. */
+  busy?: boolean;
+  /** A recovery path for a failed load. UI standards §8: errors always have one. */
+  retry?: () => void;
+  retryLabel?: string;
+  testId?: string;
 }) {
+  /* UI standards §10 (non-negotiable): a failed load is announced assertively as
+     an alert; a loading or empty panel is a polite status. Without these the
+     three states this component exists to distinguish are indistinguishable to
+     a screen reader — it silently swaps text in a plain div. */
+  const isError = tone === 'error';
   return (
-    <div className={`c2c-empty-state tone-${tone}`}>
-      {icon && <span className="c2c-empty-ic">{icon}</span>}
+    <div
+      className={`c2c-empty-state tone-${tone}`}
+      role={isError ? 'alert' : 'status'}
+      aria-live={isError ? 'assertive' : 'polite'}
+      aria-busy={busy || undefined}
+      data-testid={testId}
+    >
+      {icon && <span className="c2c-empty-ic" aria-hidden="true">{icon}</span>}
       <div className="c2c-empty-t">{title}</div>
       {hint && <div className="c2c-empty-h">{hint}</div>}
+      {retry && (
+        <button type="button" className="c2c-empty-retry" onClick={retry}>
+          {retryLabel}
+        </button>
+      )}
     </div>
   );
 }

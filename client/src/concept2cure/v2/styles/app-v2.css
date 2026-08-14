@@ -115,6 +115,17 @@
   background: color-mix(in srgb, var(--warning) 6%, transparent);
 }
 .c2c-v2 .c2c-empty-state.tone-error .c2c-empty-ic { color: var(--warning); opacity: 1; }
+/* UI standards §8: a failed load always offers a recovery path. Sized to the
+   44px touch target the mobile-first rule requires. */
+.c2c-v2 .c2c-empty-state .c2c-empty-retry {
+  margin-top: 6px; min-height: 32px; padding: 7px 14px;
+  font-size: 12px; font-weight: 500; color: var(--accent-200);
+  border: 1px solid var(--accent-muted, var(--border)); border-radius: 99px;
+  background: var(--accent-000, transparent);
+  transition: background var(--dur, .15s), color var(--dur, .15s), border-color var(--dur, .15s);
+}
+.c2c-v2 .c2c-empty-state .c2c-empty-retry:hover { background: var(--accent-100); color: #fff; border-color: var(--accent-100); }
+@media (pointer: coarse) { .c2c-v2 .c2c-empty-state .c2c-empty-retry { min-height: 44px; padding: 11px 18px; } }
 
 /* port helpers — the kit expressed these as one-off inline style attributes;
    classes keep the TSX clean and the CSP surface minimal */

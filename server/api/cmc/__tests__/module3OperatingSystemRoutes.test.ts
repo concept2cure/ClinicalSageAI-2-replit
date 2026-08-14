@@ -128,11 +128,26 @@ describe('module3OperatingSystemRoutes', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'ver-3' }] }) // insert version
       .mockResolvedValueOnce({}) // update section
       .mockResolvedValueOnce({}) // provenance event
+      /* persistGovernedActionSignature runs on the same client, inside the same
+         transaction: it looks the signer up for the §11.50 printed name (failing
+         closed when the user cannot be resolved) and inserts the
+         electronic_signatures row. Those two queries were missing from this
+         sequence, so the mock ran dry at the signer lookup and the handler 500'd
+         on `signer.rows` — the assertions below were measuring an
+         under-specified mock rather than the endpoint. (The §11.70 binding needs
+         no query here: this caller passes an explicit content digest over the
+         version snapshot it just wrote.) */
+      .mockResolvedValueOnce({ rows: [{ name: 'Q. Approver', email: 'q@example.test', title: 'Head of CMC' }] }) // signer snapshot
+      .mockResolvedValueOnce({ rows: [{ id: 9001, signed_at: new Date() }] }) // electronic_signatures insert
       .mockResolvedValueOnce({}); // COMMIT
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
-      .send({ reason: 'Approved after review of the executed batch and CoA.', reauth: { password: 'ok' } });
+      .send({
+        reason: 'Approved after review of the executed batch and CoA.',
+        meaning: 'review',
+        reauth: { password: 'ok' },
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -144,6 +159,10 @@ describe('module3OperatingSystemRoutes', () => {
     const governedArg = mockRecordGoverned.mock.calls[0][1];
     expect(governedArg).toMatchObject({ orgId: 101, userId: 1, command: 'sign', domain: 'cmc' });
     expect(governedArg.target).toBe('cmc_module3_section:proj-1/3.2.P.5');
+    /* §11.50(a)(3): the signed record carries the meaning the SIGNER declared.
+       This endpoint used to write the constant 'approval' regardless, so a
+       signature applied as a review was recorded as an approval. */
+    expect(governedArg.payload).toMatchObject({ meaning: 'review' });
     expect(res.body.governance).toEqual({ actionId: 'act-1', sha256Chain: 'deadbeef' });
     // The write ran as a transaction: BEGIN … COMMIT bracket the section writes.
     const executed = mockQuery.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0].toUpperCase());

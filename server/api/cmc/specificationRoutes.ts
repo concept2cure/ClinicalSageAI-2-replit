@@ -58,8 +58,22 @@ const updateSpecSchema = z.object({
 
 // Governed approval: high-risk e-signature. Approval can ONLY happen here, not
 // via the ungoverned PUT path.
+/**
+ * The meanings a signature may carry, per 21 CFR §11.50(a)(3): the signed
+ * record must show "the meaning (such as review, approval, responsibility, or
+ * authorship) associated with the signature".
+ *
+ * This is an enum rather than free text because the meaning is part of the
+ * signed record, not a comment on it, and because the signer's UI offers
+ * exactly these four.
+ */
+export const SIGNATURE_MEANINGS = ['approval', 'review', 'responsibility', 'authorship'] as const;
+
 const approveSpecSchema = z.object({
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
+  /* Defaulted rather than required so an existing caller that omits it keeps
+     working and still records a meaning — approval is what this endpoint does. */
+  meaning: z.enum(SIGNATURE_MEANINGS).optional().default('approval'),
   reauth: z
     .object({
       password: z.string().optional(),
@@ -307,7 +321,7 @@ router.post('/:id/approve', async (req, res) => {
       details: validationResult.error.errors,
     });
   }
-  const { reason, reauth, idempotencyKey } = validationResult.data;
+  const { reason, meaning, reauth, idempotencyKey } = validationResult.data;
 
   const tenantRaw = (req as any).tenantId || (req as any).tenantContext?.organizationId;
   const orgId = typeof tenantRaw === 'string' ? parseInt(tenantRaw, 10) : Number(tenantRaw);
@@ -356,7 +370,10 @@ router.post('/:id/approve', async (req, res) => {
       command: 'sign',
       target: `specification:${id}`,
       reason,
-      payload: { meaning: 'approval' },
+      // The signer's own meaning, not a constant. It was collected by the
+      // signature form and thrown away here, so every signature was recorded as
+      // "approval" whatever the signer selected.
+      payload: { meaning },
       domain: 'biopharma',
       surface: 'cmc-specifications',
       idempotencyKey: idempotencyKey ?? null,

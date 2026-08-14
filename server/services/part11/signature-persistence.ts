@@ -437,6 +437,7 @@ export async function persistGovernedActionSignature(
 
   // Signer snapshot (printed name — §11.50). Read on the caller's client so the
   // lookup participates in the same transaction. Fail closed if unresolvable.
+  // tenant-isolation-safe: primary-key lookup of the SIGNER'S OWN row, and `users` carries no organization_id — membership is a separate relation, so there is no org column to filter on in this statement. `params.userId` is the authenticated actor resolved from the request (never caller-supplied), and only name/email/title are read, to render the §11.50 printed name of the person signing. Scoping is enforced by the caller's transaction, which is already org-checked.
   const signer = await client.query(
     `SELECT name, email, title FROM users WHERE id = $1 LIMIT 1`,
     [params.userId],
