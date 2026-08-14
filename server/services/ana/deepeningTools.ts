@@ -2,7 +2,8 @@
  * Deepening tools — deterministic engines exposed to AnA:
  *   assess_batch_poolability          -> cmc/shelf-life-poolability.assessBatchPoolability
  *   assess_recorded_batch_poolability -> cmc/recorded-stability.assessRecordedPoolability
- *   assess_benefit_risk      -> regulatory/benefit-risk.assessBenefitRisk
+ *   get_submission_readiness_twin     -> innovation/submission-readiness-twin-service.getDashboard
+ *   assess_benefit_risk               -> regulatory/benefit-risk.assessBenefitRisk
  *
  * @module server/services/ana/deepeningTools
  */
@@ -73,6 +74,36 @@ export const ASSESS_RECORDED_BATCH_POOLABILITY: AnaTool = {
   },
 };
 
+/**
+ * The Submission Readiness Twin, which had no caller.
+ *
+ * `services/innovation/submission-readiness-twin-service.ts` scores a program
+ * against its submission-type criteria and returns module-level readiness, top
+ * risks, ranked recommendations with effort, criteria progress and a trend — and
+ * it is served by five live, integration-tested routes with ZERO references
+ * anywhere in the client. So the product computes a submission-readiness
+ * assessment nobody can reach.
+ *
+ * Exposed here rather than as another dashboard: the payload is risks,
+ * recommendations and gaps — reasoning material — and a permanent grid of
+ * percentages is the surface pattern this project's own principles warn against.
+ * Asking "how ready are we, and what should I fix first?" is the real interface.
+ */
+export const GET_SUBMISSION_READINESS_TWIN: AnaTool = {
+  name: 'get_submission_readiness_twin',
+  description:
+    'Read the Submission Readiness Twin for a program: overall readiness score and trend, per-module readiness (including Module 3), predicted approval probability / review time / deficiency count, top risks with mitigations, ranked recommendations with effort estimates, and criteria met-vs-total. Use for "how ready are we to file?", "what is blocking the submission?", "what should we fix first?". Reads the LATEST assessment — it does not run one, so if none exists say so rather than implying the program scored zero. Predictions are model estimates, not commitments: report them as such and never as a probability of approval you are asserting.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_id: { type: 'string', description: 'The program (uuid) to read. Must belong to the caller\'s organization.' },
+      submission_type: { type: 'string', description: 'e.g. IND, NDA, BLA, 510k. Defaults to IND.' },
+      agency: { type: 'string', description: 'e.g. FDA, EMA, PMDA. Defaults to FDA.' },
+    },
+    required: ['program_id'],
+  },
+};
+
 // Benefit/risk item shape, inlined into both arrays (the AnA schema type does
 // not support $ref/$defs).
 const BR_ITEM_SCHEMA = {
@@ -103,4 +134,9 @@ export const ASSESS_BENEFIT_RISK: AnaTool = {
 };
 
 /** Deepening tools, spread into ALL_ANA_TOOLS. */
-export const DEEPENING_TOOLS: AnaTool[] = [ASSESS_BATCH_POOLABILITY, ASSESS_RECORDED_BATCH_POOLABILITY, ASSESS_BENEFIT_RISK];
+export const DEEPENING_TOOLS: AnaTool[] = [
+  ASSESS_BATCH_POOLABILITY,
+  ASSESS_RECORDED_BATCH_POOLABILITY,
+  GET_SUBMISSION_READINESS_TWIN,
+  ASSESS_BENEFIT_RISK,
+];
