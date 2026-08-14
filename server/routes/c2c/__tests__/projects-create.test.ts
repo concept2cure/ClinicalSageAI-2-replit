@@ -462,4 +462,37 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     expect(res.body.error).toBe('PENDING_STORE');
     expect(sqlCalls()).toContain('ROLLBACK');
   });
+
+  it('names the missing store and the step, so the 503 is actionable', async () => {
+    // A bare { error: 'PENDING_STORE' } is a correct status and an unactionable
+    // outage: this endpoint touches the quota tables, the program row, the
+    // submission spine and the PM-spine anchor, so "some store is missing"
+    // narrows it to four candidates and nobody can tell what to provision.
+    query
+      .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
+      .mockRejectedValueOnce(
+        Object.assign(new Error('relation "submissions" does not exist'), { code: '42P01' }),
+      );
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.store).toBe('submissions');
+    expect(res.body.step).toBe('creating the project');
+    expect(res.body.message).toMatch(/not provisioned/);
+    expect(res.body.message).toMatch(/migrations/);
+  });
+
+  it('still answers when the relation cannot be parsed out of the driver message', async () => {
+    // Postgres does not populate `err.table` for 42P01, so the relation is read
+    // out of the message. An unrecognised message must degrade to a usable
+    // response, not to `store: undefined` rendered as "the undefined store".
+    query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.store).toBeNull();
+    expect(res.body.message).not.toMatch(/undefined|null/);
+    expect(res.body.message).toMatch(/migrations/);
+  });
 });
