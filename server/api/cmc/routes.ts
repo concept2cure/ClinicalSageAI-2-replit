@@ -121,7 +121,15 @@ function respondWriteError(
   if (message.includes('Organization context required')) {
     return res.status(401).json({ success: false, error: 'Organization context required' });
   }
-  console.error(`${fallback}:`, error);
+  /* The scoped logger, with the operation as DATA rather than interpolated into
+     the message. A template-built log line is both a Semgrep format-string
+     finding and a real hazard in a regulated audit trail: a value carrying a
+     format specifier or a newline can forge the shape of a log record. The
+     message is a constant; everything variable is a field. */
+  logger.error('CMC write failed', {
+    operation: fallback,
+    error: message,
+  });
   return res.status(500).json({ success: false, error: fallback });
 }
 

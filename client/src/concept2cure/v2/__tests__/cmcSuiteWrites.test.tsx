@@ -55,11 +55,12 @@ const callsTo = (method: string, url: string) =>
  *
  * Looking the field up BY ITS LABEL is the point: it only resolves because the
  * drawer's labels are now associated with their controls. A required field's
- * label carries a trailing "*", so the match is anchored at the start rather
- * than exact.
+ * label carries a trailing "*", so the match is a prefix rather than exact —
+ * expressed as a matcher function rather than a `new RegExp('^' + …)`, which
+ * builds a pattern out of a variable and needs the label escaped to be correct.
  */
 function type(label: string, value: string) {
-  const field = screen.getByLabelText(new RegExp('^' + label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  const field = screen.getByLabelText((content) => content.startsWith(label));
   fireEvent.change(field, { target: { value } });
 }
 
