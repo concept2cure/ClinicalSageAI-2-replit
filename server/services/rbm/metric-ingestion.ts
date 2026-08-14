@@ -233,7 +233,7 @@ export interface IngestResult {
 function latestByKey(observations: ParsedObservation[]): Map<string, ParsedObservation> {
   const out = new Map<string, ParsedObservation>();
   for (const o of observations) {
-    const key = `${o.scopeLevel} ${o.scopeId ?? ''} ${o.metricKey.toLowerCase()}`;
+    const key = `${o.scopeLevel}\u0000${o.scopeId ?? ''}\u0000${o.metricKey.toLowerCase()}`;
     const prev = out.get(key);
     if (!prev || (o.observedAt ?? '') >= (prev.observedAt ?? '')) out.set(key, o);
   }

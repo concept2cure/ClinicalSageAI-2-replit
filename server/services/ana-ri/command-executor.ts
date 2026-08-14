@@ -1060,9 +1060,17 @@ export async function updateTask(
     const mirroredTaskId = `TASK-PT-${ctx.organizationId}-${params.taskId}`;
     const requestedStatus = mirrorStatus((params.updates as Record<string, unknown>).status);
     let mirrorFrom: string | null = null;
+    /** The approval state of the mirror row, so the e-signature gate can be
+     *  applied here on the same terms the HTTP route applies it. */
+    let mirrorApproval: {
+      approvalRequired: boolean | null;
+      approvalStatus: string | null;
+      approvers: unknown;
+    } | null = null;
     try {
       const currentRes = await pool.query(
-        `SELECT status FROM unified_tasks
+        `SELECT status, approval_required, approval_status, approvers
+           FROM unified_tasks
          WHERE source_entity_type = 'project_task'
            AND source_entity_id = $1
            AND organization_id = $2
@@ -1070,6 +1078,13 @@ export async function updateTask(
         [String(params.taskId), ctx.organizationId]
       );
       mirrorFrom = currentRes.rows[0] ? String(currentRes.rows[0].status) : null;
+      mirrorApproval = currentRes.rows[0]
+        ? {
+            approvalRequired: currentRes.rows[0].approval_required as boolean | null,
+            approvalStatus: currentRes.rows[0].approval_status as string | null,
+            approvers: currentRes.rows[0].approvers,
+          }
+        : null;
     } catch (err) {
       // No mirror row readable (unprovisioned column, transient): fall through
       // and treat this as an unmirrored task, exactly as before.
@@ -1090,6 +1105,36 @@ export async function updateTask(
           message: `A task in "${mirrorFrom}" cannot move to "${requestedStatus}".`,
         };
       }
+    }
+
+    // ── §11.50 e-signature gate ────────────────────────────────────────────
+    // The HTTP route answers 428 ESIGN_REQUIRED when an approval-gated task is
+    // completed without a PIN-verified signature (taskManagement.routes.ts).
+    // This path completed the very same canonical row and never consulted it,
+    // so asking AnA to "mark it done" cleared a gate that the button in front
+    // of the user could not clear. That is not an AnA feature — it is the
+    // control being routed around, and the signature is exactly the thing that
+    // cannot be delegated to an agent: §11.200 requires it to attest that a
+    // PERSON decided.
+    //
+    // AnA cannot collect a PIN, so there is no signature to verify here and
+    // nothing to add to the ceremony. The only correct answer is to refuse and
+    // hand the user back to the surface that CAN run it. Checked before any
+    // write, so a refusal never leaves project_tasks already mutated.
+    if (
+      requestedStatus === 'completed' &&
+      mirrorApproval?.approvalRequired === true &&
+      mirrorApproval.approvalStatus !== 'approved'
+    ) {
+      return {
+        success: false,
+        action: 'update_task',
+        message:
+          `Task ${params.taskId} is approval-gated, so completing it needs an electronic ` +
+          `signature — your signing PIN, the meaning of the signature, and a reason. ` +
+          `I can't sign on your behalf. Open the task on the task board and complete it ` +
+          `there; the signature has to be yours.`,
+      };
     }
 
     setClauses.push('updated_at = NOW()');
@@ -3122,11 +3167,18 @@ export async function freezeDocument(
         message: `Document "${res.rows[0].title}" is already frozen.`,
       };
 
-    // Mark as frozen
-    await pool.query(
-      `UPDATE authoring_documents SET status = 'FROZEN', updated_at = NOW() WHERE id = $1`,
-      [docId]
-    );
+    // PROPOSE, DO NOT WRITE — see the note in submit_document. Freezing is a
+    // governed transition with no audit row on this path, and the handler was
+    // dead anyway (the SELECT filters a column authoring_documents does not
+    // have). Refuse rather than switch on an unaudited write.
+    return {
+      success: false,
+      action: 'freeze_document',
+      data: { docId, requiresHumanAction: true },
+      message:
+        `Freezing a document is a governed transition, so it has to be done by a person ` +
+        `in the document panel where the reason is captured. I can't freeze it for you.`,
+    };
     return {
       success: true,
       action: 'freeze_document',
@@ -3244,15 +3296,31 @@ export async function submitDocument(
     );
     if (res.rows.length === 0)
       return { success: false, action: 'submit_document', message: `Document ${docId} not found.` };
-    await pool.query(
-      `UPDATE authoring_documents SET status = 'SUBMITTED', updated_at = NOW() WHERE id = $1`,
-      [docId]
-    );
+    // PROPOSE, DO NOT WRITE — same shape as sign_document above.
+    //
+    // Two things were true here and each makes the write wrong on its own:
+    //
+    //  1. Submitting a document is a governed transition on a regulated record
+    //     and nothing on this path wrote an audit row, while the returned
+    //     message said "Audit trail recorded." That sentence is the one a user
+    //     would repeat to an inspector, and it was false.
+    //  2. The handler never ran anyway. The SELECT above filters
+    //     `organization_id`, and authoring_documents has no such column — it is
+    //     `tenant_id` (db/migrations/20260725_authoring_document_loop_tables.sql).
+    //     Postgres raises 42703 and the catch below swallows it.
+    //
+    // So repairing the column would not have restored a working feature; it
+    // would have switched on an unaudited governed write that had never
+    // actually executed. Refusing is the honest state, and it matches the rule
+    // this module already follows for signatures.
     return {
-      success: true,
+      success: false,
       action: 'submit_document',
-      data: { docId, title: res.rows[0].title },
-      message: `Document "${res.rows[0].title}" submitted. Status updated to SUBMITTED. Audit trail recorded.`,
+      data: { docId, requiresHumanAction: true },
+      message:
+        `Submitting a document is a governed transition, so it has to be done by a person ` +
+        `in the document panel where the reason and signature are captured. I can't submit ` +
+        `it for you.`,
     };
   } catch (err: unknown) {
     return {
