@@ -996,6 +996,12 @@ router.post('/:id/sections/:key/ai-draft', async (req: Request, res: Response) =
   // ── Data-Room hybrid RAG (same retrieval the legacy route used) ────────────
   let evidenceBlock = '';
   let sourcesRetrieved = 0;
+  /* 'empty' (retrieval ran, corpus had nothing above threshold) and 'failed'
+     (retrieval did not complete) are different facts, and only one of them
+     says anything about the Data Room. Conflating them meant an ungrounded
+     draft born of an outage looked exactly like an ordinary one. */
+  let retrievalStatus: 'ok' | 'empty' | 'failed' = 'empty';
+  let retrievalError: string | null = null;
   try {
     const { getEmbeddingService } = await import('../../services/enhancedEmbeddingService.js');
     const embeddingService = getEmbeddingService(pool);
@@ -1014,12 +1020,20 @@ router.post('/:id/sections/:key/ai-draft', async (req: Request, res: Response) =
         '\n--- END EVIDENCE ---\n\n' +
         'When your content relies on evidence above, cite it inline using [SRC-n]. ' +
         'Do NOT fabricate citations for evidence not provided.';
+      retrievalStatus = 'ok';
+    } else {
+      // Retrieval RAN and the corpus held nothing above threshold — a fact
+      // about the Data Room, unlike a failure. Set explicitly rather than left
+      // to the initialiser so all three outcomes are visible at the branch.
+      retrievalStatus = 'empty';
     }
   } catch (e: any) {
-    console.warn('[c2c/documents] ai-draft Data Room retrieval failed (non-fatal):', e?.message);
+    retrievalStatus = 'failed';
+    retrievalError = e?.message ? String(e.message).slice(0, 300) : 'unknown error';
+    console.warn('[c2c/documents] ai-draft Data Room retrieval failed (non-fatal):', retrievalError);
   }
 
-  sse({ type: 'meta', sourcesRetrieved });
+  sse({ type: 'meta', sourcesRetrieved, retrievalStatus, retrievalError });
 
   // ── Stream the draft from the gateway ──────────────────────────────────────
   try {
@@ -1097,6 +1111,10 @@ Provide detailed, compliance-ready content following ${section.agency} guideline
         model: gwResponse.model,
         provider: gwResponse.provider,
         sourcesRetrieved,
+        /* An ungrounded draft caused by a retrieval outage must not look like
+           one produced against an empty corpus. */
+        retrievalStatus,
+        retrievalError,
         generatedAt: new Date().toISOString(),
       },
     });

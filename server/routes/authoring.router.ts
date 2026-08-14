@@ -2724,6 +2724,11 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     // ── Retrieve Data Room evidence for section context ───────────────
     let evidenceBlock = '';
     let sourcesRetrieved = 0;
+    /** Whether Data Room retrieval ran, and what it found. 'empty' (ran, found
+     *  nothing) and 'failed' (did not run to completion) are different facts
+     *  and only one of them says anything about the corpus. */
+    let retrievalStatus: 'ok' | 'empty' | 'failed' = 'empty';
+    let retrievalError: string | null = null;
     // The chunks this draft is retrieved from, captured so the accept endpoint can
     // record verified source spans against them (source-attribution Phase 3). Each
     // carries the raw lumen_data_atoms.source_id that searchHybrid now returns
@@ -2760,9 +2765,23 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
           '\n--- END EVIDENCE ---\n\n' +
           'When your content relies on evidence above, cite it inline using [SRC-n]. ' +
           'Do NOT fabricate citations for evidence not provided.';
+        retrievalStatus = 'ok';
+      } else {
+        // Retrieval RAN and the corpus had nothing above threshold. Distinct
+        // from a failure: here we know there is no evidence, which is itself a
+        // fact about the Data Room.
+        retrievalStatus = 'empty';
       }
     } catch (e: any) {
-      console.warn('[Authoring] Data Room retrieval failed (non-fatal):', e.message);
+      /* A failed retrieval used to warn to the console and continue, leaving
+         `sourcesRetrieved = 0` — indistinguishable from "the corpus had
+         nothing". The model then drafted with no evidence block and the
+         response said "AI draft generated successfully". So the one case where
+         a reviewer most needs to know the draft is ungrounded looked exactly
+         like the ordinary case. Recorded and reported instead. */
+      retrievalStatus = 'failed';
+      retrievalError = e?.message ? String(e.message).slice(0, 300) : 'unknown error';
+      console.warn('[Authoring] Data Room retrieval failed (non-fatal):', retrievalError);
     }
 
     // Generate with AI Gateway (Claude primary)
@@ -2855,6 +2874,10 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
                 provider: gwResponse.provider,
                 sourcesRetrieved,
                 attributableSources,
+                /* Carried so a reader can tell an ungrounded draft from a
+                   grounded one, and a retrieval outage from an empty corpus. */
+                retrievalStatus,
+                retrievalError,
               },
             },
             message:
@@ -2862,7 +2885,9 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
                 ? `AI draft generated with ${sourcesRetrieved} Data Room source${
                     sourcesRetrieved !== 1 ? 's' : ''
                   }`
-                : 'AI draft generated successfully',
+                : retrievalStatus === 'failed'
+                  ? 'AI draft generated WITHOUT Data Room evidence — retrieval failed, so this draft is ungrounded and its claims are unverified'
+                  : 'AI draft generated with no Data Room sources above the relevance threshold',
           });
         }
       }
