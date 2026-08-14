@@ -165,7 +165,61 @@ Stated rather than implied.
   follow-up data) now distinguishes them — 3 at risk giving S=0.533 versus 4
   giving S=0.600.
 
-- **~55 biostat endpoints remain shape-tested only.** Sample-size beyond the one
+- **Round 3 pinned power, assurance and MMRM sizing** —
+  `tests/biostat/power-and-sizing-reference.test.ts`, 20 tests. These differ from
+  rounds 1–2 in having *closed-form* answers, so the expectation is derived in
+  the test (`power = Φ(δ√(n/2) − z₁₋α)`) rather than quoted: a formula cannot be
+  mistranscribed the way a table constant can.
+
+  The two strongest tests are cross-implementation checks, not value checks.
+  **MMRM with one visit and ρ=0 returns exactly the classic
+  n = 2(z_{α/2}+z_β)²σ²/δ² = 85 per arm** — a repeated-measures design collapsing
+  to the textbook answer exercises the covariance construction, the matrix
+  inversion, the variance factor and the rounding all at once, against a number
+  computed a completely different way. And **assurance with a point-mass prior
+  equals frequentist power at that point** to 7 significant figures, which is the
+  defining property of an integral over a collapsing prior.
+
+  Assurance also falls monotonically as the prior widens and stays below power at
+  the mean. That direction matters commercially: assurance *above* power-at-the-
+  mean would flatter a programme's probability of success, which is the one error
+  a sponsor must not be sold.
+
+  Mutation-verified: power treating n as total rather than per-arm (7 tests
+  fail), power sign flipped (8), MMRM rounding down instead of up — a silent
+  under-powering of the trial (7), MMRM one-sided by mistake (7).
+
+- **Round 4 pinned win ratio and event projection — and FOUND A REAL DEFECT.**
+  `tests/biostat/win-ratio-and-projection-reference.test.ts`, 20 tests. Unlike
+  rounds 1–3 this one did not merely confirm correct mathematics.
+
+  `winRatioAnalysis` returned `Infinity` when an arm had zero losses. **JSON
+  serializes `Infinity` to `null`**, so `POST /api/biostat/win-ratio` emitted
+  `"winRatio": null` beside `"success": true` — and the all-ties case (no
+  information at all) emitted exactly the same thing. Overwhelming benefit and
+  no evidence were indistinguishable on the wire, silently, in the primary
+  endpoint of a hierarchical composite design. `ciLower`/`ciUpper` were `NaN`,
+  which serializes to `null` too.
+
+  Fixed: `winRatio` and the CI bounds are now `number | null`, so the wire value
+  is intentional rather than incidental, and `wins`/`losses`/`ties` remain to
+  distinguish the cases. A JSON round-trip regression test pins it at the layer
+  where the defect actually bit — in-process the values looked fine, which is why
+  nothing had noticed.
+
+  **My own probe had hidden it.** The first exploration printed the result
+  through `JSON.stringify`, which showed `null` and looked correct; only the
+  strict test revealed `Infinity`. The viewing method destroyed the evidence.
+
+  **The class is wider than the fix.** `clinical-performance.computeDiagnosticAccuracy`
+  returns `lrPositive: Infinity` whenever specificity = 1 — ordinary in a small
+  IVD validation study — and it reaches the wire as `null` the same way.
+  Demonstrated, not inferred. `analytical-performance-extensions` does the same
+  for `shelfLife` and `predictedShelfLife`. **Not fixed here**: those belong to
+  the IVDR/stability modules with their own consumers and conventions, and
+  changing their contract is the owner's call, not a side effect of this work.
+
+- **~30 biostat endpoints remain shape-tested only.** Sample-size beyond the one
   existing textbook case, assurance, MMRM, MRMC, win ratio, external-control
   borrowing, enrollment/event forecasting and the analytical-performance family
   are still unpinned, and each deserves the same treatment.
