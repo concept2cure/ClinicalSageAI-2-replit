@@ -9,6 +9,7 @@ import {
 } from '../../services/cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
+import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
@@ -354,7 +355,29 @@ router.post('/contradictions/:projectId', async (req, res) => {
       client.release();
     }
 
-    res.json({ success: true, contradictions, impactTasks: deriveImpactTasks(contradictions) });
+    /* Route the derived work into the central task board.
+       `deriveImpactTasks` has always produced a title, priority and reviewer
+       list per contradiction, and this endpoint returned that array and threw
+       it away — so the one place the product knows exactly who must do what
+       never became something anyone was holding.
+
+       Additive and non-blocking by design: an existing task for a contradiction
+       type is left alone (it carries assignment and status the sweep knows
+       nothing about), and a tasking failure does not fail the sweep — but is
+       reported, so the caller never assumes tasks landed when they did not.
+       See services/cmc/contradiction-tasks. */
+    const taskSync = await syncContradictionTasks({
+      organizationId: orgId,
+      projectUuid: String(projectId),
+      contradictions,
+    });
+
+    res.json({
+      success: true,
+      contradictions,
+      impactTasks: deriveImpactTasks(contradictions),
+      tasks: taskSync,
+    });
   } catch (error) {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
