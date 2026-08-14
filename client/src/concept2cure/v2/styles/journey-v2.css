@@ -314,7 +314,9 @@
 .c2c-v2 .cm-kicker{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
 .c2c-v2 .cm-title{font-size:23px;font-weight:600;color:var(--text-100);margin:4px 0 5px;}
 .c2c-v2 .cm-meta{font-size:12.5px;color:var(--text-400);}
-.c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+/* auto-fit, not a fixed four: a board with five or six measures must not wrap
+   a lone tile onto a row of its own. */
+.c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
 .c2c-v2 .cm-matrix{overflow-x:auto;}
 .c2c-v2 .cm-matrix table{border-collapse:collapse;width:100%;font-size:12px;}
 .c2c-v2 .cm-matrix th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);font-weight:700;padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
@@ -361,11 +363,7 @@
 .c2c-v2 .cm-push button svg{width:12px;height:12px;}
 .c2c-v2 .cm-pushbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
 
-/* ── CMC suite: data entry, Module 3 build, provenance ──
-   The KPI strip is now driven by how many measures a surface has rather than a
-   fixed four, so the stability and build boards do not wrap a fifth tile onto a
-   row of its own. */
-.c2c-v2 .cm-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+/* ── CMC suite: data entry, Module 3 build, provenance ── */
 /* The "add a record" control lives in a card header next to its title. */
 .c2c-v2 .cm-reg-add{margin-left:auto;flex-shrink:0;}
 .c2c-v2 .cm-inline-select{margin-left:auto;width:auto;min-width:190px;flex-shrink:0;}
