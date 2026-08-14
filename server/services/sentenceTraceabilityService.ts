@@ -23,6 +23,7 @@
  */
 
 import { pool } from '../db.js';
+import auditService from './auditService';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 import { createScopedLogger } from '../utils/logger.js';
@@ -997,25 +998,23 @@ async function storeTraceabilityReport(
     contentHash: string;
   }
 ): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES (0, $1, 'traceability_report_generated', 'document', $2, $3, '0.0.0.0', NOW())`,
-      [
-        organizationId,
-        documentId,
-        JSON.stringify({
-          projectId,
-          totalSentences: stats.totalSentences,
-          tracedSentences: stats.tracedSentences,
-          coveragePercent: stats.coveragePercent,
-          averageConfidence: stats.averageConfidence,
-          contentHash: stats.contentHash,
-          generatedAt: new Date().toISOString(),
-        }),
-      ]
-    );
-  } catch {
-    // Non-critical
-  }
+  // Chained via auditService. The previous raw INSERT named columns audit_logs
+  // does not have (organization_id / entity_type / entity_id / details), so it
+  // raised 42703 into a bare catch and recorded nothing — §11.10(e) coverage
+  // reports were themselves unaudited.
+  await auditService.logAction({
+    organizationId,
+    action: 'traceability_report_generated',
+    resourceType: 'document',
+    resourceId: documentId,
+    details: {
+      projectId,
+      totalSentences: stats.totalSentences,
+      tracedSentences: stats.tracedSentences,
+      coveragePercent: stats.coveragePercent,
+      averageConfidence: stats.averageConfidence,
+      contentHash: stats.contentHash,
+      generatedAt: new Date().toISOString(),
+    },
+  });
 }

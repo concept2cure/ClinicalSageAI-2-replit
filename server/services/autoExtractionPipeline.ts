@@ -20,6 +20,7 @@
  */
 
 import { pool } from '../db.js';
+import auditService from './auditService';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
@@ -939,55 +940,47 @@ function updateStage(
 }
 
 async function storeJob(job: ExtractionJob): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES ($1, $2, 'extraction_job_created', 'file', $3, $4, '0.0.0.0', NOW())`,
-      [
-        job.userId,
-        job.organizationId,
-        job.fileId,
-        JSON.stringify({
-          jobId: job.id,
-          fileName: job.fileName,
-          fileType: job.fileType,
-          fileSize: job.fileSize,
-          priority: job.priority,
-        }),
-      ]
-    );
-  } catch {
-    /* non-critical */
-  }
+  // Chained via auditService — the previous raw INSERT named columns audit_logs
+  // does not have (organization_id / entity_type / entity_id / details), so it
+  // raised 42703 into a bare catch and recorded nothing.
+  await auditService.logAction({
+    organizationId: job.organizationId,
+    userId: job.userId,
+    action: 'extraction_job_created',
+    resourceType: 'file',
+    resourceId: job.fileId,
+    details: {
+      jobId: job.id,
+      fileName: job.fileName,
+      fileType: job.fileType,
+      fileSize: job.fileSize,
+      priority: job.priority,
+    },
+  });
 }
 
 async function updateJobInDB(job: ExtractionJob): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES ($1, $2, $3, 'file', $4, $5, '0.0.0.0', NOW())`,
-      [
-        job.userId,
-        job.organizationId,
-        job.status === 'completed' ? 'extraction_job_completed' : 'extraction_job_failed',
-        job.fileId,
-        JSON.stringify({
-          jobId: job.id,
-          fileName: job.fileName,
-          status: job.status,
-          durationMs: job.durationMs,
-          qualityScore: job.result?.qualityScore,
-          tablesExtracted: job.result?.tables.length || 0,
-          sectionsDetected: job.result?.sections.length || 0,
-          entitiesFound: job.result?.entities.length || 0,
-          artifactsStored: job.result?.artifacts.length || 0,
-          error: job.error,
-        }),
-      ]
-    );
-  } catch {
-    /* non-critical */
-  }
+  // Chained via auditService (see storeJob above for why the raw INSERT could
+  // never have written a row).
+  await auditService.logAction({
+    organizationId: job.organizationId,
+    userId: job.userId,
+    action: job.status === 'completed' ? 'extraction_job_completed' : 'extraction_job_failed',
+    resourceType: 'file',
+    resourceId: job.fileId,
+    details: {
+      jobId: job.id,
+      fileName: job.fileName,
+      status: job.status,
+      durationMs: job.durationMs,
+      qualityScore: job.result?.qualityScore,
+      tablesExtracted: job.result?.tables.length || 0,
+      sectionsDetected: job.result?.sections.length || 0,
+      entitiesFound: job.result?.entities.length || 0,
+      artifactsStored: job.result?.artifacts.length || 0,
+      error: job.error,
+    },
+  });
 }
 
 async function logExtractionAudit(job: ExtractionJob): Promise<void> {
