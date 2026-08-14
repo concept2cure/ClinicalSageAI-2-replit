@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T22:41:31.387Z",
+  "generatedAt": "2026-08-14T22:48:33.666Z",
   "git": {
-    "sha": "800a3a5524e1c1e433c485366a29db8787783428",
+    "sha": "a6271e7de77046d75d300dd5a8420bba39f9ecb5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2489,6 +2489,10 @@
         "lines": 1864
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 1859
+      },
+      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 1855
       },
@@ -2523,10 +2527,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
         "lines": 1813
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 1798
       },
       {
         "file": "design-system/ui_kits/home/Projects.jsx",
