@@ -957,6 +957,17 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260508_ivd_diagnostic_surfaces.sql',
   'migrations/001_create_ivdr_tables.sql',
 
+  // ── The tenant key 20260813d indexes, which nothing ever created ─────────
+  // electronic_signatures.organization_id is declared in shared/schema.ts and
+  // REQUIRED by server/services/part11/signature-persistence.ts (it throws
+  // without it), but no migration created it — the drizzle-push substrate and
+  // this lineage had diverged. Two things were broken by that: 20260813d below
+  // fails 42703 building its index, which takes out EVERY file after it in this
+  // list including the isolation sweep; and the sweep skips tables with no
+  // tenant column, so the Part 11 signature record sat unpoliced rather than
+  // mis-policied. MUST stay immediately before 20260813d.
+  'migrations/20260813c2_electronic_signatures_tenant_key.sql',
+
   // ── Single e-signature write path, D6 (added 2026-08-13) ─────────────────
   // The governed sign action (/api/c2c/actions/sign) now persists an
   // electronic_signatures row in the same transaction as its ledger write.
