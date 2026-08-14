@@ -72,7 +72,14 @@ discoverable from the other. Until then this document is the map of which is whi
 > table below is currently chain-orphaned.**
 
 The wiring list is `DOMAIN_HISTORY_TABLES` in that module — 23 entries, all
-`linked: false` — ordered here by effort (writer-site count = number of edits):
+`linked: false` — ordered here by effort (writer-site count = number of edits).
+
+**It is not the same 23 as the (b) set in §4**, and the difference is deliberate: the
+wiring list drops three (b) tables that record no governance (noted at the end of this
+section) and adds three tables that do — `regulatory_audit_logs` (verdict (a), §3.3) and
+`charter_audit_events` / `document_audit_trail` (verdict (c) no-reader, §5.2, but still
+receiving governed writes). Membership is "records a governed domain event", not "carries
+verdict (b)".
 
 | # | Table | Writer sites to wire | Where |
 |---|---|---|---|
@@ -250,7 +257,7 @@ Evidence for every row: `grep -rniE "INSERT INTO <name>|insert\(<drizzleConst>\)
 | `coauthor_status_history` | `migrations/0000_sweet_joseph.sql:1606` | `shared/schema.ts:11616` only |
 | `csr_extraction_log` | `migrations/0005_csr_knowledge_database.sql:915` | `shared/schema/csr-knowledge-db.ts:1516` only |
 | `relation_extraction_log` | `migrations/0006_regulatory_atoms.sql:335` | `shared/schema/regulatory-atoms.ts:393` only |
-| `program_activity_log` | `migrations/20260524_program_workbench_schema.sql:222` | `shared/schema/programs.ts:309` only; `routes/programs.ts:512` notes in place that the real feed does not exist |
+| `program_activity_log` | `migrations/20260524_program_workbench_schema.sql:222` | `shared/schema/programs.ts:309` only. `routes/programs.ts:512` names it as "the real feed" alongside `audit_logs` but notes neither is reachable from that router's id — an intended reader that was never built over a table that was never written |
 | `vault_document_audit_logs` | **no DDL anywhere** | Phantom name. Referenced only as a target by three consolidated migration helpers (`db/migrations/_consolidated/0002_add_organization_id.ts:20`, `0002_add_org_id_column.ts:26`, `0004_add_tenant_indexes.ts:30`) |
 
 **Audit-schema infrastructure, matched by the `audit.` prefix only** — same zero-reference
