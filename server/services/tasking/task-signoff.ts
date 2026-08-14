@@ -53,6 +53,28 @@ export type SignoffResult =
   | { required: true; ok: false; status: number; code: string; error: string };
 
 /**
+ * `approvers` is a `json` column, so it may hold anything a past writer put
+ * there. Accept the two shapes that are meaningful — a bare array of user ids,
+ * or an array of `{ userId }` records — and ignore everything else rather than
+ * throwing. Returning [] means "no designation", which leaves the gate open;
+ * that is the safe direction here because the alternative is bricking every
+ * approval-gated task on a malformed value.
+ */
+function normaliseApprovers(raw: unknown): number[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap(entry => {
+    if (typeof entry === 'number' && Number.isInteger(entry)) return [entry];
+    if (typeof entry === 'string' && /^\d+$/.test(entry)) return [Number(entry)];
+    if (entry && typeof entry === 'object') {
+      const id = (entry as { userId?: unknown }).userId;
+      if (typeof id === 'number' && Number.isInteger(id)) return [id];
+      if (typeof id === 'string' && /^\d+$/.test(id)) return [Number(id)];
+    }
+    return [];
+  });
+}
+
+/**
  * Decide whether this transition needs a signature and, if so, verify it.
  * Pure apart from the PIN check; the caller persists the manifestation.
  */
@@ -63,6 +85,9 @@ export async function requireTaskSignoff(params: {
     title: string;
     approvalRequired: boolean | null;
     approvalStatus: string | null;
+    /** `unified_tasks.approvers` — the designated signers for this checkpoint.
+     *  See the enforcement note in the body. */
+    approvers?: unknown;
   };
   toStatus: string;
   actor: SignoffActor;
@@ -76,6 +101,32 @@ export async function requireTaskSignoff(params: {
     task.approvalRequired === true &&
     task.approvalStatus !== 'approved';
   if (!needsSignoff) return { required: false };
+
+  // Designated-approver scoping.
+  //
+  // `unified_tasks.approvers` names who may clear this checkpoint. Where it is
+  // populated we enforce it: identity alone is not authority, and a verified PIN
+  // proves only that the signer is who they say they are, not that they are the
+  // person the workflow nominated.
+  //
+  // Where it is EMPTY the gate stays open to any org member with an enrolled
+  // PIN, and that is a real, known limitation rather than an oversight: nothing
+  // in the product writes this column yet and there is no UI to nominate
+  // approvers, so enforcing an empty list would lock every approval-gated task
+  // permanently. Quorum and role-based gate types are NOT implemented — the
+  // surface copy must not claim they are. Closing that gap means a designation
+  // UI plus a quorum policy, which is a feature, not a guard.
+  const designated = normaliseApprovers(task.approvers);
+  if (designated.length > 0 && (actor.userId === null || !designated.includes(actor.userId))) {
+    return {
+      required: true,
+      ok: false,
+      status: 403,
+      code: 'ESIGN_NOT_DESIGNATED_APPROVER',
+      error:
+        'This approval checkpoint is assigned to specific approvers, and you are not one of them.',
+    };
+  }
 
   if (!signature) {
     return {

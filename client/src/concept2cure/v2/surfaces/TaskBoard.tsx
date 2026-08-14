@@ -34,6 +34,28 @@ import '../styles/project-home-v2.css';
  * returns numeric FK ids (stringified) for project / assignee / assignedBy and
  * does NOT return blockedReason / assignmentType (client-only, optional).
  */
+/** Mirrors the wire shape from server/routes/taskBoard.routes.ts. */
+interface SignatureManifestation {
+  signedById: number | null;
+  signedByName: string;
+  meaning: string;
+  reason: string;
+  signedAt: string;
+  method: string;
+}
+
+/** Signed-at, rendered in the reader's own locale and timezone with the offset
+ *  shown. A §11.50 timestamp that silently renders in server time is a real
+ *  hazard when the reader is reconstructing a sequence of events. */
+function fmtSigned(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+  });
+}
+
 interface TaskItem {
   taskId: string;
   title: string;
@@ -55,6 +77,9 @@ interface TaskItem {
   regulatoryImpact: boolean;
   approvalRequired: boolean;
   approvalStatus: string;
+  /** §11.50 manifestations from GET /api/task-management/board, oldest first.
+   *  Always an array — the route normalises a null/legacy column to []. */
+  approvalHistory: SignatureManifestation[];
   dependsOn: string[];
   blocks: string[];
   comments: number;
@@ -546,7 +571,25 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                 <div className="tb-col-h"><span className="kdot" data-tone={col.tone} /><span>{col.label}</span><span className="kn">{items.length}</span></div>
                 <div className="tb-col-b">
                   {items.map(t => (
-                    <div key={t.taskId} className="tb-card" data-blocked={t.blocked || undefined} onClick={() => setSel(t)}>
+                    // role/tabIndex/key handling, not a bare div+onClick: the
+                    // card is the board's primary affordance and was reachable
+                    // by mouse only, so a keyboard user could not open a task
+                    // from the board view at all (SC 2.1.1). The card contains
+                    // its own buttons, so it cannot be a <button> — hence the
+                    // explicit role rather than a native element.
+                    <div
+                      key={t.taskId}
+                      className="tb-card"
+                      data-blocked={t.blocked || undefined}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open ${t.title}`}
+                      onClick={() => setSel(t)}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget) return; // let inner buttons act
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(t); }
+                      }}
+                    >
                       <div className="tb-card-top">
                         <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
                         {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
@@ -585,7 +628,19 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <div className="tb-path">
           <div className="tb-path-h">Critical path -- {critChain.length} tasks -- computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
           {critChain.map((t, i) => (
-            <div key={t.taskId} className="tb-path-row" data-status={t.status} onClick={() => setSel(t)}>
+            <div
+              key={t.taskId}
+              className="tb-path-row"
+              data-status={t.status}
+              role="button"
+              tabIndex={0}
+              aria-label={`Open ${t.title}`}
+              onClick={() => setSel(t)}
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(t); }
+              }}
+            >
               <div className="tb-path-rail"><span className="tb-path-dot" data-status={t.status} />{i < critChain.length - 1 && <span className="tb-path-line" />}</div>
               <div className="tb-path-card">
                 <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
@@ -751,18 +806,24 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
   // hard-delete path on the board.
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
-  useEffect(() => {
-    if (!confirmArchive) return;
-    const id = setTimeout(() => setConfirmArchive(false), 4000);
-    return () => clearTimeout(id);
-  }, [confirmArchive]);
+  // The reason the USER gives. This used to be the hardcoded string
+  // 'Archived from the task board', sent on every archive — which meant the
+  // Part 11 ledger recorded an identical sentence for every archived task in
+  // the system. A reason field that is really a constant is worse than no
+  // reason field: it reads to an auditor as a captured justification when
+  // nothing was ever captured.
+  const [archiveReason, setArchiveReason] = useState('');
+  const archiveReasonOk = archiveReason.trim().length >= 3;
+  // There used to be a 4s timer that silently disarmed the confirm. With a
+  // reason textarea in the flow that would wipe a half-written justification
+  // mid-sentence, so disarming is now an explicit Cancel button instead.
   const archive = async () => {
     if (!confirmArchive) { setConfirmArchive(true); return; }
-    if (archiving) return;
+    if (archiving || !archiveReasonOk) return;
     setArchiving(true);
     try {
       const res = await apiRequest('DELETE', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), {
-        reason: 'Archived from the task board',
+        reason: archiveReason.trim(),
       });
       if (res.ok) { onArchived(); return; }
     } catch (e) {
@@ -802,7 +863,47 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
         {t.approvalRequired && (
           <div className="tb-detail-sec">
             <div className="tb-detail-sec-h">Approval checkpoint <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus.replace('_', ' ')}</span></div>
-            <div className="tb-detail-note">HITL gate (<code>approvalCheckpoints</code>) -- 21 CFR 11 e-signature required to clear. Quorum/role-based gate types supported.</div>
+            {/* §11.50 manifestation. This section previously showed only the
+                status badge, so a signature could be captured, PIN-verified and
+                written to the ledger with no way for anyone to see who signed,
+                when, or what they meant by it — the signed record was invisible
+                to the person relying on it. approvalHistory now rides the board
+                read model for exactly this. */}
+            {t.approvalHistory.length > 0 ? (
+              <div className="tb-sig-list">
+                {t.approvalHistory.map((s, i) => (
+                  <div className="tb-sig" key={`${s.signedAt}-${i}`}>
+                    <div className="tb-sig-h">
+                      {I.shieldCheck}
+                      <b>{s.signedByName}</b>
+                      <span className="tb-sig-meaning">{s.meaning.toLowerCase()}</span>
+                      <span className="sp" />
+                      <time dateTime={s.signedAt}>{fmtSigned(s.signedAt)}</time>
+                    </div>
+                    {s.reason && <div className="tb-sig-reason">{s.reason}</div>}
+                    <div className="tb-sig-meta">Signed with a verified PIN ({s.method}).</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="tb-detail-note">
+                Not signed yet. Completing this task requires an electronic signature — your
+                signing PIN, the meaning of the signature, and a reason — recorded under
+                21 CFR Part 11 §11.50.
+              </div>
+            )}
+            {/* The copy here used to claim "Quorum/role-based gate types
+                supported." Neither is implemented. What IS enforced: where a
+                task names designated approvers, only they can sign (see
+                task-signoff.ts); where it names none, any org member with an
+                enrolled PIN can. Saying so plainly beats advertising a control
+                that does not exist. */}
+            {t.approvalStatus === 'pending' && t.approvalHistory.length > 0 && (
+              <div className="tb-detail-note" data-warn="true">
+                This task was reopened after signing, so the signature above no longer
+                approves the current version. Completing it again requires a new signature.
+              </div>
+            )}
           </div>
         )}
         {(t.dependsOn.length > 0 || t.blocks.length > 0) && (
@@ -824,13 +925,38 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
           <div className="tb-detail-sec-h">Audit</div>
           <div className="tb-detail-note">{I.shieldCheck} Advancing, moving back or archiving this task is recorded in the Part-11 <code>c2c_ana_actions</code> ledger with your identity, the from/to state and any reason you give.</div>
         </div>
+        {confirmArchive && (
+          <div className="tb-detail-note" role="group" aria-label="Archive this task">
+            <div style={{ marginBottom: 6 }}>
+              Archiving removes “{t.title}” from the board. There is no way to restore it from
+              here, and the reason below is written to the Part 11 audit trail.
+            </div>
+            <div className="tb-field full">
+              <label htmlFor="tb-archive-reason">Reason for archiving<i>*</i></label>
+              <textarea
+                id="tb-archive-reason"
+                rows={2}
+                autoFocus
+                required
+                aria-required="true"
+                value={archiveReason}
+                onChange={(e) => setArchiveReason(e.target.value)}
+                placeholder="e.g. Superseded by TASK-1043 after the content-lock plan changed."
+              />
+            </div>
+          </div>
+        )}
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
+          {confirmArchive && (
+            <button className="btn ghost" onClick={() => { setConfirmArchive(false); setArchiveReason(''); }}>Cancel</button>
+          )}
           <button
             className="btn ghost"
             style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
-            disabled={archiving}
+            disabled={archiving || (confirmArchive && !archiveReasonOk)}
             onClick={archive}
+            title={confirmArchive && !archiveReasonOk ? 'Give a reason to archive' : undefined}
             aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
           >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
           <span className="sp" />

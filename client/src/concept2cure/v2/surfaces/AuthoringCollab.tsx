@@ -153,19 +153,26 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
   // Two-step takeover of another author's lock (server audits it and notifies
   // them). First click arms; second click within the window commits.
   const [confirmTakeover, setConfirmTakeover] = useState(false);
-  useEffect(() => {
-    if (!confirmTakeover) return;
-    const t = setTimeout(() => setConfirmTakeover(false), 4000);
-    return () => clearTimeout(t);
-  }, [confirmTakeover]);
+  // The reason the USER gives for taking someone else's lock. This was
+  // previously the constant 'Took over a stale section lock from the authoring
+  // canvas'. The server genuinely enforces this control —
+  // realtime-collab.ts rejects a takeover whose reason is under 3 characters,
+  // because it is recorded in the audit trail and the displaced author is shown
+  // it. Satisfying that check with the same canned sentence every time defeated
+  // a control the backend was correctly insisting on, and left every takeover
+  // in the ledger reading identically.
+  const [takeoverReason, setTakeoverReason] = useState('');
+  const takeoverReasonOk = takeoverReason.trim().length >= 3;
+  // No auto-disarm timer here any more: it would wipe a part-written reason.
 
   const takeover = useCallback(async () => {
     if (!confirmTakeover) { setConfirmTakeover(true); return; }
+    if (!takeoverReasonOk) return;
     setConfirmTakeover(false);
     const res = await apiCall<{ success?: boolean }>('POST', '/api/realtime-collab/locks', {
       documentId, sectionId: sectionId || undefined,
       lockType: 'section-edit', takeover: true,
-      reason: 'Took over a stale section lock from the authoring canvas',
+      reason: takeoverReason.trim(),
     });
     if (!res.ok || !res.body?.success) {
       fireToast('Couldn’t take over the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.');
@@ -234,15 +241,40 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
           <span className="rd-chip tone-warn" title={otherLock.reason || ''}>
             {I.lock} locked by {otherLock.lockedByLabel || 'another author'}{expiresIn(otherLock.expiresAt)}
           </span>
+          {confirmTakeover && (
+            <input
+              className="rd-input"
+              style={{ height: 30, minWidth: 240 }}
+              autoFocus
+              value={takeoverReason}
+              onChange={(e) => setTakeoverReason(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && takeoverReasonOk) void takeover(); }}
+              aria-label="Reason for taking over the lock"
+              aria-required="true"
+              placeholder={`Why are you taking this from ${otherLock.lockedByLabel || 'them'}?`}
+            />
+          )}
           <button
             className="btn ghost"
             style={{ height: 30, ...(confirmTakeover ? { color: 'var(--error)', borderColor: 'var(--error)' } : {}) }}
             onClick={takeover}
-            title="Take over this lock — the holder is notified and the takeover is audited"
+            disabled={confirmTakeover && !takeoverReasonOk}
+            title={
+              confirmTakeover && !takeoverReasonOk
+                ? 'Give a reason — the holder is shown it and it is written to the audit trail'
+                : 'Take over this lock — the holder is notified and the takeover is audited'
+            }
             aria-label={confirmTakeover ? 'Confirm lock takeover' : 'Take over the section lock'}
           >
             {confirmTakeover ? 'Confirm takeover' : 'Take over'}
           </button>
+          {confirmTakeover && (
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => { setConfirmTakeover(false); setTakeoverReason(''); }}
+            >Cancel</button>
+          )}
         </>
       ) : myLock ? (
         <button className="btn ghost" style={{ height: 30 }} onClick={release} title="Release your section lock">
