@@ -76,6 +76,8 @@
     "ci:unbacked-tables:strict": "node scripts/ci/check-unbacked-tables.mjs --strict",
     "ci:unbacked-tables:write-baseline": "node scripts/ci/check-unbacked-tables.mjs --write-baseline",
     "ci:tenant-entry-points": "node scripts/ci/check-tenant-entry-points.mjs",
+    "ci:path-containment": "node scripts/ci/check-path-containment.mjs",
+    "ci:path-containment:write-baseline": "node scripts/ci/check-path-containment.mjs --write-baseline",
     "ci:tenant-entry-points:write-baseline": "node scripts/ci/check-tenant-entry-points.mjs --write-baseline",
     "ci:unreferenced-modules": "node scripts/ci/check-unreferenced-modules.mjs",
     "ci:committed-secrets": "node scripts/ci/check-committed-secrets.mjs",

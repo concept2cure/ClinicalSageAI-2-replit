@@ -15,7 +15,14 @@ export function registerSubscriptionsRoutes(app: Express) {
     try {
       const personaId = String(req.params.personaId);
       const filename = String(req.params.filename);
-      const filePath = path.join(REPORTS_ROOT_DIR, personaId, 'files', filename);
+      // basename on BOTH: two request params are used as path segments here, and
+      // Express decodes %2F, so either can carry traversal on its own.
+      const filePath = path.join(
+        REPORTS_ROOT_DIR,
+        path.basename(personaId),
+        'files',
+        path.basename(filename)
+      );
 
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({
@@ -58,7 +65,12 @@ export function registerSubscriptionsRoutes(app: Express) {
     try {
       const personaId = String(req.params.personaId);
       const imageFile = String(req.params.imageFile);
-      const imagePath = path.join(REPORTS_ROOT_DIR, personaId, 'images', imageFile);
+      const imagePath = path.join(
+        REPORTS_ROOT_DIR,
+        path.basename(personaId),
+        'images',
+        path.basename(imageFile)
+      );
 
       if (!fs.existsSync(imagePath)) {
         return res.status(404).json({

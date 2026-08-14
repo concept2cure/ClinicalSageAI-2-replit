@@ -197,6 +197,15 @@ jobs:
         # this makes the surface enumerable instead of found-by-reading.
         run: npm run ci:tenant-entry-points
 
+      - name: Guardrails — request values must not reach a path unconstrained
+        # RLS protects rows; it does nothing for files. Three instances of the
+        # same shape were found by hand in one afternoon — one of them MOUNTED,
+        # with the per-tenant vault inside its allowlist, so one customer could
+        # read another's regulatory document. Finding the fourth by reading code
+        # is not a plan. Express decodes %2F, so a single route param can carry
+        # `../../` — "it is only one segment" is not a defence.
+        run: npm run ci:path-containment
+
       - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
         # The production deploy registers a pinned task-def revision
         # (image @sha256:<digest>) and updates the service by ARN.

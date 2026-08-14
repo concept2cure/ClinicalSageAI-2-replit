@@ -25,9 +25,9 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
-import path from 'path';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { resolveDocumentPath } from '../utils/document-file-roots.js';
 
 const logger = createScopedLogger('document-understanding');
 
@@ -450,18 +450,12 @@ router.post('/analyze', async (req: Request, res: Response) => {
     if (body.base64Content) {
       textContent = Buffer.from(body.base64Content, 'base64').toString('utf-8');
     } else if (body.filePath) {
-      // Restrict to allowed upload/document directories to prevent path traversal
-      const ALLOWED_ROOTS = [
-        path.resolve('uploads'),
-        path.resolve('exports'),
-        path.resolve('generated_documents'),
-        path.resolve('csrs'),
-        path.resolve('ectd'),
-        path.resolve('storage'),
-      ];
-      const fullPath = path.resolve(body.filePath);
-      const isAllowed = ALLOWED_ROOTS.some(root => fullPath.startsWith(root));
-      if (!isAllowed) {
+      // One decision point — see utils/document-file-roots. The inline allowlist
+      // this replaces matched roots by string prefix (so `/app/storage-evil`
+      // passed for `/app/storage`) and included `storage`, which contains the
+      // per-tenant vault: one customer could name another customer's file here.
+      const fullPath = resolveDocumentPath(body.filePath);
+      if (!fullPath) {
         return res
           .status(403)
           .json({ error: 'Access denied: file path outside allowed directories' });
@@ -571,16 +565,10 @@ router.post('/extract-tables', async (req: Request, res: Response) => {
 
   let text = content || '';
   if (!content && filePath) {
-    const ALLOWED_ROOTS = [
-      path.resolve('uploads'),
-      path.resolve('exports'),
-      path.resolve('generated_documents'),
-      path.resolve('csrs'),
-      path.resolve('ectd'),
-      path.resolve('storage'),
-    ];
-    const fullPath = path.resolve(filePath);
-    if (!ALLOWED_ROOTS.some(root => fullPath.startsWith(root))) {
+    // See utils/document-file-roots — the tenant vault is deliberately not
+    // reachable by arbitrary path, and containment is separator-aware.
+    const fullPath = resolveDocumentPath(filePath);
+    if (!fullPath) {
       return res
         .status(403)
         .json({ error: 'Access denied: file path outside allowed directories' });
@@ -613,16 +601,10 @@ router.post('/extract-form-fields', async (req: Request, res: Response) => {
 
   let text = content || '';
   if (!content && filePath) {
-    const ALLOWED_ROOTS = [
-      path.resolve('uploads'),
-      path.resolve('exports'),
-      path.resolve('generated_documents'),
-      path.resolve('csrs'),
-      path.resolve('ectd'),
-      path.resolve('storage'),
-    ];
-    const fullPath = path.resolve(filePath);
-    if (!ALLOWED_ROOTS.some(root => fullPath.startsWith(root))) {
+    // See utils/document-file-roots — the tenant vault is deliberately not
+    // reachable by arbitrary path, and containment is separator-aware.
+    const fullPath = resolveDocumentPath(filePath);
+    if (!fullPath) {
       return res
         .status(403)
         .json({ error: 'Access denied: file path outside allowed directories' });

@@ -42,7 +42,8 @@ reportsManifestRoutes.get('/persona/:personaId', async (req: Request, res: Respo
     // Set response type to JSON explicitly
     res.setHeader('Content-Type', 'application/json');
 
-    const manifestPath = path.join(REPORTS_ROOT_DIR, personaId, 'manifest.json');
+    // basename: personaId is a request param used as a path segment.
+      const manifestPath = path.join(REPORTS_ROOT_DIR, path.basename(personaId), 'manifest.json');
 
     console.log(`Accessing manifest at: ${manifestPath}`);
 

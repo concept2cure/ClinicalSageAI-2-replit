@@ -253,7 +253,10 @@ router.get('/cer/:ndcCode/exports', async (req: Request, res: Response) => {
 router.get('/download/:filename', async (req: Request, res: Response) => {
   try {
     const { filename } = req.params;
-    const filePath = path.join(exportsDir, String(filename));
+    // basename: `filename` is a route param joined onto a path. Express decodes
+    // %2F, so `..%2F..%2F.env` arrives here as real traversal — "it is only one
+    // path segment" is not a defence.
+    const filePath = path.join(exportsDir, path.basename(String(filename)));
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
