@@ -24,11 +24,11 @@ enforced by machine rather than by review.
 | `ci:design-system` | Lucide only, no spring/bounce motion — zero violations |
 | `check:microcopy` | 288 customer-facing files, no exclamations or pictographs |
 | `ci:check-css-selector-shadowing` | 32 stylesheets, 21 known shadowed selectors, 0 new |
-| `ci:surface-discoverability` | 118 renderable: 92 catalogued, 26 declared contextual with reasons |
+| `ci:surface-discoverability` | 119 renderable: 93 catalogued, 26 declared contextual with reasons |
 
 That contrast gate is unusual and worth naming: colour is not a matter of taste here, it
 is a checked property. So is motion. So is tone. **The vocabulary is governed; what is not
-governed is the composition.**
+governed is the composition — or, as finding 3a shows, the adoption.**
 
 The lazy-chunking work is also real: `surfaceViews.ts` moved from 88 static imports to one
 `lazySurface(...)` chunk per surface, taking the V2App chunk from **1,645 KB to 229 KB**.
@@ -43,8 +43,8 @@ stylesheets, which means every surface re-invents its table, its empty state, it
 bar and its refusal state, and the only thing keeping them alike is that the same person
 wrote them.
 
-That is why the same weakness shows up in five different measurements below. They are not
-five problems.
+That is why the same weakness shows up in every measurement below. They are not six
+problems.
 
 ### Measured findings
 
@@ -54,7 +54,7 @@ against 116 raw hex — about three quarters — and the design gate's own docst
 roughly 500 hex literals across the wider mix as needing per-occurrence judgement.
 
 **2 · The surface count has never been consolidated.**
-118 registry ids over 86 modules (ledger L42). The *never three of anything* doctrine was
+119 registry ids over 86 modules (ledger L42; 118 when that row was written). The *never three of anything* doctrine was
 applied to services, routes and tables and never to surfaces: six submission surfaces,
 four authoring, three labeling, three eCTD, three reporting over three unrelated backends,
 two biostat, two quality, two lineage. Some splits encode a real regulatory distinction —
@@ -77,9 +77,25 @@ hard-coded stages, and `filings-catalog`.
 source document. That is *reference data*, and bundling it is legitimate.
 `authoring-engine` renders fabricated pipeline state as though it were the customer's
 configuration. That misrepresents. Both live in the same directory, are imported the same
-way, and look identical to a reviewer. Five of the 34 surfaces show anything in the UI
-about their data's origin; `Coverage` has the right pattern already —
-`Backend link connected · fixtures`.
+way, and look identical to a reviewer.
+
+**3a · And the affordance for saying so already exists, on four screens.**
+`v2/dataConnect.tsx` is an honesty layer, not a fetch wrapper: `useLive(path, fixture)`
+returns `{ data, sample, error }` and comes back with `sample: true` on *any* failure —
+network, 401, non-OK — so a surface always knows whether it is showing the tenant's data or
+a stand-in. It ships with `<SampleTag sample />`, described in its own docstring as "the
+visible 'Sample data' / 'Live' pill every fixture-backed surface must carry (GAP RULE:
+never present fabricated data as live)."
+
+**72 surfaces call `useLive` or `liveGet`. Four render `SampleTag`** — `AdminSurfaces`,
+`LicensingSurface`, `Onboarding`, `SubmissionCenter`. Sixty-nine consume the honesty layer
+and discard its verdict.
+
+So this is not a missing component or an unwritten rule. The component exists, the rule is
+written down in the module that enforces it, and the call site is missing on 69 screens —
+the same defect shape as the tamper check with no caller and the provenance tables with no
+writers. It is the cheapest finding in this assessment to close and the one with the most
+direct bearing on whether a screen can be trusted.
 
 **4 · Motion and focus are governed in principle and thin in practice.**
 205 `transition:` declarations across the surface stylesheets; **4 of 23 stylesheets honour
@@ -113,8 +129,8 @@ right, and the chunking is right. What is missing is the layer between tokens an
 A regulatory affairs lead is accountable for a filing that moves across a project plan, a
 document, a submission sequence and an agency correspondence thread. Today each of those is
 a screen that was built well and built separately. The table behaves differently on each
-one. The empty state says something different. Two of them tell her when the data is a
-sample and the rest do not. When she cannot find a capability she knows exists, the answer
+one. The empty state says something different. Four of them tell her when the data is a
+sample and sixty-nine more could and do not. When she cannot find a capability she knows exists, the answer
 is a catalog she has to think to open.
 
 She is not confused about regulatory work. She is spending attention on the interface that
@@ -185,7 +201,7 @@ two screens is not an inconsistency but a defect.
 
 | Component | Status | Notes |
 | --- | --- | --- |
-| `DataProvenanceBanner` | **New** | Where this screen's data came from: live, sample, or partially backed. Generalizes `Coverage`'s `Backend link connected · fixtures`. The single highest-value component in this list — it closes finding 3 across all 34 surfaces at once. |
+| `SampleTag` / provenance slot | **Modify — adopt, do not rebuild** | The component exists in `v2/dataConnect.tsx` and is rendered on four surfaces out of the 72 that call `useLive`. The work is adoption, plus a fixed slot in `SurfaceHeader` so a surface cannot quietly omit it, plus a CI gate that fails when a surface consumes `useLive`/`liveGet` and never renders the tag. Highest value per hour in this list by a wide margin. |
 | `EmptyState` | **New** | Distinguishes *nothing yet*, *nothing matched*, and *could not load* — the same three-way the backend already draws between `ok` / `empty` / `failed`. Today each surface improvises. |
 | `RefusalNotice` | **New** | The UI half of the platform's refuse-rather-than-approximate doctrine. `not_evaluated` and `unverifiable` are first-class outcomes in the services and have no consistent visual form. |
 | `GovernedActionConfirm` | **New** | Reason-for-change capture on any governed mutation. Currently per-surface where it exists at all. |
@@ -199,16 +215,19 @@ two screens is not an inconsistency but a defect.
 | `Toolbar` | **New** | Action grouping and overflow behaviour. |
 | `_shared/components` (3) | **Modify** | Fold into the new library rather than leaving two shared locations — one of anything. |
 
-**Sequencing:** `DataProvenanceBanner`, `EmptyState` and `RefusalNotice` first. They are
+**Sequencing:** the provenance slot, `EmptyState` and `RefusalNotice` first. They are
 small, they carry the compliance weight, and they can be adopted surface-by-surface without
 a migration. `DataTable` last within the first tranche — it is the largest and it should
 absorb the keyboard fixes rather than being retrofitted for them.
 
 ## Key Interactions
 
-**Arriving on any surface.** The provenance banner resolves before content. Live data
-renders normally; sample data renders with a persistent, non-dismissible label; a failed
-load renders `RefusalNotice`, never an empty table that reads as "you have nothing".
+**Arriving on any surface.** The provenance state resolves before content, from the
+`sample` flag `useLive` already returns. Live data renders normally; sample data renders
+with a persistent, non-dismissible `SampleTag`; a failed load renders `RefusalNotice`,
+never an empty table that reads as "you have nothing". Note that `useLive` currently
+collapses *fixture by design* and *fetch failed* into one `sample: true` — the three-way
+distinction belongs in that layer, not in each surface's own reading of it.
 
 **Crossing surfaces.** Header shape, filter position and table behaviour are identical, so
 crossing costs no re-orientation. Keyboard focus lands on the header, not the document

@@ -52,6 +52,8 @@ import { buildMemoryContextForChat } from '../../services/memory-context-assembl
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
+import { directiveFromToolResult } from '../../services/ana-ri/navigation-actions.js';
+import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import { runAgenticToolLoop, resolveMaxRounds, resolveRoundExtension, capToolResultForModel, budgetToolResultsForModel, buildAdaptationNote, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn, type FailedToolCall } from '../../services/ana/agentic-loop.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
@@ -748,6 +750,12 @@ router.post('/stream', async (req: Request, res: Response) => {
     // pathological multi-round turn can't accumulate unbounded records.
     const collectedProvenance: ProvenanceRecord[] = [];
     const PROVENANCE_CAP = 200;
+    // Validated navigation directives from `navigate_to` this turn. Post-processing
+    // turns them into `actionType: 'navigate'` chips on `post_done`, which is the
+    // only path from a model decision to a screen change — see
+    // services/ana-ri/navigation-actions.ts for why it is tool-driven and offered
+    // rather than performed.
+    const collectedNavigation: NavigationDirective[] = [];
     // Document drafts emitted this turn — persisted to the governed artifact
     // version history (concept2cure_artifacts / _artifact_versions) by
     // post-processing so Document Studio version history survives the session.
@@ -961,6 +969,11 @@ router.post('/stream', async (req: Request, res: Response) => {
                   if (p && typeof p === 'object') collectedProvenance.push(p as ProvenanceRecord);
                 }
               }
+              // A validated navigation target AnA resolved this turn. Collected
+              // here, offered as a chip by post-processing; a refused target
+              // (unknown id, missing param) yields null and never becomes one.
+              const directive = directiveFromToolResult(toolUse.name, resultStr);
+              if (directive) collectedNavigation.push(directive);
               if (parsed?.status === 'intelligence_question' && parsed.question) {
                 res.write(
                   `data: ${JSON.stringify({
@@ -1303,6 +1316,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       humanControls: controlEvents,
       toolEvidenceCorpus,
       collectedProvenance,
+      collectedNavigation,
       collectedDrafts,
       messages,
       model: gwResponse.model,

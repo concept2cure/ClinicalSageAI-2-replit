@@ -703,7 +703,23 @@ export function AnaRail({
                 Array.isArray(m.executedActions) &&
                 m.executedActions.length > 0 && (
                   <div className="ana-msg-executed">
-                    {m.executedActions.map((a, i) => (
+                    {m.executedActions.map((a, i) =>
+                      /* A navigation target AnA resolved is the one executed
+                         action you can act on: it is an offer, not a report, so
+                         it renders as a button. Everything else is a record of
+                         what already happened and stays inert. Guarded on
+                         `targetId` as well as the type, because a chip that
+                         cannot say where it goes must not look like it can. */
+                      a.actionType === 'navigate' && a.targetId && onNav ? (
+                        <button
+                          key={i}
+                          type="button"
+                          className="ana-exec-chip is-nav"
+                          onClick={() => onNav(a.targetId as string)}
+                        >
+                          {I.arrowRight} {a.label}
+                        </button>
+                      ) : (
                       <span
                         key={i}
                         className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}

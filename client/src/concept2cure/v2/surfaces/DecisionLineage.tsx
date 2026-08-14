@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   // Canonical reference config (kept — not fixture DATA): the node-type display
@@ -179,6 +180,51 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       setExportBusy('');
     }
   };
+
+  /* WHAT ANA SEES HERE. This is the surface that answers "when did this change,
+     who approved it, and what source does it trace back to", so the context has
+     to carry the chain verdict rather than just the trail. `chainVerified` is
+     three-valued on purpose — verified, broken, and not-yet-answered are three
+     different facts, and collapsing the third into "broken" would have AnA
+     report tampering on a slow endpoint. */
+  const anaContext = useMemo(
+    () => ({
+      summary: loading
+        ? 'Decision lineage, still loading the org\'s governed decision trails.'
+        : error
+          ? 'Decision lineage could not be loaded — the trails are unavailable, not empty.'
+          : empty
+            ? 'Decision lineage: no governed decision trails recorded for this org yet.'
+            : `Decision lineage: ${graphs.length} governed trail(s)` +
+              (g ? `, "${g.artifactLabel}" selected with ${g.nodes?.length ?? 0} node(s)` : '') + '.',
+      facts: {
+        trailsState: loading ? 'loading' : error ? 'error' : empty ? 'empty' : 'ready',
+        trailCount: graphs.length,
+        ...(g
+          ? {
+              selectedArtifact: g.artifactLabel,
+              selectedRootType: g.rootEntityType,
+              selectedRootId: g.rootEntityId,
+              nodeCount: g.nodes?.length ?? 0,
+              edgeCount: g.edges?.length ?? 0,
+            }
+          : {}),
+        // Absent is not "broken". See the comment above.
+        chainIntegrity: chainState.loading ? 'not-yet-checked' : (chain?.chainIntegrity ?? 'unavailable'),
+        ...(chain
+          ? { chainEntriesVerified: chain.entriesVerified, chainComplianceStatus: chain.complianceStatus }
+          : {}),
+      },
+      availableActions: [
+        'Explain this decision trail — what changed, when, who approved it',
+        'Trace a value back to its source document',
+        'Explain what the hash-chain verification result means',
+        'Export this lineage trail',
+      ],
+    }),
+    [loading, error, empty, graphs.length, g, chainState.loading, chain],
+  );
+  usePublishSurfaceContext('decision-lineage', anaContext);
 
   return (
     <div className="dl">
