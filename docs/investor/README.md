@@ -1,7 +1,7 @@
 # Investor technical white paper
 
-A 36-page technical white paper on the platform, written for prospective
-investors. Cover, contents, and 34 content sections — one section per page.
+A 37-page technical white paper on the platform, written for prospective
+investors. Cover, contents, and 35 content sections — one section per page.
 
 There is deliberately no page limit. Earlier revisions were capped at 10 and then
 15 pages, and both times the cap was paid for by omitting whole capability
@@ -34,7 +34,7 @@ sans — but line breaks shift, and the section-per-page fit is not guaranteed.
 
 ---
 
-## The three rules
+## The four rules
 
 These exist because each was learned by getting it wrong in a published
 revision. They are ordered by how expensive the mistake was.
@@ -85,7 +85,7 @@ through post-approval change, omitting CMC, CSR, protocol development,
 risk-based monitoring, IRB, supply chain, QMS/QC and labeling entirely.
 
 The submission chain is the most *legible* part of the codebase, so it is what a
-quick pass finds. Breadth lives in the table families and the 107 client
+quick pass finds. Breadth lives in the table families and the 118 rendered
 surfaces.
 
 ---
@@ -119,18 +119,37 @@ document.querySelectorAll('section').forEach((s, i) =>
   console.log(i + 1, Math.round(s.getBoundingClientRect().height / 3.7795) + 'mm'));
 ```
 
+If you script that into a throwaway copy of the page, **write the copy into
+`docs/investor/`**. `whitepaper.html` links its stylesheet relatively, so a copy
+in a scratch directory renders unstyled and reports heights for a document that
+does not exist — plausible numbers, entirely wrong. The PDF's page count is the
+only measurement that cannot lie to you this way.
+
 ### Numbering is generated, not hand-maintained
 
 Section numbers, running heads, page numbers and the contents table are all
-derived from document order by the renumbering pass. Do not edit them by hand.
-Adding a section means inserting a `<!-- ═══ PAGE 0 · TITLE ═══ -->` marker and
-re-running that pass — the `PAGE N ·` prefix is what the splitter matches on, and
-a marker without it is silently absorbed into the previous section.
+derived from document order:
+
+```bash
+node scripts/renumber-investor-whitepaper.mjs           # rewrite
+node scripts/renumber-investor-whitepaper.mjs --check   # CI-style, non-mutating
+```
+
+Do not edit them by hand. Adding a section means inserting a
+`<!-- ═══ PAGE 0 · TITLE ═══ -->` marker, adding the contents row in the right
+place, and re-running the pass — the `PAGE N ·` prefix is what the splitter
+matches on, and a marker without it is silently absorbed into the previous
+section. The pass also verifies that each contents row still matches the title
+of the section it points at.
 
 **Cross-references are not generated.** After any renumbering, re-audit every
 `Section NN` in prose against the actual section titles. A restructure left 32 of
 61 references pointing at a valid but wrong section — they resolve, so nothing
 fails; they are just incorrect.
+
+Ranges need their own pass. A bulk shift matches `Sections 16` in
+"Sections 16 to 20" and leaves the `20` behind, silently widening or narrowing
+the range.
 
 ---
 

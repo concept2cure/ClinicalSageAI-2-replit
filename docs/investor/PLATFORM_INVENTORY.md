@@ -25,10 +25,12 @@ own documents.
 | Service files (non-test) | 1,527 + 264 loose top-level |
 | Lines in `server/services` | ~519,000 |
 | Route modules / handlers | 465 / 3,545 |
-| CI guard scripts | 66 (64 `.mjs` + 2 `.sh`) |
+| CI guard scripts | 68 (66 `.mjs` + 2 `.sh`) |
 | Regions / agencies / application types | 12 / 16 / 33 |
-| Surfaces reachable from navigation | 19 / 107 |
-| Client surfaces (`v2/surfaces`) | 107 |
+| Renderable surfaces | 118 (`v2/surfaceViews.ts`) |
+| Of those: catalogued / declared contextual | 92 / 26 |
+| Surface source files (`v2/surfaces/*.tsx`) | 107 |
+| Service modules that reach a model at runtime | 31 of 1,774 (1.7%) |
 | Tables provisioned from blank | 931 |
 | RLS policies | 787 |
 
@@ -201,4 +203,17 @@ grep -rhoE "(router|app)\.(get|post|put|patch|delete)\(" server/routes/ --includ
 
 # CI guard scripts (scripts only — scripts/ci also holds JSON baselines)
 ls scripts/ci/*.mjs scripts/ci/*.sh | wc -l
+
+# renderable surfaces, and the catalogued / contextual split
+# (107 .tsx files is a different measure — some surfaces are registered from
+#  elsewhere, and this is the one the product actually renders)
+npm run ci:surface-discoverability
+
+# service modules that reach a model at runtime — the LLM-reliance figure.
+# Counting files that merely MENTION the gateway returns 95 and is wrong: 66 of
+# them are `import type { AnaTool }`, a type-only import that cannot dispatch.
+{ grep -rlE "getGateway\(" server/services --include='*.ts';
+  grep -rlE "from ['\"][^'\"]*aiProviderRouter" server/services --include='*.ts'; } \
+  | grep -vE '\.test\.ts|__tests__|/ai-gateway/' | sort -u | wc -l
+find server/services -name '*.ts' ! -name '*.test.ts' ! -path '*__tests__*' | wc -l
 ```
