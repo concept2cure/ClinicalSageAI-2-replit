@@ -554,3 +554,24 @@ td.num, th.num { font-family: var(--sans); font-variant-numeric: tabular-nums; w
   color: var(--ink-muted);
   margin-top: 0.8mm;
 }
+
+/* Two-column contents for the 27-section paper. */
+.toc-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin-bottom: 4mm; }
+.toc-g-label {
+  font-family: var(--sans);
+  font-size: 6.3pt;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 3mm 0 1.2mm 0;
+}
+.toc-cols > div > .toc-g-label:first-child { margin-top: 0; }
+.toc-tight > li {
+  grid-template-columns: 7mm 1fr 7mm;
+  padding: 1.5mm 0;
+  border-bottom: 1px solid var(--border-faint);
+}
+.toc-tight .toc-t { font-size: 8.4pt; font-weight: 400; }
+.toc-tight .toc-n { font-size: 6.8pt; }
+.toc-tight .toc-p { font-size: 7.2pt; }
