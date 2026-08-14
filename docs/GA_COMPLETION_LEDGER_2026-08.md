@@ -12,7 +12,7 @@ one row per open item, each pointing at the document that actually owns the deta
 
 | Document | Owns |
 |---|---|
-| `docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md` | Blockers B1–B20 — the licensed assets, credentials and flags. The prose. |
+| `docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md` | Blockers B1–B21 — the licensed assets, credentials and flags. The prose. |
 | `scripts/ops/ga-readiness-report.mjs` | The *probe* for those blockers. Observation, not intention. |
 | `docs/COMPETITIVE_LANDSCAPE_2026-08.md` | The 2026 market benchmark and the four-silo finding. |
 | `docs/COMPETITIVE_POSITION_DELTA_2026-08.md` | Table stakes closed vs. open, per journey. |
@@ -54,8 +54,8 @@ Ranked. Every row here was at some point described as somebody else's problem; i
 |---|---|---|---|---|
 | L4 | Literature screening state — schema column + persistence, so screening/appraisal decisions survive the session. Currently reported honestly as absent rather than faked | eng | open | `docs/COMPETITIVE_POSITION_DELTA_2026-08.md` §CER |
 | L5 | PMS complaint / PMCF enrolment backends — the generators and documentation status are live; the feeds behind them have no backend | eng | open | `docs/COMPETITIVE_POSITION_DELTA_2026-08.md` §CER |
-| L6 | Standards mapping per product code — classification lookup is closed; the recognised-consensus-standards mapping is not | eng | open | `server/services/integrations/openfda-device-client.ts` |
-| L7 | IQ/OQ validation pack — machine-generated installation/operational qualification evidence. The *mechanisms* are closed (single signature substrate, chained audit, §11.70 supersession); the evidence pack is not produced | eng + qual | open | `docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md` §B |
+| L6 | Standards mapping per product code — vendored FDA recognition-list drop-point, whole-file-validating loader, org-scoped `GET /api/510k/device/standards`, and the intake panel rendering "dataset not held" / "list holds nothing for this code" / "here is FDA's list" as three distinct states. Nothing is seeded or inferred; the acquisition itself is procurement (runbook B21) | eng | done | `server/services/fda-recognized-standards/__tests__/recognized-standards.test.ts`, `tests/routes/510k-device-routes.test.ts`, `client/src/concept2cure/mdx/surfaces/__tests__/DeviceProfilePanel.render.test.tsx` |
+| L7 | IQ/OQ validation pack — 11 controls mapped to the tests that exercise them, installation observed, verdict fails closed on any control lacking evidence. The generator is engineering's; the signature is quality's, and no script can be that | eng + qual | in-flight | `node scripts/ops/generate-iq-oq-pack.mjs` |
 | L8 | Outcome-data capture — (submission content → agency response) pairs. The strongest moat in the benchmark and the only one no competitor can buy. Nothing captures it today | eng | open | `docs/COMPETITIVE_LANDSCAPE_2026-08.md` §moat |
 | L9 | Template-chase ingestion pipeline — the substrate is right (versioned catalog, fail-closed registry); the ingestion is unbuilt | eng | open | `docs/COMPETITIVE_POSITION_DELTA_2026-08.md` §4 |
 
@@ -76,7 +76,7 @@ engineering" never becomes "not tracked".
 
 | ID | Item | Owner | State | Evidence |
 |---|---|---|---|---|
-| L15 | Blockers B1–B20 — eSTAR templates + field maps, eCTD DTDs, LORENZ licence, gateway credentials, MedDRA, the enforcement flags | proc | open | `node scripts/ops/ga-readiness-report.mjs` |
+| L15 | Blockers B1–B21 — eSTAR templates + field maps, eCTD DTDs, LORENZ licence, gateway credentials, MedDRA, the enforcement flags, the FDA recognition list (B21, the procurement half of L6) | proc | open | `node scripts/ops/ga-readiness-report.mjs` |
 | L16 | Consultant / CRO channel — multi-client workspaces and per-submission pricing. A product decision, unstarted | prod | open | `docs/COMPETITIVE_LANDSCAPE_2026-08.md` §moat |
 
 ---
