@@ -118,6 +118,11 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   /* Optional enrichment — degrades panels but doesn't block beta. */
   { name: 'public.safety_signals',                role: 'CerSurface signals table',                    required: false },
   { name: 'public.literature_entries',            role: 'CerSurface literature corpus + insights',     required: false },
+  // Optional like its parent: absent, the screening panel reports the trail as
+  // unavailable (it never renders articles as unscreened), so the surface
+  // degrades rather than breaking. Probed so that state is visible in health
+  // instead of only at the moment a reviewer tries to record a decision.
+  { name: 'public.literature_screening_decisions', role: 'CerSurface MEDDEV screening/appraisal trail', required: false },
   { name: 'public.c2c_submission_packages',       role: 'Workbench Submissions pane',                  required: false },
   { name: 'public.c2c_blockers',                  role: 'Workbench Validation rules matrix',           required: false },
   { name: 'clinical_ops.studies',                 role: 'PmaSurface trial metrics (Enrolled/Sites)',   required: false },

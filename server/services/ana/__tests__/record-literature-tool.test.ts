@@ -25,7 +25,7 @@ const { mockRecord, mockPool } = vi.hoisted(() => ({
 vi.mock('../../../db', () => ({ pool: mockPool, db: {} }));
 vi.mock('../../literature-recording.service', () => ({
   recordLiteratureEntries: mockRecord,
-  SCREENING_STATE_UNSUPPORTED: 'entries are stored unscreened',
+  SCREENING_RECORDED_SEPARATELY: 'entries enter the corpus unscreened',
   PROGRAM_BINDING_NOTE: 'entries are recorded to the organization corpus',
 }));
 

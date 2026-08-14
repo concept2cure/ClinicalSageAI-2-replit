@@ -1388,8 +1388,10 @@ export const RECORD_LITERATURE: AnaTool = {
     'they appear in the CER workbench corpus chart. Use after search_literature when the user asks ' +
     'to save, record, or keep results. Idempotent per PMID — re-recording updates the stored entry ' +
     'instead of duplicating it. The organization comes from the active context, never from ' +
-    'arguments. Honest limits: entries are stored unscreened (the table has no screening-state ' +
-    'column, so include/exclude appraisal is not persisted) and are org-scoped (no program ' +
+    'arguments. Scope: this tool records BIBLIOGRAPHY only — entries enter the corpus unscreened. ' +
+    'Include/exclude appraisal is a separate governed act with its own reviewer attribution and ' +
+    'appraisal stage, recorded by a human in the CER workbench screening surface; do not claim an ' +
+    'article has been screened because it was recorded. Entries are org-scoped (no program ' +
     'binding); the per-program corpus chart matches entries by product name in title/abstract.',
   input_schema: {
     type: 'object',
