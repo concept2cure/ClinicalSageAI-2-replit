@@ -1148,6 +1148,22 @@ export const C2C_MIGRATION_FILES = [
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
 
+  // ── Draft generator capture, GA ledger L33 (added 2026-08-14) ────────────
+  // ADD COLUMN on authoring_ai_draft_candidates so a parked AI draft carries
+  // what produced it — model, provider, and a SHA-256 of the prompt actually
+  // sent. All three existed at draft time and reached only the browser, so
+  // "what produced this text?" survived about as long as the tab.
+  //
+  // Server-side with the source chunks, deliberately: a generator round-tripped
+  // through the client would be a client claim, and which model wrote a
+  // regulatory section is exactly the sort of claim that must not be forgeable.
+  //
+  // Nullable, no backfill. Nothing recorded the generator for earlier drafts,
+  // and filling it from the model registry's current default would attribute
+  // text to a model that may never have seen it. The table has a 2-hour TTL, so
+  // the unrecorded window closes on its own.
+  'migrations/20260814h_draft_candidate_generator.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
