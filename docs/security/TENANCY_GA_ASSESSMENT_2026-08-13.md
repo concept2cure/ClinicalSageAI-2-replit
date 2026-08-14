@@ -906,3 +906,53 @@ Two lessons from the sweep itself, both earned the hard way:
    its own first mutation and silently missed the second; the compliance-claim
    check I nearly built already existed. Both were caught by mutation-testing
    with exit codes, not by reading output.
+
+### 7.9 Two corrections to §7.6, and a defect in one of this workstream's own gates
+
+Both found by continuing to probe rather than by re-reading, and both matter more
+than the refactor they were meant to enable.
+
+**1. The CMC routes are not unguarded — the gap is narrower than §7.6 said.**
+`server/api/cmc/projectRoutes.ts` carries a
+`router.param('projectId', …)` that calls `verifyProjectOwnership` for EVERY
+sub-resource route. Eighteen handlers with no visible check are covered by that
+one line. A handler-scoped reading — including the analysis that produced the
+original §7.6 wording — cannot see it.
+
+The real gap is subtler and easier to miss. `router.param` verifies the PARENT:
+a caller cannot reach another org's project. The sub-resource writes then filter
+on the CHILD id alone:
+
+```ts
+db.update(drugProducts).set({ ...req.body }).where(eq(drugProducts.id, productId))
+```
+
+So a caller can pass **their own** `projectId` (which passes `router.param`)
+together with **another tenant's** `productId`, and the write targets the foreign
+row. RLS is the only thing stopping it, since `drug_products` carries
+`organization_id NOT NULL` and is policied — one control deep, which is the whole
+point of recording it. `drug_products` has no `project_id` column, so the write
+cannot be scoped to the verified project; the organization is the predicate to
+use, and it cannot be added until the model exposes the column. The baseline
+entries are corrected to say this.
+
+**2. `check-org-path-param-guards.mjs` had the same blind spot as the analysis
+that produced it.** `router.param` guards were invisible to it, so a correctly
+guarded router was reported as UNGUARDED — demonstrated with a synthetic router
+before fixing. That is the more corrosive direction of failure: a false positive
+on a safe route teaches the next reader that the gate cries wolf, and the true
+positive is then ignored too.
+
+Fixed by collecting params guarded at the router level and treating routes that
+use them as covered — but only when the `router.param` callback itself contains a
+guard idiom, so a param handler that merely parses the id still fails. Three arms
+verified by exit code: a `router.param`-guarded route now exits 0; a
+`router.param` that only parses exits 1; a handler losing its own inline guard
+still exits 1.
+
+**The pattern across this whole sweep.** Five times now, a structural feature
+defeated a text-level analysis — nine guard idioms, an over-long slice, an
+unconditional echo, `router.param`, and a model/DDL split. Every correction came
+from executing the behaviour or reading the whole file, never from re-reading the
+grep. That is the durable lesson, and it is why each gate here is mutation-tested
+by exit code before being believed.
