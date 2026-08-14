@@ -104,6 +104,26 @@ report.
 | L24 | **The end-to-end lineage dossier is unreachable.** `lineage-dossier.ts` assembles precisely the answer to the question above — every iteration, the decisions, AnA's reasoning per turn, the data lineage — and has no production caller; only its own tests and one type import | eng | open | `server/services/ana/lineage-dossier.ts` |
 | L25 | **No stored hash is ever checked against the source bytes.** The byte reader never loads the checksum, and no job sweeps for it. `verifyIntegrityChain` verifies the extracted-text artifact, not the originating document | eng | open | `server/services/ana/uploaded-file-access.ts` |
 
+### 5.1 The approval half — signatures and post-signing change
+
+The audit's second segment asked whether an approval can be trusted: is a signature bound
+to the *content* it approved, and does a later edit invalidate it? The binding is written
+well on two paths and **never checked anywhere**. Verified by reading the code.
+
+| ID | Item | Owner | State | Evidence |
+|---|---|---|---|---|
+| L26 | **A live route mints signatures with no content binding and no tenant.** `POST /api/auth/enterprise/electronic-signature` (mounted `register-platform-routes.ts:152`) inserts into `electronic_signatures` with no `bound_payload_digest`, no `organization_id`, and no `binding_basis`; by the binding evaluator's own rules every row it writes is unverifiable. It also takes `documentId`/`versionId` from the request body without checking they belong to the caller's organization | eng | open | `server/services/auth-security-service.ts` |
+| L27 | **The one live signature-verification endpoint cannot see a content change.** `verifySignatureIntegrity` re-hashes `documentId`, `versionId`, `signerId`, `signerEmail`, `signatureType`, `signatureMeaning`, `signedAt` — no content is read. It returns `valid: true` for a document whose text has been completely rewritten since signing | eng | open | `server/services/auth-security-service.ts` |
+| L28 | **The real tamper check is never asked.** `validateElectronicSignature` re-derives the bound digest and detects post-signing change; its only callers repo-wide are in `tests/schema-contract/esignature-verify-roundtrip.contract.test.ts`. The §11.70 guarantee is implemented, tested, and unreachable in production | eng | open | `server/services/part11ComplianceService.ts` |
+| L29 | **No signature is superseded by an edit.** `superseded_by` is written only by the explicit governed revocation path. No document edit, section PATCH or new version touches it, so a signed record can be edited while its signature stays `is_valid = true` | eng | open | `server/services/part11/signature-persistence.ts` |
+| L30 | **`POST /api/ana/submission-chat/apply-rewrite` cannot succeed.** Its version-snapshot INSERT names `title`, `status`, `created_by`, `metadata` — none of which exist on `concept2cure_artifact_versions` — and omits the NOT NULL `organization_id` and `content_hash`. It is inside the transaction, so every call rolls back. No test covers this module at all | eng | open | `server/services/ana/submission-chat-apply-rewrite.ts` |
+| L31 | **AnA can destroy section history on the 510(k) surface.** `write_kit_section` overwrites `cerv2_510k_sections.content` in place with no version row, no reason, no prior-content snapshot and no trigger on that table; its audit call is fire-and-forget in a bare catch | eng | open | `server/services/ana/AnaToolExecutor.ts` |
+| L32 | **On the governed c2c store, accepted AnA text is recorded as human-authored.** The section PATCH calls `replaceAuthorSpans` only, so the Data Room sources retrieved for the draft never become source spans; only a coarse `draft_source='ana'` flag carries the AI fact | eng | open | `server/routes/c2c/documents.ts` |
+| L33 | **Which model, provider, prompt and prompt version produced a draft is never persisted, on any surface.** All four exist at draft time and are returned to the browser, then dropped at accept | eng | open | `server/routes/authoring.router.ts` |
+| L34 | **Reason-for-change is enforced by route convention, not by the database.** The version trigger `COALESCE`s an empty reason to the literal `'content change'`, so any future writer that sets the actor GUC but not the reason silently writes that string into a NOT NULL Part 11 column. Elsewhere the reason is a hardcoded literal or absent, and `doc_revisions` has no reason column at all | eng | open | `migrations/20260528_phase9_document_schema.sql` |
+| L35 | **RAG retrieval failure is silent.** Both draft paths catch a retrieval error, warn, and let the model draft ungrounded; nothing in the persisted record distinguishes that from a grounded draft | eng | open | `server/routes/authoring.router.ts` |
+| L36 | **`ana_action_id` in the immutable version ledger is never written.** Declared as the backlink for AnA-mediated changes; the trigger that is the table's only writer omits it, so it is permanently NULL | eng | open | `migrations/20260528_phase9_document_schema.sql` |
+
 ---
 
 ## 6. The rule that keeps this file honest
