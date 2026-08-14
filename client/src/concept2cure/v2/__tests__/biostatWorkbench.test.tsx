@@ -150,10 +150,17 @@ describe('BiostatWorkbench — real statistical engine', () => {
   it('announces the toast through a live region', async () => {
     // The toast is the only channel for "submission refused" and for results.
     // Without a live region a screen-reader user submits and is told nothing.
+    // Selected by class, not role: EmptyState is a live region too, so
+    // getByRole('status') is ambiguous on a surface that renders both.
     render(<BiostatWorkbench {...props()} />);
     fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
-    const status = await screen.findByRole('status');
-    expect(status.getAttribute('aria-live')).toBe('polite');
+    const toast = await waitFor(() => {
+      const el = document.querySelector('.de-toast');
+      if (!el) throw new Error('no toast');
+      return el as HTMLElement;
+    });
+    expect(toast.getAttribute('role')).toBe('status');
+    expect(toast.getAttribute('aria-live')).toBe('polite');
   });
 
   it('marks the selected calculator for assistive technology, not by colour alone', () => {

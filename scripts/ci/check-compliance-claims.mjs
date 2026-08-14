@@ -53,6 +53,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { CLAIMS } from './compliance-claims.rules.mjs';
+
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
 
@@ -64,52 +66,6 @@ const ALLOW = 'compliance-claim-allow';
 // Deliberately narrow. This gate exists to stop the specific claims the audit
 // disproved from returning — not to police every use of the word "compliance",
 // which would produce noise, get muted, and protect nothing.
-// ─────────────────────────────────────────────────────────────────────────────
-const CLAIMS = [
-  {
-    id: 'soc2-attestation',
-    // "SOC 2 Type II", "SOC 2 certified", "SOC 2 compliant", "SOC2-audited".
-    // NOT bare "SOC 2", which legitimately appears when describing the control
-    // mapping we ship for the customer's own program.
-    re: /SOC\s?2\b[^.\n]{0,24}\b(Type\s?(?:I{1,2}|1|2)|certified|certification|attested|attestation|compliant|audited)\b/i,
-    why: 'Concept2Cure holds no SOC 2 report of any type. The shipped TSC mapping is a reference framework for the customer\'s GRC program, not an attestation of this platform.',
-  },
-  {
-    id: 'part11-compliant-product',
-    // The ADJECTIVE form only — "a Part 11-compliant PDF", "our Part 11
-    // compliant signature" — which asserts that a thing we ship IS compliant.
-    //
-    // Deliberately NOT the noun form. "The Platform supports 21 CFR Part 11
-    // compliance" (client/src/concept2cure/auth/ZenSignup.tsx) and "audit trail
-    // for 21 CFR Part 11 compliance" state a PURPOSE, which is both true and
-    // the hedged wording the team already settled on. Flagging those would bury
-    // the real violations in noise and get this gate muted — the precision is
-    // what makes it worth having.
-    //
-    // Part 11 compliance is a property of a VALIDATED INSTALLATION — IQ/OQ/PQ,
-    // SOPs, training — which a vendor cannot assert on a customer's behalf.
-    re: /(?:21\s?CFR\s?)?\bPart[-\s]?11[-\s]compliant\b|\b(?:is|are|fully|100%)\s+(?:\w+\s+){0,2}(?:21\s?CFR\s?)?Part[-\s]?11[-\s]complian/i,
-    why: 'Part 11 compliance is a property of a validated installation (IQ/OQ/PQ, SOPs, training), not of shipped software. Describe the control instead — "Part 11 audit trail", "Part 11 e-signature", or "supports Part 11 compliance".',
-  },
-  {
-    id: 'hipaa-compliant',
-    // "HIPAA compliant" vs the hedged "HIPAA-ready" the team already uses.
-    re: /HIPAA[- ]?compliant\b/i,
-    why: 'Use "HIPAA-ready". HIPAA compliance depends on a BAA and the customer\'s own administrative and physical safeguards.',
-  },
-  {
-    id: 'blanket-encryption-at-rest',
-    // "all data encrypted at rest", "everything encrypted at rest", and the
-    // bare "encrypted at rest" badge that implies blanket coverage.
-    re: /\b(?:all|every|complete(?:ly)?|full(?:y)?)\s+(?:\w+\s+){0,2}encrypt(?:ed|ion)\b[^.\n]{0,32}\bat[- ]rest\b/i,
-    why: 'Encryption at rest is field-level over specific secrets. Whole-database encryption is a property of the deployment, not of this application.',
-  },
-  {
-    id: 'mfa-enforced-everywhere',
-    re: /\bMFA\b[^.\n]{0,40}\benforced\b[^.\n]{0,40}\b(?:every|all)\b/i,
-    why: 'TOTP MFA is per-user opt-in; it cannot currently be enforced org-wide.',
-  },
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Where to look.
@@ -153,6 +109,43 @@ function walk(dir, out = []) {
   return out;
 }
 
+/**
+ * The prose a reader actually sees on a line, with JSX interpolations blanked.
+ *
+ * Every rule here bounds its match with `[^.\n]{0,N}` — "within the same
+ * sentence" — because a claim is only a claim when its parts belong to one
+ * statement. A JSX expression defeats that: `{I.dot}` renders as a separator
+ * glyph, but its member-access period reads to the regex as a full stop, so
+ * `Deterministic validation {I.dot} 100%` looked like two sentences and no
+ * rule could span it. The claim was invisible to the gate while being the
+ * most prominent text on the badge.
+ *
+ * Blanking `{...}` restores the sentence without widening any rule. It also
+ * fixes the same blind spot for the four original rules, which have carried
+ * it since they were written.
+ */
+function proseOf(line) {
+  return line.replace(/\{[^{}]*\}/g, ' ');
+}
+
+/**
+ * Is this line a code comment rather than copy a user reads?
+ *
+ * This gate's scope is "the UI a prospect or user reads". A JSDoc block in a
+ * utility module is not that, and treating it as such produces exactly the
+ * noise the SOC 2 rule's comment warns will get the gate muted: the first run
+ * of the absolute-guarantee rule flagged `authToken.ts` for "what guarantees
+ * no stale bearer survives logout" — a true statement about deterministic
+ * code, in a file no customer opens.
+ *
+ * Code files only. Markdown is left alone, because there the prose IS the
+ * content and a leading `*` is a bullet, not a comment.
+ */
+function isCommentLine(rel, line) {
+  if (/\.(md|mdx)$/.test(rel)) return false;
+  return /^\s*(?:\/\/|\/\*|\*(?!\/)|\*\/)/.test(line);
+}
+
 const files = [
   ...SCAN_ROOTS.flatMap((r) => walk(r)),
   ...SCAN_FILES.filter((f) => fs.existsSync(f)),
@@ -178,8 +171,15 @@ for (const file of files) {
     const exempt = line.includes(ALLOW) || (i > 0 && lines[i - 1].includes(ALLOW));
     if (exempt) continue;
 
+    if (isCommentLine(rel, line)) continue;
+
+    // Match against the rendered prose, not the source line — see proseOf.
+    // The exemption above is checked on the RAW line, because the annotation
+    // lives in a comment rather than in what the reader sees.
+    const prose = proseOf(line);
+
     for (const claim of CLAIMS) {
-      const m = line.match(claim.re);
+      const m = prose.match(claim.re);
       if (m) {
         violations.push({
           file: rel,

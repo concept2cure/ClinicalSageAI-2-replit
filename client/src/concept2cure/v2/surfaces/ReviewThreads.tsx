@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiCall, apiErrorText } from '../apiCall';
 
 /* ================================================================
@@ -107,6 +108,44 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
   const canComment = perms?.canComment !== false;
   const selected = threads.find(t => t.threadId === sel) ?? null;
   const refresh = () => setRefreshKey(k => k + 1);
+
+  /* What AnA can see of this screen. Without it she knew the user was on
+     "review" and not what was in their queue, so "what needs me?" — the exact
+     question this surface exists to answer — had to be re-typed by the user. */
+  const anaContext = useMemo(() => {
+    // Every thread here is already open — my-queue filters status='open'
+    // server-side, so there is nothing to re-filter and no status field to do
+    // it with.
+    return {
+      summary:
+        `Your review queue: ${threads.length} open thread${threads.length === 1 ? '' : 's'} and ` +
+        `${tasks.length} review task${tasks.length === 1 ? '' : 's'} assigned to you.` +
+        (selected ? ` The thread "${selected.title || 'untitled'}" is open.` : ''),
+      facts: {
+        openThreads: threads.length,
+        reviewTasks: tasks.length,
+        changeRequests: tasks.filter(t => t.taskType === 'change_request').length,
+        approvalTasks: tasks.filter(t => t.taskType === 'approval_task').length,
+        threads: threads.slice(0, 8).map(t => ({
+          threadId: t.threadId, title: t.title, priority: t.priority, artifact: t.artifactTitle,
+        })),
+        tasks: tasks.slice(0, 8).map(t => ({
+          taskId: t.taskId, title: t.title, type: t.taskType, dueAt: t.dueAt,
+        })),
+        selectedThread: selected ? { threadId: selected.threadId, title: selected.title } : null,
+        // So AnA offers only what this caller may actually do.
+        permissions: { canComment, canRequestChanges, canResolve },
+      },
+      availableActions: [
+        'Open a thread to read its comments',
+        ...(canComment ? ['Reply to the open thread'] : []),
+        ...(canRequestChanges ? ['Post a formal change request against the open thread'] : []),
+        ...(canResolve ? ['Resolve the open thread'] : []),
+        'Resolve a review task assigned to you',
+      ],
+    };
+  }, [threads, tasks, selected, canComment, canRequestChanges, canResolve]);
+  usePublishSurfaceContext('review', anaContext);
 
   const post = async () => {
     if (!sel || !body.trim() || busy) return;
