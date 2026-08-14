@@ -137,6 +137,22 @@ async function updateTask(taskId: number, status: string) {
   return (res as Array<{ success: boolean; message?: string }>)[0];
 }
 
+/** Dispatch any command the way the CHAT path does — no human confirmation. */
+async function asAgent(command: string, params: Record<string, unknown> = {}) {
+  const { executeCommands } = await import('../command-executor');
+  const res = await executeCommands([{ command, params }] as never,
+    { organizationId: ORG, userId: 1 } as never);
+  return (res as Array<{ success: boolean; error?: string; message?: string; data?: any }>)[0];
+}
+
+/** Dispatch the way POST /governed-action does, after a human confirmed. */
+async function asConfirmedHuman(command: string, params: Record<string, unknown> = {}) {
+  const { executeCommands } = await import('../command-executor');
+  const res = await executeCommands([{ command, params }] as never,
+    { organizationId: ORG, userId: 1, humanConfirmed: true } as never);
+  return (res as Array<{ success: boolean; error?: string; message?: string }>)[0];
+}
+
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(DDL);
@@ -207,5 +223,67 @@ describe('AnA update_task and the §11.50 approval gate', () => {
 
     expect(out.success).toBe(true);
     expect((await mirrorRow(105)).status).toBe('review');
+  });
+});
+
+describe('the propose-only partition', () => {
+  // The three approve-class commands whose ONLY other gate is params.confirm —
+  // a string the model itself writes.
+  const APPROVE_CLASS = [
+    'section.approve',
+    'post_market.document.approve',
+    'post_market.document.supersede',
+  ];
+
+  it.each(APPROVE_CLASS)('refuses %s from the agent path', async (command) => {
+    const out = await asAgent(command, { confirm: true, documentId: 'D1', sectionId: 'S1' });
+    expect(out.success).toBe(false);
+    expect(out.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+  });
+
+  it('is not satisfied by the model asserting confirmation in params', async () => {
+    // params is the model's writable channel. Every plausible spelling of "I
+    // confirm" must still be refused — this is the precise weakness of the
+    // params.confirm gate that this partition exists to cover.
+    for (const params of [
+      { confirm: true },
+      { confirm: 'yes' },
+      { humanConfirmed: true },
+      { confirmed: true, approved: true },
+    ]) {
+      const out = await asAgent('section.approve', params);
+      expect(out.success, JSON.stringify(params)).toBe(false);
+      expect(out.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+    }
+  });
+
+  it('hands back the retry envelope the existing sign-off flow already consumes', async () => {
+    const out = await asAgent('section.approve', { documentId: 'D1' });
+    // Reusing buildSignatureRequiredResult's shape means GovernedActionSignoff
+    // needs no new branch: same openModal, same retry payload.
+    expect((out as any).openModal).toBe('esign');
+    expect(out.data?.retry).toEqual({ command: 'section.approve', params: { documentId: 'D1' } });
+    expect(out.data?.proposedByAgent).toBe(true);
+  });
+
+  it('refuses the e-sign tier too, before any tenant flag is consulted', async () => {
+    // part11Enforce is unset here (the default-OFF case). The Part 11 block
+    // would not have run at all; this gate still does.
+    const out = await asAgent('freeze_document', { docId: 'D1' });
+    expect(out.success).toBe(false);
+    expect(out.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+  });
+
+  it('lets a human-confirmed dispatch through the partition', async () => {
+    // Past the gate the command runs and fails or succeeds on its own merits —
+    // the partition must not become a second, permanent refusal.
+    const out = await asConfirmedHuman('section.approve', { documentId: 'D1', sectionId: 'S1' });
+    expect(out.error).not.toBe('HUMAN_CONFIRMATION_REQUIRED');
+  });
+
+  it('leaves ordinary agent work alone', async () => {
+    await seedTask(201, { approvalRequired: false });
+    const out = await updateTask(201, 'review');
+    expect(out.success).toBe(true);
   });
 });

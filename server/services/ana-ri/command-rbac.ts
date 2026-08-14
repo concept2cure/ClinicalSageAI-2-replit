@@ -398,6 +398,60 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
   'audit.explain': { effect: 'read', object: 'audit_row' },
 };
 
+/**
+ * Commands AnA may PROPOSE but never EXECUTE on her own.
+ *
+ * ── Why this exists as a separate gate from the Part 11 tier ────────────────
+ * `part11Enforce` answers "must this dispatch carry a reason and a signature?"
+ * and is per-tenant, defaulting OFF. That is a reasonable rollout switch for a
+ * signature ceremony. It is NOT a reasonable answer to a different question:
+ * "may a language model take this action at all?"
+ *
+ * §11.200 requires an electronic signature to attest that a PERSON executed the
+ * action. An agent that can complete an approval, freeze a record or transmit a
+ * submission has produced an attestation about a decision no human made. That
+ * is not a configuration choice, so this gate is not configurable: it holds for
+ * every tenant, on the first deploy, with no settings row to read.
+ *
+ * ── DERIVED, not hand-listed ───────────────────────────────────────────────
+ * The membership rule is evaluated against COMMAND_AUTHORIZATION rather than
+ * typed out, so a new governed handler joins the partition the moment it is
+ * registered. A hand-maintained list is exactly the artefact that drifts, and
+ * the drift is silent — a new approve-shaped command would simply be executable
+ * by the agent and nothing would say so.
+ *
+ * A command is propose-only when it alters the official record in a way a
+ * person must own:
+ *   · requiresSignature      — the §11.200 e-signature tier;
+ *   · requiresReasonForChange — the reason-for-change tier;
+ *   · a manager-tier write carrying requiresConfirmation — the approve /
+ *     supersede class. These sit in NEITHER Part 11 set today
+ *     (section.approve, post_market.document.approve,
+ *     post_market.document.supersede), so no signature can ever be demanded of
+ *     them and their only gate is `params.confirm` — a string the MODEL writes,
+ *     which cannot distinguish a relayed human yes from the model confirming
+ *     itself. This clause is the one that closes that hole.
+ *
+ * Ordinary authoring mutations are deliberately NOT here. Creating a task or
+ * updating a draft is work, not attestation, and making AnA unable to do it
+ * would trade a real capability for no control.
+ */
+export const PROPOSE_ONLY_COMMANDS: ReadonlySet<string> = new Set(
+  Object.entries(COMMAND_AUTHORIZATION)
+    .filter(([, a]) =>
+      a.effect === 'write' &&
+      (a.requiresSignature === true ||
+        a.requiresReasonForChange === true ||
+        (a.requiresConfirmation === true && a.minRole === 'manager'))
+    )
+    .map(([name]) => name)
+);
+
+/** True when this command may only be proposed by an agent, never executed. */
+export function isProposeOnlyCommand(command: string): boolean {
+  return PROPOSE_ONLY_COMMANDS.has(command);
+}
+
 export type AuthorizationDecision = { ok: true } | { ok: false; result: CommandResult };
 
 /** Is this a positive integer id (from the verified principal)? */

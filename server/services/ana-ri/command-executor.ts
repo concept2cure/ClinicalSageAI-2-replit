@@ -73,10 +73,11 @@ import {
   requiresEsignature,
   validateSignoff,
   buildSignatureRequiredResult,
+  buildHumanConfirmationRequiredResult,
   loadPart11EnforceStrict,
   type Part11Signoff,
 } from './part11-governance';
-import { authorizeCommand, isPrivacyAdmin } from './command-rbac';
+import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -127,6 +128,20 @@ export interface CommandContext {
    * record-altering commands fail closed unless `signoff` is present + valid.
    */
   part11Enforce?: boolean;
+  /**
+   * TRUE only when a human has confirmed THIS dispatch through the governed
+   * sign-off flow. Assigned in exactly one place — the CommandContext literal
+   * in server/routes/ana-ri/utility.ts, inside POST /api/ana-ri/governed-action,
+   * which is reached only by a request the browser makes after
+   * GovernedActionSignoff has collected the user's reason-for-change and, for
+   * the e-signature tier, re-authenticated them server-side.
+   *
+   * Deliberately NOT settable from command params: params is the model's only
+   * writable channel into a dispatch, so a field read from there could be
+   * asserted by the model itself. Absence means "no human confirmed", which
+   * blocks — so any future dispatch path that forgets to stamp it fails closed.
+   */
+  humanConfirmed?: boolean;
   /**
    * The verified Part 11 sign-off for THIS dispatch (reason-for-change +
    * server-verified electronic signature). Stamped by the route after it
@@ -5132,6 +5147,27 @@ export async function executeCommands(
       if (!authz.ok) {
         results.push(authz.result);
         console.warn(`[AnA Command] Blocked ${cmd.command}: ${authz.result.error}`);
+        continue;
+      }
+
+      // ── Propose-only gate: an agent may ask, a person must act. ─────────
+      // LAST of the pre-handler gates, immediately before execution. Ordering
+      // matters and was chosen deliberately:
+      //   · after authorizeCommand, so a caller who simply lacks the role is
+      //     told that, not "a human must confirm" — and so an unreadable
+      //     governance configuration still reports GOVERNANCE_UNAVAILABLE;
+      //   · after the Part 11 block, so a signer mid-ceremony still gets the
+      //     signature demand first;
+      //   · but still before the handler, which is the only thing that matters
+      //     for the guarantee.
+      //
+      // It is unconditional — unlike the Part 11 block, which is per-tenant and
+      // defaults OFF, and unlike the params.confirm convention, which the model
+      // can satisfy by asserting it. Three approve-class commands sit in
+      // neither Part 11 set, so this is the only gate that reaches them.
+      if (isProposeOnlyCommand(cmd.command) && ctx.humanConfirmed !== true) {
+        results.push(buildHumanConfirmationRequiredResult(cmd.command, cmd.params as Record<string, unknown>));
+        console.log(`[AnA Command] Proposed ${cmd.command}: HUMAN_CONFIRMATION_REQUIRED`);
         continue;
       }
 
