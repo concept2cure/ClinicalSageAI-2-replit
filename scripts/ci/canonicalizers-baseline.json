@@ -1,0 +1,22 @@
+{
+  "$comment": "Modules defining their own deterministic JSON serializer instead of importing shared/canonical-json.ts. This list may only shrink. Re-point the call site, then regenerate with npm run ci:canonicalizers:write-baseline — but read the migration note in shared/canonical-json.ts first: changing a call site's serializer changes the digests it produces, so any stored hash written by the old copy stops reproducing. Adding an entry by hand is a regression, not a fix.",
+  "generatedBy": "scripts/ci/check-canonicalizers.mjs --write-baseline",
+  "count": 15,
+  "modules": [
+    "server/routes/chat/provenance.ts",
+    "server/services/ana/agentic-loop.ts",
+    "server/services/audit/audit-archive.service.ts",
+    "server/services/audit/signedAuditExport.ts",
+    "server/services/evidence-sufficiency/evidence-sufficiency.service.ts",
+    "server/services/intelligence-engine/reviewer-simulator.service.ts",
+    "server/services/ivdrPackManifest.ts",
+    "server/services/part11/signature-persistence.ts",
+    "server/services/part11ComplianceService.ts",
+    "server/services/report-os/sealing/seal.ts",
+    "server/services/resolution/receipt-store.ts",
+    "server/services/stats/compute-cache.ts",
+    "server/services/stats/rng.ts",
+    "server/services/tenant-export/attestation-report.service.ts",
+    "server/workers/ivdr-pack-worker.ts"
+  ]
+}
