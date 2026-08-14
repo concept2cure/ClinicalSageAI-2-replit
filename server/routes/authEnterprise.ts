@@ -23,7 +23,6 @@ import {
   recordFailedLogin,
   resetFailedLogins,
   isPasswordExpired,
-  createElectronicSignature,
   verifySignatureIntegrity,
 } from '../services/auth-security-service';
 
@@ -91,25 +90,6 @@ const selectOrganizationSchema = z.object({
     z.number().int().positive(),
     z.string().trim().regex(/^\d+$/, 'organizationId must be numeric'),
   ]),
-});
-
-const electronicSignatureSchema = z.object({
-  documentId: z.coerce.number().int().positive(),
-  versionId: z.coerce.number().int().positive(),
-  signerName: z.string().trim().min(1).max(255),
-  signerTitle: z.string().max(255).optional(),
-  signerEmail: emailSchema.optional(),
-  signatureType: z.enum([
-    'approval',
-    'review',
-    'witness',
-    'acknowledgment',
-    'authorship',
-  ]),
-  signaturePurpose: z.string().max(2000).optional(),
-  signatureMeaning: z.string().max(2000).optional(),
-  password: z.string().min(1).max(1024),
-  mfaCode: mfaCodeSchema.optional(),
 });
 
 /**
@@ -638,58 +618,31 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /electronic-signature
- * Create a 21 CFR Part 11 compliant electronic signature
+ * POST /electronic-signature — REMOVED (Gone).
+ *
+ * This was a second electronic-signature write path. Its INSERT omitted
+ * `bound_payload_digest`, `binding_basis` and `organization_id`, so every row
+ * it wrote was permanently unverifiable against the content it approved, and it
+ * took `documentId`/`versionId` from the request body without checking they
+ * belonged to the caller's organization.
+ *
+ * Sign through POST /api/esignature/sign, which resolves the version inside the
+ * caller's org, refuses when the content cannot be bound
+ * (ESIGNATURE_CONTENT_UNBINDABLE), and writes through the single INSERT in
+ * services/part11/signature-persistence.ts.
+ *
+ * 410 rather than a silent 404: a caller that was using this needs to be told
+ * its signatures were not conforming, not left to think the path moved.
  */
-router.post('/electronic-signature', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const parsed = electronicSignatureSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: parsed.error.errors.map(e => ({
-          field: e.path.join('.'),
-          message: e.message,
-        })),
-      });
-    }
-    const sig = parsed.data;
-
-    const result = await createElectronicSignature({
-      documentId: sig.documentId,
-      versionId: sig.versionId,
-      // signerId is identity — sourced from the request body exactly as before
-      // (createElectronicSignature re-authenticates this user via password/MFA).
-      // It is intentionally NOT part of the validated schema as a trusted field.
-      signerId: req.body.signerId,
-      signerName: sig.signerName,
-      signerTitle: sig.signerTitle as string,
-      signerEmail: sig.signerEmail as string,
-      signatureType: sig.signatureType,
-      signaturePurpose: sig.signaturePurpose as string,
-      signatureMeaning: sig.signatureMeaning as string,
-      password: sig.password,
-      mfaCode: sig.mfaCode,
-      ipAddress: req.ip || (req.headers['x-forwarded-for'] as string),
-      deviceInfo: {
-        userAgent: req.headers['user-agent'],
-        timestamp: new Date().toISOString(),
-      },
-    });
-
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-
-    res.json({
-      success: true,
-      signatureId: result.signatureId,
-      message: 'Electronic signature created successfully (21 CFR Part 11 compliant)',
-    });
-  } catch (error) {
-    console.error('[Enterprise Auth] electronic-signature error:', error);
-    res.status(500).json({ error: 'Failed to create electronic signature' });
-  }
+router.post('/electronic-signature', authMiddleware, async (_req: Request, res: Response) => {
+  res.status(410).json({
+    error: 'This signing endpoint has been removed.',
+    code: 'ESIGNATURE_ENDPOINT_REMOVED',
+    detail:
+      'It wrote electronic_signatures rows with no content binding and no organization, ' +
+      'which cannot satisfy 21 CFR Part 11 §11.70. Use POST /api/esignature/sign.',
+    use: '/api/esignature/sign',
+  });
 });
 
 /**

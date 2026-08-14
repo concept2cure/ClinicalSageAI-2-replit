@@ -92,6 +92,9 @@ interface RawArtifactRow {
   model: string | null;
   program: string | null;
   is_signed: boolean;
+  /** Version the newest active signature covers; null when unsigned or when
+   *  the signature's version row is missing. */
+  signed_version: number | string | null;
 }
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────
@@ -200,7 +203,32 @@ export default function createArtifactsCenterRoutes(): Router {
               WHERE s.artifact_id = a.id
                 AND s.organization_id = a.organization_id
                 AND s.status = 'active'
-           )                                               AS is_signed
+           )                                               AS is_signed,
+           /* Which version the newest active signature actually covers.
+              is_signed above is EXISTS-any: it says a signature exists, not
+              that it covers what you are looking at. An artifact signed at v3
+              and edited to v7 satisfies it exactly as well as one signed a
+              moment ago, so the badge read "signed" for content nobody had
+              approved. Version content is immutable here — an edit mints a new
+              version rather than rewriting one — so the old signature is not
+              invalid, it simply covers earlier bytes. That distinction is the
+              honest one to draw, and it needs the version number to draw it.
+
+              Deliberately NOT folded into is_signed: some writers set
+              artifact_version_id to a predecessor snapshot, so requiring
+              equality here would report freshly-signed artifacts as unsigned.
+              Under-reporting a signature is its own falsehood. The number is
+              reported and the caller compares. */
+           (
+             SELECT v.version
+               FROM concept2cure_signatures s
+               JOIN concept2cure_artifact_versions v ON v.id = s.artifact_version_id
+              WHERE s.artifact_id = a.id
+                AND s.organization_id = a.organization_id
+                AND s.status = 'active'
+              ORDER BY s.id DESC
+              LIMIT 1
+           )                                               AS signed_version
          FROM concept2cure_artifacts a
          LEFT JOIN projects p ON p.id = a.project_id
          WHERE a.organization_id = $1
@@ -213,6 +241,9 @@ export default function createArtifactsCenterRoutes(): Router {
 
       const data: ArtifactCenterRow[] = rawRows.map(r => {
         const version = Number(r.version);
+        const rawSignedVersion = r.signed_version == null ? null : Number(r.signed_version);
+        const signedVersion =
+          rawSignedVersion !== null && Number.isFinite(rawSignedVersion) ? rawSignedVersion : null;
         return {
           id: r.artifact_id,
           name: r.title,
@@ -223,6 +254,17 @@ export default function createArtifactsCenterRoutes(): Router {
           when: relativeTime(r.updated_at),
           ver: `v${Number.isFinite(version) ? version : 1}`,
           sig: r.is_signed === true,
+          /* The version the signature covers, and whether that is still the
+             current one. `sigStale` is only asserted when BOTH numbers are
+             known — an unresolvable signed_version reports null rather than
+             guessing, because "we cannot tell whether this approval still
+             applies" and "this approval is out of date" are different things
+             to tell a reviewer. */
+          sigVersion: signedVersion,
+          sigStale:
+            r.is_signed === true && signedVersion !== null && Number.isFinite(version)
+              ? signedVersion !== version
+              : null,
           prog: r.program || `proj_${r.project_id}`,
         };
       });
