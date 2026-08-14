@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T21:09:43.625Z",
+  "generatedAt": "2026-08-14T21:25:19.375Z",
   "git": {
-    "sha": "78610cbe2b6d344264b311dfde37596fbdfe4bdf",
+    "sha": "f061817707ecc446f531bf781ccd9eb73e94ba72",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": 219,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 34,
+    "largeFilesByBytes": 35,
     "largeFilesByLines": 84
   },
   "findings": {
@@ -2261,6 +2261,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
         "bytes": 104369
+      },
+      {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "bytes": 104021
       }
     ],
     "largeFilesByLines": [
@@ -2485,6 +2489,10 @@
         "lines": 1864
       },
       {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1855
+      },
+      {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
       },
@@ -2531,10 +2539,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
-      },
-      {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1761
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2607,7 +2611,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
-      "largeByBytes": 29,
+      "largeByBytes": 30,
       "largeByLines": 72
     },
     {
