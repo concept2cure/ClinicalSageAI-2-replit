@@ -213,6 +213,55 @@ export function buildSignatureRequiredResult(
 }
 
 /**
+ * The result an agent gets when it asks for something only a person may do.
+ *
+ * Reuses the SAME envelope as buildSignatureRequiredResult — `openModal:'esign'`
+ * plus a `retry` payload — because the client already knows how to handle it:
+ * GovernedActionSignoff opens, collects the reason (and the signature for the
+ * e-sign tier), and re-submits through POST /api/ana-ri/governed-action, which
+ * is the one route that stamps humanConfirmed. Inventing a second
+ * propose-then-confirm channel would leave two flows to keep in step, and the
+ * one that drifted would be the one nobody was watching.
+ *
+ * The distinct `error` code is what lets the UI say the honest thing: this is
+ * not "you are missing a signature", it is "an assistant cannot take this
+ * action for you".
+ */
+export function buildHumanConfirmationRequiredResult(
+  command: string,
+  params?: Record<string, unknown>
+): {
+  success: false;
+  action: string;
+  error: string;
+  message: string;
+  openModal: 'esign';
+  data: {
+    reasonRequired: true;
+    signatureRequired: boolean;
+    proposedByAgent: true;
+    retry: { command: string; params: Record<string, unknown> };
+  };
+} {
+  return {
+    success: false,
+    action: command,
+    error: 'HUMAN_CONFIRMATION_REQUIRED',
+    message:
+      'This action changes the official record, so it has to be taken by a person rather ' +
+      'than on your behalf. Review it and confirm to continue — your reason for the change ' +
+      'is recorded with it.',
+    openModal: 'esign',
+    data: {
+      reasonRequired: true,
+      signatureRequired: requiresEsignature(command),
+      proposedByAgent: true,
+      retry: { command, params: params ?? {} },
+    },
+  };
+}
+
+/**
  * STRICT org-settings read: is Part 11 enforcement enabled for this tenant?
  * DB errors PROPAGATE, so the caller can distinguish a DETERMINATE "tenant has
  * not opted in" (false) from an INDETERMINATE "could not read the flag"

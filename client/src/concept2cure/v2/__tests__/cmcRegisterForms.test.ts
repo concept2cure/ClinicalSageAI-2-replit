@@ -216,6 +216,33 @@ describe('QC testing — qc_testing', () => {
     const body = qcReviewBody({ passFailStatus: 'fail', releaseDate: '', certificateOfAnalysis: '' });
     expect(body).toEqual({ passFailStatus: 'fail' });
   });
+
+  /* QC results ARE the batch analyses of §3.2.S.4.4 / §3.2.P.5.4, and the
+     server's write-through to that canonical source is keyed on the project. If
+     the body omits it the write-through cannot fire and the result never reaches
+     Module 3 — which is exactly how this register came to be the only one with
+     no path into the submission. */
+  it('carries the project on both the result and the review, so it reaches Module 3', () => {
+    const created = qcTestBody(
+      { sampleId: 'S-1', sampleType: 'finished-product', testMethod: 'HPLC', testDate: '2026-05-06', passFailStatus: 'pass' },
+      7,
+      'proj-uuid',
+    );
+    expect(created.projectId).toBe('proj-uuid');
+
+    const reviewed = qcReviewBody({ passFailStatus: 'pass' }, 12, 'proj-uuid');
+    expect(reviewed.projectId).toBe('proj-uuid');
+  });
+
+  it('omits the project rather than sending an empty one', () => {
+    // No program in context is a real state; a blank projectId would make the
+    // server attempt a canonical write for a project that does not exist.
+    expect('projectId' in qcTestBody(
+      { sampleId: 'S-1', sampleType: 'x', testMethod: 'y', testDate: '2026-05-06', passFailStatus: 'pass' },
+      7,
+    )).toBe(false);
+    expect('projectId' in qcReviewBody({ passFailStatus: 'pass' }, 12, '')).toBe(false);
+  });
 });
 
 describe('stability studies — stability_studies', () => {

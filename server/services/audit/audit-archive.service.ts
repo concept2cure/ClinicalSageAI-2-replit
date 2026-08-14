@@ -25,6 +25,7 @@ import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { Pool, PoolClient } from 'pg';
+import { stableStringify } from '../../../shared/canonical-json.js';
 import {
   S3Client,
   PutObjectCommand,
@@ -182,15 +183,13 @@ export function computeBatchHash(rows: Array<Record<string, unknown>>): string {
   return crypto.createHash('sha256').update(canon).digest('hex');
 }
 
+/**
+ * Canonical form for the batch checksum. The sink echoes back what it stored
+ * and the caller compares within the same call, so both sides move together —
+ * no stored digest is recomputed against (see the migration note).
+ */
 function canonicalJSON(value: unknown): string {
-  if (Array.isArray(value)) return '[' + value.map(canonicalJSON).join(',') + ']';
-  if (value && typeof value === 'object') {
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    return '{' + keys.map(k => JSON.stringify(k) + ':' + canonicalJSON(obj[k])).join(',') + '}';
-  }
-  if (value instanceof Date) return JSON.stringify(value.toISOString());
-  return JSON.stringify(value);
+  return stableStringify(value);
 }
 
 // ─── Filesystem sink (dev/CI; production overrides with S3) ────────────────

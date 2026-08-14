@@ -489,7 +489,7 @@ export function CmQcTesting() {
         subject: 'QC result',
         path: '/api/cmc/qc-testing',
         form: qcTestForm,
-        toBody: (v) => qcTestBody(v, currentUserId),
+        toBody: (v, projectId) => qcTestBody(v, currentUserId, projectId),
       }}
       rowActions={[
         {
@@ -498,7 +498,7 @@ export function CmQcTesting() {
           subject: 'QC review',
           form: (r) => qcReviewForm(r.sampleId, String(r.passFailStatus ?? 'pending')),
           path: (r) => `/api/cmc/qc-testing/${r.id}`,
-          toBody: (v) => qcReviewBody(v, currentUserId),
+          toBody: (v, _r, projectId) => qcReviewBody(v, currentUserId, projectId),
           /* Second-person review means a different person. The analyst on the
              record is compared against the signed-in user and the action is
              refused — with the reason on the button — rather than accepted and

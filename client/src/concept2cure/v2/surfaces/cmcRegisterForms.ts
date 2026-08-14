@@ -184,6 +184,10 @@ export interface QcTestBody {
   passFailStatus: string;
   certificateOfAnalysis?: string;
   analyst?: number;
+  /* Carries the QC result through to the canonical Module 3 source object.
+     Without it the write-through cannot fire, and a recorded release result
+     never reaches §3.2.S.4.4 / §3.2.P.5.4 Batch Analyses. */
+  projectId?: string;
 }
 
 export function qcTestForm(): C2CFormConfig {
@@ -207,7 +211,11 @@ export function qcTestForm(): C2CFormConfig {
   };
 }
 
-export function qcTestBody(v: Record<string, string>, analystUserId?: number): QcTestBody {
+export function qcTestBody(
+  v: Record<string, string>,
+  analystUserId?: number,
+  projectId?: string,
+): QcTestBody {
   const body: QcTestBody = {
     sampleId: req(v.sampleId),
     sampleType: req(v.sampleType),
@@ -229,6 +237,7 @@ export function qcTestBody(v: Record<string, string>, analystUserId?: number): Q
   const coa = opt(v.certificateOfAnalysis);
   if (coa) body.certificateOfAnalysis = coa;
   if (analystUserId) body.analyst = analystUserId;
+  if (projectId) body.projectId = projectId;
   return body;
 }
 
@@ -260,15 +269,24 @@ export interface QcReviewBody {
   releaseDate?: string;
   certificateOfAnalysis?: string;
   reviewedBy?: number;
+  /* The review is the state change that matters downstream — an unreviewed
+     result is not releasable evidence — so the canonical source must be
+     refreshed here too, which needs the project. */
+  projectId?: string;
 }
 
-export function qcReviewBody(v: Record<string, string>, reviewerUserId?: number): QcReviewBody {
+export function qcReviewBody(
+  v: Record<string, string>,
+  reviewerUserId?: number,
+  projectId?: string,
+): QcReviewBody {
   const body: QcReviewBody = { passFailStatus: req(v.passFailStatus) || 'pending' };
   const rd = isoDate(v.releaseDate);
   if (rd) body.releaseDate = rd;
   const coa = opt(v.certificateOfAnalysis);
   if (coa) body.certificateOfAnalysis = coa;
   if (reviewerUserId) body.reviewedBy = reviewerUserId;
+  if (projectId) body.projectId = projectId;
   return body;
 }
 
