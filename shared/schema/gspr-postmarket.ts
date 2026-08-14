@@ -209,6 +209,89 @@ export const postMarketDocuments = pgTable(
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PMCF enrolment — Annex XIV Part B §6.2 execution evidence
+//
+// The PMCF *plan* is a postMarketDocuments row: versioned, approvable,
+// lockable. Enrolment progress is the opposite kind of record — it moves
+// continuously against a plan that is deliberately frozen — so it lives here
+// and points back at the plan via pmcfPlanDocumentId. Full rationale, and the
+// CHECK constraints that make the nullable columns honest, are in
+// migrations/20260814c_pmcf_enrollment_records.sql.
+//
+// NULL IS NOT ZERO, in three places:
+//   targetEnrollment  null = no planned sample size set (never 0)
+//   enrolledCount     null = enrolment NEVER reported; a reported 0 is a fact
+//   enrollmentAsOf    present iff enrolledCount is — an undated count is not
+//                     evidence
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** MDCG 2020-7 §6 PMCF method taxonomy. Mirrors the DB CHECK constraint. */
+export const PMCF_ACTIVITY_KINDS = [
+  'pmcf_study',
+  'registry',
+  'survey',
+  'cohort_follow_up',
+  'literature_review',
+  'other',
+] as const;
+export type PmcfActivityKind = (typeof PMCF_ACTIVITY_KINDS)[number];
+
+/** Lifecycle of the ACTIVITY (not of a document). Mirrors the DB CHECK. */
+export const PMCF_ACTIVITY_STATUSES = [
+  'planned',
+  'enrolling',
+  'follow_up',
+  'completed',
+  'terminated',
+] as const;
+export type PmcfActivityStatus = (typeof PMCF_ACTIVITY_STATUSES)[number];
+
+export const pmcfEnrollmentRecords = pgTable(
+  'pmcf_enrollment_records',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: integer('organization_id').notNull(),
+    // FK-free by repo convention — see the migration header.
+    programId: uuid('program_id').notNull(),
+    pmcfPlanDocumentId: uuid('pmcf_plan_document_id'),
+
+    activityCode: text('activity_code').notNull(),
+    activityKind: text('activity_kind').notNull(),
+    title: text('title').notNull(),
+    status: text('status').notNull().default('planned'),
+
+    primaryEndpoint: text('primary_endpoint'),
+    sitesCount: integer('sites_count'),
+
+    /** Planned sample size, or null when none is set. Never 0. */
+    targetEnrollment: integer('target_enrollment'),
+    /** Subjects enrolled as reported. null = never reported; 0 is a real fact. */
+    enrolledCount: integer('enrolled_count'),
+    /** The date enrolledCount was true on. Present iff enrolledCount is. */
+    enrollmentAsOf: timestamp('enrollment_as_of', { withTimezone: true }),
+
+    dataCollectionThrough: timestamp('data_collection_through', { withTimezone: true }),
+    notes: text('notes'),
+
+    createdBy: text('created_by').notNull(),
+    updatedBy: text('updated_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    activityUq: uniqueIndex('pmcf_enrollment_records_activity_uq').on(
+      table.organizationId,
+      table.programId,
+      table.activityCode
+    ),
+    orgProgramIdx: index('pmcf_enrollment_records_org_program_idx').on(
+      table.organizationId,
+      table.programId
+    ),
+  })
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Insert schemas + types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -236,6 +319,15 @@ export type GsprProgramMapping = InferSelectModel<typeof gsprProgramMappings>;
 export type InsertGsprProgramMapping = z.infer<typeof insertGsprProgramMappingSchema>;
 export type PostMarketDocument = InferSelectModel<typeof postMarketDocuments>;
 export type InsertPostMarketDocument = z.infer<typeof insertPostMarketDocumentSchema>;
+
+export const insertPmcfEnrollmentRecordSchema = createInsertSchema(pmcfEnrollmentRecords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type PmcfEnrollmentRecord = InferSelectModel<typeof pmcfEnrollmentRecords>;
+export type InsertPmcfEnrollmentRecord = z.infer<typeof insertPmcfEnrollmentRecordSchema>;
 
 export type PostMarketDocumentType =
   | 'pms_plan'
