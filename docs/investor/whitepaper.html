@@ -127,9 +127,11 @@
       </ol>
       <div class="toc-g-label">The investment case</div>
       <ol class="toc-list toc-tight">
-        <li><span class="toc-n">25</span><span class="toc-t">Defensibility and moat</span><span class="toc-p">27</span></li>
-        <li><span class="toc-n">26</span><span class="toc-t">Roadmap to general availability</span><span class="toc-p">28</span></li>
-        <li><span class="toc-n">27</span><span class="toc-t">Risks, and what to underwrite</span><span class="toc-p">29</span></li>
+        <li><span class="toc-n">25</span><span class="toc-t">What is ready now</span><span class="toc-p">27</span></li>
+        <li><span class="toc-n">26</span><span class="toc-t">What is weak, and how weak</span><span class="toc-p">28</span></li>
+        <li><span class="toc-n">27</span><span class="toc-t">Defensibility and moat</span><span class="toc-p">29</span></li>
+        <li><span class="toc-n">28</span><span class="toc-t">Roadmap to general availability</span><span class="toc-p">30</span></li>
+        <li><span class="toc-n">29</span><span class="toc-t">Risks, and what to underwrite</span><span class="toc-p">31</span></li>
       </ol>
     </div>
   </div>
@@ -148,7 +150,7 @@
 
 <!-- ═══════════════ PAGE 3 · EXECUTIVE SUMMARY ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>01 · Executive summary</span><span class="rh-num">03</span></div>
+  <div class="running-head"><span>01 · Executive summary</span><span class="rh-num">3</span></div>
 
   <div class="section-num">Section 01</div>
   <h1 class="section-title">Executive summary</h1>
@@ -227,9 +229,9 @@
     </p>
   </div>
 </section>
-<!-- ═══════════════════════ PAGE 4 · PROBLEM & MARKET ═══════════════════════ -->
+<!-- ═══════════════ PAGE 4 · PROBLEM & MARKET ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>02 · The problem and the market window</span><span class="rh-num">04</span></div>
+  <div class="running-head"><span>02 · The problem and the market window</span><span class="rh-num">4</span></div>
 
   <div class="section-num">Section 02</div>
   <h1 class="section-title">The problem and the market window</h1>
@@ -319,9 +321,9 @@
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 5 · COMPETITIVE LANDSCAPE ═══════════════════════ -->
+<!-- ═══════════════ PAGE 5 · COMPETITIVE LANDSCAPE ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>03 · The competitive landscape</span><span class="rh-num">05</span></div>
+  <div class="running-head"><span>03 · The competitive landscape</span><span class="rh-num">5</span></div>
 
   <div class="section-num">Section 03</div>
   <h1 class="section-title">The competitive landscape</h1>
@@ -421,7 +423,7 @@
   </div>
 </section><!-- ═══════════════ PAGE 6 · ARCHITECTURE ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>04 · Platform architecture</span><span class="rh-num">06</span></div>
+  <div class="running-head"><span>04 · Platform architecture</span><span class="rh-num">6</span></div>
 
   <div class="section-num">Section 04</div>
   <h1 class="section-title">Platform architecture</h1>
@@ -528,7 +530,7 @@
 
 <!-- ═══════════════ PAGE 7 · SUBSTRATE ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>05 · The data substrate and tenancy</span><span class="rh-num">07</span></div>
+  <div class="running-head"><span>05 · The data substrate and tenancy</span><span class="rh-num">7</span></div>
 
   <div class="section-num">Section 05</div>
   <h1 class="section-title">The data substrate and tenancy</h1>
@@ -602,7 +604,7 @@
 
 <!-- ═══════════════ PAGE 8 · ANA ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>06 · AnA — the regulatory assistant</span><span class="rh-num">08</span></div>
+  <div class="running-head"><span>06 · AnA — the regulatory assistant</span><span class="rh-num">8</span></div>
 
   <div class="section-num">Section 06</div>
   <h1 class="section-title">AnA — the regulatory assistant</h1>
@@ -638,8 +640,10 @@
       ANDA) and any quoted source text, and checks each against the evidence the assistant
       actually gathered that turn. Claims absent from that corpus are surfaced as
       unsupported. <strong>The verdict is advisory — shown to the user, not used to block or
-      rewrite.</strong> Binding retrieval-verified citations into the document itself is
-      Phase 2 work in Section 26.
+      rewrite.</strong> A sharper limit applies underneath it: when retrieval itself fails,
+      both draft paths warn and let the model draft ungrounded, and nothing in the persisted
+      record distinguishes that from a grounded draft. Binding retrieval-verified citations
+      into the document is Phase 2 work (Section 27).
     </p>
   </div>
 
@@ -677,7 +681,7 @@
 
 <!-- ═══════════════ PAGE 9 · AI GATEWAY ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>07 · The AI gateway and model governance</span><span class="rh-num">09</span></div>
+  <div class="running-head"><span>07 · The AI gateway and model governance</span><span class="rh-num">9</span></div>
 
   <div class="section-num">Section 07</div>
   <h1 class="section-title">The AI gateway and model governance</h1>
@@ -757,10 +761,12 @@
 
   <h2>What remains open</h2>
   <p>
-    Model reproducibility is incomplete: dated model snapshots are not yet pinned across the
-    board, and the exact request as sent is not fully recorded. Both are Phase 2 items in
-    Section 26, and both are prerequisites for answering "reproduce this output" rather than
-    "here is what we asked for".
+    Two gaps matter. Model reproducibility is incomplete: dated snapshots are not pinned across
+    the board and the exact request is not fully recorded. More consequentially, the ledger
+    records the <em>call</em>, but which model, provider and prompt produced an <em>accepted
+    draft</em> is never persisted on any surface — all exist at draft time and are dropped at
+    accept. The platform can say what it asked a model; it cannot yet say what produced a given
+    sentence.
   </p>
 </section>
 
@@ -833,7 +839,7 @@
       for all of them simultaneously; no durable advantage rests on it. A deterministic,
       tenant-scoped, versioned record of what reviewers actually objected to — accumulated across
       customers and submissions — is not purchasable. Its value grows with usage rather than with
-      the next model release. The caveat in Section 25 stands: the substrate exists, the outcome
+      the next model release. The caveat in Section 26 stands: the substrate exists, the outcome
       data that would make it compound does not yet.
     </p>
   </div>
@@ -856,10 +862,10 @@
       <tr><th style="width:23%">Control</th><th style="width:12%">State</th><th>What is true today</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Electronic signature</strong></td><td><span class="pill pill-live">Built</span></td>
-        <td>Server-side credential re-verification, signing-authority and signer-role resolution, binding to a specific document version. The audit called the design right; consolidating to one system of record remains.</td></tr>
-      <tr><td><strong>Clause-level lineage</strong></td><td><span class="pill pill-live">Built</span></td>
-        <td>The editor cannot save content without clause-level provenance — enforced in-transaction and structurally gated in CI. A user can select any passage and ask where it came from.</td></tr>
+      <tr><td><strong>Electronic signature</strong></td><td><span class="pill pill-open">Not operating</span></td>
+        <td>The §11.70 guarantee is implemented and tested — and unreachable. The real tamper check has no production caller; the live verification endpoint re-hashes metadata only, so it returns valid for a document rewritten after signing; a live route mints signatures with no content binding and no tenant scoping; and no edit supersedes a signature. <strong>Design right, wiring absent.</strong> See Section 26.</td></tr>
+      <tr><td><strong>Clause-level lineage</strong></td><td><span class="pill pill-partial">Middle only</span></td>
+        <td>Strong from draft to approval: the editor cannot save content without clause-level provenance, enforced in-transaction and gated in CI, and a user can select a passage and ask where it came from. Broken at both ends — the versioned provenance tables have no writers, source documents are unversioned, no stored hash is checked against source bytes, and a filed eCTD leaf cannot be traversed back to its document. See Section 26.</td></tr>
       <tr><td><strong>Audit chain</strong></td><td><span class="pill pill-partial">In flight</span></td>
         <td>Chain enforcement exists on the reference store via an insert trigger that cannot be bypassed by an application path. The audit found the chain unpopulated and three integrity checks reporting an empty chain as intact. Checks now return an explicit <span class="mono">unverifiable</span> state; substrate consolidation and immutability grants are Phase 2.</td></tr>
       <tr><td><strong>Tenant isolation</strong></td><td><span class="pill pill-partial">In flight</span></td>
@@ -873,21 +879,20 @@
 
   <h2>The principle the audit tested</h2>
   <p>
-    The audit's sharpest observation was not about any single control but that several failures
-    shared a shape: <em>a control that reports success while doing nothing</em>. An integrity
-    monitor verifying an all-null chain as healthy. A tenant-offboarding path reporting permanent
-    deletion while the data survived. Governed AI commands returning past-tense success for work
-    that never happened. In a regulated tool a silent-pass control is more dangerous than an
-    absent one, because only the first gets relied on during an inspection.
+    The audit's sharpest observation was that several failures shared a shape: <em>a control that
+    reports success while doing nothing</em>. An integrity monitor verifying an all-null chain as
+    healthy. A tenant-offboarding path reporting deletion while the data survived. In a regulated
+    tool a silent-pass control is more dangerous than an absent one, because only the first gets
+    relied on during an inspection.
   </p>
 
   <div class="callout callout-accent">
     <div class="c-label">What changed as a result</div>
     <p style="margin:0">
       The remediation was not only to fix each defect but to make the class detectable: integrity
-      checks that cannot verify now say so; the AI provenance ledger refuses boot rather than
-      logging silently; a CI gate rejects tenant-blind data models. Fixing an instance closes one
-      finding. Making the shape of the mistake fail loudly closes the ones not yet written.
+      checks that cannot verify now say so; the provenance ledger refuses boot rather than logging
+      silently; a CI gate rejects tenant-blind data models. Making the shape of the mistake fail
+      loudly closes the ones not yet written.
     </p>
   </div>
 
@@ -1936,16 +1941,113 @@
       Each row was confirmed by reading the current code. What has <em>not</em> been done is an
       independent re-scoring: the audit's headline counts were a 10 August snapshot, superseded by
       the work above, and no second audit has re-measured them. Treat the aggregate as history and
-      this table as evidence. What remains genuinely open is in Section 26.
+      this table as evidence. What remains genuinely open is in Section 27.
     </p>
   </div>
 </section>
 
-<!-- ═══════════════ PAGE 27 · DEFENSIBILITY ═══════════════ -->
+<!-- ═══════════════ PAGE 27 · READY VS WEAK ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>25 · Defensibility and moat</span><span class="rh-num">27</span></div>
+  <div class="running-head"><span>25 · What is ready now</span><span class="rh-num">27</span></div>
 
   <div class="section-num">Section 25</div>
+  <h1 class="section-title">What is ready now</h1>
+  <p class="deck">
+    The rest of this paper describes what exists. This section says what <em>works</em> — and
+    it separates the two, because in this codebase they are not the same thing, and the
+    difference is where diligence will go.
+  </p>
+
+  <h2>How readiness was assessed</h2>
+  <p>
+    Not from docstrings. A module's header describes its intent and is usually honest about
+    scope, but intent is not operation — the August audit's central finding was precisely that
+    divergence. Readiness below is assessed from four observable signals: whether a route is
+    mounted and a client call resolves to it; test-to-service ratio; the platform's own
+    completion ledger, whose findings were verified by reading code rather than reports; and
+    whether a capability's tables have writers.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat"><div class="s-n">345</div><div class="s-l">Client modules reachable<br>0 unreachable</div></div>
+    <div class="stat"><div class="s-n">100%</div><div class="s-l">Client API calls<br>resolving to a route</div></div>
+    <div class="stat"><div class="s-n">19<span style="font-size:9pt">/107</span></div><div class="s-l">Surfaces referenced<br>from navigation</div></div>
+    <div class="stat"><div class="s-n">29</div><div class="s-l">Open items on the<br>completion ledger</div></div>
+  </div>
+
+  <h2>Ready now — usable, tested, and wired</h2>
+  <table>
+    <thead><tr><th style="width:30%">Capability</th><th>Why it qualifies</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Provisioning and schema</strong></td><td>931 tables and 787 policies from blank, verified, idempotent, fails closed on zero policies. Unbacked table references down from 85 to 41, all baselined.</td></tr>
+      <tr><td><strong>Deterministic domain engines</strong></td><td>Substantial-equivalence decision walk, SUPAC/variations classifier, ICH Q1E shelf-life, ICH conformance checker, design gates, evidence priors, central statistical monitoring. These are pure functions with no I/O — they cannot be broken by wiring, and they are the platform's most defensible output.</td></tr>
+      <tr><td><strong>eCTD assembly, spine-backed</strong></td><td>Real ICH v3.2.2 backbone, MD5 manifest, genuine byte-stable PDF leaves. 30 test files across 50 services.</td></tr>
+      <tr><td><strong>Authentication boundary</strong></td><td>Default-deny mounted once ahead of all routes; algorithm-pinned JWT; the audit's escalation, MFA and SSO bypasses all closed.</td></tr>
+      <tr><td><strong>AI gateway policy path</strong></td><td>Single chokepoint with a CI gate against bypass, two policy passes, placement resolution, boot-invariant ledger. 14 tests across 21 services.</td></tr>
+      <tr><td><strong>CI invariant system</strong></td><td>79 gates enforcing architectural properties. Independently the strongest asset in the repository.</td></tr>
+      <tr><td><strong>Wiring integrity</strong></td><td>345 client modules reachable with none orphaned, and every client API prefix resolving to a server route.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="c-label">Read this alongside the next page</div>
+    <p style="margin:0">
+      The list above is what a pilot can rely on. Section 26 is what it cannot, and the two are
+      meant to be read together — the platform's strengths and its gaps are not in the same
+      places, and a reader who takes only one page away will misjudge it in one direction or the
+      other.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════ PAGE 28 · WEAK ═══════════════ -->
+<section class="page">
+  <div class="running-head"><span>26 · What is weak, and how weak</span><span class="rh-num">28</span></div>
+
+  <div class="section-num">Section 26</div>
+  <h1 class="section-title">What is weak, and how weak</h1>
+  <p class="deck">
+    Drawn from the platform's own completion ledger, where each item was verified by reading
+    code rather than reports. Stated here because a buyer's quality unit will find them, and
+    finding them in this document is a materially different conversation from finding them in a
+    pilot.
+  </p>
+
+  <h2>The three severe ones</h2>
+    <table>
+      <thead><tr><th style="width:26%">Area</th><th>What is actually wrong</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Part 11 e-signature</strong><br><span class="pill pill-open">Not operating</span></td>
+          <td>The §11.70 guarantee is implemented and tested, and <strong>has no production caller</strong>. The live verification endpoint re-hashes only metadata, so it reports valid for a document rewritten after signing. A live route mints signatures with no content binding, no tenant scoping, and no ownership check on the document it references. No edit supersedes a signature. This is the single most consequential gap in the platform: it is the control a pharma quality unit audits first.</td></tr>
+        <tr><td><strong>End-to-end lineage</strong><br><span class="pill pill-open">Middle only</span></td>
+          <td>Strong from draft to approval. Broken at both ends: the correctly-modelled provenance tables have zero writers while two live services read them; source documents carry no version chain, so a revised protocol becomes an unlinked second row; no stored hash is ever checked against source bytes; a filed eCTD leaf cannot be traversed back to its document; and the assembled lineage dossier has no production caller.</td></tr>
+        <tr><td><strong>AI attribution at accept</strong><br><span class="pill pill-open">Dropped</span></td>
+          <td>Model, provider, prompt and prompt version exist at draft time and are discarded when a draft is accepted. On the governed store, accepted AI text is recorded as human-authored. Retrieval failure is silent, so an ungrounded draft is indistinguishable from a grounded one in the persisted record.</td></tr>
+        <tr><td><strong>Ingest extraction</strong><br><span class="pill pill-open">Defective</span></td>
+          <td>The pipeline's only HTTP entry point fails unconditionally, and the extractor fabricates placeholder content when it cannot read a file — latent only because the route is broken. Two content-hash defects mean some artifacts can never verify. These must be fixed together.</td></tr>
+        <tr><td><strong>Navigation</strong><br><span class="pill pill-partial">Thin</span></td>
+          <td>19 of 107 surfaces are referenced from a navigation, registry or router file. Most of what is built is not reachable by a user who does not know it exists.</td></tr>
+        <tr><td><strong>Test depth, unevenly</strong><br><span class="pill pill-partial">Uneven</span></td>
+          <td>Ratios vary by a factor of four. Strong: evidence spine 21 tests / 17 services, IND lifecycle 31/36, study design 13/17. Thin where it matters most: CMC 6/16, statistics 7/24, submission gateways 10/28 — the last being the irreversible action.</td></tr>
+      </tbody>
+    </table>
+
+  <h2>The pattern, stated once</h2>
+  <p>
+    The weaknesses are not random. In every case the <em>mechanism is built correctly and the
+    call site is missing</em> — a tamper check with no caller, provenance tables with no
+    writers, a lineage dossier nothing invokes, an extraction pipeline behind a broken route.
+    That is a recognisable and repairable failure mode, and it is a far better position than
+    absent capability. But it is also exactly the failure mode that makes a demo look finished
+    and a pilot find holes, and it should be priced as integration work rather than discovery.
+  </p>
+</section>
+
+<!-- ═══════════════ PAGE 29 · DEFENSIBILITY ═══════════════ -->
+<section class="page">
+  <div class="running-head"><span>27 · Defensibility and moat</span><span class="rh-num">29</span></div>
+
+  <div class="section-num">Section 27</div>
   <h1 class="section-title">Defensibility and moat</h1>
   <p class="deck">
     Five candidate advantages, sorted honestly by whether they compound, whether they are merely
@@ -1963,13 +2065,14 @@
       </p>
     </div>
     <div class="card card-accent">
-      <h3>2 · Governed provenance <span class="pill pill-live">Built</span></h3>
+      <h3>2 · Governed provenance <span class="pill pill-partial">Partial</span></h3>
       <p style="margin:0">
-        Clause-level lineage enforced in-transaction; a save path that structurally cannot skip
-        it; Module 3 sections carrying the hash of the source they compiled from. Retrofitting
-        this into an existing authoring product means rewriting its persistence layer — which is
-        why the AI authoring entrants are unlikely to add it and the publishing incumbents are
-        unlikely to add drafting.
+        The <em>mechanism</em> is the moat and it is built: clause-level lineage enforced
+        in-transaction, a save path that structurally cannot skip it, Module 3 sections carrying
+        the hash of the source they compiled from. Retrofitting that into an existing authoring
+        product means rewriting its persistence layer. But per Section 26 the chain is currently
+        broken at both ends, so this is a moat whose foundations are laid and whose wiring is
+        not — real, and not yet bankable.
       </p>
     </div>
     <div class="card card-accent">
@@ -2018,7 +2121,7 @@
   <div class="callout callout-accent">
     <div class="c-label">The honest asymmetry</div>
     <p style="margin:0">
-      Items 1 through 4 are built and real. Item 5 — the only one that compounds — is not. An
+      Items 1, 3 and 4 are built and real; item 2 is built but not fully wired (Section 26); item 5 — the only one that compounds — does not exist. An
       investment here is a bet that the team converts a strong architectural position into the
       operational trustworthiness required to acquire customers, and then converts those customers
       into the outcome dataset that makes the position permanent. Both conversions are execution,
@@ -2028,11 +2131,11 @@
   </div>
 </section>
 
-<!-- ═══════════════ PAGE 28 · ROADMAP ═══════════════ -->
+<!-- ═══════════════ PAGE 30 · ROADMAP ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>26 · Roadmap to general availability</span><span class="rh-num">28</span></div>
+  <div class="running-head"><span>28 · Roadmap to general availability</span><span class="rh-num">30</span></div>
 
-  <div class="section-num">Section 26</div>
+  <div class="section-num">Section 28</div>
   <h1 class="section-title">Roadmap to general availability</h1>
   <p class="deck">
     Sequenced so each phase unblocks the next and produces evidence a buyer's reviewers accept.
@@ -2099,11 +2202,11 @@
   </div>
 </section>
 
-<!-- ═══════════════ PAGE 29 · RISKS ═══════════════ -->
+<!-- ═══════════════ PAGE 31 · RISKS ═══════════════ -->
 <section class="page">
-  <div class="running-head"><span>27 · Risks, and what to underwrite</span><span class="rh-num">29</span></div>
+  <div class="running-head"><span>29 · Risks, and what to underwrite</span><span class="rh-num">31</span></div>
 
-  <div class="section-num">Section 27</div>
+  <div class="section-num">Section 29</div>
   <h1 class="section-title">Risks, and what to underwrite</h1>
   <p class="deck">
     What could go wrong, stated at the same standard as the rest of this document.

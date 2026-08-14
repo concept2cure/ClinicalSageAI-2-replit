@@ -1,7 +1,7 @@
 # Investor technical white paper
 
-A 29-page technical white paper on the platform, written for prospective investors.
-Cover, contents, and 27 content sections — one section per page.
+A 31-page technical white paper on the platform, written for prospective investors.
+Cover, contents, and 29 content sections — one section per page.
 
 There is deliberately no page limit. Earlier revisions were capped at 10 and then
 15 pages, and both times the cap was paid for by omitting whole capability
@@ -36,7 +36,7 @@ sans — but line breaks shift, and the section-per-page fit is not guaranteed.
 Each `<section>` must fit inside one printed page. The printable box on US Letter
 at the configured margins is **254mm tall by 186mm wide**; a section taller than
 that silently spills onto a second sheet and pushes the whole document out of
-shape. After any content change, re-render and confirm the page count is still 29:
+shape. After any content change, re-render and confirm the page count is still 31:
 
 ```bash
 python3 -c "from pypdf import PdfReader; \
@@ -50,6 +50,17 @@ document.body.style.width = '186mm';
 document.querySelectorAll('section').forEach((s, i) =>
   console.log(i + 1, Math.round(s.getBoundingClientRect().height / 3.7795) + 'mm'));
 ```
+
+## Before claiming anything works
+
+`docs/GA_COMPLETION_LEDGER_2026-08.md` is the authority on what actually
+operates, and its §5 lineage rows were verified by reading code. Read it before
+marking any control "built". Three drafts of this paper overstated Part 11
+e-signature and lineage because they were assessed from docstrings and CI-gate
+names — both of which describe intent. The ledger records that the §11.70 tamper
+check has no production caller, the provenance tables have no writers, and model
+attribution is dropped at draft-accept. Sections 25 and 26 of the paper carry
+that assessment; keep them synchronized with the ledger, not with the docstrings.
 
 ## Before writing about scope
 
@@ -74,7 +85,7 @@ effect. When the platform changes materially, the figures in Sections 04 and 08
 and the state tables in Sections 09, 16–18 and 24 need re-deriving, not just
 re-wording.
 
-**Section 24 is the load-bearing one, and it decays fastest.** It pairs each of
+**Sections 24-26 are the load-bearing ones, and it decays fastest.** It pairs each of
 the audit's severe findings with the state of that mechanism in the code, and
 every row was confirmed by reading current source rather than a changelog. Two rules when editing it. First, re-verify the same way — a remediation claim taken
 from a commit message is exactly the kind of assertion this document exists to
