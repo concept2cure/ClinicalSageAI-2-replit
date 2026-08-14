@@ -214,7 +214,9 @@
     "visual-qa:capture": "vitest run scripts/visual-qa/dump-surface-markup.spec.tsx scripts/visual-qa/dump-v2-surfaces.spec.tsx",
     "visual-qa:styling": "node scripts/visual-qa/check-surface-styling.mjs",
     "visual-qa:a11y": "node scripts/visual-qa/check-a11y-semantics.mjs",
-    "visual-qa:contrast": "node scripts/visual-qa/check-contrast.mjs"
+    "visual-qa:contrast": "node scripts/visual-qa/check-contrast.mjs",
+    "ci:canonicalizers": "node scripts/ci/check-canonicalizers.mjs",
+    "ci:canonicalizers:write-baseline": "node scripts/ci/check-canonicalizers.mjs --write-baseline"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
