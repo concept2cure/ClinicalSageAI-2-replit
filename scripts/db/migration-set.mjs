@@ -1185,6 +1185,7 @@ export const C2C_MIGRATION_FILES = [
   // every lineage.
   'migrations/20260814j_catalog_missing_product_surfaces.sql',
   'migrations/20260814k_catalog_mission_control.sql',
+  'migrations/20260814l_catalog_filing_strategy.sql',
 
   // Same guard: descriptions only, no module added or removed (ledger L41).
   'migrations/20260814l_catalog_honest_module_descriptions.sql',

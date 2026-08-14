@@ -50,6 +50,38 @@ import {
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
 
 const router = Router();
+
+/**
+ * A 42P01 (undefined_table) as an actionable 503.
+ *
+ * Every PENDING_STORE site in this file used to answer `{ error: 'PENDING_STORE' }`
+ * and nothing else. That is a correct status and an unactionable outage: the
+ * caller learns a store is missing but not WHICH one, so nobody — operator,
+ * support, or the user watching project creation fail — can tell what to
+ * provision. `POST /api/c2c/projects` in particular touches the quota tables,
+ * the program row, the submission spine and the PM-spine anchor, so "some store
+ * is missing" narrows it to four candidates.
+ *
+ * Postgres puts the relation in the message ("relation \"x\" does not exist");
+ * `err.table` is not populated for this code. Naming a schema object to an
+ * authenticated operator is not a disclosure risk — it is the only thing that
+ * makes the response useful — but the raw driver message is not echoed, so
+ * nothing beyond the relation name leaks.
+ */
+function pendingStore(err: unknown, step: string): { error: string; store: string | null; step: string; message: string } {
+  const raw = (err as { message?: string })?.message ?? '';
+  const match = /relation "([^"]+)" does not exist/i.exec(raw);
+  const store = match ? match[1] : null;
+  return {
+    error: 'PENDING_STORE',
+    store,
+    step,
+    message: store
+      ? `The "${store}" store is not provisioned in this environment, so ${step} cannot complete. Run the pending database migrations.`
+      : `A store required for ${step} is not provisioned in this environment. Run the pending database migrations.`,
+  };
+}
+
 const logger = createScopedLogger('c2c-projects');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -545,7 +577,7 @@ router.post('/', async (req: Request, res: Response) => {
     // documented PENDING_STORE contract rather than reporting a missing table
     // as a billing refusal.
     if ((e as { code?: string })?.code === '42P01') {
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(e, 'the licensed-program quota check'));
     }
     throw e;
   }
@@ -791,7 +823,7 @@ router.post('/', async (req: Request, res: Response) => {
     });
   } catch (err: unknown) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(err, 'creating the project'));
     }
     console.error('[c2c/projects] POST /', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -1035,7 +1067,7 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
     // cannot distinguish "no pinned evidence" from "the query failed".
     if ((err as { code?: string })?.code === '42P01') {
       // c2c_project_pinned_evidence may not exist in all environments yet.
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(err, 'reading pinned evidence'));
     }
     logger.error('GET /:id/evidence failed', {
       programId: String(req.params.id),
@@ -1161,7 +1193,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     // The activity feed is an audit-log read; a caught failure must not render
     // as an empty feed (indistinguishable from a project with no activity).
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json({ error: 'PENDING_STORE' });
+      return res.status(503).json(pendingStore(err, 'reading the activity feed'));
     }
     logger.error('GET /:id/activity failed', {
       programId: String(req.params.id),
