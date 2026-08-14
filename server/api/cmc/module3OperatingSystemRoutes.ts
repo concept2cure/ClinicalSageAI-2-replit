@@ -40,6 +40,7 @@ const upsertSourceObjectSchema = z.object({
     'reference_standard',
     'container_closure',
     'excipient',
+    'qc_result',
   ]),
   sourceKey: z.string().min(1),
   sourcePayload: z.record(z.any()),

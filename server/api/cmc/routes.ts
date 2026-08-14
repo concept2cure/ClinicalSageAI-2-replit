@@ -6,6 +6,7 @@ import {
   writeThroughDrugSubstance,
   writeThroughDrugProduct,
   writeThroughAnalyticalMethod,
+  writeThroughQcTesting,
   writeThroughStabilityStudy,
   writeThroughProcessValidation,
   writeThroughChangeControl,
@@ -427,6 +428,16 @@ router.post('/qc-testing', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = qcTestingBody.parse(req.body);
     const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId } as typeof qcTesting.$inferInsert).returning();
+    /* Write-through: QC results ARE the batch analyses of §3.2.S.4.4 / §3.2.P.5.4.
+       This register was the only one with no canonical write-through, so a
+       recorded release result never reached the sections whose entire purpose is
+       to carry it. */
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughQcTesting(orgId, projectId, String(test.id), test).catch(err =>
+        observeWriteThroughFailure('write_through_qc_testing', test.id, err)
+      );
+    }
     res.json({ success: true, data: test });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create QC test');
@@ -454,6 +465,15 @@ router.put('/qc-testing/:id', async (req, res) => {
       .where(and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)))
       .returning();
     if (!test) return res.status(404).json({ success: false, error: 'QC test record not found' });
+    /* The review IS the state change that matters downstream: an unreviewed
+       result is not releasable evidence, so the canonical source must be
+       refreshed here too, not only on create. */
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughQcTesting(orgId, projectId, String(test.id), test).catch(err =>
+        observeWriteThroughFailure('write_through_qc_testing', test.id, err)
+      );
+    }
     res.json({ success: true, data: test });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update QC test');
