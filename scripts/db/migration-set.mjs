@@ -1192,6 +1192,12 @@ export const C2C_MIGRATION_FILES = [
   // Same guard: descriptions only, no module added or removed (ledger L41).
   'migrations/20260814m_catalog_honest_module_descriptions.sql',
 
+  // Retires the duplicate 'ind-lifecycle' catalog row added by 20260814j: the
+  // same IndLifecycle surface was already catalogued as 'ind-checklist', so one
+  // module was listed — and separately entitleable — twice. Deprecates rather
+  // than deletes (organization_modules cascades).
+  'migrations/20260814o_catalog_retire_duplicate_ind_lifecycle.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
