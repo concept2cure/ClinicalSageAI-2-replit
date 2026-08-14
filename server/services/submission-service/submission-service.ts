@@ -13,6 +13,7 @@
  * @module server/services/submission-service/submission-service
  */
 
+import { createHash } from 'crypto';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { PoolClient } from 'pg';
@@ -697,15 +698,34 @@ export async function upsertLeaf(
 
   // When a leaf points at the canonical document table, the target must belong
   // to the caller's org — no dangling cross-tenant document pointers.
+  /* Source pin (GA ledger L23). The leaf records where the document lives and
+     the MD5 of its RENDERED bytes; neither says what the SOURCE contained when
+     it was filed. So "this went to the agency — is the document behind it still
+     what went?" had no answer: `document_id` resolves to the document as it is
+     now, and editing it after filing changes nothing on the leaf.
+
+     The digest is taken from the SAME org-scoped read that already proves the
+     document belongs to the caller, so the bytes pinned are the bytes the
+     tenancy check passed on — a second query could race a concurrent edit and
+     pin content the check never saw. */
+  let documentContentSha256: string | null = null;
   if (input.documentTable === 'coauthor_documents' && input.documentId) {
     const [doc] = await db
-      .select({ id: coauthorDocuments.id })
+      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content })
       .from(coauthorDocuments)
       .where(and(eq(coauthorDocuments.id, input.documentId), eq(coauthorDocuments.organizationId, ctx.organizationId)))
       .limit(1);
     if (!doc) {
       throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
     }
+    /* An empty or absent body pins NOTHING rather than the digest of an empty
+       string. sha256('') is a real, constant hex value that would look exactly
+       like a pin that had been taken, and would then "match" any other empty
+       document forever. NULL is the honest record of "no content to pin". */
+    documentContentSha256 =
+      typeof doc.content === 'string' && doc.content.length > 0
+        ? createHash('sha256').update(doc.content, 'utf8').digest('hex')
+        : null;
   }
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
@@ -748,6 +768,12 @@ export async function upsertLeaf(
         documentType: input.documentType ?? null,
         parentLeafId: input.parentLeafId ?? null,
         ...(input.checksum !== undefined ? { checksum: input.checksum } : {}),
+        /* Re-pinned on every update, because an update can re-point the leaf at
+           a different document — carrying the previous pin forward would attest
+           to content this leaf no longer references. Clearing to NULL when the
+           new target has no pinnable content is likewise correct: unknown. */
+        documentContentSha256,
+        documentPinnedAt: documentContentSha256 ? new Date() : null,
         updatedAt: new Date(),
       })
       .where(
@@ -783,6 +809,8 @@ export async function upsertLeaf(
       documentType: input.documentType ?? null,
       parentLeafId: input.parentLeafId ?? null,
       checksum: input.checksum ?? null,
+      documentContentSha256,
+      documentPinnedAt: documentContentSha256 ? new Date() : null,
       organizationId: ctx.organizationId,
       createdBy: ctx.userId,
     })

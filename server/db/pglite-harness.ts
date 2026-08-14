@@ -267,6 +267,11 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   leaf_guid       TEXT,
   parent_leaf_id  INTEGER,
   checksum        TEXT,
+  -- Source pin (migrations/20260814e_submission_leaf_source_pin.sql): SHA-256 of
+  -- the SOURCE document's content when the leaf was filed, distinct from the
+  -- MD5 checksum column of RENDERED bytes above.
+  document_content_sha256 TEXT,
+  document_pinned_at      TIMESTAMPTZ,
   organization_id INTEGER NOT NULL,
   created_by      INTEGER,
   created_at      TIMESTAMPTZ DEFAULT now(),
