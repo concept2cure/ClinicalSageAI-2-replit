@@ -3,6 +3,29 @@ name: design-review
 description: Run a structured design critique against the brief and codebase. Checks visual hierarchy, consistency, responsiveness, accessibility, and aesthetic fidelity. Use when user wants a design review, critique, QA pass, polish pass, or mentions "review" after building.
 ---
 
+> **C2C OVERRIDE — fan the code review out to subagents.**
+>
+> Steps 1-3 below (read the brief, explore the code, capture screenshots) stay with YOU, the orchestrator. Screenshots in particular are not delegated: one browser session, one set of files under `.design/<feature-slug>/screenshots/`.
+>
+> The code-level critique is then run by six specialist agents **in parallel**, in a single message with multiple Agent calls:
+>
+> | Agent | Lens |
+> |---|---|
+> | `design-reviewer` | hierarchy, consistency, restraint, state coverage |
+> | `a11y-auditor` | WCAG 2.2 AA |
+> | `part11-ux-auditor` | governed actions, reason-for-change, §11.50 manifestation |
+> | `microcopy-reviewer` | tone of every user-facing string |
+> | `motion-auditor` | calm-motion rule, `prefers-reduced-motion` |
+> | `design-system-auditor` | registry + token conformance, runs the design CI gates |
+>
+> Give each agent the same scope: the feature slug, the list of files created or modified, and the brief's path. They are read-only by design — none of them edits, so they cannot conflict, and a review never silently rewrites what it is judging.
+>
+> Then YOU synthesise. Do not paste six reports back to back. De-duplicate (the same missing focus ring will arrive from two lenses), reconcile disagreements by going and looking yourself, and rank the merged list. Where two agents contradict each other, say so explicitly rather than picking the more confident one.
+>
+> **Skip a lens when it has nothing to judge** — no animation means no `motion-auditor` — and say in the review which lenses you ran. A review that silently omits a lens reads as coverage it does not have.
+>
+> `part11-ux-auditor` is the one to run even when it seems irrelevant. Compliance UX fails silently: a governed action that never wrote its ledger entry looks completely normal until an auditor asks.
+
 This skill runs a structured design review of what has been built, measured against the design brief and the chosen aesthetic philosophy.
 
 > **CRITICAL — Visual Screenshot Capture**
