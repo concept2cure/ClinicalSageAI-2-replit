@@ -387,6 +387,61 @@ for (const f of ENFORCEMENT_FLAGS) {
   });
 }
 
+// ── 4b. Tenant entitlement switches ─────────────────────────────────────────
+//
+// These do NOT fit the ENFORCEMENT_FLAGS shape above, and forcing them into it
+// would make the report lie. Those flags are ready only when set to an exact
+// value, because unset means OFF. These three default to the SAFE posture in
+// production when unset (see isSeatEnforcementOn / isStorageEnforcementOn /
+// scimProvisioningBlocked), so "not set" is ready, and the interesting reading is
+// the one where someone has explicitly turned a control off.
+{
+  const opposite = (varName, off, what, note) => {
+    const raw = (env[varName] ?? '').trim().toLowerCase();
+    const disabled = raw === off;
+    record({
+      id: `tenant-${varName.toLowerCase().replace(/_/g, '-')}`,
+      group: 'Tenant entitlement switches',
+      label: `${what} (${varName})`,
+      status: disabled ? 'blocked' : 'ready',
+      severity: 'advisory',
+      observed: raw === ''
+        ? `${varName} not set — production default applies (enforcing)`
+        : `${varName}="${env[varName]}"`,
+      gate: note.gate,
+      owner: 'Ops (deploy env) + Commercial (who is over their limit)',
+      unblock: note.unblock,
+    });
+  };
+
+  opposite('SEAT_LIMIT_ENFORCEMENT', 'report', 'Seat licensing enforcement', {
+    gate: 'server/services/seat-licensing.ts isSeatEnforcementOn — unset enforces in production',
+    unblock:
+      'Remove SEAT_LIMIT_ENFORCEMENT (or set it to "enforce") once over-seat tenants ' +
+      'are reconciled with their contracts. While it reads "report", the (N+1)th ' +
+      'member or invitation is counted and surfaced but never blocked.',
+  });
+
+  opposite('STORAGE_LIMIT_ENFORCEMENT', 'report', 'Storage quota enforcement', {
+    gate: 'server/services/tenant/tenant-storage.ts isStorageEnforcementOn → middleware/storageQuotaGuard.ts',
+    unblock:
+      'Run `npm run report:tenant-storage` FIRST — it prints exactly which tenants ' +
+      'would start receiving 413s. Unlike seats (default 0 = unlimited), max_storage ' +
+      'defaults to 5 GB and nothing measured a tenant against it before this control ' +
+      'existed, so enforcing blind can refuse a customer mid-submission. Remove the ' +
+      'variable (or set "enforce") once that list is empty.',
+  });
+
+  opposite('SCIM_PROVISIONING_ON_SUSPENDED_TENANT', 'allow', 'SCIM provisioning on a suspended tenant', {
+    gate: 'server/routes/scim.ts scimProvisioningBlocked — unset blocks CREATE/ACTIVATE, never DELETE/DEACTIVATE',
+    unblock:
+      'Set back to "block" (or remove it). While it reads "allow", an organization ' +
+      'suspended for non-payment or a security incident can still have new users ' +
+      'provisioned into it by its IdP. Deprovisioning is unaffected either way — that ' +
+      'asymmetry is deliberate and must not be "fixed".',
+  });
+}
+
 // ── 5. Boot-posture secrets ─────────────────────────────────────────────────
 
 {

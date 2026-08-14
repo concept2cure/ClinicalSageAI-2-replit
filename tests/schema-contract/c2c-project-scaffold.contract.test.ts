@@ -19,7 +19,7 @@
  * the REAL service against it.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,14 +30,6 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.sql');
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
 
-// Each test boots a PGlite instance and applies the phase-9 migrations. Against
-// the 10s global default that is comfortable in isolation and marginal under
-// contention — this file timed out at 12.4s in a 75-file run while passing in
-// isolation and in a 49-file one. Matched to the six sibling PGlite contract
-// tests that already opt out of the default; see the longer note in
-// c2c-rule-pack-outlines.contract.test.ts for why the GLOBAL default was left
-// alone.
-vi.setConfig({ testTimeout: 300_000, hookTimeout: 300_000 });
 
 const ORG = 7;
 const PROJECT = '11111111-2222-3333-4444-555555555555';

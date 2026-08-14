@@ -443,6 +443,25 @@ missing from the fixture fails loudly instead of quietly reducing the suite to
 nothing. Both are recorded here because "the tests passed" is worth exactly as
 much as the tests were capable of failing.
 
+**Composition is now proven, not just each guard in isolation.** Every guard in
+this workstream was unit-tested with its neighbours mocked, and every one passed.
+That says nothing about whether they compose — a guard mounted in the wrong order,
+or reading a request field an earlier middleware has not yet populated, fails only
+on a live chain. Two claims had been written as comments in `middleware/auth.ts`
+and `auth.ts` and asserted nowhere:
+
+- **Both chains or neither.** Dropping the storage guard from the global `/api`
+  gate alone fails one assertion — the one-sided mount is exactly the shape of the
+  four transport bypasses closed in §2.5.
+- **A suspended tenant is told it is suspended, not that it is out of disk.**
+  Swapping the two mounts fails the ordering assertions and *nothing else* in the
+  file: the other thirteen pass under either order, which is precisely why the
+  ordering needed its own test. It matters commercially — a 413 tells a customer
+  to delete files or buy storage, and neither restores access to a suspended
+  tenancy.
+
+Both verified by mutation against the real middleware, not a mock of it.
+
 **Rollout: this one needs reconciliation first.** Unlike `seats_purchased`
 (default 0 = unlimited), `max_storage` defaults to **5 GB** and nothing has ever
 measured a tenant against it, so switching enforcement on can refuse tenants who
@@ -460,7 +479,7 @@ Report mode is not an off switch: it computes, counts and logs every decision.
 | `services/tenant/__tests__/tenant-lifecycle.test.ts` | 22 passed — full decision table, both asymmetric unknown-value arms |
 | `services/tenant/__tests__/tenant-offboarding.test.ts` | 18 passed — every refusal path, plus the "row survives" and "audit trail excluded" invariants |
 | `middleware/__tests__/tenantLifecycleGuard.test.ts` | 16 passed — carve-outs, platform bypass, read-only verb split, fail-closed |
-| `middleware/__tests__/auth-establishes-scope.integration.test.ts` | 9 passed — wiring proof on **both** auth chains |
+| `middleware/__tests__/auth-establishes-scope.integration.test.ts` | 15 passed — wiring proof on **both** auth chains, now including guard **composition and ordering** (see below) |
 | `services/__tests__/seat-licensing.test.ts` | 11 passed — production-default enforcement |
 | `services/tenant/__tests__/tenant-storage.test.ts` | 25 passed — quota boundaries, every spelling of "unlimited", hostile inputs, the burst-through-cache hole |
 | `middleware/__tests__/storageQuotaGuard.test.ts` | 19 passed — which requests are evaluated, carve-outs, report mode, the deliberate fail-OPEN arm |
@@ -507,3 +526,47 @@ commercial team needs a reconciliation window first.
 rising means the posture lookup is failing and tenants are being refused for
 infrastructure reasons. Alert on it separately from `decision="deny"`, which is
 the control working.
+
+**Storage enforcement.** Production enforces by default here too, but this one is
+NOT symmetric with seats and the difference is the whole risk. `seats_purchased`
+defaults to 0 (unlimited), so switching seat enforcement on cannot surprise a
+tenant that was never provisioned. `max_storage` defaults to **5 GB** and nothing
+had ever measured a tenant against it, so switching storage enforcement on can
+refuse a customer who has been quietly over for months — during a submission.
+
+Run this first; it prints exactly who would start receiving 413s and by how much:
+
+```
+npm run report:tenant-storage
+```
+
+Ship with `STORAGE_LIMIT_ENFORCEMENT=report` until that list is empty. Report mode
+is a measurement mode, not an off switch: it still computes every decision, counts
+it on `tenant_quota_decisions_total{resource="storage"}` and logs the tenant.
+
+---
+
+## 6. The three switches are machine-checkable
+
+Every enforcement decision in this workstream is a deploy-time variable, and a
+variable documented only in `.env.example` is a variable someone ships wrong. All
+three now appear in `scripts/ops/ga-readiness-report.mjs` under **Tenant
+entitlement switches**, so a release check reports them rather than an operator
+remembering:
+
+| Variable | READY when | BLOCKED when |
+|---|---|---|
+| `SEAT_LIMIT_ENFORCEMENT` | unset, or `enforce` | `report` — over-seat adds counted, never blocked |
+| `STORAGE_LIMIT_ENFORCEMENT` | unset, or `enforce` | `report` — a paid limit deliberately unenforced |
+| `SCIM_PROVISIONING_ON_SUSPENDED_TENANT` | unset, or `block` | `allow` — an IdP can still provision into a suspended tenant |
+
+They deliberately do NOT use that report's `ENFORCEMENT_FLAGS` shape, which is
+ready only on an exact value because unset means OFF there. These three default to
+the *safe* posture in production, so "not set" is genuinely ready, and forcing
+them into that shape would have made the report lie.
+
+Falsified in both directions: each row goes BLOCKED when the control is explicitly
+disabled, and a typo'd value (`repot`) reads READY — which matches the runtime,
+where an unrecognized value falls back to the enforcing default rather than
+silently disabling a paid control. The probe agrees with the code, not with an
+assumption about it.
