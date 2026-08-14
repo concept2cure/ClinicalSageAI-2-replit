@@ -67,6 +67,15 @@
 .c2c-v2 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
 .c2c-v2 button:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
+/* The reset above strips the user-agent focus ring from every field in v2, and
+   nothing put one back — `.c2c-input`, the class every surface uses, has no rule
+   anywhere in the repo, so it inherited a bare `outline: 0`. A keyboard user had
+   no way to see which field they were on, across all 119 surfaces. Buttons
+   already had this ring one line up; fields simply never got the matching rule.
+   WCAG 2.2 SC 2.4.7. */
+.c2c-v2 input:focus-visible,
+.c2c-v2 textarea:focus-visible,
+.c2c-v2 select:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 svg { display: block; }
 
 /* the "Sample data" / "Live" provenance pill (kit data-connect.jsx renders it
@@ -106,6 +115,17 @@
   background: color-mix(in srgb, var(--warning) 6%, transparent);
 }
 .c2c-v2 .c2c-empty-state.tone-error .c2c-empty-ic { color: var(--warning); opacity: 1; }
+/* UI standards §8: a failed load always offers a recovery path. Sized to the
+   44px touch target the mobile-first rule requires. */
+.c2c-v2 .c2c-empty-state .c2c-empty-retry {
+  margin-top: 6px; min-height: 32px; padding: 7px 14px;
+  font-size: 12px; font-weight: 500; color: var(--accent-200);
+  border: 1px solid var(--accent-muted, var(--border)); border-radius: 99px;
+  background: var(--accent-000, transparent);
+  transition: background var(--dur, .15s), color var(--dur, .15s), border-color var(--dur, .15s);
+}
+.c2c-v2 .c2c-empty-state .c2c-empty-retry:hover { background: var(--accent-100); color: #fff; border-color: var(--accent-100); }
+@media (pointer: coarse) { .c2c-v2 .c2c-empty-state .c2c-empty-retry { min-height: 44px; padding: 11px 18px; } }
 
 /* port helpers — the kit expressed these as one-off inline style attributes;
    classes keep the TSX clean and the CSP surface minimal */
@@ -456,6 +476,22 @@
 .c2c-v2 .kdot{width:8px;height:8px;border-radius:50%;background:var(--text-400);}
 .c2c-v2 .kdot[data-tone="idle"]{background:var(--text-400);}.c2c-v2 .kdot[data-tone="ai"]{background:var(--accent-100);}.c2c-v2 .kdot[data-tone="warn"]{background:var(--warning);}.c2c-v2 .kdot[data-tone="ok"]{background:var(--success);}.c2c-v2 .kdot[data-tone="err"]{background:var(--error);}
 .c2c-v2 .tb-card:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
+/* The card's move buttons are opacity:0 until hover. Without this companion
+   rule a keyboard user tabs onto a control that paints nothing — the focus ring
+   is suppressed along with the button, so there is no way to tell where you are
+   or that the control exists. SC 2.4.7. */
+.c2c-v2 .tb-card:focus-within .tb-move{opacity:1;}
+
+/* §11.50 signature manifestation, rendered in the task detail panel. */
+.c2c-v2 .tb-sig-list{display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .tb-sig{border:1px solid var(--border);border-left:3px solid var(--success);border-radius:var(--radius-md);background:var(--bg-050);padding:9px 11px;}
+.c2c-v2 .tb-sig-h{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-200);}
+.c2c-v2 .tb-sig-h svg{width:14px;height:14px;color:var(--success);flex-shrink:0;}
+.c2c-v2 .tb-sig-h time{font-size:11px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 .tb-sig-meaning{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--success);background:var(--success-muted);border-radius:4px;padding:1px 6px;}
+.c2c-v2.dark .tb-sig-meaning{color:var(--success);}
+.c2c-v2 .tb-sig-reason{font-size:12px;color:var(--text-300);line-height:1.5;margin-top:5px;}
+.c2c-v2 .tb-sig-meta{font-size:10.5px;color:var(--text-400);margin-top:5px;}
 .c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(5,1fr);}
 @media (max-width:1250px){.c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(3,1fr);}}
 @media (max-width:900px){.c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(2,1fr);}}

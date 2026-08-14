@@ -417,6 +417,14 @@ export interface BuildResult {
   body: Record<string, unknown>;
   /** Human-readable reasons the form is not ready to submit. */
   errors: string[];
+  /**
+   * The same failures keyed by field, so each message can be rendered AT the
+   * control it is about and referenced by `aria-describedby`. A single summary
+   * string identifies that something is wrong without identifying which input —
+   * WCAG 2.2 SC 3.3.1 asks for the item in error to be identified, and for a
+   * fifteen-field form a summary is not that.
+   */
+  fieldErrors: Record<string, string>;
 }
 
 /**
@@ -431,13 +439,18 @@ export function buildRequestBody(
 ): BuildResult {
   const body: Record<string, unknown> = { ...(calc.fixedBody ?? {}) };
   const errors: string[] = [];
+  const fieldErrors: Record<string, string> = {};
+  const reject = (field: CalculatorField, message: string) => {
+    errors.push(message);
+    fieldErrors[field.key] = message;
+  };
 
   for (const field of calc.fields) {
     if (!isFieldVisible(field, values)) continue;
     const raw = (values[field.key] ?? '').trim();
 
     if (!raw) {
-      if (!field.optional) errors.push(`${field.label} is required.`);
+      if (!field.optional) reject(field, `${field.label} is required.`);
       continue;
     }
 
@@ -451,20 +464,20 @@ export function buildRequestBody(
       case 'number':
       case 'int': {
         const n = Number(raw);
-        if (!Number.isFinite(n)) { errors.push(`${field.label} must be a number.`); break; }
-        if (field.kind === 'int' && !Number.isInteger(n)) { errors.push(`${field.label} must be a whole number.`); break; }
+        if (!Number.isFinite(n)) { reject(field, `${field.label} must be a number.`); break; }
+        if (field.kind === 'int' && !Number.isInteger(n)) { reject(field, `${field.label} must be a whole number.`); break; }
         setPath(body, field.key, n);
         break;
       }
       case 'numlist': {
         const list = parseNumberList(raw);
-        if (!list) { errors.push(`${field.label} must be a list of numbers.`); break; }
+        if (!list) { reject(field, `${field.label} must be a list of numbers.`); break; }
         setPath(body, field.key, list);
         break;
       }
       case 'rows': {
         const rows = parseRowLines(raw);
-        if (!rows) { errors.push(`${field.label}: every line must be a list of numbers.`); break; }
+        if (!rows) { reject(field, `${field.label}: every line must be a list of numbers.`); break; }
         const shape = calc.parseRows?.[field.key];
         setPath(body, field.key, shape ? shape(rows) : rows);
         break;
@@ -472,7 +485,7 @@ export function buildRequestBody(
     }
   }
 
-  return { body, errors };
+  return { body, errors, fieldErrors };
 }
 
 /** A field with `showWhen` is only part of the form while its condition holds. */

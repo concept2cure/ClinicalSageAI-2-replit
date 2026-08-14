@@ -314,7 +314,9 @@
 .c2c-v2 .cm-kicker{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
 .c2c-v2 .cm-title{font-size:23px;font-weight:600;color:var(--text-100);margin:4px 0 5px;}
 .c2c-v2 .cm-meta{font-size:12.5px;color:var(--text-400);}
-.c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+/* auto-fit, not a fixed four: a board with five or six measures must not wrap
+   a lone tile onto a row of its own. */
+.c2c-v2 .cm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
 .c2c-v2 .cm-matrix{overflow-x:auto;}
 .c2c-v2 .cm-matrix table{border-collapse:collapse;width:100%;font-size:12px;}
 .c2c-v2 .cm-matrix th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);font-weight:700;padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
@@ -360,6 +362,41 @@
 .c2c-v2 .cm-push button:hover{background:var(--accent-100);color:#fff;border-color:var(--accent-100);}
 .c2c-v2 .cm-push button svg{width:12px;height:12px;}
 .c2c-v2 .cm-pushbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+
+/* ── CMC suite: data entry, Module 3 build, provenance ── */
+/* The "add a record" control lives in a card header next to its title. */
+.c2c-v2 .cm-reg-add{margin-left:auto;flex-shrink:0;}
+.c2c-v2 .cm-inline-select{margin-left:auto;width:auto;min-width:190px;flex-shrink:0;}
+.c2c-v2 .cm-gate{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+/* pj-con is styled as an alert; the export gate reuses it for the PASS verdict
+   too, so the ok variant re-tones it rather than introducing a second panel. */
+.c2c-v2 .pj-con.is-ok{border-color:var(--success);background:var(--success-muted);}
+.c2c-v2 .pj-con.is-ok .pj-con-t{color:#3f5c1f;}
+.c2c-v2 .pj-con.is-ok>.ico{color:var(--success);}
+.c2c-v2 .cm-projbar-sm{height:5px;width:64px;display:inline-block;vertical-align:middle;margin-right:7px;}
+.c2c-v2 .cm-list{margin:4px 0 0;padding-left:18px;}
+.c2c-v2 .cm-list li{margin-bottom:3px;}
+.c2c-v2 .cm-sub-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin:18px 0 8px;}
+/* A results table nested inside an expanded register row. */
+.c2c-v2 .cm-subtable{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-md);margin:8px 0;}
+.c2c-v2 .cm-subtable th{background:transparent;}
+.c2c-v2 .cm-linkish{font-size:12.5px;color:var(--accent-200);font-weight:500;text-decoration:underline;text-underline-offset:2px;}
+.c2c-v2 .cm-linkish:hover{color:var(--accent-100);}
+/* The per-section provenance chain in the Module 3 build drawer. */
+.c2c-v2 .cm-prov{list-style:none;margin:0;padding:0;}
+.c2c-v2 .cm-prov li{padding:10px 0;border-bottom:1px solid var(--border);}
+.c2c-v2 .cm-prov li:last-child{border-bottom:0;}
+.c2c-v2 .cm-prov-h{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.c2c-v2 .cm-prov-p{font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-400);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 10px;margin:6px 0 0;overflow-x:auto;white-space:pre-wrap;word-break:break-word;}
+/* A failure toast must not wear the success tick's green. `.de-toast .ico` is
+   unconditionally var(--success), so "Couldn't save — nothing was persisted"
+   read as a success at a glance. */
+.c2c-v2 .de-toast[data-tone="error"]{background:var(--error);color:#fff;}
+.c2c-v2 .de-toast[data-tone="error"] .ico{color:#fff;}
+/* A disabled row action must look disabled. `.nda-open` carried no disabled
+   state, so "Review" blocked by the two-person rule and "Build" blocked by
+   having no source data both still read as live controls. */
+.c2c-v2 .nda-open:disabled,.c2c-v2 .reg-cta:disabled{opacity:.45;cursor:not-allowed;}
 .c2c-v2 .pj-toolgrp{margin-bottom:16px;}
 .c2c-v2 .pj-toolgrp-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:8px;}
 .c2c-v2 .sp-tone-err{color:var(--error);font-weight:600;}

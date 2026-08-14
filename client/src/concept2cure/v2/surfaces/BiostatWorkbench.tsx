@@ -35,6 +35,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   CALCULATORS,
   buildRequestBody,
@@ -62,7 +63,11 @@ function useToast(): [string, (m: string) => void] {
 }
 function C2CToast({ msg }: { msg: string }) {
   if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
+  // role="status" + aria-live: this is the ONLY channel for validation errors
+  // ("Prior SD is required.") and for result confirmations, and without a live
+  // region a screen-reader user submits the form and is told nothing at all.
+  // WCAG 2.2 SC 4.1.3.
+  return <div className="de-toast" role="status" aria-live="polite"><span className="ico">{I.checkCircle}</span>{msg}</div>;
 }
 async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
   try {
@@ -158,11 +163,32 @@ function cell(v: unknown): string {
   return String(v);
 }
 
-function Field({ field, value, onChange }: { field: CalculatorField; value: string; onChange: (v: string) => void }) {
-  const common = { className: 'c2c-input', value, onChange: (e: any) => onChange(e.target.value) };
+function Field({ field, value, error, onChange }: {
+  field: CalculatorField;
+  value: string;
+  /** This field's own validation message, if it has one. */
+  error?: string;
+  onChange: (v: string) => void;
+}) {
+  /* The hint and the error are referenced rather than nested, for two reasons:
+     nesting them in the <label> folds them into the field's accessible NAME, so
+     the control announces its whole help text on every focus; and a description
+     is what `aria-describedby` is for. `aria-invalid` is what identifies WHICH
+     input is wrong — a single summary string says something is wrong without
+     saying where, which for a fifteen-field form is not identification.
+     WCAG 2.2 SC 3.3.1. */
+  const describedBy = [error ? `${field.key}-err` : null, field.hint ? `${field.key}-hint` : null]
+    .filter(Boolean).join(' ') || undefined;
+  const common = {
+    className: 'c2c-input',
+    value,
+    'aria-invalid': error ? true : undefined,
+    'aria-describedby': describedBy,
+    onChange: (e: any) => onChange(e.target.value),
+  };
   return (
     <label style={{ fontSize: 12, display: 'block' }}>
-      <span>{field.label}{field.optional ? <span style={{ color: 'var(--c2c-dim,#667085)' }}> (optional)</span> : null}</span>
+      <span>{field.label}{field.optional ? <span style={{ color: 'var(--text-300,#6b6963)' }}> (optional)</span> : null}</span>
       {field.kind === 'select' ? (
         <select {...common} style={{ height: 30 }}>
           {(field.options ?? []).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -172,7 +198,10 @@ function Field({ field, value, onChange }: { field: CalculatorField; value: stri
       ) : (
         <input {...common} style={{ height: 30 }} placeholder={field.placeholder} />
       )}
-      {field.hint && <span style={{ display: 'block', fontSize: 11, color: 'var(--c2c-dim,#667085)', marginTop: 2 }}>{field.hint}</span>}
+      {error && (
+        <span id={`${field.key}-err`} style={{ display: 'block', fontSize: 11, color: 'var(--error,#b63939)', marginTop: 2 }}>{error}</span>
+      )}
+      {field.hint && <span id={`${field.key}-hint`} style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>{field.hint}</span>}
     </label>
   );
 }
@@ -182,6 +211,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
   const [result, setResult] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const visible = useMemo(() => calc.fields.filter(f => isFieldVisible(f, values)), [calc, values]);
   const rows = useMemo(() => scalarRows(result), [result]);
@@ -189,8 +219,14 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
   const provenance = result?.provenance ?? null;
 
   const run = useCallback(async () => {
-    const { body, errors } = buildRequestBody(calc, values);
-    if (errors.length > 0) { fireToast(errors[0]); return; }
+    const { body, errors, fieldErrors: errs } = buildRequestBody(calc, values);
+    setFieldErrors(errs);
+    if (errors.length > 0) {
+      // The toast announces (via its live region) that submission was refused
+      // and names the first problem; the per-field messages say which controls.
+      fireToast(errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length} fields need attention.)`);
+      return;
+    }
     setBusy(true);
     try {
       const res = await readData(`/api/biostat${calc.path}`, body);
@@ -206,7 +242,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
     } finally { setBusy(false); }
   }, [calc, values, fireToast]);
 
-  const reset = useCallback(() => { setValues(initialValues(calc)); setResult(null); }, [calc]);
+  const reset = useCallback(() => { setValues(initialValues(calc)); setResult(null); setFieldErrors({}); }, [calc]);
 
   return (
     <div className="pj-card">
@@ -215,11 +251,22 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
         <span className="s">{calc.subtitle}</span>
       </div>
       <div className="pj-card-b">
-        <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginBottom: 12, lineHeight: 1.5 }}>{calc.about}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginBottom: 12, lineHeight: 1.5 }}>{calc.about}</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10, marginBottom: 12 }}>
           {visible.map(f => (
-            <Field key={f.key} field={f} value={values[f.key] ?? ''} onChange={v => setValues(s => ({ ...s, [f.key]: v }))} />
+            <Field
+              key={f.key}
+              field={f}
+              value={values[f.key] ?? ''}
+              error={fieldErrors[f.key]}
+              onChange={v => {
+                setValues(s => ({ ...s, [f.key]: v }));
+                // Clear this field's error as soon as the user acts on it —
+                // leaving it up while they type says the new value is wrong too.
+                setFieldErrors(e => (e[f.key] ? { ...e, [f.key]: '' } : e));
+              }}
+            />
           ))}
         </div>
 
@@ -228,7 +275,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
             {I.zap} {busy ? 'Computing…' : 'Compute'}
           </button>
           <button className="btn" style={{ height: 32 }} onClick={reset} disabled={busy}>Reset</button>
-          {result && <button className="btn" style={{ height: 32 }} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
+          {result && <button className="btn" style={{ height: 32 }} aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
         </div>
 
         {result !== null && (
@@ -258,7 +305,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
                       </table>
                     </div>
                     {t.rows.length > 60 && (
-                      <div style={{ fontSize: 11, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>
                         Showing 60 of {t.rows.length} rows — the full table is in the raw response.
                       </div>
                     )}
@@ -271,7 +318,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
               // Shown because these numbers go into an SAP or a submission and a
               // reviewer will ask how they were produced. The hash is over the
               // inputs, so the same hash means the same computation.
-              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--c2c-dim,#667085)' }}>
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-300,#6b6963)' }}>
                 {provenance.method} · {provenance.engine} {provenance.engineVersion}
                 {provenance.inputsSha256 ? <> · inputs <span className="mono">{String(provenance.inputsSha256).slice(0, 12)}</span></> : null}
                 {provenance.reproducible ? ' · reproducible' : null}
@@ -279,7 +326,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
             )}
 
             {showRaw && (
-              <pre style={{ marginTop: 10, maxHeight: 320, overflow: 'auto', background: 'var(--c2c-surface-2,#f9fafb)', padding: 10, borderRadius: 6, fontSize: 11 }}>
+              <pre id={`raw-${calc.id}`} style={{ marginTop: 10, maxHeight: 320, overflow: 'auto', background: 'var(--canvas-elevated,#ffffff)', color: 'var(--text-100,#3d3d3a)', padding: 10, borderRadius: 6, fontSize: 11 }}>
                 {JSON.stringify(result, null, 2)}
               </pre>
             )}
@@ -302,6 +349,36 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
   const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
   const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
 
+  /* What AnA can see of this screen: which engine is selected, what it computes
+     and what it needs. Without it, "is this the right design?" on the
+     group-sequential screen is answered from the message text alone, and she
+     cannot know the user is looking at boundaries rather than at MMRM sizing.
+     The calculator's own `about` prose is reused rather than restated, so this
+     cannot drift from what the user is reading. */
+  const anaContext = useMemo(
+    () => ({
+      summary: `Biostatistics workbench, "${active.title}" selected — ${active.subtitle}.`,
+      facts: {
+        calculatorId: active.id,
+        endpoint: `/api/biostat${active.path}`,
+        computes: active.about,
+        requiredInputs: active.fields.filter(f => !f.optional).map(f => f.label),
+        optionalInputs: active.fields.filter(f => f.optional).map(f => f.label),
+        availableCalculators: CALCULATORS.map(c => c.title),
+        defensibilityAssessed: asmtRes !== null,
+      },
+      availableActions: [
+        'Explain what this calculator computes',
+        'Suggest inputs for a design',
+        'Switch to another calculator',
+        'Run a reviewer-risk defensibility assessment',
+      ],
+    }),
+    [active, asmtRes]
+  );
+
+  usePublishSurfaceContext('biostat-workbench', anaContext);
+
   const runAssess = useCallback(async () => {
     if (!asmt.indication || !asmt.studyDesign || !asmt.primaryEndpoint) { fireToast('Enter indication, study design, and primary endpoint.'); return; }
     setAsmtBusy(true);
@@ -320,7 +397,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
     <div className="cm-body">
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span></div>
-        <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--c2c-dim,#667085)' }}>
+        <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300,#6b6963)' }}>
           Every calculation below runs on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser.
         </div>
       </div>
@@ -341,16 +418,16 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
           {asmtRes && (
             <div style={{ marginTop: 12 }}>
               <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
-                {asmtRes.overallScore != null && <div><div style={{ fontSize: 26, fontWeight: 700 }}>{asmtRes.overallScore}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Overall score</div></div>}
-                {asmtRes.overallRating && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.overallRating)}>{asmtRes.overallRating}</span><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>Rating</div></div>}
-                {asmtRes.reviewerRiskLevel && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.reviewerRiskLevel)}>{asmtRes.reviewerRiskLevel}</span><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>Reviewer risk</div></div>}
+                {asmtRes.overallScore != null && <div><div style={{ fontSize: 26, fontWeight: 700 }}>{asmtRes.overallScore}</div><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)' }}>Overall score</div></div>}
+                {asmtRes.overallRating && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.overallRating)}>{asmtRes.overallRating}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Rating</div></div>}
+                {asmtRes.reviewerRiskLevel && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.reviewerRiskLevel)}>{asmtRes.reviewerRiskLevel}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Reviewer risk</div></div>}
               </div>
               {Array.isArray(asmtRes.criticalIssues) && asmtRes.criticalIssues.length > 0 && (
-                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c2c-err,#b42318)' }}>Critical issues</div>
+                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--error,#b63939)' }}>Critical issues</div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.criticalIssues.map((x, i) => <li key={i}>{issueText(x)}</li>)}</ul></div>
               )}
               {Array.isArray(asmtRes.majorIssues) && asmtRes.majorIssues.length > 0 && (
-                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c2c-warn,#b54708)' }}>Major issues</div>
+                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--warning,#955d22)' }}>Major issues</div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.majorIssues.map((x, i) => <li key={i}>{issueText(x)}</li>)}</ul></div>
               )}
               {Array.isArray(asmtRes.recommendations) && asmtRes.recommendations.length > 0 && (
@@ -372,6 +449,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
                 key={c.id}
                 className={'btn' + (c.id === activeId ? ' primary' : '')}
                 style={{ height: 28, fontSize: 12 }}
+                aria-pressed={c.id === activeId}
                 onClick={() => setActiveId(c.id)}
               >
                 {c.title}

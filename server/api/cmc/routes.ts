@@ -73,6 +73,157 @@ function getOrgId(req: express.Request): number {
   return orgId;
 }
 
+/* ── Date fields on a JSON boundary ──────────────────────────────────────────
+ *
+ * drizzle-zod maps a `timestamp` column onto `z.date()`. JSON has no date type,
+ * so a browser or any other JSON client can only ever send a STRING — and every
+ * insert schema below therefore rejected its own timestamp field:
+ *
+ *   insertQcTestingSchema.parse({ ..., testDate: '2026-08-14T00:00:00.000Z' })
+ *     → ZodError: Expected date, received string
+ *
+ * `test_date` (qc_testing) and `start_date` (stability_studies) are NOT NULL, so
+ * the failure was not partial: those two records could not be created at all,
+ * and because the handlers caught everything into a generic
+ * `500 Failed to create …` the cause was invisible from the client. That is why
+ * the CMC registers have only ever been readable — the write path was closed.
+ *
+ * These wrappers accept an ISO string (or a Date) and normalise blank/absent to
+ * undefined, so an optional timestamp left empty in a form is "not set" rather
+ * than `new Date('')` → Invalid Date → a second confusing rejection.
+ */
+const requiredDate = z.coerce.date();
+const optionalDate = z.preprocess(
+  v => (v === '' || v === null || v === undefined ? undefined : v),
+  z.coerce.date().optional()
+);
+
+/**
+ * Normalise a failed write into an honest response.
+ *
+ * A rejected field is the client's problem to fix and must say which field;
+ * reporting it as `500 Failed to create X` (as every handler here did) tells the
+ * operator the server is broken when the real answer is "matrix is required".
+ */
+function respondWriteError(
+  res: express.Response,
+  error: unknown,
+  fallback: string
+): express.Response {
+  if (error instanceof z.ZodError) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid payload',
+      details: error.errors,
+    });
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  if (message.includes('Organization context required')) {
+    return res.status(401).json({ success: false, error: 'Organization context required' });
+  }
+  /* The scoped logger, with the operation as DATA rather than interpolated into
+     the message. A template-built log line is both a Semgrep format-string
+     finding and a real hazard in a regulated audit trail: a value carrying a
+     format specifier or a newline can forge the shape of a log record. The
+     message is a constant; everything variable is a field. */
+  logger.error('CMC write failed', {
+    operation: fallback,
+    error: message,
+  });
+  return res.status(500).json({ success: false, error: fallback });
+}
+
+/* ── Reading a stability study's recorded series ─────────────────────────────
+ *
+ * The stability surface appends each pull-point result to
+ * `stability_data.results`. These readers are deliberately tolerant of the
+ * shapes a json column can hold (parsed object, JSON string, or a bare array
+ * from an older writer) and deliberately intolerant of guessing: a value that
+ * cannot be read as a number reads as null, never as zero, and an acceptance
+ * criterion that cannot be parsed yields no limit rather than a default one.
+ * A fabricated limit here would silently produce a shelf-life number, which is
+ * the single most consequential value this module computes. */
+
+interface StabilityPointRecord {
+  timePoint?: unknown;
+  parameter?: unknown;
+  result?: unknown;
+  specification?: unknown;
+}
+
+function readRecordedStabilityResults(value: unknown): StabilityPointRecord[] {
+  let raw = value;
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  const list = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object' && Array.isArray((raw as { results?: unknown }).results)
+      ? (raw as { results: unknown[] }).results
+      : [];
+  return list.filter(
+    (r): r is StabilityPointRecord => Boolean(r) && typeof r === 'object'
+  );
+}
+
+/** The first finite number in a recorded value ("98.4%" → 98.4), else null. */
+function parseNumeric(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const m = String(value ?? '').match(/-?\d+(?:\.\d+)?/);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * An acceptance criterion as recorded → the limit and which way the attribute
+ * trends toward it.
+ *
+ *   "<= 2.0%"          → upper limit 2.0, attribute increasing toward it
+ *   ">= 95.0%"         → lower limit 95.0, attribute decreasing toward it
+ *   "95.0 – 105.0%"    → a two-sided range; the LOWER bound is taken, because a
+ *                        potency/assay range is limited in practice by decay.
+ *
+ * Returns null when nothing numeric is recorded — the caller then reports the
+ * parameter as not estimable and says why.
+ */
+function parseAcceptanceCriterion(
+  candidates: unknown[]
+): { limit: number; direction: 'increasing' | 'decreasing' } | null {
+  for (const candidate of candidates) {
+    const text = String(candidate ?? '').trim();
+    if (!text) continue;
+    const numbers = (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number).filter(Number.isFinite);
+    if (numbers.length === 0) continue;
+
+    if (/(?:<=|≤|<|nmt|not more than|max)/i.test(text)) {
+      return { limit: numbers[0], direction: 'increasing' };
+    }
+    if (/(?:>=|≥|>|nlt|not less than|min)/i.test(text)) {
+      return { limit: numbers[0], direction: 'decreasing' };
+    }
+    if (numbers.length >= 2) {
+      // A range: the attribute is bounded on both sides, and the failure mode a
+      // shelf life is set by is the decreasing one.
+      return { limit: Math.min(...numbers), direction: 'decreasing' };
+    }
+  }
+  return null;
+}
+
+/**
+ * Strip the tenant key from a validated update body. The organization scope is
+ * taken from the authenticated context and must never be settable by the caller.
+ */
+function withoutOrgId<T extends Record<string, unknown>>(data: T): Omit<T, 'organizationId'> {
+  const { organizationId: _discard, ...rest } = data as { organizationId?: unknown } & T;
+  return rest as Omit<T, 'organizationId'>;
+}
+
 // Analytical Methods Routes
 router.get('/analytical-methods', async (req, res) => {
   try {
@@ -84,6 +235,17 @@ router.get('/analytical-methods', async (req, res) => {
         title: analyticalMethods.title,
         technique: analyticalMethods.technique,
         purpose: analyticalMethods.purpose,
+        /* analyte / matrix are NOT NULL on the table and are what an analytical
+           scientist identifies a method by ("residual solvents in DS", not just
+           "GC"); withholding them made the library unreadable as a method list.
+           validationDate is the ICH Q2 evidence date the Specifications tab's
+           "cannot approve without a validated method" rule points at. */
+        analyte: analyticalMethods.analyte,
+        matrix: analyticalMethods.matrix,
+        validationDate: analyticalMethods.validationDate,
+        /* Carried so an edit round-trips: without it the client can only send
+           back an empty validation record and would erase the one on file. */
+        ichQ2Parameters: analyticalMethods.ichQ2Parameters,
         status: analyticalMethods.status,
         organizationId: analyticalMethods.organizationId,
         createdAt: analyticalMethods.createdAt,
@@ -98,10 +260,32 @@ router.get('/analytical-methods', async (req, res) => {
   }
 });
 
+/* Timestamp-bearing variants of the generated insert schemas — see the
+   `requiredDate` / `optionalDate` note above. Each names exactly the timestamp
+   columns its table carries, so a schema change that adds one is a compile-time
+   prompt to decide how it crosses the JSON boundary rather than a silent 500. */
+const analyticalMethodBody = insertAnalyticalMethodSchema.extend({
+  validationDate: optionalDate,
+});
+const processValidationBody = insertProcessValidationSchema.extend({
+  approvalDate: optionalDate,
+});
+const stabilityStudyBody = insertStabilityStudySchema.extend({
+  startDate: requiredDate,
+  plannedEndDate: optionalDate,
+});
+const qcTestingBody = insertQcTestingSchema.extend({
+  testDate: requiredDate,
+  releaseDate: optionalDate,
+});
+const changeControlBody = insertCmcChangeControlSchema.extend({
+  implementationDate: optionalDate,
+});
+
 router.post('/analytical-methods', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertAnalyticalMethodSchema.parse(req.body);
+    const validatedData = analyticalMethodBody.parse(req.body);
     // createInsertSchemaOmit widens the parsed type to `{}`, so cast the
     // Zod-validated values to the table insert type at this boundary.
     const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId } as typeof analyticalMethods.$inferInsert).returning();
@@ -115,8 +299,7 @@ router.post('/analytical-methods', async (req, res) => {
     }
     res.json({ success: true, data: method });
   } catch (error) {
-    console.error('Error creating analytical method:', error);
-    res.status(500).json({ success: false, error: 'Failed to create analytical method' });
+    return respondWriteError(res, error, 'Failed to create analytical method');
   }
 });
 
@@ -124,9 +307,9 @@ router.put('/analytical-methods/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
-    const validatedData = insertAnalyticalMethodSchema.partial().parse(req.body);
+    const validatedData = analyticalMethodBody.partial().parse(req.body);
     // Strip organizationId so the tenant scope cannot be overridden by the request body.
-    const { organizationId: _discard, ...safeData } = validatedData as { organizationId?: number } & Record<string, unknown>;
+    const safeData = withoutOrgId(validatedData as Record<string, unknown>);
     const [method] = await db
       .update(analyticalMethods)
       .set({ ...safeData, updatedAt: new Date() })
@@ -139,10 +322,10 @@ router.put('/analytical-methods/:id', async (req, res) => {
         observeWriteThroughFailure('write_through_analytical_method', method.id, err)
       );
     }
+    if (!method) return res.status(404).json({ success: false, error: 'Analytical method not found' });
     res.json({ success: true, data: method });
   } catch (error) {
-    console.error('Error updating analytical method:', error);
-    res.status(500).json({ success: false, error: 'Failed to update analytical method' });
+    return respondWriteError(res, error, 'Failed to update analytical method');
   }
 });
 
@@ -164,7 +347,7 @@ router.get('/process-validation', async (req, res) => {
 router.post('/process-validation', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertProcessValidationSchema.parse(req.body);
+    const validatedData = processValidationBody.parse(req.body);
     const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId } as typeof processValidation.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
@@ -175,8 +358,35 @@ router.post('/process-validation', async (req, res) => {
     }
     res.json({ success: true, data: validation });
   } catch (error) {
-    console.error('Error creating process validation:', error);
-    res.status(500).json({ success: false, error: 'Failed to create process validation' });
+    return respondWriteError(res, error, 'Failed to create process validation');
+  }
+});
+
+/**
+ * Advance a process-validation record through the three-stage lifecycle
+ * (process design → qualification → continued verification). Without this the
+ * stage a record was created at was the stage it kept forever.
+ */
+router.put('/process-validation/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = processValidationBody.partial().parse(req.body);
+    const [validation] = await db
+      .update(processValidation)
+      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .where(and(eq(processValidation.id, id), eq(processValidation.organizationId, orgId)))
+      .returning();
+    if (!validation) return res.status(404).json({ success: false, error: 'Process validation record not found' });
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughProcessValidation(orgId, projectId, String(validation.id), validation).catch(err =>
+        observeWriteThroughFailure('write_through_process_validation', validation.id, err)
+      );
+    }
+    res.json({ success: true, data: validation });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update process validation');
   }
 });
 
@@ -184,15 +394,32 @@ router.post('/process-validation', async (req, res) => {
 router.get('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
+    /* The projection carries the columns a stability coordinator works from —
+       the batch and scope the study is run on, its climatic zone, the pull
+       points and parameters it tests, the recorded results, and the shelf life
+       it supports. The previous six-column projection could describe a study
+       but never its data, so §3.2.S.7 / §3.2.P.8 had nothing to compose from. */
     const studies = await db
       .select({
         id: stabilityStudies.id,
         studyTitle: stabilityStudies.studyTitle,
         productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        dosageForm: stabilityStudies.dosageForm,
+        strength: stabilityStudies.strength,
+        scope: stabilityStudies.scope,
+        climaticZone: stabilityStudies.climaticZone,
         studyType: stabilityStudies.studyType,
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
+        testParameters: stabilityStudies.testParameters,
+        timePoints: stabilityStudies.timePoints,
+        stabilityData: stabilityStudies.stabilityData,
+        shelfLife: stabilityStudies.shelfLife,
+        notes: stabilityStudies.notes,
         status: stabilityStudies.status,
+        startDate: stabilityStudies.startDate,
+        plannedEndDate: stabilityStudies.plannedEndDate,
         organizationId: stabilityStudies.organizationId,
         createdAt: stabilityStudies.createdAt,
         updatedAt: stabilityStudies.updatedAt,
@@ -209,7 +436,7 @@ router.get('/stability-studies', async (req, res) => {
 router.post('/stability-studies', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertStabilityStudySchema.parse(req.body);
+    const validatedData = stabilityStudyBody.parse(req.body);
     const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId } as typeof stabilityStudies.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
@@ -220,8 +447,36 @@ router.post('/stability-studies', async (req, res) => {
     }
     res.json({ success: true, data: study });
   } catch (error) {
-    console.error('Error creating stability study:', error);
-    res.status(500).json({ success: false, error: 'Failed to create stability study' });
+    return respondWriteError(res, error, 'Failed to create stability study');
+  }
+});
+
+/**
+ * Update a stability study over its life: pull-point results into
+ * `stability_data`, the status as it moves DRAFT → ACTIVE → COMPLETED, and the
+ * shelf life the study supports once the data justify it. A stability study is
+ * a multi-year record; a create-only endpoint could never express it.
+ */
+router.put('/stability-studies/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = stabilityStudyBody.partial().parse(req.body);
+    const [study] = await db
+      .update(stabilityStudies)
+      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)))
+      .returning();
+    if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughStabilityStudy(orgId, projectId, String(study.id), study).catch(err =>
+        observeWriteThroughFailure('write_through_stability_study', study.id, err)
+      );
+    }
+    res.json({ success: true, data: study });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update stability study');
   }
 });
 
@@ -240,12 +495,38 @@ router.get('/qc-testing', async (req, res) => {
 router.post('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertQcTestingSchema.parse(req.body);
+    const validatedData = qcTestingBody.parse(req.body);
     const [test] = await db.insert(qcTesting).values({ ...validatedData, organizationId: orgId } as typeof qcTesting.$inferInsert).returning();
     res.json({ success: true, data: test });
   } catch (error) {
-    console.error('Error creating QC test:', error);
-    res.status(500).json({ success: false, error: 'Failed to create QC test' });
+    return respondWriteError(res, error, 'Failed to create QC test');
+  }
+});
+
+/**
+ * Second-person QC review. A QC result is recorded by the analyst who ran it
+ * and then verified by someone else before the material can be released — the
+ * `reviewed_by` / `release_date` columns exist precisely for that step, and
+ * with no update route they could never be set. `analyst` is deliberately not
+ * updatable here: who performed the test is a matter of record, not an edit.
+ */
+router.put('/qc-testing/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = qcTestingBody.partial().parse(req.body);
+    const { analyst: _analystIsARecord, ...safeData } = withoutOrgId(
+      validatedData as Record<string, unknown>
+    ) as { analyst?: unknown } & Record<string, unknown>;
+    const [test] = await db
+      .update(qcTesting)
+      .set({ ...safeData, updatedAt: new Date() })
+      .where(and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)))
+      .returning();
+    if (!test) return res.status(404).json({ success: false, error: 'QC test record not found' });
+    res.json({ success: true, data: test });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update QC test');
   }
 });
 
@@ -267,7 +548,7 @@ router.get('/change-control', async (req, res) => {
 router.post('/change-control', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertCmcChangeControlSchema.parse(req.body);
+    const validatedData = changeControlBody.parse(req.body);
     const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId } as typeof cmcChangeControl.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
@@ -278,8 +559,35 @@ router.post('/change-control', async (req, res) => {
     }
     res.json({ success: true, data: change });
   } catch (error) {
-    console.error('Error creating change control:', error);
-    res.status(500).json({ success: false, error: 'Failed to create change control' });
+    return respondWriteError(res, error, 'Failed to create change control');
+  }
+});
+
+/**
+ * Move a change through its control lifecycle — assessed filing category,
+ * status, planned implementation date. A change-control register in which
+ * nothing can ever leave 'draft' is a list, not a register.
+ */
+router.put('/change-control/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = changeControlBody.partial().parse(req.body);
+    const [change] = await db
+      .update(cmcChangeControl)
+      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .where(and(eq(cmcChangeControl.id, id), eq(cmcChangeControl.organizationId, orgId)))
+      .returning();
+    if (!change) return res.status(404).json({ success: false, error: 'Change-control record not found' });
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughChangeControl(orgId, projectId, String(change.id), change).catch(err =>
+        observeWriteThroughFailure('write_through_change_control', change.id, err)
+      );
+    }
+    res.json({ success: true, data: change });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update change control');
   }
 });
 
@@ -294,7 +602,11 @@ router.get('/drug-substances', async (req, res) => {
         casNumber: drugSubstances.casNumber,
         molecularFormula: drugSubstances.molecularFormula,
         molecularWeight: drugSubstances.molecularWeight,
+        inn: drugSubstances.inn,
+        structuralFormula: drugSubstances.structuralFormula,
         manufacturingProcess: drugSubstances.manufacturingProcess,
+        status: drugSubstances.status,
+        developmentPhase: drugSubstances.developmentPhase,
         organizationId: drugSubstances.organizationId,
         createdAt: drugSubstances.createdAt,
         updatedAt: drugSubstances.updatedAt,
@@ -322,8 +634,31 @@ router.post('/drug-substances', async (req, res) => {
     }
     res.json({ success: true, data: substance });
   } catch (error) {
-    console.error('Error creating drug substance:', error);
-    res.status(500).json({ success: false, error: 'Failed to create drug substance' });
+    return respondWriteError(res, error, 'Failed to create drug substance');
+  }
+});
+
+/** Edit a §3.2.S drug substance and re-feed the Module 3 canonical layer. */
+router.put('/drug-substances/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = insertDrugSubstanceSchema.partial().parse(req.body);
+    const [substance] = await db
+      .update(drugSubstances)
+      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .where(and(eq(drugSubstances.id, id), eq(drugSubstances.organizationId, orgId)))
+      .returning();
+    if (!substance) return res.status(404).json({ success: false, error: 'Drug substance not found' });
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughDrugSubstance(orgId, projectId, String(substance.id), substance).catch(err =>
+        observeWriteThroughFailure('write_through_drug_substance', substance.id, err)
+      );
+    }
+    res.json({ success: true, data: substance });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update drug substance');
   }
 });
 
@@ -338,7 +673,10 @@ router.get('/drug-products', async (req, res) => {
         dosageForm: drugProducts.dosageForm,
         strength: drugProducts.strength,
         routeOfAdministration: drugProducts.routeOfAdministration,
+        composition: drugProducts.composition,
         manufacturingProcess: drugProducts.manufacturingProcess,
+        packagingMaterials: drugProducts.packagingMaterials,
+        status: drugProducts.status,
         organizationId: drugProducts.organizationId,
         createdAt: drugProducts.createdAt,
         updatedAt: drugProducts.updatedAt,
@@ -366,8 +704,31 @@ router.post('/drug-products', async (req, res) => {
     }
     res.json({ success: true, data: product });
   } catch (error) {
-    console.error('Error creating drug product:', error);
-    res.status(500).json({ success: false, error: 'Failed to create drug product' });
+    return respondWriteError(res, error, 'Failed to create drug product');
+  }
+});
+
+/** Edit a §3.2.P drug product and re-feed the Module 3 canonical layer. */
+router.put('/drug-products/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = insertDrugProductSchema.partial().parse(req.body);
+    const [product] = await db
+      .update(drugProducts)
+      .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
+      .where(and(eq(drugProducts.id, id), eq(drugProducts.organizationId, orgId)))
+      .returning();
+    if (!product) return res.status(404).json({ success: false, error: 'Drug product not found' });
+    const projectId = (req.body as { projectId?: string }).projectId;
+    if (projectId) {
+      writeThroughDrugProduct(orgId, projectId, String(product.id), product).catch(err =>
+        observeWriteThroughFailure('write_through_drug_product', product.id, err)
+      );
+    }
+    res.json({ success: true, data: product });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update drug product');
   }
 });
 
@@ -827,6 +1188,163 @@ router.post('/control-strategy', async (req, res) => {
       success: false,
       error: error instanceof Error ? error.message : 'Control strategy generation failed',
     });
+  }
+});
+
+/**
+ * POST /api/cmc/stability-studies/:id/shelf-life
+ * Estimate the shelf life a study's OWN recorded data support, by ICH Q1E.
+ *
+ * ── Why this route exists ─────────────────────────────────────────────────────
+ * `services/cmc/shelf-life.ts` is a tested, deterministic ICH Q1E estimator —
+ * ordinary least squares of the attribute against time, solved to where the
+ * one-sided 95% confidence limit meets the specification limit, with the
+ * t-quantile taken from the project's tested Student-t CDF so the number
+ * reproduces exactly. It has never had an HTTP route in the CMC family, so the
+ * one calculation a stability programme exists to produce could not be reached
+ * from the product, and a shelf life could only ever be typed in by hand.
+ *
+ * The estimator needs a per-timepoint series. That is exactly what the stability
+ * surface now records into `stability_data.results`, so this route reads the
+ * study's own series, groups it by parameter, and estimates per parameter.
+ *
+ * ── What it refuses to do ─────────────────────────────────────────────────────
+ * Nothing is invented to make an estimate possible:
+ *   • a parameter needs ≥ 3 usable points and a numeric specification limit, or
+ *     it is reported as not estimable WITH THE REASON — never dropped, and never
+ *     given a default limit;
+ *   • the spec limit and trend direction are read from what was recorded
+ *     ("<= 2.0%" ⇒ increasing toward an upper limit of 2.0), and a criterion
+ *     that cannot be parsed is reported as such;
+ *   • the estimate is NOT written to `shelf_life`. That column is the shelf life
+ *     the organisation CLAIMS, which is a regulatory decision a person makes on
+ *     the close-out form. This route computes evidence for that decision.
+ *   • ICH Q1E batch poolability (ANCOVA across batches) is a separate concern —
+ *     `services/cmc/shelf-life-poolability.ts` — and this single-study estimate
+ *     says so rather than implying a pooled claim.
+ */
+router.post('/stability-studies/:id/shelf-life', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    const orgId = getOrgId(req);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        storageConditions: stabilityStudies.storageConditions,
+        duration: stabilityStudies.duration,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
+
+    const { estimateShelfLife } = await import('../../services/cmc/shelf-life');
+    const series = readRecordedStabilityResults(study.stabilityData);
+    if (series.length === 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'This study has no recorded pull-point results — there is nothing to fit.',
+      });
+    }
+
+    // Group by the attribute being trended. Q1E fits ONE attribute at a time.
+    const byParameter = new Map<string, StabilityPointRecord[]>();
+    for (const r of series) {
+      const key = String(r.parameter || '').trim();
+      if (!key) continue;
+      const list = byParameter.get(key) ?? [];
+      list.push(r);
+      byParameter.set(key, list);
+    }
+
+    const maxTime = Number.isFinite(study.duration) && (study.duration as number) > 0
+      ? Math.max(120, (study.duration as number) * 2)
+      : 120;
+
+    const estimates: Array<Record<string, unknown>> = [];
+    for (const [parameter, points] of byParameter) {
+      const usable = points
+        .map(p => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
+        .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
+      const criterion = parseAcceptanceCriterion(points.map(p => p.specification));
+
+      if (usable.length < 3) {
+        estimates.push({
+          parameter,
+          estimable: false,
+          reason: `ICH Q1E regression needs at least 3 numeric timepoints; ${usable.length} of ${points.length} recorded ${points.length === 1 ? 'result is' : 'results are'} numeric.`,
+          pointsRecorded: points.length,
+          pointsUsable: usable.length,
+        });
+        continue;
+      }
+      if (!criterion) {
+        estimates.push({
+          parameter,
+          estimable: false,
+          reason:
+            'No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. "<= 2.0%" or ">= 95.0%") on the pull-point results.',
+          pointsRecorded: points.length,
+          pointsUsable: usable.length,
+        });
+        continue;
+      }
+
+      try {
+        const result = estimateShelfLife({
+          data: usable,
+          specLimit: criterion.limit,
+          direction: criterion.direction,
+          maxTime,
+        });
+        estimates.push({
+          parameter,
+          estimable: true,
+          specLimit: criterion.limit,
+          direction: criterion.direction,
+          pointsUsed: usable.length,
+          ...result,
+        });
+      } catch (e) {
+        estimates.push({
+          parameter,
+          estimable: false,
+          reason: e instanceof Error ? e.message : String(e),
+          pointsRecorded: points.length,
+          pointsUsable: usable.length,
+        });
+      }
+    }
+
+    // The programme-level answer is the most constraining attribute, which is
+    // what a shelf-life claim is actually limited by.
+    const estimable = estimates.filter(e => e.estimable) as Array<{ parameter: string; shelfLife: number }>;
+    const limiting = estimable.length
+      ? estimable.reduce((min, e) => (e.shelfLife < min.shelfLife ? e : min))
+      : null;
+
+    return res.json({
+      success: true,
+      data: {
+        studyId: study.id,
+        studyTitle: study.studyTitle,
+        productName: study.productName,
+        batchNumber: study.batchNumber,
+        storageConditions: study.storageConditions,
+        basis: 'ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit',
+        scopeLimit:
+          'Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.',
+        maxTimeEvaluated: maxTime,
+        limitingParameter: limiting ? limiting.parameter : null,
+        supportedShelfLife: limiting ? limiting.shelfLife : null,
+        estimates,
+      },
+    });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to estimate shelf life');
   }
 });
 

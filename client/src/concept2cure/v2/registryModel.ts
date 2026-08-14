@@ -136,6 +136,7 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'review-approve',
   'doc-journey',
   'change-assessment',
+  'mission-control',
   'tasks',
   'review',
   'agency-meetings',
@@ -514,7 +515,7 @@ export const SEGMENT_MODULES = {
       ],
     },
     { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['mission-control', 'review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
@@ -542,7 +543,7 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['mission-control', 'review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
@@ -592,6 +593,7 @@ export const SEGMENT_MODULES = {
     {
       label: 'Review & govern',
       items: [
+        'mission-control',
         'orchestration',
         'review',
         'shadow-review',
@@ -675,6 +677,7 @@ export const SEGMENT_MODULES = {
     {
       label: 'Review & govern',
       items: [
+        'mission-control',
         'orchestration',
         'review',
         'shadow-review',
@@ -716,7 +719,7 @@ export const SEGMENT_MODULES = {
     },
   ],
   cro: [
-    { label: 'Portfolio & studies', items: ['cro-portfolio', 'projects', 'tasks'] },
+    { label: 'Portfolio & studies', items: ['cro-portfolio', 'projects', 'mission-control', 'tasks'] },
     {
       label: 'Author & assemble',
       items: ['protocol-dev', 'document-authoring', 'csr-workflow', 'template-library'],
@@ -757,7 +760,7 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: ['biostatistics', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
-    { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
+    { label: 'Review & govern', items: ['mission-control', 'review', 'tasks', 'audit-trail'] },
   ],
 };
 /**

@@ -108,6 +108,13 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
   const work = myWork.data;
   const assigned = work?.items ?? [];
   const approvalRows = approvals.data?.approvals ?? [];
+  /* A failed fetch used to be indistinguishable from "nothing pending": the
+     group simply did not render. For the one surface whose job is telling a
+     regulatory professional what needs their signature, silence that means
+     "you're clear" when it actually means "we don't know" is the worst
+     available failure. Surfaced the same way myWork's error already is. */
+  const approvalsError = approvals.error;
+  const queueError = queue.error;
   const badge = (work?.total ?? 0) + (unread.data?.unread ?? 0);
 
   const markRead = async (id: number) => {
@@ -141,7 +148,9 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
           workError={myWork.error}
           assigned={assigned}
           queue={queue.data}
+          queueError={queueError}
           approvalRows={approvalRows}
+          approvalsError={approvalsError}
           notifs={notifs.rows}
           notifsLoading={notifs.loading}
           markRead={markRead}
@@ -154,7 +163,7 @@ export function TaskTray({ onNav, onAsk }: { onNav?: (id: string) => void; onAsk
 }
 
 function TrayPanel({
-  onClose, work, workLoading, workError, assigned, queue, approvalRows,
+  onClose, work, workLoading, workError, assigned, queue, queueError, approvalRows, approvalsError,
   notifs, notifsLoading, markRead, go, onAsk,
 }: {
   onClose: () => void;
@@ -163,7 +172,12 @@ function TrayPanel({
   workError?: string;
   assigned: MyWorkItem[];
   queue: MyQueue | null;
+  /** Fetch failures are passed in, not swallowed: an empty approvals list and a
+   *  failed approvals fetch must not look the same on a surface whose job is
+   *  telling someone what needs their signature. */
+  queueError?: string;
   approvalRows: PendingApproval[];
+  approvalsError?: string;
   notifs: NotificationRow[];
   notifsLoading: boolean;
   markRead: (id: number) => void;
@@ -208,7 +222,7 @@ function TrayPanel({
             ) : workError ? (
               <div className="tt-empty" role="alert">Couldn't load your tasks — retry from the board.</div>
             ) : !ordered.length ? (
-              <div className="tt-empty">Nothing assigned to you right now.</div>
+              <div className="tt-empty">Nothing assigned to you right now. Tasks land here as soon as someone assigns you one.</div>
             ) : ordered.slice(0, 8).map(t => (
               <button key={t.taskId} className="tt-item" onClick={() => go('tasks')}>
                 <span className={`tt-dot tt-dot-${t.overdue ? 'err' : t.dueSoon || t.blocked ? 'warn' : 'ok'}`} aria-hidden />
@@ -226,9 +240,14 @@ function TrayPanel({
             )}
           </div>
 
-          {(approvalsFromBoard.length > 0 || approvalRows.length > 0) && (
+          {(approvalsFromBoard.length > 0 || approvalRows.length > 0 || approvalsError) && (
             <div className="tt-group">
               <div className="tt-group-head">Approvals — you sign</div>
+              {approvalsError && (
+                <div className="tt-empty" role="alert">
+                  Couldn't load your approvals, so this list may be incomplete — open Review to check.
+                </div>
+              )}
               {approvalsFromBoard.map(t => (
                 <button key={t.taskId} className="tt-item" onClick={() => go('tasks')}>
                   <span className="tt-dot tt-dot-err" aria-hidden />
@@ -249,12 +268,24 @@ function TrayPanel({
                   <span className="tt-go">{I.arrowRight}</span>
                 </button>
               ))}
+              {/* Without this, someone with 7 pending approvals saw 5 and had no
+                  signal the other 2 existed — for signature-required items. */}
+              {approvalRows.length > 5 && (
+                <button className="tt-more" onClick={() => go('review')}>
+                  +{approvalRows.length - 5} more awaiting your sign-off
+                </button>
+              )}
             </div>
           )}
 
-          {(reviewTasks.length > 0 || reviewThreads.length > 0) && (
+          {(reviewTasks.length > 0 || reviewThreads.length > 0 || queueError) && (
             <div className="tt-group">
               <div className="tt-group-head">Review — threads &amp; change requests</div>
+              {queueError && (
+                <div className="tt-empty" role="alert">
+                  Couldn't load your review queue, so this list may be incomplete — open Review to check.
+                </div>
+              )}
               {reviewTasks.slice(0, 5).map(t => (
                 <button key={t.taskId} className="tt-item" onClick={() => go('review')}>
                   <span className="tt-dot tt-dot-warn" aria-hidden />
@@ -275,6 +306,11 @@ function TrayPanel({
                   <span className="tt-go">{I.arrowRight}</span>
                 </button>
               ))}
+              {(reviewTasks.length > 5 || reviewThreads.length > 5) && (
+                <button className="tt-more" onClick={() => go('review')}>
+                  +{Math.max(reviewTasks.length - 5, 0) + Math.max(reviewThreads.length - 5, 0)} more in review
+                </button>
+              )}
             </div>
           )}
 
@@ -283,7 +319,7 @@ function TrayPanel({
             {notifsLoading ? (
               <div className="tt-empty">Loading…</div>
             ) : !notifs.length ? (
-              <div className="tt-empty">You're all caught up.</div>
+              <div className="tt-empty">No unread messages or alerts.</div>
             ) : notifs.map(n => (
               <div key={n.id} className="tt-item tt-notif" data-sev={n.severity}>
                 <span className={`tt-dot tt-dot-${n.severity === 'critical' ? 'err' : n.severity === 'warning' ? 'warn' : 'ok'}`} aria-hidden />

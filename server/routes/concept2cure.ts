@@ -16093,6 +16093,15 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
     const changeRequestTasks = myTasks.filter(t => t.taskType === 'change_request');
     const approvalTasks = myTasks.filter(t => t.taskType === 'approval_task');
 
+    // Tell the client what this caller may actually do, so it can stop
+    // rendering governed actions that the server will refuse. Resolve and
+    // request-changes are role-gated (getThreadPermissions), and my-queue
+    // deliberately contains threads ASSIGNED to the caller — an admin can
+    // assign a thread to an author, who would then see a Resolve button that
+    // 403s every time. Deriving this from the same function the enforcement
+    // uses means the button and the guard cannot drift apart.
+    const perms = getThreadPermissions(String((req as any).userRole || ''));
+
     return sendSuccess(res, {
       threads: myThreads,
       tasks: myTasks,
@@ -16103,6 +16112,11 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
       dueSoonTasks: dueSoonTasks.length,
       changeRequests: changeRequestTasks.length,
       approvalsNeeded: approvalTasks.length,
+      permissions: {
+        canComment: perms.has('comment'),
+        canRequestChanges: perms.has('request_changes'),
+        canResolve: perms.has('resolve'),
+      },
     });
   } catch (error: any) {
     logConcept2cureError('my review queue', error);

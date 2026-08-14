@@ -1184,6 +1184,7 @@ export const C2C_MIGRATION_FILES = [
   // Guarded on available_modules existing, since the catalog table is not on
   // every lineage.
   'migrations/20260814j_catalog_missing_product_surfaces.sql',
+  'migrations/20260814k_catalog_mission_control.sql',
 
   // Same guard: descriptions only, no module added or removed (ledger L41).
   'migrations/20260814k_catalog_honest_module_descriptions.sql',
