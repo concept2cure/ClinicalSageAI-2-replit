@@ -25,11 +25,6 @@ import {
   SR_ONLY_STYLE,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
-import {
-  mergeAnaContext,
-  readAnaSurfaceContext,
-  subscribeAnaSurfaceContext,
-} from './anaSurfaceContext';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { SignoffList } from './SignoffList';
@@ -482,18 +477,7 @@ export function AnaRail({
    * a new inaccuracy in the opposite direction, so it is removed rather than
    * re-labelled. If per-surface AnA context becomes a real server concern, add
    * the endpoint and the provenance signal together. */
-  /* ...and the live half. A surface that has already fetched real state
-     publishes it (see ./anaSurfaceContext); the rail merges it over the config
-     above so AnA is attached to the WORK on screen — which sub-tab, what is
-     blocked, what is measured — rather than only to the module. A surface that
-     publishes nothing leaves this exactly as it was, and the fields the config
-     honestly omits stay omitted. */
-  const livePatch = React.useSyncExternalStore(
-    subscribeAnaSurfaceContext,
-    readAnaSurfaceContext,
-    readAnaSurfaceContext,
-  );
-  const ac: AnaContext = mergeAnaContext(getAnaContext(surface.id, segment), surface.id, livePatch);
+  const ac: AnaContext = getAnaContext(surface.id, segment);
   const suggestions = ac.suggestions?.length ? ac.suggestions : [];
   const send = () => {
     const t = draft.trim();

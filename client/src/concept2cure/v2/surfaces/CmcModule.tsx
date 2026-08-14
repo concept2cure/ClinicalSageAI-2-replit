@@ -48,7 +48,7 @@ import {
   readStabilityResults,
   type StabilityResult,
 } from './cmcRegisterForms';
-import { useAnaSurfaceContext } from '../anaSurfaceContext';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   C2CToast,
   cmcProjectId,
@@ -1866,18 +1866,20 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
   }, []);
 
   /* ── What AnA is told about this screen ──
-     The rail's per-surface config is keyed on the surface id, so without this
-     AnA would say the same sentence on all twelve sub-tabs and know nothing of
-     the state in front of the user.
+     `useAnaChat` forwards a surface's published context to the orchestrator as
+     `module_context`, so this is what makes a generic question ("what should I
+     do next?") answerable here without the user restating their situation. The
+     shell alone knows only that the surface is "cmc" — not which of the twelve
+     sub-tabs is open, nor what is on it.
 
-     Readiness is READ, not assembled: GET /api/cmc/module3-os/readiness is the
-     same endpoint the build board renders, so the rail and the board cannot
-     disagree, and while it is loading or errored the fields stay undefined and
-     the rail falls back to the honest config. Nothing here is computed to make
-     the panel look populated.
+     Readiness is READ, never assembled: GET /api/cmc/module3-os/readiness is the
+     same endpoint the build board renders, so AnA and the board cannot disagree.
+     While that fetch is loading or errored the facts are simply ABSENT — telling
+     her a percentage nobody measured would make her confidently wrong, which is
+     the failure this channel is most able to cause.
 
-     `screens` + `goToScreen` give AnA the module's own router, so "take me to
-     the build board" is something she can DO here, not only describe. */
+     Per surfaceContext's own budget rule: the nouns and numbers a user could
+     point at, never raw API bodies, and never anything the screen is hiding. */
   const anaProjectId = cmcProjectId();
   const anaReadiness = useLiveData<{
     totalSections: number; approvedSections: number; staleSections: number;
@@ -1885,38 +1887,45 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
   }>(anaProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(anaProjectId) : null);
   const tabLabel = CMC_NAV.find((n) => n.id === tab)?.label ?? 'Overview';
   const r = anaReadiness.loading || anaReadiness.error ? null : anaReadiness.data;
-  useAnaSurfaceContext(
+  const anaContext = React.useMemo(
     () => ({
-      surfaceId: 'cmc',
-      here: `the ${tabLabel} tab of the CMC Module 3 operating system`,
-      focus: tabLabel,
-      section: tab === 'build' ? 'CTD §3.2' : null,
-      suggestions: CMC_SUGGEST[tab] ?? CMC_CAPABILITY_PROMPTS.slice(0, 3),
-      /* Only present once measured. */
-      ...(r
-        ? {
-            stage: r.exportReady
-              ? 'Module 3 export ready'
-              : r.openCriticalContradictions > 0
-                ? `${r.openCriticalContradictions} critical contradiction${r.openCriticalContradictions === 1 ? '' : 's'} blocking`
-                : r.staleSections > 0
-                  ? `${r.staleSections} section${r.staleSections === 1 ? '' : 's'} stale after approval`
-                  : 'Module 3 in build',
-            readiness: r.totalSections > 0
-              ? Math.round((100 * r.approvedSections) / r.totalSections)
-              : undefined,
-            evidence: [
-              { count: r.approvedSections, label: 'approved §3.2 sections' },
-              { count: r.staleSections, label: 'stale sections' },
-              { count: r.openCriticalContradictions, label: 'critical contradictions' },
-            ].filter((e) => e.count > 0),
-          }
-        : {}),
-      screens: CMC_NAV.map((n) => ({ id: n.id, label: n.label })),
-      goToScreen: (id: string) => { if (CMC_SURF[id]) setTab(id); },
+      summary:
+        `The user is on the ${tabLabel} tab of the CMC Module 3 operating system` +
+        (r
+          ? `. ${r.approvedSections} of ${r.totalSections} §3.2 sections are approved` +
+            (r.staleSections ? `, ${r.staleSections} went stale after approval` : '') +
+            (r.openCriticalContradictions ? `, ${r.openCriticalContradictions} critical contradiction(s) are unresolved` : '') +
+            `. Final export ${r.exportReady ? 'would pass' : 'is blocked'}.`
+          : '.'),
+      facts: {
+        tab,
+        tabLabel,
+        /* Spread only once measured, so a fact is never a guess. */
+        ...(r
+          ? {
+              sectionsApproved: r.approvedSections,
+              sectionsTotal: r.totalSections,
+              staleSections: r.staleSections,
+              openCriticalContradictions: r.openCriticalContradictions,
+              exportReady: r.exportReady,
+            }
+          : {}),
+      },
+      /* Her vocabulary for "drive this screen" requests: the tabs by name, plus
+         the governed actions this module actually performs. */
+      availableActions: [
+        ...CMC_NAV.map((n) => `open the ${n.label} tab`),
+        'compile Module 3 from the canonical sources',
+        'run the contradiction sweep',
+        'check the final-export gate',
+        'run the ICH compliance check',
+        'generate the control strategy',
+        'estimate shelf life from the recorded stability results (ICH Q1E)',
+      ],
     }),
     [tab, tabLabel, r?.totalSections, r?.approvedSections, r?.staleSections, r?.openCriticalContradictions, r?.exportReady],
   );
+  usePublishSurfaceContext('cmc', anaContext);
 
   const Surf = CMC_SURF[tab] || CmOverview;
   return (
