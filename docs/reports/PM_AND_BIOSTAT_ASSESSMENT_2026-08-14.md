@@ -143,11 +143,32 @@ the invariant tests, where it belongs.
 
 Stated rather than implied.
 
-- **The other ~60 biostat endpoints remain shape-tested only.** This change pins
-  the group-sequential core, which is the most load-bearing for registrational
-  designs. Sample-size (beyond the one existing textbook case), assurance, MMRM,
-  MRMC, win ratio, RMST and BOIN are still unpinned, and each deserves the same
-  treatment.
+- **Round 2 extended the pinning to the foundation layer** —
+  `tests/biostat/statistical-core-reference.test.ts`, 37 tests over `normal.ts`,
+  `special.ts`, `multiplicity.ts`, `rmst.ts` and `dose-finding-boin.ts`. Again
+  every value was verified against a published reference *before* being written,
+  and again no code change was needed: Clopper–Pearson matched on all five
+  configurations, BOIN λE/λD matched Liu & Yuan for both targets, Bonferroni /
+  Holm / Hochberg matched their exact definitions, and KM/RMST matched hand
+  computation.
+
+  Mutation-verified against six realistic errors: Hochberg implemented step-down
+  (1 test fails), Clopper–Pearson one-sided by mistake (4), BOIN escalation and
+  de-escalation boundaries swapped (3), KM survival made additive (2), risk set
+  counted after removal (3), and censored subjects left in the risk set (1).
+
+  **The censoring mutation initially SURVIVED**, and that was a defect in the
+  fixture rather than a false alarm: the original data censored only *after* the
+  last event, so whether censored subjects leave the risk set never changed any
+  computed value. A genuine censoring bug would have shipped green. A second
+  fixture with censoring interleaved between events (the ordinary shape of
+  follow-up data) now distinguishes them — 3 at risk giving S=0.533 versus 4
+  giving S=0.600.
+
+- **~55 biostat endpoints remain shape-tested only.** Sample-size beyond the one
+  existing textbook case, assurance, MMRM, MRMC, win ratio, external-control
+  borrowing, enrollment/event forecasting and the analytical-performance family
+  are still unpinned, and each deserves the same treatment.
 - `server/routes/programs.ts` unmounted — flagged, not diagnosed.
 - PM automation rules (1 reader) and escalation paths (3) — candidates for the
   "built but not wired" pattern, not confirmed.
