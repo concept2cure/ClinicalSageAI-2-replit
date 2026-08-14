@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T23:03:17.871Z",
+  "generatedAt": "2026-08-14T23:20:46.879Z",
   "git": {
-    "sha": "be7ccdeb7b5d3467031fb250c21b79cccf567989",
+    "sha": "bd796d7da44b0acece77b7b98591d78be7fe8a7f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2458,6 +2458,10 @@
         "lines": 1981
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 1979
+      },
+      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
@@ -2488,10 +2492,6 @@
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 1859
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",

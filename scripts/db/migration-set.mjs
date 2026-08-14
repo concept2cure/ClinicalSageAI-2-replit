@@ -1192,6 +1192,38 @@ export const C2C_MIGRATION_FILES = [
   // Same guard: descriptions only, no module added or removed (ledger L41).
   'migrations/20260814m_catalog_honest_module_descriptions.sql',
 
+  // Retires the duplicate 'ind-lifecycle' catalog row added by 20260814j: the
+  // same IndLifecycle surface was already catalogued as 'ind-checklist', so one
+  // module was listed — and separately entitleable — twice. Deprecates rather
+  // than deletes (organization_modules cascades).
+  'migrations/20260814o_catalog_retire_duplicate_ind_lifecycle.sql',
+
+  // ── 21 CFR Part 11 §11.10(e): audit trail immutability, at the DB engine ──
+  // Both files were authored, reviewed, and left UNREACHABLE. Neither carries the
+  // `_gcc_` infix the psql loop matches, and neither was in this list — so no
+  // apply path installed them, and `audit_events` / `audit_logs` were MUTABLE on
+  // every deployed database while the platform reported the control as present.
+  // `provision-app-role.mjs` grants the runtime role the default
+  // ['SELECT','INSERT','UPDATE','DELETE'] on `public`, where both tables live,
+  // so the application role itself could rewrite audit history.
+  //
+  // The reachability CI check did not catch it: it only flags migrations whose
+  // sole-created TABLE is unreachable, and these create only triggers.
+  //
+  // Safe to install (verified against the tree, not assumed):
+  //   * INSERT is untouched — the chained writer only ever INSERTs.
+  //   * No production code UPDATEs either table. The only UPDATEs are PGlite
+  //     tests that build `audit_logs` inline with their own CREATE TABLE (so they
+  //     never see these triggers) and scripts/db-verify/verify-audit-chain.ts, a
+  //     manual tamper-demo not wired into CI.
+  //   * Nothing TRUNCATEs either table anywhere in the repo.
+  //   * DELETE on audit_logs stays possible for the retention/archival service
+  //     only, via the fail-closed `app.audit_archive_bypass` GUC it already sets
+  //     with SET LOCAL on one dedicated connection.
+  // Ordered BEFORE the tenant-isolation sweeps, which must remain last (C-33).
+  'db/migrations/20260222_audit_events_immutability.sql',
+  'db/migrations/20260617_audit_logs_immutability.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

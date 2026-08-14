@@ -1245,4 +1245,44 @@ export const UI_V2_SURFACES: UiSurface[] = [
     compliance: [A11Y, TONE],
     notes: 'Plan usage limits, weekly caps, usage credits, rate limits by tier — billing-dashboard.ts router, MOUNTED AT /api/billing (verified against register-inline-routes 2026-07-05).',
   },
+  {
+    /* Wired into the shell (surfaceViews.ts:347, NAV_HIDDEN, and the
+       "Review & govern" group of every segment) but never registered here, so
+       `getSurface('mission-control')` returned undefined and the surface had no
+       catalog row. Registered against what it actually mounts. */
+    id: 'mission-control',
+    label: 'Mission control',
+    navTier: 'project',
+    layoutMode: 'mission-control',
+    group: 'review',
+    icon: 'gauge',
+    uiKit: null,
+    apiPrefixes: ['/api/mission-control'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'Cross-program standing: what is blocking, what moves next. Router mounted at /api/mission-control behind authenticateToken (register-advanced-platform-routes.ts).',
+  },
+  {
+    /* Same gap as mission-control: present in the shell and in the segment
+       "Intelligence" groups, absent from this registry. */
+    id: 'filing-strategy',
+    label: 'Global filing strategy',
+    navTier: 'project',
+    layoutMode: 'filing-strategy',
+    group: 'intelligence',
+    icon: 'globe',
+    uiKit: null,
+    apiPrefixes: ['/api/regulatory-precedent-intelligence'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'Cross-jurisdictional filing sequence, agency divergence and reliance pathways over the regulatory_intel.* tables. Those tables ship EMPTY — this is storage plus query for a record the tenant builds, not a shipped knowledge base (see migrations/20260814l_catalog_filing_strategy.sql).',
+  },
 ];
