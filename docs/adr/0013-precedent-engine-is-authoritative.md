@@ -89,3 +89,46 @@ Seed data. If `regulatory_intel.*` ships populated — with provenance per
 pattern, which the schema supports and the inline arrays do not — then the
 better-factored, updatable, citable implementation becomes the better answer on
 every axis, and this ADR should be revisited.
+
+## Update, same day — the reversal condition is now half met
+
+Two migrations landed after this decision:
+
+- `migrations/20260814m_regulatory_intel_platform_tier.sql` gives shipped
+  knowledge somewhere to live. Every table was `organization_id UUID NOT NULL`,
+  so platform knowledge had no representation at all; rows owned by the
+  all-zeros sentinel are now platform-provided and readable by every tenant,
+  with partial unique indexes so a pattern cannot be seeded twice. NULL was
+  rejected as the marker because every tenant predicate in this codebase is
+  `organization_id = $1`, which NULL silently fails rather than being excluded
+  by — an invisible row is worse than a reserved one.
+- `migrations/20260814n_seed_regulatory_intel_platform_knowledge.sql` seeds 24
+  patterns — 9 CRL, 7 RTF, 8 advisory-committee — lifted verbatim from this
+  file's inline arrays. Nothing invented. The category mappings from free text
+  to each table's constrained vocabulary are recorded in that migration's
+  header, including the two that map imperfectly because the CRL vocabulary has
+  no bioequivalence and no device term.
+
+`precedent-engine.analyzeCRLTriggers` now reads the store and falls back to its
+inline arrays. **The fallback is the load-bearing part, and it is what allows
+this to ship before every environment is seeded:** an empty result, a missing
+table and a thrown query all fall back, and only a table with actual rows
+overrides the curated knowledge. An empty store is indistinguishable from an
+unseeded one, and treating either as "no CRL risk" is precisely the failure this
+ADR exists to prevent. Pinned by
+`server/services/__tests__/precedent-crl-store-fallback.test.ts`.
+
+**This does not yet reverse the decision.** Three things are still outstanding:
+
+1. RTF and advisory-committee analysis are seeded but not yet cut over to read
+   the store — only CRL is. They still read their inline arrays.
+2. EMA question patterns are not seeded at all; that table keys on procedure
+   phase and type with their own vocabularies and needs its own mapping pass.
+3. **No provenance was gained.** The seeded rows carry no citation, because the
+   inline arrays carry none to copy. The schema has the columns
+   (`typical_fda_language`, `deficiency_signals`) and they are NULL. Until the
+   patterns can cite the CRLs they were derived from, this is the same knowledge
+   in a better container — genuinely better, because it can now be updated
+   without a deploy and extended per tenant, but not yet *more defensible*.
+
+The decision stands until at least (1) and (3) are done.
