@@ -39,7 +39,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -149,13 +149,30 @@ const CONTROLS = [
 
 /* ── IQ observations ──────────────────────────────────────────────────────── */
 
+/**
+ * Probe a binary's presence and version.
+ *
+ * `spawnSync` rather than `execFileSync` because execFileSync returns stdout
+ * only, and xmllint — like many tools — prints `--version` to **stderr**. The
+ * first cut reported it "present (version not reported)": an observation that
+ * observed nothing, in a document whose entire value is that its lines were
+ * observed.
+ */
 function binary(cmd, args) {
-  try {
-    const out = execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    return { present: true, version: out.split('\n')[0].trim().slice(0, 80) };
-  } catch {
-    return { present: false, version: null };
-  }
+  const r = spawnSync(cmd, args, { encoding: 'utf8' });
+  /* ENOENT is what "absent" means. A binary that exists but exits non-zero on
+     --version is present; reporting it absent would be a false installation
+     finding. */
+  if (r.error?.code === 'ENOENT') return { present: false, version: null };
+  const out = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim();
+  return { present: true, version: out.split('\n')[0].trim() || null };
+}
+
+/** Markdown table cells are pipe-delimited, so any pipe inside a value ends the
+ *  cell early and shifts every column after it. Vitest summary lines contain
+ *  pipes ("Tests 1 failed | 8 passed"), which silently corrupted the OQ table. */
+function cell(value) {
+  return String(value ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
 }
 
 function readJson(p) {
@@ -306,7 +323,9 @@ function render(iq, controls, v) {
   L.push(`| Migration files present | ${iq.migrations.declared} | count on disk; whether they are *applied* needs a database and is not claimed here |`);
   L.push(`| CI gates declared | ${iq.gates.declared} | \`ci:*\` / \`check:*\` scripts |`);
   for (const [name, probe] of Object.entries(iq.toolchain)) {
-    L.push(`| ${name} | ${probe.present ? `present — \`${probe.version}\`` : '**absent**'} | PDF/A + XML toolchain (runbook B15) |`);
+    L.push(
+      `| ${name} | ${probe.present ? `present${probe.version ? ` — \`${cell(probe.version)}\`` : ' (version not reported)'}` : '**absent**'} | PDF/A + XML toolchain (runbook B15) |`,
+    );
   }
   for (const s of iq.secrets) {
     L.push(`| \`${s.name}\` | ${s.set ? 'set' : '**not set**'} | presence only; value never read |`);
@@ -322,8 +341,12 @@ function render(iq, controls, v) {
         ? '**NO EVIDENCE**'
         : c.found.map((t) => `\`${t}\``).join('<br>');
     const res =
-      c.result === 'PASS' ? 'PASS' : c.result === 'FAIL' ? `**FAIL** — ${c.failureHint ?? 'see suite'}` : 'NOT EXECUTED';
-    L.push(`| ${c.id} | ${c.control} | ${c.regulation} | ${ev} | ${res} |`);
+      c.result === 'PASS'
+        ? 'PASS'
+        : c.result === 'FAIL'
+          ? `**FAIL** — ${cell(c.failureHint ?? 'see suite')}`
+          : 'NOT EXECUTED';
+    L.push(`| ${c.id} | ${cell(c.control)} | ${cell(c.regulation)} | ${ev} | ${res} |`);
   }
   const anyMissing = controls.filter((c) => c.missing.length > 0);
   if (anyMissing.length) {
