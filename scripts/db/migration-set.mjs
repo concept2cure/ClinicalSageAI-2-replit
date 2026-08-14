@@ -1185,6 +1185,9 @@ export const C2C_MIGRATION_FILES = [
   // every lineage.
   'migrations/20260814j_catalog_missing_product_surfaces.sql',
 
+  // Same guard: descriptions only, no module added or removed (ledger L41).
+  'migrations/20260814k_catalog_honest_module_descriptions.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

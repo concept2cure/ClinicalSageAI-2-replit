@@ -107,10 +107,10 @@ const AE_AUTOMATIONS: AeAutomation[] = [
     val: 'Schema-conformance and value-preservation diff assert that no cell value was altered by the normalization; any unmapped label or lost value stops the merge and raises a Tasking item.' },
   { id: 'a3', t: 'Cross-reference integrity',
     flow: [['When', 'A value changes in a source table'], ['AnA does', 'Find every document paragraph that cites that value'], ['Then', 'Mark those paragraphs stale and create a Tasking item for the author']],
-    val: 'Provenance-hash comparison between the cited value and its live source -- deterministic, catches 100% of drifted references without relying on the model.' },
+    val: 'Provenance-hash comparison between the cited value and its live source. A hash mismatch marks the paragraph stale on its own, without asking the model to judge whether the value moved.' },
   { id: 'a4', t: 'Section completeness gate',
     flow: [['When', 'A document reaches "ready for review"'], ['AnA does', 'Assert every required CTD / ICH section is present and non-empty'], ['Then', 'Block promotion and list the missing sections if the gate fails']],
-    val: 'Template section-map assertion runs the required-content spec for that document type -- a non-AI gate that guarantees no incomplete draft is promoted.' },
+    val: 'Template section-map assertion runs the required-content spec for that document type -- a non-AI gate that blocks promotion and names the sections still missing.' },
 ];
 
 /* ── Window globals -- cross-surface data providers ── */
@@ -143,17 +143,30 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
         <div>
           <div className="reg-eyebrow">Biotech & Pharma {I.dot} authoring</div>
           <h1 className="reg-title">AnA Authoring Engine</h1>
-          <p className="reg-sub">One end-to-end suite for the entire CTD pyramid -- raw data to final draft. A dedicated AI system for every document type produces GxP-grade drafts with no hallucinations and every required element, across text, tables, figures and graphs.</p>
+          <p className="reg-sub">One route from raw data to a final draft across the CTD. Each document type has its own drafting system that works from evidence you have locked, cites each claim to its source, and surfaces anything it could not ground -- across text, tables, figures and graphs.</p>
         </div>
         <button className="reg-ask" onClick={() => ask('Draft my next CTD document with the right document-type system, grounded on the locked evidence')}>{I.sparkles} Draft with AnA</button>
       </div>
 
       <div className="ae-badges">
-        <span className="ae-badge">{I.check} AI system per document type</span>
-        <span className="ae-badge">{I.check} No hallucinations {I.dot} every required element</span>
+        <span className="ae-badge">{I.check} A drafting system per document type</span>
+        <span className="ae-badge">{I.check} Claims cited to locked evidence</span>
         <span className="ae-badge">{I.check} Multi-modal -- text, tables, figures, graphs</span>
-        <span className="ae-badge">{I.check} Learns your templates</span>
-        <span className="ae-badge">{I.check} GxP automations {I.dot} non-AI validation, 100%</span>
+        <span className="ae-badge">{I.check} Learns from templates you add</span>
+        <span className="ae-badge">{I.check} GxP automations {I.dot} deterministic post-checks</span>
+      </div>
+
+      {/* WHAT THIS SCREEN IS. Everything below the tabs is a description of the
+          engine's document-type coverage -- it reads none of your data and
+          reports on none of your programs. It said so nowhere, while sitting
+          in the Apps catalog as a purchasable module beside `document-authoring`
+          (the real editor), so a reader had no way to tell a capability list
+          from their own configured state. Saying it once, plainly, is cheaper
+          than the support conversation that follows finding out. */}
+      <div className="scaf-note" style={{ marginTop: 12, marginBottom: 4, maxWidth: 820 }}>
+        This page describes what the authoring engine is built to do for each document type.
+        It does not read your programs or report their status. Open the document editor to
+        work on a real document.
       </div>
 
       <div className="reg-tabs">
@@ -203,7 +216,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="ae-detail-cols">
               <div>
-                <div className="pj-seclbl" style={{ marginTop: 0 }}>What the system guarantees</div>
+                <div className="pj-seclbl" style={{ marginTop: 0 }}>What the system is built to produce</div>
                 <div className="ae-chk">
                   {sys.guarantees.map((g, i) => (
                     <div key={i} className="ae-chk-row"><span className="ico">{I.checkCircle}</span>{g}</div>
@@ -254,14 +267,14 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
       {tab === 'automations' && (
         <div style={{ maxWidth: 860 }}>
           <div className="scaf-note" style={{ marginBottom: 16 }}>
-            Automations run with less human engagement than the rest of AnA -- so each carries built-in validation logic that uses <b>non-AI</b> techniques to confirm it performed as intended, every single time. More powerful than traditional software automation, because AI resolves the messy parts and deterministic checks guarantee the result.
+            Automations run with less human engagement than the rest of AnA -- so each carries built-in validation logic that uses <b>non-AI</b> techniques to confirm it performed as intended, every single time. More powerful than traditional software automation, because AI resolves the messy parts and deterministic checks verify the result.
           </div>
           {AE_AUTOMATIONS.map((a) => (
             <div key={a.id} className="ae-auto">
               <div className="ae-auto-h">
                 <span style={{ color: 'var(--accent-200)' }}>{I.workflow}</span>
                 <span className="ae-auto-t">{a.t}</span>
-                <span className="ae-det-badge">{I.shieldCheck} Deterministic validation {I.dot} 100%</span>
+                <span className="ae-det-badge">{I.shieldCheck} Deterministic post-check</span>
               </div>
               <div className="ae-flow">
                 {a.flow.map((f, i) => (
