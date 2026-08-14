@@ -18,6 +18,10 @@ import { db } from '../db';
 import { eq, and, sql } from 'drizzle-orm';
 import { users, electronicSignatures } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
+/* The §11.70 binding evaluator is shared with part11ComplianceService rather
+   than reimplemented — see verifySignatureIntegrity. */
+import { evaluateBindingVerification } from './part11/version-binding';
+import part11ComplianceService from './part11ComplianceService';
 
 const logger = createScopedLogger('auth-security');
 
@@ -561,6 +565,11 @@ export async function createElectronicSignature(params: {
  */
 export async function verifySignatureIntegrity(signatureId: number): Promise<{
   valid: boolean;
+  /** Whether the SIGNED CONTENT was re-derived and still matches. Distinct from
+   *  `valid`: a signature can be internally consistent and still attest to
+   *  nothing, if no content digest was recorded when it was written. */
+  bindingVerified?: boolean;
+  attestsToContent?: boolean;
   details?: any;
   error?: string;
 }> {
@@ -595,8 +604,39 @@ export async function verifySignatureIntegrity(signatureId: number): Promise<{
 
     const hashValid = sig.signatureHash === expectedHash;
 
+    /* ── §11.70 record binding — the check this endpoint used to skip ────────
+       Everything above hashes IDENTIFIERS: document id, version id, signer,
+       type, meaning, timestamp. None of it reads a byte of the signed content,
+       so this function answered `valid: true` for a document that had been
+       completely rewritten since it was signed — which is the one question a
+       signature exists to answer.
+
+       The content check is re-derived here from the signed version and compared
+       against the digest recorded at signing, through the SAME shared evaluator
+       the canonical validator uses (`evaluateBindingVerification`). Reusing it
+       matters: two verifiers that disagree about what "valid" means is how a
+       regulated system ends up with a screen that says verified and a report
+       that says tampered. */
+    const bound = (sig as { boundPayloadDigest?: string | null }).boundPayloadDigest;
+    const current =
+      bound && bound.length > 0 && sig.versionId != null
+        ? await part11ComplianceService.computeVersionBindingDigest(sig.versionId)
+        : null;
+    const binding = evaluateBindingVerification(bound, current);
+
     return {
-      valid: hashValid && sig.isValid === true,
+      /* A signature is only valid if BOTH hold. Previously this was the
+         identifier hash alone, so tampering with content could not move it. */
+      valid: hashValid && sig.isValid === true && binding.valid,
+      /* Reported separately and never folded into `valid`, because "the
+         content still matches what was signed" and "the signature row is
+         internally consistent" are different claims and a reader must be able
+         to tell which one they are getting. A signature written without a
+         bound digest reports attestsToContent:false — it is not tampered, it
+         simply never recorded what it was approving, and saying so is the
+         honest answer rather than a bare `valid: true`. */
+      bindingVerified: binding.bindingVerified,
+      attestsToContent: binding.bindingVerified,
       details: {
         signatureId: sig.id,
         signerName: sig.signerName,
@@ -604,6 +644,12 @@ export async function verifySignatureIntegrity(signatureId: number): Promise<{
         signatureType: sig.signatureType,
         signatureMeaning: sig.signatureMeaning,
         hashIntegrity: hashValid ? 'VERIFIED' : 'COMPROMISED',
+        contentBinding: binding.bindingVerified
+          ? 'VERIFIED'
+          : binding.valid
+            ? 'NOT_RECORDED'
+            : 'BROKEN',
+        contentBindingReason: binding.reason,
         isValid: sig.isValid,
       },
     };
