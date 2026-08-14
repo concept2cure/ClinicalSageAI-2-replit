@@ -24,7 +24,7 @@ disagree, the command is right and this file is stale.
 Measured 2026-08-14 on `concept2cure-v2`:
 
 ```bash
-node scripts/ops/ledger-check.mjs          # 40 rows: 17 done, 18 open, 4 in-flight, 1 blocked
+node scripts/ops/ledger-check.mjs          # 42 rows: 17 done, 20 open, 4 in-flight, 1 blocked
 node scripts/ops/ga-readiness-report.mjs   # 3/40 ready · 18 blockers · 19 advisories
 npm run ci:surface-discoverability         # 118 renderable: 92 catalogued, 26 contextual
 ```
@@ -297,9 +297,21 @@ ingested document. Add the reconciliation check the README asks for, so
 to it, and that asking for a surface that does not exist produces a refusal rather than a
 jump.
 
-**Step 2 — Generalize surface awareness to all 118 (weeks).** The MDX resolver is the right
-shape; its limit is that it is keyed to one workstream and hand-written for eight surfaces.
-Generalize it:
+**Step 2 — Generalize surface awareness (weeks) — but consolidate the surfaces first.**
+L42 records that the surface layer never had the consolidation pass the services, routes
+and tables got: **118 registry ids over 86 modules**, still carrying clusters the backend
+shed. Writing 118 knowledge entries against a set about to be merged means writing entries
+twice and deleting the difference. Run the consolidation, then generalize against the
+number that survives.
+
+L41 is the paired warning: `authoring-engine` is catalogued, renders entirely from inline
+fixture data, calls no endpoint, and carries no sample-mode label. A knowledge entry for
+that surface would tell AnA a capability exists that does not. **Audit for backing before
+writing knowledge**, on the same evidence standard used for the eight L40 additions — a
+mounted route and real API calls.
+
+The MDX resolver is the right shape; its limit is that it is keyed to one workstream and
+hand-written for eight surfaces. Generalize it:
 
 - Make the surface context resolver workstream-agnostic, selected by the surface id the
   client already knows, not by a `workstream` string.
@@ -380,7 +392,9 @@ These are the traps. Each would look like progress.
   consequence.
 - **Do not add a catalog entry for a shell.** A catalog entry asserts a capability is
   available. Listing an unbacked surface to quiet the discoverability gate is worse than the
-  invisibility it fixes.
+  invisibility it fixes — and L41 shows it has already happened once: `authoring-engine` is
+  catalogued, renders from inline fixture data, calls no endpoint, and says nothing on
+  screen about being sample data.
 - **Do not wire navigation signal-driven.** Parsing ` ```ana-navigate ` blocks out of model
   prose lets any text that reaches the context window steer the client — including text
   from an ingested document. Take the tool-driven path: a tool call is schema-validated,
@@ -427,6 +441,7 @@ If only one thing moves this week, make it the first row.
 | 3 | **B11** — backup / restore rehearsal | The one non-procurement hard blocker on the readiness probe, and unprovable retroactively after a loss | Days |
 | 3= | **§5a Step 1** — close the AnA navigation loop | One file. The contract, the tools and the client handler all ship today and are joined by nothing; the highest capability-per-hour item on this list | Days |
 | 4 | **B8 + B20** — RLS enforced in production | Gates every multi-tenant pilot; the code is ready and the flag is not flipped | Days |
+| 4= | **L42** — surface consolidation pass | 118 ids over 86 modules; every surface-layer investment after this one is cheaper once it lands, and §5a Step 2 is wasted work before it | Weeks |
 | 5 | **L8** — outcome-data capture | Cheap now, impossible to backfill, and the only unpurchasable advantage in the benchmark | Weeks |
 | 6 | **L21 + L25** — source versioning and hash checking | Closes the half of the lineage chain a regulator asks about first | Weeks |
 | 7 | **L39 + L37 + L28** — writer and signer consolidation | Safe by convention today; convention decays and this is the substrate under Part 11 | Weeks |
