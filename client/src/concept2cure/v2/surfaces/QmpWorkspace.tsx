@@ -16,10 +16,11 @@
  * an honest error — never a fixture. Create/activate are real awaited writes
  * that adopt the server's returned row and refetch; nothing is fabricated.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
@@ -70,7 +71,12 @@ const CREATE_FORM: C2CFormConfig = {
   ],
 };
 
-export function QmpWorkspace(_props: SurfaceViewProps) {
+export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
+  /* AnA on this surface. It took SurfaceViewProps and discarded the whole
+     object as `_props`, so a quality lead looking at a gate-level breakdown and
+     a risk profile had no way to ask what any of it meant — on the screen that
+     decides what every other document is validated against. */
+  const ask = onAsk;
   const [plans, setPlans] = useState<Plan[]>([]);
   const [listState, setListState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [active, setActive] = useState<number | null>(null);
@@ -120,12 +126,69 @@ export function QmpWorkspace(_props: SurfaceViewProps) {
     if (active === id) void loadDashboard(id);
   }, [active, loadDashboard, fireToast]);
 
+  /* WHAT ANA SEES HERE. A QMP defines the gates every other document is
+     validated against, so the payload carries the gate-level split and the risk
+     profile rather than just a plan name — "why did my document fail a hard
+     gate" is answered from this screen's numbers, not from the document's.
+
+     dashState travels separately from the plan list because the dashboard has
+     its own failure: a freshly created plan with no sections yet lands in
+     `error` by design (the loader requires the full shape before rendering).
+     Publishing that as "no sections" would state a fact the surface itself
+     refuses to state. */
+  const activePlan = plans.find((p) => p.id === active) ?? null;
+  const anaContext = useMemo(
+    () => ({
+      summary: listState === 'loading'
+        ? 'Quality management plans, still loading.'
+        : listState === 'error'
+          ? 'Quality management plans could not be loaded — unavailable, not empty.'
+          : plans.length === 0
+            ? 'Quality management: no quality plans defined yet for this organization.'
+            : `Quality management: ${plans.length} plan(s)` +
+              (activePlan ? `, "${activePlan.name}" (v${activePlan.version ?? '—'}, ${activePlan.status ?? 'no status'}) selected` : '') +
+              (dash ? `; ${dash.overallCompleteness}% complete across ${dash.sections.totalSections} section(s).` : '.'),
+      facts: {
+        plansState: listState,
+        planCount: plans.length,
+        activePlanCount: plans.filter((p) => String(p.status ?? '').toLowerCase() === 'active').length,
+        ...(activePlan
+          ? { selectedPlanId: activePlan.id, selectedPlanName: activePlan.name, selectedPlanVersion: activePlan.version, selectedPlanStatus: activePlan.status }
+          : {}),
+        dashboardState: dashState,
+        ...(dash
+          ? {
+              overallCompletenessPct: dash.overallCompleteness,
+              totalSections: dash.sections.totalSections,
+              sectionsByGateLevel: dash.sections.sectionsByGateLevel,
+              sectionsAllowingOverride: dash.sections.sectionsAllowingOverride,
+              totalFactors: dash.factors.totalFactors,
+              factorsByRiskLevel: dash.factors.factorsByRiskLevel,
+              requiredFactors: dash.factors.requiredFactors,
+              riskProfile: dash.riskProfile,
+            }
+          : {}),
+      },
+      availableActions: [
+        'Explain what a hard, soft and info gate each enforce',
+        'Explain this plan\'s risk profile and which factors drive it',
+        'Explain what activating this plan changes for documents in flight',
+        'Create a quality-management plan',
+      ],
+    }),
+    [listState, plans, activePlan, dashState, dash],
+  );
+  usePublishSurfaceContext('qmp', anaContext);
+
   return (
     <div className="cm-body">
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Quality management plans</span>
-          <button className="nda-open" onClick={() => setCreating(true)}>{I.plus} New plan</button>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {ask && <button className="reg-cta" onClick={() => ask('Explain what this quality-management plan enforces: what a hard, soft and info gate each block, which risk factors are required, and what changes for documents already in flight if I activate it. Say which figures are unavailable rather than assuming zero.')}>{I.sparkles} Explain this plan</button>}
+            <button className="nda-open" onClick={() => setCreating(true)}>{I.plus} New plan</button>
+          </span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {listState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading quality plans…" /></div>

@@ -243,6 +243,46 @@ export function mapProcessValidationPayload(record: Record<string, any>): Record
   };
 }
 
+/**
+ * Map a qc_testing row to a canonical source payload — the batch-analyses
+ * evidence behind §3.2.S.4.4 / §3.2.P.5.4.
+ *
+ * `qc_testing` was the ONE CMC register with no write-through. A QC analyst
+ * recorded a release result against its specification, a second person reviewed
+ * it under the §11 two-person rule, and none of it reached Module 3 — the two
+ * sections whose whole job is to carry quantitative batch results were composed
+ * without ever seeing the QC file.
+ *
+ * `batchAnalyses` is the field the section rules require. It is emitted only
+ * when there is an actual result to report: a QC record with no results is a
+ * pending test, and letting it satisfy the requirement would mark the section
+ * complete on the strength of a test nobody has run yet.
+ */
+export function mapQcTestingPayload(record: Record<string, any>): Record<string, any> {
+  const results = record.testResults ?? record.test_results ?? null;
+  const specifications = record.specifications ?? null;
+  const status = record.passFailStatus || record.pass_fail_status || '';
+  const hasResult = results !== null && results !== undefined && results !== '';
+  return {
+    sampleId: record.sampleId || record.sample_id || '',
+    sampleType: record.sampleType || record.sample_type || '',
+    testMethod: record.testMethod || record.test_method || '',
+    testResults: results,
+    specifications,
+    passFailStatus: status,
+    certificateOfAnalysis: record.certificateOfAnalysis || record.certificate_of_analysis || '',
+    /* §3.2.S.4.4 / §3.2.P.5.4 require quantitative results per test, not
+       "conforms" statements — so the presence of a recorded result is what
+       counts here, not the presence of a row. */
+    batchAnalyses: hasResult ? results : null,
+    /* Reviewed status travels with the payload: an unreviewed result is not yet
+       releasable evidence, and a reader of the composed section needs to know
+       which it is looking at. */
+    reviewed: Boolean(record.reviewedBy ?? record.reviewed_by),
+    releaseDate: record.releaseDate || record.release_date || null,
+  };
+}
+
 // ── Core write-through function ────────────────────────────────────────────
 
 /**
@@ -410,6 +450,17 @@ export async function writeThroughStabilityStudy(
     orgId, projectId, sourceType: 'stability',
     sourceKey: `stability:${recordId}`,
     sourcePayload: mapStabilityPayload(record),
+    createdBy,
+  });
+}
+
+export async function writeThroughQcTesting(
+  orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
+): Promise<WriteThroughResult | null> {
+  return writeThroughToCanonicalSource({
+    orgId, projectId, sourceType: 'qc_result',
+    sourceKey: `qc_result:${recordId}`,
+    sourcePayload: mapQcTestingPayload(record),
     createdBy,
   });
 }

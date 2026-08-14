@@ -171,6 +171,22 @@ one is unreachable from the product.
 | `submission-orchestrator` | 10 | SQL | — |
 | `submission-center` | 8 | SQL | Orphaned sibling of the live `/api/submissions` |
 
+### Decided since this was written — read ADR 0013 first
+
+`precedent-engine` is authoritative for CRL / RTF / EMA / advisory-committee.
+`regulatory-precedent-intelligence`'s versions of those stay unwired, because
+**its tables ship with zero rows** and an empty answer from a regulatory risk
+tool reads as "low risk". Only its two non-overlapping families
+(`cross-jurisdictional`, `confidence`) are surfaced, through `filing-strategy`,
+and they are described as a record the tenant builds rather than a shipped
+knowledge base. See `docs/adr/0013-precedent-engine-is-authoritative.md`.
+
+**Add a step to the verification method below because of this:** confirming a
+table EXISTS is not confirming it has ROWS. That check was skipped once here and
+produced a catalog entry promising a populated knowledge base over an empty
+store. `grep -c "INSERT INTO <schema>" migrations/` before describing anything
+as available.
+
 ### The clearest one, fully verified
 
 **`/api/regulatory-precedent-intelligence` — 39 endpoints, zero client references.**

@@ -259,20 +259,35 @@ router.get('/build-state/:projectId', async (req, res) => {
       };
     });
 
-    // Summary stats
+    /* ── Summary stats ──
+       "Ready" is counted from the UNDERLYING FACTS, not from the display state.
+
+       `buildState` is a presentation value with a priority order, and its
+       `locked` branch reads `artifactStatus`, which is the DOCUMENT lifecycle in
+       the editor — not §3.2 section approval. Counting it as ready meant a
+       section whose artifact happened to be locked was reported ready while its
+       `approval_state` was still `draft`. The final-export gate counts
+       `approval_state === 'approved'` and refuses on any section that went stale
+       after approval, so this readiness figure could read 10/10 on the build
+       screen while the gate refused the very same project with "10 section(s)
+       not approved".
+
+       A readiness percentage that disagrees with the gate governing release is
+       worse than no percentage. The two conditions below are exactly the gate's,
+       so the number on screen and the verdict at the gate cannot diverge. */
+    const isReady = (s: { approvalState: string; isStale: boolean }) =>
+      s.approvalState === 'approved' && !s.isStale;
+
     const totalSections = sections.length;
-    const readySections = sections.filter(
-      (s) => s.buildState === 'approved' || s.buildState === 'locked'
-    ).length;
+    const readySections = sections.filter(isReady).length;
     const staleSections = sections.filter((s) => s.buildState === 'stale').length;
     const blockedSections = sections.filter(
       (s) => s.buildState === 'contradiction_flagged'
     ).length;
+    // Anything with sources that is not already ready still has work to do —
+    // including a section that was approved and then went stale.
     const buildableSections = sections.filter(
-      (s) =>
-        s.sourceObjectCount > 0 &&
-        s.buildState !== 'approved' &&
-        s.buildState !== 'locked'
+      (s) => s.sourceObjectCount > 0 && !isReady(s)
     ).length;
 
     return res.json({

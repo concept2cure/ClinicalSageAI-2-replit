@@ -34,10 +34,11 @@
  * audit trail and frees the transmit lock. It does not retract anything at the
  * agency, and the copy no longer implies that it does.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
@@ -109,7 +110,12 @@ const ROLLBACK_FORM = (id: number): C2CFormConfig => ({
   ],
 });
 
-export function GatewayTransmittals(_props: SurfaceViewProps) {
+export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
+  /* AnA on this surface. It discarded SurfaceViewProps entirely as `_props`, on
+     the last screen before bytes leave for an agency — the point at which an
+     unconfigured gateway or an unacknowledged transmittal most needs
+     explaining. */
+  const ask = onAsk;
   const [gateways, setGateways] = useState<GatewayInfo[]>([]);
   const [rows, setRows] = useState<Transmittal[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -201,12 +207,64 @@ export function GatewayTransmittals(_props: SurfaceViewProps) {
     void load();
   }, [dialog, load, fireToast]);
 
+  /* WHAT ANA SEES HERE. This is the last screen before bytes leave for an
+     agency, so the payload is deliberately about CAPABILITY and OUTCOME, not
+     volume. Which gateways hold credentials decides what can be sent at all —
+     an unconfigured gateway is the single most common reason a transmit cannot
+     happen, and it is a fact about the deployment that no amount of retrying
+     changes.
+
+     Failures travel by error_class rather than message: the classes are a
+     bounded vocabulary worth reasoning over, while messages are unbounded
+     gateway text that would flood a payload sent on every turn.
+
+     Nothing here implies a transmittal can be recalled. A rollback marks the
+     audit trail; the agency still holds the bytes. The surface says so in its
+     own toast, and the context says so too, so AnA cannot offer to undo a
+     transmission. */
+  const configuredGateways = gateways.filter((g) => g.configured);
+  const anaContext = useMemo(
+    () => ({
+      summary: state === 'loading'
+        ? 'Agency gateways and transmittals, still loading.'
+        : state === 'error'
+          ? 'Agency gateways could not be reached — the dispatch layer is unavailable, which is not the same as having no gateways.'
+          : `Agency transmittals: ${configuredGateways.length} of ${gateways.length} gateway(s) hold credentials; ` +
+            `${rows.length} transmittal(s) logged.`,
+      facts: {
+        dispatchState: state,
+        gatewaysTotal: gateways.length,
+        gatewaysConfigured: configuredGateways.length,
+        gatewaysAwaitingCredentials: gateways.filter((g) => !g.configured).map((g) => g.gateway ?? g.name ?? g.region).filter(Boolean),
+        transmittalCount: rows.length,
+        byStatus: rows.reduce<Record<string, number>>(
+          (acc, r) => ({ ...acc, [r.status ?? 'unknown']: (acc[r.status ?? 'unknown'] ?? 0) + 1 }),
+          {},
+        ),
+        failureClasses: [...new Set(rows.map((r) => r.error_class).filter(Boolean))],
+        awaitingAcknowledgement: rows.filter((r) => r.submitted_at && !r.ack_received_at).length,
+        // A rollback is an audit-trail act, not a recall.
+        rollbackRetractsAtAgency: false,
+      },
+      availableActions: [
+        'Explain which gateways can actually transmit and what the others are missing',
+        'Explain why a transmittal failed, from its error class',
+        'Explain what a rollback does and does not undo at the agency',
+      ],
+    }),
+    [state, gateways, configuredGateways.length, rows],
+  );
+  usePublishSurfaceContext('gateway-transmittals', anaContext);
+
   return (
     <div className="cm-body">
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Agency gateways</span>
-          <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload || I.layers} Transmit</button>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {ask && <button className="reg-cta" onClick={() => ask('Explain our agency gateway posture: which gateways hold credentials and can transmit, what the unconfigured ones are missing, and which transmittals are still awaiting acknowledgement. Do not treat an unreachable dispatch layer as having no gateways.')}>{I.sparkles} Explain gateway posture</button>}
+            <button className="btn primary" style={{ height: 32 }} onClick={() => setDialog('transmit')}>{I.upload || I.layers} Transmit</button>
+          </span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading gateways…" /></div>

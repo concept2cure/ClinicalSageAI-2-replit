@@ -30,10 +30,17 @@
  * ── What this does NOT do ────────────────────────────────────────────────────
  * It does not touch the CRL / RTF / EMA / advisory-committee endpoints. Those
  * overlap with `precedent-engine`, which has an independent implementation
- * (1,797 lines) already wired to a surface. Choosing which of two independent
- * regulatory-risk implementations is authoritative silently changes the advice a
- * sponsor receives, and that is a domain decision, not a refactor. Recorded in
- * docs/design/WORK_ORDER_mission_control.md.
+ * (1,797 lines) already wired to a surface, and that one is authoritative — see
+ * docs/adr/0013-precedent-engine-is-authoritative.md. The short version: this
+ * module's tables SHIP EMPTY, so its CRL/RTF/EMA answers would be `[]` on every
+ * tenant, and "no CRL triggers found" reads as "low risk".
+ *
+ * ── This record starts empty, and the surface says so ────────────────────────
+ * The same is true of the two families below. The tables are created and seeded
+ * with nothing, so every view is blank until the organisation populates it. That
+ * is stated in the header, in the catalog entry, and in each empty state —
+ * because a blank filing-sequence panel and a filing sequence with no risks are
+ * the same pixels and opposite meanings.
  */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
@@ -283,9 +290,16 @@ export function FilingStrategy(_props: SurfaceViewProps) {
           <span className="s">Sequence, divergence and calibration</span>
         </div>
         <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300,#6b6963)', lineHeight: 1.5 }}>
-          Filing order, agency divergence and reliance pathways are computed by the server from the
-          cross-jurisdictional record. Nothing here is estimated in the browser, and an agency with no
-          recorded divergence is reported as having none — not as agreement.
+          <p style={{ margin: '0 0 8px' }}>
+            Filing order, agency divergence and reliance pathways are computed by the server from your
+            organisation’s cross-jurisdictional record. Nothing here is estimated in the browser, and an
+            agency with no recorded divergence is reported as having none — not as agreement.
+          </p>
+          <p style={{ margin: 0 }}>
+            <b>This record starts empty.</b> The store ships with no rows, so every view below is blank
+            until your organisation adds frameworks, divergences and reliance pathways. Blank here means
+            nothing has been recorded — never that there is nothing to record.
+          </p>
         </div>
       </div>
 
@@ -359,7 +373,7 @@ export function FilingStrategy(_props: SurfaceViewProps) {
               return rows.length > 0
                 ? <RecordTable rows={rows} />
                 : <EmptyState icon={I.route} title="No sequence returned"
-                    hint="The cross-jurisdictional record has no filing strategy for this product type and agency set yet." />;
+                    hint="Your cross-jurisdictional record has no filing strategy for this product type and agency set. The store ships empty — this is what an unpopulated record looks like, not a finding about the agencies." />;
             }}
           </Panel>
         </>
