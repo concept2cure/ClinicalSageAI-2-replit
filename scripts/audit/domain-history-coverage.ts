@@ -37,7 +37,7 @@
  * Compliance: 21 CFR Part 11 §11.10(e) — completeness of the audit trail.
  */
 
-import pg from 'pg';
+import { Pool, PoolClient } from 'pg';
 import {
   DOMAIN_HISTORY_TABLES,
   type DomainHistoryTable,
@@ -74,7 +74,12 @@ function resolveDatabaseUrl(): string {
   );
 }
 
-async function tableExists(client: pg.PoolClient, qualified: string): Promise<boolean> {
+/** SQL identifier quoting: wrap in double quotes, doubling any embedded quote. */
+function quoteIdent(name: string): string {
+  return `"${name.replace(/"/g, '""')}"`;
+}
+
+async function tableExists(client: PoolClient, qualified: string): Promise<boolean> {
   const [schema, table] = splitQualified(qualified);
   const { rows } = await client.query(
     `SELECT 1 FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2 LIMIT 1`,
@@ -83,18 +88,18 @@ async function tableExists(client: pg.PoolClient, qualified: string): Promise<bo
   return rows.length > 0;
 }
 
-async function countRows(client: pg.PoolClient, qualified: string): Promise<number> {
+async function countRows(client: PoolClient, qualified: string): Promise<number> {
   const [schema, table] = splitQualified(qualified);
   // Identifiers come from DOMAIN_HISTORY_TABLES (a compile-time constant), never
-  // from user input; quote_ident keeps that true even if the list gains an odd name.
+  // from user input; quoteIdent keeps that safe even if the list gains an odd name.
   const { rows } = await client.query(
-    `SELECT count(*)::int AS n FROM ${JSON.stringify(schema)}.${JSON.stringify(table)}`,
+    `SELECT count(*)::int AS n FROM ${quoteIdent(schema)}.${quoteIdent(table)}`,
   );
   return Number(rows[0]?.n ?? 0);
 }
 
 async function countLinks(
-  client: pg.PoolClient,
+  client: PoolClient,
   domainTable: string,
   orgId: number | null,
 ): Promise<number> {
@@ -116,7 +121,7 @@ function classify(domainRows: number | null, linkedRows: number): CoverageRow['s
 }
 
 async function measure(
-  client: pg.PoolClient,
+  client: PoolClient,
   spec: DomainHistoryTable,
   orgId: number | null,
 ): Promise<CoverageRow> {
@@ -162,7 +167,7 @@ async function main(): Promise<void> {
   }
 
   const connectionString = resolveDatabaseUrl();
-  const pool = new pg.Pool({
+  const pool = new Pool({
     connectionString,
     ssl: /localhost|127\.0\.0\.1|\/\.s\.PGSQL/.test(connectionString)
       ? undefined
