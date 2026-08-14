@@ -7,7 +7,7 @@
  */
 
 import { db } from '../db';
-import { eq, and, or, sql } from 'drizzle-orm';
+import { eq, and, or, ne, sql } from 'drizzle-orm';
 import * as schema from '../../shared/schema';
 import { generateUUID } from '../utils/id-generator';
 
@@ -369,7 +369,12 @@ class UnifiedTaskService {
           // value), which permanently credited the approvals component of the
           // submission-readiness score a full 100 and made the
           // "N tasks awaiting approval" critical alert unreachable.
-          sql`${schema.unifiedTasks.approvalStatus} IS DISTINCT FROM 'approved'`
+          sql`${schema.unifiedTasks.approvalStatus} IS DISTINCT FROM 'approved'`,
+          // A cancelled task is not awaiting anyone's signature. Without this
+          // the NULL-safe predicate above counts cancelled gated rows as
+          // pending approvals for as long as they exist, which drags the
+          // submission-readiness score down and keeps a critical alert lit.
+          ne(schema.unifiedTasks.status, 'cancelled')
         )
       );
 

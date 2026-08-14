@@ -4,22 +4,31 @@
  * Registry id: `ectd-compile`.
  *
  * Wired to the real persisting compiler (server/routes/ectd-compile.ts, mounted
- * /api/ectd-compile), keyed on the open program's numeric project id:
- *   • GET  /:projectId/status    — module-by-module readiness (required-section
- *                                  completion, overall %), the go/no-go picture
- *   • POST /:projectId/validate  — pre-compile validation findings (missing /
- *                                  unapproved / empty required sections), by rule
- *   • POST /:projectId/compile   — builds the eCTD 4.0 XML backbone across the
- *                                  selected region (FDA/EMA) and submission type,
- *                                  returns per-module status + the real backbone
- *                                  XML + blocking errors/warnings
- *   • GET  /:projectId/history   — prior compilations
+ * /api/ectd-compile), keyed on the open program's identifier — the server
+ * resolves a legacy numeric project id, a regulatory_programs UUID, or a program
+ * code, org-scoped (the same 3-way ident contract as the eSTAR export routes):
+ *   • GET  /:projectIdent/status    — module-by-module readiness (required-section
+ *                                     completion, overall %), the go/no-go picture
+ *   • POST /:projectIdent/validate  — pre-compile validation findings (missing /
+ *                                     unapproved / empty required sections), by rule
+ *   • POST /:projectIdent/compile   — compiles the submission: a program linked to
+ *                                     the canonical submission spine (placed
+ *                                     submission_leaves) assembles the REAL package
+ *                                     server-side (rendered PDF leaves, ICH v3.2.2
+ *                                     index.xml, MD5s) and returns its actual
+ *                                     backbone; otherwise the honest draft backbone
+ *                                     over authored section text, with blockers
+ *                                     saying exactly why no leaf files exist
+ *   • GET  /:projectIdent/history   — prior compilations
  *
  * HONESTY: every panel renders live server data, an honest empty, or an honest
  * error — never a fixture. Compile/validate are real awaited writes; the
  * downloadable backbone is the exact XML the server returned. No project open,
- * a non-numeric project id, or a missing org are all surfaced honestly rather
- * than sending a doomed request or fabricating readiness.
+ * or a missing org, are surfaced honestly rather than sending a doomed request
+ * or fabricating readiness. (The old client-side "no numeric project id"
+ * dead-end is gone: window.C2C_PROJECT.id is a program UUID and the SERVER now
+ * resolves it; a program with no linked section store gets the server's own
+ * blocker text, not a silent 0%.)
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
@@ -38,7 +47,10 @@ interface ModuleReadiness {
   ready: boolean;
 }
 interface StatusView {
-  projectId: number;
+  /** Legacy numeric project id, or null when the ident named a program. */
+  projectId: number | null;
+  projectIdent?: string;
+  programId?: string | null;
   overallReadiness: number;
   /** Every required section approved/locked/final. Not the same as submittable. */
   contentComplete?: boolean;
@@ -60,7 +72,9 @@ interface ValidationResult {
 }
 interface CompileResult {
   id: string;
-  projectId: number;
+  projectId: number | null;
+  projectIdent?: string;
+  programId?: string | null;
   status: 'completed' | 'failed';
   modules: Array<{ moduleCode: string; moduleName: string; status: string; requiredCompleted: number; requiredSections: number }>;
   xmlBackbone: string;
@@ -113,20 +127,26 @@ function downloadXml(name: string, text: string) {
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
-/** The open program's numeric project id, or null when absent / non-numeric. */
-function readNumericProjectId(): { id: number | null; raw: unknown; title?: string; code?: string } {
+/**
+ * The open program's identifier — a regulatory_programs UUID, a program code,
+ * or a legacy numeric project id. The SERVER resolves whichever it is,
+ * org-scoped; this surface never demands a numeric id (that demand was a
+ * permanent dead-end: window.C2C_PROJECT.id is a program UUID).
+ */
+function readProjectIdent(): { ident: string | null; title?: string; code?: string } {
   const p = (window as unknown as { C2C_PROJECT?: { id?: unknown; title?: string; code?: string } }).C2C_PROJECT;
-  if (!p || p.id == null) return { id: null, raw: undefined };
-  const n = Number(p.id);
-  return { id: Number.isInteger(n) && n > 0 ? n : null, raw: p.id, title: p.title, code: p.code };
+  if (!p || p.id == null) return { ident: null };
+  const ident = String(p.id).trim();
+  return { ident: ident !== '' ? ident : null, title: p.title, code: p.code };
 }
 
 const REGIONS = ['FDA', 'EMA'] as const;
 const SUB_TYPES = ['initial', 'amendment'] as const;
 
 export function EctdCompile(_props: SurfaceViewProps) {
-  const proj = readNumericProjectId();
-  const projectId = proj.id;
+  const proj = readProjectIdent();
+  const ident = proj.ident;
+  const identPath = ident != null ? encodeURIComponent(ident) : null;
 
   const [region, setRegion] = useState<(typeof REGIONS)[number]>('FDA');
   const [submissionType, setSubmissionType] = useState<(typeof SUB_TYPES)[number]>('initial');
@@ -140,27 +160,27 @@ export function EctdCompile(_props: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
   const loadStatus = useCallback(async () => {
-    if (projectId == null) return;
+    if (identPath == null) return;
     setStatusState('loading');
-    const { ok, body } = await readJson<StatusView>('GET', `/api/ectd-compile/${projectId}/status`);
+    const { ok, body } = await readJson<StatusView>('GET', `/api/ectd-compile/${identPath}/status`);
     if (!ok || !body) { setStatusState('error'); setStatus(null); return; }
     setStatus(body); setStatusState('ready');
-  }, [projectId]);
+  }, [identPath]);
 
   const loadHistory = useCallback(async () => {
-    if (projectId == null) return;
-    const { body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${projectId}/history`);
+    if (identPath == null) return;
+    const { body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${identPath}/history`);
     setHistory(Array.isArray(body?.compilations) ? body!.compilations! : []);
-  }, [projectId]);
+  }, [identPath]);
 
   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
 
   const doValidate = useCallback(async () => {
-    if (projectId == null) return;
+    if (identPath == null) return;
     setBusy('validate');
     try {
       const { ok, status: st, body } = await readJson<{ valid: boolean; results: ValidationResult[]; summary: { pass: number; warnings: number; errors: number } }>(
-        'POST', `/api/ectd-compile/${projectId}/validate`, { region },
+        'POST', `/api/ectd-compile/${identPath}/validate`, { region },
       );
       if (!ok || !body) {
         fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`);
@@ -169,13 +189,13 @@ export function EctdCompile(_props: SurfaceViewProps) {
       setFindings(body.results ?? []);
       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
     } finally { setBusy(null); }
-  }, [projectId, region, fireToast]);
+  }, [identPath, region, fireToast]);
 
   const doCompile = useCallback(async () => {
-    if (projectId == null) return;
+    if (identPath == null) return;
     setBusy('compile');
     try {
-      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${projectId}/compile`, { submissionType, region });
+      const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, region });
       if (!ok || !body) {
         fireToast(st === 401 ? 'Sign in to your tenant to compile.' : `Compile failed (HTTP ${st}). Nothing was assembled.`);
         return;
@@ -191,18 +211,17 @@ export function EctdCompile(_props: SurfaceViewProps) {
         : `Compile blocked — ${body.errors.length} error(s) must be resolved.`);
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
-  }, [projectId, submissionType, region, fireToast, loadStatus, loadHistory]);
+  }, [identPath, submissionType, region, fireToast, loadStatus, loadHistory]);
 
-  // ── No program open / non-numeric id ──
-  if (projectId == null) {
+  // ── No program open ── (the server resolves UUID / code / numeric idents, so
+  // the only honest dead-end left is having no program at all)
+  if (ident == null) {
     return (
       <div className="cm-body" style={{ padding: 24 }}>
         <EmptyState
           icon={I.layers}
-          title={proj.raw == null ? 'Open a program to compile its eCTD' : 'This program has no numeric project id'}
-          hint={proj.raw == null
-            ? 'eCTD assembly runs against a program’s sections (project_sections). Open a program, then compile and export its submission here.'
-            : `The eCTD compiler is keyed on a numeric project id; the open program’s id (${String(proj.raw)}) isn’t one. Open a program backed by the sectioned project store.`}
+          title="Open a program to compile its eCTD"
+          hint="eCTD assembly runs against a program’s sections (project_sections). Open a program, then compile and export its submission here."
         />
       </div>
     );
@@ -213,7 +232,7 @@ export function EctdCompile(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Compile &amp; Export eCTD</span>
-          <span className="s">{proj.title ?? `Project ${projectId}`}{proj.code ? ' · ' + proj.code : ''}</span>
+          <span className="s">{proj.title ?? `Project ${ident}`}{proj.code ? ' · ' + proj.code : ''}</span>
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Region</label>
@@ -248,7 +267,7 @@ export function EctdCompile(_props: SurfaceViewProps) {
           {statusState === 'loading' ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading readiness…" /></div>
           ) : statusState === 'error' ? (
-            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compilation readiness" hint="GET /api/ectd-compile/:projectId/status didn’t respond. Sign in to your tenant and retry." /></div>
+            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compilation readiness" hint="GET /api/ectd-compile/:projectIdent/status didn’t respond. Sign in to your tenant and retry." /></div>
           ) : !status || status.modules.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No module readiness yet" hint="Readiness is derived from the program’s sections. Draft and approve sections, then readiness appears per CTD module." /></div>
           ) : (
@@ -299,10 +318,15 @@ export function EctdCompile(_props: SurfaceViewProps) {
             )}
             {compileResult.xmlBackbone && (
               <>
-                <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-project-${projectId}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
-                  {I.download} Download eCTD 4.0 backbone XML
+                <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-${ident.replace(/[^a-zA-Z0-9._-]/g, '_')}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
+                  {I.download} Download eCTD backbone XML
                 </button>
-                {!compileResult.submissionReady && (
+                {/* Draft-backbone compiles (no leaf files rendered) get the
+                    working-document caveat. A spine-backed compile returned the
+                    package's REAL index.xml — its leaves are rendered files, so
+                    this caveat would be false there; the blockers panel above
+                    already says what still stands between it and transmission. */}
+                {!compileResult.submissionReady && (compileResult.leafFilesRendered ?? 0) === 0 && (
                   <div style={{ fontSize: 11.5, marginTop: 6, color: 'var(--c2c-dim,#667085)' }}>
                     The backbone describes the authored section content and marks every leaf
                     <span className="mono"> rendered=&quot;false&quot;</span>. It is a working document,

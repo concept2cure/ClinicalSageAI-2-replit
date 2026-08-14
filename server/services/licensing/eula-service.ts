@@ -19,6 +19,7 @@
 
 import crypto from 'crypto';
 import { pool } from '../../db.js';
+import auditService from '../auditService.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('eula-service');
@@ -286,26 +287,25 @@ export async function recordAcceptance(input: RecordAcceptanceInput): Promise<Ac
     ]
   );
 
-  // Mirror into the immutable audit log (best-effort).
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (tenant_id, user_id, action, table_name, record_id, new_values)
-       VALUES ($1, $2, 'license_accepted', 'license_acceptances', $3, $4)`,
-      [
-        input.organizationId ?? null,
-        input.userId,
-        input.agreementId,
-        JSON.stringify({
-          agreementKey: agreement.agreement_key,
-          version: agreement.version,
-          hash,
-          method: input.method ?? 'clickwrap',
-        }),
-      ]
-    );
-  } catch {
-    /* non-critical */
-  }
+  // Mirror into the canonical audit log. Routed through auditService rather
+  // than a raw INSERT: the raw form wrote a row with NULL sha256_chain /
+  // payload_hash / hmac_seal, i.e. a row that SITS IN audit_logs BUT OUTSIDE
+  // the hash chain — invisible to the chain verifier and therefore not
+  // tamper-evident. auditService computes the chain link and HMAC seal inside
+  // its own transaction (§11.10(e), §11.70).
+  await auditService.logAction({
+    organizationId: input.organizationId ?? undefined,
+    userId: input.userId,
+    action: 'license_accepted',
+    resourceType: 'license_acceptances',
+    resourceId: input.agreementId,
+    details: {
+      agreementKey: agreement.agreement_key,
+      version: agreement.version,
+      hash,
+      method: input.method ?? 'clickwrap',
+    },
+  });
 
   const r = rows[0];
   return {

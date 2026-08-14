@@ -10,16 +10,17 @@
  *    regulatory_programs.target_submission_date or null. Null must render "No
  *    target date set" (reason + next action), never a projected date.
  *
- * 2. The six "Documents AnA assembles" cards printed their server route (e.g.
+ * 2. The "Documents AnA assembles" cards printed their server route (e.g.
  *    /api/ind-lifecycle/cover-letter) next to a button that never called it — a
- *    false affordance. The route text is gone; the un-wired cards' buttons say
- *    "Ask AnA" (which is what they do), and the cover-letter card is wired
- *    end-to-end as the exemplar: a real POST whose result (the server's letter
+ *    false affordance. The route text is gone; every card is now wired
+ *    end-to-end (the cover-letter exemplar first, the rest mirroring it — see
+ *    indLifecycleDeliverables.test.tsx), each card keeps an honest "Ask AnA"
+ *    button that does exactly that, and the assemble result (the server's
  *    model + its gap verdict) renders in place.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', () => ({ apiRequest }));
@@ -30,6 +31,7 @@ const props = () => ({ onAsk: vi.fn(), onNav: vi.fn() }) as any;
 
 /* A REAL org-scoped checklist — deliberately NOT the kit's BX-301 sample. */
 const CHECKLIST = (targetReceiptDate: string | null) => ({
+  submissionId: 31,
   code: 'ZX-9',
   drugName: 'Zexanib',
   productName: 'ZX-9 First-in-Human',
@@ -103,18 +105,21 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     expect(document.querySelector('.indl-route')).toBeNull();
   });
 
-  it('un-wired cards say "Ask AnA" and do exactly that', async () => {
+  it('every card keeps an honest "Ask AnA" button that does exactly that', async () => {
     const p = props();
     mockApi(null);
     render(<IndLifecycle {...p} />);
     await screen.findByText('No target date set');
 
-    // The briefing-book card (un-wired) hands its generic prompt to AnA.
+    // The briefing-book card (now wired end-to-end) still offers Ask AnA, and
+    // that button hands its generic prompt to AnA — nothing else.
     const askButtons = screen.getAllByText('Ask AnA');
     expect(askButtons.length).toBeGreaterThan(0);
-    const briefingCard = screen.getByText('Pre-IND Briefing Book').closest('.indl-dcard')!;
-    fireEvent.click(briefingCard.querySelector('.indl-dcard-acts button')!);
+    const briefingCard = screen.getByText('Pre-IND Briefing Book').closest('.indl-dcard')! as HTMLElement;
+    fireEvent.click(within(briefingCard).getByText('Ask AnA'));
     expect(p.onAsk).toHaveBeenCalledWith('Assemble the Pre-IND briefing book for this program.');
+    // No POST fired from asking AnA.
+    expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-lifecycle/briefing-book')).toBe(false);
   });
 
   it('the cover-letter exemplar POSTs the real route and renders the SERVER model + gaps', async () => {
@@ -132,7 +137,9 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     render(<IndLifecycle {...props()} />);
     await screen.findByText('No target date set');
 
-    fireEvent.click(screen.getByText('Assemble now'));
+    // Every card now renders an "Assemble now" — scope to the exemplar's card.
+    const clCard = screen.getByText('IND Cover Letter').closest('.indl-dcard')! as HTMLElement;
+    fireEvent.click(within(clCard).getByText('Assemble now'));
 
     expect(await screen.findByText('REAL SERVER LETTER BODY')).toBeTruthy();
     expect(document.body.textContent).toContain('Missing before filing: signatoryName');
@@ -149,7 +156,8 @@ describe('IndLifecycle — deliverable cards carry no false affordance', () => {
     render(<IndLifecycle {...props()} />);
     await screen.findByText('No target date set');
 
-    fireEvent.click(screen.getByText('Assemble now'));
+    const clCard = screen.getByText('IND Cover Letter').closest('.indl-dcard')! as HTMLElement;
+    fireEvent.click(within(clCard).getByText('Assemble now'));
 
     expect(
       await screen.findByText('Could not assemble the cover letter — sign in and retry.'),

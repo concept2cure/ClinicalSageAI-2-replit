@@ -14,6 +14,7 @@
  */
 
 import { pool } from '../db.js';
+import auditService from './auditService';
 import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
@@ -629,30 +630,24 @@ async function logFigureGeneration(
   figure: FigureSpec,
   durationMs: number
 ): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO audit_logs (user_id, organization_id, action, entity_type, entity_id, details, ip_address, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
-      [
-        request.userId,
-        request.organizationId,
-        'figure_generated',
-        'figure',
-        figure.id,
-        JSON.stringify({
-          figureType: figure.figureType,
-          generatedFormat: figure.generatedFormat,
-          sectionCode: figure.regulatoryContext,
-          confidence: figure.confidence,
-          durationMs,
-          model: figure.metadata.modelUsed,
-        }),
-        '0.0.0.0',
-      ]
-    );
-  } catch {
-    // Non-critical
-  }
+  // Chained via auditService — the previous raw INSERT named columns audit_logs
+  // does not have (organization_id / entity_type / entity_id / details), so it
+  // raised 42703 into a bare catch and recorded nothing.
+  await auditService.logAction({
+    organizationId: request.organizationId,
+    userId: request.userId,
+    action: 'figure_generated',
+    resourceType: 'figure',
+    resourceId: figure.id,
+    details: {
+      figureType: figure.figureType,
+      generatedFormat: figure.generatedFormat,
+      sectionCode: figure.regulatoryContext,
+      confidence: figure.confidence,
+      durationMs,
+      model: figure.metadata.modelUsed,
+    },
+  });
 }
 
 function buildPlaceholderFigure(

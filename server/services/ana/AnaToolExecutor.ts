@@ -8856,6 +8856,63 @@ registerToolHandler('validate_ectd_package', async (input) => {
   }
 });
 
+// The authoring → filing seam as a tool: upsert a submission_leaves row in the
+// canonical core (submission-service.upsertLeaf — the same write the Submission
+// Center Builder and the editor's "Place into filing" make). Tenant + actor
+// from ToolContext; the service refuses locked sequences and cross-tenant
+// document pointers, and every refusal is returned verbatim as a structured
+// error — never a claimed placement.
+registerToolHandler('place_into_sequence', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) {
+    return JSON.stringify({ error: 'place_into_sequence requires tenant context (organizationId and userId).' });
+  }
+  const sequenceId = typeof input.sequence_id === 'number' ? input.sequence_id : NaN;
+  if (!Number.isFinite(sequenceId)) return JSON.stringify({ error: 'sequence_id (number) is required.' });
+  const sectionCode = typeof input.section_code === 'string' ? input.section_code.trim() : '';
+  if (!sectionCode) return JSON.stringify({ error: 'section_code is required.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const lifecycleOp =
+    typeof input.lifecycle_op === 'string' && ['new', 'replace', 'append', 'delete'].includes(input.lifecycle_op)
+      ? input.lifecycle_op
+      : undefined;
+  try {
+    const { upsertLeaf } = await import('../submission-service/submission-service.js');
+    const leaf = await upsertLeaf(
+      {
+        sequenceId,
+        leafId: typeof input.leaf_id === 'number' ? input.leaf_id : undefined,
+        sectionCode,
+        title,
+        lifecycleOp,
+        granularity: typeof input.granularity === 'string' ? input.granularity : undefined,
+        documentTable: typeof input.document_table === 'string' ? input.document_table : undefined,
+        documentId: typeof input.document_id === 'number' ? input.document_id : undefined,
+        documentType: typeof input.document_type === 'string' ? input.document_type : undefined,
+        parentLeafId: typeof input.parent_leaf_id === 'number' ? input.parent_leaf_id : undefined,
+      },
+      { organizationId: ctx.organizationId, userId: ctx.userId },
+    );
+    return JSON.stringify({
+      ok: true,
+      leaf: {
+        id: leaf.id,
+        sequenceId: leaf.sequenceId,
+        sectionCode: leaf.sectionCode,
+        title: leaf.title,
+        lifecycleOp: leaf.lifecycleOp,
+        documentTable: leaf.documentTable,
+        documentId: leaf.documentId,
+      },
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `place_into_sequence failed: ${err instanceof Error ? err.message : String(err)}`,
+      code: (err as any)?.code,
+    });
+  }
+});
+
 registerToolHandler('run_shadow_review', async (input, ctx) => {
   if (!ctx?.organizationId || !ctx?.userId) {
     return JSON.stringify({ error: 'run_shadow_review requires tenant context (organizationId and userId).' });

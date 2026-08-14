@@ -68,7 +68,6 @@ import {
   initializeEarlyServices,
   initializeParallelServices,
   mountApiCatchAll,
-  startPythonBackend,
 } from './startup/services';
 import { setupFrontendServing } from './startup/frontend';
 
@@ -93,11 +92,9 @@ const pool = getPool();
 
 // ── Shutdown wiring (must run before any async work that could crash) ──────
 let httpServer: HttpServer | null = null;
-let pythonProcess: { kill: (signal: string) => void } | null = null;
 
 registerShutdownHandlers({
   getHttpServer: () => httpServer,
-  getPythonProcess: () => pythonProcess,
   pool,
 });
 
@@ -202,10 +199,6 @@ async function startServer() {
     );
     startSecurityHealthScheduler(pool);
   }
-
-  debugLog('Initializing Python backend...');
-  pythonProcess = await startPythonBackend();
-  debugLog('Python backend initialization complete');
 
   debugLog('Mounting startup route families...');
   await registerPostStartRoutes(routeCtx);

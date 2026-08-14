@@ -26,37 +26,10 @@ import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
-import { isSigningAuthorized } from '../services/part11/signing-authority';
-import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 
 // ---------------------------------------------------------------------------
 // TYPES
 // ---------------------------------------------------------------------------
-
-export interface ElectronicSignature {
-  id: string;
-  documentId: string;
-  documentVersion: number;
-  signerId: string;
-  signerName: string;
-  signerTitle: string;
-  signerOrganization: string;
-  meaning: SignatureMeaning;
-  customMeaning?: string;
-  timestamp: Date;
-  serverTimestamp?: string; // Server-authoritative timestamp (ISO 8601)
-  ipAddress: string;
-  userAgent: string;
-  signatureHash: string; // SHA-256 of document content + signer + timestamp
-  certificateId?: string; // Digital certificate reference
-  biometricVerified: boolean;
-  passwordVerified: boolean;
-  mfaVerified: boolean;
-  revoked: boolean;
-  revokedAt?: Date;
-  revokedBy?: string;
-  revokedReason?: string;
-}
 
 export type SignatureMeaning =
   | 'authorship' // Author/creator of the document
@@ -239,16 +212,6 @@ function computeHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
-function computeSignatureHash(
-  documentId: string,
-  documentContent: string,
-  signerId: string,
-  timestamp: Date
-): string {
-  const payload = `${documentId}|${documentContent}|${signerId}|${timestamp.toISOString()}`;
-  return computeHash(payload);
-}
-
 function computeAuditChainHash(entry: Omit<AuditTrailEntry, 'hash'>, previousHash: string): string {
   const payload = `${previousHash}|${entry.entityType}|${entry.entityId}|${entry.action}|${entry.userId}|${entry.timestamp.toISOString()}`;
   return computeHash(payload);
@@ -322,250 +285,41 @@ function appendAuditEntry(
 
 const router = Router();
 
-async function verifySignerPassword(pool: Pool, signerId: string, password: string): Promise<boolean> {
-  if (!password || typeof password !== 'string' || password.length < 8) {
-    return false;
-  }
-
-  try {
-    // tenant-isolation-safe: re-auth self-lookup — signerId is derived from the authenticated user and a client-supplied signerId is rejected unless it matches (§11.200(a)(2)); users is a global identity.
-    const result = await pool.query(
-      `SELECT password_hash
-       FROM users
-       WHERE id::text = $1 OR email = $1
-       LIMIT 1`,
-      [signerId]
-    );
-    const hash = result.rows[0]?.password_hash;
-    if (!hash || typeof hash !== 'string' || hash.startsWith('temp_')) {
-      return false;
-    }
-
-    const bcrypt = await import('bcryptjs');
-    return bcrypt.compare(password, hash);
-  } catch (error) {
-    console.error('[Part11] Password verification query failed:', (error as Error).message);
-    return false;
-  }
-}
-
 // ============================
 // ELECTRONIC SIGNATURES (§11.50, §11.70, §11.100)
 // ============================
-
-/**
- * POST /signatures
- * Apply an electronic signature to a document
- * Requires: credential hash verification + meaning selection
- */
-router.post(
-  '/signatures',
-  createPolicyGuard({
-    action: 'part11.signature.create',
-    module: 'part11-compliance',
-    resourceType: 'electronic_signature',
-  }),
-  async (req: Request, res: Response) => {
-    const pool: Pool = (req as any).pool || (req.app as any).pool;
-    const {
-      documentId,
-      documentVersion,
-      documentContent,
-      signerId: bodySignerId,
-      signerName,
-      signerTitle,
-      signerOrganization,
-      meaning,
-      customMeaning,
-      password,
-    } = req.body;
-
-    // §11.200(a)(2): an electronic signature may be "used only by [its] genuine
-    // owner." The signer identity is therefore BOUND to the authenticated session
-    // user — never taken from the request body. A client-supplied `signerId` is
-    // only accepted as a redundant assertion that must match the authenticated
-    // user; any mismatch is rejected so a logged-in user cannot record a
-    // signature attributed to (and password-verified against) a different account.
-    const authUser = (req as any).user || {};
-    const authSignerId = authUser.userId ?? authUser.id;
-    if (authSignerId === undefined || authSignerId === null || authSignerId === '') {
-      return res.status(401).json({
-        error: 'Authenticated session required to sign per 21 CFR Part 11 §11.200',
-      });
-    }
-    const signerId = String(authSignerId);
-    if (
-      bodySignerId !== undefined &&
-      bodySignerId !== null &&
-      String(bodySignerId) !== signerId &&
-      String(bodySignerId) !== String(authUser.email ?? '')
-    ) {
-      return res.status(403).json({
-        error:
-          'signerId does not match the authenticated user; an e-signature may be used only by its genuine owner (§11.200(a)(2))',
-      });
-    }
-
-    if (!documentId || !meaning || !password) {
-      return res.status(400).json({
-        error:
-          'documentId, meaning, and password are required per 21 CFR Part 11 §11.100',
-      });
-    }
-
-    // §11.70 signature/record linking: a signature must bind the CONTENT being
-    // signed. This route hashes caller-supplied `documentContent`, so it must be
-    // present and non-empty — otherwise the "signature" would bind nothing (an
-    // empty-string digest), which is not a valid signature. Fail closed.
-    if (typeof documentContent !== 'string' || documentContent.length === 0) {
-      return res.status(400).json({
-        error:
-          'documentContent is required and must be non-empty — an electronic signature must bind the content being signed (21 CFR Part 11 §11.70).',
-        code: 'ESIGNATURE_CONTENT_REQUIRED',
-      });
-    }
-
-    // §11.10(g): identity is not authority. Enforce signing authority for the
-    // authenticated user before credential work, matching the policy on the
-    // other signing routes. Role from the membership record (never the body).
-    const signerOrgId = Number(
-      authUser.organizationId ?? (req as any).tenantContext?.organizationId,
-    );
-    const signerRole = await resolveSignerOrgRole(Number(signerId), signerOrgId);
-    if (!isSigningAuthorized(signerRole)) {
-      return res.status(403).json({
-        error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
-        code: 'ESIGNATURE_NO_AUTHORITY',
-      });
-    }
-
-    // §11.100(a): Verify identity before signing against stored credential hash.
-    // The credential checked is ALWAYS the authenticated user's, not a body value.
-    const passwordVerified = await verifySignerPassword(pool, signerId, password);
-    if (!passwordVerified) {
-      appendAuditEntry({
-        entityType: 'signature',
-        entityId: documentId,
-        action: 'failed_login',
-        userId: signerId,
-        userName: signerName || 'unknown',
-        userRole: signerTitle || 'unknown',
-        timestamp: new Date(),
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.get('user-agent') || 'unknown',
-        sessionId: (req as any).sessionId || 'unknown',
-      });
-      return res
-        .status(401)
-        .json({ error: 'Password verification failed — signature rejected per §11.100(a)' });
-    }
-
-    const signatureHash = computeSignatureHash(documentId, documentContent, signerId, new Date());
-
-    const signature: ElectronicSignature = {
-      id: uuidv4(),
-      documentId,
-      documentVersion: documentVersion || 1,
-      signerId,
-      signerName: signerName || signerId,
-      signerTitle: signerTitle || '',
-      signerOrganization: signerOrganization || '',
-      meaning,
-      customMeaning: meaning === 'custom' ? customMeaning : undefined,
-      timestamp: new Date(),
-      ipAddress: req.ip || 'unknown',
-      userAgent: req.get('user-agent') || 'unknown',
-      signatureHash,
-      biometricVerified: false,
-      passwordVerified,
-      mfaVerified: !!req.body.mfaToken,
-      revoked: false,
-    };
-
-    try {
-      await pool.query(
-        `
-        INSERT INTO electronic_signatures (
-          id, document_id, document_version, signer_id, signer_name, signer_title,
-          signer_organization, meaning, custom_meaning, signature_hash,
-          password_verified, mfa_verified, ip_address, user_agent, timestamp
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-          $11, $12, $13, $14, $15
-        )
-      `,
-        [
-          signature.id,
-          signature.documentId,
-          signature.documentVersion,
-          signature.signerId,
-          signature.signerName,
-          signature.signerTitle,
-          signature.signerOrganization,
-          signature.meaning,
-          signature.customMeaning || null,
-          signature.signatureHash,
-          signature.passwordVerified,
-          signature.mfaVerified,
-          signature.ipAddress,
-          signature.userAgent,
-          signature.timestamp,
-        ]
-      );
-    } catch (error) {
-      // §11.70/§11.10(e): a signature that isn't durably persisted did not
-      // happen. Never report success after a failed insert — fail the request
-      // so the caller (and the audit trail) never records a phantom signature.
-      const code = (error as { code?: string })?.code;
-      console.error('[Part11] Signature persistence FAILED — signing aborted:', (error as Error).message);
-      if (code === '42P01') {
-        return res.status(503).json({
-          error: 'E-signature schema not present — run migrations before signing.',
-          code: 'ESIGNATURE_SCHEMA_MISSING',
-        });
-      }
-      return res.status(500).json({
-        error: 'Signature could not be persisted; signing aborted (no signature without a durable record).',
-        code: 'ESIGNATURE_PERSIST_FAILED',
-      });
-    }
-
-    appendAuditEntry({
-      entityType: 'signature',
-      entityId: documentId,
-      action: 'sign',
-      userId: signerId,
-      userName: signerName || signerId,
-      userRole: signerTitle || 'signer',
-      newValue: JSON.stringify({
-        meaning,
-        documentVersion: signature.documentVersion,
-        signatureHash,
-      }),
-      timestamp: signature.timestamp,
-      ipAddress: signature.ipAddress,
-      userAgent: signature.userAgent,
-      sessionId: (req as any).sessionId || 'unknown',
-      metadata: {
-        signerOrganization,
-        mfaVerified: signature.mfaVerified,
-        part11_section: '11.50,11.70,11.100',
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      data: {
-        id: signature.id,
-        documentId,
-        meaning,
-        timestamp: signature.timestamp,
-        signatureHash,
-        compliance: '21 CFR Part 11 compliant',
-      },
-    });
-  }
-);
+//
+// `POST /signatures` — REMOVED (single e-signature write path, Phase 4 D6).
+//
+// It was a THIRD signing entry point that had never once executed: its INSERT
+// named columns that do not exist on the physical `electronic_signatures`
+// table (document_version, signer_organization, meaning, custom_meaning,
+// password_verified, mfa_verified, user_agent, timestamp — plus a uuid `id`
+// against a serial PK), so every call raised 42703 and returned 500. It failed
+// closed, so it never fabricated a signature; it simply never worked, and a
+// repo-wide grep found no caller in client/ or server/ — only its own test.
+//
+// It was deleted rather than repaired because repairing it would have created a
+// second live document-signing surface with a WEAKER §11.70 binding than the one
+// we already have:
+//   - it hashed a caller-supplied `documentContent`, i.e. it bound whatever the
+//     client claimed the record was, which no inspector can re-derive from
+//     stored bytes;
+//   - it recorded `mfa_verified` from `!!req.body.mfaToken` — a client-asserted
+//     boolean, never verified;
+//   - it took a free-text documentId with no versionId, so post-D6 it could only
+//     have anchored via `signed_target`, inventing an anchor for a row that is
+//     conceptually a document-version signature.
+//
+// The supported document-signing surface is POST /api/esignature/sign
+// (server/routes/esignature.ts): it re-verifies password + TOTP server-side,
+// derives the §11.70 binding digest from the STORED version content inside the
+// signer's org, and writes through the one INSERT in
+// server/services/part11/signature-persistence.ts. Governed typed targets sign
+// via POST /api/c2c/actions/sign, through the same write path.
+//
+// The read/verification endpoints below are unaffected and still serve rows
+// written by BOTH paths.
 
 /**
  * GET /signatures/:documentId
@@ -576,14 +330,19 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
   const { documentId } = req.params;
 
   try {
+    // Physical-schema column set (the previous SELECT referenced columns —
+    // document_version, signer_organization, meaning, password_verified,
+    // mfa_verified, timestamp, user_agent — that never existed on the table,
+    // so this read failed for every stored signature).
     const result = await pool.query(
       `
-      SELECT id, document_id, document_version, signer_id, signer_name, signer_title,
-             signer_organization, meaning, signature_hash, password_verified, mfa_verified,
-             timestamp, ip_address, user_agent
+      SELECT id, document_id, version_id, signed_target, signature_type,
+             signature_purpose, signer_id, signer_name, signer_title, signer_email,
+             signature_meaning, signature_hash, binding_basis,
+             second_factor_verified, is_valid, signed_at, ip_address
       FROM electronic_signatures
       WHERE document_id = $1
-      ORDER BY timestamp DESC
+      ORDER BY signed_at DESC
     `,
       [documentId]
     );
@@ -613,13 +372,44 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
   const pool: Pool = (req as any).pool || (req.app as any).pool;
   const { signatureId } = req.params as { signatureId: string };
 
+  // electronic_signatures.id is a serial integer — reject a non-numeric id
+  // before it reaches the database (22P02 would surface as an opaque 500).
+  const idNum = Number(signatureId);
+  if (!Number.isInteger(idNum) || idNum <= 0) {
+    return res.status(400).json({ success: false, error: 'signatureId must be a positive integer' });
+  }
+
   try {
+    // Query the PHYSICAL schema (shared/schema.ts electronicSignatures / the
+    // 0000 migration): signature_meaning + signed_at — the previous query
+    // referenced columns (meaning, custom_meaning, timestamp,
+    // signer_organization) that never existed on the table, so this endpoint
+    // 500'd for every stored signature. Serves BOTH document-anchored rows
+    // (/api/esignature/sign, sign-release) and governed-sign rows
+    // (/api/c2c/actions/sign — signed_target/binding_basis). §11.50 meaning
+    // falls back to signature_type when no explicit meaning was declared —
+    // a derivation from stored fields, never an invented value.
+    //
+    // Tenant scope: when the authenticated request carries an organization,
+    // only that org's rows (plus legacy pre-tenancy rows with NULL org) are
+    // servable — no cross-tenant signature probing by id.
+    const orgIdRaw =
+      (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    const orgId = Number(orgIdRaw);
+    const params: unknown[] = [idNum];
+    let tenantClause = '';
+    if (Number.isFinite(orgId)) {
+      params.push(orgId);
+      tenantClause = ' AND (es.organization_id = $2 OR es.organization_id IS NULL)';
+    }
     const result = await pool.query(
-      `SELECT id, signer_name, signer_title, signer_organization,
-              meaning, custom_meaning, timestamp
-       FROM electronic_signatures
-       WHERE id = $1`,
-      [signatureId]
+      `SELECT es.id, es.signer_name, es.signer_title, o.name AS signer_organization,
+              COALESCE(es.signature_meaning, es.signature_type) AS meaning,
+              es.signed_at, es.signed_target, es.binding_basis
+         FROM electronic_signatures es
+         LEFT JOIN organizations o ON o.id = es.organization_id
+        WHERE es.id = $1${tenantClause}`,
+      params
     );
     if (!result.rows.length) {
       return res.status(404).json({ success: false, error: 'Signature not found' });
@@ -630,14 +420,25 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
       signerTitle: row.signer_title,
       signerOrganization: row.signer_organization,
       meaning: row.meaning,
-      customMeaning: row.custom_meaning,
-      timestamp: row.timestamp,
+      customMeaning: null,
+      timestamp: row.signed_at,
     });
     res.json({
       success: true,
-      data: { id: row.id, ...manifest, compliance: '21 CFR Part 11 §11.50' },
+      data: {
+        id: row.id,
+        ...manifest,
+        signedTarget: row.signed_target ?? null,
+        bindingBasis: row.binding_basis ?? null,
+        compliance: '21 CFR Part 11 §11.50',
+      },
     });
   } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === '42P01' || code === '42703') {
+      // Store or its D6 columns unprovisioned — fail closed, honestly.
+      return res.status(503).json({ success: false, error: 'SIGNATURE_STORE_UNPROVISIONED' });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to build signature manifest',

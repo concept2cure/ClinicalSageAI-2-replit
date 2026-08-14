@@ -43,7 +43,6 @@ const APPROVED = new Set([
   'server/services/universal-packager.ts',
   'server/services/claude/ClaudeToolExecutor.ts',
   'server/services/tools/index.ts',
-  'server/routes/ind-pdf.ts',
   'server/routes/concept2cure.ts',
   'server/src/routes/stability.router.ts',
   'server/pdf-processor.ts',

@@ -37,27 +37,26 @@
  *        · ivdr_classifications  — classes/rules + NB-required KPI.
  *        · ivdr_per_documents    — PER completeness flags (scientific /
  *          analytical / clinical performance done) + nbTimeline.
- *      The live kit IvdSurface (client useIvd) currently calls the SEPARATE
- *      legacy family GET /api/ivdr/* (server/routes/ivdr-routes.ts), which
- *      reads a DIFFERENT ivdr_classifications shape (intended_purpose /
- *      classification / is_cdx / rule_trace / analytes) plus
- *      ivdr_analytical_validations, ivdr_clinical_evidence,
- *      ivdr_gspr_assessments. To light up BOTH families this module (a) also
- *      writes the legacy classification columns when they exist, and (b)
- *      best-effort seeds the three legacy detail tables when present. On a
- *      fresh GA DB those detail tables are absent (created lazily by the
- *      route) and are skipped — see report.
+ *      Since the D11d IVDR consolidation (2026-08-13) ivdr_classifications
+ *      has ONE canonical shape (ivdr_class / companion_diagnostic / … plus
+ *      the module columns intended_purpose / rule_trace / analytes), the kit
+ *      IvdSurface lists classifications through GET /api/mdx/ivdr/
+ *      classifications, and the module detail panels still read GET
+ *      /api/ivdr/{validations,clinical-evidence,gspr-checklist}
+ *      (ivdr_analytical_validations, ivdr_clinical_evidence,
+ *      ivdr_gspr_assessments — all on the durable migration path now). This
+ *      module writes canonical columns only; the deprecated shape-1 names
+ *      are never repopulated.
  *
  * DDL sources: migrations/0000_sweet_joseph.sql (cerv2_510k_sections,
  * concept2cure_artifacts, regulatory_programs, projects, client_workspaces),
  * migrations/20260506_kit_section_draft_provenance.sql (draft_source/
  * drafted_at/accepted_at), migrations/20260524_c2c_blockers.sql +
  * 0002_phase15_submission_ops.sql (c2c_blockers), migrations/
- * 20260508_ivd_diagnostic_surfaces.sql + 20260524_ivdr_cdx.sql
- * (ivdr_classifications/ivdr_per_documents current shape), migrations/
- * 001_create_ivdr_tables.sql (legacy ivdr_classifications columns +
- * ivdr_analytical_validations / ivdr_clinical_evidence), and the route's
- * ensureGsprTable() (ivdr_gspr_assessments).
+ * 20260508_ivd_diagnostic_surfaces.sql + 20260813c_ivdr_schema_
+ * reconciliation.sql (canonical ivdr_classifications/ivdr_per_documents +
+ * ivdr_gspr_assessments), and migrations/001_create_ivdr_tables.sql
+ * (ivdr_analytical_validations / ivdr_clinical_evidence).
  *
  * Tenant scoping matches each read exactly: organization_id (int) on
  * regulatory_programs / cerv2_510k_sections / concept2cure_artifacts /
@@ -462,12 +461,11 @@ async function seedIvdr(client, org) {
       console.log('   ⚠ ivdr_classifications lacks the device_name/ivdr_class shape — skipping classifications');
     } else {
       const hasProgram = cols.has('program_id');
+      /* Canonical module columns (D11d consolidation) — presence-guarded so
+         the seed converges on databases not yet reconciled by
+         20260813c_ivdr_schema_reconciliation.sql. */
       const legacy = {
         intended_purpose: cols.has('intended_purpose'),
-        classification: cols.has('classification'),
-        is_cdx: cols.has('is_cdx'),
-        is_self_test: cols.has('is_self_test'),
-        is_near_patient: cols.has('is_near_patient'),
         rule_trace: cols.has('rule_trace'),
         analytes: cols.has('analytes'),
       };
@@ -485,13 +483,14 @@ async function seedIvdr(client, org) {
           const params = [org.id, c.device, c.ivdrClass, c.rule, c.rationale, c.cdx, c.selfTest,
             c.nearPatient, c.ivdrClass !== 'A', c.nb, c.nbId, c.cert];
           if (hasProgram) { fields.push('program_id'); params.push(PROG.IV_415); }
-          // Also populate the legacy ivdr-routes.ts columns when present so the
-          // live kit IvdSurface (/api/ivdr/classifications) lights up too.
+          // Canonical module columns (intended_purpose / rule_trace / analytes
+          // survived the D11d IVDR consolidation as canonical; the shape-1
+          // duplicates classification / is_cdx / is_self_test / is_near_patient
+          // are deprecated and deliberately UNWRITTEN — the backfill in
+          // 20260813c_ivdr_schema_reconciliation.sql owns legacy data, and no
+          // writer may repopulate the deprecated names). Column-guarded so the
+          // seed still converges on a not-yet-reconciled database.
           if (legacy.intended_purpose) { fields.push('intended_purpose'); params.push(c.intendedPurpose); }
-          if (legacy.classification)   { fields.push('classification');   params.push(c.ivdrClass); }
-          if (legacy.is_cdx)           { fields.push('is_cdx');           params.push(c.cdx); }
-          if (legacy.is_self_test)     { fields.push('is_self_test');     params.push(c.selfTest); }
-          if (legacy.is_near_patient)  { fields.push('is_near_patient');  params.push(c.nearPatient); }
           if (legacy.rule_trace)       { fields.push('rule_trace');       params.push(JSON.stringify([{ rule: `Rule ${c.rule}`, matched: true, resultClass: c.ivdrClass }])); }
           if (legacy.analytes)         { fields.push('analytes');         params.push(JSON.stringify(c.analytes)); }
           const placeholders = params.map((_, i) => `$${i + 1}`).join(', ');

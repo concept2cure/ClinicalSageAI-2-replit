@@ -45,11 +45,20 @@ function getOrganizationId(req: Request): number {
   throw new Error('Organization context required');
 }
 
+/**
+ * Strictly parse the numeric project id ('12' or 'proj_12').
+ *
+ * MUST fail closed on anything else. The previous `parseInt(raw.replace(…))`
+ * truncated arbitrary idents to their leading digits, so a regulatory_programs
+ * UUID like '7abb…' — the id-space the v2 surfaces hold — silently resolved to
+ * project 7 and served ANOTHER project's schedule inside the same org. A
+ * non-numeric ident is a 400, never a prefix-guessed project.
+ */
 function getProjectId(req: Request): number | null {
   const raw = req.params.id;
   if (typeof raw !== 'string') return null;
-  const n = parseInt(raw.replace('proj_', ''), 10);
-  return Number.isNaN(n) ? null : n;
+  const m = /^(?:proj_)?(\d+)$/.exec(raw.trim());
+  return m ? parseInt(m[1], 10) : null;
 }
 
 function parseDate(value: unknown): Date | null {

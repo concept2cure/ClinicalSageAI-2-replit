@@ -64,6 +64,11 @@ beforeAll(async () => {
       'db/migrations/20260725_users_signing_lockout_columns.sql',
       'db/migrations/20260730_esign_audit_db_level_immutability.sql',
       'db/migrations/20260730_release_signature_uniqueness.sql',
+      // D6 (single e-signature write path): signed_target/binding_basis columns
+      // + nullable document anchor. The Drizzle insert in
+      // part11ComplianceService enumerates every declared column, so the
+      // journey schema must carry the D6 shape or every insert 42703s.
+      'migrations/20260813d_esignature_governed_unification.sql',
     ],
     prereqSql: `${baseline}\nCREATE TABLE IF NOT EXISTS submissions (id SERIAL PRIMARY KEY, organization_id INTEGER);`,
   });

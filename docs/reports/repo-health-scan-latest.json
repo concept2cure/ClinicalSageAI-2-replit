@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-13T17:35:59.636Z",
+  "generatedAt": "2026-08-14T03:36:17.404Z",
   "git": {
-    "sha": "c17bb3f4b4fdb5608f244cb55aaeb8b0654242b6",
+    "sha": "0b38f7f1efe834588ab882d1715627cd140cb4b9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2129,11 +2129,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 954676
+        "bytes": 957404
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 838110
+        "bytes": 841220
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2189,7 +2189,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 135202
+        "bytes": 135234
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2205,7 +2205,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 120942
+        "bytes": 120988
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2263,11 +2263,11 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19912
+        "lines": 19957
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18585
+        "lines": 18642
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2323,7 +2323,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3059
+        "lines": 3060
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2339,7 +2339,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2683
+        "lines": 2685
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2534,12 +2534,12 @@
         "lines": 1751
       },
       {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1735
-      },
-      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
+      },
+      {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1704
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",

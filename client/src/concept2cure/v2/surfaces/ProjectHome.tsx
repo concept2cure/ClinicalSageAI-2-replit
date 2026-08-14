@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { EmptyState, useLiveData, hasKeys, type DataState } from '../dataConnect';
+import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
@@ -30,10 +30,12 @@ declare global {
    Real backend rows — the org-scoped, UUID-keyed project read-models this
    surface anchors to (server/routes/c2c/projects.ts). Every field is projected
    from a verified column; nullable columns are `| null` and rendered null-safe.
-   Slices with no reachable UUID-keyed backend (tasks, readiness, schedule,
-   the CTD pyramid, memory/instructions/intelligence, conversations, the vault
-   tree, agency meetings, eTMF, grants, submissions) are rendered as an honest
-   EmptyState rather than a fabricated fixture.
+   Slices with no reachable UUID-keyed backend (tasks, readiness, the CTD
+   pyramid, memory/instructions/intelligence, conversations, the vault tree,
+   agency meetings, eTMF, grants, submissions) are rendered as an honest
+   EmptyState rather than a fabricated fixture. The schedule-of-events panel
+   (plan stage) is live for numeric-keyed projects and renders the same honest
+   id-space empty for UUID programs — see SchedulePanel.
    ════════════════════════════════════════════════════════════════════════ */
 
 /** GET /api/c2c/projects/:id — regulatory_programs metadata (bare object). */
@@ -553,6 +555,216 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   );
 }
 
+/* ════ Schedule of events — the 'plan' step's screen ════════════════════════
+   AnA's regulatory-aware milestone schedule, read from the REAL store
+   (GET /api/concept2cure/projects/:id/schedule-of-events — plan header in
+   project_schedule_of_events, milestones reusing project_workflow_stages).
+
+   IDENTITY: that store is keyed by the NUMERIC projects.id, while this
+   surface's window.C2C_PROJECT.id is normally a regulatory_programs UUID (see
+   the header comment). The panel therefore fetches ONLY when the open ident is
+   numeric-keyed ('12' / 'proj_12' — the SubmissionTwin idiom), and renders the
+   honest id-space empty for UUID programs instead of sending a doomed request
+   or borrowing another project's schedule. Milestone STATUS is displayed as
+   stored; nothing here invents progress, dates, or health. */
+
+/** GET …/schedule-of-events → milestones[] (ScheduleMilestoneView subset). */
+interface ScheduleMilestoneRow {
+  id: number;
+  key: string;
+  title: string;
+  status: string; // not_started | in_progress | at_risk | slipped | blocked | completed
+  targetDate: string | null;
+  isCritical: boolean;
+  regulatoryBasis: string | null;
+  ownerRole: string | null;
+  slipDays: number | null;
+}
+
+/** GET …/schedule-of-events → plan (SchedulePlanView subset); null = none generated. */
+interface SchedulePlanRow {
+  regulatoryFramework: string | null;
+  version: number;
+  targetDate: string | null;
+  confidence: string | null;
+}
+
+interface ScheduleViewRow {
+  plan: SchedulePlanRow | null;
+  milestones: ScheduleMilestoneRow[];
+  health?: { overallStatus?: string; summary?: string } | null;
+}
+
+/** The numeric-keyed ident space the schedule store resolves ('12' / 'proj_12'). */
+const SCHED_IDENT_RE = /^(?:proj_)?\d+$/;
+const SCHED_SHOWN = 8;
+
+/** Real ISO date → display with year (schedules span years); null stays null. */
+function fmtDue(v: string | null): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+const SCHED_STATUS_TONE: Record<string, string> = {
+  completed: 'tone-ok',
+  at_risk: 'tone-warn',
+  slipped: 'tone-warn',
+  blocked: 'tone-warn',
+};
+
+function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
+  const ident = pid && SCHED_IDENT_RE.test(pid) ? pid : null;
+  const [reloadKey, setReloadKey] = useState(0);
+  const [genBusy, setGenBusy] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+
+  const state = useLiveData<ScheduleViewRow>(
+    ident ? `/api/concept2cure/projects/${ident}/schedule-of-events` : null,
+    [ident, reloadKey],
+    hasKeys<ScheduleViewRow>('plan', 'milestones'),
+  );
+
+  const askGenerate = () =>
+    onAsk(
+      'Generate a schedule of events for this project — the regulatory milestone plan for its pathway, with dates toward our target submission.',
+    );
+
+  // Real POST /projects/:id/schedule-of-events/generate (routes/
+  // project-schedule-of-events.ts) — offered only in the numeric id-space where
+  // that endpoint actually resolves this project.
+  const generate = async () => {
+    if (!ident || genBusy) return;
+    setGenBusy(true);
+    setGenError(null);
+    const res = await liveMutateOrNull<ScheduleViewRow>(
+      'POST',
+      `/api/concept2cure/projects/${ident}/schedule-of-events/generate`,
+      {},
+    );
+    setGenBusy(false);
+    if (res.error) {
+      setGenError(res.error);
+    } else {
+      setReloadKey((k) => k + 1);
+    }
+  };
+
+  return (
+    <section className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Schedule</h2>
+        <span className="sec-sub">
+          {state.data?.plan
+            ? [
+                state.data.plan.regulatoryFramework,
+                `v${state.data.plan.version}`,
+                fmtDue(state.data.plan.targetDate) ? `target ${fmtDue(state.data.plan.targetDate)}` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : "AnA's regulatory milestone plan for this project"}
+        </span>
+      </div>
+
+      {!ident ? (
+        /* UUID program — the schedule store is keyed by the numeric project
+           record, which this workspace doesn't resolve (same identity gap as
+           tasks & readiness). Stated honestly; no phantom generate action. */
+        <EmptyState
+          icon={I.calendar}
+          title="Schedule isn't wired to this workspace yet"
+          hint="AnA's schedule of events is keyed to the numeric project record, which this workspace doesn't resolve yet — so no milestones can be shown or generated from here."
+        />
+      ) : (
+        <Anchored
+          state={state}
+          loadingText="Loading the schedule of events…"
+          errorTitle="Couldn't load the schedule"
+          errorHint="The schedule-of-events read didn't respond. Sign in and retry, or check the service is reachable."
+          emptyTitle="No schedule generated"
+          emptyHint="Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below."
+          isEmpty={(d) => !d.plan && (d.milestones ?? []).length === 0}
+          render={(d) => {
+            const milestones = d.milestones ?? [];
+            const open = milestones.filter((m) => m.status !== 'completed');
+            const completed = milestones.length - open.length;
+            const shown = open.slice(0, SCHED_SHOWN);
+            return (
+              <>
+                {d.health?.summary && (
+                  <div className="scaf-note" style={{ padding: '4px 0 10px', fontSize: 12.5 }}>{d.health.summary}</div>
+                )}
+                <div className="pj-sched" style={{ display: 'grid', gap: 0 }}>
+                  {shown.map((m) => {
+                    const due = fmtDue(m.targetDate);
+                    return (
+                      <div
+                        key={m.key || m.id}
+                        style={{
+                          display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
+                          borderBottom: '1px solid var(--border-subtle,#eaecf0)',
+                        }}
+                      >
+                        <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
+                          {String(m.status || 'not_started').replace(/_/g, ' ')}
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>
+                            {m.title}
+                            {m.isCritical && <span className="sp-tone-warn" style={{ fontSize: 11, marginLeft: 6 }}>critical path</span>}
+                          </span>
+                          <span className="sec-sub" style={{ fontSize: 11.5 }}>
+                            {[m.regulatoryBasis, m.ownerRole].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+                        <span className="sec-sub" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                          {due ?? 'no due date'}
+                          {m.slipDays != null && m.slipDays > 0 && (
+                            <span className="sp-tone-warn"> · {m.slipDays}d late</span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
+                  {open.length > SCHED_SHOWN ? `+${open.length - SCHED_SHOWN} more upcoming · ` : ''}
+                  {completed > 0 ? `${completed} completed · ` : ''}
+                  {milestones.length} milestone{milestones.length === 1 ? '' : 's'} total
+                </div>
+              </>
+            );
+          }}
+        />
+      )}
+
+      {/* Empty-state affordances — both real: the composer prompt reaches the
+          generate_schedule_of_events AnA tool, and the button calls the real
+          POST generate endpoint. Rendered only in the numeric id-space where
+          they can actually act on THIS project. */}
+      {ident && !state.loading && !state.error && state.data && !state.data.plan
+        && (state.data.milestones ?? []).length === 0 && (
+        <div className="cm-pushbar" style={{ marginTop: 10 }}>
+          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={askGenerate}>
+            {I.sparkles} Ask AnA to generate one
+          </button>
+          <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} disabled={genBusy} onClick={generate}>
+            {genBusy ? 'Generating…' : 'Generate schedule'}
+          </button>
+        </div>
+      )}
+      {genError && (
+        <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
+          Couldn&rsquo;t generate the schedule: {genError}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ════ Inline conversation composer ════
    An ENTRY POINT to the one conversation, not a conversation of its own.
 
@@ -955,9 +1167,11 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             </section>
           )}
 
-          {/* Plan — canonical tool catalog + honest empties for the panels whose
-              backends are org-shaped/absent here (meetings, eTMF, grants). */}
+          {/* Plan — the live schedule-of-events panel, the canonical tool
+              catalog, and honest empties for the panels whose backends are
+              org-shaped/absent here (meetings, eTMF, grants). */}
           {stage === 'plan' && (<>
+            <SchedulePanel pid={pid} onAsk={ask} />
             <StagePanel stage="plan" onNav={onNav} />
             <section className="pj-sec">
               <div className="pj-sec-h"><h2>Agency meetings &amp; planning data</h2></div>

@@ -15,7 +15,7 @@
  * packaged, CONVERTS a stored manifest back into the `PriorLeaf` shape the
  * lifecycle operator diffs against, and computes the cross-sequence path prefix
  * for the ICH `modified-file` pointer. The DB read/write lives at the call
- * sites (the export service persists it; a loader reads it back).
+ * sites (compiling callers persist it; a loader reads it back).
  *
  * @module server/services/ectd/sequence-manifest
  */

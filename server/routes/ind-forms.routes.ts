@@ -61,6 +61,7 @@ import crypto from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { projects, concept2cureArtifacts } from '@shared/schema';
+import { regulatoryPrograms } from '../../shared/schema/programs';
 import auditService from '../services/auditService';
 import { recordArtifactProvenanceDrizzle } from '../services/provenance/artifact-provenance';
 
@@ -87,6 +88,36 @@ function ctxOf(req: Request): Ctx | null {
 
 function isSupported(formId: string): formId is SupportedFormId {
   return (SUPPORTED_FORM_IDS as readonly string[]).includes(formId);
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve a program-spine ident (regulatory_programs UUID or program code),
+ * org-scoped — the same 3-way ident contract as the eSTAR export routes
+ * (510k-estar-routes.ts resolveProjectAnchor). Null when nothing in the caller's
+ * org matches; a failed lookup is a non-match, never a guessed program.
+ */
+async function resolveProgramIdent(
+  ident: string,
+  organizationId: number,
+): Promise<{ id: string; code: string | null; name: string | null } | null> {
+  const byUuid = UUID_RE.test(ident);
+  try {
+    const [row] = await db
+      .select({ id: regulatoryPrograms.id, code: regulatoryPrograms.code, name: regulatoryPrograms.name })
+      .from(regulatoryPrograms)
+      .where(
+        and(
+          byUuid ? eq(regulatoryPrograms.id, ident) : eq(regulatoryPrograms.code, ident),
+          eq(regulatoryPrograms.organizationId, organizationId),
+        ),
+      )
+      .limit(1);
+    return row ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function metaOf(req: Request): IndProjectMetadata {
@@ -235,13 +266,28 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
  * (closes the "download a form the platform doesn't know about" gap). Stores the
  * deterministic structured field map (the registry's declared storage.format),
  * NOT the PDF bytes — the PDF is a reproducible derivative of the field map, with
- * a content hash for integrity. A projectId is REQUIRED and validated against the
- * caller's org, so an artifact is never created under another tenant's project.
+ * a content hash for integrity.
  *
- * Body: IndProjectMetadata + { projectId: number }.
+ * Project identity: `projectId` (legacy numeric projects.id) OR `projectIdent`
+ * (regulatory_programs UUID or program code — the id space window.C2C_PROJECT
+ * actually carries), both validated against the caller's org so an artifact is
+ * never created under another tenant's project.
+ *
+ * Program-spine idents have NO legacy numeric project row, and the artifact
+ * registry (concept2cure_artifacts.project_id → projects.id FK) predates the
+ * program spine — so those saves use the audited-unplaced degradation contract
+ * from the eSTAR /build handler: the built field map is content-hashed and
+ * audit-logged (that audit row is the only persisted trace, so it is REQUIRED —
+ * an audit failure fails the request rather than claiming `audited: true`), and
+ * the response says plainly that registry placement is pending. No artifact row
+ * is fabricated.
+ *
+ * Body: IndProjectMetadata + ({ projectId: number } | { projectIdent: string }).
  * For 1572 this persists the FIRST investigator's form (per-investigator
  * persistence mirrors /1572/pdf-all and is a follow-on).
- * Returns 201 { artifactId, formId, projectId, ready, missingRequired, contentHash }.
+ * Returns 201 { artifactId, formId, projectId, ready, missingRequired, contentHash }
+ * for the governed path; 200 { governed:false, audited:true, artifactId:null, … }
+ * for the audited-unplaced program path.
  */
 router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -250,12 +296,71 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
   if (!isSupported(formId)) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
   }
-  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as IndProjectMetadata & { projectId?: unknown };
-  const projectId = Number(body.projectId);
-  if (!Number.isInteger(projectId) || projectId <= 0) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'projectId is required to persist a governed form artifact.' } });
+  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as IndProjectMetadata & {
+    projectId?: unknown;
+    projectIdent?: unknown;
+  };
+  const rawIdent = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
+  const projectId = Number(body.projectId ?? (/^\d+$/.test(rawIdent) ? rawIdent : NaN));
+  const isProgramIdent = rawIdent !== '' && !/^\d+$/.test(rawIdent) && body.projectId === undefined;
+  if (!isProgramIdent && (!Number.isInteger(projectId) || projectId <= 0)) {
+    return res.status(400).json({
+      error: {
+        code: 'VALIDATION',
+        message: 'projectId (numeric) or projectIdent (program UUID/code) is required to persist a governed form artifact.',
+      },
+    });
   }
   try {
+    if (isProgramIdent) {
+      // Program-spine path: resolve org-scoped, then audited-unplaced degradation.
+      const program = await resolveProgramIdent(rawIdent, ctx.organizationId);
+      if (!program) {
+        return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+      }
+      const builtForProgram = buildFormById(formId, body);
+      const programContent = JSON.stringify({
+        formId: builtForProgram.formId,
+        fields: builtForProgram.fields,
+        missingRequired: builtForProgram.missingRequired,
+      });
+      const programContentHash = crypto.createHash('sha256').update(programContent).digest('hex');
+      const ready = builtForProgram.missingRequired.length === 0;
+      // The audit row is the ONLY persisted trace on this path — it is required,
+      // not best-effort. If it throws, the catch below answers 500 and the
+      // response never claims `audited: true` over nothing.
+      await auditService.logAction({
+        action: 'ind_form.artifact.unplaced',
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        resourceType: 'ind_form',
+        resourceId: `${formId}:${program.id}`,
+        metadata: {
+          formId,
+          programId: program.id,
+          programCode: program.code,
+          ready,
+          contentHash: programContentHash,
+          artifactRegistry: 'unplaced_pending_document_identity_contract',
+        },
+      });
+      return res.status(200).json({
+        governed: false,
+        audited: true,
+        artifactId: null,
+        formId,
+        projectId: null,
+        programId: program.id,
+        ready,
+        missingRequired: builtForProgram.missingRequired,
+        contentHash: programContentHash,
+        artifact_registry:
+          'unplaced — the governed artifact registry (concept2cure_artifacts) requires a legacy ' +
+          'numeric project row; the built field map is audit-logged with its content hash ' +
+          '(pending document-identity contract)',
+      });
+    }
+
     // Tenant scope: the project must belong to the caller's org.
     const [project] = await db
       .select({ id: projects.id })

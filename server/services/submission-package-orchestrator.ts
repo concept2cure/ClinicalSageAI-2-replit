@@ -4,7 +4,8 @@
  *
  * The meta-service that sequences artifacts → sections → modules → ZIP for an
  * IND/NDA/BLA/510(k) submission. Closes the gap identified in the audit:
- * services exist (csr-builder, module3Composer, m2-summary-builders, ectdExportService)
+ * services exist (csr-builder, module3Composer, m2-summary-builders, the canonical
+ * ectd/assemble-from-core packager)
  * but no single coordinator runs them in dependency order, regenerates downstream when
  * upstream changes, or records an audit log of inputs to the package.
  *

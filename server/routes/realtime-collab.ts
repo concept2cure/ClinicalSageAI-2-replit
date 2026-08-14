@@ -512,7 +512,12 @@ class MemoryLockStore {
  */
 class DurableLockManager {
   private fallback = new MemoryLockStore();
-  /** Sticky memory mode: unprovisioned table, or no pool at all. */
+  /**
+   * Sticky memory mode, set ONLY when the table is unprovisioned (42P01).
+   * The separate `!pool` guards below also route to the fallback store but
+   * deliberately leave this false — that is a per-request condition, not a
+   * latched demotion, and `storageMode` reads this flag.
+   */
   private useFallback = false;
 
   private isMissingTable(err: unknown): boolean {

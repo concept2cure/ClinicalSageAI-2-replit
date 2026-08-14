@@ -34,7 +34,6 @@ const APPROVED_JS = new Set([
   'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
   'server/routes/authoring.router.ts',
-  'server/routes/ind-templates.ts',
   'scripts/generate_sso_spec.js',
   'client/src/services/Fda510kExportService.js',
   // Imports ONLY the convertInchesToTwip unit helper from 'docx' — no
@@ -66,7 +65,6 @@ const APPROVED_PYTHON = new Set([
   'ind_automation/create_form_templates.py',
   'ind_automation/compilers/ectd4_compiler.py',
   'lumen_cortex/core/extractors/text_extract.py',
-  'services/ectd_generator.py',
 ]);
 
 // Patterns that indicate test files (always allowed)

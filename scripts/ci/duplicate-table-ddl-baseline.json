@@ -1,7 +1,7 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-08-11T16:27:00.475Z",
-  "total": 69,
+  "generatedAt": "2026-08-13T22:01:52.445Z",
+  "total": 63,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -31,14 +31,6 @@
     "c2c_template_specs": [
       "migrations/20260531_template_specs.sql",
       "migrations/20260716_template_doc_types.sql"
-    ],
-    "cdx_concordance_studies": [
-      "migrations/20260508_ivd_diagnostic_surfaces.sql",
-      "migrations/20260524_ivdr_cdx.sql"
-    ],
-    "cdx_pairings": [
-      "migrations/20260508_ivd_diagnostic_surfaces.sql",
-      "migrations/20260524_ivdr_cdx.sql"
     ],
     "charter_sections": [
       "migrations/0012_project_charter_timeline.sql",
@@ -168,23 +160,6 @@
     "ind_cross_references": [
       "migrations/20260614_ind_cross_references.sql",
       "sql/ind_data_model.sql"
-    ],
-    "ivd_analytical_performance": [
-      "migrations/20260508_ivd_diagnostic_surfaces.sql",
-      "migrations/20260524_ivd_performance.sql"
-    ],
-    "ivd_clinical_performance": [
-      "migrations/20260508_ivd_diagnostic_surfaces.sql",
-      "migrations/20260524_ivd_performance.sql"
-    ],
-    "ivdr_classifications": [
-      "migrations/001_create_ivdr_tables.sql",
-      "migrations/20260508_ivd_diagnostic_surfaces.sql",
-      "migrations/20260524_ivdr_cdx.sql"
-    ],
-    "ivdr_per_documents": [
-      "migrations/20260508_ivd_diagnostic_surfaces.sql",
-      "migrations/20260524_ivdr_cdx.sql"
     ],
     "organizations": [
       "scripts/db-verify/00_bootstrap_base.sql",

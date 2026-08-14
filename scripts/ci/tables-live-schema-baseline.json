@@ -3,7 +3,7 @@
   "generatedAt": "2026-08-13T03:51:34.426Z",
   "liveRelationCount": 1246,
   "referencedCount": 787,
-  "count": 97,
+  "count": 95,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -152,12 +152,6 @@
     ],
     "firecrawl_usage_daily": [
       "server/integrations/firecrawl/usage.ts"
-    ],
-    "ind_kpi_events": [
-      "server/routes/ind-kpi.routes.ts"
-    ],
-    "ind_source_documents": [
-      "server/routes/ind-pdf.ts"
     ],
     "ivdr_analytical_validations": [
       "server/routes/ivdr-routes.ts",

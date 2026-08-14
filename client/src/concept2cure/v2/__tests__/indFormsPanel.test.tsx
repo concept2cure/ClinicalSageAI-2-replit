@@ -105,6 +105,39 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier as a governed artifact/)));
   });
 
+  it('a program UUID project takes the audited-unplaced path and the note says exactly that', async () => {
+    const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+    (window as any).C2C_PROJECT = { id: uuid };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/ind-forms/') return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
+        // The server's audited-unplaced degradation contract (no legacy project
+        // row → no registry placement; the audit row IS the record).
+        return {
+          ok: true, status: 200,
+          json: async () => ({ governed: false, audited: true, artifactId: null, formId: 'FDA_1571', projectId: null, programId: uuid, ready: false, missingRequired: ['drugName'], contentHash: 'abc' }),
+        } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response;
+    });
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Save to dossier/ })[0]);
+
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[1] === '/api/ind-forms/1571/artifact');
+      expect(call).toBeTruthy();
+      // The UUID ident is threaded as projectIdent — never coerced to a number.
+      expect(call![2]).toMatchObject({ projectIdent: uuid });
+      expect(call![2]).not.toHaveProperty('projectId');
+    });
+    // The note reports the degradation honestly: audit-logged, NOT placed —
+    // never "saved to the dossier".
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/audit-logged .*not placed in the dossier registry/)));
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier/));
+  });
+
   it('does NOT save (or guess a project) when no project is open', async () => {
     const note = vi.fn();
     render(<IndFormsPanel note={note} />);

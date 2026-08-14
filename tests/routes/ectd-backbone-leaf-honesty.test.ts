@@ -1,21 +1,24 @@
 /**
- * eCTD backbone — what the platform is entitled to claim.
+ * eCTD backbone — what the platform is entitled to claim (draft path).
  *
- * The compiler produces XML over `project_sections.content`. Nothing in that
- * route, or anywhere it calls, renders a PDF. Every document in the backbone
- * nevertheless declared:
+ * The DRAFT compile path produces XML over `project_sections.content` and
+ * renders nothing to disk (real leaf rendering lives on the SPINE-BACKED path:
+ * placed submission_leaves assembled by ectd/assemble-from-core). A numeric
+ * legacy ident has no submission spine, so its backbone must never declare:
  *
  *   <ectd:file-path>m3/3/2/p/drug-product.pdf</ectd:file-path>
  *   <ectd:checksum algorithm="md5">pending</ectd:checksum>
  *
  * — a leaf file that was never written, verified against a hash that was never
- * computed. And whenever content validation passed, the response said
+ * computed. And whenever content validation passed, the response used to say
  * `submissionReady: true`, which the surface renders as the words
  * "Submission-ready" beside a download button.
  *
  * These tests drive the real handlers against a mocked pool and assert on the
  * artifact and the response, because the artifact and the response are what a
- * reviewer and a regulatory user actually act on.
+ * reviewer and a regulatory user actually act on. The blocker text now derives
+ * from the spine's real state (no linked submission with placed documents)
+ * instead of a hardcoded capability flag.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -59,7 +62,7 @@ function section(over: Record<string, unknown> = {}) {
 }
 
 function req(body: Record<string, unknown> = {}) {
-  const r = createMockRequest({ params: { projectId: '42' }, body });
+  const r = createMockRequest({ params: { projectIdent: '42' }, body });
   (r as any).tenantId = ORG;
   return r;
 }
@@ -96,7 +99,7 @@ function cleanPackage(): unknown[] {
 async function compile(rows: unknown[] = [section()]) {
   mockSections(rows);
   const res = createMockResponse();
-  await getHandler('/:projectId/compile')(req({ submissionType: 'original', region: 'FDA' }), res);
+  await getHandler('/:projectIdent/compile')(req({ submissionType: 'original', region: 'FDA' }), res);
   return (res.json as any).mock.calls[0][0];
 }
 
@@ -175,7 +178,8 @@ describe('submission readiness', () => {
 
   it('says why, rather than leaving the user to infer it', async () => {
     const result = await compile(cleanPackage());
-    expect(result.submissionBlockers.join(' ')).toMatch(/does not yet produce the PDF leaf files/);
+    expect(result.submissionBlockers.join(' ')).toMatch(/No leaf files have been rendered/);
+    expect(result.submissionBlockers.join(' ')).toMatch(/place approved documents into its eCTD sequence/i);
     expect(result.leafFilesRendered).toBe(0);
   });
 
@@ -200,7 +204,7 @@ describe('submission readiness', () => {
     // chip claiming ready while the compile panel said otherwise.
     mockSections(cleanPackage());
     const res = createMockResponse();
-    await getHandler('/:projectId/status', 'get')(req(), res);
+    await getHandler('/:projectIdent/status', 'get')(req(), res);
     const body = (res.json as any).mock.calls[0][0];
 
     expect(body.submissionReady).toBe(false);

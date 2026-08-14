@@ -12,6 +12,11 @@ import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impa
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
+import {
+  persistGovernedActionSignature,
+  sha256CanonicalJson,
+  BINDING_BASIS,
+} from '../../services/part11/signature-persistence';
 
 const router = express.Router();
 
@@ -648,21 +653,63 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         ]
       );
 
+      const signTarget = `cmc_module3_section:${projectId}/${sectionKey}`;
+      const signReason =
+        typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
+          ? (req.body as any).reason.trim()
+          : `Approved Module 3 section ${sectionKey}`;
+
       // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
       // the same ledger the specification-approve and batch-release endpoints write.
       const governance = await recordGovernedAction(client, {
         orgId,
         userId: actorId,
         command: 'sign',
-        target: `cmc_module3_section:${projectId}/${sectionKey}`,
-        reason:
-          typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
-            ? (req.body as any).reason.trim()
-            : `Approved Module 3 section ${sectionKey}`,
+        target: signTarget,
+        reason: signReason,
         payload: { meaning: 'approval', versionNumber, approvedVersionId },
         domain: 'cmc',
         surface: 'cmc-module3-section-approve',
         idempotencyKey: (req.body ?? {}).idempotencyKey ?? null,
+      });
+
+      // 21 CFR Part 11 signature row, same transaction as the ledger pair.
+      // Approving a Module 3 CTD section is a document-approval signature that
+      // ships inside an NDA/BLA — an inspector querying electronic_signatures
+      // must find it. The §11.70 binding is a real content digest over the
+      // frozen version snapshot this transaction just wrote, so it is
+      // re-derivable from cmc_module3_section_versions.snapshot_json. §11.200
+      // factors are the ones verifyReauth actually verified above.
+      await persistGovernedActionSignature(client, {
+        orgId,
+        userId: actorId,
+        target: signTarget,
+        reason: signReason,
+        payload: { meaning: 'approval' },
+        actionId: governance.actionId,
+        auditId: governance.auditId,
+        sha256Chain: governance.sha256Chain,
+        authenticationMethod: (req.body ?? {}).reauth?.totp ? 'password+totp' : 'password',
+        secondFactorVerified: Boolean((req.body ?? {}).reauth?.totp),
+        ipAddress:
+          (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+          req.socket?.remoteAddress ||
+          null,
+        occurredAt: new Date(),
+        binding: {
+          digest: sha256CanonicalJson({
+            organizationId: orgId,
+            projectId,
+            sectionKey,
+            versionNumber,
+            approvedVersionId,
+            snapshot: section.deterministic_json,
+          }),
+          basis: BINDING_BASIS.CMC_MODULE3_SECTION_VERSION,
+          note: 'sha256 over the canonical JSON of the approved cmc_module3_section_versions snapshot (organization, project, section key, version number, version id and the frozen deterministic_json) at approval time.',
+        },
+        complianceStatement:
+          'Module 3 section approval applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
       });
 
       await client.query('COMMIT');

@@ -25,6 +25,44 @@ import type {
 } from './types';
 import { DEFAULT_SENTINEL_CONFIG } from './types';
 
+/**
+ * Task-status SQL used by the analyzers, exported so tests can execute the REAL
+ * query text against a real engine rather than a copy that can drift.
+ *
+ * All three read `unified_tasks.status` against the TASK_STATUSES domain
+ * (pending / in-progress / review / completed / blocked / cancelled). They
+ * previously tested for 'done' — a project_tasks value that unified_tasks never
+ * holds — which silently inverted every one of them.
+ */
+export const SENTINEL_OVERDUE_TASKS_SQL = `SELECT t.id, t.title, t.project_id, t.due_date, t.priority, p.name as project_name
+       FROM unified_tasks t
+       JOIN projects p ON t.project_id = p.id
+       WHERE p.organization_id = $1
+         AND t.deleted_at IS NULL
+         AND t.status NOT IN ('completed', 'cancelled')
+         AND t.due_date < NOW()
+       ORDER BY t.due_date ASC
+       LIMIT 50`;
+
+export const SENTINEL_PROJECT_HEALTH_SQL = `SELECT p.id, p.name,
+              COUNT(t.id)::int as total_tasks,
+              COUNT(t.id) FILTER (WHERE t.status = 'completed')::int as done_tasks,
+              COUNT(t.id) FILTER (WHERE t.status = 'blocked')::int as blocked_tasks,
+              COUNT(t.id) FILTER (WHERE t.status NOT IN ('completed', 'cancelled')
+                                    AND t.due_date < NOW())::int as overdue_tasks,
+              CASE WHEN COUNT(t.id) > 0
+                THEN ROUND(100.0 * COUNT(t.id) FILTER (WHERE t.status = 'completed') / COUNT(t.id))
+                ELSE 100 END as completion_rate
+       FROM projects p
+       LEFT JOIN unified_tasks t
+              ON t.project_id = p.id
+             AND t.deleted_at IS NULL
+             AND t.status <> 'cancelled'
+       WHERE p.organization_id = $1
+         AND p.status = 'active'
+       GROUP BY p.id, p.name
+       HAVING COUNT(t.id) >= 5`;
+
 export class AISentinel {
   private configs = new Map<number, SentinelConfig>();
 
@@ -203,14 +241,7 @@ export class AISentinel {
 
     // Overdue tasks across organization
     const tasksResult = await this.pool.query(
-      `SELECT t.id, t.title, t.project_id, t.due_date, t.priority, p.name as project_name
-       FROM unified_tasks t
-       JOIN projects p ON t.project_id = p.id
-       WHERE p.organization_id = $1
-         AND t.status NOT IN ('done', 'cancelled')
-         AND t.due_date < NOW()
-       ORDER BY t.due_date ASC
-       LIMIT 50`,
+        SENTINEL_OVERDUE_TASKS_SQL,
       [orgId]
     );
 
@@ -283,7 +314,11 @@ export class AISentinel {
        JOIN projects p ON t.project_id = p.id
        WHERE p.organization_id = $1
          AND p.status = 'active'
-         AND t.status NOT IN ('done', 'cancelled')
+         AND t.deleted_at IS NULL
+         -- 'completed', not 'done' (see the deadline query above): otherwise a
+         -- user's whole task history counted as open work, so this reported
+         -- people as over-allocated on projects they had already finished.
+         AND t.status NOT IN ('completed', 'cancelled')
        GROUP BY u.id, u.name
        HAVING COUNT(DISTINCT t.project_id) > 3
        ORDER BY active_projects DESC`,
@@ -460,20 +495,7 @@ export class AISentinel {
 
     // Per-project task health
     const qualityResult = await this.pool.query(
-      `SELECT p.id, p.name,
-              COUNT(t.id)::int as total_tasks,
-              COUNT(t.id) FILTER (WHERE t.status = 'done')::int as done_tasks,
-              COUNT(t.id) FILTER (WHERE t.status = 'blocked')::int as blocked_tasks,
-              COUNT(t.id) FILTER (WHERE t.status != 'done' AND t.due_date < NOW())::int as overdue_tasks,
-              CASE WHEN COUNT(t.id) > 0
-                THEN ROUND(100.0 * COUNT(t.id) FILTER (WHERE t.status = 'done') / COUNT(t.id))
-                ELSE 100 END as completion_rate
-       FROM projects p
-       LEFT JOIN unified_tasks t ON t.project_id = p.id
-       WHERE p.organization_id = $1
-         AND p.status = 'active'
-       GROUP BY p.id, p.name
-       HAVING COUNT(t.id) >= 5`,
+      SENTINEL_PROJECT_HEALTH_SQL,
       [orgId]
     );
 

@@ -1,5 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { adaptEvidence } from '../useIvd';
+import { adaptClassification, adaptEvidence } from '../useIvd';
+
+describe('IVDR classification adapter (canonical columns, D11d consolidation)', () => {
+  it('reads the canonical shape-2 row the mdx list returns', () => {
+    expect(
+      adaptClassification({
+        id: 3, device_name: 'Assay A', ivdr_class: 'c', classification_rule: '3',
+        companion_diagnostic: true, self_test: false, near_patient_test: true,
+        intended_purpose: 'Detection of a biomarker',
+      }),
+    ).toMatchObject({
+      id: '3', device: 'Assay A', classification: 'C', rule: '3',
+      cdx: true, selfTest: false, nearPatient: true,
+      intendedPurpose: 'Detection of a biomarker',
+    });
+  });
+
+  it('falls back to the deprecated shape-1 spellings for a not-yet-reconciled database', () => {
+    expect(
+      adaptClassification({
+        id: 4, device_name: 'Assay B', classification: 'D', is_cdx: true,
+        is_self_test: true, is_near_patient: false,
+        rule_trace: [{ rule: '1', matched: true }],
+      }),
+    ).toMatchObject({ classification: 'D', cdx: true, selfTest: true, nearPatient: false, rule: '1' });
+  });
+
+  it('drops rows without a device name rather than rendering a nameless record', () => {
+    expect(adaptClassification({ id: 5, ivdr_class: 'A' })).toBeNull();
+  });
+});
 
 describe('IVDR clinical evidence adapter', () => {
   it('derives display metrics from counts rather than trusting inconsistent stored percentages', () => {

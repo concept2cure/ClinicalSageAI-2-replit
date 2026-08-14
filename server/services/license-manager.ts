@@ -20,6 +20,7 @@
  */
 
 import { pool } from '../db.js';
+import auditService from './auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -372,20 +373,23 @@ export function requireModule(moduleId: string) {
     const { allowed, reason } = await canAccessModule(Number(orgId), moduleId);
 
     if (!allowed) {
-      // Log the access denial
+      // Log the access denial through auditService, not a raw INSERT: the raw
+      // form wrote a row with NULL sha256_chain / payload_hash / hmac_seal —
+      // a row that sits IN audit_logs but OUTSIDE the hash chain, invisible to
+      // the chain verifier and so not tamper-evident. auditService computes
+      // the chain link and seal (§11.10(e), §11.70).
       try {
-        await pool.query(
-          `INSERT INTO audit_logs (tenant_id, user_id, action, table_name, record_id, new_values)
-           VALUES ($1, $2, 'module_access_denied', 'module_subscriptions', $3, $4)`,
-          [
-            orgId,
-            (req as any).user?.id || (req as any).userId,
-            moduleId,
-            JSON.stringify({ reason, tier: (req as any).licenseInfo?.tier }),
-          ]
-        );
+        await auditService.logAction({
+          organizationId: orgId,
+          userId: (req as any).user?.id || (req as any).userId,
+          action: 'module_access_denied',
+          resourceType: 'module_subscriptions',
+          resourceId: moduleId,
+          details: { reason, tier: (req as any).licenseInfo?.tier },
+        });
       } catch {
-        // Non-critical
+        // Non-critical: an audit-trail outage must not change the access
+        // decision itself, which has already been made above.
       }
 
       return res.status(403).json({

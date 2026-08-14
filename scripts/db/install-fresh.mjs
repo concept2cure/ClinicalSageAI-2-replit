@@ -220,8 +220,12 @@ async function main() {
         'indexes unified_documents — push-vs-overlay identity collision, ledger C-29 (only creator also redefines users/tenants with TEXT keys)'],
       ['0007_tenant_isolation_fixes.sql',
         'policies unified_documents — same C-29 collision as 0004'],
-      ['001_create_ivdr_tables.sql',
-        'ivdr_classifications shape collides with shared/schema.ts (push wins, columns differ) — ledger C-29; both consumers live, needs a rename decision'],
+      // 001_create_ivdr_tables.sql was classified-skipped here ("needs a
+      // rename decision") because its rival shape-1 CREATE of
+      // ivdr_classifications collided with the push shape. The D11d IVDR
+      // consolidation (2026-08-13) made that decision: the rival definition is
+      // deleted, shape-2 names are canonical, and the file now applies cleanly
+      // — so it is no longer classified as an expected skip.
       ['20260609_design_risk.sql',
         'risk_items/risk_management_files shapes collide with shared/schema.ts — ledger C-29; both consumers live, needs a rename decision'],
     ]);

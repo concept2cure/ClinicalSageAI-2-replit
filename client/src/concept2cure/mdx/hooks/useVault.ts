@@ -62,8 +62,9 @@ interface VaultVersionsPayload {
   meta?: { count?: number };
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Live program ids are uuids; the surface's fixture ids ('or801' …) are not,
+ *  and the list route's zod schema rejects a non-uuid program_id outright. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function toStatus(status: string, lockedAt: string | null): VaultFileStatus {
   if (lockedAt || status === 'locked') return 'locked';
@@ -191,6 +192,14 @@ export interface UseVaultResult {
  * program filter only applies to real program ids.
  */
 export function useVault(programId: string | null): UseVaultResult {
+  /* Program filtering is requested again: the project-to-program bridge
+     (`projects.regulatory_program_id`) landed with slice C1 of the Document
+     Identity Contract, so the server filters on it instead of refusing. Only
+     real uuid program ids are sent — the surface's fixture ids ('or801' …)
+     are not uuids and the route's zod schema would 422 the whole request.
+     On a database that has not had the anchor migration applied the server
+     still answers 422 for a uuid; that surfaces as `error` here, which the
+     surface already renders as "no live data" rather than as an empty vault. */
   const url =
     programId && UUID_RE.test(programId)
       ? `/api/mdx/vault?program_id=${encodeURIComponent(programId)}`

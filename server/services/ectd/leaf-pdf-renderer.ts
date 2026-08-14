@@ -1,7 +1,7 @@
 /**
  * Deterministic eCTD leaf PDF renderer.
  *
- * The eCTD publisher (`ectdExportService.generateEctdPackage`) writes leaf files
+ * The eCTD assemblers (leaf-source-resolver / assemble-from-core) write leaf files
  * with a `.pdf` extension, but the source content for a granule/section is HTML
  * or plain text. Writing those bytes under a `.pdf` name produces a file that an
  * FDA ESG / eCTD validator rejects (not a real PDF). This module renders that

@@ -12,6 +12,7 @@
 
 import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
+import auditService from '../auditService.js';
 import { normalizeTemplateSpec, type TemplateSpec } from './templateSpec';
 
 export interface TemplateRecord {
@@ -64,21 +65,30 @@ async function auditTemplate(params: {
   reason: string;
 }): Promise<void> {
   try {
-    await pool.query(
-      `INSERT INTO audit_logs
-         (id, tenant_id, user_id, action, table_name, record_id,
-          actor_id, target, target_type, target_id, reason, occurred_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, 'c2c_template_specs', $4,
-               $2, $5, 'template', $4, $6, now())`,
-      [
-        params.orgId,
-        params.userId,
-        params.action,
-        params.templateId,
-        `template:${params.templateId}`,
-        params.reason,
-      ],
-    );
+    // Routed through auditService rather than a raw INSERT: the raw form set
+    // no sha256_chain / payload_hash / hmac_seal, so the row landed IN
+    // audit_logs but OUTSIDE the hash chain — invisible to the chain verifier
+    // and therefore not tamper-evident. auditService computes the chain link
+    // and seal inside its own transaction (§11.10(e), §11.70).
+    // NOTE on `reason`: auditService writes the mutation-primitive `target`
+    // column (derived as resourceType:resourceId) but not `target_type` /
+    // `target_id` / `reason`. The reason is therefore carried in details →
+    // new_values rather than the dedicated column, so no governance data is
+    // lost by the switch. Promoting it to the column belongs with the
+    // governed-action path (recordGovernedAction) if template edits ever
+    // become governed mutations.
+    await auditService.logAction({
+      organizationId: params.orgId,
+      userId: params.userId,
+      action: params.action,
+      resourceType: 'c2c_template_specs',
+      resourceId: params.templateId,
+      details: {
+        targetType: 'template',
+        targetId: params.templateId,
+        reason: params.reason,
+      },
+    });
   } catch (err: any) {
     // Audit is best-effort here; never block the CRUD on a logging failure.
     console.warn('[templateStore] audit write failed:', err?.message);

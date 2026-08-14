@@ -14,6 +14,8 @@
  */
 
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import type { PoolClient } from 'pg';
 import { db } from '../../db';
 import {
   submissions,
@@ -91,11 +93,21 @@ export interface CreateSubmissionInput {
   lifecycleStage?: string;
 }
 
-export async function createSubmission(
+/** Anything that can run the canonical submissions INSERT — the pool-backed
+ *  `db`, or a per-request drizzle wrapper over a transaction's PoolClient. */
+type SubmissionInsertExecutor = Pick<typeof db, 'insert'>;
+
+/**
+ * The ONE definition of what a canonical `submissions` row is created from.
+ * Both creation paths (standalone `createSubmission`, transactional
+ * `createSubmissionTx`) run through here so the field mapping cannot fork.
+ */
+async function insertSubmissionRow(
+  executor: SubmissionInsertExecutor,
   input: CreateSubmissionInput,
   ctx: { organizationId: number; userId: number }
 ): Promise<Submission> {
-  const [row] = await db
+  const [row] = await executor
     .insert(submissions)
     .values({
       title: input.title,
@@ -108,6 +120,14 @@ export async function createSubmission(
       createdBy: ctx.userId,
     })
     .returning();
+  return row as Submission;
+}
+
+export async function createSubmission(
+  input: CreateSubmissionInput,
+  ctx: { organizationId: number; userId: number }
+): Promise<Submission> {
+  const row = await insertSubmissionRow(db, input, ctx);
   await auditService.logAction({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
@@ -117,7 +137,31 @@ export async function createSubmission(
     details: { applicationType: input.applicationType, primaryRegion: input.primaryRegion, clientType: input.clientType },
   });
   logger.info('Created submission', { submissionId: row.id, organizationId: ctx.organizationId });
-  return row as Submission;
+  return row;
+}
+
+/**
+ * Create a canonical submission INSIDE a caller-owned transaction.
+ *
+ * Runs the same INSERT as `createSubmission`, but on the caller's PoolClient,
+ * so the submission commits — or rolls back — atomically with whatever else
+ * that transaction creates (e.g. the regulatory program the C2C intake wizard
+ * writes in routes/c2c/projects.ts). Mirrors the `createSubmissionTx(client,…)`
+ * idiom in services/irb/irb-service.ts.
+ *
+ * Deliberately does NOT call auditService.logAction: that write runs on its own
+ * pooled connection, OUTSIDE the caller's transaction, so on rollback it would
+ * leave a sealed record of a submission that does not exist — a fabricated
+ * audit trail. The caller owns the transaction and must write its own audit row
+ * on the same client (the C2C intake route writes a hash-chained audit_logs row
+ * covering both creations).
+ */
+export function createSubmissionTx(
+  client: PoolClient,
+  input: CreateSubmissionInput,
+  ctx: { organizationId: number; userId: number }
+): Promise<Submission> {
+  return insertSubmissionRow(drizzle(client), input, ctx);
 }
 
 export async function listSubmissions(ctx: { organizationId: number }): Promise<Submission[]> {
@@ -756,6 +800,7 @@ export async function upsertLeaf(
 
 export default {
   createSubmission,
+  createSubmissionTx,
   listSubmissions,
   getSubmission,
   createSequence,

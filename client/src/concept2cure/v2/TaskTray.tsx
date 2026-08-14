@@ -58,12 +58,16 @@ interface MyQueue {
   unreadNotifications: number;
   overdueTasks: number;
 }
+/** Mirrors ApprovalOrchestrator.getPendingApprovals. The field names matter:
+ *  this previously declared `startedByName` / `due`, which the server never
+ *  sends, so every workflow approval rendered the generic fallback subtitle and
+ *  silently dropped its due date. */
 interface PendingApproval {
   workflowId?: string;
   documentTitle?: string;
   stepName?: string;
-  startedByName?: string;
-  due?: string | null;
+  requestedByName?: string;
+  dueDate?: string | null;
 }
 interface NotificationRow {
   id: number;
@@ -240,7 +244,7 @@ function TrayPanel({
                   <span className="tt-dot tt-dot-err" aria-hidden />
                   <span className="tt-item-body">
                     <span className="tt-item-title">{a.documentTitle || a.stepName || 'Workflow approval'}</span>
-                    <span className="tt-item-sub">{a.stepName ? `${a.stepName} · ` : ''}{a.startedByName ? `from ${a.startedByName}` : 'awaiting your sign-off'}</span>
+                    <span className="tt-item-sub">{a.stepName ? `${a.stepName} · ` : ''}{a.requestedByName ? `from ${a.requestedByName}` : 'awaiting your sign-off'}{a.dueDate ? ` · ${dueLabel(a.dueDate)}` : ''}</span>
                   </span>
                   <span className="tt-go">{I.arrowRight}</span>
                 </button>

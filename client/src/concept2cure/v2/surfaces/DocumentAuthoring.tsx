@@ -66,6 +66,7 @@ import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
 import { apiRequest } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
+import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { DocCanvas } from './EditorCanvas';
@@ -258,7 +259,7 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
   );
 }
 
-export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
+export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   // `module` is no longer a filter the user drives — the filing outline is. It
   // survives only as the value AuthoringCreateExport needs when creating a new
   // document, and it now follows the selected section instead of a dropdown
@@ -1013,6 +1014,20 @@ export function DocumentAuthoring(_props: OwnedSurfaceViewProps) {
                 docTitle={activeDoc.title}
                 docStatus={activeDoc.status}
                 onChanged={() => { void loadDocs(); if (activeDocId) void loadSections(activeDocId); }}
+                fireToast={fireToast}
+              />
+            )}
+            {/* The authoring → filing seam: place the OPEN document into an
+                eCTD sequence of the canonical submission core. Beside the
+                freeze/e-sign bar because it is the same family of act — the
+                document leaving the editor for the governed record. */}
+            {activeDoc && (
+              <AuthoringPlaceIntoFiling
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                activeSectionCode={activeSection?.code ?? null}
+                dirty={dirty}
+                onNav={onNav}
                 fireToast={fireToast}
               />
             )}

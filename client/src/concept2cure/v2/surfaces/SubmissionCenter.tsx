@@ -11,30 +11,54 @@
  * eSTAR tracker (GET /api/510k/estar/submissions + one POST /assemble verdict
  * for the section header) — a separate spine from the eCTD core, because eSTAR
  * is not eCTD and a device filing is never forced into ectd_sequences.
- * Slices with no load-time list read (Builder leaves are per-sequence;
- * eValidator findings, shadow-review results, and cross-region gaps are
- * POST/AI results, not a list GET) show an honest EmptyState instead of the
- * kit's sample data. Every fixture presented as content, plus the SampleTag,
+ *
+ * Per-sequence workspaces (SubmissionSeqWorkspaces.tsx) are REAL: a sequence
+ * selector feeds Builder (GET/PUT leaves), Validation (dispatch-readiness
+ * findings + AI explain), Shadow Review (runs + persisted findings),
+ * Cross-region (gap computation off the real leaves) and Dispatch (the
+ * server-computed gate + AI QC advisory). Sequence lifecycle transitions POST
+ * the real /sequences/:seqId/transition endpoint and surface the server's
+ * verdict verbatim. The irreversible transitions — freeze and dispatch — run
+ * ONLY through the governed chain: the shared Part 11 EsignModal (re-auth) →
+ * POST /api/c2c/actions/sign on the exact `ectd-sequence:<id>` target → the
+ * governed freeze/dispatch endpoint with the returned signatureActionId. The
+ * server enforces the e-signature AND the deterministic dispatch gate
+ * atomically; this surface never simulates, bypasses, or pre-announces a
+ * governed outcome. Every fixture presented as content, plus the SampleTag,
  * has been removed; only the canonical enum/label/state-machine maps
- * (SC_REGIONS / SC_APPTYPES / SC_LENSES / SC_SEQ_STATUS / SC_TRANSITIONS) are
- * kept — real regulatory reference config, not sample data.
+ * (SC_REGIONS / SC_APPTYPES / SC_SEQ_STATUS / SC_TRANSITIONS …) are kept —
+ * real regulatory reference config, not sample data.
  */
 import React from 'react';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
+import { EsignModal } from '../../_shared/components/EsignModal';
+import type { EsigMeaning } from '../../hooks/useEsignature';
 import {
   // Canonical enum / label / state-machine maps (mirror shared/types/
   // submission-constants + the server SEQUENCE_TRANSITIONS) — reference config,
   // NOT sample data, so they stay.
   SC_APPTYPES,
-  SC_LENSES,
   SC_REGIONS,
   SC_SEQ_STATUS,
   SC_TRANSITIONS,
   type ToneMap,
 } from '../fixtures/submission';
+import {
+  BuilderWorkspace,
+  Chip,
+  CrossRegionWorkspace,
+  DispatchWorkspace,
+  SeqPicker,
+  ShadowReviewWorkspace,
+  ValidationWorkspace,
+  VerdictNote,
+  mutateVerbatim,
+  type Notice,
+  type SeqRow,
+} from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
@@ -57,15 +81,8 @@ interface SubRow {
   lifecycleStage: string; // planning|original|amendment|response|variation|annual|withdrawal
 }
 
-// GET /api/submissions/:id/sequences → listSequences() → `ectd_sequences` rows.
-interface SeqRow {
-  id: number;
-  sequenceNumber: string; // '0000', '0001', …
-  type: string; // original|amendment|response|variation|annual|withdrawal
-  status: string; // draft|assembling|validated|frozen|dispatched (SC_SEQ_STATUS)
-  region: string; // fda|eu|jp
-  validationStatus: string | null; // pending|passed|failed — nullable column
-}
+// (SeqRow — the `ectd_sequences` display row — now lives in
+// SubmissionSeqWorkspaces.tsx, shared with the per-sequence workspaces.)
 
 // Deterministic display tone for the submission status enum (not sample data).
 const SUB_STATUS_TONE: Record<string, string> = {
@@ -146,10 +163,10 @@ function reviewClock(f: DeviceFilingRow): string {
   return f.filedAt ? 'No review clock' : 'Not filed yet';
 }
 
-function Chip({ map, k }: { map: Record<string, ToneMap>; k: string }) {
-  const m = map[k] ?? { l: k, t: 'idle' };
-  return <span className={`rd-chip tone-${m.t}`}>{m.l}</span>;
-}
+// (Chip is imported from SubmissionSeqWorkspaces — one implementation.)
+
+/** The workspaces that operate on ONE selected sequence (fed by SeqPicker). */
+const PER_SEQ_WS = new Set(['builder', 'validation', 'shadow-review', 'cross-region', 'dispatch']);
 
 export function SubmissionCenter({
   onAsk,
@@ -163,7 +180,6 @@ export function SubmissionCenter({
 }) {
   const [ws, setWs] = React.useState('portfolio');
   const [selSub, setSelSub] = React.useState<number | null>(null);
-  const [lens, setLens] = React.useState('fda_filing');
 
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const subs = useLiveRows<SubRow>('/api/submissions');
@@ -210,13 +226,109 @@ export function SubmissionCenter({
   // GET /api/submissions/:id/sequences — keyed on the selected submission (a real
   // numeric id). Null path while no submission is selected → the hook stays idle
   // and returns an empty list (no fixture). Not seeded into local state, so no
-  // re-render loop.
+  // re-render loop. `seqBump` refetches after a server-confirmed transition so
+  // the rendered status always comes from the server, never an optimistic guess.
+  const [seqBump, setSeqBump] = React.useState(0);
   const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
-  const seqs = useLiveRows<SeqRow>(seqPath);
+  const seqs = useLiveRows<SeqRow>(seqPath, [seqPath, seqBump]);
+
+  // The selected working sequence — the selector feeding Builder / Validation /
+  // Shadow Review / Cross-region / Dispatch. Defaults to the first real row.
+  const [selSeq, setSelSeq] = React.useState<number | null>(null);
+  const seq = seqs.rows.find((r) => r.id === selSeq) ?? seqs.rows[0] ?? null;
+
+  // Server-verdict line (transitions, governed outcomes) — verbatim, role=status.
+  const [notice, setNotice] = React.useState<Notice | null>(null);
+  // The in-flight governed flow (freeze | dispatch) driving the EsignModal.
+  const [flow, setFlow] = React.useState<{ seq: SeqRow; kind: 'freeze' | 'dispatch' } | null>(null);
+  // Sequence id with a transition POST in flight (buttons disable, no double-fire).
+  const [acting, setActing] = React.useState<number | null>(null);
+
+  // Changing submission invalidates the sequence selection and any verdict.
+  const subId = sub?.id;
+  React.useEffect(() => {
+    setSelSeq(null);
+    setNotice(null);
+  }, [subId]);
+
+  /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
+   *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
+   *  targets never reach this function — they open the e-sign chain instead. */
+  const doTransition = async (s: SeqRow, to: string) => {
+    if (acting != null) return;
+    setActing(s.id);
+    const r = await mutateVerbatim<SeqRow>('POST', `/api/submissions/sequences/${s.id}/transition`, {
+      status: to,
+    });
+    setActing(null);
+    if (r.data && typeof r.data.status === 'string') {
+      setNotice({
+        tone: 'ok',
+        text: `Sequence ${s.sequenceNumber} → ${SC_SEQ_STATUS[r.data.status]?.l ?? r.data.status} — server-confirmed.`,
+      });
+      setSeqBump((b) => b + 1);
+    } else {
+      // The server's refusal, verbatim (e.g. an INVALID_STATE lifecycle verdict).
+      setNotice({ tone: 'err', text: `Transition refused — ${r.error ?? 'the request failed'}.` });
+    }
+  };
+
+  /** The governed freeze/dispatch chain, run from inside the EsignModal AFTER
+   *  its §11.200 re-authentication succeeds. Two real server steps:
+   *    1. POST /api/c2c/actions/sign on the exact `ectd-sequence:<id>` target —
+   *       the server re-verifies the forwarded credentials, enforces separation
+   *       of duties, and writes the sha256-chained ledger row.
+   *    2. POST the governed freeze/dispatch endpoint with the returned
+   *       signatureActionId — the server verifies the signature governs THIS
+   *       sequence and that the deterministic dispatch gate is clear, atomically.
+   *  Any failure throws with the server's words; the modal shows it inline and
+   *  no success is fabricated. */
+  const runGoverned = async (
+    f: { seq: SeqRow; kind: 'freeze' | 'dispatch' },
+    input: { meaning: EsigMeaning; reason: string; password: string; totp?: string },
+  ) => {
+    const sign = await mutateVerbatim<{ actionId?: string; sha256Chain?: string }>(
+      'POST',
+      '/api/c2c/actions/sign',
+      {
+        target: `ectd-sequence:${f.seq.id}`,
+        reason: input.reason,
+        payload: { intent: f.kind, meaning: input.meaning },
+        reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
+      },
+    );
+    if (sign.error || !sign.data?.actionId) {
+      throw new Error(
+        `The e-signature was not recorded — ${sign.error ?? 'no actionId returned'}. Nothing was ${
+          f.kind === 'freeze' ? 'frozen' : 'dispatched'
+        }.`,
+      );
+    }
+    const done = await mutateVerbatim<SeqRow>(
+      'POST',
+      `/api/submissions/sequences/${f.seq.id}/${f.kind}`,
+      { signatureActionId: sign.data.actionId },
+    );
+    if (done.error || !done.data || typeof done.data.status !== 'string') {
+      throw new Error(done.error ?? `The ${f.kind} was not applied.`);
+    }
+    setSeqBump((b) => b + 1);
+    setNotice({
+      tone: 'ok',
+      text: `Sequence ${f.seq.sequenceNumber} is now ${
+        SC_SEQ_STATUS[done.data.status]?.l ?? done.data.status
+      } — server-confirmed under signature ${sign.data.actionId}.`,
+    });
+    return {
+      meaning: input.meaning,
+      reason: input.reason,
+      signedAt: new Date().toISOString(),
+      hash: sign.data.sha256Chain,
+    };
+  };
 
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
-  const lensL = SC_LENSES.find((l) => l.v === lens)?.l ?? lens;
 
   return (
     <div className="sp sc-page">
@@ -296,6 +408,9 @@ export function SubmissionCenter({
           </button>
         ))}
       </div>
+
+      {/* The latest server verdict (transition / governed outcome) — verbatim. */}
+      <VerdictNote notice={notice} />
 
       {ws === 'portfolio' && (
         <>
@@ -496,28 +611,42 @@ export function SubmissionCenter({
         </div>
       )}
 
-      {ws === 'builder' && (
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Builder · eCTD leaves</span>
-            <span className="s">GET /sequences/:seqId/leaves</span>
-          </div>
-          <div className="pj-card-b">
-            <div className="scaf-note sc-mb">
-              Each leaf carries a lifecycle operator (new / replace / append / delete). AnA classifies
-              and extracts uploaded documents into the right leaf and traces provenance.
-            </div>
-            {/* Backend gap: the leaves list is a per-SEQUENCE read
-                (GET /api/submissions/sequences/:seqId/leaves). This surface has no
-                sequence selection yet, so there is no id to read against — show an
-                honest empty rather than the kit's sample leaves. */}
-            <EmptyState
-              icon={I.layers}
-              title="No eCTD leaves to show here yet"
-              hint="The Builder tree loads a sequence's leaves once a sequence is selected. Open a sequence from the Sequences workspace, then classify and place its documents here."
-            />
-          </div>
-        </div>
+      {/* Builder / Validation / Shadow review / Cross-region / Dispatch — the
+          per-sequence workspaces. One selector (SeqPicker) chooses the working
+          sequence; each workspace then reads/writes the REAL endpoints for it. */}
+      {PER_SEQ_WS.has(ws) && !sub && !subs.loading && (
+        <EmptyState
+          icon={I.fileText}
+          title="No submission selected"
+          hint="Create or select a submission in the Portfolio workspace — these workspaces operate on one of its sequences."
+        />
+      )}
+      {PER_SEQ_WS.has(ws) && sub && (
+        <>
+          <SeqPicker
+            loading={seqs.loading}
+            error={seqs.error}
+            rows={seqs.rows}
+            selId={seq?.id ?? null}
+            onSel={setSelSeq}
+          />
+          {!seqs.loading && !seqs.error && seq && (
+            <>
+              {ws === 'builder' && <BuilderWorkspace key={seq.id} seq={seq} />}
+              {ws === 'validation' && <ValidationWorkspace key={seq.id} sub={sub} seq={seq} />}
+              {ws === 'shadow-review' && <ShadowReviewWorkspace key={seq.id} seq={seq} />}
+              {ws === 'cross-region' && <CrossRegionWorkspace key={seq.id} sub={sub} seq={seq} />}
+              {ws === 'dispatch' && (
+                <DispatchWorkspace
+                  key={`${seq.id}:${seq.status}`}
+                  sub={sub}
+                  seq={seq}
+                  onGoverned={(s, kind) => setFlow({ seq: s, kind })}
+                />
+              )}
+            </>
+          )}
+        </>
       )}
 
       {ws === 'sequences' && sub && (
@@ -560,213 +689,96 @@ export function SubmissionCenter({
                 </div>
               </>
             ) : (
-              <div className="sp-list">
-                {seqs.rows.map((s) => (
-                  <div key={s.id} className="sp-row">
-                    <span className="sp-tag2">{s.sequenceNumber}</span>
-                    <span className="sp-row-b">
-                      <span className="sp-row-t sc-cap">{s.type} sequence</span>
-                      <span className="sp-row-s">
-                        {regL(s.region)}
-                        {s.validationStatus ? (
-                          <>
-                            {' '}
-                            {I.dot} validation {s.validationStatus}
-                          </>
-                        ) : null}
+              <>
+                <div className="scaf-note sc-mb">
+                  Transitions POST the real lifecycle endpoint and the server&#39;s verdict is shown
+                  verbatim. Freeze and Dispatch are irreversible — the generic endpoint refuses
+                  them, so those two open the Part 11 e-signature chain instead. Selecting a row
+                  sets the working sequence for the Builder, Validation, Shadow review,
+                  Cross-region and Dispatch workspaces.
+                </div>
+                <div className="sp-list">
+                  {seqs.rows.map((s) => (
+                    <div
+                      key={s.id}
+                      className="sp-row sc-subrow"
+                      data-cur={s.id === seq?.id || undefined}
+                      onClick={() => setSelSeq(s.id)}
+                    >
+                      <span className="sp-tag2">{s.sequenceNumber}</span>
+                      <span className="sp-row-b">
+                        <span className="sp-row-t sc-cap">{s.type} sequence</span>
+                        <span className="sp-row-s">
+                          {regL(s.region)}
+                          {s.validationStatus ? (
+                            <>
+                              {' '}
+                              {I.dot} validation {s.validationStatus}
+                            </>
+                          ) : null}
+                        </span>
                       </span>
-                    </span>
-                    <Chip map={SC_SEQ_STATUS} k={s.status} />
-                    <span className="sc-trans">
-                      {/* MOCK-ACTION (flagged): the kit transitioned status with an
-                          optimistic local write + a toast claiming POST /transition.
-                          A real endpoint exists (POST /api/submissions/sequences/
-                          :seqId/transition — and governed freeze/dispatch) but wiring
-                          the write + refetch is the actions pass; hand off to AnA
-                          rather than fabricate a persisted state change. */}
-                      {(SC_TRANSITIONS[s.status] ?? []).map((to) => (
-                        <button
-                          key={to}
-                          type="button"
-                          className="sc-trans-b"
-                          onClick={() =>
-                            onAsk(
-                              `Transition sequence ${s.sequenceNumber} of ${sub.title} to ${SC_SEQ_STATUS[to]?.l ?? to}.`
-                            )
-                          }
-                        >
-                          {I.right} {SC_SEQ_STATUS[to]?.l ?? to}
-                        </button>
-                      ))}
-                      {(SC_TRANSITIONS[s.status] ?? []).length === 0 && (
-                        <span className="sp-q-s">terminal</span>
-                      )}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                      <Chip map={SC_SEQ_STATUS} k={s.status} />
+                      <span className="sc-trans">
+                        {(SC_TRANSITIONS[s.status] ?? []).map((to) => {
+                          const governed = to === 'frozen' || to === 'dispatched';
+                          return (
+                            <button
+                              key={to}
+                              type="button"
+                              className="sc-trans-b"
+                              disabled={acting != null}
+                              title={
+                                governed
+                                  ? 'Governed — Part 11 e-signature and a clear dispatch gate required'
+                                  : 'POST /sequences/:seqId/transition — server-enforced lifecycle'
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelSeq(s.id);
+                                if (governed) {
+                                  setFlow({ seq: s, kind: to === 'frozen' ? 'freeze' : 'dispatch' });
+                                } else {
+                                  void doTransition(s, to);
+                                }
+                              }}
+                            >
+                              {governed ? I.lock : I.right} {SC_SEQ_STATUS[to]?.l ?? to}
+                            </button>
+                          );
+                        })}
+                        {(SC_TRANSITIONS[s.status] ?? []).length === 0 && (
+                          <span className="sp-q-s">terminal</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
       )}
 
-      {ws === 'validation' && (
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Validation · eValidator</span>
-            <span className="s">POST /:id/validation/explain</span>
-          </div>
-          <div className="pj-card-b">
-            {/* Backend gap: there is no load-time list read for eValidator findings
-                in this display shape — findings are produced by an assemble/validate
-                run (the dispatch-readiness gate exposes a COUNT, not this list). Show
-                an honest empty rather than the kit's sample findings. */}
-            <EmptyState
-              icon={I.fileText}
-              title="No validation findings loaded yet"
-              hint="eValidator findings surface after a sequence is assembled and validated. Ask AnA to re-validate a sequence — each finding is then explained with its rule and location."
-            />
-            <div className="cm-pushbar sc-mt">
-              <button
-                type="button"
-                className="sp-primary sc-btn"
-                onClick={() =>
-                  onAsk('Re-run the eCTD validator on the current sequence and explain each finding.')
-                }
-              >
-                {I.shieldCheck} Re-validate package
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {ws === 'shadow-review' && (
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Shadow review</span>
-            <span className="s">POST /sequences/:seqId/shadow-review</span>
-          </div>
-          <div className="pj-card-b">
-            <div className="cm-pushbar sc-mb">
-              <span className="sp-q-s">Review lens</span>
-              <select
-                className="sc-subpick"
-                value={lens}
-                onChange={(e) => setLens(e.target.value)}
-              >
-                {SC_LENSES.map((l) => (
-                  <option key={l.v} value={l.v}>
-                    {l.l}
-                  </option>
-                ))}
-              </select>
-              {/* MOCK-ACTION (flagged): the kit flipped a local `ran` flag and showed
-                  fixture findings. A real endpoint exists (POST shadow-review + GET
-                  findings, keyed on a sequence); hand off to AnA rather than fabricate
-                  a completed run. */}
-              <button
-                type="button"
-                className="sp-primary sc-btn"
-                onClick={() =>
-                  onAsk(`Run a ${lensL} shadow review on the current sequence and list the findings.`)
-                }
-              >
-                {I.sparkles} Run shadow review
-              </button>
-            </div>
-            <div className="scaf-note">
-              Run a review to see how a {lensL} reviewer would read this sequence before you file —
-              pre-empting information requests. Findings appear once AnA completes the run.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {ws === 'cross-region' && sub && (
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Cross-region gap analysis</span>
-            <span className="s">POST /:id/cross-region</span>
-          </div>
-          <div className="pj-card-b">
-            <div className="scaf-note sc-mb">
-              What the {regL(sub.primaryRegion)} sequence is missing to file the same program in other
-              regions.
-            </div>
-            {/* Backend gap: cross-region gaps are a POST/AI computation, not a
-                load-time list read — show an honest empty + CTA rather than the
-                kit's sample gaps. */}
-            <EmptyState
-              icon={I.gitBranch}
-              title="No cross-region gap analysis yet"
-              hint="Run a gap analysis to compare this sequence against another region's requirements — reusable content vs. the gaps you'd need to close to file there."
-            />
-            <div className="cm-pushbar sc-mt">
-              <button
-                type="button"
-                className="sp-primary sc-btn"
-                onClick={() =>
-                  onAsk(
-                    `Run a cross-region gap analysis for ${sub.title}: what the ${regL(sub.primaryRegion)} sequence is missing to file in the EU and Japan.`
-                  )
-                }
-              >
-                {I.sparkles} Analyze another region
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {ws === 'dispatch' && sub && (
-        <div className="pj-card">
-          <div className="pj-card-h">
-            <span className="t">Dispatch</span>
-            <span className="s">POST /:id/dispatch-qc</span>
-          </div>
-          <div className="pj-card-b">
-            <div className="sc-dispatch">
-              <div className="scaf-note">
-                Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and
-                clear the deterministic dispatch gate before it can be dispatched, and{' '}
-                {sub.primaryRegion === 'fda'
-                  ? 'transmission through the FDA ESG gateway'
-                  : 'export / regional transmission'}{' '}
-                only runs when the region gateway is configured. AnA runs the QC and walks the gates
-                with you.
-              </div>
-              <div className="sc-disp-actions">
-                {/* MOCK-ACTIONS (flagged): the kit fired toasts claiming a QC check /
-                    gateway transmit. Real endpoints exist (dispatch-qc, governed
-                    freeze/dispatch/transmit) but each is gated on e-signature + the
-                    server dispatch gate — hand off to AnA rather than fake the event. */}
-                <button
-                  type="button"
-                  className="sp-primary sc-btn"
-                  onClick={() =>
-                    onAsk(`Run the dispatch QC gate for the current ${regL(sub.primaryRegion)} sequence of ${sub.title}.`)
-                  }
-                >
-                  {I.shieldCheck} Run dispatch QC
-                </button>
-                <button
-                  type="button"
-                  className={`sp-primary sc-btn ${sub.primaryRegion === 'fda' ? '' : 'sc-btn-neutral'}`}
-                  onClick={() =>
-                    onAsk(
-                      sub.primaryRegion === 'fda'
-                        ? `Freeze and dispatch the current sequence of ${sub.title} through the FDA ESG gateway (governed — e-signature required).`
-                        : `Freeze and export the current sequence of ${sub.title} as the ${regL(sub.primaryRegion)} regional package (governed — e-signature required).`
-                    )
-                  }
-                >
-                  {I.rocket} {sub.primaryRegion === 'fda' ? 'Send via ESG gateway' : 'Export package'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* The governed freeze/dispatch chain — the shared Part 11 EsignModal
+          (§11.50 meaning + reason, §11.100 identity, §11.200 re-auth) runs
+          `runGoverned` only after re-authentication succeeds. Its failure path
+          is the modal's inline alert with the server's words; its success path
+          is the server-confirmed manifest. Never simulated, never bypassed. */}
+      {flow && sub && (
+        <EsignModal
+          open
+          action={flow.kind === 'freeze' ? 'Freeze sequence' : 'Dispatch sequence'}
+          target={`Sequence ${flow.seq.sequenceNumber} · ${sub.title}`}
+          targetMeta={`${regL(flow.seq.region)} · ectd-sequence:${flow.seq.id} · ${
+            flow.kind === 'freeze'
+              ? 'irreversible content lock'
+              : 'records dispatch; wire transmission stays behind the governed transmit path'
+          }`}
+          defaultMeaning="release"
+          onClose={() => setFlow(null)}
+          onSign={(input) => runGoverned(flow, input)}
+        />
       )}
     </div>
   );

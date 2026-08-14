@@ -9,7 +9,7 @@
  *
  * This module centralizes which organization roles may apply a signature so
  * every signing surface enforces the SAME policy: /api/esignature/sign,
- * /api/submissions/:id/sign-release, /api/part11/signatures, and the AnA
+ * /api/submissions/:id/sign-release, and the AnA
  * verified-seal route all resolve the signer's org role (see
  * resolve-signer-role.ts) and call `isSigningAuthorized`. A deployment can
  * override the default role set via the ESIGNATURE_SIGNING_ROLES env var
