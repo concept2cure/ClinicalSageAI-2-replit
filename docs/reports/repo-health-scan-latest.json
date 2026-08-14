@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T19:39:00.821Z",
+  "generatedAt": "2026-08-14T21:28:23.907Z",
   "git": {
-    "sha": "0914784daa6a70538009a08a475caeff0100f5f4",
+    "sha": "daa58bcd985b76ad30ee7adf956d091ae2112102",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": 219,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 34,
+    "largeFilesByBytes": 35,
     "largeFilesByLines": 84
   },
   "findings": {
@@ -2128,7 +2128,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 961616
+        "bytes": 965262
       },
       {
         "file": "shared/schema.ts",
@@ -2203,6 +2203,10 @@
         "bytes": 127662
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 124024
+      },
+      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 120988
       },
@@ -2231,10 +2235,6 @@
         "bytes": 113352
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 112961
-      },
-      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2261,6 +2261,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
         "bytes": 104369
+      },
+      {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "bytes": 104021
       }
     ],
     "largeFilesByLines": [
@@ -2270,7 +2274,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18720
+        "lines": 18793
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2397,6 +2401,10 @@
         "lines": 2166
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2164
+      },
+      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
@@ -2449,10 +2457,6 @@
         "lines": 1981
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 1941
-      },
-      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
@@ -2483,6 +2487,10 @@
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
+      },
+      {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1855
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
@@ -2531,10 +2539,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
-      },
-      {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1761
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2607,7 +2611,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
-      "largeByBytes": 29,
+      "largeByBytes": 30,
       "largeByLines": 72
     },
     {

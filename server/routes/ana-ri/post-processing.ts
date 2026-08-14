@@ -35,6 +35,8 @@ import { processResponseActions } from '../../services/ana-guidance-executor.js'
 import type { CommandContext } from '../../services/ana-ri/command-executor.js';
 import { isPositiveIntegerId } from './shared.js';
 import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersionStore.js';
+import { toNavigationActions } from '../../services/ana-ri/navigation-actions.js';
+import type { NavigationDirective } from '../../../shared/navigation/index.js';
 
 export interface StreamPostProcessingContext {
   res: Response;
@@ -64,6 +66,12 @@ export interface StreamPostProcessingContext {
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
   collectedProvenance: ProvenanceRecord[];
+  /**
+   * Validated navigation targets `navigate_to` resolved this turn. Surfaced on
+   * `post_done` as `actionType: 'navigate'` chips — offered to the user, never
+   * performed by the server. See services/ana-ri/navigation-actions.ts.
+   */
+  collectedNavigation?: NavigationDirective[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
   collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
   /** Gateway message history built for the turn (for working-memory write-back). */
@@ -151,6 +159,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     humanControls,
     toolEvidenceCorpus,
     collectedProvenance,
+    collectedNavigation,
     collectedDrafts,
     messages,
     model,
@@ -183,6 +192,14 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       } catch (e: any) {
         console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
       }
+    }
+
+    // Navigation — the screens AnA resolved this turn become chips the user can
+    // activate. Appended after the guidance executor so an artifact the turn
+    // actually created still leads. Nothing here moves the client on its own:
+    // the server offers a destination, the person takes it.
+    if (collectedNavigation && collectedNavigation.length > 0) {
+      executedActions = [...executedActions, ...toNavigationActions(collectedNavigation)];
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)

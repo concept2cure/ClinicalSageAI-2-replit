@@ -24,9 +24,9 @@ disagree, the command is right and this file is stale.
 Measured 2026-08-14 on `concept2cure-v2`:
 
 ```bash
-node scripts/ops/ledger-check.mjs          # 42 rows: 17 done, 20 open, 4 in-flight, 1 blocked
+node scripts/ops/ledger-check.mjs          # 44 rows: 19 done, 20 open, 4 in-flight, 1 blocked
 node scripts/ops/ga-readiness-report.mjs   # 3/40 ready · 18 blockers · 19 advisories
-npm run ci:surface-discoverability         # 118 renderable: 92 catalogued, 26 contextual
+npm run ci:surface-discoverability         # 119 renderable: 93 catalogued, 26 contextual
 ```
 
 **The shape of the remaining work is not construction.** In case after case the mechanism
@@ -304,11 +304,13 @@ shed. Writing 118 knowledge entries against a set about to be merged means writi
 twice and deleting the difference. Run the consolidation, then generalize against the
 number that survives.
 
-L41 is the paired warning: `authoring-engine` is catalogued, renders entirely from inline
-fixture data, calls no endpoint, and carries no sample-mode label. A knowledge entry for
-that surface would tell AnA a capability exists that does not. **Audit for backing before
-writing knowledge**, on the same evidence standard used for the eight L40 additions — a
-mounted route and real API calls.
+L44 is the paired warning, and it is larger than it looks. 72 surfaces call
+`useLive`/`liveGet`, which reports whether what is on screen is the tenant's data or a
+fixture standing in after a failed fetch; four render the pill that says so. **A surface
+knowledge entry must carry that same verdict**, or AnA will describe fixture state as the
+customer's own — the assistant version of the defect L41 closed on one screen. Audit for
+backing before writing knowledge, on the evidence standard used for the eight L40
+additions: a mounted route and real API calls.
 
 The MDX resolver is the right shape; its limit is that it is keyed to one workstream and
 hand-written for eight surfaces. Generalize it:
@@ -392,9 +394,12 @@ These are the traps. Each would look like progress.
   consequence.
 - **Do not add a catalog entry for a shell.** A catalog entry asserts a capability is
   available. Listing an unbacked surface to quiet the discoverability gate is worse than the
-  invisibility it fixes — and L41 shows it has already happened once: `authoring-engine` is
-  catalogued, renders from inline fixture data, calls no endpoint, and says nothing on
-  screen about being sample data.
+  invisibility it fixes — and L41 showed it had already happened once: `authoring-engine`
+  was catalogued and rendering inline fixture data with nothing on screen saying so, with a
+  catalog description asserting validation that "runs as intended 100% of the time". Closed
+  by labelling the surface and correcting the description. L44 is the same shape at scale:
+  72 surfaces consume `useLive`, which reports whether the data is real, and four render
+  the pill that says.
 - **Do not wire navigation signal-driven.** Parsing ` ```ana-navigate ` blocks out of model
   prose lets any text that reaches the context window steer the client — including text
   from an ingested document. Take the tool-driven path: a tool call is schema-validated,

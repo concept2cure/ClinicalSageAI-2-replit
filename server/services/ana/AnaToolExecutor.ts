@@ -15781,6 +15781,79 @@ registerToolHandler('assess_batch_poolability', async (input: Record<string, unk
   }
 });
 
+/* The same ICH Q1E decision over the studies ON FILE, so AnA can answer "are my
+   primary batches combinable?" without the user transcribing their data.
+
+   Org scope comes from ToolContext and is applied in the WHERE clause, never
+   from model input — a study id the model produced must still belong to the
+   caller's tenant to be readable. The eligibility rules and the assessment
+   itself live in services/cmc/recorded-stability, shared verbatim with the HTTP
+   route the stability surface posts to, so the two can never disagree. */
+registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the stability register.';
+  const ids = Array.from(
+    new Set(
+      (Array.isArray(input.study_ids) ? input.study_ids : [])
+        .map((v: unknown) => (typeof v === 'number' ? v : parseInt(String(v), 10)))
+        .filter((n: number) => Number.isInteger(n) && n > 0),
+    ),
+  ).slice(0, 30);
+  if (ids.length < 2) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'Poolability compares batches, so it needs at least two different stability study ids.',
+    });
+  }
+  try {
+    const [{ db }, { stabilityStudies }, { and, eq, inArray }, { assessRecordedPoolability }] =
+      await Promise.all([
+        import('../../db.js'),
+        import('../../../shared/schema.js'),
+        import('drizzle-orm'),
+        import('../cmc/recorded-stability.js'),
+      ]);
+    const studies = await db
+      .select({
+        id: stabilityStudies.id,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        storageConditions: stabilityStudies.storageConditions,
+        duration: stabilityStudies.duration,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(inArray(stabilityStudies.id, ids), eq(stabilityStudies.organizationId, orgId)));
+
+    if (studies.length !== ids.length) {
+      const found = new Set(studies.map(s => s.id));
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No stability study in this organization for id(s): ${ids.filter(i => !found.has(i)).join(', ')}. List the stability register first and use the ids it returns — do not assess a partial set.`,
+      });
+    }
+
+    const outcome = await assessRecordedPoolability(studies);
+    if (!outcome.ok) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        message: outcome.error,
+        instruction: 'Relay this reason to the user verbatim. Do not work around it by falling back to assess_batch_poolability with numbers you read off the studies — the refusal is a property of the data, not of the tool.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: outcome.data,
+      instruction:
+        'Lead with the decision for the limiting attribute (combinable → one pooled shelf life; otherwise the shortest batch) and the supported shelf life, then report the slope/intercept F-tests verbatim. Name every attribute reported as not assessable and the reason given. This is EVIDENCE — the registered shelf life is set by a person on the study close-out, and this tool writes nothing.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_recorded_batch_poolability failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Structured benefit-risk assessment (BRAT-style) — deterministic decision aid.
 registerToolHandler('assess_benefit_risk', async (input: Record<string, unknown>) => {
   try {
@@ -15980,7 +16053,7 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
       status: 'navigation_ready',
       directive: res.directive,
       instruction:
-        'A navigation directive was produced; the UI will move to this screen. Tell the user where you are taking them. Project-scoped screens require an active project.',
+        'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
