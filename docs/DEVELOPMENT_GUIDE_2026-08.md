@@ -24,7 +24,7 @@ disagree, the command is right and this file is stale.
 Measured 2026-08-14 on `concept2cure-v2`:
 
 ```bash
-node scripts/ops/ledger-check.mjs          # 44 rows: 19 done, 20 open, 4 in-flight, 1 blocked
+node scripts/ops/ledger-check.mjs          # 52 rows: 19 done, 28 open, 4 in-flight, 1 blocked
 node scripts/ops/ga-readiness-report.mjs   # 3/40 ready · 18 blockers · 19 advisories
 npm run ci:surface-discoverability         # 119 renderable: 93 catalogued, 26 contextual
 ```
@@ -203,9 +203,22 @@ rather than by construction*, which is the state that decays silently.
 | **L17** | Org-scope the §11.50 signer lookup — **through the org-membership table**. Scoping on `users.default_organization_id` is the obvious fix and it is wrong: it breaks a legitimate signature by a user acting outside their default org. |
 | **L38** | `artifactVersionStore` writes `updated_at`, which no migration creates. Either the column joins the migration set or the writer stops naming it. |
 | **L10** | D8 C2 — attribute-free alias map plus the CI gate enforcing the invariant. |
+| **L45** | **Do this one first, and before Phase 0's chain verification.** Eight `stableStringify` implementations feed SHA-256 integrity artifacts and they disagree; one emits invalid JSON. Comparing two hashes is not a meaningful check until they are the same function. One canonicalizer in `shared/`, a golden-vector test, delete the other seven. |
+| **L46** | Rename the ungoverned `openai-service` so a governed and an ungoverned call cannot be selected by directory depth. Holding action; the burndown is the real fix. |
+| **L47** | Delete one of the two 1,134-line eCTD template catalogs and re-point its importer. |
+| **L48** | Collapse three Define-XML generators to one with a version parameter. |
+| **L49**, **L51** | Second template registry; `toQuestionOptions` ×14. Cheap, do them while the above are in review. |
 
-**Gate:** one INSERT site per substrate, one verifier, and a CI gate for each — so the
-next writer cannot reintroduce the second one.
+**Gate:** one INSERT site per substrate, one verifier, **one canonicalizer**, and a CI gate
+for each — so the next writer cannot reintroduce the second one.
+
+**On the shape of this phase.** L45–L52 came from a duplication sweep, and what it mostly
+found was that the obvious failure modes are already governed: 3 empty catch blocks in
+6,228, zero absolute route collisions, no backup or `-old` files, and dead modules already
+held by a ratcheting gate at 107. What is *not* governed is duplication of the small
+load-bearing helper — the canonicalizer, the template catalog, the generator — because no
+gate asks whether a function exists twice. That is the gap this phase should close with a
+gate, not just with edits.
 
 ---
 
