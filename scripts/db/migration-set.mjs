@@ -1134,6 +1134,20 @@ export const C2C_MIGRATION_FILES = [
   // into an FK violation.
   'migrations/20260814f_section_version_ana_action_backlink.sql',
 
+  // ── Section version reason required, GA ledger L34 (added 2026-08-14) ────
+  // Another CREATE OR REPLACE of c2c_snapshot_section_version(), so it MUST run
+  // after 20260814f — it carries that migration's ana_action_id handling
+  // forward and adds the reason check on top. Position, not luck: replacing
+  // these out of order would silently drop the backlink.
+  //
+  // The trigger now RAISES on a missing reason exactly as it already did on a
+  // missing actor, instead of COALESCEing to the literal 'content change'. Both
+  // current writers guarantee a non-empty reason, so nothing in the product can
+  // trip it; it exists for the next writer. Function replacement only — no
+  // table, no column, no data, and existing placeholder rows are left alone
+  // because they truthfully record that nothing was captured.
+  'migrations/20260814g_section_version_reason_required.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
