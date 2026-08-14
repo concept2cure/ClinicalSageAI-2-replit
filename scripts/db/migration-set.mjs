@@ -1173,6 +1173,18 @@ export const C2C_MIGRATION_FILES = [
   // the unrecorded window closes on its own.
   'migrations/20260814i_draft_candidate_generator.sql',
 
+  // ── Apps catalog additions, GA ledger L40 (added 2026-08-14) ─────────────
+  // Eight built, routed, API-backed surfaces that appeared in no catalog, so a
+  // user could reach them only by knowing the URL. INSERT … ON CONFLICT DO
+  // NOTHING, so re-running is a no-op and an entry an operator has since edited
+  // keeps their version rather than being reset.
+  //
+  // Position is not load-bearing (no table, no column), but it must run after
+  // the 2026-08-10 reconcile that seeds the rest of the catalog, which it does.
+  // Guarded on available_modules existing, since the catalog table is not on
+  // every lineage.
+  'migrations/20260814j_catalog_missing_product_surfaces.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

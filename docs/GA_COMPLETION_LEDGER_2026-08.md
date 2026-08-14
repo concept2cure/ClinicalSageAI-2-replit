@@ -77,6 +77,7 @@ engineering" never becomes "not tracked".
 
 | ID | Item | Owner | State | Evidence |
 |---|---|---|---|---|
+| L40 | **Eight built surfaces a user could not find.** The product renders 118 surfaces; the rail exposes 14 and the rest are found through the Apps catalog, which nothing kept in step with the renderer. Design controls, human factors, eTMF, IND lifecycle, investigator brochure, SmPC labeling, publishing centre and report engine were all mounted and API-backed — IND lifecycle across 17 endpoints — and in no catalog. Added, with a CI gate requiring every renderable surface to be catalogued or declared contextual WITH A REASON. The seven `pdev-*` ids stay out deliberately: they are tabs of the `pdev` surface, which is catalogued | eng | done | `npm run ci:surface-discoverability` |
 | L15 | Blockers B1–B21 — eSTAR templates + field maps, eCTD DTDs, LORENZ licence, gateway credentials, MedDRA, the enforcement flags, the FDA recognition list (B21, the procurement half of L6) | proc | open | `node scripts/ops/ga-readiness-report.mjs` |
 | L16 | Consultant / CRO channel — multi-client workspaces and per-submission pricing. A product decision, unstarted | prod | open | `docs/COMPETITIVE_LANDSCAPE_2026-08.md` §moat |
 
