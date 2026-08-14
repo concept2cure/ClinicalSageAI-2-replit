@@ -14382,32 +14382,97 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
        section_key); the seed populates one row per key. We update in place
        rather than insert to preserve display_order, level, parent linkage.
        If the row doesn't exist we surface a clear error rather than silently
-       creating a free-floating row outside the kit's taxonomy. */
-    const { rows } = await pool.query(
-      `UPDATE cerv2_510k_sections
-          SET content                = $3,
-              status                 = $4,
-              completion_percentage  = $5,
-              draft_source           = 'ana',
-              drafted_at             = NOW(),
-              drafted_summary        = NULLIF($6, ''),
-              accepted_at            = NULL,
-              accepted_by            = NULL,
-              updated_at             = NOW()
-        WHERE organization_id = $1 AND section_key = $2
-        RETURNING id, section_number, section_title, section_key, status,
-                  completion_percentage AS "completionPercentage",
-                  drafted_at AS "draftedAt"`,
-      [ctx.organizationId, sectionKey, content, status, completionPct, note],
-    );
+       creating a free-floating row outside the kit's taxonomy.
 
-    if (rows.length === 0) {
-      return JSON.stringify({
-        error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+       HISTORY (2026-08-14). This UPDATE used to run alone: no version row, no
+       reason, no snapshot of the text it replaced — and `cerv2_510k_sections`
+       has no version trigger, so nothing else preserved it either. AnA could
+       overwrite a section's prior content on the device surface, where that
+       content becomes a 510(k), with no recoverable history. The human PATCH
+       route had always written a rich version row; only this path did not.
+
+       This path now goes through recordCerv2SectionVersion, on a transaction,
+       so the content write and its history commit together or not at all. A
+       version row written outside the content write can attest to a change
+       that rolled back; content written without one is the loss this exists to
+       prevent.
+
+       NOT yet consolidated: routes/cerv2-sections.ts still has three of its own
+       inserts into cerv2_section_versions. They record history correctly, so
+       nothing is unsafe there — but four writers of one table is three too
+       many, and re-pointing untested route paths is its own change. Tracked as
+       ledger L39. */
+    const { recordCerv2SectionVersion } = await import('../cerv2/section-version.js');
+    const client = await pool.connect();
+    let row: any;
+    try {
+      await client.query('BEGIN');
+
+      /* Read the prior state FOR UPDATE inside the transaction: it is both the
+         `previousValues` snapshot and the row lock that stops two concurrent
+         writers computing the same next version number. */
+      const prior = await client.query(
+        `SELECT id, content, status, completion_percentage
+           FROM cerv2_510k_sections
+          WHERE organization_id = $1 AND section_key = $2
+          FOR UPDATE`,
+        [ctx.organizationId, sectionKey],
+      );
+      if (prior.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return JSON.stringify({
+          error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+        });
+      }
+      const before = prior.rows[0];
+
+      const updated = await client.query(
+        `UPDATE cerv2_510k_sections
+            SET content                = $3,
+                status                 = $4,
+                completion_percentage  = $5,
+                draft_source           = 'ana',
+                drafted_at             = NOW(),
+                drafted_summary        = NULLIF($6, ''),
+                accepted_at            = NULL,
+                accepted_by            = NULL,
+                updated_at             = NOW()
+          WHERE organization_id = $1 AND section_key = $2
+          RETURNING id, section_number, section_title, section_key, status,
+                    completion_percentage AS "completionPercentage",
+                    drafted_at AS "draftedAt"`,
+        [ctx.organizationId, sectionKey, content, status, completionPct, note],
+      );
+
+      await recordCerv2SectionVersion(client, {
+        sectionId: before.id,
+        organizationId: ctx.organizationId,
+        changeType: 'edited',
+        /* The tool's own note when the caller supplied one. Falling back to a
+           fixed string is deliberate and honest — it names the actor and the
+           mechanism rather than inventing a rationale nobody gave. */
+        changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
+        content,
+        status,
+        completionPercentage: completionPct,
+        previousValues: {
+          content: before.content ?? '',
+          status: before.status ?? null,
+          completion_percentage: before.completion_percentage ?? null,
+        },
+        newValues: { content, status, completion_percentage: completionPct },
+        fieldsChanged: ['content', 'status', 'completion_percentage'],
+        changedBy: ctx.userId ?? null,
       });
-    }
 
-    const row = rows[0];
+      await client.query('COMMIT');
+      row = updated.rows[0];
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      client.release();
+    }
 
     /* Audit log — fire-and-forget, never block the response. The auditService
        singleton handles tamper-proof chaining + Drizzle persistence. */

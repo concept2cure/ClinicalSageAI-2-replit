@@ -53,6 +53,35 @@ import { ensureJournal, recordApplied } from './migration-journal.mjs';
 // 358 migrations because the manifest is not authoritative for anything. Making
 // something consume it is a separate change to how schema ships.
 export const C2C_MIGRATION_FILES = [
+  // ── Golden-journey prerequisites ────────────────────────────────────────────
+  // Seven migrations that tests/golden-journeys provision and depend on, and
+  // that no durable applier ran — the exact drift ci:journey-migration-
+  // reachability exists to catch. They lead the set because later entries
+  // depend on what they create: the c2c_documents family (phase9) is ALTERed by
+  // 20260728_c2c_document_sections_timestamps and _c2c_section_version_author_kind
+  // and read by the 20260804+ rule-pack outlines; regulatory_programs
+  // (program_workbench) is scoped by 20260726_cre_source_program_scope and
+  // anchored by 20260814_projects_regulatory_program_anchor.
+  //
+  // Order within the block is dependency order, which here matches date order:
+  // phase9_backfill reads regulatory_programs and writes the c2c_documents
+  // family, so it follows both; audit_hmac_seal seals the chain columns
+  // mutation_primitives adds to audit_logs, so it follows that.
+  //
+  // Prerequisites all come from drizzle-kit push, which runs before this set:
+  // cerv2_510k_sections, cer_reports, pma_submissions and audit_logs are all
+  // declared in shared/schema.ts. Every ALTER here is ADD COLUMN IF NOT EXISTS
+  // or guarded on information_schema, and the backfill guards each source table
+  // the same way, so the block is safe on a database that already has them and
+  // on one that does not.
+  'migrations/20260506_kit_section_draft_provenance.sql',
+  'migrations/20260524_program_workbench_schema.sql',
+  'migrations/20260527_mutation_primitives.sql',
+  'migrations/20260528_phase9_document_schema.sql',
+  'migrations/20260529_phase9_backfill.sql',
+  'migrations/20260604_shadow_review.sql',
+  'migrations/20260609_audit_hmac_seal.sql',
+  // ── End golden-journey prerequisites ────────────────────────────────────────
   'migrations/20260603_ai_capability_governance.sql',
   'migrations/20260603_pv_operational.sql',
   'migrations/20260603_commitments.sql',
@@ -1072,6 +1101,52 @@ export const C2C_MIGRATION_FILES = [
   // several stores with different key types, so it could not carry a REFERENCES
   // even if every target table were present on every database.
   'migrations/20260814d_document_alias_map.sql',
+
+  // ── Submission leaf source pin, GA ledger L23 (added 2026-08-14) ─────────
+  // Two nullable columns on submission_leaves recording the SHA-256 of the
+  // source document's content at the moment a leaf was filed, and when that was
+  // taken. The leaf already carried `document_id` (which resolves to the
+  // document as it is NOW) and `checksum` (MD5 of RENDERED bytes, for the eCTD
+  // index) — neither answers "is the document behind this filed leaf still what
+  // went to the agency?".
+  //
+  // ADD COLUMN only, no backfill, and the absence of a backfill is the point: a
+  // pin computed today from current content would manufacture agreement for
+  // every existing leaf, including any whose document has since been edited —
+  // exactly the case the column exists to detect. Pre-existing leaves report
+  // "not pinned", which is true.
+  //
+  // Position is not load-bearing (it creates no table, so the isolation sweep
+  // below has nothing to attach), but it stays with its siblings above the
+  // sweep for readability.
+  'migrations/20260814e_submission_leaf_source_pin.sql',
+
+  // ── Section version AnA backlink, GA ledger L36 (added 2026-08-14) ───────
+  // CREATE OR REPLACE of c2c_snapshot_section_version() so the version trigger
+  // writes ana_action_id — a column declared in the Phase-9 schema with a FK to
+  // c2c_ana_actions and written by nothing since, leaving "which AnA action
+  // produced this version?" permanently unanswerable.
+  //
+  // Function replacement only: no table, no column, no data. It MUST run after
+  // the Phase-9 schema that defines the original function, which it does by
+  // position. The trigger resolves the id against c2c_ana_actions before using
+  // it and writes NULL otherwise, so a stale GUC can never turn a section save
+  // into an FK violation.
+  'migrations/20260814f_section_version_ana_action_backlink.sql',
+
+  // ── Section version reason required, GA ledger L34 (added 2026-08-14) ────
+  // Another CREATE OR REPLACE of c2c_snapshot_section_version(), so it MUST run
+  // after 20260814f — it carries that migration's ana_action_id handling
+  // forward and adds the reason check on top. Position, not luck: replacing
+  // these out of order would silently drop the backlink.
+  //
+  // The trigger now RAISES on a missing reason exactly as it already did on a
+  // missing actor, instead of COALESCEing to the literal 'content change'. Both
+  // current writers guarantee a non-empty reason, so nothing in the product can
+  // trip it; it exists for the next writer. Function replacement only — no
+  // table, no column, no data, and existing placeholder rows are left alone
+  // because they truthfully record that nothing was captured.
+  'migrations/20260814g_section_version_reason_required.sql',
 
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 

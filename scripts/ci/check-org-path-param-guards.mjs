@@ -4,7 +4,7 @@
  * compare it against the caller's authenticated org.
  *
  * ── The class ────────────────────────────────────────────────────────────────
- * `GET /api/tenant-users/:tenantId` and its 36 siblings accept a tenant
+ * `GET /api/tenant-users/:tenantId` and its 42 siblings accept a tenant
  * identifier from the path. If a handler uses that value without checking it
  * against the JWT-bound org, any authenticated user reads or writes another
  * tenant's data — the textbook IDOR.
@@ -19,7 +19,7 @@
  * the ONLY control.
  *
  * ── Why a gate rather than a code review ─────────────────────────────────────
- * Every one of the 37 routes is currently guarded — this class is in good shape.
+ * Every one of the 43 routes is currently guarded — this class is in good shape.
  * But it is enforced by NINE different local idioms:
  *
  *   authorizeOrgAccess · enforceOrgScope · requireAuthedOrgId ·
@@ -43,7 +43,7 @@
  * next one, including route-level middleware (`validateTenantId` is applied as
  * middleware on the router line, not called in the body). Deriving the list from
  * the code rather than inventing a convention is deliberate: a gate that demands
- * a new helper would fail 37 working routes and get switched off.
+ * a new helper would fail 43 working routes and get switched off.
  *
  * Two routes legitimately IGNORE the path param and scope from the token
  * instead (`intelligent-reports`, `mdx-imports`, both with a SECURITY comment
@@ -114,17 +114,48 @@ function walk(dir, acc = []) {
  */
 const ANY_ROUTE_RE = /router\.(?:get|post|put|patch|delete|all)\s*\(/g;
 
+/**
+ * `router.param('x', cb)` runs cb for EVERY route carrying `:x`, so a guard
+ * living there covers routes whose own bodies contain no check at all. This
+ * codebase does exactly that — `server/api/cmc/projectRoutes.ts` verifies
+ * project ownership for 18 handlers via a single `router.param('projectId')`.
+ *
+ * A handler-scoped analysis cannot see it. An earlier revision of this gate had
+ * that blind spot and reported a correctly-guarded router as UNGUARDED, which is
+ * the more corrosive failure: a false positive on a safe route teaches the next
+ * reader that the gate cries wolf, and then the true positive is ignored too.
+ */
+const PARAM_GUARD_RE = new RegExp(
+  `router\\.param\\(\\s*['"\`](${ORG_PARAM.replace('(?:', '').replace(')', '')})['"\`]`,
+  'g'
+);
+
+/** Params this router guards centrally, with the guard verified in the callback. */
+function routerLevelGuardedParams(src, allRouteStarts) {
+  const guarded = new Set();
+  for (const m of src.matchAll(PARAM_GUARD_RE)) {
+    // The callback body ends at the next route or param declaration.
+    const next = allRouteStarts.find(i => i > m.index) ?? src.length;
+    if (GUARD_RE.test(src.slice(m.index, next))) guarded.add(m[1]);
+  }
+  return guarded;
+}
+
 const findings = [];
 for (const file of walk(path.join(repoRoot, 'server'))) {
   const src = fs.readFileSync(file, 'utf8');
   const allRouteStarts = [...src.matchAll(ANY_ROUTE_RE)].map(m => m.index);
+  const paramGuarded = routerLevelGuardedParams(src, allRouteStarts);
   for (const m of src.matchAll(ROUTE_RE)) {
     const next = allRouteStarts.find(i => i > m.index);
+    const inBody = GUARD_RE.test(src.slice(m.index, next ?? src.length));
+    // ...or the org param this route uses is guarded once at the router level.
+    const viaParam = [...paramGuarded].some(pn => m[2].includes(`:${pn}`));
     findings.push({
       file: path.relative(repoRoot, file),
       verb: m[1].toUpperCase(),
       route: m[2],
-      guarded: GUARD_RE.test(src.slice(m.index, next ?? src.length)),
+      guarded: inBody || viaParam,
     });
   }
 }

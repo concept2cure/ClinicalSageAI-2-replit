@@ -49,15 +49,26 @@ export interface DiagnosticAccuracyResult {
   ppa: number;
   npa: number;
   /** Sample-based predictive values (reflect the study case mix). */
-  ppvSample: number;
-  npvSample: number;
+  /** Sample PPV, or null when undefined (no test-positives). Not NaN — see note. */
+  ppvSample: number | null;
+  /** Sample NPV, or null when undefined (no test-negatives). */
+  npvSample: number | null;
   /** Prevalence-adjusted predictive values (only when prevalence supplied). */
   ppvAdjusted: number | null;
   npvAdjusted: number | null;
   accuracy: number;
   youdenJ: number;
   /** Likelihood ratios; +∞ when specificity is 1 (LR+) or sensitivity is 1 (LR-). */
-  lrPositive: number;
+  /**
+   * Positive likelihood ratio sens/(1−spec), or NULL when specificity = 1.
+   *
+   * Deliberately not `Infinity`. A perfect-specificity result is ordinary in a
+   * small IVD validation study, and `JSON.stringify(Infinity)` is `null` — so
+   * returning Infinity meant the API emitted `"lrPositive": null` regardless,
+   * with no way for a client to tell an undefined ratio from a missing field.
+   * `specificity` is in the same object, so the caller can still see why.
+   */
+  lrPositive: number | null;
   lrNegative: number;
   cohensKappa: number;
   n: number;
@@ -85,8 +96,10 @@ export function computeDiagnosticAccuracy(
   const sensitivityCi = clopperPearsonInterval(tp, positives, conf);
   const specificityCi = clopperPearsonInterval(tn, negatives, conf);
 
-  const ppvSample = point.ppv ?? NaN;
-  const npvSample = point.npv ?? NaN;
+  // null, not NaN: NaN serializes to null anyway, so making it explicit means
+  // the type tells the truth and the wire value is intentional.
+  const ppvSample = point.ppv ?? null;
+  const npvSample = point.npv ?? null;
 
   let ppvAdjusted: number | null = null;
   let npvAdjusted: number | null = null;
@@ -95,13 +108,15 @@ export function computeDiagnosticAccuracy(
     if (p < 0 || p > 1) throw new Error('prevalence must be in [0, 1].');
     const ppvDen = sensitivity * p + (1 - specificity) * (1 - p);
     const npvDen = (1 - sensitivity) * p + specificity * (1 - p);
-    ppvAdjusted = ppvDen > 0 ? (sensitivity * p) / ppvDen : NaN;
-    npvAdjusted = npvDen > 0 ? (specificity * (1 - p)) / npvDen : NaN;
+    // These are declared `number | null` and initialised to null above; assigning
+    // NaN here contradicted the module's own convention.
+    ppvAdjusted = ppvDen > 0 ? (sensitivity * p) / ppvDen : null;
+    npvAdjusted = npvDen > 0 ? (specificity * (1 - p)) / npvDen : null;
   }
 
   const accuracy = point.accuracy as number;
   const youdenJ = sensitivity + specificity - 1;
-  const lrPositive = specificity < 1 ? sensitivity / (1 - specificity) : Infinity;
+  const lrPositive = specificity < 1 ? sensitivity / (1 - specificity) : null;
   const lrNegative = sensitivity < 1 ? (1 - sensitivity) / specificity : 0;
 
   // Cohen's κ for agreement (test vs reference).

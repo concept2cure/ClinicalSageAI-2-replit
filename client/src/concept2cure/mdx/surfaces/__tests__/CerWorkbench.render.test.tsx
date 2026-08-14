@@ -232,13 +232,20 @@ describe('CerSurface — the CER workbench', () => {
     );
   });
 
-  it('the literature tab refuses a too-short search locally and stays read-only', async () => {
+  it('the literature tab offers per-row recording and refuses a too-short search locally', async () => {
     mockEmptyTenantFetch();
     renderSurface(PROGRAM);
 
     fireEvent.click(cerTabs().getByRole('tab', { name: /Literature/ }));
     await waitFor(() => expect(screen.getByText('Search PubMed')).toBeTruthy());
-    expect(screen.getByText(/not recorded to the project corpus/)).toBeTruthy();
+    // The panel was read-only when this test was written, and asserted the
+    // "results are not recorded to the project corpus" caveat. Literature
+    // persistence (GA ledger L4) removed that caveat: hits are recorded to the
+    // org corpus per row and the include/exclude decision, its reason and its
+    // reviewer are persisted per MEDDEV 2.7/1 Rev 4 appraisal stage. Assert the
+    // capability that replaced it, so the test fails if persistence regresses
+    // rather than if the wording changes again.
+    expect(screen.getByText(/Record hits to the organization corpus per row/)).toBeTruthy();
 
     fireEvent.change(screen.getByPlaceholderText(/EGFR companion diagnostic/), {
       target: { value: 'x' },
