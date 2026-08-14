@@ -844,3 +844,65 @@ over-long slice. Fixed to end at the next route of any kind. Both arms now
 verified by exit code — a new unguarded route exits 1, and an existing route
 losing its own guard exits 1. A gate that cannot fail is worse than no gate,
 because it is believed.
+
+### 7.8 The tenant header is a detector, not an input — and one thing it is not
+
+`utils/tenantContext.ts` reads `x-organization-id` / `?organizationId`. It does
+**not** trust them, and the construction is worth calling out as a pattern to
+copy: the client-supplied value is compared against the JWT and, on mismatch,
+raises a `tenant_header_mismatch` security alert — then the JWT value is used
+regardless. The attack vector is turned into an impersonation detector. Every
+other org-from-request read in `server/` is either that helper or a comment
+recording where a `req.query.organizationId` IDOR was already fixed
+(`decision-lineage`, `document-routes`, `client-branding`).
+
+**What is NOT a boundary, stated so nobody assumes it is.** Three lines below,
+`clientWorkspaceId` *is* taken from `x-client-workspace-id` / query and used
+unvalidated. That is not a cross-tenant hole — every workspace-scoped table
+(`client_workspaces`, `client_workspace_settings`, `client_security_settings`,
+`projects`) carries a tenant column and is policied, so RLS confines the query to
+the caller's org even where the handler filters on workspace id alone.
+
+But there is **no workspace-level membership or ACL anywhere in the schema**, and
+nothing restricts which workspace a user may select. So within one organization,
+any member can scope themselves to any workspace. That is coherent with the
+model this platform actually implements — the boundary is the ORGANIZATION, a CRO
+serving several sponsors gets one org per sponsor, and consultants are multi-org
+members whose switching is membership-validated and audited (R7). It is recorded
+here only because "client workspace" reads like an isolation boundary and is not
+one: if workspace-level isolation is ever sold to a CRO, this is the gap to close
+first, and it is a schema change (a membership table), not a patch.
+
+---
+
+## 8. Security sweep — what was examined beyond the tenancy register
+
+Recorded so the negative results carry weight alongside the fixes. Each row was
+examined against the running code, not the design docs.
+
+| Surface | Result |
+|---|---|
+| Tenant lifecycle / entitlement on every transport | **4 fixed** (§2.5) — session, API key, two sockets, background sweeps |
+| `electronic_signatures` tenant key | **Fixed** (§7.1) — column never created; also broke deploys |
+| Object storage read/delete | **Fixed** (§7.2) — cross-tenant by construction, reachable via model-authored AI payloads |
+| In-process caches (23 enumerated) | **1 fixed** (§7.3) — AI-action idempotency key omitted the org |
+| Internal-service proxy path | **Fixed** (§7.4) — `%2F` + `new URL` traversal to any endpoint |
+| SSRF (43 outbound sinks) | **Clean** (§7.5) — shared guard on webhooks/connectors, fail-closed allowlist on firecrawl |
+| Drizzle model vs physical tenant column | **Gated** (§7.6) — 5 of 701 blind, all baselined with the fix-order trap recorded |
+| Org id in the URL path (43 routes) | **Clean, gated** (§7.7) — all guarded; nine idioms unified into one check |
+| Org id in body/query/header | **Clean** (§7.8) — header is a detector; prior IDORs already fixed |
+| Stripe + Firecrawl webhooks | **Clean** — HMAC/`constructEvent`, raw body preserved, timing-safe, fail closed without a secret |
+| Pre-auth allowlist (18 entries) | **Clean** — first-run setup is rate-limited and self-closing; health/metrics carry their own gate |
+| File-serving sinks (`sendFile`/`createReadStream`) | **Clean** — none takes a request-derived path |
+| Mass assignment into DB writes | **Recorded** (§7.6) — reachable only if the model divergence is "fixed" without adding the org predicate |
+
+Two lessons from the sweep itself, both earned the hard way:
+
+1. **Pattern-matching lies in both directions.** Four greps reported unguarded
+   routes that were guarded; one `(empty = unmounted)` echo printed
+   unconditionally and briefly convinced me a live router was dead. Every finding
+   above was confirmed by reading the handler or executing the behaviour.
+2. **A gate is not evidence until it has failed.** The org-path-param gate passed
+   its own first mutation and silently missed the second; the compliance-claim
+   check I nearly built already existed. Both were caught by mutation-testing
+   with exit codes, not by reading output.

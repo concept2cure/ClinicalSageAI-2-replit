@@ -4,7 +4,7 @@
  * compare it against the caller's authenticated org.
  *
  * ── The class ────────────────────────────────────────────────────────────────
- * `GET /api/tenant-users/:tenantId` and its 36 siblings accept a tenant
+ * `GET /api/tenant-users/:tenantId` and its 42 siblings accept a tenant
  * identifier from the path. If a handler uses that value without checking it
  * against the JWT-bound org, any authenticated user reads or writes another
  * tenant's data — the textbook IDOR.
@@ -19,7 +19,7 @@
  * the ONLY control.
  *
  * ── Why a gate rather than a code review ─────────────────────────────────────
- * Every one of the 37 routes is currently guarded — this class is in good shape.
+ * Every one of the 43 routes is currently guarded — this class is in good shape.
  * But it is enforced by NINE different local idioms:
  *
  *   authorizeOrgAccess · enforceOrgScope · requireAuthedOrgId ·
@@ -43,7 +43,7 @@
  * next one, including route-level middleware (`validateTenantId` is applied as
  * middleware on the router line, not called in the body). Deriving the list from
  * the code rather than inventing a convention is deliberate: a gate that demands
- * a new helper would fail 37 working routes and get switched off.
+ * a new helper would fail 43 working routes and get switched off.
  *
  * Two routes legitimately IGNORE the path param and scope from the token
  * instead (`intelligent-reports`, `mdx-imports`, both with a SECURITY comment
