@@ -171,7 +171,6 @@ export const SEGMENTS = [
       'design-controls',
       'human-factors',
       'precedent-intelligence',
-        'filing-strategy',
     ],
     ana: '510(k)/PMA/De Novo + IVDR; predicate & substantial-equivalence context.',
   },
@@ -187,7 +186,6 @@ export const SEGMENTS = [
       'ivd-completeness',
       'labeling',
       'precedent-intelligence',
-        'filing-strategy',
       'evidence-search',
     ],
     ana: 'IVD & companion diagnostics — IVDR classification, analytical & clinical performance, CDx co-development.',
@@ -271,8 +269,7 @@ export const SEGMENTS = [
     icon: 'scale',
     pathways: ['Cross-segment'],
     defaultSurface: 'projects',
-    focus: ['global-ri', 'precedent-intelligence',
-        'filing-strategy', 'submission-center'],
+    focus: ['global-ri', 'precedent-intelligence', 'submission-center'],
     ana: 'Consulting / government — all pathways.',
   },
   {
@@ -519,11 +516,10 @@ export const SEGMENT_MODULES = {
       ],
     },
     { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['mission-control', 'review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence',
-        'filing-strategy', 'device-analytics', 'device-postmarket', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -548,11 +544,10 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['mission-control', 'review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence',
-        'filing-strategy', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -599,7 +594,6 @@ export const SEGMENT_MODULES = {
     {
       label: 'Review & govern',
       items: [
-        'mission-control',
         'orchestration',
         'review',
         'shadow-review',
@@ -621,7 +615,6 @@ export const SEGMENT_MODULES = {
         'pharmacovigilance',
         'pv-cockpit',
         'precedent-intelligence',
-        'filing-strategy',
         'crl-library',
         'global-ri',
         'intelligence-catalog',
@@ -684,7 +677,6 @@ export const SEGMENT_MODULES = {
     {
       label: 'Review & govern',
       items: [
-        'mission-control',
         'orchestration',
         'review',
         'shadow-review',
@@ -706,7 +698,6 @@ export const SEGMENT_MODULES = {
         'pharmacovigilance',
         'pv-cockpit',
         'precedent-intelligence',
-        'filing-strategy',
         'crl-library',
         'global-ri',
         'intelligence-catalog',
@@ -727,7 +718,7 @@ export const SEGMENT_MODULES = {
     },
   ],
   cro: [
-    { label: 'Portfolio & studies', items: ['cro-portfolio', 'projects', 'mission-control', 'tasks'] },
+    { label: 'Portfolio & studies', items: ['cro-portfolio', 'projects', 'tasks'] },
     {
       label: 'Author & assemble',
       items: ['protocol-dev', 'document-authoring', 'csr-workflow', 'template-library'],
@@ -748,7 +739,6 @@ export const SEGMENT_MODULES = {
         'biostat-workbench',
         'rbm',
         'precedent-intelligence',
-        'filing-strategy',
         'crl-library',
         'global-ri',
         'intelligence-catalog',
@@ -769,7 +759,7 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: ['biostatistics', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
-    { label: 'Review & govern', items: ['mission-control', 'review', 'tasks', 'audit-trail'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],
 };
 /**

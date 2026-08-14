@@ -597,6 +597,47 @@ export const UI_SURFACES: UiSurface[] = [
     compliance: [A11Y, TONE],
     notes: 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.',
   },
+  {
+    id: 'mission-control',
+    label: 'Mission Control',
+    navTier: 'specialist',
+    layoutMode: 'default',
+    icon: 'route',
+    group: 'governance',
+    uiKit: null,
+    apiPrefixes: ['/api/mission-control'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'The regulatory program engine — programs, server-computed readiness across nine ' +
+      'dimensions, and the artifacts, risks, decisions and stale dependencies behind that ' +
+      'score. Distinct from `projects` (/api/c2c/projects), which models the workspace a ' +
+      'team works inside rather than the regulatory program.',
+  },
+  {
+    id: 'filing-strategy',
+    label: 'Global filing strategy',
+    navTier: 'specialist',
+    layoutMode: 'default',
+    icon: 'route',
+    group: 'regulatory',
+    uiKit: null,
+    apiPrefixes: ['/api/regulatory-precedent-intelligence'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'Filing sequence across agencies, requirement divergence between any agency pair, ' +
+      'and the confidence-calibration report. Reads the cross-jurisdictional and ' +
+      'confidence families only — the CRL/RTF/EMA/advisory-committee endpoints on the ' +
+      'same router are NOT authoritative (see docs/adr/0013). The record starts empty ' +
+      'and the surface says so.',
+  },
   // 'rbm-operations' is retired. It was a second, thinner RBM destination
   // holding the write/compute layer (KRI value capture, site-risk recompute,
   // central monitoring, patient scoring) while the `rbm` surface was read-only.
