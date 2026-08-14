@@ -55,7 +55,11 @@ document.querySelectorAll('section').forEach((s, i) =>
 
 `docs/GA_COMPLETION_LEDGER_2026-08.md` is the authority on what actually
 operates, and its §5 lineage rows were verified by reading code. Read it before
-marking any control "built". Three drafts of this paper overstated Part 11
+marking any control "built" — **and check the ledger against the deploy branch,
+not against the branch you are on.** Nine severe rows closed within hours of the
+ledger being written; a revision of this paper published them as open because it
+was assessed from a base 16 commits behind `concept2cure-v2`. Fetch and merge
+first, then verify each row in the merged tree. Three drafts of this paper overstated Part 11
 e-signature and lineage because they were assessed from docstrings and CI-gate
 names — both of which describe intent. The ledger records that the §11.70 tamper
 check has no production caller, the provenance tables have no writers, and model

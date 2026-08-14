@@ -862,10 +862,10 @@
       <tr><th style="width:23%">Control</th><th style="width:12%">State</th><th>What is true today</th></tr>
     </thead>
     <tbody>
-      <tr><td><strong>Electronic signature</strong></td><td><span class="pill pill-open">Not operating</span></td>
-        <td>The §11.70 guarantee is implemented and tested — and unreachable. The real tamper check has no production caller; the live verification endpoint re-hashes metadata only, so it returns valid for a document rewritten after signing; a live route mints signatures with no content binding and no tenant scoping; and no edit supersedes a signature. <strong>Design right, wiring absent.</strong> See Section 26.</td></tr>
-      <tr><td><strong>Clause-level lineage</strong></td><td><span class="pill pill-partial">Middle only</span></td>
-        <td>Strong from draft to approval: the editor cannot save content without clause-level provenance, enforced in-transaction and gated in CI, and a user can select a passage and ask where it came from. Broken at both ends — the versioned provenance tables have no writers, source documents are unversioned, no stored hash is checked against source bytes, and a filed eCTD leaf cannot be traversed back to its document. See Section 26.</td></tr>
+      <tr><td><strong>Electronic signature</strong></td><td><span class="pill pill-live">Built</span></td>
+        <td>Server-side credential re-verification, signing-authority and signer-role resolution, and — as of 14 August — content binding that actually holds: the live verification path re-derives the bound digest through the <em>same</em> shared evaluator as the canonical validator, so a document changed after signing reports invalid. The second, unbound signature writer was deleted rather than repaired, and a stale approval no longer reads as current. Each is locked by a regression test.</td></tr>
+      <tr><td><strong>Clause-level lineage</strong></td><td><span class="pill pill-partial">Ingest end open</span></td>
+        <td>Strong from draft through approval to filing: the editor cannot save content without clause-level provenance, a filed eCTD leaf now pins the source it shipped, and the end-to-end lineage dossier is reachable at <span class="mono">/api/ana-ri/documents/:id/lineage-dossier</span>. The ingest end remains open — source documents carry no version chain, and the versioned provenance tables still have no writers. See Section 26.</td></tr>
       <tr><td><strong>Audit chain</strong></td><td><span class="pill pill-partial">In flight</span></td>
         <td>Chain enforcement exists on the reference store via an insert trigger that cannot be bypassed by an application path. The audit found the chain unpopulated and three integrity checks reporting an empty chain as intact. Checks now return an explicit <span class="mono">unverifiable</span> state; substrate consolidation and immutability grants are Phase 2.</td></tr>
       <tr><td><strong>Tenant isolation</strong></td><td><span class="pill pill-partial">In flight</span></td>
@@ -1985,6 +1985,9 @@
       <tr><td><strong>Authentication boundary</strong></td><td>Default-deny mounted once ahead of all routes; algorithm-pinned JWT; the audit's escalation, MFA and SSO bypasses all closed.</td></tr>
       <tr><td><strong>AI gateway policy path</strong></td><td>Single chokepoint with a CI gate against bypass, two policy passes, placement resolution, boot-invariant ledger. 14 tests across 21 services.</td></tr>
       <tr><td><strong>CI invariant system</strong></td><td>79 gates enforcing architectural properties. Independently the strongest asset in the repository.</td></tr>
+      <tr><td><strong>Part 11 signature binding</strong></td><td>The live verification path re-derives the bound content digest through the same shared evaluator as the canonical validator; a document changed after signing reports invalid, and an unbound signature reports that it attests to no content. One write path, regression-tested.</td></tr>
+      <tr><td><strong>Ingest extraction</strong></td><td>Fails rather than inventing when it cannot read a file, hashes what it actually stores, and its entry point works. Test-locked against regression to fabrication.</td></tr>
+      <tr><td><strong>Filing traceability</strong></td><td>A filed eCTD leaf pins the source it shipped, and the end-to-end lineage dossier is reachable over an API route in JSON and XML.</td></tr>
       <tr><td><strong>Wiring integrity</strong></td><td>345 client modules reachable with none orphaned, and every client API prefix resolving to a server route.</td></tr>
     </tbody>
   </table>
@@ -2013,33 +2016,49 @@
     pilot.
   </p>
 
-  <h2>The three severe ones</h2>
-    <table>
-      <thead><tr><th style="width:26%">Area</th><th>What is actually wrong</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Part 11 e-signature</strong><br><span class="pill pill-open">Not operating</span></td>
-          <td>The §11.70 guarantee is implemented and tested, and <strong>has no production caller</strong>. The live verification endpoint re-hashes only metadata, so it reports valid for a document rewritten after signing. A live route mints signatures with no content binding, no tenant scoping, and no ownership check on the document it references. No edit supersedes a signature. This is the single most consequential gap in the platform: it is the control a pharma quality unit audits first.</td></tr>
-        <tr><td><strong>End-to-end lineage</strong><br><span class="pill pill-open">Middle only</span></td>
-          <td>Strong from draft to approval. Broken at both ends: the correctly-modelled provenance tables have zero writers while two live services read them; source documents carry no version chain, so a revised protocol becomes an unlinked second row; no stored hash is ever checked against source bytes; a filed eCTD leaf cannot be traversed back to its document; and the assembled lineage dossier has no production caller.</td></tr>
-        <tr><td><strong>AI attribution at accept</strong><br><span class="pill pill-open">Dropped</span></td>
-          <td>Model, provider, prompt and prompt version exist at draft time and are discarded when a draft is accepted. On the governed store, accepted AI text is recorded as human-authored. Retrieval failure is silent, so an ungrounded draft is indistinguishable from a grounded one in the persisted record.</td></tr>
-        <tr><td><strong>Ingest extraction</strong><br><span class="pill pill-open">Defective</span></td>
-          <td>The pipeline's only HTTP entry point fails unconditionally, and the extractor fabricates placeholder content when it cannot read a file — latent only because the route is broken. Two content-hash defects mean some artifacts can never verify. These must be fixed together.</td></tr>
-        <tr><td><strong>Navigation</strong><br><span class="pill pill-partial">Thin</span></td>
-          <td>19 of 107 surfaces are referenced from a navigation, registry or router file. Most of what is built is not reachable by a user who does not know it exists.</td></tr>
-        <tr><td><strong>Test depth, unevenly</strong><br><span class="pill pill-partial">Uneven</span></td>
-          <td>Ratios vary by a factor of four. Strong: evidence spine 21 tests / 17 services, IND lifecycle 31/36, study design 13/17. Thin where it matters most: CMC 6/16, statistics 7/24, submission gateways 10/28 — the last being the irreversible action.</td></tr>
-      </tbody>
-    </table>
+  <div class="callout callout-accent">
+    <div class="c-label">This list shrank while the paper was being written</div>
+    <p style="margin:0">
+      Nine severe items closed on 14 August, after the assessment below was first drafted:
+      extraction now fails rather than inventing and hashes what it stores; its broken entry
+      point is repaired; both content-hash defects are locked; a filed eCTD leaf pins its
+      source; the lineage dossier has a production route; the unbound second signature writer
+      was deleted; the live verification path now re-derives the content digest; and a stale
+      approval no longer reads as current. Each is held by a regression test. What follows is
+      what remains after that.
+    </p>
+  </div>
+
+  <h2>What remains open</h2>
+  <table>
+    <thead><tr><th style="width:26%">Area</th><th>What is actually wrong</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Lineage at the ingest end</strong><br><span class="pill pill-open">Open</span></td>
+        <td>The correctly-modelled provenance tables — carrying version chain, current flag, page number, section reference, sentence index — have zero writers, while two live services read them. Source documents carry no version chain, so a revised protocol becomes an unlinked second row and a fact cannot be told it rests on superseded content. The draft-to-filing half of the chain now holds; this half does not.</td></tr>
+      <tr><td><strong>AI attribution at accept</strong><br><span class="pill pill-open">Open</span></td>
+        <td>Model, provider, prompt and prompt version exist at draft time and are discarded when a draft is accepted. On the governed store, accepted AI text is recorded as human-authored. Retrieval failure is silent, so an ungrounded draft is indistinguishable from a grounded one in the persisted record. The gateway records the call; the document does not record what produced it.</td></tr>
+      <tr><td><strong>Navigation</strong><br><span class="pill pill-partial">Thin</span></td>
+        <td>19 of 107 surfaces are referenced from a navigation, registry or router file. Most of what is built is not reachable by a user who does not already know it exists.</td></tr>
+      <tr><td><strong>Test depth, unevenly</strong><br><span class="pill pill-partial">Uneven</span></td>
+        <td>Ratios vary by a factor of four. Strong: evidence spine 21 tests / 17 services, IND lifecycle 31/36, study design 13/17. Thin where it matters most: CMC 6/16, statistics 7/24, submission gateways 10/28 — the last being the irreversible action.</td></tr>
+      <tr><td><strong>Isolation in production</strong><br><span class="pill pill-partial">Provisioned</span></td>
+        <td>The least-privilege role exists and grants are applied, but production has not been demonstrated running under it with a cross-tenant read returning zero rows. This gates a multi-tenant pilot.</td></tr>
+      <tr><td><strong>Not built at all</strong><br><span class="pill pill-open">Open</span></td>
+        <td>Outcome-data capture, retrieval-verified citation binding, the privacy lifecycle (erasure, retention, residency), template-change ingestion, and audit-substrate consolidation with database-enforced immutability.</td></tr>
+    </tbody>
+  </table>
 
   <h2>The pattern, stated once</h2>
   <p>
-    The weaknesses are not random. In every case the <em>mechanism is built correctly and the
-    call site is missing</em> — a tamper check with no caller, provenance tables with no
-    writers, a lineage dossier nothing invokes, an extraction pipeline behind a broken route.
-    That is a recognisable and repairable failure mode, and it is a far better position than
-    absent capability. But it is also exactly the failure mode that makes a demo look finished
-    and a pilot find holes, and it should be priced as integration work rather than discovery.
+    The weaknesses are not random, and neither were the ones just closed. In every case the
+    <em>mechanism was built correctly and the call site was missing</em> — a tamper check with
+    no caller, provenance tables with no writers, a lineage dossier nothing invoked, an
+    extraction pipeline behind a broken route. That is a recognisable and repairable failure
+    mode, and the nine closed on 14 August are evidence of the repair rate: each was fixed by
+    connecting an existing mechanism and locking it with a test, not by building something new.
+    It remains the failure mode that makes a demo look finished and a pilot find holes, so it
+    should still be priced as integration work — but the observed rate of closure is the
+    relevant input, and it is fast.
   </p>
 </section>
 
@@ -2065,14 +2084,13 @@
       </p>
     </div>
     <div class="card card-accent">
-      <h3>2 · Governed provenance <span class="pill pill-partial">Partial</span></h3>
+      <h3>2 · Governed provenance <span class="pill pill-live">Built</span></h3>
       <p style="margin:0">
         The <em>mechanism</em> is the moat and it is built: clause-level lineage enforced
         in-transaction, a save path that structurally cannot skip it, Module 3 sections carrying
         the hash of the source they compiled from. Retrofitting that into an existing authoring
-        product means rewriting its persistence layer. But per Section 26 the chain is currently
-        broken at both ends, so this is a moat whose foundations are laid and whose wiring is
-        not — real, and not yet bankable.
+        product means rewriting its persistence layer. Draft through approval to filing now
+        holds end to end; per Section 26 the ingest end is the remaining gap.
       </p>
     </div>
     <div class="card card-accent">
@@ -2121,7 +2139,7 @@
   <div class="callout callout-accent">
     <div class="c-label">The honest asymmetry</div>
     <p style="margin:0">
-      Items 1, 3 and 4 are built and real; item 2 is built but not fully wired (Section 26); item 5 — the only one that compounds — does not exist. An
+      Items 1 through 4 are built and real, with one gap at the ingest end of item 2. Item 5 — the only one that compounds — does not exist. An
       investment here is a bet that the team converts a strong architectural position into the
       operational trustworthiness required to acquire customers, and then converts those customers
       into the outcome dataset that makes the position permanent. Both conversions are execution,
