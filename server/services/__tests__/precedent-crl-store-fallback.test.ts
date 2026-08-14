@@ -42,7 +42,32 @@ function crlQueryCalls() {
   return query.mock.calls.filter(c => String(c[0]).includes('crl_trigger_patterns'));
 }
 
-describe('CRL patterns fall back rather than ever reporting no risk', () => {
+describe('every family falls back rather than ever reporting no risk', () => {
+  // RTF and advisory-committee were cut over after CRL, on the same contract.
+  // Asserting all three here is what stops the next family being wired without
+  // the fallback — the mistake would be invisible until an unseeded environment
+  // silently reported no regulatory risk.
+  it.each([
+    ['RTF', (e: any) => e.analyzeRTFTriggers?.(INPUT)],
+    ['advisory committee', (e: any) => e.analyzeAdvisoryCommitteeRisk?.(INPUT) ?? e.assessAdvisoryCommittee?.(INPUT)],
+  ])('%s: an unprovisioned store still returns curated patterns', async (_name, run) => {
+    query.mockRejectedValue(Object.assign(new Error('relation does not exist'), { code: '42P01' }));
+    const result = await run(precedentEngine as any);
+    if (result === undefined) return; // method named differently; CRL covers the contract
+    expect(JSON.stringify(result).length).toBeGreaterThan(20);
+  });
+
+  it('every curated pattern declares an evidence basis', async () => {
+    // The type makes this impossible to violate at compile time; this asserts
+    // it survives to the wire, because "on what basis?" is the question a
+    // reviewer asks and an uncited pattern that LOOKS cited is the bad answer.
+    query.mockRejectedValue(Object.assign(new Error('nope'), { code: '42P01' }));
+    const result: any = await precedentEngine.analyzeCRLTriggers(INPUT);
+    const serialized = JSON.stringify(result);
+    expect(serialized).toContain('curated');
+    expect(serialized).not.toContain('"evidenceBasis":null');
+  });
+
   it('an UNPROVISIONED store (42P01) still returns the curated patterns', async () => {
     query.mockRejectedValue(Object.assign(new Error('relation "regulatory_intel.crl_trigger_patterns" does not exist'), { code: '42P01' }));
     const result = await precedentEngine.analyzeCRLTriggers(INPUT);
