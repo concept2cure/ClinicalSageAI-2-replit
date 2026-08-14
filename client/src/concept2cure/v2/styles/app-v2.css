@@ -456,6 +456,22 @@
 .c2c-v2 .kdot{width:8px;height:8px;border-radius:50%;background:var(--text-400);}
 .c2c-v2 .kdot[data-tone="idle"]{background:var(--text-400);}.c2c-v2 .kdot[data-tone="ai"]{background:var(--accent-100);}.c2c-v2 .kdot[data-tone="warn"]{background:var(--warning);}.c2c-v2 .kdot[data-tone="ok"]{background:var(--success);}.c2c-v2 .kdot[data-tone="err"]{background:var(--error);}
 .c2c-v2 .tb-card:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
+/* The card's move buttons are opacity:0 until hover. Without this companion
+   rule a keyboard user tabs onto a control that paints nothing — the focus ring
+   is suppressed along with the button, so there is no way to tell where you are
+   or that the control exists. SC 2.4.7. */
+.c2c-v2 .tb-card:focus-within .tb-move{opacity:1;}
+
+/* §11.50 signature manifestation, rendered in the task detail panel. */
+.c2c-v2 .tb-sig-list{display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .tb-sig{border:1px solid var(--border);border-left:3px solid var(--success);border-radius:var(--radius-md);background:var(--bg-050);padding:9px 11px;}
+.c2c-v2 .tb-sig-h{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-200);}
+.c2c-v2 .tb-sig-h svg{width:14px;height:14px;color:var(--success);flex-shrink:0;}
+.c2c-v2 .tb-sig-h time{font-size:11px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 .tb-sig-meaning{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--success);background:var(--success-muted);border-radius:4px;padding:1px 6px;}
+.c2c-v2.dark .tb-sig-meaning{color:var(--success);}
+.c2c-v2 .tb-sig-reason{font-size:12px;color:var(--text-300);line-height:1.5;margin-top:5px;}
+.c2c-v2 .tb-sig-meta{font-size:10.5px;color:var(--text-400);margin-top:5px;}
 .c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(5,1fr);}
 @media (max-width:1250px){.c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(3,1fr);}}
 @media (max-width:900px){.c2c-v2 .tb-kanban[data-cols="5"]{grid-template-columns:repeat(2,1fr);}}
