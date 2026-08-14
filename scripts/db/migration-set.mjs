@@ -1148,6 +1148,14 @@ export const C2C_MIGRATION_FILES = [
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
 
+  // Constraint repair only: no table, no column, no data. 0001_phase13_full
+  // meant to widen concept2cure_review_tasks.task_type to include
+  // 'approval_task' but added a second CHECK instead of replacing phase13's
+  // inline one, so the effective domain stayed the intersection and the value
+  // was never insertable. Must run after both of those, which it does by
+  // position. Widening a CHECK cannot invalidate an existing row.
+  'migrations/20260814h_review_task_type_domain_repair.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

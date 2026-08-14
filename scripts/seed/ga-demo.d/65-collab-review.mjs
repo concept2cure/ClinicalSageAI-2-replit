@@ -327,6 +327,16 @@ export default async function seed(client, { org, admin }) {
             createdDaysAgo: 9, dueInDays: 6,
           },
           {
+            taskId: 'ga-demo-rtask-005',
+            artifact: primary, threadKey: null,
+            title: 'Approve the revised host cell protein specification for content lock',
+            description:
+              'Sign-off gate before Module 3 content lock: confirm the revised NMT 100 ng/mg limit and its justification are acceptable for the filing.',
+            taskType: 'approval_task', status: 'open',
+            creator: person('lisa'), assignee: ADMIN,
+            createdDaysAgo: 2, dueInDays: 4,
+          },
+          {
             taskId: 'ga-demo-rtask-004',
             artifact: secondary, threadKey: null,
             title: 'Second-reviewer read of the revised clinical overview',

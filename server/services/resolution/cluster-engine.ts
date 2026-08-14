@@ -173,7 +173,7 @@ async function findDirectLinks(
         rt.title as object_title,
         rt.anchor_key as section_code
       FROM concept2cure_review_threads rt
-      WHERE rt.organization_id = ${organizationId}
+      WHERE rt.org_id = ${organizationId}
         AND rt.status = 'open'
       LIMIT 20
     `);
@@ -288,7 +288,7 @@ async function findLinkedArtifacts(
           rt.anchor_key as section_code
         FROM concept2cure_review_threads rt
         WHERE rt.artifact_id::text = ${objectId}
-          AND rt.organization_id = ${organizationId}
+          AND rt.org_id = ${organizationId}
           AND rt.status = 'open'
         LIMIT 10
       `);
