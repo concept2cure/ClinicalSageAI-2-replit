@@ -570,3 +570,80 @@ disabled, and a typo'd value (`repot`) reads READY — which matches the runtime
 where an unrecognized value falls back to the enforcing default rather than
 silently disabling a paid control. The probe agrees with the code, not with an
 assumption about it.
+
+---
+
+## 7. Second front — the boundaries that are not RLS
+
+RLS is the platform's strongest tenancy control and it is genuinely mature. That
+is also why the remaining isolation defects are all in places RLS does not reach.
+Two were found and closed by inspecting exactly those places.
+
+### 7.1 The Part 11 signature table had no tenant key at all — HIGH
+
+`electronic_signatures` is the 21 CFR Part 11 §11.50/§11.70 record. `shared/
+schema.ts` declared `organization_id` on it and indexed it twice;
+`services/part11/signature-persistence.ts` **throws** without it and writes it on
+every insert. **No migration ever created the column.** The schema lived in two
+substrates — a drizzle-push model and the SQL lineage — and they had diverged.
+
+The isolation sweep policies tables that carry a tenant column and silently skips
+those that do not, correctly, because a table with no tenant key has no predicate
+to write. So the signature table was not mis-policied. It was **invisible to the
+control** — and invisible is the one state a "no unpoliced tenant table"
+assertion cannot report, because such a table is absent from that query rather
+than failing it.
+
+It also broke deploys: `20260813d` builds an index on the missing column and
+fails 42703, which takes out every migration ordered after it — **including the
+isolation sweep itself**. One missing column disabled the isolation pass for the
+whole tail of the set.
+
+Closed by `migrations/20260813c2_electronic_signatures_tenant_key.sql`. Verified
+by probe, not assumption: the column exists, `tenant_isolation_policy` is
+installed, and RLS is **ENABLED and FORCED**. FORCE matters more here than almost
+anywhere — without it the table owner bypasses the policy, and the owner is the
+role the application connects as on a stock deployment.
+
+### 7.2 Object storage was cross-tenant by construction — HIGH
+
+RLS does nothing for bytes on a disk or in a bucket. The vault provider's read
+API was `get(vaultVersionId)` — **no organization at all**:
+
+- the **local** provider resolved that id by walking EVERY organization's
+  directory under `VAULT_ROOT` and returning the first match;
+- the **S3** provider read the owning org out of the object's own metadata and
+  used it to rebuild the key — answering "which org owns this?" and then
+  fetching, never asking whether that was the org doing the asking;
+- `delete()` did the same on both. A cross-tenant delete is strictly worse than a
+  cross-tenant read: the read leaks a regulatory record, the delete destroys one.
+
+`vaultVersionId` is a `randomUUID`, which makes it unguessable but is not an
+authorization control — ids leak through logs, provenance rows, exports and AI
+context, and an unguessable capability is still a capability.
+
+**The reachable vector was AI actions.** `ocr_extract_text` and
+`extract_template_from_upload` passed a payload-supplied id straight through, and
+on that surface the payload is **model-authored**. An instruction injected into a
+document AnA is reading could name another tenant's file id and have its contents
+returned as OCR text. `ctx.user.organizationId` was already in scope in both
+handlers — used for provenance, never for authorization.
+
+Closed by making `orgId` a **required** parameter on `get`, `delete` and
+`getSignedUrl`. Required rather than optional deliberately: an optional tenant
+argument is a control that is only on where someone remembered it, which is the
+same defect as a hand-maintained allowlist. A required parameter makes the
+boundary impossible to omit because the compiler asks — no CI ratchet needed.
+
+Two supporting decisions:
+
+- **A foreign file reports as MISSING, never forbidden.** A distinguishable 403
+  confirms the id exists, turning the endpoint into an enumeration oracle. Same
+  rule `ana/uploaded-file-access.ts` already follows.
+- **The version id is shape-validated before it is joined onto a path.** Rooting
+  the search at the caller's org made traversal reachable in a way the old
+  whole-vault scan did not. Ids are UUIDs, so the check is an exact whitelist
+  rather than a blocklist.
+
+Mutation-verified by restoring the original whole-vault search: four assertions
+fail, including the cross-tenant read and the cross-tenant delete.
