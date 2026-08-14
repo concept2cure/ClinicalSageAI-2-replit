@@ -67,6 +67,15 @@
 .c2c-v2 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
 .c2c-v2 button:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
+/* The reset above strips the user-agent focus ring from every field in v2, and
+   nothing put one back — `.c2c-input`, the class every surface uses, has no rule
+   anywhere in the repo, so it inherited a bare `outline: 0`. A keyboard user had
+   no way to see which field they were on, across all 119 surfaces. Buttons
+   already had this ring one line up; fields simply never got the matching rule.
+   WCAG 2.2 SC 2.4.7. */
+.c2c-v2 input:focus-visible,
+.c2c-v2 textarea:focus-visible,
+.c2c-v2 select:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
 .c2c-v2 svg { display: block; }
 
 /* the "Sample data" / "Live" provenance pill (kit data-connect.jsx renders it

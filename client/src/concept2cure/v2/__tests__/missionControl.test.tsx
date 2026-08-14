@@ -175,14 +175,28 @@ describe('Mission Control — reads the real program engine', () => {
     });
   });
 
-  it('refuses to create a program with no name rather than posting one', async () => {
+  it('refuses to create a program with no name, and says so out loud', async () => {
     render(<MissionControl {...props()} />);
     await screen.findByRole('button', { name: /C2C-101/ });
     fireEvent.click(screen.getByRole('button', { name: /New program/ }));
     fireEvent.click(screen.getByRole('button', { name: /^Create$/ }));
 
-    expect(await screen.findByText('Enter a program name.')).toBeTruthy();
+    // The toast is the only channel for this refusal, so it has to be a live
+    // region — otherwise a screen-reader user presses Create and hears nothing.
+    const status = await screen.findByRole('status');
+    expect(status.textContent).toContain('Enter a program name.');
+    expect(status.getAttribute('aria-live')).toBe('polite');
     expect(apiRequest.mock.calls.some(c => c[0] === 'POST')).toBe(false);
+  });
+
+  it('gives its tables explicit column headers', () => {
+    render(<MissionControl {...props()} />);
+    // scope="col" is the documented technique; inference is not guaranteed.
+    return screen.findByRole('button', { name: /C2C-101/ }).then(() => {
+      for (const th of Array.from(document.querySelectorAll('thead th'))) {
+        expect(th.getAttribute('scope')).toBe('col');
+      }
+    });
   });
 
   it('switching programs refetches that program’s records', async () => {

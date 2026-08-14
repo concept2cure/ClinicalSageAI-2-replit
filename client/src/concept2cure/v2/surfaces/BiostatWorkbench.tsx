@@ -63,7 +63,11 @@ function useToast(): [string, (m: string) => void] {
 }
 function C2CToast({ msg }: { msg: string }) {
   if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
+  // role="status" + aria-live: this is the ONLY channel for validation errors
+  // ("Prior SD is required.") and for result confirmations, and without a live
+  // region a screen-reader user submits the form and is told nothing at all.
+  // WCAG 2.2 SC 4.1.3.
+  return <div className="de-toast" role="status" aria-live="polite"><span className="ico">{I.checkCircle}</span>{msg}</div>;
 }
 async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
   try {
@@ -159,8 +163,29 @@ function cell(v: unknown): string {
   return String(v);
 }
 
-function Field({ field, value, onChange }: { field: CalculatorField; value: string; onChange: (v: string) => void }) {
-  const common = { className: 'c2c-input', value, onChange: (e: any) => onChange(e.target.value) };
+function Field({ field, value, error, onChange }: {
+  field: CalculatorField;
+  value: string;
+  /** This field's own validation message, if it has one. */
+  error?: string;
+  onChange: (v: string) => void;
+}) {
+  /* The hint and the error are referenced rather than nested, for two reasons:
+     nesting them in the <label> folds them into the field's accessible NAME, so
+     the control announces its whole help text on every focus; and a description
+     is what `aria-describedby` is for. `aria-invalid` is what identifies WHICH
+     input is wrong — a single summary string says something is wrong without
+     saying where, which for a fifteen-field form is not identification.
+     WCAG 2.2 SC 3.3.1. */
+  const describedBy = [error ? `${field.key}-err` : null, field.hint ? `${field.key}-hint` : null]
+    .filter(Boolean).join(' ') || undefined;
+  const common = {
+    className: 'c2c-input',
+    value,
+    'aria-invalid': error ? true : undefined,
+    'aria-describedby': describedBy,
+    onChange: (e: any) => onChange(e.target.value),
+  };
   return (
     <label style={{ fontSize: 12, display: 'block' }}>
       <span>{field.label}{field.optional ? <span style={{ color: 'var(--text-300,#6b6963)' }}> (optional)</span> : null}</span>
@@ -173,7 +198,10 @@ function Field({ field, value, onChange }: { field: CalculatorField; value: stri
       ) : (
         <input {...common} style={{ height: 30 }} placeholder={field.placeholder} />
       )}
-      {field.hint && <span style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>{field.hint}</span>}
+      {error && (
+        <span id={`${field.key}-err`} style={{ display: 'block', fontSize: 11, color: 'var(--error,#b63939)', marginTop: 2 }}>{error}</span>
+      )}
+      {field.hint && <span id={`${field.key}-hint`} style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>{field.hint}</span>}
     </label>
   );
 }
@@ -183,6 +211,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
   const [result, setResult] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const visible = useMemo(() => calc.fields.filter(f => isFieldVisible(f, values)), [calc, values]);
   const rows = useMemo(() => scalarRows(result), [result]);
@@ -190,8 +219,14 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
   const provenance = result?.provenance ?? null;
 
   const run = useCallback(async () => {
-    const { body, errors } = buildRequestBody(calc, values);
-    if (errors.length > 0) { fireToast(errors[0]); return; }
+    const { body, errors, fieldErrors: errs } = buildRequestBody(calc, values);
+    setFieldErrors(errs);
+    if (errors.length > 0) {
+      // The toast announces (via its live region) that submission was refused
+      // and names the first problem; the per-field messages say which controls.
+      fireToast(errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length} fields need attention.)`);
+      return;
+    }
     setBusy(true);
     try {
       const res = await readData(`/api/biostat${calc.path}`, body);
@@ -207,7 +242,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
     } finally { setBusy(false); }
   }, [calc, values, fireToast]);
 
-  const reset = useCallback(() => { setValues(initialValues(calc)); setResult(null); }, [calc]);
+  const reset = useCallback(() => { setValues(initialValues(calc)); setResult(null); setFieldErrors({}); }, [calc]);
 
   return (
     <div className="pj-card">
@@ -220,7 +255,18 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10, marginBottom: 12 }}>
           {visible.map(f => (
-            <Field key={f.key} field={f} value={values[f.key] ?? ''} onChange={v => setValues(s => ({ ...s, [f.key]: v }))} />
+            <Field
+              key={f.key}
+              field={f}
+              value={values[f.key] ?? ''}
+              error={fieldErrors[f.key]}
+              onChange={v => {
+                setValues(s => ({ ...s, [f.key]: v }));
+                // Clear this field's error as soon as the user acts on it —
+                // leaving it up while they type says the new value is wrong too.
+                setFieldErrors(e => (e[f.key] ? { ...e, [f.key]: '' } : e));
+              }}
+            />
           ))}
         </div>
 
@@ -229,7 +275,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
             {I.zap} {busy ? 'Computing…' : 'Compute'}
           </button>
           <button className="btn" style={{ height: 32 }} onClick={reset} disabled={busy}>Reset</button>
-          {result && <button className="btn" style={{ height: 32 }} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
+          {result && <button className="btn" style={{ height: 32 }} aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
         </div>
 
         {result !== null && (
@@ -280,7 +326,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
             )}
 
             {showRaw && (
-              <pre style={{ marginTop: 10, maxHeight: 320, overflow: 'auto', background: 'var(--canvas-elevated,#ffffff)', color: 'var(--text-100,#3d3d3a)', padding: 10, borderRadius: 6, fontSize: 11 }}>
+              <pre id={`raw-${calc.id}`} style={{ marginTop: 10, maxHeight: 320, overflow: 'auto', background: 'var(--canvas-elevated,#ffffff)', color: 'var(--text-100,#3d3d3a)', padding: 10, borderRadius: 6, fontSize: 11 }}>
                 {JSON.stringify(result, null, 2)}
               </pre>
             )}
@@ -403,6 +449,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
                 key={c.id}
                 className={'btn' + (c.id === activeId ? ' primary' : '')}
                 style={{ height: 28, fontSize: 12 }}
+                aria-pressed={c.id === activeId}
                 onClick={() => setActiveId(c.id)}
               >
                 {c.title}

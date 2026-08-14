@@ -277,7 +277,7 @@ export function MissionControl(_props: SurfaceViewProps) {
   }, [draft, fireToast, loadPrograms]);
 
   const selected = useMemo(
-    () => (programs.data ?? []).find(p => p.id === selectedId) ?? null,
+    () => asArray<Program>(programs.data).find(p => p.id === selectedId) ?? null,
     [programs.data, selectedId]
   );
 
@@ -297,7 +297,7 @@ export function MissionControl(_props: SurfaceViewProps) {
     if (!selected) {
       return {
         summary: 'Mission Control with no program selected.',
-        facts: { programCount: programs.data?.length ?? 0 },
+        facts: { programCount: asArray(programs.data).length },
         availableActions: ['Create a program', 'Open a program'],
       };
     }
@@ -312,11 +312,11 @@ export function MissionControl(_props: SurfaceViewProps) {
         indication: selected.indication ?? null,
         overallConfidence: readiness.data?.overallConfidence ?? null,
         readinessLoaded: readiness.state === 'ready',
-        blockers: (readiness.data?.blockers ?? []).map(b => `${b.severity}: ${b.message}`),
-        nextActions: (readiness.data?.nextActions ?? []).map(a => `${a.action} — ${a.target}`),
-        artifactCount: artifacts.data?.length ?? null,
-        riskCount: risks.data?.length ?? null,
-        staleDependencyCount: stale.data?.length ?? null,
+        blockers: asArray<any>(readiness.data?.blockers).map(b => `${b.severity}: ${b.message}`),
+        nextActions: asArray<any>(readiness.data?.nextActions).map(a => `${a.action} — ${a.target}`),
+        artifactCount: asArray(artifacts.data).length,
+        riskCount: asArray(risks.data).length,
+        staleDependencyCount: asArray(stale.data).length,
       },
       availableActions: [
         'Create a program',
@@ -347,7 +347,7 @@ export function MissionControl(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Programs</span>
-          <span className="s">{programs.data?.length ?? 0} in this organization</span>
+          <span className="s">{asArray(programs.data).length} in this organization</span>
         </div>
         <div className="pj-card-b">
           {programs.state === 'loading' ? (
@@ -463,7 +463,7 @@ export function MissionControl(_props: SurfaceViewProps) {
           {/* ── The records behind the score ── */}
           <Section title="Artifacts" hint={`${asArray(artifacts.data).length}`} load={artifacts} empty="No artifacts on this program yet">
             {() => <table className="reg-tbl">
-              <thead><tr><th>Title</th><th>Type</th><th>State</th><th>Destination</th></tr></thead>
+              <thead><tr><th scope="col">Title</th><th scope="col">Type</th><th scope="col">State</th><th scope="col">Destination</th></tr></thead>
               <tbody>
                 {asArray<any>(artifacts.data).slice(0, 100).map((a: any, i: number) => (
                   <tr key={a.id ?? i}>
@@ -479,7 +479,7 @@ export function MissionControl(_props: SurfaceViewProps) {
 
           <Section title="Risks" hint={`${asArray(risks.data).length}`} load={risks} empty="No risks logged">
             {() => <table className="reg-tbl">
-              <thead><tr><th>Risk</th><th>Severity</th><th>Status</th><th>Owner</th></tr></thead>
+              <thead><tr><th scope="col">Risk</th><th scope="col">Severity</th><th scope="col">Status</th><th scope="col">Owner</th></tr></thead>
               <tbody>
                 {asArray<any>(risks.data).slice(0, 100).map((r: any, i: number) => (
                   <tr key={r.id ?? i}>
@@ -495,7 +495,7 @@ export function MissionControl(_props: SurfaceViewProps) {
 
           <Section title="Stale dependencies" hint="Upstream changed after the downstream artifact was written" load={stale} empty="No stale dependencies">
             {() => <table className="reg-tbl">
-              <thead><tr><th>Upstream</th><th>Downstream</th><th>Kind</th></tr></thead>
+              <thead><tr><th scope="col">Upstream</th><th scope="col">Downstream</th><th scope="col">Kind</th></tr></thead>
               <tbody>
                 {asArray<any>(stale.data).slice(0, 100).map((d: any, i: number) => (
                   <tr key={d.id ?? i}>
@@ -510,7 +510,7 @@ export function MissionControl(_props: SurfaceViewProps) {
 
           <Section title="Decisions" hint={`${asArray(decisions.data).length}`} load={decisions} empty="No decisions recorded">
             {() => <table className="reg-tbl">
-              <thead><tr><th>Decision</th><th>Rationale</th><th>Decided</th></tr></thead>
+              <thead><tr><th scope="col">Decision</th><th scope="col">Rationale</th><th scope="col">Decided</th></tr></thead>
               <tbody>
                 {asArray<any>(decisions.data).slice(0, 100).map((d: any, i: number) => (
                   <tr key={d.id ?? i}>
@@ -525,7 +525,10 @@ export function MissionControl(_props: SurfaceViewProps) {
         </>
       )}
 
-      {toast && <div className="de-toast"><span className="ico">{I.checkCircle}</span>{toast}</div>}
+      {/* role="status" + aria-live: the toast carries every validation message
+          ("Enter a program name.") and every write confirmation, and without a
+          live region none of it reaches a screen reader. WCAG 2.2 SC 4.1.3. */}
+      {toast && <div className="de-toast" role="status" aria-live="polite"><span className="ico">{I.checkCircle}</span>{toast}</div>}
     </div>
   );
 }

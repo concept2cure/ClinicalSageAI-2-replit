@@ -119,13 +119,59 @@ describe('BiostatWorkbench — real statistical engine', () => {
     });
   });
 
-  it('blocks submission with a named field instead of posting an incomplete body', async () => {
+  it('blocks submission and marks the offending field, not just a summary', async () => {
+    // WCAG 2.2 SC 3.3.1 asks for the item in error to be IDENTIFIED. A single
+    // toast string says something is wrong without saying which of fifteen
+    // controls, so the message is rendered at the field and referenced by
+    // aria-describedby, with aria-invalid marking the control itself.
     render(<BiostatWorkbench {...props()} />);
     fill(/Prior mean effect/, '0.4');
     fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
 
-    expect(await screen.findByText(/Prior SD is required/)).toBeTruthy();
+    await waitFor(() => expect(screen.getAllByText(/Prior SD is required/).length).toBeGreaterThan(0));
+    const priorSd = screen.getByLabelText(/^Prior SD/) as HTMLInputElement;
+    expect(priorSd.getAttribute('aria-invalid')).toBe('true');
+    expect(priorSd.getAttribute('aria-describedby')).toContain('priorSd-err');
+    // The field the user DID fill must not be marked.
+    expect(screen.getByLabelText(/Prior mean effect/).getAttribute('aria-invalid')).toBeNull();
     expect(apiRequest.mock.calls.find((c) => c[1] === '/api/biostat/assurance')).toBeFalsy();
+  });
+
+  it('clears a field’s error as soon as the user acts on it', async () => {
+    // Leaving the message up while they type asserts the new value is wrong too.
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    const priorSd = screen.getByLabelText(/^Prior SD/) as HTMLInputElement;
+    await waitFor(() => expect(priorSd.getAttribute('aria-invalid')).toBe('true'));
+    fireEvent.change(priorSd, { target: { value: '0.15' } });
+    expect(priorSd.getAttribute('aria-invalid')).toBeNull();
+  });
+
+  it('announces the toast through a live region', async () => {
+    // The toast is the only channel for "submission refused" and for results.
+    // Without a live region a screen-reader user submits and is told nothing.
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    const status = await screen.findByRole('status');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('marks the selected calculator for assistive technology, not by colour alone', () => {
+    render(<BiostatWorkbench {...props()} />);
+    expect(screen.getByRole('button', { name: CALCULATORS[0].title }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: CALCULATORS[1].title }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('the raw-response disclosure reports its expanded state', async () => {
+    render(<BiostatWorkbench {...props()} />);
+    fill(/Prior mean effect/, '0.4');
+    fill(/^Prior SD/, '0.15');
+    fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    const toggle = await screen.findByRole('button', { name: /raw response/ });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(toggle);
+    expect(screen.getByRole('button', { name: /raw response/ }).getAttribute('aria-expanded')).toBe('true');
   });
 
   it('surfaces the server’s own error text, not a generic failure', async () => {
@@ -236,8 +282,9 @@ describe('the calculator registry builds bodies the server will accept', () => {
       for (const f of calc.fields) {
         if (isFieldVisible(f, values)) values[f.key] = sampleFor(f.kind, f.placeholder);
       }
-      const { body, errors } = buildRequestBody(calc, values);
+      const { body, errors, fieldErrors } = buildRequestBody(calc, values);
       expect(errors).toEqual([]);
+      expect(fieldErrors).toEqual({});
       // Every fixed discriminator survives into the body.
       for (const [k, v] of Object.entries(calc.fixedBody ?? {})) {
         expect((body as any)[k]).toBe(v);
@@ -256,8 +303,10 @@ describe('the calculator registry builds bodies the server will accept', () => {
     (_title, calc) => {
       const values = initialValues(calc);
       const required = calc.fields.filter(f => !f.optional && isFieldVisible(f, values) && f.kind !== 'select');
-      const { errors } = buildRequestBody(calc, values);
+      const { errors, fieldErrors } = buildRequestBody(calc, values);
       expect(errors.length).toBe(required.length);
+      // Every summary line is also attributable to the control it is about.
+      expect(Object.keys(fieldErrors).sort()).toEqual(required.map(f => f.key).sort());
     }
   );
 
