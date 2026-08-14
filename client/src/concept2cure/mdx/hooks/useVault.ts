@@ -62,6 +62,10 @@ interface VaultVersionsPayload {
   meta?: { count?: number };
 }
 
+/** Live program ids are uuids; the surface's fixture ids ('or801' …) are not,
+ *  and the list route's zod schema rejects a non-uuid program_id outright. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function toStatus(status: string, lockedAt: string | null): VaultFileStatus {
   if (lockedAt || status === 'locked') return 'locked';
   if (status === 'approved') return 'final';
@@ -188,15 +192,19 @@ export interface UseVaultResult {
  * program filter only applies to real program ids.
  */
 export function useVault(programId: string | null): UseVaultResult {
-  /* Program filtering is not requested: no project-to-program bridge exists
-     in the schema, so the server refuses program_id with a 422 (it used to
-     500 on the missing column). Listing org-wide is the honest behaviour —
-     the surface labels the scope so nobody reads it as program-scoped.
-     Restore the filter when the bridge lands (see the server route's note
-     and docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md); `programId` is kept in
-     the signature so callers need not change then. */
-  void programId;
-  const { data, loading, error, refresh } = useFetchJson<VaultListPayload>('/api/mdx/vault');
+  /* Program filtering is requested again: the project-to-program bridge
+     (`projects.regulatory_program_id`) landed with slice C1 of the Document
+     Identity Contract, so the server filters on it instead of refusing. Only
+     real uuid program ids are sent — the surface's fixture ids ('or801' …)
+     are not uuids and the route's zod schema would 422 the whole request.
+     On a database that has not had the anchor migration applied the server
+     still answers 422 for a uuid; that surfaces as `error` here, which the
+     surface already renders as "no live data" rather than as an empty vault. */
+  const url =
+    programId && UUID_RE.test(programId)
+      ? `/api/mdx/vault?program_id=${encodeURIComponent(programId)}`
+      : '/api/mdx/vault';
+  const { data, loading, error, refresh } = useFetchJson<VaultListPayload>(url);
   const files = useMemo(() => selectVaultFiles(data), [data]);
   const folders = useMemo(() => (files && files.length ? deriveVaultFolders(files) : null), [files]);
   const kpis = useMemo(() => (files && files.length ? deriveVaultKpis(files) : null), [files]);

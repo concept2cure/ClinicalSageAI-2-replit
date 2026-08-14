@@ -5303,6 +5303,21 @@ export const projects = pgTable(
     // token size of the project knowledge corpus drives the selection.
     retrievalMode: text('retrieval_mode'),
     knowledgeTokenEstimate: integer('knowledge_token_estimate').default(0).notNull(),
+    /**
+     * Anchor to `regulatory_programs.id` (uuid) — the Document Identity
+     * Contract's C1 bridge between the uuid program spine every v2 surface uses
+     * and this integer PM spine, which `concept2cure_artifacts.project_id` FKs
+     * to. NULL means "not anchored to a regulatory program", a valid and common
+     * state; nothing is required to be anchored.
+     *
+     * Deliberately NOT `.references()`: `regulatory_programs` lives in
+     * shared/schema/programs.ts, which this module does not re-export, so
+     * drizzle-kit push does not create it — the FK would name a table push has
+     * never heard of. The raw migration
+     * (migrations/20260814_projects_regulatory_program_anchor.sql) declines the
+     * FK for the same reason plus a stronger one, and states both.
+     */
+    regulatoryProgramId: uuid('regulatory_program_id'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -5311,6 +5326,9 @@ export const projects = pgTable(
     pathIdx: index('projects_path_idx').on(table.path),
     depthIdx: index('projects_depth_idx').on(table.depth),
     idx_projects_org: index('idx_projects_org').on(table.organizationId),
+    // Same NAME and same (non-partial) shape as the migration's index, so a
+    // pushed database and a migrated one carry one index, not two shapes.
+    regulatoryProgramIdx: index('projects_regulatory_program_idx').on(table.regulatoryProgramId),
     parentFk: foreignKey({ columns: [table.parentProjectId], foreignColumns: [table.id] }),
   })
 );

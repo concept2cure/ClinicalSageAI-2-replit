@@ -4,8 +4,11 @@
  * Governed CRUD + certify (e-signature) + AI completeness review for clinical
  * investigator financial disclosures (Forms FDA 3454/3455 → Module 1). Every
  * mutation runs BEGIN → <domain>Tx → recordGovernedAction → COMMIT so the row
- * write and the audit/ledger commit together. Org-scoped from the verified
- * request context (never body/params). Mounted at /api/financial-disclosures.
+ * write and the audit/ledger commit together. Certify additionally persists the
+ * 21 CFR Part 11 electronic_signatures row in that same transaction (single
+ * write path — server/services/part11/signature-persistence.ts), bound to the
+ * disclosure content hash. Org-scoped from the verified request context (never
+ * body/params). Mounted at /api/financial-disclosures.
  *
  * @module server/routes/financial-disclosures
  */
@@ -14,6 +17,10 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
+import {
+  persistGovernedActionSignature,
+  BINDING_BASIS,
+} from '../services/part11/signature-persistence';
 import { getGateway } from '../services/ai-gateway';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -50,6 +57,15 @@ function resolveOrgId(req: Request): number | null {
   const raw = r.tenantId ?? r.organizationId ?? r.user?.organizationId ?? r.user?.tenantId;
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Real client IP for the Part 11 signature row, or null — never fabricated. */
+function resolveIpAddress(req: Request): string | null {
+  return (
+    (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    null
+  );
 }
 
 const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400 };
@@ -308,6 +324,32 @@ router.post('/disclosures/:id/certify', async (req, res) => {
     const gov = await recordGovernedAction(client, {
       orgId, userId, command: 'sign', target: `financial-disclosure:${id}`,
       reason: parsed.data.reason, payload: { contentHash, provenanceLinkId, meaning: parsed.data.meaning ?? 'Certified' }, domain: 'fcoi',
+    });
+    // 21 CFR Part 11 signature row, same transaction as the ledger pair. A
+    // certified disclosure IS a signed FDA form (3454/3455) that ships in
+    // Module 1 — an inspector querying electronic_signatures must find it, not
+    // just the governed ledger. The §11.70 binding is the disclosure content
+    // hash certifyDisclosureTx just computed and persisted on
+    // financial_disclosures.content_hash, so an inspector can re-derive it from
+    // the stored disclosure + interests (computeDisclosureContentHash). The
+    // §11.200 factors are the ones verifyReauth actually verified above.
+    await persistGovernedActionSignature(client, {
+      orgId, userId,
+      target: `financial-disclosure:${id}`,
+      reason: parsed.data.reason,
+      payload: { meaning: parsed.data.meaning ?? 'Certified' },
+      actionId: gov.actionId, auditId: gov.auditId, sha256Chain: gov.sha256Chain,
+      authenticationMethod: parsed.data.reauth?.totp ? 'password+totp' : 'password',
+      secondFactorVerified: Boolean(parsed.data.reauth?.totp),
+      ipAddress: resolveIpAddress(req),
+      occurredAt: new Date(),
+      binding: {
+        digest: contentHash,
+        basis: BINDING_BASIS.FINANCIAL_DISCLOSURE_CONTENT,
+        note: 'sha256 over the canonical financial-disclosure snapshot (form type, disclosure period, disclosable-interest flag and the ordered interest rows) at certification time — the same digest stored on financial_disclosures.content_hash.',
+      },
+      complianceStatement:
+        'Investigator financial-disclosure certification (21 CFR 54; Form FDA 3454/3455) applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
     });
     await client.query('COMMIT');
     recordFcoiCertification();

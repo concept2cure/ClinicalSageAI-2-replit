@@ -29,6 +29,10 @@ import {
 } from '../../services/c2c/scaffold-project-documents.js';
 import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
 import {
+  ensureProgramProjectAnchor,
+  type AnchorResult,
+} from '../../services/c2c/program-project-anchor.js';
+import {
   canCreateProgram,
   canMutateProgram,
   resolveProgramAuthzMode,
@@ -467,7 +471,12 @@ router.get('/', async (req: Request, res: Response) => {
 // Drug program types (DRUG_APPLICATION_TYPES) additionally create/link the
 // canonical `submissions` row in the same transaction — the spine the
 // IndLifecycle checklist, NdaCockpit, SubmissionCenter and DispatchReadiness
-// surfaces read.
+// surfaces read. Every program type additionally ensures a PM-spine `projects`
+// row carrying `regulatory_program_id` (Document Identity Contract slice C1),
+// which is what lets governed exports be registry-placed and the Vault be
+// filtered by program — WHERE the workspace is unambiguous; see
+// services/c2c/program-project-anchor.ts for why a skip is the honest outcome
+// otherwise, and meta.projectAnchorSkipped for how a skip is surfaced.
 //
 // Body (from the wizard): { name, productName?, programType, productType?,
 // primaryAgency?, submissionTypeId?, indication?, targetSubmissionDate?,
@@ -598,6 +607,7 @@ router.post('/', async (req: Request, res: Response) => {
   // program types, which create no submission spine.
   const applicationType = DRUG_APPLICATION_TYPES[programType] ?? null;
   let submissionSpine: { id: number; created: boolean } | null = null;
+  let projectAnchor: AnchorResult = { projectId: null, created: false };
   try {
     try {
       await client.query('BEGIN');
@@ -645,6 +655,24 @@ router.post('/', async (req: Request, res: Response) => {
         });
       }
 
+      // PM-spine anchor, SAME transaction (Document Identity Contract, slice
+      // C1). `concept2cure_artifacts.project_id` is an integer FK to
+      // `projects.id`, so without a projects row carrying this program's uuid
+      // the governed artifact registry has nowhere to put a 510(k)/CER export
+      // and the Vault cannot be filtered by program at all. Mirrors
+      // ensureSubmissionSpine exactly: caller-owned transaction, idempotent,
+      // and any error propagates so the whole creation rolls back — never a
+      // program with a half-written anchor.
+      //
+      // A SKIP is not an error. `projects.client_workspace_id` is NOT NULL and
+      // nothing in program data names a workspace, so the anchor is created
+      // only where the org has exactly one (the unambiguous case). Otherwise
+      // the program is created without it and the reason is reported — in the
+      // 201 body and in the sealed audit payload below.
+      projectAnchor = await ensureProgramProjectAnchor({
+        client, orgId, userId, programId: newId, name, code: createdCode, priority,
+      });
+
       // Domain audit row for the creation, in the SAME transaction as the
       // insert: a created program that left no audit trace is not a record a
       // regulated tenant can defend, and rolling back the program is the only
@@ -675,6 +703,19 @@ router.post('/', async (req: Request, res: Response) => {
               submission_application_type: applicationType,
             }
           : {}),
+        // The PM-spine anchor, present or absent, is part of the record. An
+        // absent one is recorded WITH its reason: a regulated tenant asking
+        // later why this program's exports were never registry-placed gets the
+        // answer from the audit row rather than from a support ticket.
+        ...(projectAnchor.projectId !== null
+          ? {
+              project_anchor_id: projectAnchor.projectId,
+              project_anchor_created: projectAnchor.created,
+            }
+          : {
+              project_anchor_id: null,
+              project_anchor_skipped: projectAnchor.skipped ?? null,
+            }),
       };
       const payloadHash = hashPayload(auditDetails);
       const { sha256Chain, hmacSeal } = await computeAuditChainSealed(client, {
@@ -737,6 +778,15 @@ router.post('/', async (req: Request, res: Response) => {
         ...(submissionSpine
           ? { submissionId: submissionSpine.id, submissionCreated: submissionSpine.created }
           : {}),
+        // Never silent, same idiom as the scaffold skip above: either the
+        // anchor id, or the reason there is none.
+        ...(projectAnchor.projectId !== null
+          ? { projectAnchorId: projectAnchor.projectId, projectAnchorCreated: projectAnchor.created }
+          : {
+              projectAnchorId: null,
+              projectAnchorSkipped: projectAnchor.skipped,
+              projectAnchorDetail: projectAnchor.detail,
+            }),
       },
     });
   } catch (err: unknown) {

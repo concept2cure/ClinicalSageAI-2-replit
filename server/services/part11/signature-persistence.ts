@@ -22,6 +22,15 @@
  *   - `persistGovernedSignSignature(client, params)` composes the two for the
  *     governed sign action: signer snapshot + binding derivation + manifest +
  *     attribution hash + INSERT, all on the caller's transaction client.
+ *   - `persistGovernedActionSignature(client, params)` is the same composition
+ *     with a CALLER-SUPPLIED binding, for domain endpoints that already hold
+ *     the content digest of what they persisted (FCoI certify, Module 3
+ *     section approval).
+ *   - `persistGovernedSignatureRevocation(client, params)` closes the §11.70
+ *     supersession chain for the governed `revoke-signature` action: it resolves
+ *     the live signature on that target (org-scoped), records the revocation as
+ *     its own attributable row, and points the revoked row's `superseded_by` at
+ *     it. A revocation that cannot resolve what it revokes REFUSES.
  *
  * Fail-closed invariants (Part 11 integrity is sacred):
  *   - Every row must be anchored: either (documentId AND versionId) or a
@@ -59,6 +68,10 @@ export const BINDING_BASIS = {
   C2C_DOCUMENT_SECTIONS: 'c2c-document-sections-sha256',
   /** sha256 over a single c2c document section's content + version at signing time. */
   C2C_DOCUMENT_SECTION: 'c2c-document-section-sha256',
+  /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
+  FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
+  /** sha256 over the frozen cmc_module3_section_versions snapshot approved at signing time. */
+  CMC_MODULE3_SECTION_VERSION: 'cmc-module3-section-version-sha256',
   /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
@@ -68,6 +81,16 @@ export const BINDING_BASIS = {
    */
   GOVERNED_ACTION_LEDGER: 'governed-action-sha256-chain',
 } as const;
+
+/**
+ * signature_type of the row a governed `revoke-signature` writes (§11.70
+ * supersession, below). Distinct from 'governed-action' so a revocation can
+ * never be mistaken for — or itself be revoked as — an applied signature.
+ */
+export const GOVERNED_REVOCATION_SIGNATURE_TYPE = 'governed-revocation';
+
+/** verification_status stamped on a signature a governed revocation supersedes. */
+export const REVOKED_VERIFICATION_STATUS = 'revoked';
 
 export type BindingBasis = (typeof BINDING_BASIS)[keyof typeof BINDING_BASIS];
 
@@ -92,6 +115,13 @@ export function canonicalJson(value: unknown): string {
 }
 
 const sha256Hex = (s: string): string => createHash('sha256').update(s).digest('hex');
+
+/**
+ * sha256 over the canonical JSON of `value` — the ONE way a caller-supplied
+ * §11.70 binding digest is computed, so every basis in BINDING_BASIS is
+ * re-derivable by an inspector the same way (keys sorted, Dates → ISO).
+ */
+export const sha256CanonicalJson = (value: unknown): string => sha256Hex(canonicalJson(value));
 
 // ── The single INSERT ────────────────────────────────────────────────────────
 
@@ -367,15 +397,44 @@ export interface GovernedSignParams {
 }
 
 /**
- * Persist the electronic_signatures row for a governed `sign` action, on the
- * SAME client/transaction as the ledger write. Throwing here rolls the whole
- * governed sign back — a governed sign either lands in BOTH substrates
- * (ledger + electronic_signatures) or in neither.
+ * A governed signature whose §11.70 binding the CALLER supplies, because the
+ * caller — not this module — is the only place the signed content is known.
+ * Domain endpoints that govern their own write in place (e.g. FCoI certify,
+ * Module 3 section approval) pass the digest they already computed over the
+ * exact bytes they persisted, with an explicit basis. Never pass a digest whose
+ * provenance you cannot state.
  */
-export async function persistGovernedSignSignature(
+export interface GovernedActionSignatureParams extends GovernedSignParams {
+  /** Explicit, honest binding. `digest: null` ⇒ the audit chain hash is bound. */
+  binding: GovernedBinding | { digest: string | null; basis: string; note: string };
+  /** electronic_signatures.signature_type. Default 'governed-action'. */
+  signatureType?: string;
+  /** manifest `kind` discriminator. Default 'governed-sign'. */
+  manifestKind?: string;
+  /** manifest `command`. Default 'sign'. */
+  command?: string;
+  /** Overrides the default §11 compliance statement. */
+  complianceStatement?: string;
+  /**
+   * Extra manifest members, APPENDED after the shared ones. Appending (never
+   * interleaving) keeps the persisted manifest bytes — and therefore the
+   * §11.200 attribution hash — byte-identical for callers that pass none.
+   */
+  extraManifest?: Record<string, unknown>;
+}
+
+/**
+ * Compose + persist ONE governed electronic_signatures row on the caller's
+ * client/transaction: signer snapshot + declared meaning + manifest +
+ * attribution hash + INSERT. Throwing rolls the caller's whole governed write
+ * back — the signature lands with the ledger or not at all.
+ */
+export async function persistGovernedActionSignature(
   client: SignatureDbClient,
-  params: GovernedSignParams,
+  params: GovernedActionSignatureParams,
 ): Promise<{ id: number; signedAt: Date }> {
+  const command = params.command ?? 'sign';
+
   // Signer snapshot (printed name — §11.50). Read on the caller's client so the
   // lookup participates in the same transaction. Fail closed if unresolvable.
   const signer = await client.query(
@@ -383,14 +442,15 @@ export async function persistGovernedSignSignature(
     [params.userId],
   );
   if (signer.rows.length === 0) {
-    throw new Error(`governed sign: signer user ${params.userId} not found — cannot attribute signature (§11.100).`);
+    throw new Error(
+      `governed ${command}: signer user ${params.userId} not found — cannot attribute signature (§11.100).`,
+    );
   }
   const signerName: string = signer.rows[0].name || signer.rows[0].email;
   const signerEmail: string = signer.rows[0].email;
   const signerTitle: string | null = signer.rows[0].title ?? null;
 
-  // Honest content binding for the signed target.
-  const binding = await deriveGovernedTargetBinding(client, params.target, params.orgId);
+  const binding = params.binding;
   const boundPayloadDigest = binding.digest ?? params.sha256Chain;
 
   // §11.50 meaning: only what the signer actually declared (the sign modal sends
@@ -405,12 +465,12 @@ export async function persistGovernedSignSignature(
   // The manifest IS the attributed record; the §11.200 attribution hash is
   // computed over these exact bytes (hash and manifest must be the same bytes).
   const signatureManifest: Record<string, unknown> = {
-    kind: 'governed-sign',
+    kind: params.manifestKind ?? 'governed-sign',
     actionId: params.actionId,
     auditId: params.auditId,
     auditSha256Chain: params.sha256Chain,
     target: params.target,
-    command: 'sign',
+    command,
     reason: params.reason,
     meaning: declaredMeaning,
     signerId: params.userId,
@@ -421,6 +481,7 @@ export async function persistGovernedSignSignature(
     boundPayloadDigest,
     bindingBasis: binding.basis,
     bindingNote: binding.note,
+    ...(params.extraManifest ?? {}),
   };
   const signatureHash = sha256Hex(JSON.stringify(signatureManifest));
 
@@ -429,7 +490,7 @@ export async function persistGovernedSignSignature(
     versionId: null,
     signedTarget: params.target,
     bindingBasis: binding.basis,
-    signatureType: 'governed-action',
+    signatureType: params.signatureType ?? 'governed-action',
     signaturePurpose: params.reason,
     signerId: params.userId,
     signerName,
@@ -443,10 +504,153 @@ export async function persistGovernedSignSignature(
     signatureManifest,
     isValid: true,
     complianceStatement:
+      params.complianceStatement ??
       'Electronic signature applied via the governed sign action (21 CFR Part 11 §11.50/§11.70/§11.200); ledger-chained to the audit_logs sha256 chain.',
     ipAddress: params.ipAddress ?? null,
     signedAt: params.occurredAt,
     boundPayloadDigest,
     organizationId: params.orgId,
   });
+}
+
+/**
+ * Persist the electronic_signatures row for a governed `sign` action, on the
+ * SAME client/transaction as the ledger write. Throwing here rolls the whole
+ * governed sign back — a governed sign either lands in BOTH substrates
+ * (ledger + electronic_signatures) or in neither.
+ */
+export async function persistGovernedSignSignature(
+  client: SignatureDbClient,
+  params: GovernedSignParams,
+): Promise<{ id: number; signedAt: Date }> {
+  // Honest content binding for the signed target, derived on the caller's client.
+  const binding = await deriveGovernedTargetBinding(client, params.target, params.orgId);
+  return persistGovernedActionSignature(client, { ...params, binding });
+}
+
+// ── §11.70 supersession (governed revoke-signature) ──────────────────────────
+
+/**
+ * A governed revocation could not identify the signature it revokes. Fail
+ * closed: a revocation that cannot name what it revokes revokes nothing, and
+ * recording it would leave the supersession chain claiming an act that never
+ * landed.
+ */
+export class SignatureRevocationUnresolvedError extends Error {
+  readonly code = 'REVOCATION_TARGET_UNRESOLVED';
+  constructor(message: string) {
+    super(message);
+    this.name = 'SignatureRevocationUnresolvedError';
+  }
+}
+
+/**
+ * Persist the §11.70 supersession for a governed `revoke-signature` action, on
+ * the SAME client/transaction as the revocation's ledger write.
+ *
+ * SUPERSESSION CONVENTION — reused, not invented. `superseded_by` is set on the
+ * row that HAS BEEN superseded and points at the row that replaced it; a row
+ * with `superseded_by IS NULL` is the live one. That is the convention the
+ * existing readers already encode:
+ *   - migrations/20260629_orchestrator_awaiting_signature_status.sql builds the
+ *     resume-path index `WHERE superseded_by IS NULL` and calls the excluded
+ *     rows "every superseded row … dead weight for this query";
+ *   - submission-package-orchestrator.findActiveReleaseSignature selects
+ *     `… AND superseded_by IS NULL` to return "the current, non-rolled-back
+ *     signature".
+ * Pointing the NEW row backwards instead would make every replacement
+ * invisible to those lookups, so this direction is the only one consistent
+ * with the shipped readers.
+ *
+ * WHY A ROW IS INSERTED. `superseded_by` is an FK to electronic_signatures(id),
+ * so supersession is only expressible against a successor row — and §11.70
+ * append-only history is the documented rule for rollback ("never deletes a
+ * row; it inserts a new row"). The revocation is itself an attributable act:
+ * `revoke-signature` is a HIGH_RISK command, so the revoker re-authenticated
+ * under §11.200 exactly as a signer does. Persisting it records WHO revoked,
+ * WHEN, WHY and under WHICH factors — which a bare UPDATE could never carry.
+ *
+ * WHAT IS MUTATED ON THE REVOKED ROW. Nothing the signer attested: signer
+ * identity, signature_hash, signature_manifest, bound_payload_digest and
+ * binding_basis are left byte-identical. Only the Verification column group
+ * (`is_valid`, `verification_status`, `verification_date`) and the supersession
+ * pointer change — `verification_status = 'revoked'` states WHY `is_valid` is
+ * false, so the row can never be misread as "the signing factors failed".
+ *
+ * The revocation row binds to its OWN governed-action chain hash, never to the
+ * revoked target's content digest — otherwise it would collide with the
+ * (organization_id, bound_payload_digest, superseded_by IS NULL) lookup and a
+ * revoked release would read as freshly signed.
+ */
+export async function persistGovernedSignatureRevocation(
+  client: SignatureDbClient,
+  params: GovernedSignParams,
+): Promise<{ revocationId: number; revokedSignatureId: number }> {
+  // Resolve the signature under revocation: org-scoped, anchored on the same
+  // governed target the ledger records, still live. Revocation rows themselves
+  // are excluded — a revocation is not a signature that can be revoked.
+  const found = await client.query(
+    `SELECT id, signature_hash, signature_type, signed_at, signer_id
+       FROM electronic_signatures
+      WHERE organization_id = $1
+        AND signed_target = $2
+        AND signature_type <> $3
+        AND superseded_by IS NULL
+      ORDER BY signed_at DESC, id DESC
+      LIMIT 1`,
+    [params.orgId, params.target, GOVERNED_REVOCATION_SIGNATURE_TYPE],
+  );
+  if (found.rows.length === 0) {
+    throw new SignatureRevocationUnresolvedError(
+      `revoke-signature: no active electronic signature is anchored to target '${params.target}' in organization ${params.orgId} — refusing to record a revocation of nothing (§11.70).`,
+    );
+  }
+  const revoked = found.rows[0];
+  const revokedId = Number(revoked.id);
+
+  const revocation = await persistGovernedActionSignature(client, {
+    ...params,
+    binding: {
+      digest: null,
+      basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER,
+      note:
+        `Revocation of electronic signature ${revokedId}. bound_payload_digest carries this revocation's ` +
+        'governed action audit sha256 chain hash (target identity + payload hash + actor + time), not a content hash. ' +
+        'The revoked signature keeps its own binding unchanged.',
+    },
+    signatureType: GOVERNED_REVOCATION_SIGNATURE_TYPE,
+    manifestKind: 'governed-revoke-signature',
+    command: 'revoke-signature',
+    complianceStatement:
+      'Revocation of a previously applied electronic signature via the governed revoke-signature action ' +
+      '(21 CFR Part 11 §11.50/§11.70/§11.200); the superseded signature is retained unaltered and linked via superseded_by.',
+    extraManifest: {
+      revokedSignatureId: revokedId,
+      revokedSignatureHash: revoked.signature_hash ?? null,
+      revokedSignatureType: revoked.signature_type ?? null,
+      revokedSignatureSignerId: revoked.signer_id == null ? null : Number(revoked.signer_id),
+    },
+  });
+
+  // Mark the superseded row. The `superseded_by IS NULL` predicate makes this a
+  // compare-and-set: two concurrent revocations cannot both claim the same
+  // signature, and the loser fails closed rather than orphaning a revocation row.
+  const marked = await client.query(
+    `UPDATE electronic_signatures
+        SET superseded_by = $1,
+            is_valid = false,
+            verification_status = $2,
+            verification_date = $3,
+            updated_at = now()
+      WHERE id = $4 AND organization_id = $5 AND superseded_by IS NULL
+      RETURNING id`,
+    [revocation.id, REVOKED_VERIFICATION_STATUS, params.occurredAt, revokedId, params.orgId],
+  );
+  if (marked.rows.length === 0) {
+    throw new SignatureRevocationUnresolvedError(
+      `revoke-signature: electronic signature ${revokedId} was superseded concurrently — refusing to leave a revocation without a superseded signature (§11.70).`,
+    );
+  }
+
+  return { revocationId: revocation.id, revokedSignatureId: revokedId };
 }

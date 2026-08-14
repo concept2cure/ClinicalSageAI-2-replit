@@ -968,6 +968,28 @@ export const C2C_MIGRATION_FILES = [
   // until it lands.
   'migrations/20260813d_esignature_governed_unification.sql',
 
+  // ── Program anchor, Document Identity Contract slice C1 (added 2026-08-14) ─
+  // projects.regulatory_program_id — the column live code has assumed exists
+  // for a long time and that NO migration created. mdx-vault.ts filtered on it
+  // while claiming "added by the MDX migration", so every program-scoped Vault
+  // request raised 42703 and 500'd. That is now an honest 422 until this lands,
+  // and this is what lets the real filter come back.
+  //
+  // MUST be on this list, not merely in migrations/: the root tree reaches only
+  // fresh databases, and it is the EXISTING ones whose governed exports are
+  // landing audited-but-unplaced. CREATE TABLE IF NOT EXISTS cannot add a
+  // column to a table that already exists, so the guarded ALTER here is the
+  // only path by which it reaches them.
+  //
+  // Placed with the other pre-sweep entries (C-33: the two isolation steps are
+  // the tail of the set, always). It creates no table, so the sweep has nothing
+  // new to policy — `projects` is a base table policied long ago — and the
+  // ordering costs it nothing. No dependency on any entry above: it ALTERs
+  // `projects` (a drizzle-push base table deploy-migrate asserts as a sentinel)
+  // and its backfill self-guards on regulatory_programs, whose creator
+  // (20260524_program_workbench_schema.sql) is deliberately not on this path.
+  'migrations/20260814_projects_regulatory_program_anchor.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

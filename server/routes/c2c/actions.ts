@@ -12,7 +12,11 @@
  * `sign` additionally persists a 21 CFR Part 11 electronic_signatures row in
  * the SAME transaction as the ledger pair (single e-signature write path — see
  * server/services/part11/signature-persistence.ts). A governed sign lands in
- * both substrates or in neither.
+ * both substrates or in neither. Its reverse counterpart `revoke-signature`
+ * closes the §11.70 supersession chain in that same transaction: it marks the
+ * revoked signature superseded and records the revocation as its own
+ * attributable row, or — when no live signature is anchored to the target —
+ * refuses (409 REVOCATION_TARGET_UNRESOLVED) and writes nothing at all.
  *
  * Legacy redirect (handled here):
  *   POST /api/cerv2-sections/:id/accept-ana-draft → delegate to accept-ai-suggestion
@@ -41,7 +45,11 @@ import {
   SeparationOfDutiesError,
 } from '../../services/governance/separation-of-duties.js';
 import { can } from '../../services/governance/permissions.js';
-import { persistGovernedSignSignature } from '../../services/part11/signature-persistence.js';
+import {
+  persistGovernedSignSignature,
+  persistGovernedSignatureRevocation,
+  SignatureRevocationUnresolvedError,
+} from '../../services/part11/signature-persistence.js';
 
 const router = Router();
 
@@ -453,14 +461,14 @@ export async function writeMutation(
       surface,
       idempotencyKey: idempotencyKey ?? null,
     });
-    if (command === 'sign') {
+    if (command === 'sign' || command === 'revoke-signature') {
       // Attribution honesty: record only the re-auth factors verifyReauth
       // actually verified for this envelope (password always for the HTTP
       // path; TOTP only when supplied). A programmatic call without re-auth
       // credentials is recorded as 'session', never as a password check that
       // did not happen.
       const reauth = envelope.reauth;
-      await persistGovernedSignSignature(client, {
+      const signatureParams = {
         orgId,
         userId,
         target,
@@ -475,7 +483,17 @@ export async function writeMutation(
         secondFactorVerified: Boolean(reauth?.totp),
         ipAddress: signContext?.ipAddress ?? null,
         occurredAt: new Date(),
-      });
+      };
+      if (command === 'sign') {
+        await persistGovernedSignSignature(client, signatureParams);
+      } else {
+        // §11.70 supersession, on the SAME client as the revocation's ledger
+        // pair: the revoked signature is marked superseded and the revocation
+        // is itself recorded as an attributable row. An unresolvable target
+        // throws → the whole revocation rolls back (a governed revocation
+        // lands in ledger AND electronic_signatures, or in neither).
+        await persistGovernedSignatureRevocation(client, signatureParams);
+      }
     }
     return recorded;
   };
@@ -609,6 +627,11 @@ function makeHandler(command: Command) {
       }
       if (err instanceof SeparationOfDutiesError) {
         return res.status(403).json({ error: err.code, detail: err.message });
+      }
+      if (err instanceof SignatureRevocationUnresolvedError) {
+        // Nothing was written (the transaction rolled back). Say so plainly
+        // rather than returning an opaque 500 that reads as "maybe it worked".
+        return res.status(409).json({ error: err.code, detail: err.message });
       }
       console.error(`[c2c/actions/${command}]`, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });

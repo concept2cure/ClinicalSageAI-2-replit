@@ -145,6 +145,12 @@ describe('POST /api/c2c/projects', () => {
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // INSERT ... RETURNING id
       .mockResolvedValueOnce({ rows: [] })                                            // spine identity SELECT (nda = drug)
+      // Program anchor (slice C1), on the same transaction client, between the
+      // spine and the audit row: preflight (column present, exactly one
+      // workspace) → no existing anchor → INSERT INTO projects RETURNING id.
+      .mockResolvedValueOnce({ rows: [{ has_column: 1, workspace_count: 1, workspace_id: 55 }] })
+      .mockResolvedValueOnce({ rows: [] })                                            // anchor: no existing project
+      .mockResolvedValueOnce({ rows: [{ id: 9001 }] })                                // anchor: INSERT INTO projects
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT (same txn)
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT
       .mockResolvedValueOnce({ rows: [shapedRow()] });                                // re-select (post-commit, on the pool)
