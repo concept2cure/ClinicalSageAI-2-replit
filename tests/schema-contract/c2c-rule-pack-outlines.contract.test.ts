@@ -34,28 +34,12 @@
  * and is recorded as such below rather than quietly exempted.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scaffoldProjectDocuments } from '../../server/services/c2c/scaffold-project-documents';
-
-// Every test here boots a PGlite instance and applies four migrations. Measured
-// in isolation on an idle machine, the heaviest case takes ~5.5s against the
-// 10s global default — 55% of the budget with zero contention. That is a latent
-// flake: run this file alongside other PGlite suites (which vitest does by
-// default) and the same test tips over a timeout while asserting nothing
-// different. It failed exactly that way in a 75-file run, at 10.8s and 12.4s,
-// and passed in isolation and in a 49-file run.
-//
-// So the timeout is raised to match the six sibling PGlite contract tests that
-// already opt out of the default (rls-two-tenant-full-schema, tenant-isolation-
-// sweep, tenant-export-covers-purge, …). Raising the GLOBAL default was the
-// wrong fix: it would hide genuine slowness in the fast unit suites, where a
-// 10s test really is a defect. A hung test is still caught — by the CI job
-// timeout, which is the right layer for "this never finishes".
-vi.setConfig({ testTimeout: 300_000, hookTimeout: 300_000 });
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const PREREQ = path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql');
