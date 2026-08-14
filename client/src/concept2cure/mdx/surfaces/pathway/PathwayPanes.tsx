@@ -136,6 +136,11 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
 
   const selected = events.find((e) => e.id === selectedId) || filtered[0];
 
+  /* Fixtures carry a synthesized chain and no `chain` field, so they count as
+     chained — they are only ever reachable through the explicit sample-mode
+     boundary, where the surface is already labelled as sample content. */
+  const unchainedCount = events.filter((e) => e.chain === 'unchained').length;
+
   const groups = React.useMemo(() => {
     const out: Array<{ day: string; items: AuditEvent[] }> = [];
     let curDay: string | null = null;
@@ -157,9 +162,27 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
     <div className="audit-pane">
       <div className="audit-bar">
         <div className="audit-bar-l">
-          <span className="audit-integrity" title="Each row is hash-chained to its predecessor (SHA-256). Tampering with any prior event invalidates the chain.">
-            {I.shieldCheck} Tamper-evident · SHA-256 · {events.length} events
-          </span>
+          {/* The badge states what the rows in this window actually carry.
+              It used to assert "Tamper-evident · SHA-256" unconditionally,
+              over rows whose real chain column the route never read — so it
+              said the same thing whether every row was sealed or none was.
+              A row is only tamper-evident if it carries a chain link. */}
+          {unchainedCount > 0 ? (
+            <span
+              className="audit-integrity warn"
+              title={`${unchainedCount} of ${events.length} events reached the audit table outside the hash chain and cannot be shown to be untampered. The remainder are chained.`}
+            >
+              {I.shieldCheck} {events.length - unchainedCount} of {events.length} chained ·{' '}
+              {unchainedCount} unchained
+            </span>
+          ) : (
+            <span
+              className="audit-integrity"
+              title="Each row carries a SHA-256 chain link committing it to the prior event. Tampering with any prior event invalidates the chain."
+            >
+              {I.shieldCheck} Tamper-evident · SHA-256 · {events.length} events
+            </span>
+          )}
         </div>
         <div className="audit-bar-r">
           <div className="audit-filters">
@@ -233,14 +256,40 @@ function AuditDetail({ e, onOpenSection }: { e: AuditEvent; onOpenSection: OpenS
 
       <div className="audit-det-chain">
         <div className="audit-chain-label">{I.link} Hash chain</div>
-        <div className="audit-chain-row">
-          <span className="audit-chain-k">prev</span>
-          <span className="mono audit-chain-v">{e.prev}</span>
-        </div>
-        <div className="audit-chain-row">
-          <span className="audit-chain-k">this</span>
-          <span className="mono audit-chain-v">{e.hash}</span>
-        </div>
+        {e.chain === 'unchained' ? (
+          /* Not a rendering edge case — a compliance fact. This row reached the
+             audit table without a chain link, so nothing here can attest to it.
+             Showing empty hash fields under a "Hash chain" heading read as a
+             display bug; it is not one. */
+          <div className="audit-chain-row">
+            <span className="audit-chain-v">
+              Written outside the hash chain — this event is not tamper-evident.
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="audit-chain-row">
+              <span className="audit-chain-k">prev</span>
+              {/* The audit_logs chain is global across tenants, so this row's
+                  predecessor commonly belongs to another organization and is
+                  not ours to display. That is why the field is empty — the
+                  linkage exists, it is just not tenant-visible. */}
+              <span className="mono audit-chain-v">
+                {e.prev || (e.prevAvailable === false ? 'not tenant-visible' : '—')}
+              </span>
+            </div>
+            <div className="audit-chain-row">
+              <span className="audit-chain-k">this</span>
+              <span className="mono audit-chain-v">{e.hash || '—'}</span>
+            </div>
+            {e.chain === 'sealed' && (
+              <div className="audit-chain-row">
+                <span className="audit-chain-k">seal</span>
+                <span className="audit-chain-v">HMAC sealed · 21 CFR 11.70</span>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {e.target_id && (
