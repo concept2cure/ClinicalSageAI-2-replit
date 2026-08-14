@@ -77,6 +77,16 @@ jobs:
         # `microcopy-allow: <reason>`.
         run: npm run check:microcopy
 
+      - name: GA completion ledger check
+        # Hard gate. docs/GA_COMPLETION_LEDGER_2026-08.md is the single register
+        # of open GA work across every space; its failure mode is going stale —
+        # a row citing a renamed file, a row marked `done` on an agent's
+        # say-so, two rows sharing an ID. All three have happened here. The
+        # check refuses a `done` row whose evidence does not exist, and refuses
+        # work specified against a document that is not in the repo. A path an
+        # `open` row names as its deliverable is reported, never failed.
+        run: npm run check:ledger
+
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh
 
