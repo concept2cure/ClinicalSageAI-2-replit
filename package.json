@@ -46,6 +46,7 @@
     "check:compliance-claims": "node scripts/ci/check-compliance-claims.mjs",
     "check:microcopy": "node scripts/ci/check-microcopy.mjs",
     "check:ledger": "node scripts/ops/ledger-check.mjs",
+    "pack:whitepaper": "node scripts/build-investor-whitepaper.mjs",
     "pack:iq-oq": "node scripts/ops/generate-iq-oq-pack.mjs",
     "pack:iq-oq:run": "node scripts/ops/generate-iq-oq-pack.mjs --run",
     "ocr:vendor": "node scripts/vendor-tesseract-langdata.mjs",

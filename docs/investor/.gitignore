@@ -1,0 +1,3 @@
+# Webfont binaries fetched at build time — see scripts/build-investor-whitepaper.mjs.
+# Regenerate with: node scripts/build-investor-whitepaper.mjs --fetch-fonts
+fonts/

@@ -470,7 +470,21 @@
 @keyframes tt-fade{from{opacity:0;}to{opacity:1;}}
 .c2c-v2 .tt-panel{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:92vw;background:var(--bg-000);border-left:1px solid var(--border);box-shadow:-18px 0 48px -20px rgb(20 20 19/.22);z-index:91;display:flex;flex-direction:column;animation:tt-slide 220ms cubic-bezier(.4,0,.2,1);}
 @keyframes tt-slide{from{transform:translateX(20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
-@media (prefers-reduced-motion: reduce){.c2c-v2 .tt-panel,.c2c-v2 .tt-scrim{animation:none;}}
+/* Reduced-motion policy for this stylesheet — keep every entrance/exit
+   animation registered HERE rather than beside its own rule, so the list can be
+   diffed against the keyframes in one place. Six of these were missing: the
+   task-board drawer and modal, and the collab launcher's menu, backdrop, modal
+   and toast all animated regardless of the user's setting. That is a
+   vestibular-safety gap, not a polish item.
+   Each of these is safe to kill outright: every keyframe animates FROM an
+   offset TO the element's resting state, so suppressing it lands on the base
+   rule. `.cl-toast` is the one to watch — its base rule carries
+   translateX(-50%), so it stays centred rather than jumping. */
+@media (prefers-reduced-motion: reduce){
+  .c2c-v2 .tt-panel,.c2c-v2 .tt-scrim,
+  .c2c-v2 .tb-detail,.c2c-v2 .tb-create,
+  .c2c-v2 .cl-fab-menu,.c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast{animation:none;}
+}
 .c2c-v2 .tt-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
 .c2c-v2 .tt-head b{font-size:14px;font-weight:600;}
 .c2c-v2 .tt-head-meta{font-size:11px;color:var(--text-400);}
@@ -523,6 +537,13 @@
 .c2c-v2.dark .tb-pri.pri-critical{color:var(--error);}.c2c-v2.dark .tb-pri.pri-high{color:var(--warning);}
 .c2c-v2 .tb-appr{font-size:9.5px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--bg-100);color:var(--text-400);}
 .c2c-v2 .tb-appr[data-s="pending"]{background:var(--warning-muted);color:#7a4a0f;}.c2c-v2 .tb-appr[data-s="approved"]{background:var(--success-muted);color:#3f5c1f;}
+/* Both fills above are tokens that shift for dark mode, but the text was
+   hardcoded light-mode hex with no dark override — leaving pending at 1.47:1
+   and approved at 1.58:1 against the dark fill, i.e. unreadable. Every sibling
+   chip (.tb-pri, .tb-detail-note[data-warn], .cl-warn) carries this override;
+   the approval chip was the one that never got it. */
+.c2c-v2.dark .tb-appr[data-s="pending"]{color:var(--warning);}
+.c2c-v2.dark .tb-appr[data-s="approved"]{color:var(--success);}
 .c2c-v2 .tb-prog{height:3px;border-radius:2px;background:var(--bg-200);margin-bottom:8px;overflow:hidden;}
 .c2c-v2 .tb-prog>span{display:block;height:100%;background:var(--accent-100);border-radius:2px;}
 .c2c-v2 .tb-card-foot{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text-400);}
@@ -569,6 +590,8 @@
 .c2c-v2 .tb-an-open{color:var(--warning);}.c2c-v2 .tb-an-done{color:var(--success);}
 .c2c-v2 .tb-an-foot{font-size:10px;color:var(--text-400);margin-top:9px;padding-top:9px;border-top:1px solid var(--border);}
 .c2c-v2 .tb-an-foot[data-warn]{color:#7a4a0f;}
+/* Same missing-dark-override bug as .tb-appr: 2.03:1 on the dark surface. */
+.c2c-v2.dark .tb-an-foot[data-warn]{color:var(--warning);}
 .c2c-v2 .tb-an-auto{font-size:11.5px;color:var(--text-300);line-height:1.5;}
 .c2c-v2 .tb-an-auto-rules{display:flex;flex-direction:column;gap:4px;margin:9px 0;}
 .c2c-v2 .tb-an-auto-rules span{font-family:var(--font-mono);font-size:10px;color:var(--text-300);background:var(--bg-050);border-radius:4px;padding:3px 7px;}

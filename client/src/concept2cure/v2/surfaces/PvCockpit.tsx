@@ -65,7 +65,13 @@ const EVENT_TYPES = ['AE', 'SAE', 'SUSAR', 'AESI'];
 const SERIOUSNESS = ['death', 'life_threatening', 'hospitalization', 'disability', 'congenital_anomaly', 'medically_important'];
 const REGIONS = ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada'];
 
-export function PvCockpit(_props: SurfaceViewProps) {
+export function PvCockpit({ onAsk }: SurfaceViewProps) {
+  /* AnA on this surface. It took SurfaceViewProps and discarded it as `_props`,
+     so the one screen where a safety reviewer is looking at a disproportionality
+     signal or an expedited-reporting clock had no way to ask about it. The
+     prompts below name the actual artefact on screen — a generic "ask about this
+     page" would make the affordance decorative. */
+  const ask = onAsk;
   const [ov, setOv] = useState<Overview | null>(null);
   const [ovState, setOvState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [matrix, setMatrix] = useState<ComplianceRow[]>([]);
@@ -132,7 +138,7 @@ export function PvCockpit(_props: SurfaceViewProps) {
     <div className="cm-body">
       {/* KPI strip */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Safety surveillance</span><span className="s">Live org-scoped KPIs</span></div>
+        <div className="pj-card-h"><span className="t">Safety surveillance</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Live org-scoped KPIs{ask && <button className="reg-cta" onClick={() => ask('Review our current pharmacovigilance posture: overdue cases, active signals, and any periodic report at risk of missing its deadline. Say which are unavailable rather than assuming zero.')}>{I.sparkles} Review posture</button>}</span></div>
         <div className="pj-card-b">
           {ovState === 'loading' ? <EmptyState icon={I.zap} title="Loading safety KPIs…" />
             : ovState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load safety KPIs" hint="GET /api/pharmacovigilance/overview didn’t respond. Sign in to your tenant and retry." />
@@ -148,7 +154,7 @@ export function PvCockpit(_props: SurfaceViewProps) {
       {/* Disproportionality screener + deadline calculator */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))', gap: 14, marginBottom: 14 }}>
         <div className="pj-card" style={{ margin: 0 }}>
-          <div className="pj-card-h"><span className="t">Disproportionality screener</span><span className="s">PRR · ROR · EBGM</span></div>
+          <div className="pj-card-h"><span className="t">Disproportionality screener</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>PRR · ROR · EBGM{ask && <button className="reg-cta" onClick={() => ask('Interpret a disproportionality result for a drug-event pair: what PRR, ROR with its confidence interval, chi-square, EBGM and EB05 together do and do not support, and what evidence would be needed before calling it a signal.')}>{I.sparkles} Interpret these statistics</button>}</span></div>
           <div className="pj-card-b">
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <input className="c2c-input" style={{ height: 30, flex: 1 }} aria-label="Drug name" placeholder="Drug" value={scr.drug} onChange={(e) => setScr({ ...scr, drug: e.target.value })} />
@@ -199,7 +205,7 @@ export function PvCockpit(_props: SurfaceViewProps) {
 
       {/* Compliance matrix */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Regional reporting compliance</span><span className="s">{matrix.length}</span></div>
+        <div className="pj-card-h"><span className="t">Regional reporting compliance</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{matrix.length}{ask && <button className="reg-cta" onClick={() => ask('Explain our expedited and periodic safety reporting obligations by region, and which of them our current compliance matrix shows we are not meeting. Say which regions have no compliance status recorded rather than assuming compliant.')}>{I.sparkles} Explain obligations</button>}</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {matrix.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No compliance data yet" hint="Per-region adverse-event reporting compliance appears here once events are logged." /></div>
             : <table className="reg-tbl"><thead><tr><th>Region</th><th>Events</th><th>Overdue</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>

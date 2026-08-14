@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T18:32:08.679Z",
+  "generatedAt": "2026-08-14T18:42:12.754Z",
   "git": {
-    "sha": "236629dc30b3f7d12fa2d89f81a6170e30471e11",
+    "sha": "0928c2c543fbc191180fe19aba4834092e4c382f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -374,18 +374,6 @@
         ]
       },
       {
-        "basename": "programs",
-        "count": 6,
-        "paths": [
-          "client/src/concept2cure/mdx/data/programs.ts",
-          "design-system/ui_kits/mdx/data/programs.js",
-          "server/routes/biopharma/programs.ts",
-          "server/routes/programs.ts",
-          "shared/schema/programs.ts",
-          "ui_kits/mdx/data/programs.js"
-        ]
-      },
-      {
         "basename": "audit",
         "count": 5,
         "paths": [
@@ -438,6 +426,17 @@
           "design-system/ui_kits/mdx/surfaces/Postmarket.jsx",
           "ui_kits/mdx/data/postmarket.js",
           "ui_kits/mdx/surfaces/Postmarket.jsx"
+        ]
+      },
+      {
+        "basename": "programs",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/programs.ts",
+          "design-system/ui_kits/mdx/data/programs.js",
+          "server/routes/biopharma/programs.ts",
+          "shared/schema/programs.ts",
+          "ui_kits/mdx/data/programs.js"
         ]
       },
       {
@@ -2599,7 +2598,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 400,
       "largeByBytes": 29,
       "largeByLines": 72
     },
