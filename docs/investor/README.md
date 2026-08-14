@@ -1,7 +1,7 @@
 # Investor technical white paper
 
-A 10-page technical white paper on the platform, written for prospective investors.
-Cover, contents, and eight content sections — one section per page.
+A 15-page technical white paper on the platform, written for prospective investors.
+Cover, contents, and thirteen content sections — one section per page.
 
 | File | Role |
 |---|---|
@@ -30,7 +30,7 @@ sans — but line breaks shift, and the section-per-page fit is not guaranteed.
 Each `<section>` must fit inside one printed page. The printable box on US Letter
 at the configured margins is **254mm tall by 186mm wide**; a section taller than
 that silently spills onto a second sheet and pushes the whole document out of
-shape. After any content change, re-render and confirm the page count is still 10:
+shape. After any content change, re-render and confirm the page count is still 15:
 
 ```bash
 python3 -c "from pypdf import PdfReader; \
@@ -47,11 +47,21 @@ document.querySelectorAll('section').forEach((s, i) =>
 
 ## On the content
 
-Every quantitative claim is derived from this repository — file counts, `pgTable`
-declarations, route registrations, test files, the AnA capability manifest, and
-the platform's own readiness ledgers under `docs/`. Nothing is estimated for
-effect. When the platform changes materially, the figures in Sections 03 and 07
-and the readiness table in Section 08 need re-deriving, not just re-wording.
+Every quantitative claim is derived from this repository or from the independent
+15-domain readiness assessment dated 2026-08-10 — file counts, route
+registrations, the AnA capability manifest, the installer's provisioned table and
+policy counts, and that audit's executed evidence. Nothing is estimated for
+effect. When the platform changes materially, the figures in Sections 04 and 08
+and the state tables in Sections 06, 07 and 10 need re-deriving, not just
+re-wording.
+
+**Sections 09 and 10 are the load-bearing ones.** Section 09 reports the audit's
+unfavourable findings — 32 P0, 106 P1, average domain maturity 4.1/10, and a
+not-ready-for-GA verdict. Section 10 reports what has closed since, and every row
+in it was re-verified by reading the current code rather than taken from a status
+report. If you update Section 10, re-verify the same way; a remediation claim
+sourced from a changelog is exactly the kind of assertion this document exists to
+avoid making.
 
 The paper deliberately states open gaps and names their owners, mirroring
 `docs/GA_COMPLETION_LEDGER_2026-08.md`. That posture is the point: the same CI

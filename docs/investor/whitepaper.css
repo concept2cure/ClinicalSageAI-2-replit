@@ -514,3 +514,11 @@ td.num, th.num { font-family: var(--sans); font-variant-numeric: tabular-nums; w
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+.callout-amber { background: #fdf4e7; }
+.callout-amber .c-label { color: var(--amber); }
+
+/* 13-entry contents needs tighter rows than the 8-entry version. */
+.toc-compact > li { padding: 2.1mm 0; grid-template-columns: 8mm 1fr 10mm; }
+.toc-compact .toc-t { font-size: 9.6pt; }
+.toc-compact .toc-d { font-size: 6.9pt; margin-top: 0.8mm; }

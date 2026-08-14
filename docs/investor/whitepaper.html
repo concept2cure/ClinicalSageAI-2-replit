@@ -45,10 +45,10 @@
     <div class="cover-rule"></div>
 
     <div class="cover-facts">
-      <div class="cover-fact"><div class="cf-n">1.44M</div><div class="cf-l">Lines of<br>TypeScript</div></div>
-      <div class="cover-fact"><div class="cf-n">705</div><div class="cf-l">Governed<br>data tables</div></div>
+      <div class="cover-fact"><div class="cf-n">931</div><div class="cf-l">Tables from<br>a blank database</div></div>
       <div class="cover-fact"><div class="cf-n">359</div><div class="cf-l">Regulatory<br>AI tools</div></div>
       <div class="cover-fact"><div class="cf-n">13</div><div class="cf-l">Agency<br>gateways</div></div>
+      <div class="cover-fact"><div class="cf-n">15</div><div class="cf-l">Domains under<br>outside audit</div></div>
     </div>
   </div>
 
@@ -62,9 +62,11 @@
   </div>
 
   <div class="cover-note">
-    Quantitative figures in this paper were derived directly from the repository at the
-    revision above. Forward-looking statements regarding roadmap, market conditions, and
-    competitive position are estimates, not guarantees of outcome.
+    This paper reports an independent readiness audit of the platform alongside its
+    capabilities, including findings that were unfavourable. Quantitative figures were
+    derived directly from the repository and from that audit's executed evidence.
+    Forward-looking statements regarding roadmap, market conditions, and competitive
+    position are estimates, not guarantees of outcome.
   </div>
 </section>
 
@@ -76,78 +78,36 @@
   <h1 class="section-title">What this document covers</h1>
   <p class="deck">
     A technical assessment of the platform as it exists in code today — its architecture,
-    its intelligence layer, the compliance machinery that makes its output filing-ready, and an
-    honest ledger of what remains before a first real submission.
+    its intelligence layer, the compliance machinery, what an independent audit found
+    wrong with it, and what has been fixed since.
   </p>
 
-  <ol class="toc-list">
-    <li>
-      <span class="toc-n">01</span>
-      <span class="toc-t">Executive summary
-        <span class="toc-d">The thesis in one page: a spanning platform in a market of point tools, built during the decade's only industry-wide switching window.</span>
-      </span>
-      <span class="toc-p">03</span>
-    </li>
-    <li>
-      <span class="toc-n">02</span>
-      <span class="toc-t">The problem and the market window
-        <span class="toc-d">Why regulatory submission is four disconnected silos, and why the 2026–2029 standards transition reopens the buying decision.</span>
-      </span>
-      <span class="toc-p">04</span>
-    </li>
-    <li>
-      <span class="toc-n">03</span>
-      <span class="toc-t">Platform architecture
-        <span class="toc-d">The five-layer stack: substrate, domain services, intelligence, governance, and the chat-first surface.</span>
-      </span>
-      <span class="toc-p">05</span>
-    </li>
-    <li>
-      <span class="toc-n">04</span>
-      <span class="toc-t">The intelligence layer
-        <span class="toc-d">AnA, the tool-calling assistant; the AI gateway; and the RIM — a deterministic, non-LLM layer that accumulates regulatory judgment.</span>
-      </span>
-      <span class="toc-p">06</span>
-    </li>
-    <li>
-      <span class="toc-n">05</span>
-      <span class="toc-t">Trust architecture
-        <span class="toc-d">Hash-chained audit, row-level tenant isolation, clause-level lineage, and AI governance controls that survive an inspection.</span>
-      </span>
-      <span class="toc-p">07</span>
-    </li>
-    <li>
-      <span class="toc-n">06</span>
-      <span class="toc-t">Regulatory coverage
-        <span class="toc-d">The three go-to-market journeys — 510(k), CER/PER, IND/NDA — and the assembly, validation, and transmission chain beneath them.</span>
-      </span>
-      <span class="toc-p">08</span>
-    </li>
-    <li>
-      <span class="toc-n">07</span>
-      <span class="toc-t">Engineering scale and defensibility
-        <span class="toc-d">What has actually been built, how quality is enforced mechanically, and where the durable moat lies.</span>
-      </span>
-      <span class="toc-p">09</span>
-    </li>
-    <li>
-      <span class="toc-n">08</span>
-      <span class="toc-t">Current state, roadmap, and risks
-        <span class="toc-d">The open ledger, stated plainly: what is engineering, what is procurement, what is a quality-system signature.</span>
-      </span>
-      <span class="toc-p">10</span>
-    </li>
+  <ol class="toc-list toc-compact">
+    <li><span class="toc-n">01</span><span class="toc-t">Executive summary<span class="toc-d">The thesis, and the audit that tested it.</span></span><span class="toc-p">03</span></li>
+    <li><span class="toc-n">02</span><span class="toc-t">The problem and the market window<span class="toc-d">Four disconnected silos, and the 2026–2029 standards transition that reopens every stack.</span></span><span class="toc-p">04</span></li>
+    <li><span class="toc-n">03</span><span class="toc-t">The competitive landscape<span class="toc-d">Who occupies each silo, what they do well, and where each one stops.</span></span><span class="toc-p">05</span></li>
+    <li><span class="toc-n">04</span><span class="toc-t">Platform architecture<span class="toc-d">The five-layer stack, and the design decisions that matter commercially.</span></span><span class="toc-p">06</span></li>
+    <li><span class="toc-n">05</span><span class="toc-t">The intelligence layer<span class="toc-d">AnA, the AI gateway, and the RIM — a deterministic layer that learns without a model.</span></span><span class="toc-p">07</span></li>
+    <li><span class="toc-n">06</span><span class="toc-t">Trust architecture<span class="toc-d">Part 11 mechanisms, tenant isolation, and where each one genuinely stands.</span></span><span class="toc-p">08</span></li>
+    <li><span class="toc-n">07</span><span class="toc-t">Regulatory coverage<span class="toc-d">Three journeys over one shared chain: intake to transmission.</span></span><span class="toc-p">09</span></li>
+    <li><span class="toc-n">08</span><span class="toc-t">Engineering scale and the quality system<span class="toc-d">What exists, and how architectural invariants are enforced by machine.</span></span><span class="toc-p">10</span></li>
+    <li><span class="toc-n">09</span><span class="toc-t">The independent readiness audit<span class="toc-d">15 domains, 32 P0 findings, executed against a live system. Reported without softening.</span></span><span class="toc-p">11</span></li>
+    <li><span class="toc-n">10</span><span class="toc-t">Remediation, verified<span class="toc-d">What has closed since the audit, checked in the code rather than taken on report.</span></span><span class="toc-p">12</span></li>
+    <li><span class="toc-n">11</span><span class="toc-t">Defensibility and moat<span class="toc-d">Which advantages compound, which are merely current, and which are not yet built.</span></span><span class="toc-p">13</span></li>
+    <li><span class="toc-n">12</span><span class="toc-t">Roadmap to general availability<span class="toc-d">A dependency-ordered programme with evidence gates a buyer's reviewers accept.</span></span><span class="toc-p">14</span></li>
+    <li><span class="toc-n">13</span><span class="toc-t">Risks, and what to underwrite<span class="toc-d">What could go wrong, and what an investment is actually buying.</span></span><span class="toc-p">15</span></li>
   </ol>
 
-  <div class="callout" style="margin-top:6mm">
+  <div class="callout">
     <div class="c-label">A note on method</div>
     <p style="margin:0">
-      Every quantitative claim in this paper is derived from the repository itself — file
-      counts, schema declarations, route registrations, test files, and the platform's own
-      readiness ledgers — rather than from marketing material. Where the platform is
-      incomplete, this paper says so and names the owner of the gap. Regulatory
-      professionals evaluate vendors by whether claims survive scrutiny; the same standard
-      is applied here.
+      Every quantitative claim here is derived from the repository itself or from an
+      independent audit that produced its findings by running the system — provisioning
+      the database, booting the production build, executing the test suite, and
+      reproducing failures by hand. <strong>Sections 09 and 10 report that audit's
+      unfavourable findings in full.</strong> A vendor selling into regulated life
+      sciences is bought or rejected on whether its claims survive scrutiny, so the
+      claims here are written to be checked.
     </p>
   </div>
 </section>
@@ -160,8 +120,9 @@
   <h1 class="section-title">Executive summary</h1>
   <p class="deck">
     Regulatory submission software is fragmented into four silos that no vendor spans.
-    Concept2Cure.RI is built as the spanning layer — and the standards transition now under
-    way is the moment when that becomes purchasable.
+    Concept2Cure.RI is built as the spanning layer. An independent audit in August 2026
+    confirmed both halves of that claim: the architecture is real, and it was not yet
+    trustworthy.
   </p>
 
   <h2>The market failure</h2>
@@ -169,68 +130,65 @@
     Bringing a medical product to market requires assembling evidence, drafting an
     argument from it, packaging that argument to an agency's exact technical
     specification, and transmitting it through a validated channel — with every step
-    attributable, auditable, and defensible years later. Today that work is split across
-    four categories of vendor that do not talk to each other: <strong>evidence and
-    literature platforms</strong>, <strong>AI authoring startups</strong>,
-    <strong>publishing and validation incumbents</strong>, and <strong>regulatory
-    information management systems</strong>. Sponsors buy three or four, and stitch the
-    seams together with consultants and spreadsheets.
-  </p>
-  <p>
-    The AI authoring entrants stop at the document boundary — they produce prose, not a
-    submission. The publishing incumbents validate and transmit, but their AI is a
-    workflow bolt-on rather than a drafting engine. Nobody carries a claim from its source
-    document through to a validated, signed, transmitted package.
+    attributable and defensible years later. That work is split across four categories of
+    vendor that do not talk to each other: evidence and literature platforms, AI authoring
+    startups, publishing and validation incumbents, and regulatory information management
+    systems. Sponsors buy three or four and stitch the seams with consultants.
   </p>
 
   <h2>What has been built</h2>
   <p>
-    Concept2Cure.RI is a single governed system that spans that entire chain. Source
-    documents enter a tenant-isolated evidence store; a retrieval-grounded assistant
-    drafts against them with per-claim citations; the editor refuses to save content that
-    lacks clause-level provenance; approval runs through an electronic-signature workflow
-    with a hash-chained audit trail; and the resulting package is assembled to eCTD or
-    eSTAR structure, validated, and handed to one of thirteen agency transport adapters.
+    A single governed system spanning that chain. Source documents enter a tenant-isolated
+    evidence store; a retrieval-grounded assistant drafts against them with per-claim
+    citations; the editor refuses to save content lacking clause-level provenance;
+    approval runs through an electronic-signature workflow; and the package is assembled
+    to eCTD or eSTAR structure, validated, and handed to one of thirteen agency transport
+    adapters. On a blank PostgreSQL the installer builds <strong>931 tables and 787
+    row-level security policies</strong> and exits clean.
   </p>
 
-  <div class="stat-row">
-    <div class="stat"><div class="s-n">5,053</div><div class="s-l">TypeScript modules<br>1.44M lines</div></div>
-    <div class="stat"><div class="s-n">3,846</div><div class="s-l">API route handlers<br>across 389 modules</div></div>
-    <div class="stat"><div class="s-n">1,759</div><div class="s-l">Test files behind<br>79 CI gates</div></div>
-    <div class="stat"><div class="s-n">557</div><div class="s-l">Row-level security<br>policies verified</div></div>
+  <h2>What the audit found</h2>
+  <p>
+    A 15-domain independent readiness audit, executed against a live instance on
+    <strong>10 August 2026</strong>, returned <strong>not ready for general
+    availability</strong>: 32 P0 and 106 P1 findings, average domain maturity 4.1 of 10.
+    Its central finding was not absent features but <em>controls that reported success
+    while doing nothing</em> — an audit hash-chain that verified an empty chain as intact,
+    RLS policies rendered inert by a superuser database connection, an eCTD compile path
+    that emitted zero leaf files. Section 09 reports this in full.
+  </p>
+
+  <div class="callout callout-accent">
+    <div class="c-label">Why that audit is in an investor document</div>
+    <p style="margin:0">
+      Because it is the most informative thing available about this company. It
+      establishes that the architecture is worth keeping — the auditor's own words were
+      "not a facade… a genuinely engineered spine" — and it establishes exactly what the
+      remaining work is. An investor's real question is not whether a pre-GA platform has
+      defects. It is whether the team finds them, reports them, and closes them.
+    </p>
   </div>
 
-  <h2>Why now</h2>
+  <h2>What happened next</h2>
   <p>
-    Three regulatory shifts converge in this window. FDA's <strong>eSTAR v7.0</strong>
-    became mandatory for every 510(k) and De Novo on 3 August 2026. The
-    <strong>eCTD 4.0</strong> transition runs 2026–2029 across PMDA, EMA, and FDA — the
-    one moment in a decade when switching costs drop industry-wide, and only a handful of
-    vendors have cleared the EMA pilot. And AI-derived content in submissions is being
-    actively normalized by the agencies themselves, which moves the procurement question
-    from <em>whether</em> AI may be used to <em>how the AI is governed</em> — a question
-    this platform was architected around rather than retrofitted for.
+    In the four days following the audit, <strong>149 commits</strong> landed on the deploy
+    branch, reading as a direct remediation programme. Seven of the audit's most severe
+    mechanisms were independently re-checked in the code for this paper and found closed:
+    the eCTD leaf renderer now emits genuine PDFs, a least-privilege runtime database role
+    is provisioned, the tenant-deletion escape hatch is gone, the AI provenance ledger
+    fails closed at boot, integrity checks now report <span class="mono">unverifiable</span>
+    honestly, the global test-database mock is gone, and the timer-cancelling frontend
+    defect is removed.
   </p>
 
   <h2>The honest position</h2>
   <p>
-    The platform is pre-general-availability. Its engineering substrate is deep and its
-    compliance machinery is real and tested, but a first live filing depends on items that
-    code cannot conjure: licensed agency templates and validator licences, gateway
-    credentials, and a quality-system qualification signed by a competent person. Those
-    are enumerated in Section 08 with their owners. The engineering thesis — that the
-    spanning architecture is the hard part and it is built — is the investment case.
+    The platform remains pre-GA. A first live filing still depends on licensed agency
+    templates, validator licences, gateway credentials, and a quality-system qualification
+    signed by a competent person. The audit's own estimate — a caveated design-partner
+    pilot in 6–8 weeks, a defensible first paying pharma customer in 4–7 months with a 6–9
+    person team — is the working plan, and Section 12 sets it out.
   </p>
-
-  <div class="callout callout-accent">
-    <div class="c-label">The one-line thesis</div>
-    <p style="margin:0">
-      The first AI-native, Part&nbsp;11-governed, end-to-end submission platform spanning
-      both device and drug pathways — entering a market whose four incumbent silos each
-      solve a quarter of the problem, at the precise moment a mandatory standards
-      migration forces every sponsor to re-evaluate its stack.
-    </p>
-  </div>
 </section>
 
 <!-- ═══════════════════════ PAGE 4 · PROBLEM & MARKET ═══════════════════════ -->
@@ -244,48 +202,16 @@
     one quarter of a problem that only makes sense as a whole.
   </p>
 
-  <h2>Four silos, no spanning player</h2>
+  <h2>The work, and where it breaks</h2>
   <p>
-    A benchmark of the competitive field, conducted August 2026 across both the device and
-    drug sides, found the same structural split on each. The categories are stable, the
-    boundaries are sharp, and the seams between them are where sponsors lose time.
-  </p>
-
-  <table>
-    <thead>
-      <tr><th style="width:24%">Silo</th><th style="width:38%">Representative vendors</th><th>Where it stops</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Evidence &amp; literature</strong></td>
-        <td>Celegence CAPTIS, DistillerSR, CiteMed, Nested Knowledge, Basil Systems</td>
-        <td>Produces screened evidence, not a submission-shaped argument.</td>
-      </tr>
-      <tr>
-        <td><strong>AI authoring</strong></td>
-        <td>Weave Bio, Peer AI, Yseop, Narrativa, Complizen, Cruxi</td>
-        <td>Stops at the document boundary — no assembly, validation, or transport.</td>
-      </tr>
-      <tr>
-        <td><strong>Publishing &amp; validation</strong></td>
-        <td>Lorenz docuBridge, Extedo, Certara GlobalSubmit, Ennov</td>
-        <td>Validates and transmits; AI is a bolt-on, not a drafting engine.</td>
-      </tr>
-      <tr>
-        <td><strong>RIM &amp; lifecycle</strong></td>
-        <td>Veeva Vault RIM, Rimsys, RegDesk, Greenlight Guru</td>
-        <td>Tracks registrations and process; does not generate the content.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p>
-    The closest attempts to bridge two silos are recent and partial: one RIM vendor added
-    lightweight authoring in May 2026 with no evidence engine behind it; one AI authoring
-    startup reached the drug workflow in April 2026 through a contract-research channel
-    rather than a product. Neither spans the chain. Meanwhile at least one publishing
-    incumbent has stated publicly that it is evaluating the future of its regulatory
-    writing unit.
+    A regulatory submission is an argument built from evidence, formatted to a
+    specification, and defended under inspection. Four things must hold simultaneously:
+    the evidence must be found and appraised; the argument must be written and cited; the
+    package must conform byte-for-byte to an agency's technical standard; and every step
+    must be attributable to a person and a moment. No single vendor delivers all four, so
+    the handoffs between them are where sponsors lose months — re-keying content between
+    systems, reconciling citations by hand, and discovering conformance failures only at
+    the gateway.
   </p>
 
   <h2>The timing: a mandatory migration reopens every stack</h2>
@@ -333,22 +259,137 @@
     use AI but must prove how it is controlled, and who currently pays three vendors to
     cover one workflow, is a buyer whose stack is genuinely re-openable. That condition
     does not persist. It closes when the migration completes and the incumbents' AI
-    bolt-ons mature.
+    bolt-ons mature — which is the clock this business is running against, and the reason
+    the remediation programme in Section 12 is sequenced for speed rather than elegance.
   </p>
 
+  <div class="callout">
+    <div class="c-label">The one thing that does not change</div>
+    <p style="margin:0">
+      Whatever the standard or the model generation, a submission must be defensible: an
+      inspector, years later, must be able to ask where a sentence came from and receive
+      an answer. That requirement is indifferent to AI progress, and it is the requirement
+      the platform's architecture is organized around. Frontier capability will keep
+      improving for every competitor simultaneously; the ability to prove provenance will
+      not arrive by upgrading a model.
+    </p>
+  </div>
+
   <div class="footnote">
-    Market facts in this section are drawn from a competitive benchmark synthesized from
-    public agency notices and industry research in August 2026, retained with per-claim
-    sources in the platform's engineering documentation. Vendor capability descriptions
-    reflect publicly stated positioning at that date.
+    Market facts are drawn from a competitive benchmark synthesized from public agency
+    notices and industry research in August 2026, with per-claim sources retained in the
+    platform's engineering documentation. Vendor capability descriptions reflect publicly
+    stated positioning at that date; pricing is directional and is not reproduced here.
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 5 · ARCHITECTURE ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 5 · COMPETITIVE LANDSCAPE ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>03 · Platform architecture</span><span class="rh-num">05</span></div>
+  <div class="running-head"><span>03 · The competitive landscape</span><span class="rh-num">05</span></div>
 
   <div class="section-num">Section 03</div>
+  <h1 class="section-title">The competitive landscape</h1>
+  <p class="deck">
+    Four silos, on both the device and the drug side, with the same structural boundary in
+    each. The gap is not a niche — it is the middle of the workflow.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th style="width:22%">Silo</th><th style="width:36%">Representative vendors</th><th>Where it stops</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Evidence &amp; literature</strong></td>
+        <td>Celegence CAPTIS, DistillerSR, CiteMed, Nested Knowledge, Basil Systems</td>
+        <td>Produces screened evidence and landscape data, not a submission-shaped argument.</td>
+      </tr>
+      <tr>
+        <td><strong>AI authoring</strong></td>
+        <td>Weave Bio, Peer AI, Yseop, Narrativa, Complizen, Cruxi, Essenvia</td>
+        <td>Stops at the document boundary — no assembly, validation, or transport.</td>
+      </tr>
+      <tr>
+        <td><strong>Publishing &amp; validation</strong></td>
+        <td>Lorenz docuBridge, Extedo, Certara GlobalSubmit, Ennov</td>
+        <td>Validates and transmits; AI is a workflow bolt-on, not a drafting engine.</td>
+      </tr>
+      <tr>
+        <td><strong>RIM &amp; lifecycle</strong></td>
+        <td>Veeva Vault RIM, Rimsys, RegDesk, Greenlight Guru</td>
+        <td>Tracks registrations, process, and quality; does not generate the content.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>The notable positions</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Veeva Vault RIM — the gravity well</h3>
+      <p style="margin:0">
+        Market leader with several hundred RIM organizations and a downmarket SKU. The
+        durable advantage is distribution, not capability: recurring complaints concern
+        speed at scale, a cumbersome data model, and services overhead, and its 2026 AI is
+        workflow agents rather than drafting. This is the incumbent whose response
+        determines the size of the window.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Lorenz — the validation reference</h3>
+      <p style="margin:0">
+        docuBridge plus eValidator, the industry's reference validation tool, and an FDA
+        eCTD 4.0 pilot partner since 2022. Criticised on desktop-era usability. Relevant
+        here as both a benchmark and a dependency: the platform carries an adapter seam
+        for eValidator, and the licence is a procurement item.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Weave Bio — the closest bridge</h3>
+      <p style="margin:0">
+        AI IND drafting extended to NDA workflow in April 2026 via a contract-research
+        channel, with a published sponsor case reporting a large time reduction and no
+        critical errors. It has no assembly, validation, or gateway — the bridge is a
+        services partnership, not a product.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Greenlight Guru — the governance badge</h3>
+      <p style="margin:0">
+        Medtech quality-system incumbent, ISO/IEC 42001 certified — first to make AI
+        governance a marketable credential in this segment. It does not generate or fill
+        eSTAR. Its certification is the clearest signal that <em>how the AI is governed</em>
+        has become a purchasing criterion.
+      </p>
+    </div>
+  </div>
+
+  <h2>The structural finding</h2>
+  <p>
+    Nobody spans intake → evidence → drafting → official package → post-market. The two
+    closest moves are recent and partial: a RIM vendor added authoring-lite in May 2026
+    with no evidence engine behind it, and an AI authoring startup reached the drug
+    workflow through a CRO channel. Meanwhile a publishing incumbent has stated publicly
+    that it is evaluating the future of its regulatory writing unit — a signal that the
+    services-attached model is under pressure from exactly this direction.
+  </p>
+
+  <div class="callout callout-accent">
+    <div class="c-label">The honest counterweight</div>
+    <p style="margin:0">
+      Every vendor above has something this platform does not: paying customers, executed
+      submissions, and a validation history. Architecture spanning the chain is a real
+      advantage only once it is trustworthy enough to be bought, which is what Sections
+      09 through 12 are about. The competitive claim in this paper is about product shape,
+      not market position.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ PAGE 6 · ARCHITECTURE ═══════════════════════ -->
+<section class="page">
+  <div class="running-head"><span>04 · Platform architecture</span><span class="rh-num">06</span></div>
+
+  <div class="section-num">Section 04</div>
   <h1 class="section-title">Platform architecture</h1>
   <p class="deck">
     A single TypeScript monorepo organized in five layers, each of which the layer above
@@ -363,18 +404,18 @@
         invoked by asking the assistant, not by navigating to a screen per feature. The
         canonical workspace is an asymmetric three-zone grid — contextual tree, an
         intelligence stream, and a live-rendered artifact pane that never inherits chat
-        state, so it can be isolated for Part&nbsp;11 rendering guarantees. A registry of
-        28 governed components is the single source of truth; raw form elements are
-        rejected by a CI gate.
+        state. A registry of 28 governed components is the single source of truth; raw
+        form elements are rejected by a CI gate.
       </div>
     </div>
     <div class="layer">
       <div class="layer-name">Governance<span class="ln-sub">Layer 4</span></div>
       <div class="layer-desc">
-        The compliance spine, described in Section 05. Hash-chained audit, electronic
-        signature with signing-authority resolution and version binding, document freeze
-        and lock, clause-level lineage enforced in-transaction, and a default-deny
-        authorization boundary across the API.
+        The compliance spine, described in Section 06. Audit chaining, electronic signature
+        with signing-authority resolution and version binding, document freeze and lock,
+        clause-level lineage enforced in-transaction, and a default-deny authorization
+        boundary mounted once ahead of all route registration — so no route file can
+        forget authentication.
       </div>
     </div>
     <div class="layer">
@@ -383,28 +424,28 @@
         AnA, the tool-calling regulatory assistant (<strong>359 registered tools</strong>
         across 13 capability categories); the AI gateway that every model call must pass
         through; and the RIM, a deterministic non-LLM layer that accumulates regulatory
-        patterns over time. Detailed in Section 04.
+        patterns over time. Detailed in Section 05.
       </div>
     </div>
     <div class="layer">
       <div class="layer-name">Domain services<span class="ln-sub">Layer 2</span></div>
       <div class="layer-desc">
-        <strong>217 service domains</strong> covering the regulatory subject matter:
-        eCTD assembly and lifecycle operations, eSTAR generation, substantial-equivalence
-        and predicate analysis, clinical evaluation and literature appraisal,
-        biostatistics, CMC, pharmacovigilance, quality management, and the thirteen
-        agency transport gateways. Exposed through <strong>3,846 route handlers</strong>
-        in 389 modules.
+        <strong>217 service domains</strong> covering the regulatory subject matter: eCTD
+        assembly and lifecycle operations, eSTAR generation, substantial-equivalence and
+        predicate analysis, clinical evaluation and literature appraisal, biostatistics,
+        CMC, pharmacovigilance, quality management, and thirteen agency transport
+        gateways. Exposed through <strong>3,846 route handlers</strong> in 389 modules.
       </div>
     </div>
     <div class="layer">
       <div class="layer-name">Substrate<span class="ln-sub">Layer 1</span></div>
       <div class="layer-desc">
-        PostgreSQL with pgvector, addressed through Drizzle. <strong>705 table
-        declarations</strong>; a fresh-database installer provisions <strong>687 tables
-        and 557 row-level security policies</strong> from empty in one idempotent command,
-        verified against a clean Postgres 16. Object storage for source documents,
-        Redis for cache and queueing, and a real-time collaboration backend for the editor.
+        PostgreSQL with pgvector, addressed through Drizzle. A fresh-database installer
+        provisions <strong>931 tables and 787 row-level security policies</strong> from
+        blank in one idempotent command, takes a cluster-wide lock, re-verifies its
+        readiness contract, and fails closed with a distinct exit code. Object storage for
+        source documents, Redis for cache and queueing, and a real-time collaboration
+        backend for the editor.
       </div>
     </div>
   </div>
@@ -415,18 +456,18 @@
       <h3>Fail-closed by default</h3>
       <p style="margin:0">
         The server refuses to boot without its secrets and names what is missing. The AI
-        gateway refuses to serve with no provider configured. The readiness endpoint fails
-        closed on an incomplete schema and names the missing tables. A regulated buyer's
-        first question is what the system does when it is wrong.
+        gateway refuses to serve with no provider. The readiness endpoint fails closed on
+        an incomplete schema. A regulated buyer's first question is what the system does
+        when it is wrong.
       </p>
     </div>
     <div class="card">
       <h3>One of everything</h3>
       <p style="margin:0">
         An enforced doctrine that there is never more than one implementation of a
-        capability, backed by CI gates that reject duplicate table definitions,
-        unreachable migrations, and parallel runtime paths. It is why a system of this
-        size stays modifiable.
+        capability, backed by CI gates rejecting duplicate table definitions, unreachable
+        migrations, and parallel runtime paths. It is why a system of this size stays
+        modifiable.
       </p>
     </div>
     <div class="card">
@@ -434,8 +475,8 @@
       <p style="margin:0">
         When the platform lacks a licensed template, a dataset, or a credential, it says so
         explicitly rather than approximating. End-to-end journey tests assert honest
-        refusals as passing outcomes. In this market, a confident wrong answer is a
-        liability, not a feature.
+        refusals as passing outcomes. A confident wrong answer is a liability here, not a
+        feature.
       </p>
     </div>
   </div>
@@ -453,11 +494,11 @@
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 6 · INTELLIGENCE ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 7 · INTELLIGENCE ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>04 · The intelligence layer</span><span class="rh-num">06</span></div>
+  <div class="running-head"><span>05 · The intelligence layer</span><span class="rh-num">07</span></div>
 
-  <div class="section-num">Section 04</div>
+  <div class="section-num">Section 05</div>
   <h1 class="section-title">The intelligence layer</h1>
   <p class="deck">
     Three components: an assistant that acts through governed tools, a gateway that no
@@ -471,20 +512,19 @@
     submission and eCTD, evidence and intelligence, device and IVD, authoring, clinical,
     governance, quality management, CMC, nonclinical, biostatistics, and clinical
     pharmacology. Context is assembled from three memory layers before each turn — the
-    working thread, project memory retrieved by vector similarity, and account context —
-    and every call is recorded to an AI audit log.
+    working thread, project memory retrieved by vector similarity, and account context.
   </p>
 
   <div class="card card-ai">
-    <h3>Grounding is verified, not asserted</h3>
+    <h3>Grounding is checked deterministically</h3>
     <p style="margin:0">
-      After each turn, a deterministic self-verification round — no additional model call —
-      extracts the verifiable identifiers from the answer (trial registrations, PMIDs and
-      DOIs, FDA submission numbers) along with any quoted source text, and checks each
-      against the evidence the assistant actually gathered that turn. Claims absent from
-      that corpus are surfaced as unsupported. This catches the failure mode that makes
-      generative systems unusable in regulatory work: a fluent citation to a document that
-      does not exist.
+      After each turn, a self-verification round — no additional model call — extracts the
+      verifiable identifiers from the answer (trial registrations, PMIDs and DOIs, FDA
+      submission numbers) and any quoted source text, and checks each against the evidence
+      the assistant actually gathered that turn. Claims absent from that corpus are
+      surfaced as unsupported. <strong>The verdict is advisory: it is shown to the user,
+      not used to block or rewrite the answer.</strong> Binding retrieval-verified
+      citations into the document itself is Phase 2 work in Section 12.
     </p>
   </div>
 
@@ -498,6 +538,14 @@
     redact, or block, producing a structured audit verdict that never carries the raw
     sensitive value.
   </p>
+  <p>
+    The provenance ledger behind it — which model, at which temperature, from which
+    prompt, on which substrate, produced each output — was found by the August audit to be
+    silently recording nothing. It now <strong>fails closed at boot</strong> rather than
+    reporting success: the platform refuses to start if the ledger is unreachable, on the
+    reasoning that boot is the one moment where refusing to continue costs nothing already
+    in flight.
+  </p>
 
   <div class="card card-ai">
     <h3>Placement — the enterprise unlock</h3>
@@ -507,8 +555,7 @@
       can be pinned to, and whether it carries a zero-data-retention guarantee. A tenant
       requiring EU residency can only be routed to a provider whose placement includes the
       EU; a tenant requiring zero retention only to a substrate contractually capable of
-      it; an air-gapped tenant only to self-hosted inference. The resolved substrate and
-      region are recorded in the audit log for every call. This is what makes a large
+      it; an air-gapped tenant only to self-hosted inference. This is what makes a large
       pharmaceutical customer procurable, and it is architectural rather than
       configurational.
     </p>
@@ -517,121 +564,95 @@
   <h2>The RIM — accumulating judgment without a model</h2>
   <p>
     The Regulatory Intelligence Model sits beneath the assistant and is deliberately
-    <strong>not</strong> an LLM. It observes regulatory work as it happens and aggregates
-    signals — recurring deficiencies, reviewer triggers, data gaps, consistency issues,
-    language tendencies — into durable, tenant-scoped patterns whose confidence rises with
-    repeated observation but is bounded, so a single noisy loop can never assert certainty.
+    <strong>not</strong> an LLM. It observes regulatory work and aggregates signals —
+    recurring deficiencies, reviewer triggers, data gaps, consistency issues — into
+    durable, tenant-scoped patterns whose confidence rises with repeated observation but is
+    bounded, so a single noisy loop can never assert certainty. It is pure and
+    deterministic: no network calls, no wall-clock dependency, identity derived from
+    inputs, so the same call sequence always yields the same state — a prerequisite for
+    anything influencing a governed document.
   </p>
-  <p>
-    It is pure and deterministic — no network calls, no wall-clock dependency, identity
-    derived from inputs — so the same call sequence always yields the same state, a
-    prerequisite for anything influencing a governed document. On top of the pattern store
-    sit a readiness-scoring engine, a recommendation engine, an evidence-confidence model,
-    and change-impact propagation.
-  </p>
-
-  <div class="callout callout-accent">
-    <div class="c-label">Why the RIM is the compounding asset</div>
-    <p style="margin:0">
-      Frontier model capability is available to every competitor on identical terms and
-      improves for all of them simultaneously. A deterministic, tenant-scoped, versioned
-      record of what reviewers actually objected to — accumulated across customers and
-      submissions — is not purchasable. Its value grows with usage rather than with the
-      next model release.
-    </p>
-  </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 7 · TRUST ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 8 · TRUST ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>05 · Trust architecture</span><span class="rh-num">07</span></div>
+  <div class="running-head"><span>06 · Trust architecture</span><span class="rh-num">08</span></div>
 
-  <div class="section-num">Section 05</div>
+  <div class="section-num">Section 06</div>
   <h1 class="section-title">Trust architecture</h1>
   <p class="deck">
     In regulated life sciences, output that cannot be defended under inspection has no
-    value. The compliance machinery is not a feature tier — it is the reason the output is
-    usable at all.
+    value. This section states where each control genuinely stands — including the two the
+    August audit found failing.
   </p>
 
-  <h2>21 CFR Part 11 mechanisms</h2>
-  <div class="grid-2">
-    <div class="card card-olive">
-      <h3>Hash-chained audit trail</h3>
-      <p style="margin:0">
-        Transactional SHA-256 hash chaining with anti-forgery locking, enforced by a
-        database trigger on insert so the chain cannot be bypassed by an application path.
-        A background integrity sweep runs by default in production. The chain is the
-        primary evidence that a record was not altered after the fact.
-      </p>
-    </div>
-    <div class="card card-olive">
-      <h3>Electronic signature</h3>
-      <p style="margin:0">
-        Signing requires credential re-entry. The signature path resolves signing
-        authority and signer role, binds the signature to a specific document version, and
-        persists the governed action. Frozen documents become immutable; locks prevent
-        concurrent mutation of a record under review.
-      </p>
-    </div>
-    <div class="card card-olive">
-      <h3>Clause-level lineage</h3>
-      <p style="margin:0">
-        The editor <em>cannot</em> save content without clause-level provenance — enforced
-        in-transaction and structurally gated in CI, not by convention. A user can select
-        any passage in a document and ask where it came from, and the system answers with
-        the source, the model, and the audit identifier.
-      </p>
-    </div>
-    <div class="card card-olive">
-      <h3>Tenant isolation</h3>
-      <p style="margin:0">
-        PostgreSQL row-level security with <span class="mono">FORCE ROW LEVEL
-        SECURITY</span>, 557 policies applied and verified at install, an allowlist kept in
-        sync by a CI gate, and a production posture that requires an explicit operator
-        decision to activate rather than defaulting on silently.
-      </p>
-    </div>
-  </div>
+  <h2>Mechanisms, and their actual state</h2>
+  <table>
+    <thead>
+      <tr><th style="width:26%">Control</th><th style="width:13%">State</th><th>What is true today</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Electronic signature</strong></td>
+        <td><span class="pill pill-live">Built</span></td>
+        <td>Server-side credential re-verification, signing-authority and signer-role resolution, binding to a specific document version. The audit called the design right; the remaining work is consolidating to one system of record.</td>
+      </tr>
+      <tr>
+        <td><strong>Clause-level lineage</strong></td>
+        <td><span class="pill pill-live">Built</span></td>
+        <td>The editor cannot save content without clause-level provenance — enforced in-transaction and structurally gated in CI. A user can select any passage and ask where it came from.</td>
+      </tr>
+      <tr>
+        <td><strong>Audit chain</strong></td>
+        <td><span class="pill pill-partial">In flight</span></td>
+        <td>Chain enforcement exists on the reference store via an insert trigger. The August audit found the chain unpopulated and three integrity checks reporting an empty chain as intact. Checks now return an explicit <span class="mono">unverifiable</span> state; substrate consolidation and immutability grants are Phase 2.</td>
+      </tr>
+      <tr>
+        <td><strong>Tenant isolation</strong></td>
+        <td><span class="pill pill-partial">In flight</span></td>
+        <td>787 policies with correct USING/WITH CHECK semantics and FORCE RLS. They were <em>inert</em> because the application connected as a table-owning superuser. A least-privilege <span class="mono">app_service</span> role is now provisioned; running production under it is the remaining step.</td>
+      </tr>
+      <tr>
+        <td><strong>Authentication boundary</strong></td>
+        <td><span class="pill pill-live">Built</span></td>
+        <td>Default-deny gate mounted once ahead of all route registration. Algorithm-pinned JWT with CI-enforced rotation, bcrypt at 12 rounds, attempt-limited email OTP. The org-admin privilege escalation the audit exploited is closed.</td>
+      </tr>
+      <tr>
+        <td><strong>Qualification pack</strong></td>
+        <td><span class="pill pill-partial">Generated</span></td>
+        <td>Eleven Part 11 controls mapped to the tests that exercise them, all eleven executing and passing, with a verdict that fails closed on any control lacking evidence. Execution and signature require a competent person.</td>
+      </tr>
+    </tbody>
+  </table>
 
-  <h2>Authentication and boundary</h2>
+  <h2>The principle the audit tested</h2>
   <p>
-    JWT with a pinned signing algorithm and CI-enforced zero-downtime key rotation, bcrypt
-    password hashing at 12 rounds, mandatory attempt-limited email one-time-password
-    challenge, and a global default-deny authorization boundary across the API surface so
-    a newly added route is protected before anyone remembers to protect it.
+    The audit's sharpest observation was not about any single control. It was that several
+    failures shared a shape: <em>a control that reports success while doing nothing</em>.
+    An integrity monitor verifying an all-null chain as healthy. A tenant-offboarding path
+    reporting permanent deletion while the data survived. Governed AI commands returning
+    past-tense success for work that never happened. In a regulated tool a silent-pass
+    control is more dangerous than an absent one, because only the first gets relied on
+    during an inspection.
   </p>
 
-  <h2>The qualification pack</h2>
-  <p>
-    A generated installation- and operational-qualification pack maps eleven Part&nbsp;11
-    controls to the specific tests that exercise them. All eleven execute and pass, and
-    the pack's verdict <strong>fails closed</strong> on any control lacking evidence — it
-    cannot report success by omission. What the pack cannot do is sign itself: a
-    qualification is a protocol executed and signed by a competent person, and the pack is
-    that person's input rather than a substitute for them. This is stated plainly in the
-    platform's own ledger, and it is stated plainly here.
-  </p>
-
-  <div class="callout">
-    <div class="c-label">A discipline worth noting</div>
+  <div class="callout callout-accent">
+    <div class="c-label">What changed as a result</div>
     <p style="margin:0">
-      A CI gate scans the codebase for unqualified compliance claims. When an earlier
-      build displayed "FDA 21 CFR Part 11 Compliant" on the public signup page, the
-      platform's own gap register flagged it as a claim the system could not yet support,
-      and it was softened to describe supporting Part&nbsp;11 workflows. A vendor whose
-      tooling polices its own marketing language is a vendor whose technical claims can be
-      relied on — and in a market where a compliance overstatement can invalidate a
-      customer's filing, that discipline is commercially material.
+      The remediation was not only to fix each defect but to make the class detectable:
+      integrity checks that cannot verify now say so; the AI provenance ledger refuses boot
+      rather than logging silently; a CI gate rejects tenant-blind data models — the class
+      behind two of the isolation findings. Fixing an instance closes one finding. Making
+      the shape of the mistake fail loudly closes the ones not yet written.
     </p>
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 8 · COVERAGE ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 9 · COVERAGE ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>06 · Regulatory coverage</span><span class="rh-num">08</span></div>
+  <div class="running-head"><span>07 · Regulatory coverage</span><span class="rh-num">09</span></div>
 
-  <div class="section-num">Section 06</div>
+  <div class="section-num">Section 07</div>
   <h1 class="section-title">Regulatory coverage</h1>
   <p class="deck">
     Three go-to-market journeys run over one shared chain. The chain is what competitors
@@ -651,23 +672,23 @@
   <h2>The three journeys</h2>
   <table>
     <thead>
-      <tr><th style="width:20%">Journey</th><th style="width:30%">Scope</th><th>Position against 2026 table stakes</th></tr>
+      <tr><th style="width:19%">Journey</th><th style="width:29%">Scope</th><th>Position against 2026 table stakes</th></tr>
     </thead>
     <tbody>
       <tr>
         <td><strong>510(k) / De Novo</strong><br><span class="pill pill-partial">Gated on templates</span></td>
         <td>FDA device premarket notification. eSTAR generation, predicate identification, substantial-equivalence argumentation, filing readiness.</td>
-        <td>Substantial-equivalence engine, versioned template registry, and claim-to-source traceability are live and match or exceed the device-side field. Multi-user authoring with Part&nbsp;11 audit is stronger than any device competitor assessed. Official template packs and field maps are a procurement gate the system fails closed on.</td>
+        <td>Substantial-equivalence engine, versioned template registry, product-code-to-consensus-standards mapping, and claim-to-source traceability are live. Multi-user authoring with Part&nbsp;11 audit exceeds the device-side field. Official template packs and field maps are a procurement gate the system fails closed on.</td>
       </tr>
       <tr>
         <td><strong>CER / PER</strong><br><span class="pill pill-partial">UI wiring in flight</span></td>
         <td>EU MDR and IVDR clinical evaluation. Annex XIV structure, MEDDEV 2.7/1 rev 4 conformance, literature screening, vigilance integration.</td>
-        <td>Rule packs, conformance validator, governed export renderers, literature screening with enforced exclusion rationale, and MAUDE/FAERS clients are real. Human-in-the-loop provenance is the decisive advantage — notified bodies reject pure-AI clinical evaluations. Remaining work is surfacing built services in the workbench.</td>
+        <td>Rule packs, conformance validator, governed export renderers, and MAUDE/FAERS clients are real; literature screening decisions now persist with an enforced exclusion rationale. Human-in-the-loop provenance is the decisive advantage — notified bodies reject pure-AI clinical evaluations.</td>
       </tr>
       <tr>
         <td><strong>IND / NDA</strong><br><span class="pill pill-partial">Validator licence pending</span></td>
         <td>Drug submissions via eCTD. Backbone assembly, lifecycle operations, study tagging, US Module 1, PDF/A pipeline, gateway transmission.</td>
-        <td>eCTD 3.2.2 assembly is real with a qualification harness pinned to published FDA validation criteria, and eCTD 4.0 builders are carried. An FDA-criteria validation subset is built with an adapter seam ready for the industry-reference validator. Transport code is real; credentials are operational.</td>
+        <td>The spine-backed path assembles an ICH v3.2.2 backbone with an MD5 manifest and genuine rendered PDF leaves; the legacy draft path marks every leaf <span class="mono">rendered="false"</span> and names the blocker rather than emitting an untransmittable package. An adapter seam for the reference validator is ready; the licence is procurement.</td>
       </tr>
     </tbody>
   </table>
@@ -688,184 +709,453 @@
       A competitor entering from the authoring side must build assembly, validation, and
       transport before it can span the chain. One entering from the publishing side must
       build grounded drafting and the governance to make AI output defensible. Both must
-      then do it twice — once for device, once for drug. That double crossing is the moat,
-      and it is the reason a platform is worth more than the sum of its journeys.
+      then do it twice — once for device, once for drug. That double crossing is the moat.
     </p>
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 9 · SCALE & DEFENSIBILITY ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 10 · SCALE & QUALITY SYSTEM ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>07 · Engineering scale and defensibility</span><span class="rh-num">09</span></div>
+  <div class="running-head"><span>08 · Engineering scale and the quality system</span><span class="rh-num">10</span></div>
 
-  <div class="section-num">Section 07</div>
-  <h1 class="section-title">Engineering scale and defensibility</h1>
+  <div class="section-num">Section 08</div>
+  <h1 class="section-title">Engineering scale and the quality system</h1>
   <p class="deck">
-    Scale alone is not an asset. Scale that stays modifiable, under mechanical quality
+    Scale alone is not an asset. Scale that stays modifiable, under mechanical invariant
     enforcement, in a domain that cannot be compressed — that is an asset.
   </p>
 
   <h2>What exists, counted</h2>
   <table>
     <thead>
-      <tr><th style="width:46%">Dimension</th><th class="num" style="width:18%">Measure</th><th>Note</th></tr>
+      <tr><th style="width:44%">Dimension</th><th class="num" style="width:18%">Measure</th><th>Note</th></tr>
     </thead>
     <tbody>
-      <tr><td>TypeScript modules / lines</td><td class="num">5,053 / 1.44M</td><td>Client, server, and shared contracts in one repository</td></tr>
-      <tr><td>Database table declarations</td><td class="num">705</td><td>687 provisioned from empty by the fresh installer</td></tr>
-      <tr><td>Applied schema migrations</td><td class="num">200</td><td>Reachability enforced by CI</td></tr>
+      <tr><td>TypeScript modules / lines</td><td class="num">5,053 / 1.44M</td><td>~1.64M lines across 7,805 files counting all languages</td></tr>
+      <tr><td>Tables provisioned from blank</td><td class="num">931</td><td>Single idempotent installer, verified exit 0</td></tr>
+      <tr><td>Row-level security policies</td><td class="num">787</td><td>Correct USING / WITH CHECK semantics, FORCE RLS</td></tr>
       <tr><td>API route handlers / modules</td><td class="num">3,846 / 389</td><td>Behind a global default-deny boundary</td></tr>
       <tr><td>Domain service directories</td><td class="num">217</td><td>Regulatory subject matter, not framework code</td></tr>
       <tr><td>Registered AnA tools</td><td class="num">359</td><td>Across 13 capability categories</td></tr>
-      <tr><td>Test files</td><td class="num">1,759</td><td>Unit, route, database, security, and journey suites</td></tr>
+      <tr><td>Test files / assertions passing</td><td class="num">1,759 / 18,145</td><td>8 failing, 95 skipped at audit date</td></tr>
       <tr><td>CI guard scripts / workflows</td><td class="num">79 / 19</td><td>Governance, security, and schema-integrity gates</td></tr>
       <tr><td>TypeScript error debt</td><td class="num">2,598 → 0</td><td>Held at zero by a no-regression gate</td></tr>
     </tbody>
   </table>
 
-  <h2>Quality enforced by machine, not by intention</h2>
+  <h2>Invariants enforced by machine</h2>
   <p>
-    The 79 CI guard scripts are the unusual asset. They do not check style; they check
+    The CI guard scripts are the unusual asset. They do not check style; they check
     architectural invariants that would otherwise decay silently — that no code bypasses
-    the AI gateway, that the editor's save path cannot skip the lineage gate, that no
-    duplicate table definitions exist, that migrations are reachable, that no mock data or
-    development authentication path reaches production, that JWT verification stays
-    algorithm-pinned, that interface compliance claims are qualified, and that the
-    completion ledger cannot claim done without evidence. In a regulated product, this
-    class of enforcement is the difference between a system that can be qualified and one
-    that must be re-audited on every release.
+    the AI gateway, that the editor's save path cannot skip the lineage gate, that data
+    models are not tenant-blind, that no duplicate table definitions exist, that
+    migrations are reachable, that no mock data or development authentication path reaches
+    production, that JWT verification stays algorithm-pinned, that interface compliance
+    claims are qualified, and that the completion ledger cannot claim done without
+    evidence.
   </p>
 
-  <h2>Where the durable defensibility sits</h2>
-  <div class="grid-2">
-    <div class="card card-accent">
-      <h3>1 · The spanning architecture</h3>
-      <p style="margin:0">
-        Intake through transmission, governed end to end, across device and drug. The
-        volume of irreducible domain code is the barrier — and it is already paid for.
-      </p>
-    </div>
-    <div class="card card-accent">
-      <h3>2 · Governed provenance</h3>
-      <p style="margin:0">
-        Clause-level lineage enforced in-transaction and a hash chain enforced by database
-        trigger. Retrofitting this into an existing authoring product means rewriting its
-        persistence layer.
-      </p>
-    </div>
-    <div class="card card-accent">
-      <h3>3 · Outcome data</h3>
-      <p style="margin:0">
-        Pairs of submitted content and the agency's actual response — the strongest
-        available moat and the only one no competitor can purchase. <strong>Nothing
-        captures it today</strong>; it is the highest-leverage open item on the roadmap.
-      </p>
-    </div>
-    <div class="card card-accent">
-      <h3>4 · Placement-aware inference</h3>
-      <p style="margin:0">
-        Residency, retention, and air-gap constraints resolved per tenant at routing time.
-        The prerequisite for large-pharma procurement, and architectural rather than a
-        deployment option.
-      </p>
-    </div>
+  <div class="callout callout-amber">
+    <div class="c-label">Where the quality system was itself weak</div>
+    <p style="margin:0">
+      The August audit's most consequential finding was about this layer: a global
+      database mock installed across all test files meant the two "database-backed,
+      safety-critical" jobs ran against a stub, measured coverage sat at 5–13% on the
+      request path, and no CI job ever ran in the RLS-enforced mode production mandates.
+      That is why the other blockers shipped green. The mock is now gone and golden-journey
+      tests drive all three regulatory journeys end to end — but raising coverage and
+      making the browser tier real remain open, and the audit rightly called this the
+      single highest-leverage investment because it protects every other fix.
+    </p>
   </div>
 
+  <h2>What the auditor said was worth protecting</h2>
+  <p>
+    Faithful regulatory outlines — PMA against 21 CFR 814.20(b), EU CTA against CTR
+    536/2014, MDR Annex II, CTD Modules 2–5 — judged better than most competitors' first
+    attempts. Correct biostatistics: the Lan-DeMets solver reproduces textbook
+    O'Brien-Fleming and Pocock boundaries exactly. Exemplary licensed-terminology handling,
+    failing closed with an explicit licence requirement rather than risking copyright
+    exposure. And what the audit called institutional honesty in the code: endpoints that
+    refuse to self-certify, and comments that name their own gaps.
+  </p>
+</section>
+
+<!-- ═══════════════════════ PAGE 11 · THE AUDIT ═══════════════════════ -->
+<section class="page">
+  <div class="running-head"><span>09 · The independent readiness audit</span><span class="rh-num">11</span></div>
+
+  <div class="section-num">Section 09</div>
+  <h1 class="section-title">The independent readiness audit</h1>
+  <p class="deck">
+    On 10 August 2026 the platform was audited across fifteen domains by running it, not
+    by reading it. The verdict was not ready for general availability. This section
+    reports that finding without softening.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat"><div class="s-n">32</div><div class="s-l">P0 findings<br>block any use</div></div>
+    <div class="stat"><div class="s-n">106</div><div class="s-l">P1 findings<br>block GA</div></div>
+    <div class="stat"><div class="s-n">4.1<span style="font-size:9pt">/10</span></div><div class="s-l">Average domain<br>maturity</div></div>
+    <div class="stat"><div class="s-n">15</div><div class="s-l">Domains<br>independently audited</div></div>
+  </div>
+
+  <h2>How it was conducted</h2>
+  <p>
+    Each domain was audited by an independent pass that read the code, ran commands, and
+    queried a live database; every P0 and P1 was routed to an adversarial cross-check whose
+    default was to refute. The most severe findings were then reproduced by hand against a
+    from-scratch 931-table PostgreSQL instance, the production build booted from
+    <span class="mono">dist/</span>, and the full test suite executed. No repository report
+    or summary was accepted as evidence.
+  </p>
+
+  <h2>The eight blocker themes</h2>
+  <table>
+    <thead>
+      <tr><th style="width:32%">Theme</th><th>The finding, as reproduced</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>1 · Tenant isolation inert</strong></td><td>787 policies were real but bypassed — the app connected as a table-owning superuser. Self-service signup minted an org <span class="mono">admin</span> that an escape hatch in <span class="mono">requireRole</span> accepted, allowing one tenant to delete another outright.</td></tr>
+      <tr><td><strong>2 · Part 11 trail untrustworthy</strong></td><td>Detection, prevention, and attestation each failed — two by reporting success. The hash chain was never written; the canonical tables permitted UPDATE and DELETE; the signed inspector export called the empty chain intact.</td></tr>
+      <tr><td><strong>3 · Production could not boot</strong></td><td>Production hard-requires RLS enforcement; with it unset the boot assertion refused, and with it on an unscoped startup probe tripped the very guard it should pass. No flag value yielded a serving process.</td></tr>
+      <tr><td><strong>4 · Two key jobs unfinishable</strong></td><td>The eCTD compile path declared leaf rendering unimplemented and emitted zero files; the review step returned 500 on missing tables; exports were tag-stripped plain text.</td></tr>
+      <tr><td><strong>5 · AI output undefendable</strong></td><td>The gateway's provenance ledger recorded nothing while reporting success; "grounded" meant the model had tagged its own sentence; models were pinned to floating aliases with no reproducible request record.</td></tr>
+      <tr><td><strong>6 · Privacy lifecycle missing</strong></td><td>Right-to-erasure reached 4 of 302 user-linked tables; no data residency; an unencrypted database dump written into an un-ignored directory by a deploy script.</td></tr>
+      <tr><td><strong>7 · Tests proved less than claimed</strong></td><td>A global database mock across all test files meant the safety-critical jobs ran against a stub. Real coverage 5–13%. No job ever ran in the RLS-enforced mode.</td></tr>
+      <tr><td><strong>8 · Honesty gaps</strong></td><td>18 handlers converted internal failures into HTTP 200 with an empty list; 85 queried tables did not exist after provisioning while two CI guards reported green because they compared the repo to itself.</td></tr>
+    </tbody>
+  </table>
+
   <div class="callout callout-accent">
-    <div class="c-label">The honest asymmetry</div>
+    <div class="c-label">The auditor's own summary</div>
     <p style="margin:0">
-      Items 1, 2 and 4 are built. Item 3 — the compounding data moat — is designed for but
-      not yet capturing. That ordering is the correct one: the substrate that makes outcome
-      data trustworthy had to exist before the data was worth collecting. But it should be
-      read as a moat under construction, not a moat in place.
+      "This is not a teardown of a facade. A capable team built a real system; the gap is
+      between the architecture (good) and its wiring, coverage, and operational reality
+      (not yet)." Its estimate: roughly 4–7 months of focused work by a 6–9 person team
+      to a defensible first paying customer — <em>not a rewrite, but a serious hardening
+      programme on a foundation worth keeping.</em>
     </p>
   </div>
 </section>
 
-<!-- ═══════════════════════ PAGE 10 · STATE & RISKS ═══════════════════════ -->
+<!-- ═══════════════════════ PAGE 12 · REMEDIATION ═══════════════════════ -->
 <section class="page">
-  <div class="running-head"><span>08 · Current state, roadmap, and risks</span><span class="rh-num">10</span></div>
+  <div class="running-head"><span>10 · Remediation, verified</span><span class="rh-num">12</span></div>
 
-  <div class="section-num">Section 08</div>
-  <h1 class="section-title">Current state, roadmap, and risks</h1>
+  <div class="section-num">Section 10</div>
+  <h1 class="section-title">Remediation, verified</h1>
   <p class="deck">
-    The platform maintains its own mechanically checked completion ledger, in which every
-    open item names an owner. This section reproduces its substance.
+    In the days following the audit, 149 commits landed on the deploy branch. The
+    mechanisms below were re-checked directly in the code for this paper rather than taken
+    from a status report.
   </p>
 
-  <h2>Readiness by category</h2>
   <table>
     <thead>
-      <tr><th style="width:30%">Category</th><th style="width:15%">State</th><th>What it means</th></tr>
+      <tr><th style="width:30%">Audit finding</th><th style="width:12%">State</th><th>What is in the code now</th></tr>
     </thead>
     <tbody>
-      <tr><td>Core engineering substrate</td><td><span class="pill pill-live">Built</span></td><td>Schema, provisioning, auth, tenancy, gateway, audit chain, lineage gate — CI-enforced.</td></tr>
-      <tr><td>Intelligence layer</td><td><span class="pill pill-live">Built</span></td><td>359 tools, grounding verification, placement routing, RIM store and scoring engines.</td></tr>
-      <tr><td>510(k) journey</td><td><span class="pill pill-partial">Gated</span></td><td>Engine complete; blocked on licensed eSTAR templates and field maps, which it fails closed on.</td></tr>
-      <tr><td>CER journey</td><td><span class="pill pill-partial">Wiring</span></td><td>Services and validators real; screening and evidence surfaces being connected.</td></tr>
-      <tr><td>IND/NDA journey</td><td><span class="pill pill-partial">Gated</span></td><td>Assembly and qualification harness real; validator licence and credentials are procurement.</td></tr>
-      <tr><td>Data lineage at the ends</td><td><span class="pill pill-open">Open</span></td><td>Strong from draft to approval; defects identified at the ingest and filing ends, with fixes scoped.</td></tr>
-      <tr><td>Outcome-data capture</td><td><span class="pill pill-open">Open</span></td><td>The compounding moat. Designed, not built.</td></tr>
-      <tr><td>Qualification signature</td><td><span class="pill pill-open">Quality</span></td><td>Evidence pack generated and passing; execution requires a competent person.</td></tr>
+      <tr>
+        <td>eCTD emitted zero leaf files</td><td><span class="pill pill-live">Closed</span></td>
+        <td>The unimplemented flag is gone. A deterministic leaf renderer produces genuine, valid PDF bytes with byte-identical output across re-renders — which is what keeps the MD5 in each granule's index stable. The spine-backed path assembles a real ICH v3.2.2 package; the legacy path declares its leaves unrendered rather than pretending.</td>
+      </tr>
+      <tr>
+        <td>App connected as a superuser, making RLS inert</td><td><span class="pill pill-partial">Provisioned</span></td>
+        <td>A dedicated least-privilege <span class="mono">app_service</span> login role is provisioned by the installer and its grants refreshed on every deploy. Running production under that role is the remaining operational step.</td>
+      </tr>
+      <tr>
+        <td>Any signup could delete any tenant</td><td><span class="pill pill-live">Closed</span></td>
+        <td>The unconditional org-admin escape hatch is scoped so a guard asking for a platform role can never receive an org-admin stand-in. Tenant-management routes are behind a platform-admin middleware with no bypass.</td>
+      </tr>
+      <tr>
+        <td>AI provenance ledger recorded nothing</td><td><span class="pill pill-live">Closed</span></td>
+        <td>A boot invariant fails the platform closed if the ledger is unreachable, with the per-call writer deliberately left non-blocking so an audit-store outage cannot take inference down.</td>
+      </tr>
+      <tr>
+        <td>Integrity checks called an empty chain healthy</td><td><span class="pill pill-live">Closed</span></td>
+        <td>The integrity service now returns an explicit <span class="mono">unverifiable</span> state with a stated reason when seals cannot be checked, and the Part 11 surface no longer asserts integrity it never verified.</td>
+      </tr>
+      <tr>
+        <td>Global database mock across all tests</td><td><span class="pill pill-live">Closed</span></td>
+        <td>The mock is gone from the shared setup. Golden-journey tests now drive all three regulatory journeys end to end, asserting honest refusals as first-class passing outcomes.</td>
+      </tr>
+      <tr>
+        <td>Frontend cancelled every timer every 60s</td><td><span class="pill pill-live">Closed</span></td>
+        <td>The brute-force timer optimizer is removed; client error reporting is wired.</td>
+      </tr>
     </tbody>
   </table>
 
-  <h2>What stands between here and a first live filing</h2>
-  <div class="grid-3">
-    <div class="card">
-      <h3>Engineering</h3>
-      <ul class="tight" style="margin:0">
-        <li>Complete the CER evidence workbench</li>
-        <li>Repair the ingest-end extraction path</li>
-        <li>Consolidate the audit substrate</li>
-        <li>Build outcome-data capture</li>
-        <li>Build template-change ingestion</li>
-      </ul>
+  <h2>Beyond the specific fixes</h2>
+  <p>
+    The commit record over the same period reads as a programme rather than a patch run:
+    a CI gate that rejects tenant-blind data models — the class behind two isolation
+    findings; an executed IQ/OQ qualification pack generated from what is actually
+    installed and tested; a path-containment ratchet closing six routes; organization
+    scoping on the AI idempotency cache; and persistence for literature screening
+    decisions with an enforced exclusion rationale.
+  </p>
+
+  <div class="callout callout-amber">
+    <div class="c-label">What has not closed</div>
+    <p style="margin:0">
+      Audit-substrate consolidation and database-enforced immutability remain in flight.
+      Test coverage on the request path is still low and the browser tier is still thin.
+      Retrieval-verified citation binding, the privacy lifecycle, data residency, and
+      outcome-data capture are not built. Production has not yet been proven to boot and
+      serve under enforced isolation — the single most important remaining gate, and the
+      first item in Section 12.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ PAGE 13 · DEFENSIBILITY ═══════════════════════ -->
+<section class="page">
+  <div class="running-head"><span>11 · Defensibility and moat</span><span class="rh-num">13</span></div>
+
+  <div class="section-num">Section 11</div>
+  <h1 class="section-title">Defensibility and moat</h1>
+  <p class="deck">
+    Four candidate advantages, sorted honestly by whether they compound, whether they are
+    merely current, and whether they exist yet.
+  </p>
+
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h3>1 · The spanning architecture <span class="pill pill-live">Built</span></h3>
+      <p style="margin:0">
+        Intake through transmission, governed end to end, across device and drug. The
+        volume of irreducible domain code is the barrier, and it is already paid for. This
+        is a <em>durable but not compounding</em> advantage: a well-funded competitor could
+        cross it, but not quickly, and not without doing it twice.
+      </p>
     </div>
-    <div class="card">
-      <h3>Procurement</h3>
-      <ul class="tight" style="margin:0">
-        <li>eSTAR templates and field maps</li>
-        <li>eCTD document type definitions</li>
-        <li>Reference validator licence</li>
-        <li>Agency gateway credentials</li>
-        <li>Terminology dictionary licence</li>
-      </ul>
+    <div class="card card-accent">
+      <h3>2 · Governed provenance <span class="pill pill-live">Built</span></h3>
+      <p style="margin:0">
+        Clause-level lineage enforced in-transaction, with a save path that structurally
+        cannot skip it. Retrofitting this into an existing authoring product means
+        rewriting its persistence layer — which is why the AI authoring entrants are
+        unlikely to add it and the publishing incumbents are unlikely to add drafting.
+      </p>
     </div>
-    <div class="card">
-      <h3>Quality &amp; operations</h3>
-      <ul class="tight" style="margin:0">
-        <li>Execute and sign the IQ/OQ protocol</li>
-        <li>Prove the login delivery path end to end</li>
-        <li>Rehearse backup and restore</li>
-        <li>Activate tenant isolation in production</li>
-      </ul>
+    <div class="card card-accent">
+      <h3>3 · Placement-aware inference <span class="pill pill-live">Built</span></h3>
+      <p style="margin:0">
+        Residency, retention, and air-gap constraints resolved per tenant at routing time.
+        The prerequisite for large-pharma procurement. Currently differentiating, but
+        <em>replicable</em> — expect it to become table stakes within two years as the EU
+        AI Act phase-in makes it a standard question.
+      </p>
+    </div>
+    <div class="card card-amber">
+      <h3>4 · Outcome data <span class="pill pill-open">Not built</span></h3>
+      <p style="margin:0">
+        Pairs of submitted content and the agency's actual response. The only advantage
+        here that genuinely compounds, and the only one no competitor can purchase.
+        <strong>Nothing captures it today.</strong> It is designed for and it is the
+        highest-leverage open item on the roadmap.
+      </p>
     </div>
   </div>
 
-  <h2>Principal risks</h2>
+  <h2>The compounding asset, stated precisely</h2>
   <p>
-    <strong>Procurement dependency</strong> — several licensed assets are single-source and
-    the platform correctly refuses to fake them, converting an engineering timeline into a
-    commercial one. <strong>Incumbent response</strong> — the largest RIM vendors began
-    shipping AI agents in 2026, and the window in which their AI is a bolt-on rather than a
-    drafting engine is finite. <strong>Breadth versus depth</strong> — spanning device and
-    drug is both the differentiator and the execution risk.
-    <strong>Qualification burden</strong> — vendor validation evidence is a recurring
-    operational cost, not a one-time task.
+    Frontier model capability is available to every competitor on identical terms and
+    improves for all of them simultaneously; no durable advantage can rest on it. What can
+    compound is a deterministic, tenant-scoped, versioned record of what regulatory
+    reviewers actually objected to, accumulated across customers and submissions. The RIM
+    is the substrate designed to hold that record — and the substrate had to be
+    trustworthy before the data was worth collecting, which is the correct ordering but
+    means the moat is under construction rather than in place.
+  </p>
+
+  <h2>What is not a moat</h2>
+  <p>
+    Three things are worth naming as <em>not</em> defensible, because an investor will test
+    them. The tool count is a capability inventory, not a barrier — a competitor with the
+    same model access can add tools. The line count is a measure of surface area, and the
+    audit demonstrated that surface area without coverage is a liability as much as an
+    asset. And the design system, while genuinely good, is a matter of taste that any
+    well-resourced team can match. The defensibility argument rests on the four items
+    above and on the switching-cost window, not on scale.
+  </p>
+
+  <div class="callout callout-accent">
+    <div class="c-label">The honest asymmetry</div>
+    <p style="margin:0">
+      Items 1, 2 and 3 are built and real. Item 4 — the only one that compounds — is not.
+      An investment here is a bet that the team converts a strong architectural position
+      into the operational trustworthiness required to acquire customers, and then converts
+      those customers into the outcome dataset that makes the position permanent. Both
+      conversions are execution, and the audit is the best available evidence of how this
+      team executes when told it is wrong.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ PAGE 14 · ROADMAP ═══════════════════════ -->
+<section class="page">
+  <div class="running-head"><span>12 · Roadmap to general availability</span><span class="rh-num">14</span></div>
+
+  <div class="section-num">Section 12</div>
+  <h1 class="section-title">Roadmap to general availability</h1>
+  <p class="deck">
+    Sequenced so each phase unblocks the next and produces evidence a buyer's reviewers
+    accept. This is a dependency order, not a wish-list, and it is the audit's own
+    programme.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th style="width:9%">Phase</th><th style="width:23%">Goal</th><th>Principal work and its evidence gate</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>0</strong><br><span class="pill pill-live">Largely done</span></td>
+        <td><strong>Stop the bleeding, and make CI tell the truth</strong><br>Weeks 1–2</td>
+        <td>Close the tenant-deletion path, rotate the exposed credential, remove the unencrypted dump, scope the test database mock, remove the timer optimizer, fix the SSO redirect and MFA token-class bypass. <em>Gate: every later fix becomes provable.</em> Verified closed in Section 10.</td>
+      </tr>
+      <tr>
+        <td><strong>1</strong><br><span class="pill pill-partial">In flight</span></td>
+        <td><strong>Make isolation real, and make it boot</strong><br>Weeks 3–8</td>
+        <td>Run under the least-privilege role; fix the tables that would then deny-all; add residual tenant keys to route-reachable orphan tables; fix the startup posture probe so production boots under enforcement; supply full environment in every deploy target; move submission output to durable storage. <em>Gate: a CI job boots the built image in production mode and asserts readiness returns 200.</em></td>
+      </tr>
+      <tr>
+        <td><strong>2</strong><br><span class="pill pill-partial">Begun</span></td>
+        <td><strong>Make the regulated core trustworthy</strong><br>Weeks 6–16</td>
+        <td>Land chain and immutability on the durable applier; enforce immutability with triggers and revoked grants; serialize chain writes; consolidate to one signature system of record; replace advisory grounding with retrieval-verified citation binding; pin dated model snapshots. <em>Gate: an independent Part 11 gap assessment against the deployed schema.</em></td>
+      </tr>
+      <tr>
+        <td><strong>3</strong><br><span class="pill pill-open">Next</span></td>
+        <td><strong>Make one journey actually complete</strong><br>Weeks 10–22</td>
+        <td>One eCTD pathway emitting a conformant sequence that passes an external validator; ship the review loop; correct filing-type to pathway mapping; expose what is built in navigation; build the privacy lifecycle. <em>Gate: an automated golden journey that reopens the package and validates it.</em></td>
+      </tr>
+      <tr>
+        <td><strong>4</strong><br><span class="pill pill-open">Before GA</span></td>
+        <td><strong>Earn the outside signatures</strong></td>
+        <td>Third-party penetration test; independent Part 11 gap assessment; restore-from-backup drill with documented objectives; raised coverage floors and a real browser tier; a VPAT passing WCAG 2.2 AA; close the licensing and supply-chain gaps. <em>Gate: evidence a buyer's security, quality, and regulatory teams accept on paper.</em></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Procurement, running in parallel</h2>
+  <p>
+    Independent of engineering: official eSTAR templates and field maps, eCTD document
+    type definitions, the reference validator licence, agency gateway credentials, and a
+    medical terminology dictionary licence. These are single-source and the platform
+    correctly refuses to approximate them — which converts part of the timeline from an
+    engineering problem into a commercial one and should be underwritten as such.
+  </p>
+
+  <div class="callout callout-accent">
+    <div class="c-label">Realistic timeline</div>
+    <p style="margin:0">
+      A friendly, single-tenant, caveated design-partner pilot is reachable at the end of
+      Phase 1. A defensible first paying multi-tenant pharma customer — one whose quality
+      and security teams sign off — is the full programme, estimated at 4–7 months with a
+      6–9 person team. The variance sits in validation and third-party evidence, which is
+      calendar-bound rather than effort-bound: more engineers do not shorten a penetration
+      test or a qualification signature.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════ PAGE 15 · RISKS ═══════════════════════ -->
+<section class="page">
+  <div class="running-head"><span>13 · Risks, and what to underwrite</span><span class="rh-num">15</span></div>
+
+  <div class="section-num">Section 13</div>
+  <h1 class="section-title">Risks, and what to underwrite</h1>
+  <p class="deck">
+    What could go wrong, stated at the same standard as the rest of this document.
+  </p>
+
+  <div class="grid-2">
+    <div class="card card-amber">
+      <h3>Execution risk on trustworthiness</h3>
+      <p style="margin:0">
+        The audit found 32 P0 findings, and while the most severe are closed, the
+        regulated core is not yet through Phase 2. The risk is not that the work is
+        unknown — it is scoped — but that hardening programmes routinely take longer than
+        estimated, and this one is on a clock set by the standards migration.
+      </p>
+    </div>
+    <div class="card card-amber">
+      <h3>Procurement dependency</h3>
+      <p style="margin:0">
+        Licensed templates, validator licences, and gateway credentials are single-source.
+        No amount of engineering conjures them, and the platform is designed to refuse
+        rather than approximate. A delay here delays a first filing regardless of code
+        readiness.
+      </p>
+    </div>
+    <div class="card card-amber">
+      <h3>Incumbent response</h3>
+      <p style="margin:0">
+        The largest RIM vendors began shipping AI agents in 2026. Their advantage is
+        distribution into accounts this platform must win from outside. The window in
+        which their AI is a workflow bolt-on rather than a drafting engine is finite and
+        not controlled by this company.
+      </p>
+    </div>
+    <div class="card card-amber">
+      <h3>Breadth versus depth</h3>
+      <p style="margin:0">
+        Spanning device and drug is the differentiator and also the execution risk. The
+        audit's judgment — make <em>one</em> journey complete before broadening — is the
+        right sequencing, and it means near-term progress will look narrower than the
+        platform's eventual scope.
+      </p>
+    </div>
+    <div class="card card-amber">
+      <h3>Validation is a recurring cost</h3>
+      <p style="margin:0">
+        Regulated customers require vendor validation evidence, refreshed as the product
+        changes. This is an ongoing operational burden on every release, not a one-time
+        engineering task, and it structurally slows shipping velocity after GA.
+      </p>
+    </div>
+    <div class="card card-amber">
+      <h3>No commercial proof yet</h3>
+      <p style="margin:0">
+        This paper contains no revenue, pipeline, or customer figures because none are
+        derivable from the codebase. The technical case stands on its own; the commercial
+        case is a separate diligence item and should be requested separately.
+      </p>
+    </div>
+  </div>
+
+  <h2>What an investment is buying</h2>
+  <p>
+    A spanning architecture in a market of point tools, built against a standards
+    migration that has forced every sponsor's stack open, with the domain depth already
+    paid for and the remaining work scoped by an independent audit rather than estimated
+    internally. What it is not buying is a finished product: the platform is pre-GA, its
+    regulated core is mid-hardening, and the compounding data moat is designed but not
+    collecting.
   </p>
 
   <div class="callout callout-accent">
     <div class="c-label">In summary</div>
     <p style="margin:0">
       What has been built is the hard part: a governed chain from source evidence to
-      transmitted submission, with provenance and audit enforced structurally rather than
-      by policy, across both regulatory worlds. What remains is substantially licences,
-      credentials, signatures, and surface wiring. The market is fragmented, the standards
-      migration has forced it open, and the architecture that spans it exists in code today.
+      transmitted submission, with provenance enforced structurally rather than by policy,
+      across both regulatory worlds. What was wrong with it has been independently found,
+      published here rather than buried, and is being closed at a measurable rate. The
+      market is fragmented, the migration has forced it open, and the architecture that
+      spans it exists in code today — the question is execution against a known list, on a
+      clock, and that is the risk being priced.
     </p>
   </div>
 
+  <div class="footnote">
+    Prepared August 2026 against the <span class="mono">concept2cure-v2</span> engineering
+    branch. Audit figures are from an independent 15-domain readiness assessment dated 10
+    August 2026; remediation claims in Section 10 were re-verified in the code for this
+    document. Confidential — not for distribution.
+  </div>
 </section>
 
 </body>
