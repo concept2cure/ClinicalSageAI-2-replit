@@ -42,6 +42,14 @@ interface MyQueuePayload {
   tasks: QueueTask[];
   totalThreads: number;
   totalTasks: number;
+  /** What the SERVER will let this caller do — derived from the same
+   *  getThreadPermissions() the enforcement uses, so the button and the guard
+   *  cannot drift. Optional: an older server omits it, and we fail closed. */
+  permissions?: {
+    canComment: boolean;
+    canRequestChanges: boolean;
+    canResolve: boolean;
+  };
 }
 interface CommentRow {
   commentId: string;
@@ -88,6 +96,15 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
 
   const threads = queue.data?.threads ?? [];
   const tasks = queue.data?.tasks ?? [];
+  /* Governed actions the SERVER says this caller may perform. my-queue holds
+     threads assigned to you, and an admin can assign one to an author — who has
+     read+comment only. Rendering Resolve to them produced a button that 403s
+     every time. Default to false while the payload is in flight so nothing
+     governed flashes into view before we know. */
+  const perms = queue.data?.permissions;
+  const canResolve = perms?.canResolve === true;
+  const canRequestChanges = perms?.canRequestChanges === true;
+  const canComment = perms?.canComment !== false;
   const selected = threads.find(t => t.threadId === sel) ?? null;
   const refresh = () => setRefreshKey(k => k + 1);
 
@@ -105,7 +122,7 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
       refresh();
       onNotice(requestChanges ? 'Changes requested — the author has been notified.' : 'Comment posted.');
     } else {
-      onNotice(apiErrorText(res, 'Could not post the comment.'));
+      onNotice(apiErrorText(res, "Couldn't post the comment."));
     }
     setBusy(false);
   };
@@ -115,9 +132,9 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
     if (res.ok) {
       if (sel === threadId) setSel(null);
       refresh();
-      onNotice('Thread resolved — the linked work item is closed.');
+      onNotice('Thread resolved — the linked task is closed.');
     } else {
-      onNotice(apiErrorText(res, 'Could not resolve the thread.'));
+      onNotice(apiErrorText(res, "Couldn't resolve the thread."));
     }
   };
 
@@ -127,7 +144,7 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
       refresh();
       onNotice(`Resolved: ${title}`);
     } else {
-      onNotice(apiErrorText(res, 'Could not resolve the task.'));
+      onNotice(apiErrorText(res, "Couldn't resolve the task."));
     }
   };
 
@@ -173,6 +190,9 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
                 <div className="lrow-title">{t.title}</div>
                 <div className="lrow-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>{t.artifactTitle || ''}</span>
+                  {/* The task route permits either `resolve` permission OR
+                      being the assignee, and my-queue only ever returns tasks
+                      assigned to the caller — so this one stays visible. */}
                   <button className="btn ghost" style={{ height: 26 }} onClick={() => resolveTask(t.taskId, t.title)}>Resolve</button>
                 </div>
               </div>
@@ -189,7 +209,14 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
                     <div className="dt-eyebrow">{selected.artifactTitle || 'Review thread'}</div>
                     <h3 className="dt-title">{selected.title || 'Review thread'}</h3>
                   </div>
-                  <button className="btn ghost" onClick={() => resolveThread(selected.threadId)}>{I.check} Resolve thread</button>
+                  {/* Primary, not ghost: this is the completing action of the
+                      panel and had no visual weight at all, so the eye had no
+                      anchor. Hidden outright when the caller lacks `resolve` —
+                      the server 403s, and a disabled button someone can never
+                      enable is just clutter. */}
+                  {canResolve && (
+                    <button className="btn primary" onClick={() => resolveThread(selected.threadId)}>{I.check} Resolve thread</button>
+                  )}
                 </div>
 
                 {comments.loading ? (
@@ -225,16 +252,18 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
                     onChange={e => setBody(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void post(); } }}
                   />
-                  <button
-                    type="button"
-                    className={`tb-chip${requestChanges ? ' on' : ''}`}
-                    aria-pressed={requestChanges}
-                    onClick={() => setRequestChanges(v => !v)}
-                    title="Post as a formal change request — creates a tracked work item"
-                  >
-                    {I.alertTriangle} Request changes
-                  </button>
-                  <button className="btn ghost" disabled={!body.trim() || busy} onClick={() => void post()}>
+                  {canRequestChanges && (
+                    <button
+                      type="button"
+                      className={`tb-chip${requestChanges ? ' on' : ''}`}
+                      aria-pressed={requestChanges}
+                      onClick={() => setRequestChanges(v => !v)}
+                      title="Post as a formal change request — creates a task to track the fix"
+                    >
+                      {I.alertTriangle} Request changes
+                    </button>
+                  )}
+                  <button className="btn primary" disabled={!body.trim() || busy || !canComment} onClick={() => void post()}>
                     {I.send} {busy ? 'Posting…' : requestChanges ? 'Request changes' : 'Comment'}
                   </button>
                 </div>

@@ -2488,7 +2488,7 @@
     <div class="stat"><div class="s-n">345</div><div class="s-l">Client modules reachable<br>0 unreachable</div></div>
     <div class="stat"><div class="s-n">100%</div><div class="s-l">Client API calls<br>resolving to a route</div></div>
     <div class="stat"><div class="s-n">118<span style="font-size:9pt">/118</span></div><div class="s-l">Surfaces catalogued or<br>contextual, by CI gate</div></div>
-    <div class="stat"><div class="s-n">23<span style="font-size:9pt">/40</span></div><div class="s-l">Ledger items not<br>yet done</div></div>
+    <div class="stat"><div class="s-n">25<span style="font-size:9pt">/42</span></div><div class="s-l">Ledger items not<br>yet done</div></div>
   </div>
 
   <h2>Ready now — usable, tested, and wired</h2>
@@ -2528,8 +2528,7 @@
   <p class="deck">
     Drawn from the platform's own completion ledger, where each item was verified by reading
     code rather than reports. Stated here because a buyer's quality unit will find them, and
-    finding them in this document is a materially different conversation from finding them in a
-    pilot.
+    finding them here is a different conversation from finding them in a pilot.
   </p>
 
   <div class="callout callout-accent">
@@ -2541,12 +2540,11 @@
       source; the lineage dossier has a production route; the unbound second signature writer
       was deleted; the live verification path now re-derives the content digest; and a stale
       approval no longer reads as current. Each is held by a regression test. A tenth landed the
-      same day: eight built, routed and API-backed surfaces — design controls, human factors,
-      eTMF, IND lifecycle across seventeen endpoints, investigator brochure, SmPC labeling,
-      publishing centre, report engine — were reachable only by someone who already knew the
-      URL, and are now in the Apps catalog behind a CI gate that refuses any renderable surface
-      that is neither catalogued nor declared contextual <em>with a reason</em>. What follows is
-      what remains after that.
+      same day: eight built and API-backed surfaces — design controls, human factors, eTMF, IND
+      lifecycle across seventeen endpoints, investigator brochure, SmPC labeling, publishing
+      centre, report engine — were reachable only by someone who already knew the URL, and are
+      now catalogued behind a CI gate that refuses any renderable surface that is neither
+      catalogued nor declared contextual <em>with a reason</em>.
     </p>
   </div>
 
@@ -2558,12 +2556,12 @@
         <td>The correctly-modelled provenance tables — carrying version chain, current flag, page number, section reference, sentence index — have zero writers, while two live services read them. Source documents carry no version chain, so a revised protocol becomes an unlinked second row and a fact cannot be told it rests on superseded content. The draft-to-filing half of the chain now holds; this half does not.</td></tr>
       <tr><td><strong>AI attribution at accept</strong><br><span class="pill pill-partial">Narrowed</span></td>
         <td>Model, provider and prompt exist at draft time and are still discarded at accept, and accepted AI text is recorded as human-authored on the governed store. Two parts of this closed on 14 August: retrieval failure now reports the draft as ungrounded rather than passing silently, and the version ledger records which AnA action produced a version. What remains is the model itself.</td></tr>
-      <tr><td><strong>Surface tier metadata</strong><br><span class="pill pill-partial">Narrowed</span></td>
-        <td>The eight surfaces catalogued on 14 August carry no tier or industry metadata. Assigning one is a commercial decision, and guessing would silently withhold a capability from customers entitled to it.</td></tr>
+      <tr><td><strong>The surface layer</strong><br><span class="pill pill-open">Open</span></td>
+        <td>The eight newly-catalogued surfaces carry no tier metadata — a commercial decision, not an engineering one. <span class="mono">authoring-engine</span> is catalogued but renders from inline fixture data and calls no endpoint. And the surface layer never had the consolidation pass the services, routes and tables got: 118 registry ids over 86 modules. The engine is consistently stronger than the interface onto it.</td></tr>
       <tr><td><strong>Collaboration contract test</strong><br><span class="pill pill-partial">Blocked</span></td>
         <td>The socket tenant-isolation contract test — actor spoofing, lock theft, unjoined-document events, and cross-tenant leakage across eleven event types — cannot reach its assertions because the socket server refuses the fixture's connection as not entitled. The guard fires; the finer properties are unproven until the fixture is corrected.</td></tr>
       <tr><td><strong>Test depth, unevenly</strong><br><span class="pill pill-partial">Uneven</span></td>
-        <td>Co-located ratios vary by a factor of four. Strong: evidence spine 21 tests / 17 services, IND lifecycle 31/36, study design 13/17. Thin: CMC 6/16 and submission gateways 10/28 — the latter being the irreversible action. Statistics reads 7/24 co-located but is better covered than that suggests: six reference suites in <span class="mono">tests/biostat/</span> pin group-sequential, power and sizing, win ratio, CLSI EP and MRMC against published tables.</td></tr>
+        <td>Co-located ratios vary by a factor of four. Strong: evidence spine 21 tests / 17 services, IND lifecycle 31/36. Thin: CMC 6/16 and submission gateways 10/28 — the latter being the irreversible action. Statistics reads 7/24 but is better covered than that suggests: six reference suites in <span class="mono">tests/biostat/</span> pin its output against published tables.</td></tr>
       <tr><td><strong>Isolation in production</strong><br><span class="pill pill-partial">Provisioned</span></td>
         <td>The least-privilege role exists and grants are applied, but production has not been demonstrated running under it with a cross-tenant read returning zero rows. This gates a multi-tenant pilot.</td></tr>
       <tr><td><strong>Not built at all</strong><br><span class="pill pill-open">Open</span></td>
@@ -2575,13 +2573,11 @@
   <p>
     The weaknesses are not random, and neither were the ones just closed. In every case the
     <em>mechanism was built correctly and the call site was missing</em> — a tamper check with
-    no caller, provenance tables with no writers, a lineage dossier nothing invoked, an
-    extraction pipeline behind a broken route. That is a recognisable and repairable failure
-    mode, and the items closed on 14 August are evidence of the repair rate: each was fixed by
-    connecting an existing mechanism and locking it with a test, not by building something new.
-    It remains the failure mode that makes a demo look finished and a pilot find holes, so it
-    should still be priced as integration work — but the observed rate of closure is the
-    relevant input, and it is fast.
+    no caller, provenance tables with no writers, an extraction pipeline behind a broken route.
+    That is a recognisable and repairable failure mode: each item closed on 14 August was fixed
+    by connecting an existing mechanism and locking it with a test, not by building something
+    new. It should still be priced as integration work — but the observed rate of closure is
+    the relevant input, and it is fast.
   </p>
 </section>
 

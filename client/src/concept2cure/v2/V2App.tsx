@@ -22,6 +22,7 @@ import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
 import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
+import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
 import { getJwtOrgId } from '@/utils/authToken';
 import { useLive } from './dataConnect';
@@ -159,7 +160,23 @@ export function V2App() {
   const activeId = surfaceIdFromLocation(location);
   /* The real AnA assistant for the whole shell — one streaming conversation
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
-  const anaChat = useAnaChat({ screenName: activeId, projectId: readShellProjectId() });
+  /* What the active surface is showing, forwarded to AnA as `module_context` on
+     every turn. `screenName` alone told her WHICH screen the user was on and
+     nothing about what was on it, so a question like "what should I do next?"
+     had to be answered from the message text. A surface publishes through
+     `usePublishSurfaceContext`; the reader returns null unless the published
+     context belongs to the surface currently mounted, so context from the
+     previous screen can never be presented as this one's. */
+  const activeSurfaceContext = useActiveSurfaceContext(activeId);
+  const anaModuleContext = React.useMemo(
+    () => toModuleContext(activeSurfaceContext),
+    [activeSurfaceContext]
+  );
+  const anaChat = useAnaChat({
+    screenName: activeId,
+    projectId: readShellProjectId(),
+    moduleContext: anaModuleContext,
+  });
   const { user } = useAuth();
   /* The onboarding welcome must reflect the TENANT's real client type
      (organizations.client_type), not `prefs.segment` — that is a browser-local

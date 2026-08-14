@@ -35,6 +35,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   CALCULATORS,
   buildRequestBody,
@@ -162,7 +163,7 @@ function Field({ field, value, onChange }: { field: CalculatorField; value: stri
   const common = { className: 'c2c-input', value, onChange: (e: any) => onChange(e.target.value) };
   return (
     <label style={{ fontSize: 12, display: 'block' }}>
-      <span>{field.label}{field.optional ? <span style={{ color: 'var(--c2c-dim,#667085)' }}> (optional)</span> : null}</span>
+      <span>{field.label}{field.optional ? <span style={{ color: 'var(--text-300,#6b6963)' }}> (optional)</span> : null}</span>
       {field.kind === 'select' ? (
         <select {...common} style={{ height: 30 }}>
           {(field.options ?? []).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -172,7 +173,7 @@ function Field({ field, value, onChange }: { field: CalculatorField; value: stri
       ) : (
         <input {...common} style={{ height: 30 }} placeholder={field.placeholder} />
       )}
-      {field.hint && <span style={{ display: 'block', fontSize: 11, color: 'var(--c2c-dim,#667085)', marginTop: 2 }}>{field.hint}</span>}
+      {field.hint && <span style={{ display: 'block', fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 2 }}>{field.hint}</span>}
     </label>
   );
 }
@@ -215,7 +216,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
         <span className="s">{calc.subtitle}</span>
       </div>
       <div className="pj-card-b">
-        <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginBottom: 12, lineHeight: 1.5 }}>{calc.about}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginBottom: 12, lineHeight: 1.5 }}>{calc.about}</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 10, marginBottom: 12 }}>
           {visible.map(f => (
@@ -258,7 +259,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
                       </table>
                     </div>
                     {t.rows.length > 60 && (
-                      <div style={{ fontSize: 11, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>
                         Showing 60 of {t.rows.length} rows — the full table is in the raw response.
                       </div>
                     )}
@@ -271,7 +272,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
               // Shown because these numbers go into an SAP or a submission and a
               // reviewer will ask how they were produced. The hash is over the
               // inputs, so the same hash means the same computation.
-              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--c2c-dim,#667085)' }}>
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-300,#6b6963)' }}>
                 {provenance.method} · {provenance.engine} {provenance.engineVersion}
                 {provenance.inputsSha256 ? <> · inputs <span className="mono">{String(provenance.inputsSha256).slice(0, 12)}</span></> : null}
                 {provenance.reproducible ? ' · reproducible' : null}
@@ -279,7 +280,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
             )}
 
             {showRaw && (
-              <pre style={{ marginTop: 10, maxHeight: 320, overflow: 'auto', background: 'var(--c2c-surface-2,#f9fafb)', padding: 10, borderRadius: 6, fontSize: 11 }}>
+              <pre style={{ marginTop: 10, maxHeight: 320, overflow: 'auto', background: 'var(--canvas-elevated,#ffffff)', color: 'var(--text-100,#3d3d3a)', padding: 10, borderRadius: 6, fontSize: 11 }}>
                 {JSON.stringify(result, null, 2)}
               </pre>
             )}
@@ -302,6 +303,36 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
   const [activeId, setActiveId] = useState<string>(CALCULATORS[0].id);
   const active = useMemo(() => CALCULATORS.find(c => c.id === activeId) ?? CALCULATORS[0], [activeId]);
 
+  /* What AnA can see of this screen: which engine is selected, what it computes
+     and what it needs. Without it, "is this the right design?" on the
+     group-sequential screen is answered from the message text alone, and she
+     cannot know the user is looking at boundaries rather than at MMRM sizing.
+     The calculator's own `about` prose is reused rather than restated, so this
+     cannot drift from what the user is reading. */
+  const anaContext = useMemo(
+    () => ({
+      summary: `Biostatistics workbench, "${active.title}" selected — ${active.subtitle}.`,
+      facts: {
+        calculatorId: active.id,
+        endpoint: `/api/biostat${active.path}`,
+        computes: active.about,
+        requiredInputs: active.fields.filter(f => !f.optional).map(f => f.label),
+        optionalInputs: active.fields.filter(f => f.optional).map(f => f.label),
+        availableCalculators: CALCULATORS.map(c => c.title),
+        defensibilityAssessed: asmtRes !== null,
+      },
+      availableActions: [
+        'Explain what this calculator computes',
+        'Suggest inputs for a design',
+        'Switch to another calculator',
+        'Run a reviewer-risk defensibility assessment',
+      ],
+    }),
+    [active, asmtRes]
+  );
+
+  usePublishSurfaceContext('biostat-workbench', anaContext);
+
   const runAssess = useCallback(async () => {
     if (!asmt.indication || !asmt.studyDesign || !asmt.primaryEndpoint) { fireToast('Enter indication, study design, and primary endpoint.'); return; }
     setAsmtBusy(true);
@@ -320,7 +351,7 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
     <div className="cm-body">
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Biostatistics workbench</span><span className="s">Reviewer-risk assessment + {CALCULATORS.length} design engines</span></div>
-        <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--c2c-dim,#667085)' }}>
+        <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300,#6b6963)' }}>
           Every calculation below runs on the server’s statistical engine — deterministic, provenance-stamped, and reference-tested against published tables and closed forms. Nothing is computed in the browser.
         </div>
       </div>
@@ -341,16 +372,16 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
           {asmtRes && (
             <div style={{ marginTop: 12 }}>
               <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 10 }}>
-                {asmtRes.overallScore != null && <div><div style={{ fontSize: 26, fontWeight: 700 }}>{asmtRes.overallScore}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Overall score</div></div>}
-                {asmtRes.overallRating && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.overallRating)}>{asmtRes.overallRating}</span><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>Rating</div></div>}
-                {asmtRes.reviewerRiskLevel && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.reviewerRiskLevel)}>{asmtRes.reviewerRiskLevel}</span><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>Reviewer risk</div></div>}
+                {asmtRes.overallScore != null && <div><div style={{ fontSize: 26, fontWeight: 700 }}>{asmtRes.overallScore}</div><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)' }}>Overall score</div></div>}
+                {asmtRes.overallRating && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.overallRating)}>{asmtRes.overallRating}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Rating</div></div>}
+                {asmtRes.reviewerRiskLevel && <div><span className={'rd-chip tone-' + ratingTone(asmtRes.reviewerRiskLevel)}>{asmtRes.reviewerRiskLevel}</span><div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', marginTop: 4 }}>Reviewer risk</div></div>}
               </div>
               {Array.isArray(asmtRes.criticalIssues) && asmtRes.criticalIssues.length > 0 && (
-                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c2c-err,#b42318)' }}>Critical issues</div>
+                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--error,#b63939)' }}>Critical issues</div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.criticalIssues.map((x, i) => <li key={i}>{issueText(x)}</li>)}</ul></div>
               )}
               {Array.isArray(asmtRes.majorIssues) && asmtRes.majorIssues.length > 0 && (
-                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--c2c-warn,#b54708)' }}>Major issues</div>
+                <div style={{ marginBottom: 8 }}><div style={{ fontSize: 12, fontWeight: 600, color: 'var(--warning,#955d22)' }}>Major issues</div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: 18, fontSize: 13 }}>{asmtRes.majorIssues.map((x, i) => <li key={i}>{issueText(x)}</li>)}</ul></div>
               )}
               {Array.isArray(asmtRes.recommendations) && asmtRes.recommendations.length > 0 && (

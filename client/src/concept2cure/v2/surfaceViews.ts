@@ -244,6 +244,7 @@ const Pharmacovigilance = lazySurface(() => import('./surfaces/BiopharmaSpecialt
 const PvCockpit = lazySurface(() => import('./surfaces/PvCockpit').then((m) => ({ default: m.PvCockpit })));
 const Biostatistics = lazySurface(() => import('./surfaces/Biostatistics').then((m) => ({ default: m.Biostatistics })));
 const BiostatWorkbench = lazySurface(() => import('./surfaces/BiostatWorkbench').then((m) => ({ default: m.BiostatWorkbench })));
+const MissionControl = lazySurface(() => import('./surfaces/MissionControl').then((m) => ({ default: m.MissionControl })));
 const ChangeAssessment = lazySurface(() => import('./surfaces/ChangeAssessment').then((m) => ({ default: m.ChangeAssessment })));
 const ClinicalOps = lazySurface(() => import('./surfaces/ClinicalOps').then((m) => ({ default: m.ClinicalOps })));
 const ClientPortal = lazyOwnedSurface(() => import('./surfaces/ClientPortal').then((m) => ({ default: m.ClientPortal })));
@@ -342,6 +343,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'batch-draft': { component: BatchDraft, full: true },
   biostatistics: { component: Biostatistics },
   'biostat-workbench': { component: BiostatWorkbench },
+  'mission-control': { component: MissionControl },
   'change-assessment': { component: ChangeAssessment },
   'clinical-ops': { component: ClinicalOps },
   // External client portal — full-page read-only view (no internal AnA rail).

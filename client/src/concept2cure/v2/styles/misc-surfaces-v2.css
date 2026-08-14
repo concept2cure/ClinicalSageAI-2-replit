@@ -53,6 +53,12 @@
 
   /* chips */
   .rd-chip{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+  /* Inline single-line input for the collaboration toolbar (lock-takeover
+     reason). Matches .tb-field's input treatment so the two surfaces do not
+     drift, but sized for a toolbar row rather than a form column. */
+  .rd-input{ font:inherit; font-size:12px; padding:6px 9px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-000); color:var(--text-100); }
+  .rd-input::placeholder{ color:var(--text-500); }
+  .rd-input:focus{ outline:none; border-color:var(--accent-100); box-shadow:0 0 0 3px var(--accent-000); }
   .rd-chip.tone-ok{ background:var(--success-muted); color:var(--success); }
   .rd-chip.tone-err{ background:var(--error-muted); color:var(--error); }
   .rd-chip.tone-warn{ background:var(--warning-muted); color:var(--warning); }
