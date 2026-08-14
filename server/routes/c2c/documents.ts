@@ -422,11 +422,15 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
   if (!userId || !orgId) return send403(res);
 
   const { id, key } = req.params;
-  const { content, status, reason, draftSource } = req.body as {
+  const { content, status, reason, draftSource, anaActionId } = req.body as {
     content?:     Record<string, unknown>;
     status?:      string;
     reason?:      string;
     draftSource?: string;
+    /** The c2c_ana_actions row this save accepts, when AnA mediated it. The
+     *  version trigger records it as the backlink, so a reviewer can open the
+     *  action behind a version rather than only knowing a machine wrote it. */
+    anaActionId?: string;
   };
 
   if (content === undefined && status === undefined) {
@@ -493,6 +497,16 @@ router.patch('/:id/sections/:key', async (req: Request, res: Response) => {
       // leak to the next borrower of this pooled connection.
       await client.query(`SELECT set_config('app.actor_id', $1, true)`, [String(userId)]);
       await client.query(`SELECT set_config('app.reason', $1, true)`, [reason.trim()]);
+      /* The AnA backlink, same transaction-local mechanism as the two above.
+         `ana_action_id` has been declared on the version ledger since Phase 9
+         and written by nothing, so "which AnA action produced this version?"
+         had no answer — the difference between knowing a machine wrote it
+         (author_kind, which does work) and being able to open the conversation
+         and tool calls behind it. Always set, empty when absent, so a value
+         from an earlier statement in this transaction cannot carry over. */
+      await client.query(`SELECT set_config('app.ana_action_id', $1, true)`, [
+        typeof anaActionId === 'string' ? anaActionId.trim() : '',
+      ]);
 
       // Check if section already exists.
       const existing = await client.query(
