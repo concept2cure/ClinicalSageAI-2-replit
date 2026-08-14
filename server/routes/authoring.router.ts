@@ -2850,6 +2850,18 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
               generatedContent,
               candidateSources,
               getActorId(req),
+              undefined,
+              /* What produced this draft, parked with the source chunks rather
+                 than round-tripped through the client — "which model wrote
+                 this" must not be a forgeable claim. The prompt is composed
+                 inline here, so there is no version to name and a digest of
+                 the bytes actually sent is the honest identifier. */
+              {
+                model: gwResponse.model ?? null,
+                provider: gwResponse.provider ?? null,
+                promptSha256: crypto.createHash('sha256').update(prompt).digest('hex'),
+                generatedAt: new Date().toISOString(),
+              },
             );
             draftId = candidate.id;
           } catch (attrErr: any) {
@@ -3080,6 +3092,10 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     let saved: { rows: any[] } = { rows: [] };
     let acceptedContent = '';
     let attribution = { sourceSpans: 0, authorSpans: 0, distinctSources: 0, coverage: 0 };
+    /* Held for the audit entry below. The candidate row is claimed with
+       DELETE … RETURNING, so this is the last moment the generator exists
+       anywhere — after the transaction it lives only in what we record. */
+    let generator: Record<string, unknown> | null = null;
     try {
       await client.query('BEGIN');
 
@@ -3095,6 +3111,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
           },
         });
       }
+      generator = candidate.generator as Record<string, unknown> | null;
 
       // The author may have edited the draft before accepting; attribute what they
       // actually save. Fall back to the draft as generated when no edit is sent.
@@ -3159,7 +3176,12 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
       priorContent,
       acceptedContent,
       typeof req.body?.changeReason === 'string' ? req.body.changeReason : 'Accepted AI draft',
-      { source: 'ai-draft-accept' },
+      /* Which model, which provider, which prompt. All three existed at draft
+         time and used to reach the browser and stop there, so "what produced
+         this text?" was answerable for about as long as the tab stayed open —
+         the first question an assessor asks about AI-assisted content, and the
+         one piece of provenance being collected and then discarded. */
+      { source: 'ai-draft-accept', generator },
     );
 
     res.json({

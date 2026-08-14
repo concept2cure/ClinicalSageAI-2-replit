@@ -105,7 +105,10 @@
 /* split list/detail */
 .c2c-v2 .split{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
 .c2c-v2 .split-list{display:flex;flex-direction:column;gap:8px;}
-.c2c-v2 .lrow{border:1px solid var(--border);border-radius:var(--radius-xl);padding:13px 14px;background:var(--bg-050);transition:all var(--dur);}
+/* Named properties rather than `all`: the only things that actually change on
+   :hover and [data-on] are paint-only (see the two rules below), and `all`
+   would silently start animating whatever property is added here next. */
+.c2c-v2 .lrow{border:1px solid var(--border);border-radius:var(--radius-xl);padding:13px 14px;background:var(--bg-050);transition:border-color var(--dur),background var(--dur),box-shadow var(--dur);}
 .c2c-v2 .lrow:hover{border-color:var(--border-strong);background:var(--bg-000);}
 .c2c-v2 .lrow[data-on="true"]{border-color:var(--accent-100);box-shadow:0 0 0 1px var(--accent-100);background:var(--bg-000);}
 .c2c-v2 .lrow-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}

@@ -124,8 +124,105 @@ export interface CovariateBalanceEntry {
   covariate: string;
   treatmentMean: number;
   controlMean: number;
-  standardizedDifference: number;
+  /**
+   * Null when the covariate perfectly separates the arms — see
+   * `perfectlySeparating`. Zero would claim perfect balance for the one case
+   * where there is no overlap to balance.
+   */
+  standardizedDifference: number | null;
+  /**
+   * The covariate is constant within each arm at DIFFERENT values, so the pooled
+   * SD is zero and the standardized difference is unbounded rather than zero.
+   * There is nothing to adjust for because the arms do not overlap at all.
+   */
+  perfectlySeparating: boolean;
   balanced: boolean;
+}
+
+/**
+ * Covariate balance across source arms by standardized mean difference,
+ * extracted from the service so it can be proved without a database standing in
+ * for one — the same split this file already applies to `describeSynthesisMethod`
+ * and `synthesisMethodLimitations`. Covariates come from each arm's demographics
+ * JSON; the first half of the arms stands in for treatment and the second half
+ * for control. Pure and deterministic.
+ */
+export function assessCovariateBalanceOfArms(
+  sourceArms: Array<{ demographics?: unknown }>
+): CovariateBalanceEntry[] {
+  if (sourceArms.length < 2) return [];
+
+  // Collect all demographic keys across arms
+  const allKeys = new Set<string>();
+  for (const arm of sourceArms) {
+    const demo = (arm.demographics ?? {}) as Record<string, unknown>;
+    for (const key of Object.keys(demo)) {
+      if (typeof demo[key] === 'number') allKeys.add(key);
+    }
+  }
+
+  if (allKeys.size === 0) return [];
+
+  // Use the first half of arms as "treatment" proxy and second half as "control"
+  // (in practice, the actual treatment arm would be provided externally)
+  const midpoint = Math.ceil(sourceArms.length / 2);
+  const groupA = sourceArms.slice(0, midpoint);
+  const groupB = sourceArms.slice(midpoint);
+
+  const results: CovariateBalanceEntry[] = [];
+
+  for (const key of allKeys) {
+    const valsA = groupA
+      .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
+      .filter((v): v is number => typeof v === 'number');
+    const valsB = groupB
+      .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
+      .filter((v): v is number => typeof v === 'number');
+
+    if (valsA.length === 0 || valsB.length === 0) continue;
+
+    const meanA = valsA.reduce((s, v) => s + v, 0) / valsA.length;
+    const meanB = valsB.reduce((s, v) => s + v, 0) / valsB.length;
+
+    const varA = valsA.length > 1
+      ? valsA.reduce((s, v) => s + (v - meanA) ** 2, 0) / (valsA.length - 1)
+      : 0;
+    const varB = valsB.length > 1
+      ? valsB.reduce((s, v) => s + (v - meanB) ** 2, 0) / (valsB.length - 1)
+      : 0;
+
+    const pooledSd = Math.sqrt((varA + varB) / 2);
+    // A zero pooled SD with DIFFERENT means is a covariate that separates the
+    // arms completely, not one that agrees perfectly. Reporting SMD = 0 there
+    // (as this did) sent the maximum SMD to zero and could carry the whole
+    // diagnostics verdict to "good" on a covariate with no overlap at all.
+    const separates = pooledSd === 0 && meanA !== meanB;
+    const smd = separates ? null : pooledSd > 0 ? (meanA - meanB) / pooledSd : 0;
+
+    results.push({
+      covariate: key,
+      treatmentMean: Math.round(meanA * 1000) / 1000,
+      controlMean: Math.round(meanB * 1000) / 1000,
+      standardizedDifference: smd === null ? null : Math.round(smd * 1000) / 1000,
+      perfectlySeparating: separates,
+      balanced: smd !== null && Math.abs(smd) < 0.1,
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Largest |standardized difference| among the covariates that have one. Null
+ * when there are no covariates, or when every one of them perfectly separates
+ * the arms and so has no finite value to contribute.
+ */
+function maxAbsStandardizedDifference(entries: CovariateBalanceEntry[]): number | null {
+  const finite = entries
+    .map(e => e.standardizedDifference)
+    .filter((v): v is number => v !== null)
+    .map(Math.abs);
+  return finite.length > 0 ? Math.max(...finite) : null;
 }
 
 export interface DiagnosticsResult {
@@ -752,15 +849,23 @@ export class ExternalControlArmService {
     }
 
     // ── Overall quality ──
-    const maxSmd = covariateBalance.length > 0
-      ? Math.max(...covariateBalance.map(c => Math.abs(c.standardizedDifference)))
-      : 0;
+    const finiteSmds = covariateBalance
+      .map(c => c.standardizedDifference)
+      .filter((v): v is number => v !== null)
+      .map(Math.abs);
+    const maxSmd = finiteSmds.length > 0 ? Math.max(...finiteSmds) : 0;
+    // A covariate with no overlap cannot enter a maximum, so it has to gate the
+    // verdict directly. Without this, a perfect separator contributes nothing to
+    // maxSmd and the package can still be labelled "good".
+    const anySeparating = covariateBalance.some(c => c.perfectlySeparating);
     const overallQuality: DiagnosticsResult['overallQuality'] =
-      maxSmd < 0.1 && eValue > 2 && overlapAssessment.overlapping
-        ? 'good'
-        : maxSmd < 0.25 && eValue > 1.5
-          ? 'moderate'
-          : 'poor';
+      anySeparating
+        ? 'poor'
+        : maxSmd < 0.1 && eValue > 2 && overlapAssessment.overlapping
+          ? 'good'
+          : maxSmd < 0.25 && eValue > 1.5
+            ? 'moderate'
+            : 'poor';
 
     const diagnostics: DiagnosticsResult = {
       covariateBalance,
@@ -791,62 +896,9 @@ export class ExternalControlArmService {
    */
   private assessCovariateBalance(
     sourceArms: any[],
-    synthData: Record<string, unknown>
+    _synthData: Record<string, unknown>
   ): CovariateBalanceEntry[] {
-    if (sourceArms.length < 2) return [];
-
-    // Collect all demographic keys across arms
-    const allKeys = new Set<string>();
-    for (const arm of sourceArms) {
-      const demo = (arm.demographics ?? {}) as Record<string, unknown>;
-      for (const key of Object.keys(demo)) {
-        if (typeof demo[key] === 'number') allKeys.add(key);
-      }
-    }
-
-    if (allKeys.size === 0) return [];
-
-    // Use the first half of arms as "treatment" proxy and second half as "control"
-    // (in practice, the actual treatment arm would be provided externally)
-    const midpoint = Math.ceil(sourceArms.length / 2);
-    const groupA = sourceArms.slice(0, midpoint);
-    const groupB = sourceArms.slice(midpoint);
-
-    const results: CovariateBalanceEntry[] = [];
-
-    for (const key of allKeys) {
-      const valsA = groupA
-        .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
-        .filter((v): v is number => typeof v === 'number');
-      const valsB = groupB
-        .map(a => ((a.demographics ?? {}) as Record<string, unknown>)[key])
-        .filter((v): v is number => typeof v === 'number');
-
-      if (valsA.length === 0 || valsB.length === 0) continue;
-
-      const meanA = valsA.reduce((s, v) => s + v, 0) / valsA.length;
-      const meanB = valsB.reduce((s, v) => s + v, 0) / valsB.length;
-
-      const varA = valsA.length > 1
-        ? valsA.reduce((s, v) => s + (v - meanA) ** 2, 0) / (valsA.length - 1)
-        : 0;
-      const varB = valsB.length > 1
-        ? valsB.reduce((s, v) => s + (v - meanB) ** 2, 0) / (valsB.length - 1)
-        : 0;
-
-      const pooledSd = Math.sqrt((varA + varB) / 2);
-      const smd = pooledSd > 0 ? (meanA - meanB) / pooledSd : 0;
-
-      results.push({
-        covariate: key,
-        treatmentMean: Math.round(meanA * 1000) / 1000,
-        controlMean: Math.round(meanB * 1000) / 1000,
-        standardizedDifference: Math.round(smd * 1000) / 1000,
-        balanced: Math.abs(smd) < 0.1,
-      });
-    }
-
-    return results;
+    return assessCovariateBalanceOfArms(sourceArms);
   }
 
   // ── 4. generateRegulatoryPackage ──────────────────────────────────
@@ -968,13 +1020,10 @@ export class ExternalControlArmService {
 
       diagnosticsSummary: {
         covariateBalance: diagnostics.covariateBalance,
-        maxStandardizedDifference: diagnostics.covariateBalance.length > 0
-          ? Math.max(
-              ...diagnostics.covariateBalance.map(c =>
-                Math.abs(c.standardizedDifference)
-              )
-            )
-          : null,
+        maxStandardizedDifference: maxAbsStandardizedDifference(diagnostics.covariateBalance),
+        separatingCovariates: diagnostics.covariateBalance
+          .filter(c => c.perfectlySeparating)
+          .map(c => c.covariate),
         allCovariatesBalanced: diagnostics.covariateBalance.every(c => c.balanced),
         eValue: diagnostics.eValue,
         eValueInterpretation: `An unmeasured confounder would need to be associated with both treatment and outcome by a risk ratio of at least ${diagnostics.eValue} to fully explain the observed effect.`,

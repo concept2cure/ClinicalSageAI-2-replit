@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T17:53:52.902Z",
+  "generatedAt": "2026-08-14T18:42:12.754Z",
   "git": {
-    "sha": "5c447ade2a35935394fc41af2b0cde4eb54615ad",
+    "sha": "0928c2c543fbc191180fe19aba4834092e4c382f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -374,18 +374,6 @@
         ]
       },
       {
-        "basename": "programs",
-        "count": 6,
-        "paths": [
-          "client/src/concept2cure/mdx/data/programs.ts",
-          "design-system/ui_kits/mdx/data/programs.js",
-          "server/routes/biopharma/programs.ts",
-          "server/routes/programs.ts",
-          "shared/schema/programs.ts",
-          "ui_kits/mdx/data/programs.js"
-        ]
-      },
-      {
         "basename": "audit",
         "count": 5,
         "paths": [
@@ -438,6 +426,17 @@
           "design-system/ui_kits/mdx/surfaces/Postmarket.jsx",
           "ui_kits/mdx/data/postmarket.js",
           "ui_kits/mdx/surfaces/Postmarket.jsx"
+        ]
+      },
+      {
+        "basename": "programs",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/mdx/data/programs.ts",
+          "design-system/ui_kits/mdx/data/programs.js",
+          "server/routes/biopharma/programs.ts",
+          "shared/schema/programs.ts",
+          "ui_kits/mdx/data/programs.js"
         ]
       },
       {
@@ -2129,7 +2128,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 960702
+        "bytes": 961616
       },
       {
         "file": "shared/schema.ts",
@@ -2153,7 +2152,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 217805
+        "bytes": 219252
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2267,7 +2266,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18710
+        "lines": 18720
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2279,7 +2278,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5846
+        "lines": 5868
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2599,7 +2598,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 400,
       "largeByBytes": 29,
       "largeByLines": 72
     },

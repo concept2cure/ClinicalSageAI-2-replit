@@ -79,7 +79,7 @@ describe('computeGammaPoissonEbgm', () => {
     // RR = 30/0.51282 = 58.5; EBGM ≈ 29.6 (shrunk toward 1); EB05 ≈ 21.7.
     const r = computeGammaPoissonEbgm({ a: 30, b: 100, c: 10, d: 10000 });
     expect(r.relativeReportRatio).toBeCloseTo(58.5, 0);
-    expect(r.ebgm).toBeLessThan(r.relativeReportRatio); // shrinkage
+    expect(r.ebgm).toBeLessThan(r.relativeReportRatio!); // shrinkage
     expect(r.eb05).toBeLessThan(r.ebgm);
     expect(r.ebgm).toBeLessThan(r.eb95);
     expect(r.eb05).toBeGreaterThanOrEqual(2);

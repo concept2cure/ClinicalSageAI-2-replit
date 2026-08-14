@@ -1148,6 +1148,43 @@ export const C2C_MIGRATION_FILES = [
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
 
+
+  // Constraint repair only: no table, no column, no data. 0001_phase13_full
+  // meant to widen concept2cure_review_tasks.task_type to include
+  // 'approval_task' but added a second CHECK instead of replacing phase13's
+  // inline one, so the effective domain stayed the intersection and the value
+  // was never insertable. Must run after both of those, which it does by
+  // position. Widening a CHECK cannot invalidate an existing row.
+  'migrations/20260814h_review_task_type_domain_repair.sql',
+
+  // ── Draft generator capture, GA ledger L33 (added 2026-08-14) ────────────
+  // ADD COLUMN on authoring_ai_draft_candidates so a parked AI draft carries
+  // what produced it — model, provider, and a SHA-256 of the prompt actually
+  // sent. All three existed at draft time and reached only the browser, so
+  // "what produced this text?" survived about as long as the tab.
+  //
+  // Server-side with the source chunks, deliberately: a generator round-tripped
+  // through the client would be a client claim, and which model wrote a
+  // regulatory section is exactly the sort of claim that must not be forgeable.
+  //
+  // Nullable, no backfill. Nothing recorded the generator for earlier drafts,
+  // and filling it from the model registry's current default would attribute
+  // text to a model that may never have seen it. The table has a 2-hour TTL, so
+  // the unrecorded window closes on its own.
+  'migrations/20260814i_draft_candidate_generator.sql',
+
+  // ── Apps catalog additions, GA ledger L40 (added 2026-08-14) ─────────────
+  // Eight built, routed, API-backed surfaces that appeared in no catalog, so a
+  // user could reach them only by knowing the URL. INSERT … ON CONFLICT DO
+  // NOTHING, so re-running is a no-op and an entry an operator has since edited
+  // keeps their version rather than being reset.
+  //
+  // Position is not load-bearing (no table, no column), but it must run after
+  // the 2026-08-10 reconcile that seeds the rest of the catalog, which it does.
+  // Guarded on available_modules existing, since the catalog table is not on
+  // every lineage.
+  'migrations/20260814j_catalog_missing_product_surfaces.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

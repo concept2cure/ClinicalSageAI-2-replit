@@ -97,6 +97,16 @@ jobs:
         # reverted design. This says no once, to all of them.
         run: npm run ci:document-alias-attribute-free
 
+      - name: Surfaces are discoverable, or declared not to be
+        # Hard gate. The product renders 118 surfaces and the rail exposes 14;
+        # the rest are found through the Apps catalog. Nothing kept those two
+        # lists in step, so eight backed surfaces — mounted routes, live API
+        # calls, one across seventeen endpoints — were reachable only by
+        # someone who already knew the URL. A surface a user cannot find is,
+        # to that user, a surface that does not exist. Exclusions are allowed
+        # and must carry a reason.
+        run: npm run ci:surface-discoverability
+
       - name: Verify tests for changed code
         run: bash scripts/ai/verify-tests.sh
 
