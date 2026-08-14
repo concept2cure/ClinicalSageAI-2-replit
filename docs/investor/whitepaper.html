@@ -37,9 +37,9 @@
     <div class="cover-eyebrow">Technical white paper</div>
     <h1 class="cover-title">One governed chain from evidence to filing</h1>
     <p class="cover-sub">
-      An AI-native, 21 CFR Part&nbsp;11-governed regulatory submission platform spanning
-      medical device and drug pathways — from source intake through grounded drafting
-      and assembly to validated agency transmission.
+      An AI-native, 21 CFR Part&nbsp;11-governed regulatory platform spanning medical
+      device and drug pathways — from grant funding and protocol design, through grounded
+      authoring and validated agency transmission, to post-approval change control.
     </p>
 
     <div class="cover-rule"></div>
@@ -47,7 +47,7 @@
     <div class="cover-facts">
       <div class="cover-fact"><div class="cf-n">931</div><div class="cf-l">Tables from<br>a blank database</div></div>
       <div class="cover-fact"><div class="cf-n">359</div><div class="cf-l">Regulatory<br>AI tools</div></div>
-      <div class="cover-fact"><div class="cf-n">13</div><div class="cf-l">Agency<br>gateways</div></div>
+      <div class="cover-fact"><div class="cf-n">107</div><div class="cf-l">Product<br>surfaces</div></div>
       <div class="cover-fact"><div class="cf-n">19,181</div><div class="cf-l">Tests<br>passing</div></div>
     </div>
   </div>
@@ -89,7 +89,7 @@
     <li><span class="toc-n">04</span><span class="toc-t">Platform architecture<span class="toc-d">The five-layer stack, and the design decisions that matter commercially.</span></span><span class="toc-p">06</span></li>
     <li><span class="toc-n">05</span><span class="toc-t">The intelligence layer<span class="toc-d">AnA, the AI gateway, and the RIM — a deterministic layer that learns without a model.</span></span><span class="toc-p">07</span></li>
     <li><span class="toc-n">06</span><span class="toc-t">Trust architecture<span class="toc-d">Part 11 mechanisms, tenant isolation, and where each one genuinely stands.</span></span><span class="toc-p">08</span></li>
-    <li><span class="toc-n">07</span><span class="toc-t">Regulatory coverage<span class="toc-d">Three journeys over one shared chain: intake to transmission.</span></span><span class="toc-p">09</span></li>
+    <li><span class="toc-n">07</span><span class="toc-t">Regulatory coverage<span class="toc-d">The lifecycle span from grant funding to post-approval, and the three submission journeys inside it.</span></span><span class="toc-p">09</span></li>
     <li><span class="toc-n">08</span><span class="toc-t">Chemistry, manufacturing, and controls<span class="toc-d">The Module 3 compiler, the deterministic CMC engines, and why post-approval change is recurring.</span></span><span class="toc-p">10</span></li>
     <li><span class="toc-n">09</span><span class="toc-t">Engineering scale and the module portfolio<span class="toc-d">What exists, the domain modules behind the journeys, and invariants enforced by machine.</span></span><span class="toc-p">11</span></li>
     <li><span class="toc-n">10</span><span class="toc-t">Independent audit and verified remediation<span class="toc-d">What an outside audit found, and the state of each finding in the code today.</span></span><span class="toc-p">12</span></li>
@@ -136,13 +136,16 @@
 
   <h2>What has been built</h2>
   <p>
-    A single governed system spanning that chain. Source documents enter a tenant-isolated
-    evidence store; a retrieval-grounded assistant drafts against them with per-claim
-    citations; the editor refuses to save content lacking clause-level provenance;
-    approval runs through an electronic-signature workflow; and the package is assembled
-    to eCTD or eSTAR structure, validated, and handed to one of thirteen agency transport
-    adapters. On a blank PostgreSQL the installer builds <strong>931 tables and 787
-    row-level security policies</strong> and exits clean.
+    A single governed system spanning that chain — and, it turns out, considerably more
+    than the chain. Source documents enter a tenant-isolated evidence store; a
+    retrieval-grounded assistant drafts against them with per-claim citations; the editor
+    refuses to save content lacking clause-level provenance; approval runs through an
+    electronic-signature workflow; and the package is assembled to eCTD or eSTAR
+    structure, validated, and handed to one of thirteen agency transport adapters. Either
+    side of that sit grant management, protocol development, ethics submissions,
+    risk-based monitoring, clinical study reports, quality and QC, labeling, and
+    post-approval change control. On a blank PostgreSQL the installer builds
+    <strong>931 tables and 787 row-level security policies</strong> and exits clean.
   </p>
 
   <h2>The audit, and what it produced</h2>
@@ -647,21 +650,38 @@
   <div class="section-num">Section 07</div>
   <h1 class="section-title">Regulatory coverage</h1>
   <p class="deck">
-    Three go-to-market journeys run over one shared chain. The chain is what competitors
-    do not have; the journeys are what customers buy.
+    The submission journeys are what customers buy first. They sit inside a span running
+    from grant funding to post-approval change — and it is the stages either side of
+    submission, where the lifecycle suites compete, that no submission vendor has touched.
   </p>
 
-  <div class="chain">
-    <div class="chain-step"><div class="cs-n">01</div><div class="cs-t">Intake</div><div class="cs-d">Canonical source identity, chunking, embedding, project-scoped isolation</div></div>
-    <div class="chain-step"><div class="cs-n">02</div><div class="cs-t">Evidence</div><div class="cs-d">Retrieval, literature appraisal, predicate and precedent analysis</div></div>
-    <div class="chain-step"><div class="cs-n">03</div><div class="cs-t">Draft</div><div class="cs-d">Grounded authoring with per-claim citation and lineage gate</div></div>
-    <div class="chain-step"><div class="cs-n">04</div><div class="cs-t">Review</div><div class="cs-d">Threaded review, approval chain, freeze, electronic signature</div></div>
-    <div class="chain-step"><div class="cs-n">05</div><div class="cs-t">Assemble</div><div class="cs-d">eCTD or eSTAR structure, PDF/A rendering, checksum manifest</div></div>
-    <div class="chain-step"><div class="cs-n">06</div><div class="cs-t">Validate</div><div class="cs-d">Structural and regional validation, dispatch-readiness gate</div></div>
-    <div class="chain-step"><div class="cs-n">07</div><div class="cs-t">Transmit</div><div class="cs-d">Governed transmission with pre-transmit checks and acknowledgement</div></div>
+  <h2>What the platform spans</h2>
+  <p>
+    Each stage below is backed by tables and services in the codebase, not roadmap.
+  </p>
+  <div class="lifecycle">
+    <div class="lc"><span class="lc-s">Funding</span><span class="lc-d">Opportunities, proposals, awards, milestones, closeout</span></div>
+    <div class="lc"><span class="lc-s">Preclinical</span><span class="lc-d">Nonclinical safety, first-in-human dose engine, M2.4 / M2.6</span></div>
+    <div class="lc"><span class="lc-s">Study design</span><span class="lc-d">23 protocol tables, objectives through amendments</span></div>
+    <div class="lc"><span class="lc-s">Ethics</span><span class="lc-d">IRB submissions, sites, consent, reportable events</span></div>
+    <div class="lc"><span class="lc-s">Clinical ops</span><span class="lc-d">Risk-based monitoring — site risk, central statistical monitoring</span></div>
+    <div class="lc"><span class="lc-s">Supply</span><span class="lc-d">Suppliers, materials, batches, cold-chain readings</span></div>
+    <div class="lc"><span class="lc-s">Study reporting</span><span class="lc-d">27 CSR tables — the deepest family in the schema</span></div>
+    <div class="lc"><span class="lc-s">Quality</span><span class="lc-d">QMS and QC — audits, OOS investigations, batch release</span></div>
+    <div class="lc lc-hi"><span class="lc-s">Submission</span><span class="lc-d">510(k) · CER/PER · IND/NDA — assembly, validation, transmission</span></div>
+    <div class="lc"><span class="lc-s">Labeling</span><span class="lc-d">SPL generation, prescribing information, SmPC QRD</span></div>
+    <div class="lc"><span class="lc-s">Post-approval</span><span class="lc-d">CMC change classified against FDA and EMA rules</span></div>
+    <div class="lc"><span class="lc-s">Post-market</span><span class="lc-d">E2B(R3) ICSR transport, vigilance, registrations</span></div>
   </div>
 
-  <h2>The three journeys</h2>
+  <h2>Inside the submission band</h2>
+  <p>
+    The chain runs intake → evidence → grounded draft → review and e-signature → eCTD or
+    eSTAR assembly with PDF/A rendering and checksum manifest → structural and regional
+    validation → governed transmission, each step governed by the mechanisms in Section 06.
+  </p>
+
+  <h2>The three submission journeys</h2>
   <table>
     <thead>
       <tr><th style="width:19%">Journey</th><th style="width:29%">Scope</th><th>Position against 2026 table stakes</th></tr>
@@ -670,40 +690,30 @@
       <tr>
         <td><strong>510(k) / De Novo</strong><br><span class="pill pill-partial">Gated on templates</span></td>
         <td>FDA device premarket notification. eSTAR generation, predicate identification, substantial-equivalence argumentation, filing readiness.</td>
-        <td>Substantial-equivalence engine, versioned template registry, product-code-to-consensus-standards mapping, and claim-to-source traceability are live. Multi-user authoring with Part&nbsp;11 audit exceeds the device-side field. Official template packs and field maps are a procurement gate the system fails closed on.</td>
+        <td>Substantial-equivalence engine, versioned template registry, product-code-to-standards mapping and claim-to-source traceability are live; multi-user authoring with Part&nbsp;11 audit exceeds the device-side field. Official template packs are a procurement gate the system fails closed on.</td>
       </tr>
       <tr>
         <td><strong>CER / PER</strong><br><span class="pill pill-partial">UI wiring in flight</span></td>
         <td>EU MDR and IVDR clinical evaluation. Annex XIV structure, MEDDEV 2.7/1 rev 4 conformance, literature screening, vigilance integration.</td>
-        <td>Rule packs, conformance validator, governed export renderers, and MAUDE/FAERS clients are real; literature screening decisions now persist with an enforced exclusion rationale. Human-in-the-loop provenance is the decisive advantage — notified bodies reject pure-AI clinical evaluations.</td>
+        <td>Rule packs, conformance validator, governed export renderers and MAUDE/FAERS clients are real; screening decisions persist with an enforced exclusion rationale. Human-in-the-loop provenance is decisive — notified bodies reject pure-AI evaluations.</td>
       </tr>
       <tr>
         <td><strong>IND / NDA</strong><br><span class="pill pill-partial">Validator licence pending</span></td>
         <td>Drug submissions via eCTD. Backbone assembly, lifecycle operations, study tagging, US Module 1, PDF/A pipeline, gateway transmission.</td>
-        <td>The spine-backed path assembles an ICH v3.2.2 backbone with an MD5 manifest and genuine rendered PDF leaves; the legacy draft path marks every leaf <span class="mono">rendered="false"</span> and names the blocker rather than emitting an untransmittable package. An adapter seam for the reference validator is ready; the licence is procurement.</td>
+        <td>The spine-backed path assembles an ICH v3.2.2 backbone with MD5 manifest and genuine rendered PDF leaves; the legacy path marks leaves <span class="mono">rendered="false"</span> and names the blocker rather than emitting an untransmittable package. The reference-validator licence is procurement.</td>
       </tr>
     </tbody>
   </table>
 
   <h2>Agency transport</h2>
   <p>
-    Thirteen submission-gateway adapters are implemented — FDA ESG, EMA CESP, PMDA, MHRA,
-    Health Canada, TGA eBS, Swissmedic, NMPA, MFDS, ANVISA, CDSCO Sugam, HSA PRISM — behind
-    a single governed transmit path with pre-transmit checks, bundle-integrity
-    verification, and acknowledgement tracking. Because there is no FDA certification
-    programme for eCTD software, direct gateway submission on sponsor-held accounts is
-    reachable without an incumbent's permission.
+    Thirteen gateway adapters — FDA ESG, EMA CESP, PMDA, MHRA, Health Canada, TGA eBS,
+    Swissmedic, NMPA, MFDS, ANVISA, CDSCO Sugam, HSA PRISM — sit behind one governed
+    transmit path with pre-transmit checks and bundle-integrity verification. Because
+    there is no FDA certification programme for eCTD software, direct submission on
+    sponsor-held accounts is reachable without an incumbent's permission.
   </p>
 
-  <div class="callout">
-    <div class="c-label">The structural point</div>
-    <p style="margin:0">
-      A competitor entering from the authoring side must build assembly, validation, and
-      transport before it can span the chain. One entering from the publishing side must
-      build grounded drafting and the governance to make AI output defensible. Both must
-      then do it twice — once for device, once for drug. That double crossing is the moat.
-    </p>
-  </div>
 </section>
 
 <!-- ═══════════════════════ PAGE 10 · CMC ═══════════════════════ -->

@@ -9,6 +9,7 @@ Cover, contents, and thirteen content sections — one section per page.
 | `whitepaper.css` | Print stylesheet, built to the platform design system. |
 | `Concept2Cure-RI-Technical-White-Paper.pdf` | The rendered deliverable. |
 | `fonts/` | Lora + Inter, fetched at build time. Not committed. |
+| `PLATFORM_INVENTORY.md` | Capability inventory derived from the code. Read this before writing about scope. |
 
 ## Building
 
@@ -44,6 +45,19 @@ document.body.style.width = '186mm';
 document.querySelectorAll('section').forEach((s, i) =>
   console.log(i + 1, Math.round(s.getBoundingClientRect().height / 3.7795) + 'mm'));
 ```
+
+## Before writing about scope
+
+Read `PLATFORM_INVENTORY.md` first. It maps every service domain, table family
+and client surface to a lifecycle stage, and it exists because the first drafts
+of this paper twice understated what is built — describing the platform as three
+submission journeys when the schema spans grant funding through post-approval
+change control, and omitting CMC, CSR, protocol development, risk-based
+monitoring, IRB, supply chain, QMS/QC and labeling entirely.
+
+The failure mode is specific and worth naming: the submission chain is the most
+*legible* part of the codebase, so it is what a quick pass finds. Breadth lives
+in the table families and the 107 client surfaces, not in the service names.
 
 ## On the content
 

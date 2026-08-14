@@ -522,3 +522,35 @@ td.num, th.num { font-family: var(--sans); font-variant-numeric: tabular-nums; w
 .toc-compact > li { padding: 2.1mm 0; grid-template-columns: 8mm 1fr 10mm; }
 .toc-compact .toc-t { font-size: 9.6pt; }
 .toc-compact .toc-d { font-size: 6.9pt; margin-top: 0.8mm; }
+
+/* Lifecycle band — Section 07. Twelve stages, so it wraps rather than sitting
+   in one row like .chain; the submission stage is the only highlighted cell. */
+.lifecycle {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.6mm;
+  margin: 0 0 4mm 0;
+  break-inside: avoid;
+}
+.lc {
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-faint);
+  border-radius: 2mm;
+  padding: 2.2mm 2.6mm;
+}
+.lc-hi { border-color: var(--accent); background: var(--accent-subtle); }
+.lc-s {
+  display: block;
+  font-family: var(--sans);
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.lc-hi .lc-s { color: #a84f2c; }
+.lc-d {
+  display: block;
+  font-size: 7.1pt;
+  line-height: 1.32;
+  color: var(--ink-muted);
+  margin-top: 0.8mm;
+}
