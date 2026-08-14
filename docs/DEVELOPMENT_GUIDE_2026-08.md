@@ -24,7 +24,7 @@ disagree, the command is right and this file is stale.
 Measured 2026-08-14 on `concept2cure-v2`:
 
 ```bash
-node scripts/ops/ledger-check.mjs          # 55 rows: 19 done, 29 open, 6 in-flight, 1 blocked
+node scripts/ops/ledger-check.mjs          # 58 rows: 19 done, 31 open, 7 in-flight, 1 blocked
 node scripts/ops/ga-readiness-report.mjs   # 3/40 ready · 18 blockers · 19 advisories
 npm run ci:surface-discoverability         # 119 renderable: 93 catalogued, 26 contextual
 ```
@@ -105,6 +105,7 @@ npm run ci:migration-reachability     # every migration is in a durable applier 
 npm run ci:surface-discoverability    # every renderable surface is findable or justified
 npm run check:compliance-claims       # no unqualified regulatory claims in product copy
 npm run ci:canonicalizers             # no second answer to "what does this content hash to"
+npm run ci:tenant-resolvers           # no second answer to "which organization is this"
 ```
 
 **Migrations.** A migration that is not in `C2C_MIGRATION_FILES`
@@ -226,6 +227,27 @@ what happened when it ran. A hand search had found nine copies. The gate found f
 including seven in the Part 11 and audit-export paths, and one of those turned out to be
 L55 — a tamper-evident export signing three of its own fields as `{}`. The gate paid for
 itself in under an hour, which is the argument for writing the other two.
+
+The sweep also had a scope boundary worth naming, because it was found by asking rather
+than by luck: it scanned exported **functions** and never types. Extending it produced L56,
+which is larger than any single duplicate function — 8 different `Severity` scales, 6
+`RiskLevel`s, 5 `Agency` lists — and L57, 50 import cycles. **Duplication of a type is worse
+than duplication of a function**, because two functions that disagree produce a bug someone
+eventually hits, while two enums that disagree produce two dashboards that quietly report
+different totals and are each internally consistent. Sequence L56 with the Phase 4 journey
+work, not here: the vocabulary has to be settled before a journey can report on it.
+
+Extending the sweep once more — to blocks repeated *within and across* files rather than
+whole files — produced **L58, the largest finding of the audit**. 194 modules resolve the
+caller's organization from the raw request, each in their own way, and the copies disagree
+on precedence: the canonical resolver in `server/types/auth-request.ts` reads four identity
+fields in the exact reverse order of the 35-file majority copy. They agree today only
+because one middleware populates those fields from a single value. **That is not a live
+leak and the row says so** — it is agreement by coincidence on the control whose entire job
+is tenant isolation, and it belongs in Phase 1 beside the isolation work, not in the
+consolidation phase. The order matters and is stated in the row: gate first (landed), then
+integration tests that force the fields to disagree, and only then re-point. Re-pointing
+before the tests is the change most likely to cause the leak it is meant to prevent.
 
 ---
 

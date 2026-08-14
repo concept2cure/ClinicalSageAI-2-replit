@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T21:58:33.198Z",
+  "generatedAt": "2026-08-14T22:48:33.666Z",
   "git": {
-    "sha": "0adca9d4fd4813f3e6487ad66ea708e65b496077",
+    "sha": "a6271e7de77046d75d300dd5a8420bba39f9ecb5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2156,7 +2156,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 200379
+        "bytes": 202559
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2298,7 +2298,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5175
+        "lines": 5211
       },
       {
         "file": "server/storage.ts",
@@ -2489,6 +2489,10 @@
         "lines": 1864
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 1859
+      },
+      {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 1855
       },
@@ -2523,10 +2527,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
         "lines": 1813
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 1798
       },
       {
         "file": "design-system/ui_kits/home/Projects.jsx",

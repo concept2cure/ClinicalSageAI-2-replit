@@ -178,6 +178,63 @@ interface ClaimWarning {
 
 // ─── Precedent Engine ────────────────────────────────────────────────────────
 
+
+/** The reserved owner of platform-provided precedent knowledge. See migrations/20260814m. */
+const PLATFORM_ORG = '00000000-0000-0000-0000-000000000000';
+
+/** `resolution_difficulty` back to the severity vocabulary this file speaks. */
+const DIFFICULTY_TO_SEVERITY: Record<string, CRLPattern['severity']> = {
+  very_high: 'critical', high: 'high', moderate: 'medium', low: 'low',
+};
+
+/**
+ * CRL trigger patterns from `regulatory_intel`, or null if that store cannot
+ * answer.
+ *
+ * ── Why this returns null instead of an empty array ─────────────────────────
+ * The whole reason ADR 0013 made this file authoritative is that the table
+ * shipped with zero rows, and an empty answer from a regulatory risk tool reads
+ * as "low risk" — the most dangerous direction to be wrong in. So "the table
+ * said nothing" and "the table is not there" must both fall back to the inline
+ * knowledge below, and only a table with actual rows may override it. An empty
+ * result here is indistinguishable from an unseeded environment, so it is
+ * treated as one.
+ *
+ * Reads platform rows and this organisation's own rows together: a tenant that
+ * has recorded its own patterns sees them alongside the shipped ones, which is
+ * the point of the tier.
+ */
+async function loadCrlPatternsFromStore(organizationId?: string): Promise<CRLPattern[] | null> {
+  if (!pool) return null;
+  try {
+    const { rows } = await pool.query(
+      `SELECT pattern_name, category, trigger_description, frequency_rate,
+              resolution_difficulty, submission_types
+         FROM regulatory_intel.crl_trigger_patterns
+        WHERE organization_id = ANY($1::uuid[])`,
+      [organizationId ? [PLATFORM_ORG, organizationId] : [PLATFORM_ORG]],
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rows.map(r => ({
+      category: String(r.pattern_name),
+      submissionTypes: Array.isArray(r.submission_types) ? r.submission_types : [],
+      severity: DIFFICULTY_TO_SEVERITY[String(r.resolution_difficulty)] ?? 'medium',
+      // The store has no per-pattern confidence column; the seeded rows came
+      // from the inline arrays, whose confidences are recorded there. Rather
+      // than invent one, a stored pattern reports the frequency it carries and
+      // leaves confidence at the neutral value.
+      confidence: 0.8,
+      description: String(r.trigger_description),
+      mitigation: '',
+      historicalRate: r.frequency_rate == null ? 0 : Number(r.frequency_rate),
+    }));
+  } catch {
+    // 42P01 and anything else: the store cannot answer, so the inline knowledge
+    // stands. This path is why seeding can never make the product worse.
+    return null;
+  }
+}
+
 export class PrecedentEngine {
   // ── 1. SEARCH: Find closest regulatory precedents ──────────────────────
 
@@ -1131,8 +1188,12 @@ export class PrecedentEngine {
 
     const triggers: CRLTrigger[] = [];
 
-    // Known CRL trigger patterns by submission type
-    const crlPatterns: CRLPattern[] = [
+    /* Stored patterns win when the store has any; otherwise the curated arrays
+       below stand. See loadCrlPatternsFromStore for why "empty" falls back
+       rather than overriding — an unseeded table must never be able to report
+       "no CRL risk". */
+    const stored = await loadCrlPatternsFromStore((input as { organizationId?: string }).organizationId);
+    const crlPatterns: CRLPattern[] = stored ?? [
       // NDA/BLA CRL triggers
       {
         category: 'Efficacy Endpoint Failure',
