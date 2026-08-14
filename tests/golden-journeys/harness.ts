@@ -92,6 +92,46 @@ export interface JourneyDb {
   close: () => Promise<void>;
 }
 
+/**
+ * The `req.dbClient` shape that `requireTenantContext` installs, backed by
+ * PGlite — so a journey can drive a route that uses `requestDb(req)` /
+ * `requestPgClient(req)` WITHOUT mocking either of them.
+ *
+ * Drizzle's node-postgres driver calls `.query(queryConfig, params)` with
+ * `{ text, rowMode: 'array' }` for row-mapped selects and maps the array rows
+ * itself, so `rowMode` is forwarded to PGlite verbatim. Raw-SQL callers
+ * (requestPgClient) pass a plain string; both forms are accepted here, exactly
+ * as the production lazy client accepts both.
+ *
+ * Single connection (PGlite), which is what the request-scoped client is: one
+ * connection carrying the tenant session variables. Ported from the proven shim
+ * in server/routes/__tests__/saved-precedent-queries.rls.test.ts.
+ */
+export function makeRequestDbClient(pglite: import('@electric-sql/pglite').PGlite) {
+  return {
+    query: async (textOrConfig: unknown, values?: unknown[]) => {
+      const text =
+        typeof textOrConfig === 'string' ? textOrConfig : (textOrConfig as { text: string }).text;
+      const rowMode =
+        typeof textOrConfig === 'string'
+          ? undefined
+          : (textOrConfig as { rowMode?: string }).rowMode;
+      const r = await pglite.query(
+        text,
+        (values ?? []) as unknown[],
+        rowMode === 'array' ? { rowMode: 'array' } : undefined,
+      );
+      const rows = r.rows as unknown[];
+      const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
+      return {
+        rows,
+        rowCount: rows.length > 0 ? rows.length : affected,
+        fields: (r as { fields?: unknown[] }).fields ?? [],
+      };
+    },
+  };
+}
+
 export async function createJourneyDb(options?: {
   /** Override the FK-prerequisite DDL (defaults to JOURNEY_PREREQUISITES). */
   prereqSql?: string;
