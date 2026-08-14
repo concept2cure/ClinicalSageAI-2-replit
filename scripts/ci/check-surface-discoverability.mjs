@@ -44,6 +44,7 @@ const CATALOG_FILES = [
   'db/migrations/20260810_reconcile_module_catalog.sql',
   'migrations/20260814j_catalog_missing_product_surfaces.sql',
   'migrations/20260814k_catalog_mission_control.sql',
+  'migrations/20260814l_catalog_filing_strategy.sql',
 ];
 
 /**
