@@ -208,7 +208,7 @@ export function EctdCompile(_props: SurfaceViewProps) {
         // and saying "submission-ready" in a toast over an unrendered package is
         // the claim this surface got wrong.
         ? `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`
-        : `Compile blocked — ${body.errors.length} error(s) must be resolved.`);
+        : `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`);
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
   }, [identPath, submissionType, region, fireToast, loadStatus, loadHistory]);
@@ -226,6 +226,12 @@ export function EctdCompile(_props: SurfaceViewProps) {
       </div>
     );
   }
+
+  // Read the compile result's lists through locals that are always arrays. The
+  // response is server data, not a local invariant, so `.length` on it is a
+  // render-time throw waiting for the first version skew.
+  const compileErrors = Array.isArray(compileResult?.errors) ? compileResult!.errors : [];
+  const compileWarnings = Array.isArray(compileResult?.warnings) ? compileResult!.warnings : [];
 
   return (
     <div className="cm-body">
@@ -268,7 +274,13 @@ export function EctdCompile(_props: SurfaceViewProps) {
             <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading readiness…" /></div>
           ) : statusState === 'error' ? (
             <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compilation readiness" hint="GET /api/ectd-compile/:projectIdent/status didn’t respond. Sign in to your tenant and retry." /></div>
-          ) : !status || status.modules.length === 0 ? (
+          ) : !status || !Array.isArray(status.modules) || status.modules.length === 0 ? (
+            // `status && status.modules.length` reads as guarded and is not —
+            // the check covers the container, not the member. A readiness
+            // response that arrives without `modules` (version skew, a proxy
+            // that dropped a field, an error body served with 200) threw here
+            // and unwound the whole surface into "this surface didn't finish
+            // loading", when the truthful answer is the empty state below.
             <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No module readiness yet" hint="Readiness is derived from the program’s sections. Draft and approve sections, then readiness appears per CTD module." /></div>
           ) : (
             <table className="reg-tbl"><thead><tr><th>Module</th><th>Required complete</th><th>Sections</th><th>Completion</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
@@ -289,7 +301,11 @@ export function EctdCompile(_props: SurfaceViewProps) {
         </div>
       </div>
 
-      {/* ── Compile result ── */}
+      {/* ── Compile result ──
+          `errors` and `warnings` are read through these locals rather than off
+          the response, for the same reason as the readiness table above: a
+          compile result that arrives without them is a plausible response, and
+          it must render as "0 errors", not as a crashed surface. */}
       {compileResult && (
         <div className="pj-card">
           <div className="pj-card-h">
@@ -298,11 +314,11 @@ export function EctdCompile(_props: SurfaceViewProps) {
           </div>
           <div className="pj-card-b">
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 10 }}>
-              <div><b>{compileResult.errors.length}</b> errors · <b>{compileResult.warnings.length}</b> warnings</div>
+              <div><b>{compileErrors.length}</b> errors · <b>{compileWarnings.length}</b> warnings</div>
               <div>{compileResult.submissionReady ? 'Submission-ready' : 'Not submission-ready'}</div>
             </div>
-            {compileResult.errors.length > 0 && (
-              <ul style={{ margin: '0 0 10px', paddingLeft: 18 }}>{compileResult.errors.map((e, i) => <li key={i} className="sp-tone-err" style={{ fontSize: 13 }}>{e}</li>)}</ul>
+            {compileErrors.length > 0 && (
+              <ul style={{ margin: '0 0 10px', paddingLeft: 18 }}>{compileErrors.map((e, i) => <li key={i} className="sp-tone-err" style={{ fontSize: 13 }}>{e}</li>)}</ul>
             )}
             {/* Why it is not submittable, in the server's words. A bare
                 "Not submission-ready" left the user to guess, and the previous
