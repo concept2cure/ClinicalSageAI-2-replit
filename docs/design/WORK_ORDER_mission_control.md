@@ -148,29 +148,81 @@ a lot of records needs a preview-and-confirm, not a button.
 
 ---
 
-## Phase 3 — verify, then design, the remaining orphans
+## Phase 3 — the remaining orphans, now verified
 
-Ranked by endpoint count. **Verify each before designing** (see the method
-below); the count is what the server mounts, not what is proven useful.
+The top fifteen have been through the method below. **None of them is a stub.**
+Every one is backed by real persistence or is a genuinely pure engine, and every
+one is unreachable from the product.
 
-| Namespace | Endpoints | What it appears to be |
-|---|---:|---|
-| `regulatory-precedent-intelligence` | 39 | Precedent search across prior submissions |
-| `resolution` | 33 | Issue/finding resolution workflow |
-| `client-intelligence` | 33 | Account and client intelligence |
-| `authoring-actions` | 32 | Document authoring operations |
-| `operating-system` | 27 | Platform "OS" orchestration |
-| `regulatory-intelligence` | 26 | Regulatory monitoring |
-| `project-sections` | 21 | Section store behind eCTD compile |
-| `snowglobe` | 20 | *Unknown — needs a read before anything else* |
-| `account-intelligence` | 16 | Account analytics |
-| `protocol-development` | 12 | Protocol authoring |
-| `intelligent-docs` | 12 | Document intelligence |
+| Namespace | Endpoints | Backing | What it is |
+|---|---:|---|---|
+| `regulatory-precedent-intelligence` | **39** | pure engine | CRL patterns, RTF triggers, EMA question taxonomy, advisory-committee outcomes, cross-jurisdictional, confidence calibration |
+| `resolution` | 33 | persists | Contradiction clustering → bundle planning → execution |
+| `client-intelligence` | 33 | drizzle | Account/client intelligence |
+| `authoring-actions` | 32 | drizzle | Document authoring operations (3,275 lines) |
+| `operating-system` | 27 | service | Governance-boundary orchestration |
+| `regulatory-intelligence` | 26 | 4 services | Risk model, outcome features, template validation |
+| `project-sections` | 21 | SQL | The section store behind eCTD compile |
+| `snowglobe` | 20 | SQL + store | — |
+| `account-intelligence` | 16 | persists | Account canon facts, skill bundles |
+| `protocol-development` | 12 | SQL | Protocol authoring |
+| `intelligent-docs` | 12 | db | Document intelligence |
+| `biotech-artifacts` | 11 | generator | docx / pdf / xml artifact generation |
+| `submission-orchestrator` | 10 | SQL | — |
+| `submission-center` | 8 | SQL | Orphaned sibling of the live `/api/submissions` |
 
-Several of these will turn out to be dead code rather than missing UI — one
-already did (`server/routes/programs.ts`, 622 lines, unmounted, built on the
-wrong table, deleted). **Finding that is a successful outcome of this phase**,
-not a failure.
+### The clearest one, fully verified
+
+**`/api/regulatory-precedent-intelligence` — 39 endpoints, zero client references.**
+
+The platform *does* have a precedent surface (`PrecedentEngine.tsx`, 728 lines),
+and it reaches a different, smaller family:
+
+| Namespace | Endpoints | Client references |
+|---|---:|---:|
+| `precedent-engine` | 11 | 10 |
+| `saved-precedent-queries` | 4 | 12 |
+| `precedent-engine-board` | 1 | — |
+| **`regulatory-precedent-intelligence`** | **39** | **0** |
+
+So more than twice the precedent capability the product exposes is sitting
+behind a surface that already exists and does not call it. This is the same
+shape as the biostat case and is the recommended next build: the engine is pure
+and deterministic (no writes, no Part 11 exposure), so wiring it is low-risk.
+
+### A warning about the method, learned the hard way
+
+Two heuristics were tried on these files and **both were wrong**:
+
+1. *"Does the route file touch the database?"* — `submissionCenter.routes.ts`
+   imports `{ pool, query }` and calls `query(...)`, which a `pool.query` regex
+   misses. It looked like a stub and is not.
+2. *"Does it have no persistence import at all?"* — four files came back clean
+   and **all four delegate one layer down to a service**. Persistence lives in
+   `server/services/…`, sometimes several files into a directory.
+
+Route-file inspection cannot classify these. **Follow the service.** The
+corrected pass is what produced the table above; the first two passes would each
+have produced a confident, wrong answer.
+
+### The verification method
+
+For each namespace, before any design work:
+
+1. Confirm it is mounted: `grep -rn "\.use('/api/<ns>'" server/`
+2. Read the route file's imports, then **follow every `../services/…` import**
+   and check *those* for persistence. Do not stop at the route file.
+3. Confirm no client caller: `grep -rn "/api/<ns>" client/src`
+4. Check for a **parallel live API serving the same concept under a different
+   name.** This is the most common trap and it has now caught three:
+   `submission-center` beside `/api/submissions`, `programs.ts` beside
+   `mission-control`, and `regulatory-precedent-intelligence` beside
+   `precedent-engine`.
+5. Only then: does a user-facing capability exist here worth designing?
+
+Some of the remaining ~80 will still turn out to be dead code — one already did
+(`server/routes/programs.ts`, 622 lines, unmounted, built on the wrong table,
+deleted). **Finding that is a successful outcome of this phase**, not a failure.
 
 ### The verification method
 
