@@ -5815,8 +5815,18 @@ registerToolHandler('trace_fact_to_source', async (input: Record<string, unknown
       establishingClaim: result.establishingClaim,
       establishingSource: result.establishingSource,
       citations: result.citations,
-      instruction:
-        'Report the chain: the governed value, the claim that established it, and the source artifact (file/page). List each citing location.',
+      /* A trace full of nulls reads as "this value has no evidence". That is
+         only one reason it happens; another is that the referenced claims are
+         not in the store at all — which is currently true of evidence_claims,
+         a table with no writer anywhere in the repository. Reporting the
+         broken references keeps the two apart. */
+      unresolvedClaimIds: result.unresolvedClaimIds,
+      claimStoreUnavailable: result.claimStoreUnavailable,
+      instruction: result.claimStoreUnavailable
+        ? 'Do NOT report this value as unsupported. Every claim it references failed to resolve, which means the evidence trail is BROKEN, not absent — say so plainly and name the unresolved claim ids.'
+        : result.unresolvedClaimIds.length > 0
+          ? 'Report the chain, and state clearly which referenced claims could not be resolved. A partial trail must not be presented as a complete one.'
+          : 'Report the chain: the governed value, the claim that established it, and the source artifact (file/page). List each citing location.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `trace_fact_to_source failed: ${err?.message ?? 'unknown error'}` });
