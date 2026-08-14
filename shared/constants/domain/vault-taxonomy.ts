@@ -30,7 +30,7 @@
  * @module shared/constants/domain/vault-taxonomy
  */
 
-import type { DomainEntry } from './index.js';
+import type { DomainEntry } from './types.js';
 import type { ClientSegmentType, OrganizationType } from './organization-types.js';
 import { orgToClientSegment } from './organization-types.js';
 import { TMF_ZONE_REFS } from './tmf-reference-model.js';

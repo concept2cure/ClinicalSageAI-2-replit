@@ -9,7 +9,7 @@
  */
 
 import type { QuestionOption } from '../../types/intelligence-questions.js';
-import type { DomainEntry } from './index.js';
+import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 
 export type StudyDesign =
   | 'parallel_group'
@@ -111,5 +111,5 @@ export const STUDY_DESIGNS: DomainEntry<StudyDesign>[] = [
 
 /** Convert STUDY_DESIGNS to QuestionOption[] for use in intelligence question flows. */
 export function toQuestionOptions(): QuestionOption[] {
-  return STUDY_DESIGNS.map((e) => ({ value: e.value, label: e.label, description: e.description }));
+  return sharedToQuestionOptions(STUDY_DESIGNS);
 }

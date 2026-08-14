@@ -10,7 +10,7 @@
  */
 
 import type { QuestionOption } from '../../types/intelligence-questions.js';
-import type { DomainEntry } from './index.js';
+import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 
 export type StatisticalMethod =
   | 'ancova'
@@ -135,5 +135,5 @@ export const STATISTICAL_METHODS: DomainEntry<StatisticalMethod>[] = [
 
 /** Convert STATISTICAL_METHODS to QuestionOption[] for use in intelligence question flows. */
 export function toQuestionOptions(): QuestionOption[] {
-  return STATISTICAL_METHODS.map((e) => ({ value: e.value, label: e.label, description: e.description }));
+  return sharedToQuestionOptions(STATISTICAL_METHODS);
 }

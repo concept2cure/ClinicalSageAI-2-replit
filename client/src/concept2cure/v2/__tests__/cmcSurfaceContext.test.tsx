@@ -5,7 +5,7 @@
  * ── The gap ───────────────────────────────────────────────────────────────────
  * `useAnaChat` forwards a surface's published context to the orchestrator as
  * `module_context` (see ../surfaceContext). The shell alone knows only that the
- * active surface is "cmc" — not which of the twelve sub-tabs is open, nor
+ * active surface is "cmc" — not which of the nine sub-tabs is open, nor
  * anything on it. So a generic question ("what should I do next?") could not be
  * answered here without the user restating their situation.
  *

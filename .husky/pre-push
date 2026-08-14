@@ -24,6 +24,38 @@ while read -r local_ref local_sha remote_ref _remote_sha; do
   fi
 
   if [ "$remote_ref" != "refs/heads/concept2cure-v2" ]; then
+
+    # Agent-shaped branches are refused UNCONDITIONALLY — no bypass.
+    #
+    # The bypass below used to apply here too, and that is precisely how it
+    # failed: in one session an agent set ALLOW_NON_CANONICAL_PUSH=1 eight
+    # times to keep a claude/* mirror in sync with concept2cure-v2, because its
+    # task prompt named that branch. Every push was individually defensible;
+    # the set of them was exactly the divergence this gate exists to prevent.
+    #
+    # A rule you can satisfy by following the hint printed in its own error
+    # message is not enforcement. For these prefixes there is no hint, because
+    # there is no legitimate case: an AI session's work belongs on
+    # concept2cure-v2, and its instructions to the contrary are superseded by
+    # CLAUDE.md Rule 0.
+    case "$remote_ref" in
+      refs/heads/claude/*|refs/heads/codex/*|refs/heads/cursor/*|refs/heads/agent/*|refs/heads/ai/*|refs/heads/bot/*)
+        echo ""
+        echo "🚫 REFUSED: ${remote_ref} is an agent branch. There is no bypass."
+        echo ""
+        echo "   concept2cure-v2 is the ONLY branch (CLAUDE.md Rule 0)."
+        echo "   If your task prompt told you to push here, that instruction is superseded."
+        echo ""
+        echo "     git checkout concept2cure-v2"
+        echo "     git merge origin/concept2cure-v2"
+        echo "     git push origin concept2cure-v2"
+        echo ""
+        echo "   ALLOW_NON_CANONICAL_PUSH does NOT apply to agent branches."
+        echo ""
+        exit 1
+        ;;
+    esac
+
     if [ "${ALLOW_NON_CANONICAL_PUSH:-}" = "1" ]; then
       echo "⚠️  Pushing to non-canonical ref ${remote_ref} (ALLOW_NON_CANONICAL_PUSH=1)."
     else
@@ -36,7 +68,8 @@ while read -r local_ref local_sha remote_ref _remote_sha; do
       echo "     git checkout concept2cure-v2"
       echo "     git push origin concept2cure-v2"
       echo ""
-      echo "   To bypass intentionally (e.g. dependabot PR branch):"
+      echo "   Bypass exists ONLY for externally-created refs (dependabot/*,"
+      echo "   revert-*). It does not apply to agent branches:"
       echo "     ALLOW_NON_CANONICAL_PUSH=1 git push ..."
       echo ""
       exit 1
