@@ -183,9 +183,17 @@ describe('Mission Control — reads the real program engine', () => {
 
     // The toast is the only channel for this refusal, so it has to be a live
     // region — otherwise a screen-reader user presses Create and hears nothing.
-    const status = await screen.findByRole('status');
-    expect(status.textContent).toContain('Enter a program name.');
-    expect(status.getAttribute('aria-live')).toBe('polite');
+    // Selected by class rather than by role: EmptyState is also a live region,
+    // so `getByRole('status')` is ambiguous and would break on any surface that
+    // renders both. Asserting on the toast specifically is the narrower claim.
+    const toast = await waitFor(() => {
+      const el = document.querySelector('.de-toast');
+      if (!el) throw new Error('no toast');
+      return el as HTMLElement;
+    });
+    expect(toast.textContent).toContain('Enter a program name.');
+    expect(toast.getAttribute('role')).toBe('status');
+    expect(toast.getAttribute('aria-live')).toBe('polite');
     expect(apiRequest.mock.calls.some(c => c[0] === 'POST')).toBe(false);
   });
 
