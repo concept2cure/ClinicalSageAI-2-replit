@@ -10,7 +10,7 @@
  */
 
 import type { QuestionOption } from '../../types/intelligence-questions.js';
-import type { DomainEntry } from './index.js';
+import { toQuestionOptions as sharedToQuestionOptions, type DomainEntry } from './types.js';
 
 export type ExcipientClass =
   | 'filler_diluent'
@@ -129,5 +129,5 @@ export const EXCIPIENT_CLASSES: DomainEntry<ExcipientClass>[] = [
 
 /** Convert EXCIPIENT_CLASSES to QuestionOption[] for use in intelligence question flows. */
 export function toQuestionOptions(): QuestionOption[] {
-  return EXCIPIENT_CLASSES.map((e) => ({ value: e.value, label: e.label, description: e.description }));
+  return sharedToQuestionOptions(EXCIPIENT_CLASSES);
 }
