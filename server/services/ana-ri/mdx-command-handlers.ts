@@ -39,6 +39,7 @@ import { Q_SUB_TYPES } from '../../../shared/schema/q-sub';
 import auditService from '../auditService';
 import type { CommandContext, CommandResult } from './command-executor';
 import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './mdx-tool-policy';
+import { validateSignoff, buildSignatureRequiredResult } from './part11-governance';
 
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
@@ -611,16 +612,60 @@ export async function preflightModule(
   }
 }
 
-// ─── 510(k) ESG transmit (most consequential — dual confirmation) ───────────
+// ─── 510(k) ESG transmit (most consequential — real agency transport) ──────
 
 /**
- * ESG transmit is the single most consequential mutation in the platform.
- * Beyond the standard confirm + reason, this handler requires:
- *   - confirm = 'yes-transmit' (literal — the human must type this exact
- *     phrase, not just 'yes')
- *   - reason ≥ 30 characters
- * This is intentionally awkward to invoke via chat, matching the §11.10
- * deliberateness expectation.
+ * Transmit an assembled 510(k) package to the FDA Electronic Submissions
+ * Gateway — the real one.
+ *
+ * HISTORY (why this handler looks the way it does). It used to call
+ * `server/services/ESGSubmissionService`, a SECOND, parallel "ESG service"
+ * whose `transmitToESG` threw `not-implemented` in production and returned a
+ * `SIMULATED-NOT-SENT-*` record everywhere else. The platform's genuine AS2 /
+ * RFC-4130 implementation — envelope framing, Message-ID, signed MDN with a
+ * SHA-256 MIC, mTLS, SFTP fallback, the ack1/ack2/ack3 ladder — lives in
+ * `server/services/submission-gateways/fda-esg.ts` and was reachable only from
+ * the HTTP transmit route. So the product's device transmit affordance was
+ * wired to the one path that could never reach an agency, while the path that
+ * could was wired to nothing on this surface. That second transport is gone;
+ * this handler now runs the SAME governed transmit as the HTTP route
+ * (`executeGovernedTransmit`), so there is exactly one implementation of
+ * "ship bytes to a regulator" and every guarantee travels with it.
+ *
+ * The governance preconditions, none of them dropped:
+ *
+ *   1. Verified human actor + re-authentication. `k510_workflow.transmit` is in
+ *      PART11_ESIGN_COMMANDS, so the ONLY dispatch that can carry it is
+ *      POST /api/ana-ri/governed-action, which verifies the signer's password
+ *      (and TOTP when MFA is on) server-side before executing. This handler
+ *      re-checks the verified sign-off UNCONDITIONALLY — it does not consult
+ *      the tenant's `anaPart11Enforce` flag, because a tenant opt-out must not
+ *      be able to un-gate an agency transmission — and refuses when the
+ *      verification instant is absent rather than synthesising one.
+ *   2. Stated reason. Two of them: the tool gate's ≥30-character reason and the
+ *      Part 11 reason-for-change. Both are recorded.
+ *   3. Deliberateness. confirm='yes-transmit' literal (not 'yes').
+ *   4. Package gate. The bytes must be the server-generated descriptor the
+ *      tenant-scoped assemble route wrote; missing structural-validation
+ *      evidence is UNKNOWN and blocks; error-severity findings block; the path
+ *      and any durable key must stay inside the bundle namespace; an active
+ *      transmittal for the same package blocks. All enforced inside
+ *      executeGovernedTransmit.
+ *   5. Audit. The governed `sign` ledger entry is written by the shared
+ *      service; the `agent.ana.*` rows below record the agent provenance.
+ *
+ * Fail-closed: with no FDA ESG credentials the gateway raises `CredentialError`
+ * naming exactly which FDA_ESG_* variables are missing, and that is returned as
+ * a structured refusal. No simulated success, no fabricated acknowledgement
+ * number, no transactionId that has no agency meaning.
+ *
+ * NOTE ON `projectId`. The old parameter named an `fda_510k_projects` row, and
+ * the deleted service "packaged" it as a zip of JSON documents plus a
+ * hand-built `estar.xml` — not an FDA eSTAR (a PDF form) and not a valid eCopy.
+ * Transmitting that would have been a real transmission of an invalid
+ * submission, which is worse than refusing. The parameter is now `packageId`:
+ * the numeric id of a locked `c2c_submission_packages` row that has been
+ * assembled, which is the only trusted producer of transmittable bytes.
  */
 export async function esgTransmit(
   ctx: CommandContext,
@@ -636,54 +681,206 @@ export async function esgTransmit(
   });
   if (!gate.ok) return gate.result;
 
-  const projectId = Number(params.projectId);
-  if (!Number.isFinite(projectId)) {
+  // ── Part 11 §11.200 human gate — UNCONDITIONAL ────────────────────────
+  // Not `if (ctx.part11Enforce)`: that flag is a per-tenant opt-in that
+  // defaults OFF, and an agency transmission is not a thing a tenant may opt
+  // out of. Absent or unverified sign-off returns the structured
+  // PART11_SIGNATURE_REQUIRED refusal, which cues the client to collect the
+  // reason-for-change + re-authentication and retry via
+  // POST /api/ana-ri/governed-action with the same params.
+  const signoffCheck = validateSignoff(ctx.signoff, { requireSignature: true });
+  if (!signoffCheck.ok) {
+    return buildSignatureRequiredResult(action, signoffCheck, params);
+  }
+  // The gateway is handed the moment the human was actually verified. A handler
+  // cannot observe that, so it must be carried on the sign-off; inventing
+  // `new Date()` here would stamp a fabricated verification time onto an
+  // irreversible transmission.
+  const reauthVerifiedAt = ctx.signoff?.verifiedAt;
+  if (!(reauthVerifiedAt instanceof Date) || Number.isNaN(reauthVerifiedAt.getTime())) {
     return {
       success: false,
       action,
-      message: 'projectId is required (numeric).',
+      message:
+        'Refusing to transmit: the sign-off carries no server-recorded re-authentication time, ' +
+        'so this transmission cannot name the human gate it passed. Re-submit through ' +
+        'POST /api/ana-ri/governed-action.',
+      error: 'PART11_SIGNATURE_REQUIRED',
+    };
+  }
+
+  const packageId = Number(params.packageId);
+  if (!Number.isInteger(packageId) || packageId <= 0) {
+    return {
+      success: false,
+      action,
+      message:
+        'packageId is required (positive integer): the id of a locked submission package that has ' +
+        'already been assembled via POST /api/submission-ops/packages/:packageId/assemble. ' +
+        'Only an assembled package has transmittable bytes and a server-generated bundle descriptor.',
       error: 'INVALID_INPUT',
     };
   }
 
+  // Never defaulted. `environment` decides whether bytes land on FDA's real
+  // endpoint, and this value arrives as model-supplied JSON; silently defaulting
+  // it to 'production' is how a conversation reaches a regulator by omission.
+  const envRaw = typeof params.environment === 'string' ? params.environment.toLowerCase() : '';
+  if (envRaw !== 'staging' && envRaw !== 'production') {
+    return {
+      success: false,
+      action,
+      message:
+        "environment is required and must be 'staging' or 'production'. It is deliberately not " +
+        'defaulted — it decides whether the package reaches the real FDA gateway.',
+      error: 'INVALID_INPUT',
+    };
+  }
+  const environment: 'staging' | 'production' = envRaw;
+
+  const auditBase = {
+    ...agentAuditDetails(ctx, gate),
+    packageId,
+    environment,
+    region: 'fda',
+    gateway: 'esg',
+    part11ReasonForChange: ctx.signoff?.reasonForChange ?? null,
+    reauthVerifiedAt: reauthVerifiedAt.toISOString(),
+  };
+
   try {
-    const ESGSubmissionService = (await import('../ESGSubmissionService')).default;
-    const svc = new ESGSubmissionService();
-    const response = await svc.submitToFDA(projectId, ctx.userId, ctx.organizationId);
+    const { executeGovernedTransmit } = await import(
+      '../submission-gateways/governed-transmit'
+    );
+    const { recordGovernedAction } = await import('../../routes/c2c/actions');
+
+    const outcome = await executeGovernedTransmit({
+      region: 'fda',
+      gateway: 'esg',
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      packageId,
+      environment,
+      submissionType: '510k',
+      metadata: { threadId: ctx.threadId ?? null, initiatedBy: 'agent:ana' },
+      reason: gate.reason,
+      reauthVerifiedAt,
+      recordGovernedAction,
+      surface: 'ana-mdx-command',
+    });
 
     void auditService.logAction({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.k510_workflow.transmit',
-      resourceType: 'fda_510k_submission_package',
-      resourceId: String((response as any)?.packageId ?? projectId),
+      resourceType: 'submission_transmittal',
+      resourceId: String(outcome.result.transmittalId),
       details: {
-        ...agentAuditDetails(ctx, gate),
-        projectId,
-        transactionId: (response as any)?.transactionId ?? null,
+        ...auditBase,
+        transmittalId: outcome.result.transmittalId,
+        transmissionId: outcome.result.transmissionId ?? null,
+        status: outcome.result.status,
+        transport: outcome.result.transport,
+        bundleSha256: outcome.bundle.sha256,
+        ledgerWriteFailed: outcome.ledgerWriteFailed,
       },
     });
 
     return {
       success: true,
       action,
-      data: response as unknown as Record<string, unknown>,
-      message: `Transmitted project ${projectId} to FDA ESG.`,
+      data: {
+        transmittalId: outcome.result.transmittalId,
+        transmissionId: outcome.result.transmissionId ?? null,
+        status: outcome.result.status,
+        transport: outcome.result.transport,
+        ackReceivedAt: outcome.result.ackReceivedAt ?? null,
+        bundleSha256: outcome.bundle.sha256,
+        region: 'fda',
+        gateway: 'esg',
+        environment,
+      },
+      message:
+        `Package ${packageId} handed to the FDA ESG (${environment}, ${outcome.result.transport}). ` +
+        `Transmittal #${outcome.result.transmittalId}, status '${outcome.result.status}'. ` +
+        `${outcome.result.message} ` +
+        'Poll the transmittal for the ack1/ack2/ack3 ladder — an FDA acknowledgement exists only ' +
+        'once the agency sends one.',
     };
   } catch (err) {
     void auditService.logAction({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.k510_workflow.transmit.failed',
-      resourceType: 'fda_510k_submission_package',
-      resourceId: String(projectId),
+      resourceType: 'c2c_submission_package',
+      resourceId: String(packageId),
       details: {
-        ...agentAuditDetails(ctx, gate),
+        ...auditBase,
+        errorName: err instanceof Error ? err.name : 'unknown',
         error: err instanceof Error ? err.message : 'unknown',
       },
     });
-    return mapServiceError(action, err);
+    return mapTransmitError(action, err);
   }
+}
+
+/**
+ * Map a governed-transmit failure onto a CommandResult.
+ *
+ * Every branch is a refusal or a failure — never a success, and never a
+ * synthesised identifier. In particular `CredentialError` (raised by the FDA
+ * ESG gateway when FDA_ESG_* configuration is missing) is surfaced verbatim
+ * with the missing variable names it already carries, under a distinct
+ * `GATEWAY_NOT_CONFIGURED` code so a surface can tell "you are not provisioned"
+ * apart from "the transmission failed".
+ */
+function mapTransmitError(action: string, err: unknown): CommandResult {
+  const name = err instanceof Error ? err.name : '';
+  const detail = err instanceof Error ? err.message : 'unknown';
+
+  if (name === 'GovernedTransmitRefusal') {
+    const e = err as { code?: string; details?: Record<string, unknown> };
+    return {
+      success: false,
+      action,
+      message: `Refused: ${detail}`,
+      error: e.code ?? 'TRANSMIT_REFUSED',
+      data: e.details,
+    };
+  }
+  if (name === 'CredentialError') {
+    return {
+      success: false,
+      action,
+      message:
+        `Nothing was transmitted. ${detail} ` +
+        'No submission was made and no FDA acknowledgement exists.',
+      error: 'GATEWAY_NOT_CONFIGURED',
+    };
+  }
+  if (name === 'TransmitAuthorizationError') {
+    return { success: false, action, message: detail, error: 'HUMAN_AUTHORIZATION_REQUIRED' };
+  }
+  if (name === 'ValidationError') {
+    return {
+      success: false,
+      action,
+      message: detail,
+      error: 'PACKAGE_NOT_TRANSMITTABLE',
+      data: { findings: (err as { findings?: unknown[] }).findings ?? [] },
+    };
+  }
+  if (name === 'TransportError' || name === 'GatewayError') {
+    return {
+      success: false,
+      action,
+      message:
+        `Transmission failed at the gateway: ${detail} ` +
+        'Check the transmittal record before retrying — the package may already be at FDA.',
+      error: 'TRANSMIT_FAILED',
+    };
+  }
+  return mapServiceError(action, err);
 }
 
 // ─── Metadata for the AnA intent parser / OpenAI tools ──────────────────────
@@ -738,12 +935,21 @@ export const MDX_COMMAND_METADATA = [
   {
     name: 'k510_workflow.transmit',
     description:
-      'Transmit a 510(k) submission package to the FDA Electronic ' +
-      'Submissions Gateway. The single most consequential mutation in the ' +
-      'platform — requires confirm="yes-transmit" and reason ≥ 30 chars.',
-    parameters: 'projectId (numeric), confirm="yes-transmit", reason',
+      'Transmit an ASSEMBLED 510(k) submission package to the FDA Electronic ' +
+      'Submissions Gateway over AS2. The single most consequential action in ' +
+      'the platform and the only irreversible one — nothing can un-send bytes ' +
+      'to an agency. Requires confirm="yes-transmit", reason ≥ 30 chars, an ' +
+      'explicit environment, AND a server-verified Part 11 electronic ' +
+      'signature: a chat dispatch is refused with PART11_SIGNATURE_REQUIRED ' +
+      'and must be re-submitted through POST /api/ana-ri/governed-action after ' +
+      'the user re-authenticates. The package must already be locked and ' +
+      'assembled (POST /api/submission-ops/packages/:packageId/assemble); an ' +
+      'un-assembled package has no transmittable bytes and is refused.',
+    parameters:
+      'packageId (positive integer — the assembled submission package, NOT a 510(k) project id), ' +
+      'environment ("staging" | "production", required, never defaulted), confirm="yes-transmit", reason',
     example:
-      '"Transmit project 12 to FDA ESG, reason: pre-flight green, RA + QA sign-off complete, all blockers cleared."',
+      '"Transmit submission package 12 to FDA ESG production, reason: pre-flight green, RA + QA sign-off complete, all blockers cleared."',
   },
 ];
 

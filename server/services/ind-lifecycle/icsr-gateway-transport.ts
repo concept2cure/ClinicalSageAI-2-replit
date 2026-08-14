@@ -5,8 +5,9 @@
  * `buildIcsrTransmission()` produces the full transmittable ICH ICSR message and
  * a transmit-readiness assessment, but — by design — does not post a single byte
  * to an agency gateway. This module closes that last-mile transport gap, with the
- * same fail-closed discipline as the sibling FDA/ESG transports
- * (`server/services/fdaIntegrationService.ts`, `server/services/ESGSubmissionService.ts`):
+ * same fail-closed discipline as the FDA ESG transport
+ * (`server/services/submission-gateways/fda-esg.ts`, reached through the shared
+ * `submission-gateways/governed-transmit.ts`):
  *
  *   - In PRODUCTION with no real gateway configured, `transmitIcsr()` THROWS.
  *     Returning a synthetic acknowledgement would tell a user their ICSR reached

@@ -13,7 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { qSubSvc, sectionPool, esgSvc, audit, TenantAccessError } = vi.hoisted(() => {
+const { qSubSvc, sectionPool, governedTransmit, audit, TenantAccessError } = vi.hoisted(() => {
   class TenantAccessError extends Error {
     constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
   }
@@ -25,8 +25,8 @@ const { qSubSvc, sectionPool, esgSvc, audit, TenantAccessError } = vi.hoisted(()
     sectionPool: {
       query: vi.fn(),
     },
-    esgSvc: {
-      submitToFDA: vi.fn(),
+    governedTransmit: {
+      executeGovernedTransmit: vi.fn(),
     },
     audit: { logAction: vi.fn().mockResolvedValue(undefined) },
     TenantAccessError,
@@ -56,17 +56,18 @@ vi.mock('../../../db', () => ({
   pool: sectionPool,
 }));
 
-// The handler does `new ESGSubmissionService()`, so the mocked default
-// must be a real constructor. A `vi.fn(() => ({...}))` with an arrow
-// implementation is NOT newable ("X is not a constructor") — use a class
-// whose method delegates to the hoisted spy.
-class ESGSubmissionService {
-  submitToFDA(...a: any[]) {
-    return esgSvc.submitToFDA(...a);
-  }
-}
-vi.mock('../../ESGSubmissionService', () => ({
-  default: ESGSubmissionService,
+// The 510(k) transmit handler runs the SHARED governed transmit that the HTTP
+// route runs (server/services/submission-gateways/governed-transmit.ts), which
+// ends at the real FDA ESG AS2 gateway. These tests are about the handler's own
+// gates, so the shared service is stubbed here; that the handler genuinely
+// reaches the real gateway — and how it refuses without credentials — is
+// covered end-to-end in ./mdx-esg-transmit-gateway.test.ts, where only the
+// network boundary is mocked.
+vi.mock('../../submission-gateways/governed-transmit', () => ({
+  executeGovernedTransmit: (...a: any[]) => governedTransmit.executeGovernedTransmit(...a),
+}));
+vi.mock('../../../routes/c2c/actions', () => ({
+  recordGovernedAction: vi.fn().mockResolvedValue({ actionId: 'act_1', auditId: 'aud_1' }),
 }));
 
 import {
@@ -502,50 +503,156 @@ describe('section.update', () => {
   });
 });
 
-// ─── ESG transmit (stricter gate) ──────────────────────────────────────────
+// ─── ESG transmit (stricter gate + Part 11 e-signature) ────────────────────
+
+/** A dispatch that carries a server-verified Part 11 sign-off. */
+const VERIFIED_AT = new Date('2026-08-14T10:00:00.000Z');
+const SIGNED_CTX = {
+  ...CTX,
+  signoff: {
+    reasonForChange: 'RA + QA sign-off complete; transmitting the cleared package',
+    signatureVerified: true,
+    signaturePurpose: 'approval',
+    verifiedAt: VERIFIED_AT,
+  },
+};
+const GOOD_TRANSMIT = {
+  packageId: 42,
+  environment: 'production',
+  confirm: 'yes-transmit',
+  reason: 'pre-flight green; RA + QA sign-off complete; all blockers cleared',
+};
 
 describe('k510_workflow.transmit', () => {
   it('refuses confirm="yes" — requires "yes-transmit"', async () => {
-    const r = await esgTransmit(CTX, {
-      projectId: 99,
+    const r = await esgTransmit(SIGNED_CTX, {
+      ...GOOD_TRANSMIT,
       confirm: 'yes',
       reason: 'this is a sufficient reason for a normal mutation',
     });
     expect(r.action).toBe('confirmation_required');
-    expect(esgSvc.submitToFDA).not.toHaveBeenCalled();
+    expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
   });
 
   it('requires reason ≥ 30 chars', async () => {
-    const r = await esgTransmit(CTX, {
-      projectId: 99,
-      confirm: 'yes-transmit',
-      reason: 'short reason',
-    });
+    const r = await esgTransmit(SIGNED_CTX, { ...GOOD_TRANSMIT, reason: 'short reason' });
     expect(r.action).toBe('confirmation_required');
     expect(r.error).toBe('REASON_TOO_SHORT');
+    expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
   });
 
-  it('proceeds and audits agent.ana.k510_workflow.transmit on success', async () => {
-    esgSvc.submitToFDA.mockResolvedValue({ packageId: 'pkg-1', transactionId: 'tx-1' });
-    const r = await esgTransmit(CTX, {
-      projectId: 99,
-      confirm: 'yes-transmit',
-      reason: 'pre-flight green; RA + QA sign-off complete; all blockers cleared',
+  it('refuses a chat dispatch that carries no verified Part 11 signature', async () => {
+    // CTX has no `signoff`. The tenant's anaPart11Enforce flag is irrelevant —
+    // an agency transmission is not something a tenant may opt out of.
+    const r = await esgTransmit(CTX, GOOD_TRANSMIT);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('PART11_SIGNATURE_REQUIRED');
+    expect(r.openModal).toBe('esign');
+    expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
+  });
+
+  it('refuses a sign-off that claims verification but records no verification time', async () => {
+    const r = await esgTransmit(
+      { ...SIGNED_CTX, signoff: { ...SIGNED_CTX.signoff, verifiedAt: undefined } } as any,
+      GOOD_TRANSMIT,
+    );
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('PART11_SIGNATURE_REQUIRED');
+    expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
+  });
+
+  it('refuses without an assembled packageId', async () => {
+    const r = await esgTransmit(SIGNED_CTX, { ...GOOD_TRANSMIT, packageId: undefined });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toMatch(/assembled/i);
+    expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
+  });
+
+  it('never defaults the environment to production', async () => {
+    const r = await esgTransmit(SIGNED_CTX, { ...GOOD_TRANSMIT, environment: undefined });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toMatch(/environment/i);
+    expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
+  });
+
+  it('hands the verified human gate to the governed transmit and audits it', async () => {
+    governedTransmit.executeGovernedTransmit.mockResolvedValue({
+      result: {
+        transmittalId: 7,
+        transmissionId: '<mdn-1@sponsor>',
+        status: 'received',
+        transport: 'as2',
+        httpStatus: 200,
+        ackReceivedAt: VERIFIED_AT,
+        message: 'FDA ESG AS2 transmit accepted. MDN: <mdn-1@sponsor>.',
+      },
+      bundle: { sha256: 'a'.repeat(64), sizeBytes: 10, format: 'estar' },
+      ledgerWriteFailed: false,
     });
+
+    const r = await esgTransmit(SIGNED_CTX, GOOD_TRANSMIT);
     expect(r.success).toBe(true);
+
+    const call = governedTransmit.executeGovernedTransmit.mock.calls[0][0];
+    expect(call.region).toBe('fda');
+    expect(call.gateway).toBe('esg');
+    expect(call.packageId).toBe(42);
+    expect(call.environment).toBe('production');
+    // The verification instant travels verbatim — the handler must not
+    // synthesise one.
+    expect(call.reauthVerifiedAt).toBe(VERIFIED_AT);
+    expect(call.reason).toBe(GOOD_TRANSMIT.reason);
+
     expect(audit.logAction).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'agent.ana.k510_workflow.transmit' }),
+      expect.objectContaining({
+        action: 'agent.ana.k510_workflow.transmit',
+        resourceType: 'submission_transmittal',
+        details: expect.objectContaining({ transmittalId: 7, environment: 'production' }),
+      }),
     );
   });
 
-  it('logs transmit.failed when underlying service throws', async () => {
-    esgSvc.submitToFDA.mockRejectedValue(new Error('ESG unreachable'));
-    const r = await esgTransmit(CTX, {
-      projectId: 99,
-      confirm: 'yes-transmit',
-      reason: 'pre-flight green; RA + QA sign-off complete; all blockers cleared',
-    });
+  it('reports a missing-credentials CredentialError as a structured refusal, never a success', async () => {
+    const credErr = Object.assign(
+      new Error(
+        'FDA esg credentials are not configured for production: missing FDA_ESG_URL, FDA_ESG_AS2_FROM.',
+      ),
+      { name: 'CredentialError' },
+    );
+    governedTransmit.executeGovernedTransmit.mockRejectedValue(credErr);
+
+    const r = await esgTransmit(SIGNED_CTX, GOOD_TRANSMIT);
     expect(r.success).toBe(false);
+    expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+    expect(r.message).toMatch(/FDA_ESG_URL/);
+    expect(r.message).toMatch(/FDA_ESG_AS2_FROM/);
+    expect(r.message).toMatch(/no FDA acknowledgement exists/i);
+    // No identifier of any kind is minted for a transmission that never happened.
+    expect(r.data).toBeUndefined();
+    expect(audit.logAction).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'agent.ana.k510_workflow.transmit.failed' }),
+    );
+  });
+
+  it('surfaces a pre-transmit refusal under its own code', async () => {
+    const refusal = Object.assign(
+      new Error('No assembled bundle; call POST /api/submission-ops/packages/:packageId/assemble first.'),
+      { name: 'GovernedTransmitRefusal', code: 'BUNDLE_NOT_ASSEMBLED' },
+    );
+    governedTransmit.executeGovernedTransmit.mockRejectedValue(refusal);
+
+    const r = await esgTransmit(SIGNED_CTX, GOOD_TRANSMIT);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('BUNDLE_NOT_ASSEMBLED');
+  });
+
+  it('logs transmit.failed when the gateway transport throws', async () => {
+    governedTransmit.executeGovernedTransmit.mockRejectedValue(
+      Object.assign(new Error('ESG AS2 POST timeout'), { name: 'TransportError' }),
+    );
+    const r = await esgTransmit(SIGNED_CTX, GOOD_TRANSMIT);
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('TRANSMIT_FAILED');
     expect(audit.logAction).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'agent.ana.k510_workflow.transmit.failed' }),
     );

@@ -272,12 +272,18 @@ export function mountUtilityRoutes(router: Router): void {
     // re-verify the signer server-side for the e-sign tier (never a client flag).
     const eSignRequired = requiresEsignature(command);
     let secondFactorVerified = false;
+    // The instant the server actually verified the signer, captured here rather
+    // than synthesised downstream. Handlers that hand the human gate to an
+    // external gateway (FDA ESG transmit) pass this through as the
+    // transmission's `reauthVerifiedAt`, so it must be a real observation.
+    let signatureVerifiedAt: Date | undefined;
     if (eSignRequired) {
       const verification = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
       if (!verification.verified) {
         return sendError(res, 401, verification.error || 'Signature verification failed', { code: verification.code }, 'SIGNATURE_REJECTED');
       }
       secondFactorVerified = verification.secondFactorVerified;
+      signatureVerifiedAt = new Date();
     }
 
     // §11.10(e): record the sign-off to the audit trail before executing.
@@ -307,6 +313,7 @@ export function mountUtilityRoutes(router: Router): void {
         // require one for these commands (validateSignoff requireSignature=false).
         signatureVerified: eSignRequired,
         signaturePurpose: 'approval',
+        verifiedAt: signatureVerifiedAt,
       },
     };
     try {
