@@ -743,3 +743,53 @@ Everything else resolves against a server constant (NCBI, CrossRef, openFDA) wit
 `encodeURIComponent`'d identifiers. `ssrfGuard` even documents its own limit —
 hostname inspection does not defeat DNS rebinding, so it is applied both at
 storage time and before each fetch. No change was needed.
+
+### 7.6 Tenant-blind models — the class behind two of the findings above
+
+§7.1 (`electronic_signatures`) and the CMC finding below are the same defect seen
+twice in unrelated subsystems, which makes it a class rather than two incidents:
+**the Drizzle model and the physical table disagree about the tenant column.**
+
+Measured across the whole schema: **225** tables carry a physical tenant column,
+**701** `pgTable` models exist, and exactly **5** models are blind to a tenant
+column their table declares. All five are in `shared/cmc-schema.ts`, a stale
+parallel definition of tables that `shared/schema.ts` also models correctly.
+
+**Why a blind model is a security property, not a tidiness one.** Every route
+built on it is *structurally* unable to filter by tenant —
+`db.update(t).set(x).where(eq(t.id, id))` cannot carry an organization predicate
+the model does not expose. The only boundary left is RLS, one control deep.
+
+**What the CMC routes actually do today, measured not assumed.**
+`shared/cmc-schema.ts` disagrees with the database on three counts: `id` modelled
+as `uuid` where the table is `serial`, and no `organization_id` where the table
+declares it NOT NULL. Executed against the real DDL:
+
+```
+INSERT without organization_id → null value in column "organization_id" ... violates not-null constraint
+SELECT by uuid id              → invalid input syntax for type integer
+```
+
+So `server/api/cmc/projectRoutes.ts` **500s rather than leaking** — the divergence
+fails closed. These are dead endpoints, not an exposure.
+
+**The trap, and why the five are baselined rather than fixed.** `projectRoutes`
+does `db.update(drugProducts).set({...req.body}).where(eq(id, productId))` — an
+unvalidated mass assignment with **no organization predicate**. Aligning the model
+to the database *first* would convert a dead endpoint into a live cross-tenant
+write. The divergence is currently masking a missing authorization check, and
+removing the mask before adding the check is the wrong order. The baseline says
+so on every entry, so the next person cannot "tidy up" `cmc-schema.ts` into a
+vulnerability.
+
+**Closed by** `scripts/ci/check-tenant-blind-models.mjs` (`ci:tenant-blind-models`,
+wired into `.github/workflows/ci.yml`). Near-zero baseline — 5 of 701 — so it is a
+real gate rather than a large backlog being papered over. Ratchet semantics: the
+list may only shrink, entries need a written reason, and a fixed-but-still-listed
+entry fails so the baseline cannot silently regrow.
+
+It is deliberately separate from `ci:tenant-column-types`, which validates the
+TYPE of declared tenant columns and by construction cannot see one that is absent.
+
+Both failure arms verified by exit code: a new blind model exits 1; a baselined
+model that has been fixed but left in the list exits 1.

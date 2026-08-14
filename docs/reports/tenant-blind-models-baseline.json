@@ -1,0 +1,40 @@
+{
+  "_readme": [
+    "Drizzle models that omit a tenant column their physical table declares.",
+    "Gate: scripts/ci/check-tenant-blind-models.mjs. The list may only SHRINK.",
+    "",
+    "READ BEFORE 'FIXING' ANY cmc-schema ENTRY BELOW. Adding organizationId to",
+    "these models WITHOUT first adding an organization predicate to the routes",
+    "that use them would CREATE a cross-tenant write that does not exist today.",
+    "See the per-entry reason; the divergence is currently masking the missing",
+    "authorization check, and removing the mask without adding the check is the",
+    "wrong order."
+  ],
+  "entries": {
+    "shared/cmc-schema.ts::drugProducts": {
+      "table": "drug_products",
+      "tenantColumn": "organization_id",
+      "reason": "shared/cmc-schema.ts is a stale parallel definition that does not match the database on ANY of three counts: it models `id` as uuid where the table is serial, and it omits `organization_id` which the table declares NOT NULL. Measured empirically against the real DDL: the INSERT this model produces fails with 'null value in column organization_id violates not-null constraint', and a lookup by uuid fails with 'invalid input syntax for type integer'. The routes in server/api/cmc/projectRoutes.ts that use it therefore 500 rather than leak — the divergence fails closed. The canonical, DDL-matching, tenant-aware definition is shared/schema.ts::drugProducts. FIX ORDER MATTERS: projectRoutes does `db.update(drugProducts).set({...req.body}).where(eq(id, productId))` with NO organization predicate and unvalidated mass assignment. Aligning the model first would turn a dead endpoint into a live cross-tenant write (RLS would still backstop it, but that is one control deep). Point the routes at shared/schema.ts AND add an explicit organization filter in the same change."
+    },
+    "shared/cmc-schema.ts::drugSubstances": {
+      "table": "drug_substances",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition and same failure mode as drugProducts — uuid vs serial id, no organization_id against a NOT NULL column, so server/api/cmc/projectRoutes.ts inserts fail closed rather than writing untenanted rows. Canonical definition: shared/schema.ts::drugSubstances. Same fix order applies: add the organization predicate to the routes in the same change that aligns the model."
+    },
+    "shared/cmc-schema.ts::analyticalMethods": {
+      "table": "analytical_methods",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::analyticalMethods. Baselined rather than fixed because aligning the model without adding an organization predicate to the consuming routes would remove a mask that is currently the only reason the missing check is not exploitable."
+    },
+    "shared/cmc-schema.ts::stabilityStudies": {
+      "table": "stability_studies",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::stabilityStudies. Baselined on the same terms as analyticalMethods."
+    },
+    "shared/cmc-schema.ts::complianceTracking": {
+      "table": "compliance_tracking",
+      "tenantColumn": "organization_id",
+      "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::complianceTracking. Baselined on the same terms as analyticalMethods."
+    }
+  }
+}
