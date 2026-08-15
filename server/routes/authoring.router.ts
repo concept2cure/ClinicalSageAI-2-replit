@@ -1202,7 +1202,12 @@ router.get('/docs', async (req: Request, res: Response) => {
      * The POST default at :1182 is untouched — a new document does need a
      * module, and M3 is a reasonable one to start from.
      */
-    const { module, product_code, status = 'draft', programId } = req.query;
+    /* BP-W0-7: `status` had a `= 'draft'` default here, which is the same defect
+       the `module = 'M3'` default above was fixed for and documented at length —
+       a caller that deliberately sent no status filter got one anyway and had no
+       way to tell. Combined with the case-sensitive comparison below, that made
+       draft the only state the API would answer about by default. No default. */
+    const { module, product_code, status, programId } = req.query;
     const tenantId = getTenantId(req);
 
     let query = `
@@ -1238,10 +1243,45 @@ router.get('/docs', async (req: Request, res: Response) => {
       params.push(product_code);
     }
 
-    if (status) {
+    /*
+     * BP-W0-7 — "frozen documents are unreachable under all status filters".
+     *
+     * They were, and so was everything else that had left draft. This compared
+     * `d.status = $n` case-SENSITIVELY against a vocabulary the router writes in
+     * two cases. `POST /docs` inserts `'draft'`; submit writes `'IN_REVIEW'`
+     * (:5204), approve writes `'APPROVED'` (:5399, :5415) and freeze writes
+     * `'FROZEN'` (:3859). The editor's dropdown offers `['draft', 'in_review',
+     * 'approved']`, all lower case. So:
+     *
+     *   status=draft       matched                        (both sides lower)
+     *   status=in_review   matched NOTHING                (server wrote IN_REVIEW)
+     *   status=approved    matched NOTHING                (server wrote APPROVED)
+     *   FROZEN             had no dropdown option at all
+     *
+     * A document was therefore reachable only while it was a draft. The moment
+     * it was submitted it vanished from the surface that authors it — freezing
+     * was just the most visible instance.
+     *
+     * This file had already met this exact split and solved it: the comment on
+     * LOCKED_DOCUMENT_STATUSES above spells out that the router writes both
+     * cases and that "a case-sensitive comparison would silently miss a locked
+     * record". That reasoning was applied to the lock check and never to this
+     * filter. Same fix, same reason.
+     *
+     * `all` (and an explicitly empty string) means no status predicate. That is
+     * the part that makes this durable rather than another enumeration to keep
+     * in sync: whatever status a future handler invents, the document stays
+     * reachable, which is the property the acceptance criterion actually asks
+     * for. Normalising the stored values instead would need a data migration
+     * across live tenants and would break the equality checks in the freeze and
+     * approve handlers; this is the change that fixes retrieval without touching
+     * the Part 11 chain.
+     */
+    const statusFilter = typeof status === 'string' ? status.trim() : '';
+    if (statusFilter && statusFilter.toLowerCase() !== 'all') {
       paramCount++;
-      query += ` AND d.status = $${paramCount}`;
-      params.push(status);
+      query += ` AND upper(d.status) = upper($${paramCount})`;
+      params.push(statusFilter);
     }
 
     // Project scope (optional): filter to one regulatory_programs UUID. The

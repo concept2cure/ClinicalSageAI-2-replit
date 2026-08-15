@@ -281,7 +281,16 @@ function relTime(iso: string | null | undefined): string {
   return 'just now';
 }
 
-const STATUSES = ['draft', 'in_review', 'approved'];
+/* BP-W0-7. This listed three states and the document lifecycle has five. Freeze
+   writes FROZEN and there was no option that could select it, so a sealed
+   document — the one a reviewer most needs to open — could not be listed at all.
+
+   `all` is first and is the default. A status filter that silently hides records
+   is worse than no filter on a surface whose job is to find a document, and the
+   previous default of `draft` meant the editor opened onto a view that excluded
+   everything already submitted. Selecting a state is now a deliberate narrowing
+   rather than the starting position. */
+const STATUSES = ['all', 'draft', 'in_review', 'approved', 'frozen'];
 
 /* ════ Document Authoring surface ════ */
 
@@ -304,7 +313,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   // document, and it now follows the selected section instead of a dropdown
   // that defaulted every filing type to "M3".
   const [module, setModule] = useState('M3');
-  const [status, setStatus] = useState('draft');
+  // BP-W0-7: was 'draft', so the editor opened onto a list that excluded every
+  // document already submitted, approved or frozen.
+  const [status, setStatus] = useState('all');
 
   /* ── The project's governed filing outline ──
      The tree this canvas navigates by. A project's structure is fixed at
