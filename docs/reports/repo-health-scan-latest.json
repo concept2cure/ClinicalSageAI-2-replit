@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-15T03:26:18.323Z",
+  "generatedAt": "2026-08-15T03:51:59.062Z",
   "git": {
-    "sha": "906d4d81190aba5974f61bfeb4b2f6190ab844cf",
+    "sha": "f985b8d2b797a5d3d98f4818b7fb58912a90abbc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2149,7 +2149,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 220804
+        "bytes": 221764
       },
       {
         "file": "server/statistics-service.ts",
@@ -2205,7 +2205,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126326
+        "bytes": 126709
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2287,7 +2287,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5889
+        "lines": 5906
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2395,7 +2395,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2181
+        "lines": 2186
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
