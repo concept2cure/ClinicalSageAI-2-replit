@@ -110,6 +110,22 @@ export {
 } from './organization-types.js';
 
 export {
+  type ProductType,
+  PRODUCT_TYPES,
+  DEVICE_FAMILY_PRODUCT_TYPES,
+  IVD_FAMILY_PRODUCT_TYPES,
+  MEDICINAL_PRODUCT_TYPES,
+  isDeviceFamily,
+  isIvdFamily,
+  isMedicinalProduct,
+  isProductType,
+  productTypeForFilingType,
+  listProductTypes,
+  listClassifiableFilingTypes,
+  toQuestionOptions as productTypeOptions,
+} from './product-types.js';
+
+export {
   type RegulatoryMeetingType,
   REGULATORY_MEETING_TYPES,
   meetingAgency,

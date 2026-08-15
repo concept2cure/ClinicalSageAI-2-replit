@@ -186,6 +186,81 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
     expect(rows[0].sha256_chain).toMatch(/^[0-9a-f]{64}$/i);
   });
 
+  it('creates an EU MDR technical file as a device, in the MDX workstream', async () => {
+    // The regression this pins. `mdr` was absent from every branch of the
+    // server's product-class derivation and fell through to a bare
+    // `return 'drug'`, so an EU MDR Class IIb technical file — a device
+    // conformity assessment — persisted as a drug programme. It was also absent
+    // from the workstream bucketing, so it listed under a "Mdr" workstream that
+    // matches none of the portfolio's filter tabs and was invisible in MDX.
+    const res = await request(app).post('/api/c2c/projects').send({
+      name: `${PROBE_PREFIX}AeroFlow EU Technical File`,
+      programType: 'mdr',
+      primaryAgency: 'EMA',
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.data.ws).toBe('MDX');
+
+    const { rows } = await owner.query(
+      `SELECT program_type, product_type FROM regulatory_programs
+        WHERE organization_id = $1 AND name = $2`,
+      [orgId, `${PROBE_PREFIX}AeroFlow EU Technical File`],
+    );
+    expect(rows[0].program_type).toBe('mdr');
+    expect(rows[0].product_type).toBe('device');
+    expect(rows[0].product_type).not.toBe('drug');
+  });
+
+  it('creates an EU IVDR technical file as an IVD', async () => {
+    const res = await request(app).post('/api/c2c/projects').send({
+      name: `${PROBE_PREFIX}Companion Assay EU`,
+      programType: 'ivdr',
+      primaryAgency: 'EMA',
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.data.ws).toBe('MDX');
+
+    const { rows } = await owner.query(
+      `SELECT product_type FROM regulatory_programs WHERE organization_id = $1 AND name = $2`,
+      [orgId, `${PROBE_PREFIX}Companion Assay EU`],
+    );
+    expect(rows[0].product_type).toBe('ivd');
+  });
+
+  it('refuses to record a device filing as a medicinal product', async () => {
+    // The exact payload the wizard used to send: a 510(k) with the product
+    // class read off the UI segment. The server accepted it and stored
+    // `510K · biologic`. A filing type is a regulatory fact; a client may not
+    // contradict it, so this is now a 400 rather than a persisted mistake.
+    const res = await request(app).post('/api/c2c/projects').send({
+      name: `${PROBE_PREFIX}Should Not Persist`,
+      programType: '510k',
+      productType: 'biologic',
+      primaryAgency: 'FDA',
+    });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/device submission/i);
+
+    const { rows } = await owner.query(
+      `SELECT 1 FROM regulatory_programs WHERE organization_id = $1 AND name = $2`,
+      [orgId, `${PROBE_PREFIX}Should Not Persist`],
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  it('accepts the new device-family classes', async () => {
+    for (const [suffix, productType] of [['SaMD', 'samd'], ['CDx', 'cdx']] as const) {
+      const res = await request(app).post('/api/c2c/projects').send({
+        name: `${PROBE_PREFIX}Class ${suffix}`,
+        programType: '510k',
+        productType,
+        primaryAgency: 'FDA',
+      });
+      expect(res.status).toBe(201);
+      expect(res.body.data.ws).toBe('MDX');
+    }
+  });
+
   it('creates an IVD 510(k) as an IVD', async () => {
     const res = await request(app).post('/api/c2c/projects').send({
       name: `${PROBE_PREFIX}Companion Assay`,

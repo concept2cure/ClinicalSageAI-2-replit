@@ -48,6 +48,12 @@ import {
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
+import {
+  listProductTypes,
+  productTypeForFilingType,
+  DEVICE_FAMILY_PRODUCT_TYPES,
+  workstreamSqlCase,
+} from '../../../shared/constants/domain/product-types.js';
 
 const router = Router();
 
@@ -285,12 +291,7 @@ function allowProgramMutation(
  *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
  *  match on lower() — otherwise every real row falls through to the ELSE branch
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
-const WS_CASE = `CASE
-         WHEN lower(p.program_type) IN ('510k','de_novo','pma','ivd','device','cer','ide') THEN 'MDX'
-         WHEN lower(p.program_type) IN ('ind','bla','biologic') THEN 'Biotech'
-         WHEN lower(p.program_type) IN ('nda','maa','jnda','anda') THEN 'Pharma'
-         ELSE initcap(replace(p.program_type, '_', ' '))
-       END`;
+const WS_CASE = workstreamSqlCase('p.program_type');
 
 /** Canonical program / product types accepted by the create endpoint. Program
  *  types line up with WS_CASE above; product types match the store's CHECK-free
@@ -308,15 +309,7 @@ const VALID_PROGRAM_TYPES = new Set([
   // land on. Backed by real packs as of migrations/20260810b.
   'mdr', 'ivdr',
 ]);
-const VALID_PRODUCT_TYPES = new Set(['drug', 'biologic', 'device', 'ivd']);
-
-/** Derive a product_type when the client omits it, from the program_type. */
-function productTypeForProgram(programType: string): string {
-  if (['510k', 'de_novo', 'pma', 'device', 'cer', 'ide'].includes(programType)) return 'device';
-  if (programType === 'ivd') return 'ivd';
-  if (['ind', 'bla', 'biologic'].includes(programType)) return 'biologic';
-  return 'drug';
-}
+const VALID_PRODUCT_TYPES = new Set<string>(listProductTypes());
 
 /**
  * Program types whose intake must also create the canonical `submissions` row —
@@ -580,10 +573,34 @@ router.post('/', async (req: Request, res: Response) => {
   if (!VALID_PROGRAM_TYPES.has(programType)) {
     return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
   }
+  // The product class. Derived from the FILING TYPE when the client omits it —
+  // a 510(k) is a device submission, an EU IVDR technical file is about an IVD,
+  // and neither can be about a drug. The old derivation ended in a bare
+  // `return 'drug'`, so `mdr` and `ivdr` — absent from every branch — persisted
+  // EU device and IVD technical files as drug programmes.
   let productType = str(body.productType).toLowerCase();
-  if (!productType) productType = productTypeForProgram(programType);
+  if (!productType) productType = productTypeForFilingType(programType) ?? '';
   if (!VALID_PRODUCT_TYPES.has(productType)) {
     return send400(res, `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}`);
+  }
+
+  // A device or IVD filing may not be recorded as a medicinal product, whatever
+  // the client sent. This is the defect the MDX UAT found — the wizard derived
+  // the product class from the UI segment, so a 510(k) started while the
+  // Pharma & Biotech tab was open was submitted as `productType: 'biologic'`
+  // and the server accepted it over its own correct derivation. The filing type
+  // is a regulatory fact; the client does not get to contradict it.
+  const impliedClass = productTypeForFilingType(programType);
+  if (
+    impliedClass &&
+    DEVICE_FAMILY_PRODUCT_TYPES.includes(impliedClass) &&
+    !DEVICE_FAMILY_PRODUCT_TYPES.includes(productType as never)
+  ) {
+    return send400(
+      res,
+      `A ${programType} filing is a device submission and cannot be recorded as ` +
+        `"${productType}". Use one of: ${DEVICE_FAMILY_PRODUCT_TYPES.join(', ')}.`,
+    );
   }
 
   // Licensed program count. The org's `max_projects` entitlement was sold and

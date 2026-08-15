@@ -3,6 +3,10 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { useDialog } from '../useDialog';
+import {
+  productTypeForFilingType,
+  workstreamForFilingType,
+} from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
@@ -50,11 +54,36 @@ const SEG2WS: Record<string, string> = {
   diagnostics: 'MDX', cro: 'CRO', health: 'Biotech',
 };
 
-// UI segment → regulatory_programs.product_type (what the store persists).
+/**
+ * UI segment → the product class the lane implies.
+ *
+ * This map used to be sent to the server AS `productType`, which is how a
+ * 510(k) came to be recorded as a biologic: the wizard opens on the Pharma &
+ * Biotech tab by default, `SEG2PRODUCT['biotech']` is `'biologic'`, and that
+ * value was submitted explicitly — overriding the server's own correct
+ * derivation from the filing type. The review step rendered what it sent:
+ * `510K · biologic`.
+ *
+ * The product class now comes from the FILING TYPE
+ * (`productTypeForFilingType`, shared with the server so the two cannot drift).
+ * The lane survives only as a REFINEMENT within the device family — a 510(k)
+ * started from the Diagnostics lane is an IVD 510(k) — which is a real signal
+ * and the only one available at creation time. It can no longer make a device
+ * filing medicinal.
+ */
 const SEG2PRODUCT: Record<string, string> = {
   biotech: 'biologic', pharma: 'drug', medtech: 'device',
   diagnostics: 'ivd', cro: 'drug', health: 'biologic',
 };
+
+/**
+ * The product class this wizard will persist: the filing type decides, the lane
+ * refines within the device family, and the lane's own default applies only to
+ * a filing type the shared vocabulary cannot classify.
+ */
+function productTypeForSelection(programType: string, uiSeg: string): string {
+  return productTypeForFilingType(programType, uiSeg) ?? SEG2PRODUCT[uiSeg] ?? 'drug';
+}
 
 // UI segment → human label, for the wizard's "Tailored for …" banner.
 const SEG_LABELS: Record<string, string> = {
@@ -192,7 +221,7 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
       name: name || selTpl?.label || 'New project',
       productName: product || name || (selTpl?.label ?? ''),
       programType: programTypeFor(selTpl, uiSeg),
-      productType: SEG2PRODUCT[uiSeg] || 'drug',
+      productType: productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
       primaryAgency: selTpl?.agency || 'FDA',
       submissionTypeId: selTpl?.id,
       indication: taLabel,
@@ -415,9 +444,14 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Pathway</span>
                 <span>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</span>
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Workstream</span>
-                <span>{SEG2WS[uiSeg] || 'Biotech'}</span>
+                {/* Both lines are derived exactly as the create call derives
+                    them, so the review step shows what will actually persist.
+                    They were read off the UI segment before, which is why this
+                    pane said "Workstream: Biotech / Recorded as: 510K · biologic"
+                    for a device filing — and then stored it. */}
+                <span>{workstreamForFilingType(programTypeFor(selTpl, uiSeg)) ?? SEG2WS[uiSeg] ?? 'Biotech'}</span>
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Recorded as</span>
-                <span>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {SEG2PRODUCT[uiSeg] || 'drug'}</span>
+                <span>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg)}</span>
               </div>
 
               <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, background: 'color-mix(in srgb,var(--success) 8%,transparent)', border: '1px solid var(--success)', fontSize: 11.5, display: 'flex', gap: 8, alignItems: 'center' }}>
