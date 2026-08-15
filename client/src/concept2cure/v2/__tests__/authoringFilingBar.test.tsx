@@ -80,7 +80,10 @@ describe('AuthoringFilingBar — real filing actions', () => {
     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
 
-    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/PIN was not verified/)));
+    // BP-W0-6: the tone is asserted, not just the words. This call used to pass
+    // no tone at all, so a rejected PIN rendered with the green success tick —
+    // failure and success were visually identical on the §11.50 signature.
+    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/PIN was not verified/), 'error'));
     expect(onChanged).not.toHaveBeenCalled();
   });
 

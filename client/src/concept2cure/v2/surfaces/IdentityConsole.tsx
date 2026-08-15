@@ -192,7 +192,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {tenantState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="Loading SCIM tenants…" /></div>
-            : tenantState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SCIM tenants" hint="GET /api/admin/scim-tenants didn’t respond. Retry as a platform administrator." /></div>
+            : tenantState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SCIM tenants" hint="The SCIM tenant directory didn’t respond. Retry as a platform administrator." /></div>
             : tenants.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.lock} title="No SCIM tokens issued" hint="Issue a bearer token and configure your identity provider (Okta, Entra, OneLogin) to provision users against /scim/v2." /></div>
             : <table className="reg-tbl"><thead><tr><th>Id</th><th>Organization</th><th>Label</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{tenants.map((t) => (
@@ -227,7 +227,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
       {/* SSO endpoints */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">SSO — SAML endpoints</span><span className="s">/api/auth/sso</span></div>
+        <div className="pj-card-h"><span className="t">SSO — SAML endpoints</span></div>
         <div className="pj-card-b">
           <div style={{ fontSize: 13, color: 'var(--c2c-dim,#667085)', marginBottom: 10 }}>
             These are the platform’s live SAML endpoints. Configure your identity provider against them; provider

@@ -283,7 +283,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.layers}
           title="Open a program to compile its eCTD"
-          hint="eCTD assembly runs against a program’s sections (project_sections). Open a program, then compile and export its submission here."
+          hint="eCTD assembly runs against a program’s authored sections. Open a program, then compile and export its submission here."
         />
       </div>
     );
@@ -345,7 +345,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           {statusState === 'loading' ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading readiness…" /></div>
           ) : statusState === 'error' ? (
-            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compilation readiness" hint="GET /api/ectd-compile/:projectIdent/status didn’t respond. Sign in to your tenant and retry." /></div>
+            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compilation readiness" hint="Compilation readiness didn’t respond. Sign in to your tenant and retry." /></div>
           ) : !status || !Array.isArray(status.modules) || status.modules.length === 0 ? (
             // `status && status.modules.length` reads as guarded and is not —
             // the check covers the container, not the member. A readiness

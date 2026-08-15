@@ -332,7 +332,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
     <div className="ra">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist -- evidence -- /api/analytics</div>
+          <div className="sp-eyebrow">Specialist -- evidence</div>
           <h1 className="sp-title">Reporting &amp; analytics</h1>
           <p className="sp-state">Drop in a protocol and AnA analyses it against the CSR intelligence library -- then writes the design recommendations, statistical insights and IND-readiness memo you can act on.</p>
         </div>

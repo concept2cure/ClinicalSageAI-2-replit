@@ -149,7 +149,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
           <EmptyState
             icon={I.eye || I.fileText}
             title="No shadow review has been run yet"
-            hint={<>Connect an assembled sequence and run a simulated reviewer to see what an {lens.agency} reviewer would flag before you file. Runs via <span className="mono">POST /api/submissions/sequences/:seqId/shadow-review</span>.</>}
+            hint={<>Connect an assembled sequence and run a simulated reviewer to see what an {lens.agency} reviewer would flag before you file.</>}
           />
         ) : !lensRan ? (
           <EmptyState
@@ -213,7 +213,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         <div className="sr-foot">
           <PedigreeBadge level="model_assisted" />
           <PedigreeBadge level="deterministic_registry" />
-          <span className="sr-foot-note">Findings are produced by the AI gateway (task <span className="mono">regulatory_review</span>, prompt <span className="mono">shadow-review@v1.0</span>) -- model-assisted. The RTF/CRL risk aggregation is deterministic (a single critical saturates the gate). Connect a sequence to run the live reviewer via <span className="mono">POST /api/submissions/sequences/:seqId/shadow-review</span>.</span>
+          <span className="sr-foot-note">Findings are model-assisted -- produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL risk aggregation is deterministic (a single critical saturates the gate). Connect a sequence to run the live reviewer against it.</span>
           <div className="sr-actions">
             {/* FLAG (mock action): asks AnA to run the reviewer rather than calling
                 POST /sequences/:seqId/shadow-review directly — the real endpoint

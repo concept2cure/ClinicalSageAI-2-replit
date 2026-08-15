@@ -188,7 +188,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">Safety surveillance</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Live org-scoped KPIs{ask && <button className="reg-cta" onClick={() => ask('Review our current pharmacovigilance posture: overdue cases, active signals, and any periodic report at risk of missing its deadline. Say which are unavailable rather than assuming zero.')}>{I.sparkles} Review posture</button>}</span></div>
         <div className="pj-card-b">
           {ovState === 'loading' ? <EmptyState icon={I.zap} title="Loading safety KPIs…" />
-            : ovState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load safety KPIs" hint="GET /api/pharmacovigilance/overview didn’t respond. Sign in to your tenant and retry." />
+            : ovState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load safety KPIs" hint="The pharmacovigilance overview didn’t respond. Sign in to your tenant and retry." />
             : !kpi ? <EmptyState icon={I.bell} title="No safety data yet" hint="Adverse-event, signal, and periodic-report metrics for your organization appear here." />
             : <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
                 {KPIS.map(([label, val, warn]) => (

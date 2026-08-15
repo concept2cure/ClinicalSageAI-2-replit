@@ -274,7 +274,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const head = (
     <div className="sp-head">
       <div>
-        <div className="sp-eyebrow">Specialist -- /api/precedent-engine-board</div>
+        <div className="sp-eyebrow">Specialist -- precedent board</div>
         <h1 className="sp-title">Precedent intelligence</h1>
         <p className="sp-state">
           Search cleared precedents, compare your submission, and run regulatory-risk, strategy,
@@ -666,7 +666,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
       <div className="pj-card" style={{ marginTop: 14 }}>
         <div className="pj-card-h">
           <span className="t">Real-time claim check</span>
-          <span className="s">POST /api/precedent-engine/check-claim</span>
+          <span className="s">claim check</span>
         </div>
         <div className="pj-card-b">
           <div className="tl-edit" style={{ marginTop: 0 }}>

@@ -329,7 +329,7 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1160 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist — /api/clinical-regulatory-evidence/findings</div>
+          <div className="sp-eyebrow">Specialist — clinical & regulatory evidence</div>
           <h1 className="sp-title">FDA CRL library</h1>
           <p className="sp-state">
             Search official complete response letters by finding, discipline, category, CTD or ICH

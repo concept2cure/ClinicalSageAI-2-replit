@@ -353,7 +353,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
             <>
               Request your first regulator interaction to build its briefing book
               and track its clock, minutes and commitments. Requests are persisted
-              via <span className="mono">POST /api/agency-meetings</span> — or ask
+              via <span className="mono">Request a meeting</span> — or ask
               AnA to prepare a Pre-IND package with you.
             </>
           }

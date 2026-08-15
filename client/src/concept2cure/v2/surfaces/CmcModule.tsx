@@ -686,7 +686,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
               ) : live.loading ? (
                 <EmptyState icon={I.clipboardList} title="Loading specifications…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file (GET /api/cmc/specifications) didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file didn’t respond. Sign in to your tenant and retry." />
               ) : (
                 <EmptyState icon={I.clipboardList} title="No specifications yet" hint="Release and shelf-life limits for your drug substance and drug product appear here. Use New specification to record the first one — it is persisted to the governed specifications file." />
               )}
@@ -1123,7 +1123,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
               {live.loading ? (
                 <EmptyState icon={I.barChart} title="Loading stability studies…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register (GET /api/cmc/stability-studies) didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register didn’t respond. Sign in to your tenant and retry." />
               ) : (
                 <EmptyState icon={I.barChart} title="No stability studies yet" hint="Register a study with the batch it is run on, the ICH condition it is placed at and its pull schedule. Each pull-point result you then record against it is the evidence §3.2.S.7 / §3.2.P.8 is written from." />
               )}
@@ -1548,7 +1548,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
               ) : live.loading ? (
                 <EmptyState icon={I.grid} title="Loading batch records…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file (GET /api/cmc/batch-records) didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file didn’t respond. Sign in to your tenant and retry." />
               ) : (
                 <EmptyState icon={I.grid} title="No batch records yet" hint="Manufactured batches with their yield, deviations, and disposition appear here. Use Log batch to record the first one — it is persisted to the governed batch file." />
               )}
@@ -1797,7 +1797,7 @@ function CmGlobal({ nav }: { nav?: (id: string) => void }) {
               {live.loading ? (
                 <EmptyState icon={I.globe} title="Loading the change register…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the change register" hint="GET /api/cmc/change-control didn’t respond, so the per-market filing paths cannot be computed. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the change register" hint="The change register didn’t respond, so the per-market filing paths cannot be computed. Sign in to your tenant and retry." />
               ) : (
                 <EmptyState
                   icon={I.globe}

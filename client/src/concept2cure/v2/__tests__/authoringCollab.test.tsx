@@ -87,7 +87,8 @@ describe('AuthoringCollab — real presence + locks', () => {
     const fireToast = vi.fn();
     render(<AuthoringCollab documentId="D1" sectionId="S1" fireToast={fireToast} />);
     fireEvent.click(await screen.findByRole('button', { name: /Lock section/ }));
-    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Locked by jo@acme.co/)));
+    // BP-W0-6: a refused lock must not announce itself with the success tick.
+    await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Locked by jo@acme.co/), 'error'));
   });
 
   it('sends the awareness heartbeat and adopts the server roster from its response', async () => {

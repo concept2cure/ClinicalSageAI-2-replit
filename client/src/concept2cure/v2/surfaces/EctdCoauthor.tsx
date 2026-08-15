@@ -508,8 +508,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
                   title="No eCTD documents yet"
                   hint={
                     <>
-                      Create a co-author document to draft it against the eCTD backbone — persisted via{' '}
-                      <span className="mono">POST /api/coauthor/documents</span> — or ask AnA to start one.
+                      Create a co-author document to draft it against the eCTD backbone — it is persisted as a governed document — or ask AnA to start one.
                     </>
                   }
                 />

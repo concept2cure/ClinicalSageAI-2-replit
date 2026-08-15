@@ -160,7 +160,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.shieldCheck}
           title="No administrative data yet"
-          hint={<>This organization has no members, roles or keys to administer yet. Members, API keys, audit entries and SSO configuration appear here as soon as they exist — served org-scoped from <span className="mono">GET /api/mdx/admin</span>.</>}
+          hint={<>This organization has no members, roles or keys to administer yet. Members, API keys, audit entries and SSO configuration appear here as soon as they exist — served org-scoped to this organization.</>}
         />
       ) : (
         <>

@@ -375,7 +375,7 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
     <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Builder · eCTD leaves · sequence {seq.sequenceNumber}</span>
-        <span className="s">GET/PUT /sequences/:seqId/leaves</span>
+        <span className="s">governed leaves</span>
       </div>
       <div className="pj-card-b">
         <VerdictNote notice={notice} />
@@ -535,7 +535,7 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
     <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Validation · sequence {seq.sequenceNumber}</span>
-        <span className="s">GET /sequences/:seqId/dispatch-readiness · POST /:id/validation/explain</span>
+        <span className="s">dispatch readiness · validation</span>
       </div>
       <div className="pj-card-b">
         {live.loading ? (
@@ -724,7 +724,7 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
     <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Shadow review · sequence {seq.sequenceNumber}</span>
-        <span className="s">POST/GET /sequences/:seqId/shadow-review · GET /shadow-review/:runId/findings</span>
+        <span className="s">shadow review · findings</span>
       </div>
       <div className="pj-card-b">
         <div className="cm-pushbar sc-mb">
@@ -915,7 +915,7 @@ export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }
     <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Cross-region gap analysis · sequence {seq.sequenceNumber}</span>
-        <span className="s">POST /:id/cross-region</span>
+        <span className="s">cross-region</span>
       </div>
       <div className="pj-card-b">
         <div className="scaf-note sc-mb">
@@ -1032,7 +1032,7 @@ export function DispatchWorkspace({
     <div className="pj-card">
       <div className="pj-card-h">
         <span className="t">Dispatch · sequence {seq.sequenceNumber}</span>
-        <span className="s">GET /sequences/:seqId/dispatch-readiness · POST /:id/dispatch-qc</span>
+        <span className="s">dispatch readiness · QC</span>
       </div>
       <div className="pj-card-b">
         <div className="scaf-note sc-mb">

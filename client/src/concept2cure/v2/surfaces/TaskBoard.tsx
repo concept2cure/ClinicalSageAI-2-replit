@@ -533,7 +533,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="ph-eyebrow">Project -- collaboration</div>
           <h1 className="ph-title">Task board</h1>
-          <div className="ph-sub">The org-wide <code>unifiedTasks</code> board served by <code>/api/task-management</code>. Org-scoped by design -- filter to a project below. Tasks from sections, the pyramid engine, the legacy WBS and modules are surfaced here with their origin store labelled.</div>
+          <div className="ph-sub">The org-wide unified task board. Org-scoped by design -- filter to a project below. Tasks from sections, the pyramid engine, the legacy WBS and modules are surfaced here with their origin store labelled.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
@@ -789,7 +789,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           <li><b>Canonical store</b> is <code>unifiedTasks</code> (ADR-0011). <code>project_tasks</code> keeps its own schedule-of-events lifecycle and mirrors forward into the canonical table with a deterministic id; the unified work view excludes those mirrored rows so nothing is counted twice. Origin is shown per card.</li>
           <li><b>Audit:</b> every task create, transition, link and archive writes the Part-11 <code>c2c_ana_actions</code> / <code>audit_logs</code> hash-chained pair through <code>task-audit.ts</code>, on <i>both</i> task routers and on the AnA mirror. Approval-gated completion additionally carries a verified §11.50 signature manifestation.</li>
           <li><b>Notifications:</b> real. Assignment, blocked, completion and the unblock cascade write to <code>mdx_notifications</code>; an hourly sweep adds due-soon (48h) and overdue, once each per task.</li>
-          <li><b>Both routers gate identically:</b> <code>/api/task-management/*</code> and <code>/api/regulatory/tasks/*</code> share the status state machine (409), the e-signature ceremony (428) and the org-scoped unblock cascade, so governance is a property of the record rather than of the URL. Consolidating them is deferred refactor, not missing enforcement.</li>
+          <li><b>Both task routes gate identically:</b> they share the status state machine, the e-signature ceremony and the org-scoped unblock cascade, so governance is a property of the record rather than of the route that reached it.</li>
           <li><b>Automation:</b> rules are stored and can be dry-run, but no event source dispatches to the rules engine, so a stored rule never fires on its own.</li>
         </ul>
       </details>
@@ -1278,7 +1278,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
           {err && <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
         <div className="tb-detail-f">
-          <div className="tb-endpoint" title="Persists an org-scoped unified_tasks row"><b>POST</b> /api/tasks/tasks</div>
+          
           <button className="btn ghost" onClick={onClose}>Cancel</button>
           <button className="btn primary" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating...' : 'Create task'}</button>
         </div>

@@ -201,7 +201,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
           {loadState === 'loading' ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.book} title="Loading spec versions…" /></div>
           ) : loadState === 'error' ? (
-            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="GET /api/ectd/qualification/spec-versions didn’t respond, or answered in a shape this panel can’t read. Sign in to your tenant and retry." /></div>
+            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load spec versions" hint="The specification-version register didn’t respond, or answered in a shape this panel can’t read. Sign in to your tenant and retry." /></div>
           ) : specRows.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.book} title="No spec versions" /></div>
           ) : (
@@ -253,7 +253,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
               {listState === 'loading' ? (
                 <EmptyState icon={I.book} title="Loading codes…" />
               ) : listState === 'error' ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load this code list" hint="GET /api/ectd/controlled-vocab/:listId didn’t respond, or answered in a shape this panel can’t read." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load this code list" hint="The controlled-vocabulary service didn’t respond, or answered in a shape this panel can’t read." />
               ) : !list || filteredCodes.length === 0 ? (
                 <EmptyState icon={I.book} title={filter ? 'No codes match your filter' : 'No codes'} />
               ) : (

@@ -605,7 +605,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <div className="pj-seclbl">
             Health-authority interactions{' '}
-            <span className="s">· /api/ha-interactions · org-scoped</span>
+            <span className="s">· org-scoped</span>
           </div>
           <StateGuard
             loading={interState.loading}
@@ -660,7 +660,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
           </StateGuard>
           <div className="pj-seclbl">
             Regulatory commitments{' '}
-            <span className="s">· PMR / PMC / REMS · /api/ha-interactions/commitments</span>
+            <span className="s">· PMR / PMC / REMS</span>
           </div>
           <StateGuard
             loading={commitState.loading}

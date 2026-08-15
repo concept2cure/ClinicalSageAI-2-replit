@@ -122,7 +122,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">Governed reports</span><span className="s">{reports.length} · /api/intelligent-reports</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.scroll} title="Loading governed reports…" /></div>
-            : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load governed reports" hint="GET /api/intelligent-reports/list didn’t respond. Sign in to your tenant and retry." /></div>
+            : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load governed reports" hint="The governed report register didn’t respond. Sign in to your tenant and retry." /></div>
             : reports.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.scroll} title="No governed reports yet" hint="Reports generated through the intelligent-reports engine appear here with their seal status, integrity verification, and provenance." /></div>
             : <table className="reg-tbl"><thead><tr><th>Code</th><th>Title</th><th>Domain</th><th>Seal</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{reports.map((r) => {
@@ -151,7 +151,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
 
       {verifyRes && (
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Integrity verification · report {verifyRes.id}</span><span className="s">GET /:id/verify</span></div>
+          <div className="pj-card-h"><span className="t">Integrity verification · report {verifyRes.id}</span><span className="s">verification</span></div>
           <div className="pj-card-b" style={{ padding: 0 }}>
             {verdictRows(verifyRes.verdict).length === 0
               ? <div style={{ padding: 16 }}><EmptyState icon={I.shieldCheck} title="Verification ran" hint="The server returned no scalar verdict fields to tabulate." /></div>

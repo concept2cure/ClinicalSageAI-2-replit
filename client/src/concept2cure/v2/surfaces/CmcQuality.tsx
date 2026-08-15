@@ -278,7 +278,7 @@ export function CmQuality({ ask, nav }: { ask: (text: string) => void; nav?: (id
           tone="error"
           icon={I.alertTriangle}
           title="Couldn’t derive the quality attributes"
-          hint={`GET /api/cmc/quality/qbd didn’t respond (${qbd.error}). It reads this project's specifications, methods, impurity profiles, stability and process records.`}
+          hint={`The QbD register didn’t respond (${qbd.error}). It reads this project's specifications, methods, impurity profiles, stability and process records.`}
         />
       ) : result ? (
         <>

@@ -144,7 +144,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">Audit hash-chain integrity</span><span className="s">21 CFR Part 11 §11.10 — tamper evidence</span></div>
         <div className="pj-card-b">
           {chainState === 'loading' ? <EmptyState icon={I.lock} title="Verifying the audit hash chain…" />
-            : chainState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t verify the hash chain" hint="GET /api/part11/audit-trail/chain-integrity didn’t respond. Sign in to your tenant and retry." />
+            : chainState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t verify the hash chain" hint="The audit-chain verifier didn’t respond. Sign in to your tenant and retry." />
             : !chain ? <EmptyState icon={I.lock} title="No chain data" />
             : (
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -166,7 +166,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">21 CFR Part 11 §11.10 controls</span>{typeof status?.part11?.overallStatus === 'string' && <span className="rd-chip tone-warn">{status.part11.overallStatus.replace(/_/g, ' ')}</span>}</div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {statusState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.shieldCheck} title="Loading compliance status…" /></div>
-            : statusState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compliance status" hint="GET /api/part11/compliance-status didn’t return a §11.10 status record." /></div>
+            : statusState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load compliance status" hint="The compliance service didn’t return a §11.10 status record." /></div>
             : sections.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.shieldCheck} title="No section status" /></div>
             : <table className="reg-tbl"><thead><tr><th>CFR</th><th>Control</th><th>Platform control</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
               <tbody>{sections.map(([code, sec]) => (
@@ -188,7 +188,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">SOC 2 controls</span>{soc2?.summary && <span className="s">{soc2.summary.part11MappedControls}/{soc2.summary.totalControls} Part 11-mapped · {soc2.summary.certificationTarget}</span>}</div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {soc2State === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading SOC 2 controls…" /></div>
-            : soc2State === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SOC 2 controls" hint="GET /api/part11/soc2/controls didn’t return the control framework." /></div>
+            : soc2State === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load SOC 2 controls" hint="The controls service didn’t return the SOC 2 framework." /></div>
             : !soc2 || !Array.isArray(soc2.controls) || soc2.controls.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No SOC 2 controls" hint="The SOC 2 control framework loads here once available." /></div>
             : <table className="reg-tbl"><thead><tr><th>Control</th><th>Category</th><th>Title</th><th>Part 11</th><th style={{ textAlign: 'right' }}>Evidence</th></tr></thead>
               <tbody>{soc2.controls.map((c) => (

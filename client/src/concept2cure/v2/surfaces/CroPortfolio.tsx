@@ -149,7 +149,7 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
             <>
               Onboard a sponsor to see their studies and regulatory submissions
               rolled up here. Clients are created via{' '}
-              <span className="mono">POST /api/cro/clients</span>; their studies,
+              <span className="mono">Add a client</span>; their studies,
               submissions and milestones populate this console as the engagement
               runs.
             </>

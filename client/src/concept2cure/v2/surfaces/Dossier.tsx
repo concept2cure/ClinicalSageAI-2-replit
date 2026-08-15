@@ -101,7 +101,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
             hint="The governed artifact schema isn’t migrated for this environment yet, so no readiness can be reported — nothing is shown rather than a sample dossier." />
         ) : state === 'error' ? (
           <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load dossier readiness"
-            hint="GET /api/dossier-readiness/:projectId didn’t respond. Sign in to your tenant and retry." />
+            hint="The section-readiness rollup didn’t respond. Sign in to your tenant and retry." />
         ) : !payload || payload.sections.length === 0 ? (
           <EmptyState icon={I.folder} title="No sectioned artifacts yet"
             hint="Artifacts tagged with a CTD section roll up here (draft → review → approved → locked). Author and tag artifacts, then their section readiness appears." />

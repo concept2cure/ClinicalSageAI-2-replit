@@ -180,7 +180,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     return (
       <div className="hf" style={{ maxWidth: 1140 }}>
         <EmptyState icon={I.fileText} title="No HFE/UE file yet"
-          hint="Once an IEC 62366-1 HFE/UE file is recorded (POST /api/human-factors), its element completeness and use-related risk analysis — the gate before summative usability testing — appear here." />
+          hint="Once an IEC 62366-1 HFE/UE file is recorded, its element completeness and use-related risk analysis — the gate before summative usability testing — appear here." />
       </div>
     );
   }

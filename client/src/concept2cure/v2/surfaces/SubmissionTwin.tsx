@@ -183,7 +183,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
             <div className="pj-card-h"><span className="t">Readiness &amp; fragility</span></div>
             <div className="pj-card-b">
               {readyState === 'loading' ? <EmptyState icon={I.zap} title="Loading twin intelligence…" />
-                : readyState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load readiness" hint="GET /api/submission-twin/readiness/:pkg didn’t respond. Confirm the package id and that you’re signed in." />
+                : readyState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load readiness" hint="Package readiness didn’t respond. Confirm the package id and that you’re signed in." />
                 : !readiness ? <EmptyState icon={I.layers} title="No assessment yet" hint="Run an assessment to compute readiness and fragility for this package." />
                 : (
                   <div>

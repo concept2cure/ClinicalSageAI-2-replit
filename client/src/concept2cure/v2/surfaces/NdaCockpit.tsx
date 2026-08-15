@@ -590,7 +590,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               <p className="scaf-note" style={{ marginTop: 10 }}>
                 The three biologics science engines (CQA-tiered analytical similarity, Q5E comparability, ADA/NAb
                 immunogenicity) and the RTF/CRL filing-risk profile are deterministic functions of the submitted data,
-                authored and Part 11-signed in the biologics workbench (<code>/api/biopharma/bla</code>). This tab reflects
+                authored and Part 11-signed in the biologics workbench. This tab reflects
                 the org's persisted assessments &mdash; it never fabricates a verdict.
               </p>
             </>

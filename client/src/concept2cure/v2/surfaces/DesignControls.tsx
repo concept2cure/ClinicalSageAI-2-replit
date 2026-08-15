@@ -208,7 +208,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
             <>
               A design input is a requirement the device must meet (820.30(c)).
               Add your first with <b>New design input</b> above — it persists via{' '}
-              <span className="mono">POST /api/design-controls</span> and enters
+              <span className="mono">Record a design input</span> and it enters
               the traceability matrix untraced until an output, verification and
               validation are linked.
             </>

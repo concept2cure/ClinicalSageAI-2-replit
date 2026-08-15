@@ -935,7 +935,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
 
               <h3>
                 2a -- Build &amp; render the FDA form PDFs{' '}
-                <span className="indl-h-x">-- real form engine (/api/ind-forms)</span>
+                <span className="indl-h-x">-- real form engine</span>
               </h3>
               <IndFormsPanel note={setFormsNote} />
               {formsNote && (

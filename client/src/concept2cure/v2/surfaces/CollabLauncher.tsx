@@ -580,7 +580,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         </div>
       )}
       <div className="cl-foot">
-        <div className="cl-endpoint"><b>POST</b> /api/tasks/tasks</div>
+        
         <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || saving}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
         <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || saving}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
       </div>
@@ -628,7 +628,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       <div className="cl-ctxbar">
         <span className="cl-ctx-k">About</span>
         <span className="cl-ctx-chip"><span className="ico">{I.messageSquare}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
-        <span className="cl-ctx-meta">thread on <code>/api/collaboration</code></span>
+        <span className="cl-ctx-meta">collaboration thread</span>
       </div>
       <div className="cl-field"><label>Send to</label>
         <div className="cl-assignees">
@@ -658,10 +658,10 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         <span><b>Also create a task</b>{C2C.team[to] ? <> and assign it to {C2C.team[to].n}</> : <>, unassigned</>}</span>
       </button>
       <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread (<code>POST /api/collaboration/messages</code>) + <code>/tasks/:id/notify</code> is not yet wired here -- the message is not persisted, and WebSocket delivery is stubbed (<code>io.to('tasks').emit</code> commented out).
+        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread is not yet wired here -- the message is not persisted, and real-time delivery is not yet enabled.
       </div>
       <div className="cl-foot">
-        <span className="cl-endpoint"><b>POST</b> /api/collaboration/messages</span>
+        
         <button className="btn ghost" onClick={onClose}>Cancel</button>
         <button className="btn primary" onClick={send} disabled={!body.trim()}>{I.arrowRight} {makeTask ? 'Send & assign' : 'Send'}</button>
       </div>

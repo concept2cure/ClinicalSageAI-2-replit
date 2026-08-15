@@ -475,7 +475,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the portfolio rollup"
-          hint="The org-wide rollup (GET /api/report-os/portfolio/org) didn't respond. It requires a signed-in tenant on an entitled plan — sign in and retry, or check your plan."
+          hint="The org-wide rollup didn't respond. It requires a signed-in tenant on an entitled plan — sign in and retry, or check your plan."
         />
       ) : programs.length === 0 ? (
         <EmptyState
@@ -505,7 +505,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
         </div>
       )}
       <div className="ac-port-gap" style={{ margin: '2px 0 6px', padding: '8px 12px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-300)', background: 'var(--bg-050)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization -- average readiness, worst risk, and attention-ranked members, bound to <code>GET /api/report-os/portfolio/org</code>.</span>
+        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization -- average readiness, worst risk, and attention-ranked members.</span>
       </div>
 
       {/* Role lens -- jobs across client types */}
@@ -547,7 +547,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   tone="error"
                   icon={I.alertTriangle}
                   title="Couldn't load the continuity briefing"
-                  hint="The cross-session briefing (POST /api/orchestration/continuity) didn't respond. Sign in and retry, or check the service is reachable."
+                  hint="The cross-session briefing didn't respond. Sign in and retry, or check the service is reachable."
                 />
               ) : !cont ? (
                 <EmptyState
@@ -608,7 +608,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                     tone="error"
                     icon={I.alertTriangle}
                     title="Couldn't load recommendations"
-                    hint="The recommendation engine (POST /api/orchestration/recommendations) didn't respond. Sign in and retry, or check the service is reachable."
+                    hint="The recommendation engine didn't respond. Sign in and retry, or check the service is reachable."
                   />
                 ) : allRecs.length === 0 ? (
                   <EmptyState
@@ -658,7 +658,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   tone="error"
                   icon={I.alertTriangle}
                   title="Couldn't load workflows"
-                  hint="The workflow registry (GET /api/orchestration/templates) didn't respond. Sign in and retry, or check the service is reachable."
+                  hint="The workflow registry didn't respond. Sign in and retry, or check the service is reachable."
                 />
               ) : tpls.length === 0 ? (
                 <EmptyState icon={Ico.workflow || I.dot} title="No workflows available yet" />
@@ -696,7 +696,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 tone="error"
                 icon={I.alertTriangle}
                 title="Couldn't run the pre-submission gate"
-                hint="The gate (POST /api/orchestration/pre-submission-gate) didn't respond. Sign in and retry, or check the service is reachable."
+                hint="The pre-submission gate didn't respond. Sign in and retry, or check the service is reachable."
               />
             ) : !gate ? (
               <EmptyState icon={Ico.shieldCheck || Ico.shield || I.check} title="No gate verdict yet" />

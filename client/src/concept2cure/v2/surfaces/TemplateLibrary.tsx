@@ -420,7 +420,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         <div className="pj-card" style={{ marginBottom: 16, borderColor: 'var(--accent-muted)' }}>
           <div className="pj-card-h">
             <span className="t">{I.sparkles} AnA extraction {extract ? '- preview' : '- reading OOXML...'}</span>
-            <span className="s">POST /extract</span>
+            <span className="s">extraction</span>
           </div>
           <div className="pj-card-b">
             {!extract && (

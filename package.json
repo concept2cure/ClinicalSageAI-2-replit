@@ -225,7 +225,10 @@
     "ci:commonjs-require:list": "node scripts/ci/check-commonjs-require.mjs --list",
     "ci:commonjs-require:write-baseline": "node scripts/ci/check-commonjs-require.mjs --write-baseline",
     "ci:orm-reachability": "node scripts/ci/check-orm-table-reachability.mjs",
-    "ci:orm-reachability:write-baseline": "node scripts/ci/check-orm-table-reachability.mjs --write-baseline"
+    "ci:orm-reachability:write-baseline": "node scripts/ci/check-orm-table-reachability.mjs --write-baseline",
+    "ci:internals-in-copy": "node scripts/ci/check-internals-in-copy.mjs",
+    "ci:internals-in-copy:list": "node scripts/ci/check-internals-in-copy.mjs --list",
+    "ci:internals-in-copy:write-baseline": "node scripts/ci/check-internals-in-copy.mjs --write-baseline"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

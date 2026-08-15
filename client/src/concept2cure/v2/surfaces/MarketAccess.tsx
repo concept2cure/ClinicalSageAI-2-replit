@@ -142,7 +142,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
                 <>
                   Track your first market × payer position to see coverage status,
                   HTA reviews and the codes in play. Positions are written via{' '}
-                  <span className="mono">POST /api/market-access</span> — or ask
+                  <span className="mono">Record a market-access plan</span> — or ask
                   AnA to plan the access sequence and log them with you.
                 </>
               }

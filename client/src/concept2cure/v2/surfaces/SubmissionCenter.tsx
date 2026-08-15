@@ -334,7 +334,7 @@ export function SubmissionCenter({
     <div className="sp sc-page">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Submission · GET /api/submissions</div>
+          <div className="sp-eyebrow">Submission</div>
           <h1 className="sp-title">Submission Center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
@@ -569,7 +569,7 @@ export function SubmissionCenter({
         <div className="pj-card">
           <div className="pj-card-h">
             <span className="t">Planner · {sub.title}</span>
-            <span className="s">POST /:id/plan · GET /region-profiles</span>
+            <span className="s">planning · region profiles</span>
           </div>
           <div className="pj-card-b">
             <div className="tl-spec-grid sc-spec">

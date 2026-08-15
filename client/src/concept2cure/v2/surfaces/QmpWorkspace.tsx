@@ -192,7 +192,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {listState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading quality plans…" /></div>
-            : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="GET /api/quality/plans didn’t respond. Sign in to your tenant and retry." /></div>
+            : listState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load quality plans" hint="The quality-plan register didn’t respond. Sign in to your tenant and retry." /></div>
             : plans.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No quality plans yet" hint="Create a quality-management plan to define the gate levels and risk factors your documents are validated against." /></div>
             : <table className="reg-tbl"><thead><tr><th>Plan</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
               <tbody>{plans.map((p) => (
@@ -213,7 +213,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
           <div className="pj-card-h"><span className="t">Plan dashboard</span>{dash && <span className={'rd-chip tone-' + (dash.overallCompleteness >= 80 ? 'ok' : 'warn')}>{dash.overallCompleteness}% complete</span>}</div>
           <div className="pj-card-b">
             {dashState === 'loading' ? <EmptyState icon={I.layers} title="Loading dashboard…" />
-              : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="GET /api/quality/dashboard/:id didn’t respond." />
+              : dashState === 'error' ? <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the plan dashboard" hint="The plan dashboard didn’t respond." />
               : !dash ? <EmptyState icon={I.layers} title="No dashboard" hint="Select a plan to see its completeness, section gate levels, and factor risk profile." />
               : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>

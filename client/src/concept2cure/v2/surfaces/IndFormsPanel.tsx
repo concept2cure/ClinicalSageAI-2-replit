@@ -173,7 +173,7 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
   }
   if (state === 'error') {
     return <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t reach the IND forms engine"
-      hint="GET /api/ind-forms didn’t respond. Sign in to your tenant and retry." />;
+      hint="The IND forms engine didn’t respond. Sign in to your tenant and retry." />;
   }
   if (state === 'loading') {
     return <EmptyState icon={I.fileText} title="Loading the forms engine…" />;

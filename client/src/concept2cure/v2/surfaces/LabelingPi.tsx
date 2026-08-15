@@ -102,7 +102,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.fileText}
           title="No label sections yet"
-          hint="Record or author USPI sections (via POST /api/labeling-pi or AnA drafting) and the section tree, rendered label text, and agency negotiation appear here."
+          hint="Record or author USPI sections and the section tree, rendered label text, and agency negotiation appear here."
         />
       ) : (
       <div className="lp-split">

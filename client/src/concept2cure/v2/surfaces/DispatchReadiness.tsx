@@ -389,7 +389,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
         <span className="dr2-foot-note">
           Every gate input is computed from server state — a client cannot pass{' '}
           <span className="mono">validationErrors:0</span> to talk the gate down. The AI dispatch-QC task advises; this gate{' '}
-          <b>enforces</b>. Bound to <span className="mono">GET /api/submissions/sequences/:seqId/dispatch-readiness</span>;
+          <b>enforces</b>. Bound to the governed dispatch-readiness gate;
           the wire transmit stays behind a Part-11 e-signature.
         </span>
         {gate.cleared && (

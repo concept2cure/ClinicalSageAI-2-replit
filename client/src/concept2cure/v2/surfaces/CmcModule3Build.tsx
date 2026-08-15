@@ -319,7 +319,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
           tone="error"
           icon={I.alertTriangle}
           title="Couldn’t load the Module 3 build state"
-          hint="GET /api/cmc/module3-os/build-state didn’t respond. It aggregates canonical source objects, compiled sections, contradictions and governed artifacts for this project — sign in and retry."
+          hint="The Module 3 build state didn’t respond. It aggregates canonical source objects, compiled sections, contradictions and governed artifacts for this project — sign in and retry."
           retry={bump}
           testId="m3-build-error"
         />

@@ -2266,7 +2266,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1120 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Admin -- /api/admin</div>
+          <div className="sp-eyebrow">Admin</div>
           <h1 className="sp-title">Admin console</h1>
           <p className="sp-state">
             Designate personnel, manage SSO/SCIM, security policy, module entitlements and API

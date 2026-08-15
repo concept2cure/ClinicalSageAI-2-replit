@@ -148,7 +148,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1120 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Admin · /api/billing</div>
+          <div className="sp-eyebrow">Admin · billing</div>
           <h1 className="sp-title">Plans &amp; licensing</h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by

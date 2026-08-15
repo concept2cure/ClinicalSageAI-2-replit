@@ -965,7 +965,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             <div className="scaf-note" style={{ padding: 16 }}>Loading documents…</div>
           ) : docsState === 'error' ? (
             <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load documents"
-              hint="GET /api/authoring/docs didn’t respond. Sign in to your tenant and retry." />
+              hint="The document list didn’t respond. Sign in to your tenant and retry." />
           ) : docs.length === 0 ? (
             <EmptyState icon={I.fileText} title="No documents here"
               hint={`No ${status.replace('_', ' ')} documents in this project. Switch the status filter above.`} />

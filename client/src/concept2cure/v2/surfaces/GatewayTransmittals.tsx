@@ -268,7 +268,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="Loading gateways…" /></div>
-            : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t reach the dispatch layer" hint="GET /api/mdx/gateways didn’t respond. Sign in to your tenant and retry." /></div>
+            : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t reach the dispatch layer" hint="The dispatch layer didn’t respond. Sign in to your tenant and retry." /></div>
             : gateways.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No gateways registered" hint="Region gateways (FDA ESG, EMA CESP, PMDA, Health Canada) appear here with their credential status." /></div>
             : <table className="reg-tbl"><thead><tr><th>Gateway</th><th>Region</th><th>Environment</th><th style={{ textAlign: 'right' }}>Credentials</th></tr></thead>
               <tbody>{gateways.map((g, i) => (
