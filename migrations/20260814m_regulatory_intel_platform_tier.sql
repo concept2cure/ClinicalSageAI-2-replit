@@ -81,8 +81,26 @@ BEGIN
 END
 $do$;
 
-COMMENT ON SCHEMA regulatory_intel IS
-  'Regulatory precedent patterns. Rows owned by the all-zeros UUID are '
-  'platform-provided knowledge, readable by every tenant; all other rows are '
-  'that tenant''s own and visible only to them. A service opts into platform '
-  'knowledge with organization_id IN ($1, ''00000000-0000-0000-0000-000000000000'').';
+-- Guarded. This statement sat OUTSIDE the DO block above — whose very first act
+-- is `IF to_regnamespace('regulatory_intel') IS NULL THEN RETURN`, so the file
+-- already anticipates the schema being absent, and then commented on it
+-- unconditionally anyway.
+--
+-- The schema's only creator is
+-- db/migrations/20260322_regulatory_precedent_intelligence.sql. On the deploy
+-- path that file is earlier in the ordered set, so this was invisible there. On
+-- install-fresh it is not: step 3 walks the root `migrations/` tree only, the
+-- schema does not exist, this line raises, the file is deferred across all
+-- eight passes and the install exits 1 — a fresh database could not be
+-- provisioned to completion.
+DO $guard$
+BEGIN
+  IF to_regnamespace('regulatory_intel') IS NOT NULL THEN
+    COMMENT ON SCHEMA regulatory_intel IS
+      'Regulatory precedent patterns. Rows owned by the all-zeros UUID are '
+      'platform-provided knowledge, readable by every tenant; all other rows are '
+      'that tenant''s own and visible only to them. A service opts into platform '
+      'knowledge with organization_id IN ($1, ''00000000-0000-0000-0000-000000000000'').';
+  END IF;
+END
+$guard$;

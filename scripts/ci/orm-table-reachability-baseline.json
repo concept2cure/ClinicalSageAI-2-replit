@@ -1,0 +1,16 @@
+{
+  "note": "Drizzle models under shared/schema/ that no provisioning path can create: their module is not re-exported from shared/schema.ts (so drizzle-kit push never sees them) and no .sql file creates the table. Each is an endpoint that 500s the first time it is exercised. Fix by adding a migration, then re-run with --write-baseline to shrink this list. It must never grow.",
+  "generatedBy": "scripts/ci/check-orm-table-reachability.mjs --write-baseline",
+  "sites": [
+    "shared/schema/defense-packets.ts::defense_packets",
+    "shared/schema/qc-schemas.ts::qc_batch_releases",
+    "shared/schema/qc-schemas.ts::qc_deviations",
+    "shared/schema/qc-schemas.ts::qc_microbiological_tests",
+    "shared/schema/qc-schemas.ts::qc_oos_investigations",
+    "shared/schema/qc-schemas.ts::qc_reference_standards",
+    "shared/schema/qc-schemas.ts::qc_specifications",
+    "shared/schema/unified_workflow.ts::document_attachments",
+    "shared/schema/unified_workflow.ts::document_audit_logs",
+    "shared/schema/unified_workflow.ts::module_documents"
+  ]
+}

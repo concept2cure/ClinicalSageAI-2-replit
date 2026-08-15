@@ -984,6 +984,21 @@ export const C2C_MIGRATION_FILES = [
   // org-keyed tables they create.
   'migrations/20260813c_ivdr_schema_reconciliation.sql',
   'migrations/20260508_ivd_diagnostic_surfaces.sql',
+
+  // The MDX beta surfaces — `software_lifecycle_items` (IEC 62304 / FD&C §524B
+  // software lifecycle), and the sibling of 20260508 above.
+  //
+  // It was on NO durable applier. `deploy-migrate` applies only this array, so
+  // on every database provisioned by a deploy the table simply never existed —
+  // which is exactly the `relation "software_lifecycle_items" does not exist`
+  // the MDX UAT hit, rendered raw into the browser. Its IVD twin (20260508)
+  // was listed and its tables were fine; the asymmetry is the whole bug.
+  //
+  // install-fresh created it anyway via the root-tree overlay, so a
+  // locally-provisioned database looked healthy while every deployed one did
+  // not. That divergence between "what a human ran" and "what a deploy runs" is
+  // the failure mode this array exists to close.
+  'migrations/20260507_mdx_beta_surfaces.sql',
   'migrations/001_create_ivdr_tables.sql',
 
   // ── The tenant key 20260813d indexes, which nothing ever created ─────────
@@ -1191,6 +1206,14 @@ export const C2C_MIGRATION_FILES = [
 
   // Same guard: descriptions only, no module added or removed (ledger L41).
   'migrations/20260814m_catalog_honest_module_descriptions.sql',
+
+  // The document-approval workflow tables. Declared as Drizzle models in
+  // shared/schema/unified_workflow.ts and read by six services, but created by
+  // nothing: `drizzle-kit push` reads only shared/schema.ts, which does not
+  // re-export that module, and no raw migration creates them either — the
+  // three files that mention `document_workflows` only index or add policies
+  // TO it. GET /api/approval-workflows/pending answered 500 on every request.
+  'migrations/20260815_workflow_approval_tables.sql',
 
   // Retires the duplicate 'ind-lifecycle' catalog row added by 20260814j: the
   // same IndLifecycle surface was already catalogued as 'ind-checklist', so one
