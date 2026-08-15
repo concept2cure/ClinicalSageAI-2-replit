@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-15T03:08:04.431Z",
+  "generatedAt": "2026-08-15T03:09:26.981Z",
   "git": {
-    "sha": "b6921fd8da6b1e2a94b7c48906a5db6e1d3ef218",
+    "sha": "e5c71dd6572acbd8176c2372ef054f2542e91c22",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2205,7 +2205,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 123504
+        "bytes": 126326
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2394,6 +2394,10 @@
         "lines": 2254
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2181
+      },
+      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
@@ -2408,10 +2412,6 @@
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
         "lines": 2151
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2137
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
