@@ -11834,11 +11834,11 @@ router.get('/templates/:id', (req: Request, res: Response) => {
  * GET /api/concept2cure/regulatory-catalog/regions
  * List all supported regions with application type counts.
  */
-router.get('/regulatory-catalog/regions', (_req: Request, res: Response) => {
+router.get('/regulatory-catalog/regions', async (_req: Request, res: Response) => {
   try {
     const {
       getRegionsWithCounts,
-    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    } = await import('../services/regulatory/registry/globalDocumentRegistryService.js');
     return sendSuccess(res, getRegionsWithCounts());
   } catch (error: any) {
     logger.error('Failed to fetch regulatory regions', { error: error.message });
@@ -11850,11 +11850,11 @@ router.get('/regulatory-catalog/regions', (_req: Request, res: Response) => {
  * GET /api/concept2cure/regulatory-catalog/agencies
  * List all supported regulatory agencies with counts.
  */
-router.get('/regulatory-catalog/agencies', (_req: Request, res: Response) => {
+router.get('/regulatory-catalog/agencies', async (_req: Request, res: Response) => {
   try {
     const {
       getAgenciesWithCounts,
-    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    } = await import('../services/regulatory/registry/globalDocumentRegistryService.js');
     return sendSuccess(res, getAgenciesWithCounts());
   } catch (error: any) {
     logger.error('Failed to fetch regulatory agencies', { error: error.message });
@@ -11867,11 +11867,11 @@ router.get('/regulatory-catalog/agencies', (_req: Request, res: Response) => {
  * List application types with optional filters.
  * Query params: region, agency, family, productClass, query
  */
-router.get('/regulatory-catalog/application-types', (req: Request, res: Response) => {
+router.get('/regulatory-catalog/application-types', async (req: Request, res: Response) => {
   try {
     const {
       getApplicationTypes,
-    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    } = await import('../services/regulatory/registry/globalDocumentRegistryService.js');
     const filters: Record<string, string> = {};
     if (req.query.region) filters.region = String(req.query.region);
     if (req.query.agency) filters.agency = String(req.query.agency);
@@ -11892,9 +11892,9 @@ router.get('/regulatory-catalog/application-types', (req: Request, res: Response
  * GET /api/concept2cure/regulatory-catalog/families
  * List all application families with metadata.
  */
-router.get('/regulatory-catalog/families', (_req: Request, res: Response) => {
+router.get('/regulatory-catalog/families', async (_req: Request, res: Response) => {
   try {
-    const { getAllFamiliesSorted } = require('../../shared/regulatory/application-families.js');
+    const { getAllFamiliesSorted } = await import('../../shared/regulatory/application-families.js');
     return sendSuccess(res, getAllFamiliesSorted());
   } catch (error: any) {
     logger.error('Failed to fetch application families', { error: error.message });
@@ -11907,9 +11907,9 @@ router.get('/regulatory-catalog/families', (_req: Request, res: Response) => {
  * Resolve a registry ID or legacy submission type to full entry with blueprints.
  * Body: { registryId?: string, submissionType?: string }
  */
-router.post('/regulatory-catalog/resolve', (req: Request, res: Response) => {
+router.post('/regulatory-catalog/resolve', async (req: Request, res: Response) => {
   try {
-    const { resolve } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    const { resolve } = await import('../services/regulatory/registry/globalDocumentRegistryService.js');
     const { registryId, submissionType } = req.body;
     const idToResolve = registryId || submissionType;
     if (!idToResolve) {
@@ -11935,7 +11935,7 @@ router.post('/regulatory-catalog/bootstrap-preview', async (req: Request, res: R
   try {
     const {
       getBootstrapPreview,
-    } = require('../services/regulatory/registry/globalDocumentRegistryService.js');
+    } = await import('../services/regulatory/registry/globalDocumentRegistryService.js');
     const { registryId } = req.body;
     if (!registryId) {
       return sendError(res, 400, 'registryId is required');
@@ -11956,9 +11956,9 @@ router.post('/regulatory-catalog/bootstrap-preview', async (req: Request, res: R
  * Search application types with ranked results.
  * Query params: q (required), region, agency, family, limit
  */
-router.get('/regulatory-catalog/search', (req: Request, res: Response) => {
+router.get('/regulatory-catalog/search', async (req: Request, res: Response) => {
   try {
-    const { rankedSearch } = require('../services/regulatory/registry/registrySearch.js');
+    const { rankedSearch } = await import('../services/regulatory/registry/registrySearch.js');
     const q = String(req.query.q || '');
     if (!q) {
       return sendError(res, 400, 'Query parameter "q" is required');

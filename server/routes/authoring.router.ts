@@ -4764,16 +4764,26 @@ router.post('/docs/:docId/seed-stability', async (req: Request, res: Response) =
       });
     }
 
-    // Run the stability seeder script with the provided parameters
-    const { spawn } = require('child_process');
+    // Run the stability seeder script with the provided parameters.
+    // BP-W0-6: same CommonJS `require` under "type": "module" as the docx export
+    // branch had — this route would have thrown ReferenceError the first time
+    // anyone called it. Found while fixing the export; converted rather than
+    // left as the next instance of the same 500.
+    const { spawn } = await import('node:child_process');
+    /* The `require` this replaced returned `any`, so nothing typechecked the
+       call — and it was wrong. Every one of these values comes off req.body and
+       is `string | undefined`, which no `spawn` overload accepts. Passing
+       undefined into a child's env is not a type nicety either: the child reads
+       process.env.PRODUCT_CODE and would get the string "undefined" or nothing
+       at all, depending on the platform. Coerced explicitly. */
     const childProcess = spawn('node', ['scripts/seed-stability.mjs'], {
       env: {
         ...process.env,
         BASE_URL: `http://localhost:${process.env.PORT || 5000}`,
-        PRODUCT_CODE: product_code,
-        STUDY_CODE: study_code,
-        STUDY_NAME: study_name,
-        DOC_ID: docId,
+        PRODUCT_CODE: String(product_code ?? ''),
+        STUDY_CODE: String(study_code ?? ''),
+        STUDY_NAME: String(study_name ?? ''),
+        DOC_ID: String(docId ?? ''),
       },
     });
 
@@ -5037,7 +5047,18 @@ ${sectionsResult.rows
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.xml`;
       contentType = 'application/xml';
     } else if (format === 'docx') {
-      const { Document, Packer, Paragraph, HeadingLevel } = require('docx');
+      /* BP-W0-6. This line was `require('docx')`, and package.json declares
+         "type": "module" — so `require` is not defined here at all. Every Word
+         export threw ReferenceError before it reached the docx library, the
+         catch at the bottom of this handler turned it into a 500, and the
+         client showed nothing.
+
+         It explains the exact shape of the report: Word 500 while PDF and XML
+         return 200. The PDF branch twenty lines down already uses
+         `await import(...)`, and the XML branch imports nothing. Only this
+         branch used CommonJS, so only this branch was unreachable. Nothing was
+         wrong with the docx generation below it — it had simply never run. */
+      const { Document, Packer, Paragraph, HeadingLevel } = await import('docx');
 
       const children = [];
       children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));

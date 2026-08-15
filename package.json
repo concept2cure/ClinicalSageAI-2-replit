@@ -220,7 +220,10 @@
     "ci:tenant-resolvers": "node scripts/ci/check-tenant-resolvers.mjs",
     "ci:tenant-resolvers:write-baseline": "node scripts/ci/check-tenant-resolvers.mjs --write-baseline",
     "ci:error-envelope": "node scripts/ci/check-error-envelope-reads.mjs",
-    "ci:error-envelope:write-baseline": "node scripts/ci/check-error-envelope-reads.mjs --write-baseline"
+    "ci:error-envelope:write-baseline": "node scripts/ci/check-error-envelope-reads.mjs --write-baseline",
+    "ci:commonjs-require": "node scripts/ci/check-commonjs-require.mjs",
+    "ci:commonjs-require:list": "node scripts/ci/check-commonjs-require.mjs --list",
+    "ci:commonjs-require:write-baseline": "node scripts/ci/check-commonjs-require.mjs --write-baseline"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

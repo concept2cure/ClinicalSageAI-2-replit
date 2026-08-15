@@ -1,0 +1,19 @@
+{
+  "files": [
+    "server/middleware/authAdapter.ts",
+    "server/routes/analytics-routes.ts",
+    "server/routes/auth.ts",
+    "server/routes/document-lifecycle.ts",
+    "server/routes/manufacturing-routes.ts",
+    "server/services/ai-actions/handlers/refine-with-validation.ts",
+    "server/services/ana/intelligence-questions/engine.ts",
+    "server/services/csr-extractor-service.ts",
+    "server/services/export-service.ts",
+    "server/services/regulatory-intelligence-service.ts",
+    "server/services/regulatory/registry/registryValidation.ts",
+    "server/services/storage/index.ts",
+    "server/services/storage/s3-provider.ts",
+    "server/services/tools/index.ts",
+    "server/utils/pdfParse.ts"
+  ]
+}
