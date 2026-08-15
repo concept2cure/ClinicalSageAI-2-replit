@@ -112,8 +112,24 @@ CREATE SCHEMA IF NOT EXISTS precedent AUTHORIZATION ${DB_USER};
 GRANT ALL ON SCHEMA public TO ${DB_USER};
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS vector;
 SQL
+
+# pgvector is a SEPARATE package (postgresql-${PG_VERSION}-pgvector) and is not
+# always installed. Until now it was the last statement in the block above, under
+# `ON_ERROR_STOP=1` and `set -e`, so on any machine without it this script died
+# HERE — before writing .env and before creating a single table. The SessionStart
+# hook runs this as `... >/dev/null 2>&1 || true`, so the failure was silent, and
+# every fresh session began with no DATABASE_URL and an empty database. That is
+# the state in which the product's surfaces report "the service didn't respond".
+#
+# Non-fatal now, and reported. The embedding features degrade without it; nothing
+# else does.
+if $PSQL -d "$DB_NAME" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null 2>&1; then
+  log "pgvector ready"
+else
+  err "pgvector unavailable — embedding features will degrade. Install it with:"
+  err "  apt-get install -y postgresql-${PG_VERSION}-pgvector   (then re-run)"
+fi
 
 # ── 5. Write .env (only if absent — never clobber an operator's config) ─────
 if [ -f .env ]; then
@@ -140,28 +156,71 @@ RLS_ENFORCE=off
 ENV
 fi
 
-# ── 6. Populate the working table set via the app's own bootstrap ───────────
-# ensureCoreTables + ensureAuthTables are idempotent (CREATE TABLE IF NOT
-# EXISTS) and are what the server runs on boot. Running them here means the
-# DB is usable immediately without booting the full server.
-log "Bootstrapping core + auth tables"
-DATABASE_URL="$DATABASE_URL" NODE_ENV=development npx tsx -e "
-import { ensureCoreTables } from './server/db/ensureCoreTables';
-import { ensureAuthTables } from './server/db/bootstrap/index';
-(async () => {
-  await ensureCoreTables(process.env.DATABASE_URL);
-  await ensureAuthTables();
-  process.exit(0);
-})().catch(e => { console.error(e?.message || e); process.exit(1); });
-" >/dev/null 2>&1 && log "Core + auth tables ready" || err "Bootstrap step failed (DB is up; run the server to retry table creation)"
+# ── 6. Provision the schema the application actually serves from ────────────
+#
+# This step used to run ensureCoreTables + ensureAuthTables and stop, and its
+# epilogue said "Core + auth tables are ready (sufficient for most work)". That
+# claim is what BP-W0-2 was.
+#
+# ensureCoreTables does not CREATE anything — it VERIFIES and reports. So on a
+# fresh cluster this step wrote nothing at all, and the developer was told the
+# database was ready. Booting the app against it produced exactly the symptom in
+# the work order: "roughly half the specialist services do not load", six
+# surfaces each with a user-facing error. Every one of them was a missing table.
+#
+# Even with tables, the out-of-band migration set (scripts/db/migration-set.mjs)
+# adds columns the live queries read — `nonclinical_studies.duration_label` is
+# the one that surfaced — so a database provisioned by install-fresh alone still
+# answers 500 on the nonclinical registry. Diagnosed by probing all six services
+# against a running server: five returned 200 once the schema existed, and the
+# sixth returned 200 after deploy-migrate. None of them was a code defect.
+#
+# Both steps now run here, in order, and the script reports honestly if either
+# is incomplete rather than printing a green line over a database the app cannot
+# serve from.
+#
+# `--allow-incomplete` is deliberate: on a local cluster the governed-content
+# tree needs roles a non-superuser cannot create, and refusing the whole install
+# over that would put us back where we started. The verification below is what
+# decides whether to claim success.
+log "Provisioning application schema (install-fresh)"
+if DATABASE_URL="$DATABASE_URL" NODE_ENV=development node scripts/db/install-fresh.mjs --allow-incomplete >/tmp/c2c-install.log 2>&1; then
+  log "Application schema provisioned"
+else
+  err "install-fresh failed — see /tmp/c2c-install.log"
+fi
+
+log "Applying the out-of-band migration set (deploy-migrate)"
+if DATABASE_URL="$DATABASE_URL" NODE_ENV=development node scripts/db/deploy-migrate.mjs >/tmp/c2c-migrate.log 2>&1; then
+  log "Migration set applied"
+else
+  err "deploy-migrate failed — see /tmp/c2c-migrate.log"
+fi
+
+# ── 7. Verify, and say what is actually true ────────────────────────────────
+# The point of this block is that the script must not report readiness it has
+# not checked. It counts the tables the product's own route handlers read.
+TABLES=$($PSQL -d "$DB_NAME" -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" 2>/dev/null || echo 0)
+MISSING=$($PSQL -d "$DB_NAME" -tAc "
+  SELECT count(*) FROM (VALUES
+    ('organizations'),('users'),('regulatory_programs'),('authoring_documents'),
+    ('authoring_sections'),('nonclinical_studies'),('unified_tasks')
+  ) AS required(name)
+  WHERE NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+     WHERE table_schema='public' AND table_name = required.name
+  )" 2>/dev/null || echo 99)
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 log "Local PostgreSQL ready."
 log "  DATABASE_URL=${DATABASE_URL}"
 log "  data dir:    ${DATADIR}"
 log "  logs:        ${LOGFILE}"
-log "Core + auth tables are ready (sufficient for most work)."
-log "A full 'npm run db:push' currently halts on pre-existing FKs in the"
-log "CDISC reference tables (single-column FKs to per-tenant-unique"
-log "columns, e.g. cdisc_cdash_forms / cdisc_ectd_define_xml). Tracked"
-log "as a separate schema-cleanup follow-up."
+log "  tables:      ${TABLES}"
+if [ "$MISSING" = "0" ]; then
+  log "Every core route table is present — the app can serve from this database."
+else
+  err "${MISSING} core route table(s) MISSING. The app will boot and its"
+  err "specialist surfaces will report that services did not respond."
+  err "See /tmp/c2c-install.log and /tmp/c2c-migrate.log."
+fi

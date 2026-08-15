@@ -229,8 +229,34 @@ const requireDlqAdmin = async (req, res, next) => {
  * As specified in architectural mandate for Regulatory Intelligence Layer
  */
 
-// Apply organization context middleware to all routes
-router.use(extractOrgContext);
+// Apply organization context middleware to the routes this router serves.
+//
+// ── Why the path argument is load-bearing (BP-W0-2) ─────────────────────────
+// This was `router.use(extractOrgContext)` with no path, and this router is
+// mounted at the BARE `/api` prefix (server/bootstrap/register-core-routes.ts).
+// An unpathed `router.use` runs for every request that enters the router, so it
+// ran for every `/api/*` request in the product — not just the `/ai/*` routes
+// defined below, which are the only routes this file registers.
+//
+// `extractOrgContext` does not call next() when it finds no org: it answers 403
+// "Organization context required". And it runs BEFORE the per-route
+// authenticateToken that later families apply, so for those families there is
+// no org yet to find. The result is that any API family registered after this
+// one, and gating auth per-route rather than at its mount, was answered 403
+// before its own auth middleware could run.
+//
+// The Submission Pyramid is exactly that shape — pyramid.routes.ts applies
+// authenticateToken per route, deliberately, so its `/api/v1` mount does not
+// JWT-gate the sibling X-API-Key public API sharing that prefix. Every
+// /api/v1/pyramids/* request 403'd, with a valid token carrying a valid org
+// claim. That is the work order's "The submission-pyramid engine didn't
+// respond."
+//
+// The mount comment in register-core-routes.ts anticipated half of this: it
+// explains that an auth middleware on THIS mount would intercept every /api
+// request, and gates /api/ai separately for that reason. The middleware inside
+// the router had the same reach and was not scoped.
+router.use('/ai', extractOrgContext);
 
 /**
  * /ai/ner-extract - Named Entity Recognition endpoint
