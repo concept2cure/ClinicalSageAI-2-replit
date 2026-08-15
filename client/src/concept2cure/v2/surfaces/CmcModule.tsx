@@ -2,6 +2,7 @@ import { serverMessage } from '@/lib/queryClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentState, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { C2CForm } from '../C2CForm';
@@ -405,17 +406,60 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   const drafts = secs.filter((s) => s.st === 'draft');
   const nextSec = inReview[0] || drafts[0];
   const irSubs = port.filter((p) => (p.ir ?? 0) > 0);
+  /* ── BP-W0-3, the same defect as the NDA cockpit ───────────────────────────
+     With zero submissions this lead read "Your Module 3 spans 0 submissions --
+     preparedness is still computing across the portfolio" over a board that had
+     finished loading and had nothing to compute, and then reassured with
+     "You're building steadily" over nothing being built. `not-assessed` was
+     wearing the vocabulary of work in progress.
+
+     Here `assessmentRan` CAN be true, unlike the RtF log: a governed section
+     carries a state (draft / review / approved) that only exists because
+     someone moved it, so a non-empty section set is positive evidence that the
+     package is genuinely being assessed. The gate is `secs.length`, not
+     `approved === 0`. */
+  const cmcState = assessmentState({
+    loading: board.loading,
+    unreadable: Boolean(board.error),
+    scopeExists: port.length > 0,
+    findingCount: irOverdue,
+    assessmentRan: secs.length > 0,
+  });
   const cmLead = (
     <AnswerLead
-      tone={irOverdue ? 'urgent' : 'calm'}
-      eyebrow={'Is your CMC package ready across all ' + port.length + ' submissions'}
-      headline={avgRpi != null && lowSub
-        ? <>Your Module 3 averages <b>RPI {avgRpi}</b> -- the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
-        : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <> -- preparedness is still computing across the portfolio</>}.</>}
-      body={irOverdue
-        ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}) -- agencies read a late IR response as a readiness signal. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
-        : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move -- clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
-      reassure={irOverdue ? "Answer the IRs first -- they're time-boxed. I'll draft the responses and route the sign-offs with you." : "You're building steadily. I'll help you move the next section to approved."}
+      tone={irOverdue ? 'urgent' : cmcState === 'not-assessed' ? 'calm' : 'calm'}
+      eyebrow={cmcState === 'not-assessed' && port.length === 0
+        ? 'Is your CMC package ready'
+        : 'Is your CMC package ready across all ' + port.length + ' submissions'}
+      headline={cmcState === 'unreadable'
+        ? <>The Module 3 board could not be read.</>
+        : cmcState === 'loading'
+          ? <>Reading your Module 3 portfolio&hellip;</>
+          : port.length === 0
+            ? <>No CMC submissions are in scope yet.</>
+            : avgRpi != null && lowSub
+              ? <>Your Module 3 averages <b>RPI {avgRpi}</b> -- the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
+              : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <>, with no preparedness index computed for {port.length === 1 ? 'it' : 'any of them'} yet</>}.</>}
+      body={cmcState === 'unreadable'
+        ? <>This is a failed read, not an empty portfolio. Nothing shown here should be taken as the state of your CMC package. Sign in to your tenant and retry.</>
+        : cmcState === 'loading'
+          ? <>Nothing is being asserted about readiness until the read settles.</>
+          : port.length === 0
+            ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
+            : irOverdue
+              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}) -- agencies read a late IR response as a readiness signal. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              : secs.length === 0
+                ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
+                : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move -- clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
+      /* "You're building steadily" is a claim about work in progress, so it
+         requires evidence that work is in progress. mayReassure gates it on the
+         assessed-clear state and on a non-zero readiness percentage; every
+         other state renders no reassurance rather than a softened one. */
+      reassure={irOverdue
+        ? "Answer the IRs first -- they're time-boxed. I'll draft the responses and route the sign-offs with you."
+        : mayReassure(cmcState, readyPct)
+          ? "You're building steadily. I'll help you move the next section to approved."
+          : undefined}
       action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue CMC information requests for ' + irSubs.map((p) => p.sub).join(' and ')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
         /* The second action goes where the section actually moves: the build
            board, which is the only surface that can compile it, show what is

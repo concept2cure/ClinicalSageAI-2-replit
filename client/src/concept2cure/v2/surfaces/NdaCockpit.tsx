@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentState, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -304,22 +305,108 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const gateMod = modules.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
   const openItems = m1open + rtf.filter(r => r.sev !== 'low').length;
 
+  /* ── Which of the three states is this program actually in? (BP-W0-3) ───────
+     This used to be `highs.length ? urgent : clear`, a two-branch conditional
+     with no representation for "nothing has been assessed". Over an empty
+     program the second branch fired and the surface asserted "no Refuse-to-File
+     blockers left … You're close." Both clauses are true of an empty array and
+     neither is true of the program.
+
+     `scopeExists` is the CTD module roll-up, because that read IS the question
+     "does an NDA/BLA submission exist here at all" — assembleOrgNdaModules
+     returns an empty list for an org with no such submission, so no rows means
+     there is nothing an assessment could have run against.
+
+     `assessmentRan` is FALSE, deliberately and not as a placeholder. The RtF
+     risk log is an append-only list of items a human logged; GET
+     /api/nda-cockpit/rtf cannot distinguish "the day-60 shadow review ran and
+     found nothing" from "nobody has looked yet", because no completed-review
+     signal is recorded anywhere for this surface to read. Until one is, the
+     honest answer is that clearance is unproven — so this surface never claims
+     it. Deriving `assessmentRan` from `rtf.length === 0` would reinstate the
+     exact defect. When a shadow-review completion record lands (BP-W1-6 puts
+     one in reach), this is the single line that changes. */
+  const filingState = assessmentState({
+    loading: modulesLive.loading || rtfLive.loading,
+    unreadable: Boolean(modulesLive.error || rtfLive.error),
+    scopeExists: modules.length > 0,
+    findingCount: rtf.length,
+    assessmentRan: false,
+  });
+  const reassuring = mayReassure(filingState, overall);
+
+  /* Each state gets its own sentence. No state borrows another's vocabulary,
+     and only `assessed-clear` — unreachable here for the reason above — may
+     speak of blockers being absent. */
+  const leadCopy: Record<string, { tone: 'calm' | 'urgent' | 'good'; headline: React.ReactNode; body: React.ReactNode }> = {
+    loading: {
+      tone: 'calm',
+      headline: <>Reading this application's filing readiness&hellip;</>,
+      body: <>Nothing is being asserted about Refuse-to-File risk until the read settles.</>,
+    },
+    unreadable: {
+      tone: 'urgent',
+      headline: <>Filing readiness could not be read.</>,
+      body: <>This is a failed read, not a clean program. Nothing here should be taken as an assessment of Refuse-to-File risk. Sign in to your tenant and retry.</>,
+    },
+    'not-assessed': {
+      tone: 'calm',
+      headline: modules.length === 0
+        ? <>Nothing has been assessed for this application yet.</>
+        : <>No Refuse-to-File assessment has been run against this application.</>,
+      body: modules.length === 0
+        ? <>There is no NDA/BLA submission in scope, so no module readiness, no Module&nbsp;1 worklist and no Refuse-to-File finding exists to report. Create the submission and compile a sequence, and this surface will have something to assess.</>
+        : <>{rtf.length === 0
+            ? 'The filing-risk log is empty. An empty log is not a clean shadow review — it records only what someone has entered, and no day-60 review has reported against this application.'
+            : `${rtf.length} filing-risk ${rtf.length === 1 ? 'item is' : 'items are'} logged, none of them high severity. That is the state of the log, not a verdict on the filing.`} Refuse-to-File risk is unknown until a review runs.</>,
+    },
+    'assessed-with-findings': {
+      tone: 'urgent',
+      headline: topHigh
+        ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
+        : <>You're <b>{overall}% ready</b>, with {rtf.length} filing-risk {rtf.length === 1 ? 'item' : 'items'} open.</>,
+      body: topHigh
+        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()} &mdash; and the same review that refuses today accepts. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
+        : <>{openItems} {openItems === 1 ? 'item' : 'items'} to work before you submit. None is currently rated high severity.</>,
+    },
+    'assessed-clear': {
+      tone: 'good',
+      headline: <>You're <b>{overall}% ready</b> to file &mdash; the completed review found no Refuse-to-File blockers, {openItems} items to tidy before you submit.</>,
+      body: <>The remaining items are administrative, not structural &mdash; close them out and the package is fileable.</>,
+    },
+  };
+  const copy = leadCopy[filingState];
+
   const lead = (
     <AnswerLead
-      tone={highs.length ? 'urgent' : 'calm'}
+      tone={copy.tone}
       eyebrow={'Are you ready to file ' + (progName ? 'the ' + progName + ' NDA' : 'this NDA') + ' — and what stands in the way'}
-      headline={highs.length && topHigh
-        ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
-        : <>You're <b>{overall}% ready</b> to file &mdash; no Refuse-to-File blockers left, {openItems} items to tidy before you submit.</>}
-      body={highs.length && topHigh
-        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()} &mdash; and the same review that refuses today accepts. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
-        : <>The remaining items are administrative, not structural &mdash; close them out and the package is fileable.</>}
-      reassure={highs.length ? "This is fixable before Day 74. I'll draft each remediation with you, one at a time." : "You're close. I'll help you close out the last items and assemble the sequence."}
+      headline={copy.headline}
+      body={copy.body}
+      /* Reassurance is gated on the state, not on the absence of findings, and
+         additionally on a non-zero completeness — a 0% program is never told it
+         is close. Every other state renders no reassurance line at all rather
+         than a softened one, because there is nothing truthful to reassure
+         about yet. */
+      reassure={
+        filingState === 'assessed-with-findings'
+          ? "This is fixable before Day 74. I'll draft each remediation with you, one at a time."
+          : reassuring
+            ? "I'll help you close out the last items and assemble the sequence."
+            : undefined
+      }
       action={{
-        label: highs.length ? 'Fix the filing risks with AnA' : 'Draft the final readiness plan',
-        onClick: () => ask && ask(highs.length && topHigh
-          ? 'Draft a mitigation plan for the ' + topHigh.area + ' Refuse-to-File risk: ' + topHigh.text
-          : 'Draft the final readiness plan for the open administrative items on this NDA program'),
+        label: filingState === 'assessed-with-findings'
+          ? 'Fix the filing risks with AnA'
+          : filingState === 'not-assessed'
+            ? 'Assess Refuse-to-File risk with AnA'
+            : 'Draft the final readiness plan',
+        onClick: () => ask && ask(
+          filingState === 'assessed-with-findings' && topHigh
+            ? 'Draft a mitigation plan for the ' + topHigh.area + ' Refuse-to-File risk: ' + topHigh.text
+            : filingState === 'not-assessed'
+              ? 'Assess this NDA/BLA application for Refuse-to-File triggers against 21 CFR 314.101, and list what evidence is missing before that assessment can be completed'
+              : 'Draft the final readiness plan for the open administrative items on this NDA program'),
         alt: { label: 'See Refuse-to-File risks', onClick: () => setTab('rtf') },
       }}
       secondary="Or work the readiness detail below."
