@@ -97,28 +97,46 @@
 
    So the fix is one rule, not a rewrite of three forms: `display: block` alone
    breaks the label/value concatenation (a block box cannot share the line), and
-   real chrome makes an empty field legibly empty. Tokens and metrics are taken
-   from `.tb-field input` below so the two field vocabularies agree.
+   real chrome makes an empty field legibly empty. Colours, border, radius and
+   font-size are taken from `.tb-field input` below so the two field vocabularies
+   agree. Vertical padding deliberately does NOT match it (4px here, 8px there):
+   35 of the 47 call sites pin an inline `height: 30`, and 8px padding plus a
+   12.5px line does not fit inside 30px. `min-height` carries the same 30px to
+   the call sites that pin nothing — four controls in AuthoringPlaceIntoFiling —
+   which would otherwise render several pixels shorter than every field beside
+   them.
 
    The placeholder is italic as well as dimmed. Colour alone would not carry the
    "this is an example, not your number" distinction for a low-vision or
    colour-blind reviewer, and on these forms that distinction decides whether a
-   number was chosen by a statistician or by a stylesheet. WCAG 2.2 SC 1.4.1. */
+   number was chosen by a statistician or by a stylesheet. WCAG 2.2 SC 1.4.1.
+
+   It is --text-300, not the --text-500 this rule first used. Measured against
+   --bg-000, --text-500 is 2.11:1 in light and 2.76:1 in dark, and --text-400 is
+   3.37:1 / 4.27:1 — both fail SC 1.4.3 for 12.5px text. --text-300 is 5.21:1 and
+   6.82:1 and passes in both themes. check-token-contrast.mjs carries --text-500
+   on --bg-000 as a documented exception "verify each use is disabled/decorative";
+   a required numeric field's only affordance is neither, so the exception did not
+   apply here and the gate stayed green over a real failure.
+
+   KNOWN, NOT FIXED HERE: the 1px border is var(--border), which is 1.34:1 light
+   and 1.41:1 dark against --bg-000 — below the 3:1 SC 1.4.11 wants for a control
+   boundary. No token in the palette clears it (--border-strong is 1.70:1), so
+   this is a palette gap rather than a rule bug, and changing --border moves every
+   divider in the product. Flagged for a token decision. */
 .c2c-v2 .c2c-input {
   display: block;
   width: 100%;
   font: inherit;
   font-size: 12.5px;
   padding: 4px 10px;
+  min-height: 30px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-000);
   color: var(--text-100);
 }
-.c2c-v2 .c2c-input::placeholder { color: var(--text-500); font-style: italic; }
-/* Native selects ignore ::placeholder and have their own indicator; keep the
-   arrow room so the value never collides with it. */
-.c2c-v2 select.c2c-input { padding-right: 6px; }
+.c2c-v2 .c2c-input::placeholder { color: var(--text-300); font-style: italic; }
 /* A control that follows its own label text on the same line needs the gap the
    label markup does not provide. Harmless where the field stands alone. */
 .c2c-v2 label > .c2c-input { margin-top: 4px; }

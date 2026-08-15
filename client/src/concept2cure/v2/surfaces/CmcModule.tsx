@@ -427,7 +427,12 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   });
   const cmLead = (
     <AnswerLead
-      tone={irOverdue ? 'urgent' : cmcState === 'not-assessed' ? 'calm' : 'calm'}
+      /* Both arms of the inner ternary used to resolve to 'calm', so the
+         'good' tone AnswerLead provides was unreachable here while the
+         NDA cockpit — same session, same assessmentState taxonomy — used it
+         for the identical state. Two sibling surfaces rendering one state in
+         two visual languages is the drift this work is meant to remove. */
+      tone={irOverdue ? 'urgent' : cmcState === 'assessed-clear' ? 'good' : 'calm'}
       eyebrow={cmcState === 'not-assessed' && port.length === 0
         ? 'Is your CMC package ready'
         : 'Is your CMC package ready across all ' + port.length + ' submissions'}

@@ -4970,7 +4970,24 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     const { docId } = req.params;
     const { format = 'docx', options = {} } = req.body;
     const tenantId = getTenantId(req);
-    const exportedBy = req.headers['x-user-email'] || req.body.exported_by || 'system';
+    /* SECURITY (21 CFR Part 11): the exporter recorded on the EXPORT audit row
+       and in the export ledger must come from the verified JWT.
+
+       This line read `req.headers['x-user-email'] || req.body.exported_by ||
+       'system'`. The router's own middleware deletes any client-supplied
+       x-user-email and re-derives it from the JWT, so the header is safe — but
+       only when the token carries an email claim. When it does not, the header
+       is cleared and the expression fell through to `req.body.exported_by`,
+       which the caller controls. That is a spoofable "who" on a Part 11 record.
+
+       Every other governed mutation in this file was already hardened against
+       exactly this: `submit` uses getActorEmail with a comment saying so, and a
+       duplicate freeze endpoint was deleted for carrying this same fallback.
+       Export was the one path left on it. */
+    const exportedBy = getActorEmail(req);
+    if (!exportedBy) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
 
     // Validate format
     if (!['docx', 'pdf', 'xml'].includes(format)) {

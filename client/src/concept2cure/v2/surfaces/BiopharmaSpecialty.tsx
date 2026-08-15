@@ -499,7 +499,16 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
                likewise asserted over a merely planned application that nothing
                had assessed. */
             headline={topPending
-              ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingIndication} -- {String(topPending.date).includes('pending') ? 'awaiting an agency decision' : 'not yet submitted'}.</>
+              /* "awaiting an agency decision" is a claim that a submission
+                 reached an agency, and it was being inferred from the literal
+                 substring 'pending' in a DISPLAY date. onSubmit above hardcodes
+                 exactly `date: 'pending'` for a row it then reports as "shown
+                 locally, not persisted" — so opening a designation request made
+                 the headline announce it was with the agency awaiting a
+                 decision, while the toast three lines away said it had not even
+                 been saved. Only an explicitly recorded 'submitted' status may
+                 carry that sentence; everything else reads as not yet filed. */
+              ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingIndication} -- {topPending.status === 'submitted' ? 'awaiting an agency decision' : 'not yet submitted'}.</>
               : designated.length > 0
                 ? <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>
                 : <>None of the <b>{des.length}</b> recorded {des.length === 1 ? 'designation has' : 'designations have'} been granted.</>}

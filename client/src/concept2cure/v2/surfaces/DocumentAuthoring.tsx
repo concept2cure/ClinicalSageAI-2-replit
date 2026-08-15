@@ -235,8 +235,12 @@ function C2CToast({ msg, tone = 'ok' }: { msg: string; tone?: ToastTone }) {
     <div
       className="de-toast"
       data-tone={isError ? 'error' : undefined}
-      role="status"
-      aria-live={isError ? 'assertive' : 'polite'}
+      /* role="alert" rather than role="status" + aria-live="assertive". The
+         latter is contradictory: role="status" carries an implicit polite live
+         region, and AT has historically diverged on whether an explicit
+         assertive override wins. role="alert" implies assertive AND
+         aria-atomic="true" with nothing to override. */
+      role={isError ? 'alert' : 'status'}
     >
       <span className="ico">{isError ? I.alertTriangle : I.checkCircle}</span>
       {msg}

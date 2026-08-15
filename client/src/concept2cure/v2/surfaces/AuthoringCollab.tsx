@@ -47,7 +47,10 @@ interface SectionLock {
 export interface AuthoringCollabProps {
   documentId: string;
   sectionId: string | null;
-  fireToast: (m: string) => void;
+  /* BP-W0-6: same erased tone as AuthoringFilingBar — a failed lock acquire or
+     takeover announced itself with the success tick. Lower stakes (editorial
+     concurrency, not a regulated state change) but the same defect. */
+  fireToast: (m: string, tone?: 'ok' | 'error') => void;
 }
 
 function initials(name: string): string {
@@ -175,7 +178,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
       reason: takeoverReason.trim(),
     });
     if (!res.ok || !res.body?.success) {
-      fireToast('Couldn’t take over the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.');
+      fireToast('Couldn’t take over the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.', 'error');
       return;
     }
     fireToast('Lock taken over — the previous holder has been notified.');
@@ -198,12 +201,12 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
       lockType: 'section-edit', reason: 'Editing in the authoring canvas',
     });
     if (res.status === 409) {
-      fireToast('Section is locked — ' + apiErrorText(res, 'another author holds the lock') + '.');
+      fireToast('Section is locked — ' + apiErrorText(res, 'another author holds the lock') + '.', 'error');
       void loadLocks();
       return;
     }
     if (!res.ok || !res.body?.success) {
-      fireToast('Couldn’t acquire the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.');
+      fireToast('Couldn’t acquire the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.', 'error');
       return;
     }
     fireToast('Section locked for your edit.');
@@ -215,7 +218,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     const res = await apiCall<{ released?: boolean }>('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`, {
       sectionId: sectionId || undefined,
     });
-    if (!res.ok) { fireToast(apiErrorText(res, `Couldn’t release the lock (HTTP ${res.status}).`)); return; }
+    if (!res.ok) { fireToast(apiErrorText(res, `Couldn’t release the lock (HTTP ${res.status}).`), 'error'); return; }
     fireToast(res.body?.released ? 'Lock released.' : 'No lock of yours to release.');
     void loadLocks();
   }, [documentId, sectionId, userId, loadLocks, fireToast]);
