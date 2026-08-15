@@ -6,6 +6,7 @@
  * No LLM calls.
  */
 
+import { isDeviceFamily, isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '../../db';
@@ -82,8 +83,14 @@ function requirementInScope(req: GsprRequirement, profile: GsprProgramProfile): 
     if (profile.isSoftware && pt.includes('samd')) return true;
     if (profile.isAiMl && pt.includes('ai_ml')) return true;
     if (profile.isImplantable && pt.includes('implantable')) return true;
-    if (profile.productType === 'device' && pt.includes('device')) return true;
     if (profile.productType === 'combination' && pt.includes('combination')) return true;
+    // Family membership, not equality: `samd` is a device and `cdx` is an IVD.
+    // Matching literally dropped every scoped requirement for those classes,
+    // which produces a SHORT Annex I checklist — a coverage report that looks
+    // complete and is not.
+    if (profile.productType === 'samd' && pt.includes('samd')) return true;
+    if (isIvdFamily(profile.productType) && pt.includes('ivd')) return true;
+    if (isDeviceFamily(profile.productType) && pt.includes('device')) return true;
     return false;
   }
   return true;

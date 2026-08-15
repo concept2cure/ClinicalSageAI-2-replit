@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-15T02:28:31.336Z",
+  "generatedAt": "2026-08-15T03:08:04.431Z",
   "git": {
-    "sha": "9a5e8927e03604238d4f6ddef3fca24ddd5bdf58",
+    "sha": "b6921fd8da6b1e2a94b7c48906a5db6e1d3ef218",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 35,
-    "largeFilesByLines": 84
+    "largeFilesByLines": 85
   },
   "findings": {
     "duplicateBasenames": [
@@ -2604,6 +2604,10 @@
       {
         "file": "server/routes/cortex-unified.ts",
         "lines": 1531
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1509
       }
     ]
   },
@@ -2613,7 +2617,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
       "largeByBytes": 30,
-      "largeByLines": 72
+      "largeByLines": 73
     },
     {
       "owner": "Unassigned (TBD)",
