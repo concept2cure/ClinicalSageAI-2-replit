@@ -39,8 +39,27 @@ declare global {
 declare module '@/lib/queryClient' {
   export function apiRequest(method: string, url: string, data?: any): Promise<any>;
   export class ApiRequestError extends Error {
-    constructor(message: string, status: number, payload?: unknown);
+    constructor(
+      message: string,
+      status: number,
+      payload?: unknown,
+      code?: string,
+      correlationId?: string,
+    );
     readonly status: number;
     readonly payload?: unknown;
+    /** The server's machine-readable error code. Branch on THIS, never on
+     *  `message` — the message is user copy and is expected to change. */
+    readonly code?: string;
+    /** The `X-Request-Id` the server echoed, for a user to quote to support. */
+    readonly correlationId?: string;
   }
+  /** The canonical reduction of an API error envelope to displayable copy plus a
+   *  machine code. Every surface that renders a failure must use this rather
+   *  than reaching into `{ error }` itself — reading `error` first is what put
+   *  the literal token `PENDING_STORE` on screen. */
+  export function extractApiError(
+    payload: unknown,
+    status: number,
+  ): { message: string; code?: string };
 }

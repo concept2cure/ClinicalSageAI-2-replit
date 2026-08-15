@@ -92,8 +92,16 @@ const lensL = (v: string) => SC_LENSES.find((l) => l.v === v)?.l ?? v;
  * separation-of-duties rejection), so this helper lifts the message out of the
  * error body in both failure paths:
  *   • apiRequest THROWS ApiRequestError for every non-OK except 401 — its
- *     message already carries `error.message || error || message`, and the
- *     payload's `detail` (the c2c actions route's second line) is appended;
+ *     message is the reduction `extractApiError` performs
+ *     (client/src/lib/queryClient.ts), i.e. the server's human copy with any
+ *     enum token or infrastructure text already replaced, and the payload's
+ *     `detail` (the c2c actions route's second line) is appended;
+ *
+ *     NOTE: `messageFromBody` below still prefers a bare `error` string over
+ *     `message`, which is the same precedence bug `extractApiError` was written
+ *     to end. It survives here only on the un-thrown 401 path. Migrating this
+ *     helper onto `extractApiError` is tracked with the other eight duplicate
+ *     implementations for W0-4;
  *   • a 401 passes through un-thrown (REAUTH_* / AUTH_REQUIRED) — the body is
  *     read directly.
  * A failed mutation NEVER yields data — nothing local is fabricated.

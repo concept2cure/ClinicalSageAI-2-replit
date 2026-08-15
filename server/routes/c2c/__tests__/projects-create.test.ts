@@ -463,11 +463,18 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     expect(sqlCalls()).toContain('ROLLBACK');
   });
 
-  it('names the missing store and the step, so the 503 is actionable', async () => {
+  it('names the step and a support reference, and discloses no schema object', async () => {
     // A bare { error: 'PENDING_STORE' } is a correct status and an unactionable
     // outage: this endpoint touches the quota tables, the program row, the
     // submission spine and the PM-spine anchor, so "some store is missing"
     // narrows it to four candidates and nobody can tell what to provision.
+    //
+    // The first correction answered that by putting the relation name in the
+    // client-facing message. That is the disclosure this asserts is gone: the
+    // body is rendered in a browser, and the schema shape of a governed store
+    // is not something a regulated product may put on a screen. The relation
+    // goes to the log instead, keyed by the correlation id returned here, so
+    // the operator question is still one lookup away.
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
@@ -476,23 +483,31 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
       );
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(503);
-    expect(res.body.store).toBe('submissions');
+    expect(res.body.error).toBe('PENDING_STORE');
     expect(res.body.step).toBe('creating the project');
-    expect(res.body.message).toMatch(/not provisioned/);
-    expect(res.body.message).toMatch(/migrations/);
+    expect(res.body.correlationId).toEqual(expect.any(String));
+    expect(res.body.correlationId.length).toBeGreaterThan(5);
+
+    // Nothing in the envelope names the relation, echoes the driver text, or
+    // tells the user to run migrations — none of which is their action to take.
+    const body = JSON.stringify(res.body);
+    expect(body).not.toMatch(/submissions/);
+    expect(body).not.toMatch(/relation /i);
+    expect(body).not.toMatch(/migration/i);
+    expect(res.body.store).toBeUndefined();
   });
 
-  it('still answers when the relation cannot be parsed out of the driver message', async () => {
+  it('degrades to the same safe body when the relation cannot be parsed', async () => {
     // Postgres does not populate `err.table` for 42P01, so the relation is read
-    // out of the message. An unrecognised message must degrade to a usable
-    // response, not to `store: undefined` rendered as "the undefined store".
+    // out of the message for the LOG. An unrecognised message must still
+    // produce a usable response, never one reading "the undefined store".
     query
       .mockResolvedValueOnce({ rows: [] })
       .mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
     const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
     expect(res.status).toBe(503);
-    expect(res.body.store).toBeNull();
     expect(res.body.message).not.toMatch(/undefined|null/);
-    expect(res.body.message).toMatch(/migrations/);
+    expect(res.body.correlationId).toEqual(expect.any(String));
+    expect(res.body.message.length).toBeGreaterThan(20);
   });
 });

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError } from '@/lib/queryClient';
+import { useDialog } from '../useDialog';
 import type { SurfaceViewProps } from '../surfaceViews';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
@@ -139,7 +140,12 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
 }
 
-function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id: string) => void }) {
+/** Exported for the failure-path test: the wizard's error surface is an
+ *  acceptance criterion in its own right (a failed write must be visible and
+ *  must offer a way out), and driving it through the whole Projects surface
+ *  would test the registry loader rather than the banner. */
+export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id: string) => void }) {
+  const dialogRef = useDialog(onClose);
   const [step, setStep] = useState(0);
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -151,7 +157,21 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
   const [team] = useState<string[]>([]);
   const [target, setTarget] = useState('');
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  /**
+   * The wizard's outcome banner.
+   *
+   * `kind` matters and used to be missing. One `error: string` carried two
+   * opposite outcomes: a genuine failure (nothing was created) and the
+   * created-but-no-dossier-scaffolded advisory below (the project DOES exist).
+   * Rendering both as the same red banner told a user their project had failed
+   * when it had not, and offering "Try again" on the advisory would have
+   * created a second copy of a program that was already there.
+   */
+  const [outcome, setOutcome] = useState<
+    { kind: 'error' | 'notice'; message: string; correlationId?: string } | null
+  >(null);
+  const fail = (message: string, correlationId?: string) =>
+    setOutcome({ kind: 'error', message, correlationId });
 
   const uiSeg = (typeof window !== 'undefined' && window.__C2C_SEGMENT) || 'biotech';
   const regSeg = SEG2REG[uiSeg];
@@ -166,7 +186,7 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
   // the error instead of pretending the project was created.
   const doCreate = async () => {
     setCreating(true);
-    setError(null);
+    setOutcome(null);
     const taLabel = TA_LIST.find(t => t.id === ta)?.label ?? null;
     const body = {
       name: name || selTpl?.label || 'New project',
@@ -181,13 +201,10 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
     };
     try {
       const res = await apiRequest('POST', '/api/c2c/projects', body);
+      // apiRequest throws on every non-2xx EXCEPT 401, which it returns so the
+      // caller can decide. So this branch is the session case, and only that.
       if (!res.ok) {
-        let msg = `Could not create the project (HTTP ${res.status}).`;
-        try {
-          const j = await res.json();
-          if (typeof j?.error === 'string') msg = j.error;
-        } catch { /* keep the default message */ }
-        setError(msg);
+        fail('Your session has expired. Sign in again to create this project.');
         setCreating(false);
         return;
       }
@@ -207,11 +224,20 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
       const skipped = j?.meta?.scaffoldSkipped as string | undefined;
       if (skipped) {
         const detail = typeof j?.meta?.scaffoldDetail === 'string' ? j.meta.scaffoldDetail : '';
-        setError(
-          `Project created, but no submission dossier was started. ${detail} ` +
-            `You can add documents manually, or pick a filing type with a ` +
-            `defined pathway.`.replace(/\s+/g, ' '),
-        );
+        // `detail` (from services/c2c/scaffold-project-documents.ts) already
+        // ends by restating that the project was created and nothing was
+        // scaffolded, so leading with our own sentence said the same thing
+        // twice — two systems' text concatenated without editing. Keep our
+        // sentence only for the skip that carries no detail.
+        setOutcome({
+          kind: 'notice',
+          message: (
+            detail
+              ? `${detail} You can add documents manually, or pick a filing type with a defined pathway.`
+              : 'Project created, but no submission dossier was started. You can add documents ' +
+                'manually, or pick a filing type with a defined pathway.'
+          ).replace(/\s+/g, ' '),
+        });
         setCreating(false);
         // Deliberately NOT navigating away. The project exists and is listed;
         // dropping the user into an empty Vault is how this went unnoticed.
@@ -232,7 +258,21 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
       onClose();
       onNav('project-home');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Network error creating the project.');
+      // ONLY an ApiRequestError's message is safe to render: apiRequest has
+      // reduced that one through `extractApiError`, so it is never the raw enum
+      // and never driver text. Any other throw here is a browser-native
+      // TypeError from fetch itself — "Failed to fetch", "Load failed",
+      // "NetworkError when attempting to fetch resource" — which carries a
+      // non-empty `.message` and would sail past a bare `e instanceof Error`
+      // check straight onto the screen. That is engineer text in a regulated
+      // UI, arriving by a path the server-envelope filter cannot see.
+      const known = e instanceof ApiRequestError;
+      fail(
+        known && e.message
+          ? e.message
+          : 'The project could not be created. Check your connection and try again.',
+        known ? e.correlationId : undefined,
+      );
       setCreating(false);
     }
   };
@@ -242,17 +282,35 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
 
   return (
     <div className="esign-bd" onClick={onClose}>
-      <div className="esign-modal" onClick={e => e.stopPropagation()} style={{ width: 880, maxWidth: '94vw', maxHeight: '90vh', overflow: 'auto' }}>
+      {/* `useDialog` is the v2 modal primitive that was already in this
+          directory and that this wizard never used: it focuses the panel on
+          open, closes on Escape, and hands focus back to the opener on unmount.
+          Without it the wizard was a plain div — no keyboard exit, no focus
+          hand-off, no dialog semantics — which is the surface a failed create
+          now has to announce into. Not a full focus trap; Tab can still leave
+          the panel, and closing that is a shared-modal change, not this task's. */}
+      <div
+        ref={dialogRef}
+        className="esign-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-project-title"
+        tabIndex={-1}
+        onClick={e => e.stopPropagation()}
+        style={{ width: 880, maxWidth: '94vw', maxHeight: '90vh', overflow: 'auto' }}
+      >
         {/* Header */}
         <div className="esign-h" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 12 }}>
           <span className="ico" style={{ fontSize: 18 }}>{I.plus}</span>
           <div style={{ flex: 1 }}>
-            <span className="t" style={{ fontSize: 15 }}>New project</span>
+            <span className="t" id="new-project-title" style={{ fontSize: 15 }}>New project</span>
             <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 2 }}>
               Step {step + 1} of 3 — {['Choose template', 'Configure project', 'Review & create'][step]}
             </div>
           </div>
-          <button className="tbtn" onClick={onClose}>{I.close}</button>
+          {/* The icon is aria-hidden, so without this label the control had no
+              accessible name at all. */}
+          <button className="tbtn" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
 
         {/* Step indicators */}
@@ -369,10 +427,66 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
           )}
         </div>
 
-        {/* Create error — surfaced honestly instead of a fake "created" toast */}
-        {error && (
-          <div style={{ margin: '0 20px', padding: '9px 13px', borderRadius: 6, background: 'color-mix(in srgb,var(--danger,#e5484d) 10%,transparent)', border: '1px solid var(--danger,#e5484d)', color: 'var(--danger,#e5484d)', fontSize: 11.5, display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span className="ico">{I.alertTriangle}</span><span>{error}</span>
+        {/* Announcement is separated from presentation on purpose.
+
+            These two regions are PERMANENT and empty until there is something
+            to say. A live region that is inserted into the DOM together with
+            its text is the higher-risk pattern under SC 4.1.3 — some AT/browser
+            pairs never announce it, because the region did not exist to be
+            watched. Mounting them once and writing text into them is the
+            portable form. Two regions rather than one because a failure must
+            interrupt (assertive) and a succeeded-but-degraded write must not
+            (polite), and swapping `aria-live` on a single live element is
+            itself unreliable.
+
+            The visual banner below stays in the accessibility tree — it holds
+            the Try again and Dismiss controls, so hiding it would strand them —
+            it simply is not the thing that announces. */}
+        <div className="sr-only" role="alert" aria-live="assertive">
+          {outcome?.kind === 'error' ? outcome.message : ''}
+        </div>
+        <div className="sr-only" role="status" aria-live="polite">
+          {outcome?.kind === 'notice' ? outcome.message : ''}
+        </div>
+
+        {/* The wizard's outcome — surfaced honestly instead of a fake "created"
+            toast, and never silently. A failure carries a recovery path (UI
+            standards §8: an error always offers one); the
+            created-but-not-scaffolded advisory does not, because the project
+            exists and there is nothing to retry. */}
+        {outcome && (
+          <div
+            className={`c2c-wizard-outcome tone-${outcome.kind}`}
+            data-testid="new-project-outcome"
+          >
+            <span className="ico" aria-hidden="true">
+              {outcome.kind === 'error' ? I.alertTriangle : I.info}
+            </span>
+            <div className="c2c-wizard-outcome-b">
+              <span>{outcome.message}</span>
+              {outcome.correlationId && (
+                /* The one handle support can search the server log by. It
+                   replaces the store name the API used to disclose here. */
+                <span className="c2c-wizard-outcome-ref">
+                  Reference <code>{outcome.correlationId}</code>
+                </span>
+              )}
+            </div>
+            <div className="c2c-wizard-outcome-a">
+              {outcome.kind === 'error' && (
+                <button type="button" className="btn ghost" onClick={doCreate} disabled={creating}>
+                  {creating ? 'Retrying…' : 'Try again'}
+                </button>
+              )}
+              <button
+                type="button"
+                className="tbtn"
+                onClick={() => setOutcome(null)}
+                aria-label="Dismiss this message"
+              >
+                {I.close}
+              </button>
+            </div>
           </div>
         )}
 
@@ -429,7 +543,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   // Real program portfolio — GET /api/c2c/projects projects one field per real
   // regulatory_programs column (server/routes/c2c/projects.ts). Fixture-free:
   // real rows, an honest empty, or an honest error — never a "Sample data" stand-in.
-  const live = useLiveRows<ProjPortfolioEntry>('/api/c2c/projects');
+  /* `useLiveRows` re-fetches when its dep list changes and exposes no reload of
+     its own, so the retry the failed-load panel offers is a nonce in that list.
+     The panel's copy promised a retry it did not have. */
+  const [reloadNonce, setReloadNonce] = useState(0);
+  const live = useLiveRows<ProjPortfolioEntry>('/api/c2c/projects', [reloadNonce]);
   const projects = live.rows;
 
   const list = projects.filter(p => (ws === 'all' || p.ws === ws) && (status === 'all' || p.status === status));
@@ -495,11 +613,17 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       {live.loading ? (
         <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
       ) : live.error ? (
+        // The hint used to read "…(projected from regulatory_programs)…",
+        // naming a governed store's table on screen: an information-disclosure
+        // finding in a regulated product, not a cosmetic one, and a detail the
+        // reader could do nothing with. It also promised a retry the panel did
+        // not offer — `retry` below is that affordance.
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the project portfolio"
-          hint="This is the organization's real regulatory programs (projected from regulatory_programs). Sign in and retry, or check the service is reachable."
+          hint={live.error || "Couldn't load your projects. Try again, or sign in if your session has expired."}
+          retry={() => setReloadNonce(n => n + 1)}
         />
       ) : live.empty ? (
         <EmptyState

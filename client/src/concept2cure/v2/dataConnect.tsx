@@ -230,9 +230,16 @@ export interface DataResult<T> {
  *   2. `instanceof` is false across two instances of the same module, which a
  *      bundler split or a duplicated dependency can produce silently.
  *
- * `error` prefers the server's own message, which `apiRequest` has already
- * lifted out of `{ error }` / `{ error: { message } }` / `{ message }`, so a
- * surface can show the API's wording rather than inventing its own.
+ * `error` carries the server's own wording where there is any, so a surface can
+ * show the API's message rather than inventing one. `apiRequest` has already
+ * reduced the envelope via `extractApiError` (client/src/lib/queryClient.ts),
+ * which is what makes this field SAFE to render: an enum-shaped `error` token
+ * and any infrastructure text are replaced with human copy there, so nothing
+ * reaching this string is a code, a relation name or a driver message.
+ *
+ * That order used to be reversed — `{ error }` was preferred over `{ message }`
+ * — so every surface reading this field displayed the literal token
+ * `PENDING_STORE` whenever a store was unprovisioned.
  *
  * 0 stays reserved for a genuine pre-response failure: DNS, offline, abort, or
  * a body that would not parse.
