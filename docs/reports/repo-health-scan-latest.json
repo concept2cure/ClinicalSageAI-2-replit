@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-14T23:20:46.879Z",
+  "generatedAt": "2026-08-15T02:28:31.336Z",
   "git": {
-    "sha": "bd796d7da44b0acece77b7b98591d78be7fe8a7f",
+    "sha": "9a5e8927e03604238d4f6ddef3fca24ddd5bdf58",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2205,7 +2205,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 123214
+        "bytes": 123504
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2220,6 +2220,10 @@
         "bytes": 116241
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 115556
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 114943
       },
@@ -2230,10 +2234,6 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 113352
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2338,12 +2338,12 @@
         "lines": 2826
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2759
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 2790
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2756
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2759
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2411,7 +2411,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2132
+        "lines": 2137
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
