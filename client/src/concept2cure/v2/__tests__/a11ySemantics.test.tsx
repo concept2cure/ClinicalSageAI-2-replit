@@ -47,7 +47,10 @@ import {
 import { bodyFor } from '../../../../../scripts/visual-qa/api-fixtures.mjs';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 import { AuthProvider } from '@/services/portal/authService';
 import { SURFACE_VIEWS } from '../surfaceViews';

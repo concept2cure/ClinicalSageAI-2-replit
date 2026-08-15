@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -330,7 +330,14 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       const body = await res.json().catch(() => null);
       const payload = body as { success?: boolean; error?: string } | null;
       if (!res.ok || !payload || payload.success !== true) {
-        setRequestErr(payload?.error || 'Could not record the change request (HTTP ' + res.status + ').');
+        // `payload.error` was read first, so an envelope of the shape
+        // { error: 'WORKFLOW_NOT_PENDING', message: '<a real sentence>' } put the
+        // enum token in the banner. serverMessage prefers the sentence and
+        // refuses codes and infrastructure text; the domain fallback stays
+        // because it names the action that did not happen.
+        setRequestErr(
+          serverMessage(body) ?? 'Could not record the change request (HTTP ' + res.status + ').',
+        );
         return;
       }
       setItemState(item.id, 'changes-requested');
@@ -346,7 +353,13 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       setReason('');
       fireToast('Change request recorded on the document');
     } catch (e) {
-      setRequestErr(e instanceof Error ? e.message : 'Could not reach the review service.');
+      // Only ApiRequestError carries a message that has already been reduced to
+      // safe copy. Any other throw is the browser's own — "Failed to fetch" —
+      // which this used to render verbatim.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setRequestErr(
+        known && (e as Error).message ? (e as Error).message : 'Could not reach the review service.',
+      );
     } finally {
       setRequesting(false);
     }

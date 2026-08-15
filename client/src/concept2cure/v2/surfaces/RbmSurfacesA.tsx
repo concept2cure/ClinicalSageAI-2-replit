@@ -15,7 +15,7 @@
  * collected — a form that captured them would silently drop them on save.
  */
 import React, { useState } from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshness } from './rbmBoard';
 import {
@@ -422,7 +422,10 @@ export function RbmRact({ board, onReload }: SubProps) {
           const res = await apiRequest('POST', `/api/mdx/rbm-assessments/${asmt.id}/approve`, { reason, password, mfaToken });
           if (res.ok) { setSignFor(false); onReload?.(); return; }
           const body = await res.json().catch(() => null) as { error?: string } | null;
-          return body?.error || `Approval failed (HTTP ${res.status}). The assessment was not activated.`;
+          // `body?.error` first rendered the refusal's enum token instead of
+          // the sentence beside it. The domain fallback stays — it says what
+          // did NOT happen, which a generic sentence would lose.
+          return serverMessage(body) || `Approval failed (HTTP ${res.status}). The assessment was not activated.`;
         }} />}
     </div>
   );

@@ -31,7 +31,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 // The EsignModal's §11.200 re-auth primitives (/api/esignature/verify-*) are
 // react-query mutations; mock the HOOK so the modal's re-auth step resolves
@@ -426,7 +429,15 @@ describe('governed freeze — the real e-sign chain, never bypassed', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert').textContent).toContain('The e-signature was not recorded'),
     );
-    expect(screen.getByRole('alert').textContent).toContain('SEPARATION_OF_DUTIES');
+    // The REASON is what the reviewer needs, and it is in `detail`. This used to
+    // assert the code instead, because the envelope reader preferred `error` and
+    // put the token on screen — telling a reviewer "SEPARATION_OF_DUTIES" where
+    // the answer was "you may not sign your own work". The code is still
+    // available to code that must branch on it; it is no longer display copy.
+    expect(screen.getByRole('alert').textContent).toContain(
+      'The signer must not be the author of the target.',
+    );
+    expect(screen.getByRole('alert').textContent).not.toContain('SEPARATION_OF_DUTIES');
     expect(freezeCalled).toBe(0);
   });
 });

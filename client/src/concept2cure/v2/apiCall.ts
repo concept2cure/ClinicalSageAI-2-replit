@@ -1,4 +1,4 @@
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 
 /** Local copy: `client/src/types/api.d.ts` ambiently redeclares
  *  '@/lib/queryClient' with a narrower surface, so the real module's exported
@@ -75,14 +75,30 @@ export async function apiCall<T = any>(
 }
 
 /**
- * Readable message from a normalized result. Handles the three error shapes
- * the API layer produces: a string `error`, a ZodIssue array, and an
- * `ApiRequestError` whose message was already extracted from the payload.
+ * Readable message from a normalized result.
+ *
+ * The string/`message` half is delegated to `serverMessage`
+ * (client/src/lib/queryClient.ts), which is the one place that decides whether
+ * a given string is user copy at all. This used to begin
+ *
+ *     if (typeof e === 'string' && e.trim()) return e;
+ *
+ * so `{ error: 'ESIGN_REQUIRED' }` rendered as the sentence "ESIGN_REQUIRED",
+ * and a driver message left in `error` rendered verbatim. Delegating also
+ * means the internals filter (SQL, relation names, routes, env vars) applies
+ * here without a second copy of it.
+ *
+ * The ZodIssue branch stays local: a field-level validation list is more useful
+ * than any generic sentence, and it is a shape only this layer sees.
+ *
+ * `fallback` is the caller's own domain copy ("Could not create the task."),
+ * which is why this uses `serverMessage` rather than `extractApiError` — the
+ * latter would substitute a generic status sentence and throw the better one
+ * away.
  */
 export function apiErrorText(result: ApiResult, fallback: string): string {
   if (result.networkError) return `${fallback} (the request didn't reach the server)`;
   const e = (result.body as { error?: unknown } | null)?.error;
-  if (typeof e === 'string' && e.trim()) return e;
   if (Array.isArray(e)) {
     const msgs = e
       .map(issue =>
@@ -93,7 +109,5 @@ export function apiErrorText(result: ApiResult, fallback: string): string {
       .filter(Boolean);
     if (msgs.length) return msgs.join(' · ');
   }
-  const msg = (result.body as { message?: unknown } | null)?.message;
-  if (typeof msg === 'string' && msg.trim()) return msg;
-  return fallback;
+  return serverMessage(result.body) ?? fallback;
 }

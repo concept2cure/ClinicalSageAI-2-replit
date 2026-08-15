@@ -16,6 +16,7 @@
  * verbatim, never an optimistic "recorded".
  */
 
+import { serverMessage } from '@/lib/queryClient';
 import { useCallback, useEffect, useState } from 'react';
 import { buildAuthHeaders } from './useFetchJson';
 
@@ -437,7 +438,7 @@ export async function screenCerLiterature(
       return {
         screened: false,
         code: body?.code,
-        error: body?.error ?? `Screening failed — the server answered ${res.status}`,
+        error: serverMessage(body) ?? `Screening failed — the server answered ${res.status}`,
       };
     }
     return body;

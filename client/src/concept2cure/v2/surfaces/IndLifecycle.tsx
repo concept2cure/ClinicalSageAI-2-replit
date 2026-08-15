@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import { IndFormsPanel } from './IndFormsPanel';
@@ -320,8 +320,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     drugName: drug,
     submissionType: 'original',
   });
+  /** A caught throw reduced to a fragment safe to compose into a sentence.
+      Only ApiRequestError has been through the envelope reduction in
+      queryClient; every other throw reaching here is the browser's own, whose
+      message is "Failed to fetch" / "Load failed" — a string this used to render
+      verbatim because the test was only `instanceof Error`. */
   const failMsg = (e: unknown) =>
-    e instanceof Error && e.message ? e.message : 'request failed';
+    (e as { name?: unknown })?.name === 'ApiRequestError' && (e as Error).message
+      ? (e as Error).message
+      : 'request failed';
   const assembleCoverLetter = async () => {
     setCl({ busy: true, model: null, error: '' });
     try {
@@ -373,13 +380,20 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const runOf = (id: string): DelivRun => runs[id] ?? EMPTY_RUN;
   const fv = (k: string) => (fields[k] ?? '').trim();
   const sel = (k: string, opts: Array<{ v: string }>) => fv(k) || opts[0].v;
-  /** The server's own words for a failure, else the HTTP status — never a
-      cheerful paraphrase. Trailing period trimmed so composed messages don't
-      double it. */
+  /** The server's own words for a failure — never a cheerful paraphrase, and
+      never the machine's words either. The second term used to be a bare
+      `json.error` string, so an envelope shaped { error: 'ESIGN_REQUIRED',
+      message: '<a real sentence>' } composed the enum token into the card's
+      message; serverMessage reads the sentence first and refuses codes and
+      infrastructure text. The last resort is a clause rather than a bare `HTTP
+      500`, which is not user copy on its own. Trailing period trimmed so
+      composed messages don't double it. */
   const serverErr = (json: any, st: number): string => {
-    const m = json?.error?.message ?? (typeof json?.error === 'string' ? json.error : null);
-    if (m) return String(m).replace(/\.\s*$/, '');
-    return st === 401 || st === 403 ? 'sign in with a regulatory-author account and retry' : `HTTP ${st}`;
+    const m = serverMessage(json);
+    if (m) return m.replace(/\.\s*$/, '');
+    return st === 401 || st === 403
+      ? 'sign in with a regulatory-author account and retry'
+      : `the server could not complete it (HTTP ${st})`;
   };
   /** The submission the filing routes anchor to — the checklist's REAL
       submissions.id, or null (→ filing honestly unavailable, never guessed). */

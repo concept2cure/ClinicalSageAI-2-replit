@@ -29,7 +29,7 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useLiveRows, useLiveData, hasKeys, liveGetOrNull, EmptyState } from '../dataConnect';
 import {
   SC_LENSES,
@@ -96,12 +96,6 @@ const lensL = (v: string) => SC_LENSES.find((l) => l.v === v)?.l ?? v;
  *     (client/src/lib/queryClient.ts), i.e. the server's human copy with any
  *     enum token or infrastructure text already replaced, and the payload's
  *     `detail` (the c2c actions route's second line) is appended;
- *
- *     NOTE: `messageFromBody` below still prefers a bare `error` string over
- *     `message`, which is the same precedence bug `extractApiError` was written
- *     to end. It survives here only on the un-thrown 401 path. Migrating this
- *     helper onto `extractApiError` is tracked with the other eight duplicate
- *     implementations for W0-4;
  *   • a 401 passes through un-thrown (REAUTH_* / AUTH_REQUIRED) — the body is
  *     read directly.
  * A failed mutation NEVER yields data — nothing local is fabricated.
@@ -111,21 +105,19 @@ export interface MutateResult<T> {
   error?: string;
 }
 
+/**
+ * The server's own words for a refusal, or a plain sentence if it sent none.
+ *
+ * Delegated to `serverMessage`, which already reads `{ error: CODE, detail }` —
+ * the governed-action envelope these workspaces exist to surface — and which
+ * refuses to return an enum token or infrastructure text. This used to lead
+ * with `if (typeof err === 'string') return err`, so a separation-of-duties
+ * refusal rendered as "SEPARATION_OF_DUTIES — The signer must not be the
+ * author of the target." with the code bolted onto the front of the sentence,
+ * and a code-only refusal rendered as the bare token.
+ */
 function messageFromBody(p: unknown, status: number): string {
-  const err = (p as { error?: unknown } | null)?.error;
-  if (typeof err === 'string') {
-    const detail = (p as { detail?: unknown } | null)?.detail;
-    return typeof detail === 'string' ? `${err} — ${detail}` : err;
-  }
-  if (err && typeof err === 'object') {
-    const msg = (err as { message?: unknown }).message;
-    const code = (err as { code?: unknown }).code;
-    if (typeof msg === 'string' && msg) return msg;
-    if (typeof code === 'string' && code) return code;
-  }
-  const msg = (p as { message?: unknown } | null)?.message;
-  if (typeof msg === 'string' && msg) return msg;
-  return `HTTP ${status}`;
+  return serverMessage(p) ?? `The server did not accept that (HTTP ${status}).`;
 }
 
 export async function mutateVerbatim<T>(
@@ -143,7 +135,16 @@ export async function mutateVerbatim<T>(
   } catch (e) {
     const payload = (e as { payload?: unknown } | null)?.payload;
     const detail = (payload as { detail?: unknown } | null)?.detail;
-    const base = e instanceof Error && e.message ? e.message : `Request failed: ${method} ${path}`;
+    // Only an ApiRequestError message is user copy; anything else here is a
+    // browser-native throw ("Failed to fetch"), and the old fallback put the
+    // HTTP method and the API route on screen.
+    const known =
+      (e as { name?: unknown } | null)?.name === 'ApiRequestError' &&
+      typeof (e as { message?: unknown }).message === 'string' &&
+      (e as { message: string }).message.trim();
+    const base = known
+      ? (e as { message: string }).message
+      : 'The change was not saved. Check your connection and try again.';
     return {
       data: null,
       error: typeof detail === 'string' && detail && !base.includes(detail) ? `${base} — ${detail}` : base,

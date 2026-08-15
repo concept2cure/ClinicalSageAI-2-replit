@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
-import { apiRequest, ApiRequestError } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -358,7 +358,14 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           return;
         }
         if (payload?.code === 'CONFLICT_STALE') setReloadKey((k) => k + 1);
-        setActionErr(typeof payload?.error === 'string' ? payload.error : e.message);
+        // Display used to read `payload.error` FIRST. On the envelope the state
+        // machine actually sends — { error: 'ILLEGAL_TRANSITION', message: '<the
+        // legal next states>' } — the enum won and the banner showed the token
+        // instead of the sentence beside it. `e.message` is that sentence:
+        // apiRequest already reduced the envelope through extractApiError, which
+        // rejects enum tokens and infrastructure text. The code branches above
+        // are unaffected — they read `payload.code`, not display copy.
+        setActionErr(e.message);
         return;
       }
       setActionErr('Network error while updating the task.');
@@ -377,7 +384,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('POST', '/api/tasks/tasks', payload);
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.data?.taskId) {
-        return { ok: false, error: body && body.error ? String(body.error) : 'Could not create the task.' };
+        // `body.error` is a code as often as it is a sentence, so stringifying it
+        // put tokens like VALIDATION_FAILED in the modal. serverMessage takes the
+        // real sentence wherever the envelope put it, and null when there is none
+        // worth showing — which is when this file's own copy is the better answer.
+        return { ok: false, error: serverMessage(body) ?? 'Could not create the task.' };
       }
       const newTaskId = String(body.data.taskId);
       // A failed dependency link never blocks the created task — but it must not
@@ -877,9 +888,12 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
       });
       if (res.ok) { onArchived(); return; }
     } catch (e) {
-      onErr(e instanceof ApiRequestError && typeof (e.payload as { error?: unknown })?.error === 'string'
-        ? String((e.payload as { error?: unknown }).error)
-        : 'Could not archive the task.');
+      // Reading `payload.error` first showed the refusal's enum (FORBIDDEN,
+      // PENDING_STORE) rather than the sentence the server sent with it.
+      // ApiRequestError.message is that sentence, already stripped of enum
+      // tokens and driver text; anything else caught here is a browser-native
+      // throw whose message ("Failed to fetch") is not user copy.
+      onErr(e instanceof ApiRequestError && e.message ? e.message : 'Could not archive the task.');
     }
     setArchiving(false);
     setConfirmArchive(false);
@@ -1059,9 +1073,11 @@ function ESignTaskModal({ req, taskTitle, onClose, onSigned }: ESignTaskModalPro
       });
       if (res.ok) { onSigned(); return; }
     } catch (e) {
-      setErr(e instanceof ApiRequestError && typeof (e.payload as { error?: unknown })?.error === 'string'
-        ? String((e.payload as { error?: unknown }).error)
-        : 'The signature was not accepted.');
+      // A rejected PIN comes back as an ESIGN_* code beside a sentence that says
+      // what a signer must do next (retry, wait out a lockout). Reading
+      // `payload.error` first showed the code and threw the sentence away;
+      // ApiRequestError.message is the sentence.
+      setErr(e instanceof ApiRequestError && e.message ? e.message : 'The signature was not accepted.');
     }
     setBusy(false);
     setPin(''); // never leave a rejected PIN in the field
@@ -1365,7 +1381,9 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
          had. */
       const payload = body as { success?: boolean; data?: unknown; error?: string } | null;
       if (!res.ok || payload?.success !== true) {
-        setErr(payload?.error || 'Could not create the tasks (HTTP ' + res.status + ').');
+        // `payload.error` was rendered verbatim, so a coded refusal reached the
+        // modal as its token. serverMessage returns only a real sentence.
+        setErr(serverMessage(payload) ?? 'Could not create the tasks (HTTP ' + res.status + ').');
         return;
       }
       const createdTasks: unknown[] = Array.isArray(payload.data) ? payload.data : [];
@@ -1389,7 +1407,11 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
       }
       onInstantiate(created);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Could not reach the task service.');
+      // `e instanceof Error` also matched a browser-native fetch rejection, so a
+      // dropped connection surfaced as "Failed to fetch" / "Load failed" in the
+      // dialog. Only ApiRequestError carries a message that has been reduced to
+      // user copy; everything else falls back to this surface's own sentence.
+      setErr(e instanceof ApiRequestError && e.message ? e.message : 'Could not reach the task service.');
     } finally {
       setBusy(false);
     }

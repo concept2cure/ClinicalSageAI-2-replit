@@ -62,4 +62,9 @@ declare module '@/lib/queryClient' {
     payload: unknown,
     status: number,
   ): { message: string; code?: string };
+  /** The human sentence the server actually sent, or null if it sent none worth
+   *  showing. Use when the call site has a better fallback of its own. */
+  export function serverMessage(payload: unknown): string | null;
+  /** The server's machine-readable error code, when it sent one. */
+  export function errorCodeOf(payload: unknown): string | undefined;
 }

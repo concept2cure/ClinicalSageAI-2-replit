@@ -13,6 +13,7 @@ import { useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
+import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -291,7 +292,16 @@ export const ZenSignup: React.FC = () => {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error?.message || 'Signup failed');
+        // Only the nested `error.message` was read, so the refusals that matter
+        // most here — an address already registered, a password the policy
+        // rejects — arrived as the generic fallback whenever the route put its
+        // sentence in `message` or `detail` instead. The envelope reader takes
+        // any of them and still refuses an enum token or infrastructure text.
+        throw new ApiRequestError(
+          serverMessage(errorBody) ?? t('signup.errors.signupFailed'),
+          response.status,
+          errorBody,
+        );
       }
 
       const data = await response.json();
@@ -331,7 +341,12 @@ export const ZenSignup: React.FC = () => {
       setStep('submitted');
     } catch (error) {
       console.error('Signup error:', error);
-      const message = error instanceof Error ? error.message : t('signup.errors.signupFailed');
+      // Only the ApiRequestError thrown above carries copy the envelope reader
+      // produced. Every other throw reaching here is the fetch itself failing
+      // (offline, DNS, a blocked request), whose native message is "Failed to
+      // fetch" / "Load failed" — it used to be rendered under the form.
+      const message =
+        error instanceof ApiRequestError ? error.message : t('signup.errors.signupFailed');
       setErrors(prev => ({ ...prev, general: message }));
     } finally {
       setIsLoading(false);

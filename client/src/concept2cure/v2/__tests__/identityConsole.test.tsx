@@ -10,7 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 vi.mock('../C2CForm', () => ({
   C2CForm: ({ config, onSubmit }: any) => (
     <button data-testid="form-submit" onClick={() => onSubmit({ organizationId: '101', label: 'Okta prod', cidr: '203.0.113.0/24' })}>{config.submitLabel}</button>

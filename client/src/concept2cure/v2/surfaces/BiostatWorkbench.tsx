@@ -34,7 +34,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   CALCULATORS,
@@ -81,11 +81,28 @@ async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boo
       // server's own words beats a generic "calculation failed", because the
       // usual cause is a domain constraint the form cannot check locally (an
       // information fraction not ending at 1, a covariance ordering violation).
-      error: typeof parsed?.error === 'string' ? parsed.error
-        : typeof parsed?.message === 'string' ? parsed.message
-        : null,
+      // Reading `error` first defeated that: on { error: 'VALIDATION_FAILED',
+      // message: '<the violated constraint>' } the enum won and the toast showed
+      // the token. serverMessage takes the sentence wherever the envelope put it
+      // and returns null when none of it is copy, which leaves the callers' own
+      // fallback in charge.
+      error: serverMessage(parsed),
     };
-  } catch { return { ok: false, status: 0, data: null, error: null }; }
+  } catch (e) {
+    // apiRequest THROWS for every non-OK status except 401, so a real server
+    // refusal arrives HERE, not in the branch above. Discarding it reported
+    // every domain-constraint rejection as a bare "(HTTP 0)" — the opposite of
+    // what the comment above intends. An ApiRequestError carries the real status
+    // and a message already reduced to a displayable sentence; anything else is
+    // a browser-native fetch rejection whose message is not user copy.
+    const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+    return {
+      ok: false,
+      status: known ? (e as { status: number }).status : 0,
+      data: null,
+      error: known && (e as Error).message ? (e as Error).message : null,
+    };
+  }
 }
 function issueText(x: any): string {
   if (typeof x === 'string') return x;

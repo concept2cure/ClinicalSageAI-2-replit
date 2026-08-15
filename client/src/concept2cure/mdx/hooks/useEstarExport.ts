@@ -17,6 +17,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { serverMessage } from '@/lib/queryClient';
 import { buildAuthHeaders } from './useFetchJson';
 
 interface DownloadRef {
@@ -119,12 +120,15 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
 
     if (!res.ok) {
       const blockers = Array.isArray(json?.blockers) ? (json?.blockers as string[]) : [];
-      const message =
-        (typeof json?.message === 'string' && json.message) ||
-        (typeof json?.error === 'string' && json.error) ||
-        `HTTP ${res.status}`;
+      // Same precedence this already had — the server's sentence wins over the
+      // `error` slot — but through the one shared reader, which also refuses an
+      // enum-shaped `error` token and infrastructure text. The bare
+      // `HTTP <status>` fallback is gone: on its own it was not a sentence.
+      const message = serverMessage(json) ?? `the server gave no reason (HTTP ${res.status})`;
       // Only the entitlement gate's exact 403 shape marks a Locked outcome —
-      // a role/permission 403 must NOT read as a plan limitation.
+      // a role/permission 403 must NOT read as a plan limitation. This reads
+      // the raw `error` slot on purpose: it is a machine code driving a branch,
+      // never copy, which is why it is untouched by the change above.
       const blockedByEntitlement = res.status === 403 && json?.error === 'NOT_ENTITLED';
       return {
         ok: false,
@@ -157,7 +161,10 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       requiredTier: null,
       error: null,
     };
-  } catch (err) {
+  } catch {
+    // A throw here is the fetch itself failing (offline, DNS, abort). Its
+    // native message is "Failed to fetch" / "Load failed", so the hook's own
+    // wording is the only thing worth showing.
     return {
       ok: false,
       governed: false,
@@ -167,7 +174,7 @@ async function postExport(url: string, body: unknown): Promise<EstarExportOutcom
       blockers: [],
       blockedByEntitlement: false,
       requiredTier: null,
-      error: err instanceof Error ? err.message : 'Export request failed',
+      error: 'Export request failed',
     };
   }
 }

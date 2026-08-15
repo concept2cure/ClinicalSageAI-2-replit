@@ -1,0 +1,5 @@
+{
+  "note": "Hand-rolled API error-envelope reads that predate the single-reader rule. Migrate onto serverMessage/extractApiError (client/src/lib/queryClient.ts) and re-run with --write-baseline to shrink this list. It must never grow.",
+  "generatedBy": "scripts/ci/check-error-envelope-reads.mjs --write-baseline",
+  "sites": []
+}

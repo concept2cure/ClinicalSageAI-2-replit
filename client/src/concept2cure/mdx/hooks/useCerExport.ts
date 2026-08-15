@@ -24,6 +24,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { serverMessage } from '@/lib/queryClient';
 import { buildAuthHeaders } from './useFetchJson';
 
 interface DownloadRef {
@@ -82,10 +83,12 @@ async function postExport(url: string, body: unknown): Promise<CerExportOutcome>
     const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
 
     if (!res.ok) {
-      const message =
-        (typeof json?.message === 'string' && json.message) ||
-        (typeof json?.error === 'string' && json.error) ||
-        `HTTP ${res.status}`;
+      // Same precedence this already had — the server's sentence wins over the
+      // `error` slot, which is what makes HUMAN_REVIEW_REQUIRED's explanation
+      // surface verbatim — but through the one shared reader, which also
+      // refuses an enum-shaped `error` token and infrastructure text. The bare
+      // `HTTP <status>` fallback is gone: on its own it was not a sentence.
+      const message = serverMessage(json) ?? `the server gave no reason (HTTP ${res.status})`;
       return { ok: false, governed: false, audited: false, filename: null, error: message };
     }
 
@@ -99,13 +102,16 @@ async function postExport(url: string, body: unknown): Promise<CerExportOutcome>
       filename: ref?.filename ?? null,
       error: null,
     };
-  } catch (err) {
+  } catch {
+    // A throw here is the fetch itself failing (offline, DNS, abort). Its
+    // native message is "Failed to fetch" / "Load failed", so the hook's own
+    // wording is the only thing worth showing.
     return {
       ok: false,
       governed: false,
       audited: false,
       filename: null,
-      error: err instanceof Error ? err.message : 'Export request failed',
+      error: 'Export request failed',
     };
   }
 }

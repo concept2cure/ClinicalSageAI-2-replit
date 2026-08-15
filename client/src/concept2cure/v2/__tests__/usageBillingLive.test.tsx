@@ -21,7 +21,10 @@ import { cleanup, render, screen } from '@testing-library/react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 import { UsageBilling } from '../surfaces/UsageBilling';
 

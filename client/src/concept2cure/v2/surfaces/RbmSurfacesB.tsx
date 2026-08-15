@@ -19,7 +19,7 @@
  * are disabled — with the reason shown — until the study has a plan.
  */
 import React, { useState } from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { RBM_VOCAB, type RbmSignal } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardSignal, RbmBoardSite, RbmBoardAction } from './rbmBoard';
@@ -514,7 +514,8 @@ export function RbmPlan({ board, onReload }: SubProps) {
           const res = await apiRequest('POST', `/api/mdx/rbm-monitoring-plans/${plan.id}/approve`, { reason, password, mfaToken });
           if (res.ok) { setSignFor(false); onReload?.(); return; }
           const body = await res.json().catch(() => null) as { error?: string } | null;
-          return body?.error || `Approval failed (HTTP ${res.status}). The plan was not activated.`;
+          // See RbmSurfacesA: the enum used to win over the server's sentence.
+          return serverMessage(body) || `Approval failed (HTTP ${res.status}). The plan was not activated.`;
         }} />}
     </div>
   );

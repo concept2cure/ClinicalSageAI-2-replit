@@ -27,7 +27,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { extractApiError } from '../queryClient';
+import { extractApiError, serverMessage, errorCodeOf } from '../queryClient';
 
 describe('extractApiError — enum codes never become user copy', () => {
   it('prefers the human message over an enum-shaped error token', () => {
@@ -117,6 +117,52 @@ describe('extractApiError — real sentences still reach the user', () => {
     expect(extractApiError({}, 404).message).toMatch(/couldn't find/i);
     expect(extractApiError({}, 500).message).toMatch(/could not complete/i);
     expect(extractApiError(undefined, 503).message).toMatch(/unavailable/i);
+  });
+});
+
+describe('serverMessage — the shared primitive the surfaces call', () => {
+  /**
+   * `serverMessage` exists because the two consumers need opposite endings.
+   * A surface with no domain context wants a generic status sentence
+   * (`extractApiError`); one that has its own — "Approval failed. The
+   * assessment was not activated." — must keep it, because that sentence says
+   * what did NOT happen and a generic one loses it. Returning null lets each
+   * choose while keeping ONE implementation of the hard part: deciding whether
+   * a given string is user copy at all.
+   */
+  it('returns null when the server sent nothing worth showing', () => {
+    expect(serverMessage({})).toBeNull();
+    expect(serverMessage(null)).toBeNull();
+    expect(serverMessage({ error: 'PENDING_STORE' })).toBeNull();
+    expect(serverMessage({ error: 'relation "x" does not exist' })).toBeNull();
+    expect(serverMessage({ error: '   ' })).toBeNull();
+  });
+
+  it('returns the sentence when there is one', () => {
+    expect(serverMessage({ error: 'PENDING_STORE', message: 'The store is not ready.' })).toBe(
+      'The store is not ready.',
+    );
+    expect(serverMessage({ error: 'name is required' })).toBe('name is required');
+    expect(serverMessage({ error: 'X', detail: 'You may not sign your own work.' })).toBe(
+      'You may not sign your own work.',
+    );
+  });
+
+  it('lets a caller keep its own domain fallback', () => {
+    // The idiom every migrated surface now uses.
+    const body = { error: 'FORBIDDEN' };
+    const shown = serverMessage(body) ?? 'Approval failed. The assessment was not activated.';
+    expect(shown).toBe('Approval failed. The assessment was not activated.');
+  });
+});
+
+describe('errorCodeOf — branching stays possible', () => {
+  it('reads the code from every envelope shape', () => {
+    expect(errorCodeOf({ error: 'ESIGN_REQUIRED' })).toBe('ESIGN_REQUIRED');
+    expect(errorCodeOf({ error: { code: 'CONFLICT_STALE', message: 'Reload.' } })).toBe('CONFLICT_STALE');
+    expect(errorCodeOf({ code: 'NOT_ENTITLED' })).toBe('NOT_ENTITLED');
+    // A sentence is not a code.
+    expect(errorCodeOf({ error: 'name is required' })).toBeUndefined();
   });
 });
 

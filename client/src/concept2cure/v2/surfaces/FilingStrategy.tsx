@@ -46,7 +46,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
@@ -81,15 +81,29 @@ async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Pr
         error:
           res.status === 401
             ? 'Sign in to your tenant to use filing strategy.'
-            : typeof parsed?.error === 'string'
-              ? parsed.error
-              : `Request failed (HTTP ${res.status}).`,
+            // This read `parsed.error` first, so on the refusal envelope
+            // { error: 'FORBIDDEN', message: '<the reason>' } the enum token went
+            // on screen and the reason was dropped. extractApiError takes the
+            // sentence wherever the envelope put it and substitutes a
+            // status-keyed one when the server sent none — this surface has no
+            // domain copy of its own that would say more.
+            : extractApiError(parsed, res.status).message,
       };
     }
     // These handlers return the service result directly, not wrapped in `data`.
     return { state: 'ready', data: (parsed?.data ?? parsed) as T };
-  } catch {
-    return { state: 'error', data: null, error: 'The request did not complete.' };
+  } catch (e) {
+    // apiRequest THROWS for every non-OK status except 401, so a real refusal
+    // arrives here rather than in the branch above. An ApiRequestError's message
+    // has already been reduced to a displayable sentence; anything else caught
+    // here is a browser-native fetch rejection ("Failed to fetch"), which is not
+    // user copy and keeps the generic sentence.
+    const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+    return {
+      state: 'error',
+      data: null,
+      error: known && (e as Error).message ? (e as Error).message : 'The request did not complete.',
+    };
   }
 }
 

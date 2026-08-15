@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -119,11 +119,23 @@ function envRow(json: unknown): unknown {
   return json && typeof json === 'object' && 'data' in json ? (json as { data: unknown }).data : json;
 }
 
-/* Best-effort human message from a JSON error body, else the status. */
+/* Trailing punctuation removed: every toast below appends its own
+   ". Nothing was saved." clause, so a message already ending in a full stop
+   would render a doubled period. */
+function clause(text: string): string {
+  return text.replace(/[.\s]+$/, '');
+}
+
+/* The human sentence for a failed write, reduced for display.
+
+   This used to read the body's `error` field FIRST, so against the envelope
+   { error: 'VALIDATION_FAILED', message: '<a real sentence>' } the enum won and
+   the toast showed the token. It also fell back to a bare `HTTP <status>`, which
+   is a status code rather than user copy. extractApiError takes the sentence
+   wherever the envelope put it — rejecting enum tokens and driver text — and
+   substitutes a status-keyed sentence when the server sent none. */
 function errText(json: unknown, status: number): string {
-  const j = json as { error?: unknown; message?: unknown } | null;
-  const m = j && (typeof j.error === 'string' ? j.error : typeof j.message === 'string' ? j.message : '');
-  return m || `HTTP ${status}`;
+  return clause(extractApiError(json, status).message);
 }
 
 export function Risk({ onAsk }: SurfaceViewProps) {
@@ -206,7 +218,15 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       setSel(adopted.id); setForm(false);
       fire('Hazard ' + adopted.id + ' saved · status ' + adopted.status);
     } catch (e) {
-      fire('Couldn’t add the hazard — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      // A caught throw is only safe to render when it is an ApiRequestError: its
+      // message has already been through the same reduction as errText above.
+      // Anything else reaching here is a browser-native fetch rejection, whose
+      // message ("Failed to fetch", "Load failed") is not user copy.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the risk file could not be reached';
+      fire('Couldn’t add the hazard — ' + msg + '. Nothing was saved.');
     }
   };
 
@@ -235,7 +255,13 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       setCtrlForm(false);
       fire('Risk control saved to ' + row.id);
     } catch (e) {
-      fire('Couldn’t add the control — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+      // Same restriction as addHazard: only an ApiRequestError message has been
+      // reduced to user copy; a native fetch rejection must not reach the toast.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the risk file could not be reached';
+      fire('Couldn’t add the control — ' + msg + '. Nothing was saved.');
     }
   };
 
@@ -256,7 +282,13 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       setRows(rs => rs.map(r => r.id === id ? (adopted ? { ...adopted, controls: r.controls } : { ...r, status: st }) : r));
       fire(id + ' → ' + st);
     } catch (e) {
-      fire('Couldn’t update the status — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+      // Same restriction as addHazard: only an ApiRequestError message has been
+      // reduced to user copy; a native fetch rejection must not reach the toast.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg = known && (e as Error).message
+        ? clause((e as Error).message)
+        : 'the risk file could not be reached';
+      fire('Couldn’t update the status — ' + msg + '. Nothing was persisted.');
     }
   };
 

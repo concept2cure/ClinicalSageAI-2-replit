@@ -27,7 +27,7 @@
  *                    Envelope: { success, approvals, total }.
  */
 
-import { apiRequest, type ApiRequestMethod } from '../../lib/queryClient';
+import { apiRequest, serverMessage, type ApiRequestMethod } from '../../lib/queryClient';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES — mirror each route's response shape. Heterogeneous columns are picked
@@ -192,8 +192,14 @@ class ProgramTabsService {
     if (response.status === 204) return undefined as T;
     const payload = await response.json().catch(() => ({}));
     if (payload?.error) {
-      const err = payload.error;
-      throw new Error(typeof err === 'string' ? err : err?.message || 'Program-tabs request failed');
+      // A 2xx body that still carries an `error` field. The string form of that
+      // field was thrown as-is, so an envelope of { error: '<CODE>', message:
+      // '<a real sentence>' } reached every tab as the literal token — the
+      // nested `message` was only consulted when `error` was an object. The
+      // envelope reader takes the sentence wherever the server put it and
+      // refuses both enum tokens and infrastructure text; this service's own
+      // wording stays as the fallback.
+      throw new Error(serverMessage(payload) ?? 'Program-tabs request failed');
     }
     return payload as T;
   }

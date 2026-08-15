@@ -17,7 +17,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 
 interface BuildResult { formId?: string; missingRequired?: string[]; fields?: Record<string, unknown> | Array<unknown>; }
 
@@ -75,7 +75,13 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
       const res = await apiRequest('POST', `/api/ind-forms/${formId}/build`, metadataBody());
       const json = (await res.json().catch(() => null)) as BuildResult | BuildResult[] | null;
       if (res.status === 401 || res.status === 403) { note('Building forms requires the regulatory-author role.'); return; }
-      if (!res.ok || !json) { note(`Couldn’t build form ${formId} (HTTP ${res.status}).`); return; }
+      // The server's own sentence when it sent one — filtered, so a code or a
+      // driver message degrades to the panel's own copy rather than reaching the
+      // note line.
+      if (!res.ok || !json) {
+        note(serverMessage(json) ?? `Couldn’t build form ${formId} (HTTP ${res.status}).`);
+        return;
+      }
       // 1572 returns one build per investigator; summarize the first.
       const result = Array.isArray(json) ? (json[0] ?? {}) : json;
       setChecks((c) => ({ ...c, [formId]: result }));
@@ -91,7 +97,11 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
       if (res.status === 401 || res.status === 403) { note('Rendering forms requires the regulatory-author role.'); return; }
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        note(`Couldn’t render form ${formId} — ` + ((json as any)?.error ?? `HTTP ${res.status}`) + '.');
+        // `json.error` was read raw: an enum token printed as itself, and an
+        // object-shaped error printed as "[object Object]". serverMessage takes
+        // the sentence beside the code, and nothing at all when there is none.
+        const detail = serverMessage(json) ?? `the render was refused (HTTP ${res.status})`;
+        note(`Couldn’t render form ${formId} — ` + detail + '.');
         return;
       }
       const blob = await res.blob();
@@ -149,7 +159,11 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
         note(`FDA ${formId} built and audit-logged (content hash recorded)${readiness} — not placed in the dossier registry: this program has no legacy project row for the registry yet.`);
         return;
       }
-      note(`Couldn’t save form ${formId} — ` + ((json as any)?.error?.message ?? `HTTP ${res.status}`) + '.');
+      // This read only `error.message`, so a server that put its sentence in
+      // `message` or `detail` degraded to a bare status. serverMessage reads all
+      // three in order and rejects codes and infrastructure text.
+      const detail = serverMessage(json) ?? `the save was refused (HTTP ${res.status})`;
+      note(`Couldn’t save form ${formId} — ` + detail + '.');
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 

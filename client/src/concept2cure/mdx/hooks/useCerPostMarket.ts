@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { serverMessage } from '@/lib/queryClient';
 import { buildAuthHeaders, useFetchJson } from './useFetchJson';
 
 export type PostMarketDocType =
@@ -135,18 +136,23 @@ export async function generatePostMarketDraft(args: GenerateDraftArgs): Promise<
     );
     const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
     if (!res.ok) {
-      const message =
-        (typeof json?.error === 'string' && json.error) ||
-        (typeof json?.message === 'string' && json.message) ||
-        `HTTP ${res.status}`;
+      // This one read `error` BEFORE `message`, so a refusal shaped { error:
+      // '<CODE>', message: '<why the draft was refused>' } showed the author
+      // the token and never the reason. The envelope reader inverts that and
+      // rejects the token outright; the fallback is a sentence rather than the
+      // bare `HTTP <status>` this used to fall through to.
+      const message = serverMessage(json) ?? `the server gave no reason (HTTP ${res.status})`;
       return { ok: false, draft: null, error: message };
     }
     return { ok: true, draft: (json as unknown as GeneratedPostMarketDraft) ?? null, error: null };
-  } catch (err) {
+  } catch {
+    // A throw here is the fetch itself failing (offline, DNS, abort). Its
+    // native message is "Failed to fetch" / "Load failed", so the hook's own
+    // wording is the only thing worth showing.
     return {
       ok: false,
       draft: null,
-      error: err instanceof Error ? err.message : 'Draft generation request failed',
+      error: 'Draft generation request failed',
     };
   }
 }

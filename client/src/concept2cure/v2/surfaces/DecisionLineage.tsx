@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
@@ -159,7 +159,11 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('GET', url);
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-        setExportErr((j && (j.error || j.message)) || ('Export failed (HTTP ' + res.status + ').'));
+        // `j.error` was read before `j.message`, so an envelope shaped
+        // { error: 'FORBIDDEN', message: '<a real sentence>' } showed the enum
+        // token. serverMessage reads the sentence first and rejects codes and
+        // infrastructure text outright.
+        setExportErr(serverMessage(j) ?? 'Export failed (HTTP ' + res.status + ').');
         return;
       }
       const blob = await res.blob();
@@ -175,7 +179,15 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       a.remove();
       URL.revokeObjectURL(objUrl);
     } catch (e) {
-      setExportErr(e instanceof Error ? e.message : String(e));
+      // `String(e)` rendered anything at all — including the browser's own
+      // "Failed to fetch" and non-Error throws. Only ApiRequestError has been
+      // through the envelope reduction, so only it is shown.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setExportErr(
+        known && (e as Error).message
+          ? (e as Error).message
+          : 'Could not reach the lineage export service. No file was produced.',
+      );
     } finally {
       setExportBusy('');
     }

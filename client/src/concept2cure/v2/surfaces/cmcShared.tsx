@@ -11,6 +11,7 @@
  *     was, not as "something went wrong".
  */
 
+import { serverMessage } from '@/lib/queryClient';
 import React from 'react';
 import { I } from '../icons';
 
@@ -126,7 +127,12 @@ export function cmcWriteError(json: unknown, status: number): string {
     const more = details.length > 3 ? ` (+${details.length - 3} more)` : '';
     return named + more;
   }
-  return j?.error || j?.message || `HTTP ${status}`;
+  // Delegated: `j?.error || j?.message` preferred an enum token over the real
+  // sentence beside it, so a CMC write refused with `{ error: 'PENDING_STORE',
+  // message: '…' }` told the scientist "PENDING_STORE". `serverMessage` is the
+  // one place that decides whether a string is copy, and it also keeps SQL,
+  // relation names and routes out of this line.
+  return serverMessage(json) ?? `The server did not accept the change (HTTP ${status}).`;
 }
 
 /** The message shown when a write did not land. Always says nothing was saved. */
@@ -134,7 +140,23 @@ export function cmcWriteFailed(subject: string, json: unknown, status: number): 
   return `Couldn’t save the ${subject} — ${cmcWriteError(json, status)}. Nothing was persisted.`;
 }
 
-/** The message shown when a write threw before a response arrived. */
+/**
+ * The message shown when a write threw before a response arrived.
+ *
+ * Only an `ApiRequestError` message is rendered — that one has been through
+ * `extractApiError` and is user copy by construction. Anything else here is a
+ * browser-native throw: `fetch` rejecting offline gives a TypeError reading
+ * "Failed to fetch" / "Load failed", and `String(e)` on a non-Error gives
+ * "[object Object]". Both were being shown to scientists as the reason their
+ * regulated record did not save.
+ */
 export function cmcWriteThrew(subject: string, e: unknown): string {
-  return `Couldn’t save the ${subject} — ${e instanceof Error ? e.message : String(e)}.`;
+  const known =
+    typeof e === 'object' && e !== null &&
+    (e as { name?: unknown }).name === 'ApiRequestError' &&
+    typeof (e as { message?: unknown }).message === 'string' &&
+    (e as { message: string }).message.trim();
+  return known
+    ? `Couldn’t save the ${subject} — ${(e as { message: string }).message}`
+    : `Couldn’t save the ${subject}. Check your connection and try again. Nothing was persisted.`;
 }

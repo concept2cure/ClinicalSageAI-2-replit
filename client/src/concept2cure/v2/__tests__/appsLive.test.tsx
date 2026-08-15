@@ -18,8 +18,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
+import { ApiRequestError } from '@/lib/queryClient';
 import { Apps } from '../surfaces/AdminSurfaces';
 
 const SURFACE: UiSurface = {
@@ -109,8 +113,13 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
   });
 
   it('server rejection reverts the switch and surfaces the reason', async () => {
+    // An ApiRequestError, not a bare Error, because that is what apiRequest
+    // actually throws for a non-OK status — and the surface now renders a
+    // thrown message ONLY for that type. A bare Error here is a fetch failing
+    // ("Failed to fetch"), whose text is not user copy; simulating a server
+    // refusal with one made this test assert a path production cannot reach.
     mockLive(async () => {
-      throw new Error('Admin access required');
+      throw new ApiRequestError('Admin access required', 403, { error: 'Admin access required' });
     });
     mount();
     await screen.findByText('CMC Wizard');

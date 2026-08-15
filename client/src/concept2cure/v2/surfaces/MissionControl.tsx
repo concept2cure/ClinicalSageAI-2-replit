@@ -34,7 +34,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, extractApiError, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
@@ -76,14 +76,28 @@ async function get<T>(path: string): Promise<Load<T>> {
         error:
           res.status === 401
             ? 'Sign in to your tenant to load Mission Control.'
-            : typeof parsed?.error === 'string'
-              ? parsed.error
-              : `Request failed (HTTP ${res.status}).`,
+            // This read `parsed.error` first, so on the refusal envelope
+            // { error: 'FORBIDDEN', message: '<the reason>' } the enum token was
+            // rendered as the panel's hint and the reason was dropped.
+            // extractApiError takes the sentence wherever the envelope put it and
+            // substitutes a status-keyed one when the server sent none — these
+            // panels are generic loaders with no domain copy that would say more.
+            : extractApiError(parsed, res.status).message,
       };
     }
     return { state: 'ready', data: (parsed?.data ?? null) as T };
-  } catch {
-    return { state: 'error', data: null, error: 'The request did not complete.' };
+  } catch (e) {
+    // apiRequest THROWS for every non-OK status except 401, so a real refusal
+    // arrives here rather than in the branch above. An ApiRequestError's message
+    // has already been reduced to a displayable sentence; anything else caught
+    // here is a browser-native fetch rejection ("Failed to fetch"), which is not
+    // user copy and keeps the generic sentence.
+    const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+    return {
+      state: 'error',
+      data: null,
+      error: known && (e as Error).message ? (e as Error).message : 'The request did not complete.',
+    };
   }
 }
 
@@ -263,8 +277,11 @@ export function MissionControl(_props: SurfaceViewProps) {
       if (!res.ok) {
         fireToast(
           res.status === 401 ? 'Sign in to your tenant to create a program.'
-          : typeof parsed?.error === 'string' ? parsed.error
-          : `Could not create the program (HTTP ${res.status}).`
+          // `parsed.error` was toasted verbatim, so a coded refusal reached the
+          // user as its token. serverMessage returns only a real sentence, and
+          // null when there is none — which is when this surface's own copy is
+          // the better answer.
+          : serverMessage(parsed) ?? `Could not create the program (HTTP ${res.status}).`
         );
         return;
       }
@@ -273,6 +290,14 @@ export function MissionControl(_props: SurfaceViewProps) {
       fireToast('Program created.');
       await loadPrograms();
       if (parsed?.data?.id) setSelectedId(parsed.data.id);
+    } catch (e) {
+      // apiRequest throws for every non-OK status except 401, and this call had
+      // no catch at all: a refused create (a duplicate name, a track the caller
+      // may not use) rejected out of the callback and the user was shown
+      // nothing — an error rendered as no result. Only an ApiRequestError's
+      // message is safe to show; a native fetch rejection keeps the copy below.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      fireToast(known && (e as Error).message ? (e as Error).message : 'Could not create the program.');
     } finally { setBusy(false); }
   }, [draft, fireToast, loadPrograms]);
 

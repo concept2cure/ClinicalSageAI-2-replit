@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { SampleTag, useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSurfaceMeta } from '../registryModel';
@@ -202,13 +202,25 @@ function readTranslationPolicy(raw: Partial<TranslationPolicy> | undefined): Tra
 
 /**
  * How a refused governed write is reported. The server's own message is used
- * where it gave one (apiRequest already lifts it out of the error envelope),
- * and status 0 -- reserved for a failure with no response at all -- is the one
- * case that must never read as "the server said no".
+ * where it gave one, and status 0 -- reserved for a failure with no response at
+ * all -- is the one case that must never read as "the server said no".
+ *
+ * The claim this comment used to make, that "apiRequest already lifts it out of
+ * the error envelope", is true of only one of the two ways a string gets here.
+ * apiRequest throws ApiRequestError with a message extractApiError has already
+ * reduced, and liveMutateOrNull passes that through -- so far so good. But
+ * liveMutateOrNull also has a branch that never goes near the envelope: a 401
+ * is the one status apiRequest does not throw on, and it returns its own
+ * `HTTP <status> <path>` string, which carries an API route. Rendering that is
+ * an information-disclosure finding, not a cosmetic one. So the string is
+ * filtered here rather than trusted: wrapping it as a message body runs it
+ * through the same reader every other surface uses, which rejects both
+ * enum-shaped tokens and infrastructure text.
  */
 function saveFailure(error: string, status: number): string {
   if (status === 0) return 'the server could not be reached, so nothing was saved.';
-  return `${error} (HTTP ${status}).`;
+  const said = serverMessage({ message: error });
+  return said ? `${said} (HTTP ${status}).` : `the change was not accepted (HTTP ${status}).`;
 }
 
 interface LangOption {
@@ -844,8 +856,11 @@ async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: strin
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
     return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Export failed.' };
+  } catch {
+    // Raw fetch: the only throw reachable here is the request itself failing,
+    // whose native message is "Failed to fetch" — not an export failure the
+    // server described, and not copy.
+    return { ok: false, error: 'Export failed.' };
   }
 }
 
@@ -1499,7 +1514,9 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       setOn(groupIdx, appId, !next);
       fireToast(
         `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
-          (e instanceof Error && e.message ? e.message : 'request failed'),
+          // Only apiRequest's own error has been through the envelope reader;
+          // a bare rejection is the fetch failing ("Failed to fetch").
+          (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
       );
     }
   };
@@ -2088,7 +2105,10 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       setForm({ email: '', role: 'support', reason: '' });
     } catch (e) {
       fireToast(
-        'Could not grant -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+        // Only apiRequest's own error has been through the envelope reader; a
+        // bare rejection is the fetch failing ("Failed to fetch").
+        'Could not grant -- ' +
+          (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
       );
     }
   };
@@ -2135,7 +2155,10 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       fireToast('Grant revoked -- reason recorded -- audited');
     } catch (e) {
       fireToast(
-        'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+        // Only apiRequest's own error has been through the envelope reader; a
+        // bare rejection is the fetch failing ("Failed to fetch").
+        'Could not revoke -- ' +
+          (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
       );
     }
   };
@@ -2161,7 +2184,11 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       const res = await apiRequest('POST', '/api/api-keys', { name, scopes: keyScopes });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        fireToast('Could not create the key -- ' + (json?.error || 'sign in as an admin'));
+        // `json.error` was rendered raw, so an envelope of { error: '<CODE>',
+        // message: '<a real sentence>' } toasted the token.
+        fireToast(
+          'Could not create the key -- ' + (serverMessage(json) ?? 'sign in as an admin'),
+        );
         return;
       }
       if (json?.apiKey) {
@@ -2172,7 +2199,10 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       setKeysReload((n) => n + 1); // re-fetch the live list to show the new key
     } catch (e) {
       fireToast(
-        'Could not create the key -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+        // Only apiRequest's own error has been through the envelope reader; a
+        // bare rejection is the fetch failing ("Failed to fetch").
+        'Could not create the key -- ' +
+          (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
       );
     }
   };
@@ -2205,14 +2235,18 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       const res = await apiRequest('DELETE', '/api/api-keys/' + revokeConfirm.id);
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        setRevokeError(json?.error || 'Sign in as an admin');
+        // `json.error` was rendered raw, so an envelope of { error: '<CODE>',
+        // message: '<a real sentence>' } put the token in the dialog.
+        setRevokeError(serverMessage(json) ?? 'Sign in as an admin');
         return;
       }
       fireToast('API key revoked -- audited');
       setRevokeConfirm(null);
       setKeysReload((n) => n + 1);
     } catch (e) {
-      setRevokeError(e instanceof Error && e.message ? e.message : 'Request failed');
+      // Only apiRequest's own error has been through the envelope reader; a
+      // bare rejection is the fetch failing ("Failed to fetch").
+      setRevokeError(e instanceof ApiRequestError && e.message ? e.message : 'Request failed');
     }
   };
 

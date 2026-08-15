@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import { C2CForm } from '../C2CForm';
@@ -182,14 +182,22 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
     try {
       res = await apiRequest('GET', `/api/deep-research/jobs/${id}`);
     } catch (e) {
+      // `String(e)` rendered whatever was thrown, so a dropped connection put the
+      // browser's own "Failed to fetch" on screen. Only ApiRequestError carries a
+      // message that has already been reduced to safe copy.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail =
+        known && (e as Error).message ? (e as Error).message : 'the request did not complete';
       setPhase('idle');
-      fireToast(`Couldn't reach the research engine — ${e instanceof Error ? e.message : String(e)}.`);
+      fireToast(`Couldn't reach the research engine — ${detail}.`);
       return;
     }
     const j = (await res.json().catch(() => null)) as DrRunJob | null;
     if (!res.ok || !j) {
       setPhase('idle');
-      fireToast(`Research job read failed (HTTP ${res.status}).`);
+      // The body is already parsed here, so the server's own sentence is
+      // preferred over the generic one; the status stays for support.
+      fireToast(serverMessage(j) ?? `Couldn't read the research job (HTTP ${res.status}).`);
       return;
     }
     const done =
@@ -225,19 +233,26 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
         depth,
       });
     } catch (e) {
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail =
+        known && (e as Error).message ? (e as Error).message : 'the request did not complete';
       setPhase('idle');
       setJobs([]);
-      fireToast(`Couldn't reach the research engine — ${e instanceof Error ? e.message : String(e)}.`);
+      fireToast(`Couldn't reach the research engine — ${detail}.`);
       return;
     }
     const j = (await res.json().catch(() => null)) as DrRunJob | null;
     if (!res.ok || !j?.id) {
       setPhase('idle');
       setJobs([]);
+      // The 403 copy stays — the plan/credit refusal is the one case this surface
+      // can explain better than the server. Below it, `j.error` was read first, so
+      // an envelope shaped { error: 'QUOTA_EXCEEDED', message: '<a real sentence>' }
+      // showed the enum token instead of the reason.
       fireToast(
         res.status === 403
           ? 'Deep research needs a higher plan, or you are out of research credits this period.'
-          : (j as { error?: string } | null)?.error || `Couldn't start research (HTTP ${res.status}).`,
+          : serverMessage(j) ?? `Couldn't start research (HTTP ${res.status}).`,
       );
       return;
     }
@@ -304,10 +319,13 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       });
       const body = (await res.json().catch(() => null)) as DrConnectorWrite | null;
       if (!res.ok || !body?.success) {
+        // The 403 branch is kept: the plan gate is a flow this surface explains
+        // in its own words. The other half read `body.error` first, which showed
+        // the enum token whenever the server sent a code alongside its sentence.
         fireToast(
           res.status === 403
             ? 'Storing connector credentials needs a professional plan. Nothing was saved.'
-            : (body?.error || `Couldn't store the credentials (HTTP ${res.status}).`) +
+            : (serverMessage(body) ?? `Couldn't store the credentials (HTTP ${res.status}).`) +
                 ' Nothing was saved.',
         );
         return;
@@ -316,9 +334,10 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       setReload((n) => n + 1);
       fireToast(c.name + ' credentials stored — re-reading connector status');
     } catch (e) {
-      fireToast(
-        `Couldn't reach the connector service — ${e instanceof Error ? e.message : String(e)}. Nothing was saved.`,
-      );
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail =
+        known && (e as Error).message ? (e as Error).message : 'the request did not complete';
+      fireToast(`Couldn't reach the connector service — ${detail}. Nothing was saved.`);
     } finally {
       setConnBusy('');
     }

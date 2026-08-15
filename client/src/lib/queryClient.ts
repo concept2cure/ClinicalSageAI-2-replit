@@ -132,20 +132,48 @@ export function extractApiError(
   payload: unknown,
   status: number,
 ): { message: string; code?: string } {
+  return { message: serverMessage(payload) ?? fallbackMessage(status), code: errorCodeOf(payload) };
+}
+
+/**
+ * The server's machine-readable error code, when it sent one.
+ *
+ * Separate from the message so a consumer can branch on `PENDING_STORE` or
+ * `ESIGN_REQUIRED` without parsing display copy — copy is expected to change,
+ * codes are not.
+ */
+export function errorCodeOf(payload: unknown): string | undefined {
   const p = (payload ?? {}) as Record<string, any>;
   const err = p.error;
-
-  const code =
+  return (
     (typeof err?.code === 'string' ? err.code : undefined) ??
     (isErrorCode(err) ? err : undefined) ??
-    (isErrorCode(p.code) ? p.code : undefined);
+    (isErrorCode(p.code) ? p.code : undefined)
+  );
+}
+
+/**
+ * The human sentence the SERVER actually sent, or null if it sent none worth
+ * showing.
+ *
+ * Split out from `extractApiError` because the two callers need opposite
+ * things at the end of the chain. A surface with no domain context wants a
+ * generic sentence keyed to the status (`extractApiError`); a surface that has
+ * one — "Could not create the task." — wants ITS OWN fallback rather than
+ * "Couldn't complete that request." Returning null lets each choose, and keeps
+ * one implementation of the part that is easy to get wrong: deciding whether a
+ * given string is copy at all.
+ */
+export function serverMessage(payload: unknown): string | null {
+  const p = (payload ?? {}) as Record<string, any>;
+  const err = p.error;
 
   /** A candidate is usable only if it is a real string that is neither an enum
    *  token nor infrastructure text. */
   const usable = (v: unknown): string | null =>
     typeof v === 'string' && v.trim() && !isErrorCode(v) && !looksInternal(v) ? v : null;
 
-  const message =
+  return (
     usable(err?.message) ??
     usable(p.message) ??
     // `{ error: CODE, detail: '<sentence>' }` is the c2c actions envelope — the
@@ -156,10 +184,8 @@ export function extractApiError(
     // not sign your own work".
     usable(p.detail) ??
     // A bare `error` string is copy only when it passes the same two filters.
-    usable(err) ??
-    fallbackMessage(status);
-
-  return { message, code };
+    usable(err)
+  );
 }
 
 interface GetQueryFnOptions {

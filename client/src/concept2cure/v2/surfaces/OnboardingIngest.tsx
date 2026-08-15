@@ -17,7 +17,7 @@
  */
 import React, { useCallback, useRef, useState } from 'react';
 import { I } from '../icons';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import type { OnboardingIngestResult, OnboardingProposalField } from '@shared/types/onboarding-ingest';
@@ -54,7 +54,7 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.success) {
-        setError(body?.error || 'That document could not be read.');
+        setError(serverMessage(body) || 'That document could not be read.');
         setPhase('idle');
         return;
       }
@@ -82,7 +82,7 @@ export function OnboardingIngest({ onNav }: SurfaceViewProps) {
         });
         const body = await res.json().catch(() => null);
         if (!res.ok || !body?.success) {
-          setError(body?.error || 'Those changes could not be applied.');
+          setError(serverMessage(body) || 'Those changes could not be applied.');
           setPhase('review');
           return;
         }

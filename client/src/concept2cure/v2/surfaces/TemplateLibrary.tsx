@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
 
@@ -284,7 +284,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       const res = await fetch('/api/c2c/templates/extract', { method: 'POST', headers: getAuthHeaders(), credentials: 'include', body: fd });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.spec) {
-        note(res.status === 401 ? 'Sign in to extract a template.' : 'Extraction failed — ' + (json?.error ?? `HTTP ${res.status}`) + '. Nothing was read.');
+        note(res.status === 401 ? 'Sign in to extract a template.' : 'Extraction failed — ' + (serverMessage(json) ?? 'the server did not say why') + '. Nothing was read.');
         setUploading(false);
         return;
       }
@@ -313,7 +313,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       const res = await fetch('/api/c2c/templates/from-upload', { method: 'POST', headers: getAuthHeaders(), credentials: 'include', body: fd });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.template?.id) {
-        note(res.status === 401 ? 'Sign in to save the template.' : 'Couldn’t save — ' + (json?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+        note(res.status === 401 ? 'Sign in to save the template.' : 'Couldn’t save — ' + (serverMessage(json) ?? 'the server did not say why') + '. Nothing was persisted.');
         return;
       }
       const rec = { ...(json.template as TemplateRecord), _new: true };
@@ -333,10 +333,15 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
     try {
       const res = await apiRequest('PUT', '/api/c2c/templates/' + t.id, { verified: !t.verified });
       const json = await res.json().catch(() => null);
-      if (!res.ok || !json?.template) { note('Couldn’t update verification — ' + (json?.error ?? `HTTP ${res.status}`) + '.'); return; }
+      if (!res.ok || !json?.template) { note('Couldn’t update verification — ' + (serverMessage(json) ?? 'the server did not say why') + '.'); return; }
       setRows((r) => r.map((x) => (x.id === t.id ? { ...x, ...(json.template as TemplateRecord) } : x)));
     } catch (e) {
-      note('Couldn’t update verification — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      // Only an ApiRequestError message is user copy; a browser fetch throw
+      // reads "Failed to fetch", and String(e) on a non-Error gives
+      // "[object Object]".
+      note((e as { name?: unknown } | null)?.name === 'ApiRequestError' && (e as Error).message
+        ? 'Couldn’t update verification — ' + (e as Error).message
+        : 'Couldn’t update verification. Check your connection and try again.');
     }
   };
 

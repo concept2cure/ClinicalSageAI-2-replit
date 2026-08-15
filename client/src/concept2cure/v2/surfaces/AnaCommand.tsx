@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, type DataState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
@@ -377,7 +377,9 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
         return;
       }
       if (!res.ok) {
-        const msg = body?.error || body?.errors?.[0]?.message || `The executor returned HTTP ${res.status}.`;
+        // A per-step error names the step that failed, so it beats the
+        // envelope's own message; `body?.error` leading meant the enum beat both.
+        const msg = body?.errors?.[0]?.message || serverMessage(body) || 'The command could not be run.';
         setRunErr(String(msg));
         return;
       }

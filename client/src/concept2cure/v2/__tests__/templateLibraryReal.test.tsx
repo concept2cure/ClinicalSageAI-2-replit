@@ -15,7 +15,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 vi.mock('@/utils/authToken', () => ({ getAuthHeaders: () => ({ Authorization: 'Bearer t', 'x-organization-id': '1' }) }));
 
 import { TemplateLibrary } from '../surfaces/TemplateLibrary';

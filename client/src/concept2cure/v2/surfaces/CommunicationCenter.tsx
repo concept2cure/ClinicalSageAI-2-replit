@@ -30,7 +30,7 @@ import React from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
 import {
   CC_SOURCE_TYPES,
@@ -265,7 +265,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       const res = await apiRequest('POST', commsPath, body);
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) {
-        fire('Couldn’t save the communication — ' + (json?.error || `HTTP ${res.status}`) + '. Nothing was persisted.');
+        // `json.error` was read first, so a refusal shaped
+        // { error: 'PENDING_STORE', message: '<a real sentence>' } rendered the
+        // enum token; and a bare `HTTP 500` is not user copy on its own, so the
+        // fallback is a sentence that carries the status instead.
+        const detail =
+          serverMessage(json) ?? `the store did not accept it (HTTP ${res.status})`;
+        fire('Couldn’t save the communication — ' + detail + '. Nothing was persisted.');
         return;
       }
       const saved = json.data as CommRow & { generatedTaskId?: number };
@@ -282,7 +288,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
           : 'Saved to the governed store · audit entry written',
       );
     } catch (e) {
-      fire('Couldn’t save the communication — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+      // `String(e)` put whatever was thrown on screen, including a browser
+      // "Failed to fetch" and any non-Error value. Only ApiRequestError has been
+      // through the envelope reduction and is safe to show.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail =
+        known && (e as Error).message ? (e as Error).message : 'the service could not be reached';
+      fire('Couldn’t save the communication — ' + detail + '. Nothing was persisted.');
     }
   };
 

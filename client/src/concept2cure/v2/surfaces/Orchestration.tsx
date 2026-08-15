@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -383,16 +383,30 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
       const res = await apiRequest('POST', `/api/orchestration/cancel/${encodeURIComponent(id)}`);
       const json = await res.json().catch(() => null);
       if (!res.ok) {
+        // This read `json.error` directly, so an envelope shaped
+        // { error: 'RUN_NOT_CANCELLABLE', message: '<a real sentence>' } put the
+        // enum token into the sentence. serverMessage takes the sentence and
+        // returns null for codes and for infrastructure text, in which case the
+        // sentence stands on its own.
+        const detail = serverMessage(json);
         setRunErr(
           res.status === 404
             ? `Run ${id} is no longer cancellable — it may have already finished.`
-            : `Couldn’t cancel run ${id}${(json as { error?: string } | null)?.error ? ` — ${(json as { error?: string }).error}` : ''}. Nothing changed.`,
+            : `Couldn’t cancel run ${id}${detail ? ` — ${detail}` : ''}. Nothing changed.`,
         );
         return;
       }
       setRunStatus(id, 'cancelled');
     } catch (e) {
-      setRunErr(e instanceof Error ? e.message : `Couldn’t reach the orchestration service. Run ${id} was not cancelled.`);
+      // Only ApiRequestError carries a message that has already been reduced to
+      // safe copy. Any other throw here is the browser's own ("Failed to fetch",
+      // "Load failed"), which was previously rendered verbatim.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setRunErr(
+        known && (e as Error).message
+          ? (e as Error).message
+          : `Couldn’t reach the orchestration service. Run ${id} was not cancelled.`,
+      );
     } finally {
       setBusyRun('');
     }
@@ -454,7 +468,16 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
       const body = await res.json().catch(() => null);
       const payload = body as { data?: { statusChanged?: boolean }; error?: string } | null;
       if (!res.ok || !payload?.data) {
-        setGateErr((e) => ({ ...e, [checkpointId]: payload?.error || 'Could not record the decision (HTTP ' + res.status + ').' }));
+        // `payload.error` was read first, so a refusal shaped
+        // { error: 'SEPARATION_OF_DUTIES', message: 'You may not sign your own
+        // work.' } showed the enum instead of the reason. serverMessage prefers
+        // the sentence; the domain fallback below is kept because it says more
+        // than a generic one would.
+        setGateErr((e) => ({
+          ...e,
+          [checkpointId]:
+            serverMessage(body) ?? 'Could not record the decision (HTTP ' + res.status + ').',
+        }));
         return;
       }
       setRejectingGate(null);
@@ -464,9 +487,15 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
       setCpsReloadKey((k) => k + 1);
       cpsSeedRef.current = null;
     } catch (err) {
+      // Only ApiRequestError has been through the envelope reduction; anything
+      // else is a browser-native throw whose message is "Failed to fetch".
+      const known = (err as { name?: unknown })?.name === 'ApiRequestError';
       setGateErr((e) => ({
         ...e,
-        [checkpointId]: err instanceof Error ? err.message : 'Could not reach the orchestration service.',
+        [checkpointId]:
+          known && (err as Error).message
+            ? (err as Error).message
+            : 'Could not reach the orchestration service.',
       }));
     } finally {
       setGateBusy(null);

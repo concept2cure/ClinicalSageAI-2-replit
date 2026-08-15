@@ -4,6 +4,7 @@
  * @module client/src/concept2cure/lineage/dataOriginsApi
  */
 
+import { serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 
 export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion';
@@ -55,7 +56,7 @@ export async function fetchDataOrigins(q: SelectionQuery): Promise<DataOriginsRe
   });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error?.message || `Data origins request failed (${res.status})`);
+    throw new Error(serverMessage(body) || `Data origins request failed (${res.status})`);
   }
   const body = await res.json();
   return body.report as DataOriginsReport;
@@ -76,7 +77,7 @@ export async function downloadDataOriginsPdf(q: SelectionQuery): Promise<void> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error?.message || `PDF export failed (${res.status})`);
+    throw new Error(serverMessage(body) || `PDF export failed (${res.status})`);
   }
 
   const blob = await res.blob();

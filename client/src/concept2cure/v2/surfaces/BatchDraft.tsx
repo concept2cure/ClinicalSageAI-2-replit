@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveData, EmptyState, hasKeys } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 import '../styles/project-home-v2.css';
@@ -434,7 +434,11 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        const msg = (body as { error?: string } | null)?.error || 'Drafting failed (HTTP ' + res.status + ').';
+        // `body.error` was read first, so an envelope shaped
+        // { error: 'MODEL_UNAVAILABLE', message: '<a real sentence>' } put the enum
+        // token on every card. serverMessage prefers the sentence and refuses
+        // codes and infrastructure text; the domain fallback keeps the status.
+        const msg = serverMessage(body) ?? 'Drafting failed (HTTP ' + res.status + ').';
         setCards((c) => {
           const next = { ...c };
           selList.forEach((s) => { next[s.id] = { ...next[s.id], state: 'error', error: msg }; });
@@ -452,12 +456,18 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           const r = results[i];
           next[s.id] = r && r.content
             ? { ...next[s.id], state: 'done', html: r.content, sample: false, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
-            : { ...next[s.id], state: 'error', error: (r && r.error) || 'No draft returned for this section.' };
+            // The per-result `error` is server text too, so it goes through the
+            // same filter: a provider code or a driver message is not card copy.
+            : { ...next[s.id], state: 'error', error: serverMessage(r) ?? 'No draft returned for this section.' };
         });
         return next;
       });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not reach the drafting service.';
+      // Only ApiRequestError carries an already-reduced message; any other throw
+      // here is the browser's own "Failed to fetch", which the cards used to show.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg =
+        known && (e as Error).message ? (e as Error).message : 'Could not reach the drafting service.';
       setCards((c) => {
         const next = { ...c };
         selList.forEach((s) => { next[s.id] = { ...next[s.id], state: 'error', error: msg }; });
@@ -583,7 +593,9 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       const body = await res.json().catch(() => null);
       const payload = body as { success?: boolean; error?: string; data?: { supersededVersion?: number | null } } | null;
       if (!res.ok || !payload || payload.success !== true) {
-        const msg = payload?.error || 'Save failed (HTTP ' + res.status + ').';
+        // Same defect as the batch call above: `payload.error` won over the
+        // sentence beside it, so a refusal code reached the card's save banner.
+        const msg = serverMessage(body) ?? 'Save failed (HTTP ' + res.status + ').';
         setCards((c) => ({ ...c, [key]: { ...c[key], saving: false, saveError: msg } }));
         return;
       }
@@ -600,7 +612,9 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
           : ' (the section was empty, so nothing was superseded).'),
       );
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Could not reach the document service.';
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const msg =
+        known && (e as Error).message ? (e as Error).message : 'Could not reach the document service.';
       setCards((c) => ({ ...c, [key]: { ...c[key], saving: false, saveError: msg } }));
     }
   };

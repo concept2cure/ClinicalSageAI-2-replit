@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getOrgId } from '@/utils/authToken';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -833,7 +833,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           ? `"${type.label}" needs a higher plan${body?.requiredTier ? ` (${body.requiredTier})` : ''} — I won't show an estimated result on a plan that hasn't unlocked the governed model.`
           : res.status === 404
             ? `"${type.label}" isn't in your governed report registry, so I can't run it against real data — I won't fabricate one.`
-            : `Couldn't run "${type.label}" — ${(body?.error?.message || body?.error) ?? `HTTP ${res.status}`}.`;
+            : `Couldn't run "${type.label}" — ${serverMessage(body) ?? 'the server did not say why'}.`;
         setThread(t => [...t, { role: 'ana', text: msg, tool: 'generate_report' }]);
         return;
       }
@@ -922,11 +922,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       const res = await apiRequest('POST', `/api/report-os/runs/${reportRunId}/finalize`);
       const body = await res.json().catch(() => null);
       if (res.status === 409) {
-        const reasons = Array.isArray(body?.reasons) ? body.reasons.join('; ') : (body?.error || 'the truthfulness gate holds it below final');
+        const reasons = Array.isArray(body?.reasons)
+          ? body.reasons.join('; ')
+          : (serverMessage(body) || 'the truthfulness gate holds it below final');
         fireToast(`Not sealed — "${rep.reportTypeLabel}" is held below final: ${reasons}.`);
         return;
       }
-      if (!res.ok) { fireToast(`Couldn't seal — ${(body?.error) ?? `HTTP ${res.status}`}.`); return; }
+      if (!res.ok) { fireToast(`Couldn't seal — ${serverMessage(body) ?? 'the server did not say why'}.`); return; }
       const seal = body?.data?.seal;
       const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
       setReport(r => (r ? { ...r, status: 'final' } : r));

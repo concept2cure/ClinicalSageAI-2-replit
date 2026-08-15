@@ -13,6 +13,7 @@
  *
  * @module concept2cure/v2/surfaces/rbmWrites
  */
+import { serverMessage } from '@/lib/queryClient';
 import React, { useCallback, useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
@@ -41,13 +42,9 @@ export async function rbmWrite<T>(
     | { data?: unknown; error?: unknown; meta?: unknown }
     | null;
   if (!res.ok) {
-    const raw = payload?.error;
-    const msg = typeof raw === 'string'
-      ? raw
-      : (raw && typeof raw === 'object' && typeof (raw as { message?: unknown }).message === 'string')
-        ? (raw as { message: string }).message
-        : null;
-    throw new Error(msg || `The change was not saved (HTTP ${res.status}).`);
+    // `serverMessage` decides whether a string is user copy: a bare `error`
+    // used to win here, so an RBM refusal rendered as its enum token.
+    throw new Error(serverMessage(payload) || `The change was not saved (HTTP ${res.status}).`);
   }
   return (payload?.data ?? payload) as T;
 }
@@ -63,9 +60,7 @@ export async function rbmWriteWithMeta<T>(
     | { data?: unknown; error?: unknown; meta?: unknown }
     | null;
   if (!res.ok) {
-    const raw = payload?.error;
-    const msg = typeof raw === 'string' ? raw : null;
-    throw new Error(msg || `The change was not saved (HTTP ${res.status}).`);
+    throw new Error(serverMessage(payload) || `The change was not saved (HTTP ${res.status}).`);
   }
   const meta = (payload?.meta && typeof payload.meta === 'object')
     ? payload.meta as Record<string, unknown>

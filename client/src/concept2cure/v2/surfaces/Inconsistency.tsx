@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -196,19 +196,28 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       );
       const json = await res.json().catch(() => null);
       if (!res.ok) {
+        // This read `json.error` first, so a refusal shaped
+        // { error: 'REVIEW_STATE_INVALID', message: '<a real sentence>' } put the
+        // enum token into the toast. serverMessage takes the sentence and returns
+        // null for codes and infrastructure text; a bare "HTTP 500" is not copy
+        // either, so the fallback is a sentence that carries the status.
+        const detail =
+          serverMessage(json) ?? 'the service refused the update (HTTP ' + res.status + ')';
         fireToast(
           res.status === 404
             ? 'That finding is no longer on the board — refresh to see the current state.'
-            : 'Couldn’t update "' + f.title + '" — ' +
-              ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
-              '. Nothing was changed.',
+            : 'Couldn’t update "' + f.title + '" — ' + detail + '. Nothing was changed.',
         );
         return;
       }
       setFindings(fs => fs.map(x => (x.id === f.id ? apply(x) : x)));
       fireToast(okMsg);
     } catch (e) {
-      fireToast('Couldn’t reach the contradiction service — ' + (e instanceof Error ? e.message : 'request failed') + '. Nothing was changed.');
+      // Only ApiRequestError has a message that has been through the envelope
+      // reduction; every other throw here is the browser's own "Failed to fetch".
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail = known && (e as Error).message ? (e as Error).message : 'request failed';
+      fireToast('Couldn’t reach the contradiction service — ' + detail + '. Nothing was changed.');
     } finally {
       setPendingId('');
     }
@@ -246,14 +255,19 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        fireToast(
-          'Re-detection didn’t run — ' +
-            ((json as { error?: string } | null)?.error || 'HTTP ' + res.status) +
-            '. Showing the last known findings.',
-        );
+        // Same defect as the transition above: `json.error` won over `message`,
+        // so a scan refusal showed its enum. The fallback is a sentence rather
+        // than a bare status, which is not user copy on its own.
+        const detail =
+          serverMessage(json) ?? 'the service could not start it (HTTP ' + res.status + ')';
+        fireToast('Re-detection didn’t run — ' + detail + '. Showing the last known findings.');
       }
     } catch (e) {
-      fireToast('Couldn’t reach the contradiction engine — ' + (e instanceof Error ? e.message : 'request failed') + '. Showing the last known findings.');
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      const detail = known && (e as Error).message ? (e as Error).message : 'request failed';
+      fireToast(
+        'Couldn’t reach the contradiction engine — ' + detail + '. Showing the last known findings.',
+      );
     } finally {
       setScanning(false);
       setRefresh(n => n + 1);

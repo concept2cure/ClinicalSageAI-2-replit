@@ -1,3 +1,4 @@
+import { serverMessage } from '@/lib/queryClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
@@ -507,8 +508,12 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
 
 /** Extract an honest error string from a failed CMC write response. */
 function specErr(json: unknown, status: number): string {
-  const j = json as { error?: string; message?: string; details?: Array<{ message?: string }> } | null;
-  return j?.error || j?.details?.[0]?.message || j?.message || ('HTTP ' + status);
+  const j = json as { details?: Array<{ message?: string }> } | null;
+  // A named field beats any generic sentence, so the zod detail stays first.
+  const detail = j?.details?.[0]?.message;
+  if (typeof detail === 'string' && detail.trim()) return detail;
+  // `j?.error` used to lead, which rendered the enum instead of the sentence.
+  return serverMessage(json) ?? `The server did not accept the change (HTTP ${status}).`;
 }
 
 function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {

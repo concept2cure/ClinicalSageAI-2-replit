@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, liveGetOrNull } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import {
   SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
@@ -430,8 +430,14 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       const json = await res.json().catch(() => null);
       const serverTask = (json as { data?: Record<string, unknown> } | null)?.data;
       if (!res.ok || !serverTask?.taskId) {
-        const reason = (json as { error?: string } | null)?.error;
-        setSaveErr(reason ? String(reason) : `Couldn’t create the task (HTTP ${res.status}). Nothing was saved.`);
+        // `json.error` was read first and rendered as-is, so an envelope of the
+        // shape { error: 'ASSIGNEE_NOT_IN_ORG', message: '<a real sentence>' }
+        // showed the enum token. serverMessage prefers the sentence and rejects
+        // codes and infrastructure text; the domain fallback is kept because it
+        // states what was not saved.
+        setSaveErr(
+          serverMessage(json) ?? `Couldn’t create the task (HTTP ${res.status}). Nothing was saved.`,
+        );
         return;
       }
       // Adopt the persisted row: real taskId, and the assignee the SERVER chose
@@ -461,7 +467,14 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       onCreated?.(t);
       if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
     } catch (e) {
-      setSaveErr(e instanceof Error ? e.message : 'Couldn’t reach the task service. Nothing was saved.');
+      // Only ApiRequestError carries an already-reduced message; anything else
+      // is a browser-native throw ("Failed to fetch") that must not be shown.
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setSaveErr(
+        known && (e as Error).message
+          ? (e as Error).message
+          : 'Couldn’t reach the task service. Nothing was saved.',
+      );
     } finally {
       setSaving(false);
     }
