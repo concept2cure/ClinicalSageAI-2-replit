@@ -193,20 +193,55 @@ function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn'
   }
 }
 
-/* ── Small toast (local per-surface pattern, matches sibling surfaces) ── */
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
+/* ── Small toast (local per-surface pattern, matches sibling surfaces) ──
+   BP-W0-6, the second half. The Word export's 500 was reported as a SILENT
+   failure, and the export handler does call fireToast on every failure path. It
+   was not silent because nothing fired — it was silent because of what fired.
+
+   This toast rendered `I.checkCircle` unconditionally, and `.de-toast .ico` is
+   unconditionally var(--success). So "Export failed — HTTP 500" arrived as a
+   green tick on the house's normal dark chip: at a glance, indistinguishable
+   from "Published DOCX". A failure announced in the vocabulary of success is
+   not an announcement.
+
+   `.de-toast[data-tone="error"]` already exists in journey-v2.css, added when
+   the same defect was fixed on the CMC surface, carrying a comment that says
+   exactly this. This local copy never adopted it. Now it does, and the icon
+   changes with it — colour alone would not carry the distinction for a
+   colour-blind reviewer, and this chip's whole job is to say which of two
+   opposite things happened (WCAG 2.2 SC 1.4.1).
+
+   role="status" + aria-live is added for the same reason: this is the ONLY
+   channel by which a failed export is reported, and without a live region a
+   screen-reader user clicks Word, gets nothing, and has no way to learn the
+   export did not happen (SC 4.1.3). Errors are announced assertively — a
+   failed governed action should not wait behind other chatter. */
+type ToastTone = 'ok' | 'error';
+function useToast(): [{ msg: string; tone: ToastTone }, (m: string, tone?: ToastTone) => void] {
+  const [state, setState] = useState<{ msg: string; tone: ToastTone }>({ msg: '', tone: 'ok' });
   const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => {
-    setMsg(m);
+  const fire = useCallback((m: string, tone: ToastTone = 'ok') => {
+    setState({ msg: m, tone });
     if (t.current) clearTimeout(t.current);
-    t.current = setTimeout(() => setMsg(''), 4200);
+    // A failure is worth reading twice as long as a confirmation.
+    t.current = setTimeout(() => setState({ msg: '', tone: 'ok' }), tone === 'error' ? 8000 : 4200);
   }, []);
-  return [msg, fire];
+  return [state, fire];
 }
-function C2CToast({ msg }: { msg: string }) {
+function C2CToast({ msg, tone = 'ok' }: { msg: string; tone?: ToastTone }) {
   if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
+  const isError = tone === 'error';
+  return (
+    <div
+      className="de-toast"
+      data-tone={isError ? 'error' : undefined}
+      role="status"
+      aria-live={isError ? 'assertive' : 'polite'}
+    >
+      <span className="ico">{isError ? I.alertTriangle : I.checkCircle}</span>
+      {msg}
+    </div>
+  );
 }
 
 /* ── Helpers ── */
@@ -654,7 +689,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        fireToast('Couldn’t record the source — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was saved.');
+        fireToast('Couldn’t record the source — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was saved.', 'error');
         return;
       }
       fireToast(
@@ -665,7 +700,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       setPicking(false);
       void loadSources(activeSectionId);
     } catch (e) {
-      fireToast('Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   }, [activeSectionId, fireToast, loadSources]);
 
@@ -674,7 +709,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     if (!activeSectionId) return;
     const res = await apiRequest('DELETE', `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`);
     if (!res.ok) {
-      fireToast('Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.');
+      fireToast('Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.', 'error');
       return;
     }
     fireToast('Citation removed.');
@@ -691,7 +726,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     });
     const json = await res.json().catch(() => null);
     if (!res.ok) {
-      fireToast((json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.');
+      fireToast((json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.', 'error');
       return;
     }
     fireToast((json as any)?.message ?? 'Source re-read.');
@@ -707,9 +742,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         content: draft,
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Not saved — your session isn’t authenticated. Sign in and retry.'); return; }
+      if (res.status === 401) { fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error'); return; }
       if (!res.ok) {
-        fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+        fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error');
         return;
       }
       const adopted = (json as { section?: AuthSection })?.section;
@@ -722,7 +757,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       // Keep the history rail fresh if it's open.
       if (rail === 'history') void loadHistory(activeSection.id);
     } catch (e) {
-      fireToast('Couldn’t save the section — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t save the section — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     } finally {
       setSaving(false);
     }
@@ -741,7 +776,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     });
     const json = await res.json().catch(() => null);
     if (!res.ok) {
-      fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+      fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error');
       throw new Error('save failed');
     }
     const adopted = (json as { section?: AuthSection })?.section;
@@ -758,8 +793,8 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     try {
       const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/revert`, { rev_id: revId });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Not reverted — your session isn’t authenticated.'); return; }
-      if (!res.ok) { fireToast('Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.'); return; }
+      if (res.status === 401) { fireToast('Not reverted — your session isn’t authenticated.', 'error'); return; }
+      if (!res.ok) { fireToast('Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
       const adopted = (json as { section?: AuthSection })?.section;
       const content = adopted?.content ?? '';
       setDraft(content);
@@ -768,7 +803,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       fireToast('Section reverted to the selected revision.');
       void loadHistory(activeSection.id);
     } catch (e) {
-      fireToast('Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   }, [activeSection, loadHistory, fireToast]);
 
@@ -781,13 +816,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         doc_id: activeDocId,
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Comment not posted — your session isn’t authenticated.'); return; }
-      if (!res.ok) { fireToast('Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.'); return; }
+      if (res.status === 401) { fireToast('Comment not posted — your session isn’t authenticated.', 'error'); return; }
+      if (!res.ok) { fireToast('Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
       setNewComment('');
       fireToast('Comment added.');
       void loadComments(activeDocId);
     } catch (e) {
-      fireToast('Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
 
@@ -1380,7 +1415,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         </aside>
       )}
 
-      <C2CToast msg={toast} />
+      <C2CToast msg={toast.msg} tone={toast.tone} />
     </div>
   );
 }

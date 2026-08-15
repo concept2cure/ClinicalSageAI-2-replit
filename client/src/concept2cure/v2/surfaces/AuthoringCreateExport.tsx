@@ -34,7 +34,8 @@ export interface AuthoringCreateExportProps {
   docTitle: string | null;
   /** Module filter currently active in the tree (used as the create default). */
   module: string;
-  fireToast: (m: string) => void;
+  /** BP-W0-6: a failure must not arrive wearing the success tick. */
+  fireToast: (m: string, tone?: 'ok' | 'error') => void;
   /** Called with the server's persisted row after a successful create. */
   onDocCreated: (doc: { id: string; title: string }) => void;
   onSectionCreated: (section: { id: string; code: string }) => void;
@@ -97,8 +98,8 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
         ...(clientProgramId ? { client_program_id: clientProgramId } : {}),
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.'); return; }
-      if (!res.ok || !json?.document?.id) { fireToast('Couldn’t create the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.'); return; }
+      if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.', 'error'); return; }
+      if (!res.ok || !json?.document?.id) { fireToast('Couldn’t create the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error'); return; }
       setDialog(null);
       // The server reports on every create whether the document attached to the
       // project's governed filing. Unbound is legitimate; unbound and unsaid is
@@ -111,7 +112,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       );
       onDocCreated({ id: String(json.document.id), title: String(json.document.title) });
     } catch (e) {
-      fireToast('Couldn’t create the document — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t create the document — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
 
@@ -122,13 +123,13 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
         doc_id: docId, code: v.code, title: v.title, content: '',
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.'); return; }
-      if (!res.ok || !json?.section?.id) { fireToast('Couldn’t create the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.'); return; }
+      if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.', 'error'); return; }
+      if (!res.ok || !json?.section?.id) { fireToast('Couldn’t create the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error'); return; }
       setDialog(null);
       fireToast('Section created · ' + json.section.code + ' (initial revision recorded)');
       onSectionCreated({ id: String(json.section.id), code: String(json.section.code) });
     } catch (e) {
-      fireToast('Couldn’t create the section — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Couldn’t create the section — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
 
@@ -138,7 +139,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       const res = await apiRequest('POST', `/api/authoring/docs/${docId}/export`, { format });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        fireToast('Export failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.');
+        fireToast('Export failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error');
         return;
       }
       const blob = await res.blob();
@@ -150,7 +151,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       URL.revokeObjectURL(url);
       fireToast('Published ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
     } catch (e) {
-      fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
 
