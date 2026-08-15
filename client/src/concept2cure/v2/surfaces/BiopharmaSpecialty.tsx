@@ -313,8 +313,18 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
               : <>Your pediatric plans are filed -- the next thing to watch is the {nextMsLabel}.</>}
             body={drafts.length && topDraft
               ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main program on track. The age-range extrapolation is the part reviewers scrutinize most -- get that right and the plan moves.</>
-              : <>{nextMs ? <>The {nextMsLabel} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</> : <>No milestones are overdue -- you're in good standing on your pediatric commitments.</>}</>}
-            reassure={drafts.length ? "You don't have to draft the extrapolation rationale from scratch -- I'll write the first pass with you." : "You're on top of your pediatric commitments. I'll flag anything before it slips."}
+              /* BP-W0-3: `prea` being empty means no PREA milestone has been
+                 RECORDED, which is not the same as none being overdue. The old
+                 copy read "No milestones are overdue -- you're in good standing",
+                 which is a clearance claim derived from an empty list. */
+              : <>{nextMs
+                  ? <>The {nextMsLabel} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</>
+                  : <>No PREA milestones have been recorded against {plans.length === 1 ? 'this plan' : 'these plans'} yet, so milestone standing is unknown rather than clear. Record the deferral and study-completion dates and they are tracked here.</>}</>}
+            reassure={drafts.length
+              ? "You don't have to draft the extrapolation rationale from scratch -- I'll write the first pass with you."
+              : nextMs
+                ? "I'll watch each milestone and flag anything before it slips."
+                : undefined}
             action={{
               label: drafts.length ? 'Draft the extrapolation rationale' : 'Check upcoming milestones',
               onClick: () => ask(drafts.length && topDraft
@@ -481,13 +491,28 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
           <AnswerLead
             tone="calm"
             eyebrow="Where do your rare-disease designations stand"
+            /* BP-W0-3: `des.length > 0` only says a designation RECORD exists.
+               With every record withdrawn, denied or still requested,
+               `designated.length` is 0 and the old copy read "You hold 0 orphan
+               designations -- the exclusivity and incentives are secured", which
+               claims an entitlement the org does not have. "ready to file" was
+               likewise asserted over a merely planned application that nothing
+               had assessed. */
             headline={topPending
-              ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingIndication} -- {String(topPending.date).includes('pending') ? 'awaiting an agency decision' : 'ready to file'}.</>
-              : <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>}
+              ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingIndication} -- {String(topPending.date).includes('pending') ? 'awaiting an agency decision' : 'not yet submitted'}.</>
+              : designated.length > 0
+                ? <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>
+                : <>None of the <b>{des.length}</b> recorded {des.length === 1 ? 'designation has' : 'designations have'} been granted.</>}
             body={topPending
               ? <>Orphan status brings 7-year exclusivity, fee waivers, and RPD-voucher eligibility -- real value worth getting right. The prevalence evidence and scientific rationale are what carry the application; that's where I can help most.</>
-              : <>Across the portfolio these designations translate to years of exclusivity and priority review. The next move is keeping the patient-advocacy engagements and any RPD-voucher opportunities warm.</>}
-            reassure={topPending ? "Designation narratives follow a pattern reviewers recognize -- I'll draft the prevalence and rationale sections with you." : "Your designations are in hand. I'll help you make the most of the incentives that come with them."}
+              : designated.length > 0
+                ? <>Across the portfolio these designations translate to years of exclusivity and priority review. The next move is keeping the patient-advocacy engagements and any RPD-voucher opportunities warm.</>
+                : <>No exclusivity or incentive entitlement follows from these records in their current state. Their dispositions are below.</>}
+            reassure={topPending
+              ? "Designation narratives follow a pattern reviewers recognize -- I'll draft the prevalence and rationale sections with you."
+              : designated.length > 0
+                ? "Your designations are in hand. I'll help you make the most of the incentives that come with them."
+                : undefined}
             action={{
               label: topPending ? 'Draft the designation narrative' : 'Review the incentive value',
               onClick: () => ask(topPending
@@ -701,8 +726,19 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
               : <>Your post-approval portfolio is steady -- {inReview.length} {inReview.length === 1 ? 'supplement' : 'supplements'} in agency review{nextRen ? <>, next renewal {nextRen.due}</> : null}.</>}
             body={highChg.length && topChg
               ? <>Under ICH Q12 this is the difference between a PACMP and a prior-approval supplement -- get the classification right and you avoid a costly re-file. {inReview.length ? <>{inReview.length} {inReview.length === 1 ? 'supplement is' : 'supplements are'} already in review.</> : null}</>
-              : <>{nextRen ? <>Nothing is overdue. The next thing on the horizon is the {nextRen.authority} {nextRen.next} for {nextRen.product}, due {nextRen.due}.</> : <>Nothing is overdue, and no renewal cycle is recorded yet.</>}</>}
-            reassure={highChg.length ? "You don't have to guess the pathway -- I'll classify it against Q12 and draft the justification with you." : "You're on top of this. I'll prep the next renewal whenever you want to start."}
+              /* BP-W0-3: "Nothing is overdue" was asserted whether or not any
+                 renewal cycle existed to be overdue. With no renewal records the
+                 truthful statement is that nothing is TRACKED, not that nothing
+                 is late — and with no CMC change records, "you're on top of
+                 this" was clearance derived from an empty change log. */
+              : <>{nextRen
+                  ? <>Nothing recorded is overdue. The next thing on the horizon is the {nextRen.authority} {nextRen.next} for {nextRen.product}, due {nextRen.due}.</>
+                  : <>No renewal cycle is recorded, so renewal standing is untracked rather than clear.</>}{cmc.length === 0 ? <> No CMC changes have been assessed either.</> : null}</>}
+            reassure={highChg.length
+              ? "You don't have to guess the pathway -- I'll classify it against Q12 and draft the justification with you."
+              : cmc.length > 0 && nextRen
+                ? "I'll prep the next renewal whenever you want to start."
+                : undefined}
             action={{
               label: highChg.length ? 'Classify the change against ICH Q12' : (nextRen ? 'Prepare the next renewal' : 'Review the portfolio'),
               onClick: () => ask(highChg.length && topChg
@@ -912,13 +948,36 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
           <AnswerLead
             tone={highPrr ? 'urgent' : 'calm'}
             eyebrow="Is anything in your safety data asking for action right now"
+            /* BP-W0-3 — the sharpest instance of the pattern in this file.
+               `nothingOnFile` is `sigs.length === 0 && aggs.length === 0`, so an
+               org holding aggregate reports but ZERO screened signals fell into
+               this branch and read:
+
+                 "Nothing is alarming today -- the highest signal is within
+                  expected range (PRR --) … You're keeping watch across FAERS and
+                  EudraVigilance and nothing crosses the threshold for expedited
+                  action. Your surveillance is doing its job."
+
+               with "PRR --" printed where the number should be. Nothing was
+               screened; an empty signal set is not a negative screen, and on a
+               pharmacovigilance surface that distinction is the whole point.
+               Clearance copy now requires `top` to exist — a real screened
+               signal to have been the highest one. */
             headline={highPrr && top
               ? <>Yes -- <b>{topTerm.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{prrOf(top)}</b> across {top.count} cases.</>
-              : <>Nothing is alarming today -- the highest signal is {top ? topTerm.toLowerCase() : 'within expected range'} (PRR {top ? prrOf(top) : '--'}), still within routine monitoring.</>}
+              : top
+                ? <>Nothing is alarming today -- the highest screened signal is {topTerm.toLowerCase()} (PRR {prrOf(top)}), still within routine monitoring.</>
+                : <>No signals have been screened for this organization.</>}
             body={highPrr && top
               ? <>A PRR above 3 with this many cases is worth a real causality read, not a wait-and-see. This is about patients on the drug now -- pulling the case narratives and running the assessment tells you whether a label change is warranted. {agg ? <>The {agg.cycle} is also in {agg.status} for the {agg.due} window.</> : null}</>
-              : <>You're keeping watch across FAERS and EudraVigilance and nothing crosses the threshold for expedited action. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that's the next scheduled obligation.</> : null}</>}
-            reassure={highPrr ? "You caught this early -- that's the system working. I'll pull every case narrative and draft the causality assessment with you." : "Your surveillance is doing its job. I'll flag the moment anything crosses the line."}
+              : top
+                ? <>You're keeping watch across FAERS and EudraVigilance and nothing crosses the threshold for expedited action. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that's the next scheduled obligation.</> : null}</>
+                : <>Safety standing is unknown, not clear: no disproportionality screen has been run against the adverse-event store, so there is no highest signal to report. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that obligation is tracked independently of signal screening.</> : null}</>}
+            reassure={highPrr
+              ? "You caught this early -- that's the system working. I'll pull every case narrative and draft the causality assessment with you."
+              : top
+                ? "Your surveillance is doing its job. I'll flag the moment anything crosses the line."
+                : undefined}
             action={{
               label: highPrr ? 'Adjudicate this signal now' : (agg ? 'Continue the aggregate report' : 'Review the signal log'),
               onClick: () => ask(highPrr && top
