@@ -433,7 +433,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
      The RUN controls below stay disabled with a visible reason, rather than
      removed: the run is real and worth showing, and hiding the control would
      hide the fact that no pause/resume path exists. */
-  const UNWIRED_RUN = 'Not available yet — /api/orchestration exposes execute and cancel only.';
+  const UNWIRED_RUN = 'Not available yet — orchestration supports execute and cancel only.';
 
   /**
    * Record this user's decision on a gate — POST /api/orchestration/checkpoints/:id/decision.

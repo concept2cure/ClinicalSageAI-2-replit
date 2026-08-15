@@ -1,4 +1,4 @@
-import { QueryClient, type QueryFunction } from '@tanstack/react-query';
+import { QueryClient, MutationCache, type QueryFunction } from '@tanstack/react-query';
 import { getAuthToken, getOrgId } from '@/utils/authToken';
 
 export type ApiRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -70,7 +70,10 @@ const INTERNAL_MARKERS: RegExp[] = [
   /\bduplicate key value violates\b/i,
   /\b(?:pg_[a-z_]{3,}|information_schema)\b/,
   /\/api\//, // an API route
-  /\b[A-Z][A-Z0-9]*_(?:URL|KEY|SECRET|TOKEN|DIR|PATH|PASSWORD|DSN)\b/, // env var
+  // Env var. Multi-segment names matter: ESTAR_TEMPLATE_DIR is three
+  // segments, and a single-segment pattern misses it — which is the exact
+  // string the remediation's verify step names.
+  /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:URL|KEY|SECRET|TOKEN|DIR|PATH|PASSWORD|DSN|HOST|PORT)\b/,
   /(?:^|\s)\/(?:home|usr|var|opt|app|etc)\//, // absolute file path
   /\.(?:ts|tsx|js|mjs|cjs):\d+/, // source location
   /\bnode_modules\b/,
@@ -80,6 +83,27 @@ const INTERNAL_MARKERS: RegExp[] = [
 
 function looksInternal(value: string): boolean {
   return INTERNAL_MARKERS.some((re) => re.test(value));
+}
+
+/**
+ * The last gate before a string reaches a screen.
+ *
+ * `serverMessage` already refuses to lift infrastructure text out of an error
+ * envelope, so in the normal path nothing reaching a surface needs this. It
+ * exists because "the normal path" is not a guarantee anyone can check at
+ * review time: a string can arrive at a component from a caught exception, a
+ * websocket frame, a field the envelope reader never saw, or a caller written
+ * next year.
+ *
+ * `<ErrorState>` runs every message through this, which is what turns "no
+ * client-rendered string contains SQL, a table name, a file path, an env var or
+ * an API route" from a convention into a property of the component. A surface
+ * that renders through it cannot leak, whatever it is handed.
+ */
+export function redactInternals(value: unknown, fallback: string): string {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  if (isErrorCode(value)) return fallback;
+  return looksInternal(value) ? fallback : value;
 }
 
 /**
@@ -294,7 +318,59 @@ export const getQueryFn = (options: GetQueryFnOptions = {}): QueryFunction => {
   };
 };
 
+/**
+ * The last-resort announcement for a failed write.
+ *
+ * A mutation that fails silently is the defect this exists for: the MDX UAT
+ * found Word export returning 500 with no toast, no console message and no
+ * visible change, and a document-creation failure that showed only the modal
+ * closing. In both cases the user's next action was taken on the belief that
+ * the write had landed.
+ *
+ * `MutationCache.onError` fires for EVERY `useMutation` in the app, including
+ * one whose call site forgot `onError`, so "every failed write surfaces" stops
+ * depending on each author remembering. A call site that DOES handle its own
+ * error is respected — `mutation.options.onError` being set means the surface
+ * has its own, better-placed report, and a second global toast on top of it
+ * would be noise.
+ *
+ * Dispatched as a DOM event rather than rendered here: this module is the
+ * transport layer and must not own a React tree. `<GlobalMutationErrors>`
+ * (client/src/concept2cure/v2/GlobalMutationErrors.tsx) listens and renders the
+ * shared <ErrorState>. The message has already been through `extractApiError`,
+ * so it is display copy, never an enum or a driver string.
+ */
+export const MUTATION_ERROR_EVENT = 'c2c:mutation-error';
+
+export interface MutationErrorDetail {
+  message: string;
+  code?: string;
+  correlationId?: string;
+  status?: number;
+}
+
+const mutationCache = new MutationCache({
+  onError: (error, _vars, _ctx, mutation) => {
+    // The call site reports its own failure — do not double-announce.
+    if (mutation.options.onError) return;
+    const e = error as Partial<ApiRequestError> & { message?: string };
+    const detail: MutationErrorDetail = {
+      message: redactInternals(e?.message, fallbackMessage(e?.status ?? 0)),
+      code: e?.code,
+      correlationId: e?.correlationId,
+      status: e?.status,
+    };
+    try {
+      window.dispatchEvent(new CustomEvent<MutationErrorDetail>(MUTATION_ERROR_EVENT, { detail }));
+    } catch {
+      /* No window (SSR, tests without jsdom) — the mutation's own rejection
+         still propagates to its caller; this channel is additive. */
+    }
+  },
+});
+
 export const queryClient = new QueryClient({
+  mutationCache,
   defaultOptions: {
     queries: {
       retry: 1,

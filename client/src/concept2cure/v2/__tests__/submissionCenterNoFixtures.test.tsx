@@ -186,7 +186,7 @@ describe('SubmissionCenter — honest error state', () => {
 
     expect(await screen.findByText("Couldn't load the submissions")).toBeTruthy();
     // The error-toned honest panel, not a table and not a fixture.
-    expect(document.querySelector('.c2c-empty-state.tone-error')).toBeTruthy();
+    expect(document.querySelector('.c2c-error-state')).toBeTruthy();
     expect(document.querySelector('.ub-inv')).toBeNull();
     expectNoFixtureArtifacts();
   });

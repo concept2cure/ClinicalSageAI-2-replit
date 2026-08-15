@@ -50,9 +50,23 @@ const BASELINE = path.join(ROOT, 'scripts/ci/internals-in-copy-baseline.json');
 /** Internals that must never appear in copy. */
 const INTERNALS = [
   { re: /\/api\//, what: 'API route' },
-  { re: /\b(project_sections|authoring_documents|authoring_sections|unified_tasks|regulatory_programs|c2c_document_sections|labeling_pi_sections)\b/, what: 'table name' },
+  { re: /\b(project_sections|authoring_documents|authoring_sections|unified_tasks|regulatory_programs|c2c_document_sections|labeling_pi_sections|c2c_ana_actions|audit_logs|mdx_notifications|project_tasks|document_workflows|software_lifecycle_items|unified_documents)\b/, what: 'table name' },
   { re: /\b(GET|POST|PATCH|PUT|DELETE)\s+\//, what: 'HTTP method + path' },
   { re: /\bprocess\.env\.[A-Z_]+/, what: 'env var' },
+  // ── Folded in from a parallel gate (check-ui-internals) that was doing the
+  // same job under a different name. Two gates for one rule is the duplication
+  // this repo forbids, so that one is deleted and its extra rule classes live
+  // here. Each pattern below was observed on a real screen during the MDX UAT.
+  { re: /\brelation\s+"/i, what: 'missing-relation error' },
+  { re: /failed query/i, what: 'driver error' },
+  { re: /\b(?:select|insert\s+into|update|delete\s+from)\s+["'`]/i, what: 'SQL' },
+  { re: /\b(?:pg_[a-z_]{3,}|information_schema)\b/, what: 'Postgres catalog' },
+  // Multi-segment env names: ESTAR_TEMPLATE_DIR is three segments, and a
+  // single-segment pattern misses it.
+  { re: /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:URL|KEY|SECRET|TOKEN|DIR|PATH|PASSWORD|DSN|HOST|PORT)\b/, what: 'env var' },
+  { re: /(?:^|[\s(])\/(?:home|usr|var|opt|app|etc)\//, what: 'absolute file path' },
+  { re: /\.(?:ts|tsx|js|mjs|cjs):\d+/, what: 'source location' },
+  { re: /\b[\w.-]+\.(?:ts|tsx|mjs|cjs|sql)\b/, what: 'source file' },
 ];
 
 /** Copy-bearing JSX attributes: `hint="…"` / `title={'…'}`. */

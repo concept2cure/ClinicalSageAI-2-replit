@@ -196,14 +196,14 @@ describe('BiopharmaSpecialty — honest error states', () => {
   it('Pediatric shows an error EmptyState — never a fixture — when the read fails', async () => {
     render(<Pediatric {...props()} />);
     expect(await screen.findByText("Couldn't load pediatric plans")).toBeTruthy();
-    expect(document.querySelector('.c2c-empty-state.tone-error')).toBeTruthy();
+    expect(document.querySelector('.c2c-error-state')).toBeTruthy();
     expectNoFixtureArtifacts();
   });
 
   it('Pharmacovigilance shows an error EmptyState — never a fixture — when the board fails', async () => {
     render(<Pharmacovigilance {...props()} />);
     expect(await screen.findByText("Couldn't load safety signals")).toBeTruthy();
-    expect(document.querySelector('.c2c-empty-state.tone-error')).toBeTruthy();
+    expect(document.querySelector('.c2c-error-state')).toBeTruthy();
     expectNoFixtureArtifacts();
   });
 });

@@ -444,6 +444,6 @@ describe('the framework picker is remembered or stated — never guessed', () =>
     const { container } = renderSurface();
 
     await waitFor(() => expect(container.textContent).toContain('Cover letter'));
-    expect(container.querySelector('.c2c-empty-state.tone-error')).toBeNull();
+    expect(container.querySelector('.c2c-error-state')).toBeNull();
   });
 });

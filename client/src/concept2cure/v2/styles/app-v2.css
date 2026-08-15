@@ -192,89 +192,87 @@
 .c2c-v2 .c2c-empty-state .c2c-empty-retry:hover { background: var(--accent-100); color: #fff; border-color: var(--accent-100); }
 @media (pointer: coarse) { .c2c-v2 .c2c-empty-state .c2c-empty-retry { min-height: 44px; padding: 11px 18px; } }
 
-/* The New-Project wizard's outcome banner.
+/* ErrorState — the ONE surface a failure is reported on.
  *
- * Inline rather than the centered .c2c-empty-state panel: this reports on a
- * WRITE the user just attempted from inside a modal, not on a surface that has
- * nothing to show. It sits between the step body and the footer so it is next
- * to the button that produced it.
+ * Replaces four parallel implementations: EmptyState's tone-error panel (139
+ * call sites, which now delegate here), RbmWriteError (10 sites, deleted),
+ * DataGate's error branch, and the New-Project wizard's own banner. They
+ * disagreed about whether a failure is announced to a screen reader, whether it
+ * offers a way out, and whether the string it renders is safe to show.
  *
- * ── W0-4 CONSOLIDATION DEBT — read before adding a fifth ─────────────────────
- * This is the FOURTH inline outcome/error surface in this client, after
- * EmptyState (v2/dataConnect.tsx), RbmWriteError (v2/surfaces/rbmWrites.tsx)
- * and DataGate (mdx/components/DataGate.tsx). RbmWriteError is the near-miss:
- * same role="alert", same honest one-line failure, same dismiss — it lacks only
- * a retry, a reference line, and the error/notice split this banner needs, and
- * it is coupled to the RBM feature's own stylesheet. Generalising it belongs to
- * W0-4, which builds ONE shared <ErrorState> and migrates all of these onto it.
- * This block is a migration TARGET, not a pattern to copy.
+ * Two variants, one component. The distinction is spatial, not semantic — both
+ * are role="alert", both announce assertively, both offer a recovery path:
+ *   panel  — a READ failed; nothing to show in its place, so it fills the slot.
+ *   inline — a WRITE failed; the form is still on screen and this sits next to
+ *            the control that produced it.
  *
  * ── Colour ──────────────────────────────────────────────────────────────────
- * --error is the canonical token (design-system/colors_and_type.css), and it
- * replaces the phantom --danger the previous banner reached for: --danger is
- * declared nowhere, and its 46 call sites fall back to six different hardcoded
- * reds. Note this deliberately does NOT follow .c2c-empty-state.tone-error,
- * which paints with --warning — a class named tone-error that is not
- * --error-coloured is a pre-existing inconsistency, not one to propagate.
- * Colour is never the only signal: each tone also carries its own icon, its own
- * ARIA role, and copy that states the outcome. */
-.c2c-v2 .c2c-wizard-outcome {
+ * --error is the canonical token (design-system/colors_and_type.css). It
+ * replaces the phantom --danger, which is declared nowhere and whose 46 call
+ * sites fall back to six different hardcoded reds. The border is SOLID, not a
+ * mix: composited over the surface, a 40% mix measures 1.88:1 (light) /
+ * 2.03:1 (dark) and even 70% reaches only 3.21 / 3.52, against the 3:1 SC
+ * 1.4.11 wants for a non-text boundary. Measured on the tinted fill: body text
+ * 9.23:1 / 10.71:1, icon 4.90:1 / 5.04:1.
+ *
+ * Colour is never the only signal — every instance also carries the alert icon,
+ * an assertive ARIA role, and copy that states what failed. */
+.c2c-v2 .c2c-error-state {
   display: flex; align-items: flex-start; gap: 10px;
-  margin: 0 20px; padding: 10px 12px;
   border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--border);
-  font-size: 11.5px; line-height: 1.5;
-  color: var(--text-200);
-}
-.c2c-v2 .c2c-wizard-outcome .ico { flex: 0 0 auto; margin-top: 1px; color: var(--text-400); }
-.c2c-v2 .c2c-wizard-outcome .ico svg { width: 15px; height: 15px; }
-.c2c-v2 .c2c-wizard-outcome-b { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.c2c-v2 .c2c-wizard-outcome-a { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
-
-/* Border is SOLID --error, not a mix. Composited over the modal surface, a 40%
-   mix measures 1.88:1 (light) / 2.03:1 (dark) and even 70% only reaches
-   3.21 / 3.52 — SC 1.4.11 wants ≥ 3:1 for a non-text boundary, and the tinted
-   fill already carries the softness the mix was reaching for. Solid also
-   matches the success banner two elements up, which is `1px solid
-   var(--success)`. Measured: text 9.23:1 / 10.71:1, icon 4.90:1 / 5.04:1. */
-.c2c-v2 .c2c-wizard-outcome.tone-error {
-  border-color: var(--error);
+  border: 1px solid var(--error);
   background: color-mix(in srgb, var(--error) 8%, transparent);
+  color: var(--text-200);
+  font-size: 12px; line-height: 1.5;
 }
-.c2c-v2 .c2c-wizard-outcome.tone-error .ico { color: var(--error); }
-.c2c-v2 .c2c-wizard-outcome.tone-notice {
-  border-color: var(--border-200, var(--border));
-  background: color-mix(in srgb, var(--text-400) 5%, transparent);
-}
+.c2c-v2 .c2c-error-state.variant-panel  { padding: 20px 18px; }
+.c2c-v2 .c2c-error-state.variant-inline { padding: 10px 12px; }
+
+.c2c-v2 .c2c-error-ic { flex: 0 0 auto; margin-top: 1px; color: var(--error); }
+.c2c-v2 .c2c-error-ic svg { width: 15px; height: 15px; }
+.c2c-v2 .c2c-error-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.c2c-v2 .c2c-error-t { font-size: 13px; font-weight: 600; color: var(--text-200); }
+.c2c-v2 .c2c-error-h { font-size: 12px; line-height: 1.5; max-width: 62ch; color: var(--text-200); }
+.c2c-v2 .c2c-error-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; }
 
 /* The support handle that replaced the disclosed table name. Selectable and
    monospaced so it can be read aloud or copied without transcription error.
    NOT --text-400: at this size that is normal-size text needing 4.5:1, and it
    measures 3.01:1 (light) / 3.77:1 (dark) on the tinted fill — worse again on
-   the code chip's own 10% wash, at 2.74:1 / 3.32:1. The id is the one string a
+   the chip's own 10% wash, at 2.74:1 / 3.32:1. The id is the one string a
    support call depends on being read correctly, so it takes --text-200:
    9.23:1 / 10.71:1 for the label, 8.40:1 / 9.42:1 for the chip. */
-.c2c-v2 .c2c-wizard-outcome-ref { font-size: 11px; color: var(--text-200); }
-.c2c-v2 .c2c-wizard-outcome-ref code {
+.c2c-v2 .c2c-error-ref { font-size: 11px; color: var(--text-200); }
+.c2c-v2 .c2c-error-ref code {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 11px; user-select: all; color: var(--text-200);
   padding: 1px 4px; border-radius: 3px;
   background: color-mix(in srgb, var(--text-400) 10%, transparent);
 }
-/* `.tbtn` has no base rule anywhere in client/src, and the universal
-   `.c2c-v2 button` reset strips its padding — so the dismiss control is only as
-   wide as its ~11.5px icon. Sizing it HERE rather than only under a
-   coarse-pointer query: WCAG 2.5.5 is not a touch-only requirement, and a
-   44px-tall target 11px wide satisfies neither axis. */
-.c2c-v2 .c2c-wizard-outcome-a .tbtn {
+
+/* UI standards §8: a failure always offers a recovery path. Sized to the 24px
+   floor SC 2.5.8 sets on every pointer type, and to 44px where the pointer is
+   coarse. `.tbtn` has no base rule anywhere in client/src and the universal
+   `.c2c-v2 button` reset strips its padding, so the dismiss control is sized
+   here rather than inherited. */
+.c2c-v2 .c2c-error-retry {
+  min-height: 32px; padding: 7px 14px;
+  font-size: 12px; font-weight: 500; color: var(--accent-200);
+  border: 1px solid var(--accent-muted, var(--border)); border-radius: 99px;
+  background: var(--accent-000, transparent);
+  transition: background var(--dur, .15s), color var(--dur, .15s), border-color var(--dur, .15s);
+}
+.c2c-v2 .c2c-error-retry:hover:not(:disabled) { background: var(--accent-100); color: #fff; border-color: var(--accent-100); }
+.c2c-v2 .c2c-error-retry:disabled { opacity: .6; cursor: default; }
+.c2c-v2 .c2c-error-dismiss {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 32px; min-height: 32px; border-radius: var(--radius-md, 6px);
   color: var(--text-400);
 }
-.c2c-v2 .c2c-wizard-outcome-a .tbtn:hover { color: var(--text-200); background: color-mix(in srgb, var(--text-400) 10%, transparent); }
+.c2c-v2 .c2c-error-dismiss:hover { color: var(--text-200); background: color-mix(in srgb, var(--text-400) 10%, transparent); }
 @media (pointer: coarse) {
-  .c2c-v2 .c2c-wizard-outcome-a .btn,
-  .c2c-v2 .c2c-wizard-outcome-a .tbtn { min-width: 44px; min-height: 44px; }
+  .c2c-v2 .c2c-error-retry,
+  .c2c-v2 .c2c-error-dismiss { min-width: 44px; min-height: 44px; }
 }
 
 /* port helpers — the kit expressed these as one-off inline style attributes;
@@ -2971,3 +2969,32 @@
 .c2c-v2 .esign-manifest{font-size:11px;color:var(--text-400);line-height:1.5;background:var(--bg-100);border-radius:var(--radius-md);padding:10px 12px;}
 .c2c-v2 .esign-f{display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--border);}
 
+
+/* The created-but-not-scaffolded advisory. A neutral notice, deliberately NOT
+   ErrorState: the project was saved, so styling it as a failure would tell the
+   user the opposite of what happened. Announcement is handled by the permanent
+   polite live region in the wizard, not by this element. */
+.c2c-v2 .c2c-wizard-notice {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 0 20px; padding: 10px 12px;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border-200, var(--border));
+  background: color-mix(in srgb, var(--text-400) 5%, transparent);
+  color: var(--text-200); font-size: 12px; line-height: 1.5;
+}
+.c2c-v2 .c2c-wizard-notice .ico { flex: 0 0 auto; margin-top: 1px; color: var(--text-400); }
+.c2c-v2 .c2c-wizard-notice .ico svg { width: 15px; height: 15px; }
+.c2c-v2 .c2c-wizard-notice > div { flex: 1 1 auto; min-width: 0; }
+
+/* Global mutation failures. Fixed to the bottom-right so a write that failed
+   from any surface is visible without moving the page under the user, and above
+   modal content because a modal is exactly where a write is usually attempted. */
+.c2c-v2 .c2c-global-errors,
+.c2c-global-errors {
+  position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 8px;
+  width: min(420px, calc(100vw - 32px));
+}
+@media (max-width: 480px) {
+  .c2c-global-errors { right: 8px; left: 8px; bottom: 8px; width: auto; }
+}

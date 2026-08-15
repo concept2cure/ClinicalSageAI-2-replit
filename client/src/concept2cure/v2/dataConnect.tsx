@@ -19,7 +19,8 @@
  *                             C2C_API.connected()).
  */
 import React from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, redactInternals } from '@/lib/queryClient';
+import { I } from './icons';
 import { getAuthToken } from '@/utils/authToken';
 
 export interface LiveResult<T> {
@@ -502,10 +503,131 @@ export function useLiveRows<T>(
 }
 
 /**
+ * The one surface a failure is reported on.
+ *
+ * ── What this replaces ───────────────────────────────────────────────────────
+ * Four parallel implementations, each written where it was needed and none
+ * aware of the others:
+ *
+ *   · `EmptyState tone="error"` (139 call sites) — a dashed panel whose `hint`
+ *     was routinely handed the raw server string;
+ *   · `RbmWriteError` (10 sites) — an inline "The change was not saved" banner,
+ *     with a dismiss but no retry, styled from the RBM feature's own stylesheet;
+ *   · `DataGate`'s error branch (33 sites) — a third rendering of the same idea;
+ *   · the New Project wizard's outcome banner.
+ *
+ * They disagreed about everything that matters: whether a failure is announced
+ * to a screen reader, whether it offers a way out, and whether the string it
+ * renders is safe to show. UI standards §8 has named `<ErrorState retry={…}>`
+ * as the required shape for a query failure since before any of them were
+ * written; it simply did not exist.
+ *
+ * ── Why the redaction lives HERE ─────────────────────────────────────────────
+ * `message` is passed through `redactInternals` on every render. The transport
+ * layer already refuses to lift SQL, relation names, routes or env vars out of
+ * an error envelope, so in the normal path this changes nothing — and that is
+ * the point. Putting the filter in the component is what makes "no
+ * client-rendered string contains an internal" a property of the UI rather than
+ * a convention every future caller has to remember. A string that reached a
+ * surface from a caught exception, a websocket frame or a field the envelope
+ * reader never saw is caught here too.
+ *
+ * ── Two variants, one component ──────────────────────────────────────────────
+ * `panel` — a READ failed and there is nothing to show in its place.
+ * `inline` — a WRITE failed; the form is still on screen and the banner sits
+ *            next to the control that produced it.
+ * The distinction is spatial, not semantic: both are `role="alert"`, both are
+ * announced assertively, and both must offer a recovery path.
+ */
+export function ErrorState({
+  title,
+  message,
+  correlationId,
+  retry,
+  retryLabel = 'Try again',
+  onDismiss,
+  variant = 'panel',
+  icon,
+  busy = false,
+  testId,
+}: {
+  /** What failed, in the user's terms. Always shown. */
+  title: string;
+  /** The server's own sentence, when it sent one. Redacted before render. */
+  message?: React.ReactNode;
+  /** The `X-Request-Id` the server echoed, for the user to quote to support. */
+  correlationId?: string;
+  /** UI standards §8: a failure always offers a way out. */
+  retry?: () => void;
+  retryLabel?: string;
+  /** Present → the banner can be dismissed. Used for write failures. */
+  onDismiss?: () => void;
+  variant?: 'panel' | 'inline';
+  icon?: React.ReactNode;
+  busy?: boolean;
+  testId?: string;
+}) {
+  /* A string is only rendered if it survives the internals filter; otherwise the
+     title carries the message alone, which is always safe because the caller
+     wrote it. */
+  const safe =
+    typeof message === 'string' ? redactInternals(message, '') : message ?? '';
+
+  return (
+    <div
+      className={`c2c-error-state variant-${variant}`}
+      role="alert"
+      aria-live="assertive"
+      aria-busy={busy || undefined}
+      data-testid={testId}
+    >
+      <span className="c2c-error-ic" aria-hidden="true">{icon ?? I.alertTriangle}</span>
+      <div className="c2c-error-body">
+        <div className="c2c-error-t">{title}</div>
+        {safe ? <div className="c2c-error-h">{safe}</div> : null}
+        {correlationId ? (
+          /* The support handle. It replaced the store name the API used to
+             disclose, so it is the one identifier that makes an outage
+             diagnosable without describing the schema to whoever is looking. */
+          <div className="c2c-error-ref">
+            Reference <code>{correlationId}</code>
+          </div>
+        ) : null}
+      </div>
+      {(retry || onDismiss) && (
+        <div className="c2c-error-actions">
+          {retry && (
+            <button type="button" className="c2c-error-retry" onClick={retry} disabled={busy}>
+              {busy ? 'Retrying…' : retryLabel}
+            </button>
+          )}
+          {onDismiss && (
+            <button
+              type="button"
+              className="c2c-error-dismiss"
+              onClick={onDismiss}
+              aria-label="Dismiss this message"
+            >
+              {I.close}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * The honest panel a surface shows when a real backend returns nothing, or
  * when the fetch failed — the replacement for a fixture-backed "Sample data"
  * card. `tone="error"` is for a failed load; the default idle tone is for a
  * genuine empty result.
+ *
+ * `tone="error"` DELEGATES to `<ErrorState>` rather than rendering its own
+ * error panel. That is deliberate and is what converges the 139 existing error
+ * call sites without touching any of them: they inherit the internals filter,
+ * the assertive announcement and the correlation-id slot by construction. New
+ * code should call `<ErrorState>` directly.
  */
 export function EmptyState({
   title,
@@ -514,7 +636,12 @@ export function EmptyState({
   tone = 'idle',
   busy = false,
   retry,
-  retryLabel = 'Retry',
+  /* No default here on purpose. An unspecified label falls through to whichever
+     renderer takes it: the idle panel keeps 'Retry', and a failure gets
+     ErrorState's 'Try again', so the recovery control reads the same on every
+     failure in the product rather than differing by which component happened to
+     render it. A caller that passes a label still wins. */
+  retryLabel,
   testId,
 }: {
   title: string;
@@ -528,16 +655,32 @@ export function EmptyState({
   retryLabel?: string;
   testId?: string;
 }) {
-  /* UI standards §10 (non-negotiable): a failed load is announced assertively as
-     an alert; a loading or empty panel is a polite status. Without these the
-     three states this component exists to distinguish are indistinguishable to
-     a screen reader — it silently swaps text in a plain div. */
-  const isError = tone === 'error';
+  /* A failure is not an empty state. It has one renderer, and this is not it —
+     every `tone="error"` call site is served by ErrorState above, so all 139 of
+     them get the internals filter and the correlation-id slot without being
+     rewritten. `hint` maps to `message`, which is exactly the field that used to
+     be handed a raw server string. */
+  if (tone === 'error') {
+    return (
+      <ErrorState
+        title={title}
+        message={hint}
+        icon={icon}
+        retry={retry}
+        {...(retryLabel ? { retryLabel } : {})}
+        busy={busy}
+        testId={testId}
+      />
+    );
+  }
+
+  /* UI standards §10 (non-negotiable): a loading or empty panel is a POLITE
+     status — it must not interrupt. The assertive case now lives in ErrorState. */
   return (
     <div
-      className={`c2c-empty-state tone-${tone}`}
-      role={isError ? 'alert' : 'status'}
-      aria-live={isError ? 'assertive' : 'polite'}
+      className="c2c-empty-state tone-idle"
+      role="status"
+      aria-live="polite"
       aria-busy={busy || undefined}
       data-testid={testId}
     >
@@ -546,7 +689,7 @@ export function EmptyState({
       {hint && <div className="c2c-empty-h">{hint}</div>}
       {retry && (
         <button type="button" className="c2c-empty-retry" onClick={retry}>
-          {retryLabel}
+          {retryLabel ?? 'Retry'}
         </button>
       )}
     </div>

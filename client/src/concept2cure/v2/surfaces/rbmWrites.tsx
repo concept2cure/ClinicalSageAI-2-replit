@@ -72,7 +72,7 @@ export interface RbmMutation {
   /** True while a write is in flight — controls are disabled so a slow save
    *  can't be double-submitted. */
   busy: boolean;
-  /** The server's failure message, or null. Rendered by <RbmWriteError>. */
+  /** The server's failure message, or null. Rendered by <ErrorState>. */
   error: string | null;
   clearError: () => void;
   /** Last successful write's confirmation line, for surfaces that report what
@@ -115,19 +115,12 @@ export function useRbmMutation(onReload?: () => void): RbmMutation {
   return { busy, error, clearError: () => setError(null), note, run };
 }
 
-/** The honest failure banner: what the server said, and that nothing changed. */
-export function RbmWriteError({ error, onDismiss }: { error: string | null; onDismiss?: () => void }) {
-  if (!error) return null;
-  return (
-    <div className="rbm-run" data-tone="err" role="alert">
-      <div className="rbm-run-h">{I.shieldAlert}The change was not saved</div>
-      <div className="rbm-run-m">
-        {error}
-        {onDismiss ? <button className="rbm-linkbtn" onClick={onDismiss} style={{ marginLeft: 8 }}>Dismiss</button> : null}
-      </div>
-    </div>
-  );
-}
+/* `RbmWriteError` lived here and is DELETED, not deprecated. It was one of four
+   parallel error surfaces in this client; the shared <ErrorState> in
+   v2/dataConnect.tsx replaced it, and its nine call sites now render that
+   directly. It offered a dismiss but no retry, rendered whatever string it was
+   handed, and was styled from this feature's own stylesheet — so an RBM write
+   failure looked and behaved unlike every other failure in the product. */
 
 /** The confirmation line for a completed server-side run. */
 export function RbmWriteNote({ note }: { note: string | null }) {

@@ -395,7 +395,7 @@ export function CmMethodLibrary() {
       emptyTitle="No analytical methods yet"
       emptyHint="Validated analytical procedures (HPLC, GC, UV-VIS, …) appear here as your organization records them. A specification cannot be approved until its method is validated (ICH Q2) — use Add method to record the first one."
       errorTitle="Couldn’t load analytical methods"
-      errorHint="The org-scoped method library (GET /api/cmc/analytical-methods) didn’t respond. Sign in to your tenant and retry."
+      errorHint="The org-scoped method library didn’t load. Sign in and try again."
       rowKey={(r) => r.id}
       create={{
         label: 'Add method',
@@ -482,7 +482,7 @@ export function CmQcTesting() {
       emptyTitle="No QC testing records yet"
       emptyHint="Samples tested against your specifications — raw material, in-process and finished product — appear here with their pass/fail disposition. Use Log result to record the first one."
       errorTitle="Couldn’t load QC testing records"
-      errorHint="The org-scoped QC testing file (GET /api/cmc/qc-testing) didn’t respond. Sign in to your tenant and retry."
+      errorHint="The org-scoped QC testing file didn’t load. Sign in and try again."
       rowKey={(r) => r.id}
       create={{
         label: 'Log result',
@@ -577,7 +577,7 @@ export function CmChangeRegister() {
       emptyTitle="No change-control records yet"
       emptyHint="Logged CMC changes — with their type, filing category and status — appear here. Use the simulator above to model a change, then Raise change to put it under control."
       errorTitle="Couldn’t load change-control records"
-      errorHint="The org-scoped change-control register (GET /api/cmc/change-control) didn’t respond. Sign in to your tenant and retry."
+      errorHint="The org-scoped change-control register didn’t load. Sign in and try again."
       rowKey={(r) => r.id}
       create={{
         label: 'Raise change',
@@ -647,7 +647,7 @@ export function CmComparabilityStudies() {
       emptyTitle="No comparability assessments yet"
       emptyHint="ICH Q5E assessments — the pre- and post-change comparison behind a manufacturing change — appear here once raised for your organization."
       errorTitle="Couldn’t load comparability assessments"
-      errorHint="The org-scoped comparability file (GET /api/cmc/comparability-studies) didn’t respond. Sign in to your tenant and retry."
+      errorHint="The org-scoped comparability file didn’t load. Sign in and try again."
       rowKey={(r) => String(r.id)}
       create={{
         label: 'Raise assessment',
@@ -747,7 +747,7 @@ export function CmProcessValidation() {
       emptyTitle="No process validation records yet"
       emptyHint="Validation across the three-stage lifecycle — process design, qualification and continued verification — appears here once recorded for your organization."
       errorTitle="Couldn’t load process validation"
-      errorHint="The org-scoped process validation file (GET /api/cmc/process-validation) didn’t respond. Sign in to your tenant and retry."
+      errorHint="The org-scoped process validation file didn’t load. Sign in and try again."
       rowKey={(r) => r.id}
       create={{
         label: 'Add record',
@@ -843,7 +843,7 @@ export function CmDrugSubstances() {
       emptyTitle="No drug substances yet"
       emptyHint="Your active substances (§3.2.S) — with CAS number, molecular formula and weight — appear here. They are the quality data the Module 3 blueprint composes from; use Add substance to record the first one."
       errorTitle="Couldn’t load drug substances"
-      errorHint="The org-scoped drug-substance file (GET /api/cmc/drug-substances) didn’t respond. Sign in to your tenant and retry."
+      errorHint="The org-scoped drug-substance file didn’t load. Sign in and try again."
       rowKey={(r) => r.id}
       create={{
         label: 'Add substance',
@@ -921,7 +921,7 @@ export function CmDrugProducts() {
       emptyTitle="No drug products yet"
       emptyHint="Your finished products (§3.2.P) — dosage form, strength and route of administration — appear here alongside the substances they are formulated from. Use Add product to record the first one."
       errorTitle="Couldn’t load drug products"
-      errorHint="The org-scoped drug-product file (GET /api/cmc/drug-products) didn’t respond. Sign in to your tenant and retry."
+      errorHint="The org-scoped drug-product file didn’t load. Sign in and try again."
       rowKey={(r) => r.id}
       create={{
         label: 'Add product',

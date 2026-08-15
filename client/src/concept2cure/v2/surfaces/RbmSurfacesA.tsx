@@ -22,7 +22,8 @@ import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
-import { useRbmMutation, useRbmOwners, ownerId, rbmWrite, RbmWriteError } from './rbmWrites';
+import { ErrorState } from '../dataConnect';
+import { useRbmMutation, useRbmOwners, ownerId, rbmWrite } from './rbmWrites';
 import { RbmIngestDialog } from './RbmIngest';
 import '../styles/rbm-v2.css';
 
@@ -335,7 +336,14 @@ export function RbmRact({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       {asmt ? (
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
@@ -481,7 +489,14 @@ export function RbmKris({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <div className="rbm-bar">
         <span className="rbm-bar-info">{kris.length} indicators -- seed from the TransCelerate library or define study-specific KRIs</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New KRI</button>
@@ -580,7 +595,14 @@ export function RbmQtls({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <div className="rbm-bar">
         <span className="rbm-bar-info">{qtls.length} tolerance limits -- study-level -- secondary limit is the RBQM early warning</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New QTL</button>

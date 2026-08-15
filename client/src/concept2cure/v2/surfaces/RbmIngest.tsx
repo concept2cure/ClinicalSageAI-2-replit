@@ -16,9 +16,10 @@
  *
  * @module concept2cure/v2/surfaces/RbmIngest
  */
+import { ErrorState } from '../dataConnect';
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { useRbmMutation, rbmWrite, RbmWriteError } from './rbmWrites';
+import { useRbmMutation, rbmWrite } from './rbmWrites';
 
 /** The sponsor system-of-record categories the API accepts. */
 const SOURCES = ['edc', 'ctms', 'safety', 'lab', 'irt', 'ecoa', 'vendor', 'manual_upload'] as const;
@@ -178,7 +179,14 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
             onChange={e => { setCsv(e.target.value); setFileName(null); }} />
         </label>
 
-        <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+        {mut.error && (
+          <ErrorState
+            variant="inline"
+            title="The change was not saved"
+            message={mut.error}
+            onDismiss={mut.clearError}
+          />
+        )}
         {result && <IngestOutcome result={result} />}
 
         <div className="rbm-modal-note">

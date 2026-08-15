@@ -25,6 +25,7 @@
  *     gate's own affordances stay neutral
  */
 
+import { ErrorState } from '../../v2/dataConnect';
 import * as React from 'react';
 import { I } from '../icons';
 import type { DataState } from '../lib/dataState';
@@ -127,16 +128,19 @@ function renderState(
       );
 
     case 'error':
+      // The shared failure surface, not a third rendering of one. `state.message`
+      // used to be dropped into a MONOSPACE span — styling a server string as
+      // code, which is exactly how `relation "software_lifecycle_items" does not
+      // exist` came to look like intended output on the software-lifecycle panel.
+      // ErrorState redacts it and announces the failure assertively.
       return (
-        <Shell icon={I.alertCircle} tone="error">
-          <span className="data-gate-title">Could not load {label}</span>
-          <span className="data-gate-detail data-gate-mono">{state.message}</span>
-          {onRetry && (
-            <button type="button" className="data-gate-btn" onClick={onRetry}>
-              Try again
-            </button>
-          )}
-        </Shell>
+        <ErrorState
+          variant="panel"
+          title={`Could not load ${label}`}
+          message={state.message}
+          retry={onRetry}
+          testId="data-gate-error"
+        />
       );
 
     case 'empty':

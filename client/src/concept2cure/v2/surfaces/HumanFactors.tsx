@@ -189,7 +189,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     <div className="hf" style={{ maxWidth: 1140 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/human-factors</div>
+          <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} human factors</div>
           <h1 className="sp-title">Human factors {I.dot} IEC 62366-1</h1>
           <p className="sp-state">{device} -- use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
         </div>

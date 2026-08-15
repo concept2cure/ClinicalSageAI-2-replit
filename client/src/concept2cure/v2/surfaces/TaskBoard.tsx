@@ -783,13 +783,18 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           repository. The index count is dropped rather than corrected (it was
           8, the table declares 9): a number nothing reads is a number that goes
           quietly wrong. */}
+      {/* A regulatory user needs to know which guarantees are real before
+          relying on the board as evidence. What this must NOT be is a schema
+          tour: it named five tables and a source file, always rendered, to
+          every user. The governance claims are the valuable part and are kept;
+          the identifiers are not. */}
       <details className="tb-gaps">
-        <summary>Engineering reality -- backend status</summary>
+        <summary>What is enforced, and what is not yet</summary>
         <ul>
-          <li><b>Canonical store</b> is <code>unifiedTasks</code> (ADR-0011). <code>project_tasks</code> keeps its own schedule-of-events lifecycle and mirrors forward into the canonical table with a deterministic id; the unified work view excludes those mirrored rows so nothing is counted twice. Origin is shown per card.</li>
-          <li><b>Audit:</b> every task create, transition, link and archive writes the Part-11 <code>c2c_ana_actions</code> / <code>audit_logs</code> hash-chained pair through <code>task-audit.ts</code>, on <i>both</i> task routers and on the AnA mirror. Approval-gated completion additionally carries a verified §11.50 signature manifestation.</li>
-          <li><b>Notifications:</b> real. Assignment, blocked, completion and the unblock cascade write to <code>mdx_notifications</code>; an hourly sweep adds due-soon (48h) and overdue, once each per task.</li>
-          <li><b>Both task routes gate identically:</b> they share the status state machine, the e-signature ceremony and the org-scoped unblock cascade, so governance is a property of the record rather than of the route that reached it.</li>
+          <li><b>One canonical record.</b> Schedule-of-events tasks keep their own lifecycle and mirror forward into the canonical record with a deterministic id; the unified work view excludes those mirrored rows so nothing is counted twice. Origin is shown per card.</li>
+          <li><b>Audit:</b> every task create, transition, link and archive writes a hash-chained 21 CFR Part 11 audit pair, on <i>both</i> task routers and on the AnA mirror. Approval-gated completion additionally carries a verified §11.50 signature manifestation.</li>
+          <li><b>Notifications:</b> real. Assignment, blocked, completion and the unblock cascade are all delivered; an hourly sweep adds due-soon (48h) and overdue, once each per task.</li>
+          <li><b>Both task routers gate identically:</b> the org-wide board and the regulatory task list share the status state machine, the e-signature ceremony and the org-scoped unblock cascade, so governance is a property of the record rather than of the route it was reached through.</li>
           <li><b>Automation:</b> rules are stored and can be dry-run, but no event source dispatches to the rules engine, so a stored rule never fires on its own.</li>
         </ul>
       </details>
@@ -987,7 +992,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
             unaudited when it is audited is not a conservative error. */}
         <div className="tb-detail-sec">
           <div className="tb-detail-sec-h">Audit</div>
-          <div className="tb-detail-note">{I.shieldCheck} Advancing, moving back or archiving this task is recorded in the Part-11 <code>c2c_ana_actions</code> ledger with your identity, the from/to state and any reason you give.</div>
+          <div className="tb-detail-note">{I.shieldCheck} Advancing, moving back or archiving this task is recorded in the Part 11 audit ledger with your identity, the from/to state and any reason you give.</div>
         </div>
         {confirmArchive && (
           <div className="tb-detail-note" role="group" aria-label="Archive this task">

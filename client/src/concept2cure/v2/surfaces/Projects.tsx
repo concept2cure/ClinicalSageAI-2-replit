@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, EmptyState, ErrorState } from '../dataConnect';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { useDialog } from '../useDialog';
 import {
@@ -484,43 +484,40 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
         </div>
 
         {/* The wizard's outcome — surfaced honestly instead of a fake "created"
-            toast, and never silently. A failure carries a recovery path (UI
-            standards §8: an error always offers one); the
-            created-but-not-scaffolded advisory does not, because the project
-            exists and there is nothing to retry. */}
-        {outcome && (
-          <div
-            className={`c2c-wizard-outcome tone-${outcome.kind}`}
-            data-testid="new-project-outcome"
-          >
-            <span className="ico" aria-hidden="true">
-              {outcome.kind === 'error' ? I.alertTriangle : I.info}
-            </span>
-            <div className="c2c-wizard-outcome-b">
-              <span>{outcome.message}</span>
-              {outcome.correlationId && (
-                /* The one handle support can search the server log by. It
-                   replaces the store name the API used to disclose here. */
-                <span className="c2c-wizard-outcome-ref">
-                  Reference <code>{outcome.correlationId}</code>
-                </span>
-              )}
-            </div>
-            <div className="c2c-wizard-outcome-a">
-              {outcome.kind === 'error' && (
-                <button type="button" className="btn ghost" onClick={doCreate} disabled={creating}>
-                  {creating ? 'Retrying…' : 'Try again'}
-                </button>
-              )}
-              <button
-                type="button"
-                className="tbtn"
-                onClick={() => setOutcome(null)}
-                aria-label="Dismiss this message"
-              >
-                {I.close}
-              </button>
-            </div>
+            toast, and never silently.
+
+            A FAILURE renders the shared <ErrorState variant="inline">, the same
+            component every failed load and failed write in the client now uses,
+            which is where the internals filter lives. A SUCCESS-with-caveat is
+            not an error and must not borrow its styling: the project exists,
+            there is nothing to retry, and offering "Try again" there would
+            create a second copy of a program that is already saved. */}
+        {outcome?.kind === 'error' && (
+          <div style={{ margin: '0 20px' }}>
+            <ErrorState
+              variant="inline"
+              title="The project was not created"
+              message={outcome.message}
+              correlationId={outcome.correlationId}
+              retry={doCreate}
+              busy={creating}
+              onDismiss={() => setOutcome(null)}
+              testId="new-project-outcome"
+            />
+          </div>
+        )}
+        {outcome?.kind === 'notice' && (
+          <div className="c2c-wizard-notice" data-testid="new-project-outcome">
+            <span className="ico" aria-hidden="true">{I.info}</span>
+            <div>{outcome.message}</div>
+            <button
+              type="button"
+              className="c2c-error-dismiss"
+              onClick={() => setOutcome(null)}
+              aria-label="Dismiss this message"
+            >
+              {I.close}
+            </button>
           </div>
         )}
 

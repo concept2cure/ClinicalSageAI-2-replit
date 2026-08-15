@@ -31,6 +31,7 @@ import App from './App';
 import ErrorBoundary from './ErrorBoundary';
 import { FileContextProvider } from './contexts/FileContext';
 import { Toaster } from './components/ui/toaster';
+import { GlobalMutationErrors } from './concept2cure/v2/GlobalMutationErrors';
 
 // Render the app with React 18 createRoot API - using the main App component
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -41,6 +42,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <FileContextProvider>
             <App />
             <Toaster />
+            {/* Every useMutation failure whose call site did not report one of
+                its own. Mounted at the root because a write can fail from any
+                surface, and a silent failed write is what this closes. */}
+            <GlobalMutationErrors />
           </FileContextProvider>
         </QueryClientProvider>
       </I18nextProvider>

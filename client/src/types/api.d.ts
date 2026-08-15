@@ -67,4 +67,18 @@ declare module '@/lib/queryClient' {
   export function serverMessage(payload: unknown): string | null;
   /** The server's machine-readable error code, when it sent one. */
   export function errorCodeOf(payload: unknown): string | undefined;
+  /** The last gate before a string reaches a screen: returns `fallback` when the
+   *  value is an enum token or carries SQL, a relation name, a route, a file
+   *  path or an env var. `<ErrorState>` runs every message through it. */
+  export function redactInternals(value: unknown, fallback: string): string;
+  /** DOM event raised for every useMutation failure whose call site supplied no
+   *  `onError` of its own. `<GlobalMutationErrors>` listens; see the
+   *  MutationCache in client/src/lib/queryClient.ts. */
+  export const MUTATION_ERROR_EVENT: string;
+  export interface MutationErrorDetail {
+    message: string;
+    code?: string;
+    correlationId?: string;
+    status?: number;
+  }
 }

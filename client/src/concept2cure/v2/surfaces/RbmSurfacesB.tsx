@@ -18,6 +18,7 @@
  * Monitoring actions hang off a monitoring plan, so the controls that raise one
  * are disabled — with the reason shown — until the study has a plan.
  */
+import { ErrorState } from '../dataConnect';
 import React, { useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
@@ -29,7 +30,7 @@ import {
 } from './RbmSurfaces';
 import {
   useRbmMutation, useRbmOwners, ownerId, dueDate,
-  rbmWrite, rbmWriteWithMeta, RbmWriteError, RbmWriteNote,
+  rbmWrite, rbmWriteWithMeta, RbmWriteNote,
 } from './rbmWrites';
 import '../styles/rbm-v2.css';
 
@@ -174,7 +175,14 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
         <div className="rbm-filters">{['open', 'new', 'investigating', 'resolved', 'all'].map(f => (
@@ -249,7 +257,14 @@ export function RbmPatients({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
         <span className="rbm-bar-info">scorePatientCohort -- robust modified z-score -- MIN_COHORT 5 -- {board.summary.patients.scored} subjects -- {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
@@ -309,7 +324,14 @@ export function RbmSites({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
         <span className="rbm-bar-info">site-risk-engine -- composite from Site Intelligence -- {at ? `scored ${at}` : 'never scored'}</span>
@@ -371,7 +393,14 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       {planId == null && <NoPlanNote onTab={onTab} />}
       <div className="rbm-card">
         <div className="rbm-card-h">Where do I send a monitor<span className="rbm-card-sub">SPOT -- site risk joined with open-signal load</span></div>
@@ -455,7 +484,14 @@ export function RbmPlan({ board, onReload }: SubProps) {
 
   return (
     <div>
-      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+      {mut.error && (
+        <ErrorState
+          variant="inline"
+          title="The change was not saved"
+          message={mut.error}
+          onDismiss={mut.clearError}
+        />
+      )}
       <RbmWriteNote note={mut.note} />
       {plan ? (
         <div className="rbm-asmt">

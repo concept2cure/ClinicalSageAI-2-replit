@@ -810,7 +810,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             }
           },
         }}
-        secondary="Live from GET /api/ind-checklist — this org's IND forms and section state; readiness is computed from it."
+        secondary="Live from this org's IND checklist — its forms and section state; readiness is computed from it."
       />
 
       <div className="indl-grid">
