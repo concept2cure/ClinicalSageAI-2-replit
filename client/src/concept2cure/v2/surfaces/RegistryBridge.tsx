@@ -172,8 +172,13 @@ const REGISTRY_SOURCE: Record<string, Record<string, RegistryTuple[]>> = {
       ['env_assess', 'Environmental Assessment', 'FDA', 'US', 'eCTD', '—', 'eCTD', 'NEPA environmental impact assessment or categorical exclusion.'],
       ['dmf', 'Drug Master File (DMF)', 'FDA', 'US', 'eCTD', '—', 'eCTD', 'Confidential API/excipient CMC filing.', 'dmf'],
       ['asmf', 'Active Substance Master File (ASMF)', 'EMA', 'EU', 'eCTD', '3.2.S', 'eCTD', 'EU confidential manufacturing and quality data.'],
-      ['cep', 'Certificate of Suitability (CEP)', 'EMA', 'EU', '—', '—', '—', 'EDQM monograph conformity for well-known substances.'],
-      ['gmp_cert', 'GMP Certificate', 'EMA', 'EU', '—', '—', '—', 'EMA/National authority GMP compliance.'],
+      /* BP-W1-3: both rows named EMA as the issuing authority. Neither is issued
+         by EMA. A CEP is issued by the EDQM (Council of Europe), and a GMP
+         certificate is issued by the national competent authority that performed
+         the inspection and published in EudraGMDP. Routing either request to EMA
+         sends it to an agency that cannot act on it. */
+      ['cep', 'Certificate of Suitability (CEP)', 'EDQM', 'EU', '—', '—', '—', 'EDQM monograph conformity for well-known substances. Issued by the European Directorate for the Quality of Medicines & HealthCare, not EMA.'],
+      ['gmp_cert', 'GMP Certificate', 'National competent authority', 'EU', '—', '—', '—', 'Issued by the national competent authority that performed the inspection and published in the EudraGMDP database. Not issued by EMA.'],
       ['stability_protocol', 'Stability Protocol', 'FDA', 'GLOBAL', 'eCTD', '3.2.P.8', 'eCTD', 'ICH Q1A/Q1E stability study design.'],
     ],
     designations_expedited: [
@@ -193,9 +198,20 @@ const REGISTRY_SOURCE: Record<string, Record<string, RegistryTuple[]>> = {
       ['rems', 'REMS', 'FDA', 'US', 'eCTD', '—', 'eCTD', 'Risk Evaluation and Mitigation Strategy.'],
       ['rmp', 'Risk Management Plan', 'EMA', 'EU', 'eCTD', '—', 'eCTD', 'EU safety specification and risk-minimization measures.'],
       ['pmr_pmc', 'PMR / PMC', 'FDA', 'US', 'eCTD', '—', 'eCTD', 'Post-marketing required/committed studies.'],
-      ['medwatch', 'MedWatch / FAERS', 'FDA', 'US', '—', '—', '—', 'Adverse-event reporting into FAERS.'],
-      ['eudravigilance', 'EudraVigilance Report', 'EMA', 'EU', '—', '—', 'E2B', 'Electronic adverse-event report to EudraVigilance.'],
-      ['susar_report', 'SUSAR Report', 'FDA', 'GLOBAL', 'eCTD', '—', 'eCTD', 'Suspected Unexpected Serious Adverse Reaction.'],
+      /* BP-W1-3: "MedWatch / FAERS" was listed as a single filing type. FAERS is
+         a DATABASE and MedWatch is the form family that feeds it — neither is a
+         submission a sponsor plans, schedules or assembles. What a sponsor
+         actually owes are two distinct obligations on two distinct clocks, so
+         those are what the catalog now models. The generic row is retired. */
+      ['icsr_15day', '15-Day Alert Report (ICSR)', 'FDA', 'US', '—', '—', 'E2B(R3)', 'Expedited individual case safety report for a serious, unexpected, suspected adverse reaction — 21 CFR 314.80(c)(1), due within 15 calendar days. Transmitted as an E2B(R3) message to FAERS.'],
+      ['pader', 'Periodic Safety Report (PADER)', 'FDA', 'US', '—', '—', '—', 'US periodic adverse drug experience report — 21 CFR 314.80(c)(2), quarterly for the first three years post-approval and annually thereafter.'],
+      ['eudravigilance', 'EudraVigilance Report', 'EMA', 'EU', '—', '—', 'E2B(R3)', 'Electronic individual case safety report transmitted to EudraVigilance.'],
+      /* BP-W1-3: a SUSAR was carried as an eCTD Module 5 document. It is not an
+         eCTD document at all — it is an E2B(R3) ICSR transmitted to FAERS or
+         EudraVigilance on the 7-day (fatal/life-threatening) or 15-day clock.
+         Filing it into an eCTD sequence would both miss the reporting obligation
+         and put a non-dossier artefact in the backbone. */
+      ['susar_report', 'SUSAR Report', 'FDA / EMA', 'GLOBAL', '—', '—', 'E2B(R3)', 'Suspected Unexpected Serious Adverse Reaction — an E2B transmission to FAERS / EudraVigilance on the 7-day (fatal or life-threatening) or 15-day clock. Not an eCTD Module 5 document.'],
       ['signal_detect', 'Signal Detection Report', 'EMA', 'GLOBAL', '—', '—', '—', 'Disproportionality analysis and signal assessment.'],
     ],
     clinical_documents: [
@@ -209,13 +225,20 @@ const REGISTRY_SOURCE: Record<string, Record<string, RegistryTuple[]>> = {
       ['tabulated_sum', 'Tabulated Summaries (M2.7.4)', 'FDA', 'GLOBAL', 'eCTD', '2.7.4', 'eCTD', 'Individual patient data listings.'],
     ],
     generics_biosimilars: [
-      ['anda', 'Abbreviated NDA (ANDA)', 'FDA', 'US', 'eCTD', 'M1–M3', 'eCTD', 'Generic drug application demonstrating bioequivalence.', 'anda'],
+      /* BP-W1-3: all three abbreviated generic pathways were scoped M1–M3, which
+         leaves no module for the bioequivalence study reports that ARE their
+         central evidence. "No original clinical data required" means no new
+         safety/efficacy trials — a BE study is still a clinical study and its
+         report is still Module 5 (ICH M4 Annex 5.3.1, Reports of Biopharmaceutic
+         Studies). Scoped to M1–M3, the application cannot carry the one thing it
+         exists to demonstrate. */
+      ['anda', 'Abbreviated NDA (ANDA)', 'FDA', 'US', 'eCTD', 'M1–M5 (BE in 5.3.1)', 'eCTD', 'Generic drug application demonstrating bioequivalence; the BE study reports are filed in Module 5.3.1.', 'anda'],
       ['us_505b2', '505(b)(2) Application', 'FDA', 'US', 'eCTD', 'M1–M5', 'eCTD', 'NDA relying partly on literature or FDA prior findings.', '505b2'],
       ['biosim_351k', 'Biosimilar 351(k)', 'FDA', 'US', 'eCTD', 'M1–M5', 'eCTD', 'Biosimilar demonstrating biosimilarity to reference.', 'biosimilar'],
       ['biosim_eu', 'Biosimilar MAA', 'EMA', 'EU', 'eCTD', 'M1–M5', 'eCTD', 'EU centralized biosimilar application.'],
       ['biosim_pmda', 'Biosimilar', 'PMDA', 'JP', 'eCTD', 'M1–M5', 'eCTD', 'PMDA biosimilar application.'],
-      ['generic_eu', 'Generic Decentralized', 'EMA', 'EU', 'eCTD', 'M1–M3', 'eCTD', 'EU decentralized generic application.'],
-      ['ands_hc', 'ANDS', 'Health Canada', 'CA', 'eCTD', 'M1–M3', 'eCTD', 'Health Canada abbreviated new drug submission.'],
+      ['generic_eu', 'Generic Decentralized', 'National competent authorities (DCP)', 'EU', 'eCTD', 'M1–M5 (BE in 5.3.1)', 'eCTD', 'EU decentralised generic application; bioequivalence study reports are filed in Module 5.3.1. Assessed by the Reference Member State and concerned member states, not centrally by EMA.'],
+      ['ands_hc', 'ANDS', 'Health Canada', 'CA', 'eCTD', 'M1–M5 (BE in 5.3.1)', 'eCTD', 'Health Canada abbreviated new drug submission; comparative bioavailability study reports are filed in Module 5.3.1.'],
       ['biosim_tga', 'Biosimilar', 'TGA', 'AU', 'eCTD', 'M1–M5', 'eCTD', 'TGA biosimilar medicine registration.'],
     ],
   },

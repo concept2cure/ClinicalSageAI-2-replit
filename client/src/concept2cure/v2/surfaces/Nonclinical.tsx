@@ -387,7 +387,19 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       title="Nonclinical & Module 4"
       state={
         summary ? (
-          <><b>{studies.length}</b> GLP {studies.length === 1 ? 'study' : 'studies'} {I.dot} SEND {summary.send.risk === 'none' ? 'not in scope' : summary.send.risk + ' risk'} {I.dot} Module 2.6 {summary.completeness}% complete.</>
+          /* BP-W1-3: `send.risk === 'none'` rendered as "SEND not in scope",
+             which contradicted this module's own surface — it validates SEND
+             against Pinnacle 21 rules two panels down, and offers "Fix the SEND
+             LB dataset reject" as a starter. SEND is MANDATORY for FDA
+             nonclinical data in an NDA, BLA or ANDA (FDA Data Standards Catalog,
+             eCTD m4.2.3 study data); a study cannot opt out of it.
+
+             The projection never meant scope. `risk: 'none'` is the engine
+             saying it found no conformance risk — an absence of findings, which
+             the surface then reported as an absence of obligation. That is the
+             same substitution BP-W0-3 fixed in the readiness narratives, landing
+             here on a mandatory standard. It now reports what was measured. */
+          <><b>{studies.length}</b> GLP {studies.length === 1 ? 'study' : 'studies'} {I.dot} SEND {summary.send.risk === 'none' ? 'no conformance risk flagged' : summary.send.risk + ' risk'} {I.dot} Module 2.6 {summary.completeness}% complete.</>
         ) : (
           <><b>{studies.length}</b> GLP {studies.length === 1 ? 'study' : 'studies'} in the governed nonclinical registry.</>
         )

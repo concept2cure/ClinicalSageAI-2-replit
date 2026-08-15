@@ -344,6 +344,25 @@ const ICSR_SECTIONS: SectionDefinition[] = [
   { code: 'C.2', title: 'Primary Source / Reporter Information', module: 5, required: true, contentType: 'form' },
 ];
 
+/**
+ * Periodic Adverse Drug Experience Report — 21 CFR 314.80(c)(2).
+ *
+ * The US periodic obligation, distinct from the 15-day alert above in every
+ * respect that matters: it is periodic rather than case-triggered (quarterly for
+ * three years post-approval, annually thereafter), it covers the NON-expedited
+ * cases, and it carries a narrative summary and analysis the ICSR does not. The
+ * two were previously one catalog row, which is the kind of conflation that
+ * produces a missed filing (BP-W1-3).
+ */
+const PADER_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'FDA Form 3500A Reports (Non-Expedited Cases)', module: 1, required: true, contentType: 'form', guidance: '21 CFR 314.80(c)(2)(i)' },
+  { code: '2', title: 'Narrative Summary and Analysis of the Reporting Interval', module: 1, required: true, contentType: 'narrative', guidance: '21 CFR 314.80(c)(2)(ii)' },
+  { code: '3', title: 'Index Line-Listing of Reports', module: 1, required: true, contentType: 'mixed' },
+  { code: '4', title: 'History of Actions Taken for Safety Reasons', module: 1, required: true, contentType: 'narrative' },
+  { code: '5', title: 'Status of Post-Marketing Study Commitments', module: 1, required: false, contentType: 'narrative' },
+  { code: '6', title: 'Labeling Changes in the Interval', module: 1, required: false, contentType: 'mixed' },
+];
+
 /** Structured benefit-risk assessment (CTD 2.5.6 / FDA BRF / EMA PrOACT-URL). */
 const BENEFIT_RISK_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Therapeutic Context (Condition, Current Treatment Options)', module: 2, required: true, contentType: 'narrative' },
@@ -643,7 +662,14 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
 
   // US post-approval lifecycle, safety, and environmental
   us_pmr_sections: { id: 'us_pmr_sections', name: 'Post-Marketing Requirement / Commitment Study', sections: PROTOCOL_SECTIONS },
-  us_medwatch_sections: { id: 'us_medwatch_sections', name: 'MedWatch Expedited Safety Report (ICSR)', sections: ICSR_SECTIONS },
+  /* BP-W1-3: `us_medwatch_sections` backed a catalog row named "MedWatch /
+     FAERS", which was not a filing type — FAERS is a database, MedWatch a form
+     family. The row is now two obligations with different legal bases and
+     different clocks, so each gets its own blueprint. The ICSR section set is
+     unchanged and simply renamed to what it always was: an E2B(R3) case, not a
+     MedWatch form. */
+  us_icsr_15day_sections: { id: 'us_icsr_15day_sections', name: '15-Day Alert Report — ICSR (21 CFR 314.80(c)(1))', sections: ICSR_SECTIONS },
+  us_pader_sections: { id: 'us_pader_sections', name: 'Periodic Adverse Drug Experience Report (21 CFR 314.80(c)(2))', sections: PADER_SECTIONS },
   us_ea_sections: { id: 'us_ea_sections', name: 'Environmental Assessment (21 CFR 25)', sections: ENVIRONMENTAL_ASSESSMENT_SECTIONS },
   us_eua_sections: { id: 'us_eua_sections', name: 'Emergency Use Authorization (vaccine/biologic)', sections: CTD_SECTIONS },
 

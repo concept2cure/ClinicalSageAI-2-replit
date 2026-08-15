@@ -96,7 +96,10 @@ describe('Registry coverage', () => {
       // India CDSCO clinical-trial + marketing forms.
       'IN_CT06', 'IN_CT07', 'IN_CT11', 'IN_CT18', 'IN_CT19', 'IN_CT21',
       // US post-approval lifecycle / safety / environmental; UK + China lifecycle; ICH signal.
-      'US_PMR', 'US_MEDWATCH', 'US_EA', 'US_EUA',
+      // BP-W1-3 replaced 'US_MEDWATCH' — FAERS is a database and MedWatch a form
+      // family, neither a filing type — with the two obligations a US sponsor
+      // actually owes, on their two different clocks and legal bases.
+      'US_PMR', 'US_ICSR_15DAY', 'US_PADER', 'US_EA', 'US_EUA',
       'UK_IRP', 'UK_VARIATION', 'CN_RENEWAL', 'ICH_SIGNAL',
       // Remaining drug CMC/marketing lifecycle + the five CTD module authoring surfaces.
       'US_SUPAC', 'AU_CAT2',

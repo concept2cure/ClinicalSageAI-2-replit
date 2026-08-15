@@ -129,6 +129,25 @@ export interface RegulatoryApplicationType {
   submissionFormat?: string;
   /** CTD module/section location where the document lives, when applicable (e.g. 'M1–M5', '3.2.S', '2.3'). */
   ctdModule?: string;
+  /**
+   * The NAMED SPECIFICATION that decides `ctdModule`, so the assignment can be
+   * re-audited without re-deriving it (BP-W1-4).
+   *
+   * Module assignment is not a display detail: it decides where a document lands
+   * in the eCTD backbone and therefore whether the sequence validates. An audit
+   * of a sample of this catalog found four demonstrable errors — an Investigator's
+   * Brochure in M5, an ANDA scoped to M1–M3 with no room for its own
+   * bioequivalence evidence — which is the signature of a catalog populated from
+   * memory rather than from the specifications.
+   *
+   * An unsourced assignment cannot be checked; it can only be re-guessed. Where
+   * this field is set it names the authority (ICH M4 Annex, FDA eCTD Module 1
+   * Specification v2.3, EU Module 1 Specification v3.0, or the regulation
+   * itself) and, where the value was corrected, what it used to be and why that
+   * was wrong. Absent means the assignment has not yet been traced to a
+   * specification — which is a finding, not a default.
+   */
+  moduleAuthority?: string;
   /** Product class(es) this applies to */
   productClass: ProductClass[];
   /** Dossier format standard */
