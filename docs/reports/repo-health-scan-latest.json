@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-15T05:34:54.756Z",
+  "generatedAt": "2026-08-15T06:15:52.107Z",
   "git": {
-    "sha": "b3552e44cadeab563e6846411be5cb83d26dfb27",
+    "sha": "2a03dc16dba3c04ff522740d079c2a4208e358ac",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 35,
-    "largeFilesByLines": 85
+    "largeFilesByLines": 86
   },
   "findings": {
     "duplicateBasenames": [
@@ -2608,6 +2608,10 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1509
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1501
       }
     ]
   },
@@ -2635,7 +2639,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 55,
       "largeByBytes": 2,
-      "largeByLines": 2
+      "largeByLines": 3
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
