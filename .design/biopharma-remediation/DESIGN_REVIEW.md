@@ -246,7 +246,26 @@ Both are why a design review could not see the product it was reviewing.
   names made this unavoidable rather than latent. Now escaped, with `]]>`
   handled inside CDATA, and pinned by a test that parses the bytes.
 
-- **A latent cross-tenant read in `part11-compliance.ts`, armed but not firing.**
+- ~~**A latent cross-tenant read in `part11-compliance.ts`, armed but not firing.**~~
+  **DISARMED.** Three of the five routes are now connected via `requestPgClient`
+  — the request-pinned connection, so RLS applies — each with its tenant
+  predicate landing in the *same change* as the repair. `/signatures/:documentId`
+  gained a mandatory `organization_id` filter; the manifest route's predicate was
+  conditional (`if (Number.isFinite(orgId))`, i.e. a default, not a predicate)
+  and carried `OR organization_id IS NULL`, letting every tenant read any
+  unattributed row — both removed. `seal-integrity`'s guard accepted `admin`,
+  the org-scoped role self-service signup mints for the first user of every new
+  organization, on an endpoint that reads the estate-wide chain; now
+  platform-only.
+
+  **Two routes are deliberately left unconnected**, with the reason in the code
+  so the 500 is not "fixed" blind. `/audit-trail/:entityId` selects six columns
+  that exist on no table it can reach and has no tenant column to filter on;
+  `/audit-trail/seal-integrity` would report a false "chain broken" under RLS,
+  because it walks a global chain through a tenant-scoped connection. Both need
+  decisions, not repairs.
+
+  The old finding, for the record:
   All five routes do `const pool = (req as any).pool || (req.app as any).pool`,
   and **nothing in the repo assigns either** — so every one 500s on
   `pool.query` of `undefined`. The identical bug was found and fixed in

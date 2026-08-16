@@ -26,6 +26,73 @@ import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
+import { requestPgClient } from '../db/requestDb';
+
+/**
+ * The request-scoped, tenant-pinned SQL client.
+ *
+ * ── What this replaces, and why it is not the shared pool ────────────────────
+ * Every route in this file resolved its pool as
+ *
+ *     const pool: Pool = (req as any).pool || (req.app as any).pool;
+ *
+ * and NOTHING in this repository assigns `req.pool` or `req.app.pool` — the
+ * only four assignments are in this file's own tests. So both operands were
+ * always undefined and every one of these five routes threw
+ * `TypeError: Cannot read properties of undefined (reading 'query')` and
+ * answered 500. `server/routes/graphrag.ts:543` documents the identical defect
+ * and repaired it with a fallback to the shared process pool.
+ *
+ * That fallback is deliberately NOT copied here, for two reasons.
+ *
+ * FIRST, it would arm a tenant leak rather than close a bug. Three of these five
+ * routes had no tenant predicate, and `document_id` / `entity_id` are
+ * enumerable serials — so the routes are currently safe only by virtue of being
+ * broken. Repairing the connection without the predicates is strictly worse
+ * than leaving them broken. The predicates land in the same change as the
+ * repair, route by route, and the two routes that cannot be made safe in one
+ * step are left disconnected on purpose (see their own comments).
+ *
+ * SECOND, the shared process pool is the wrong connection. `requestPgClient`
+ * returns the
+ * connection `establishRequestTenantScope` already pinned to this request, with
+ * `app.current_tenant_id` / `current_org_id` / `current_user_role` set on it —
+ * so the RLS policies on `electronic_signatures` and `audit_events` actually
+ * apply, instead of app-layer predicates being the only thing standing between
+ * one tenant and another. It is fail-closed: absent tenant context it throws
+ * `MissingRequestDbContextError` rather than quietly serving from the shared
+ * pool. `scripts/ci/audit-requestdb-coverage.mjs` ratchets on the shared-pool
+ * accessors and this file is not in its baseline, which is the same judgement
+ * expressed as a gate.
+ */
+/**
+ * Generic in the row type, matching what `pg`'s `Pool.query` gave these call
+ * sites before. `requestPgClient` declares its rows as
+ * `Record<string, unknown>`, which is the more honest type but would require
+ * rewriting every consumer in this file to narrow each column — a much larger
+ * diff, on routes whose SQL is unchanged, for no behavioural gain. The cast is
+ * confined to this one function so the widening is visible in one place.
+ */
+type SqlClient = {
+  query<T = any>(text: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number }>;
+};
+
+const requestSql = (req: Request): SqlClient => requestPgClient(req) as unknown as SqlClient;
+
+/**
+ * The organization on the verified request, or `null`.
+ *
+ * Both accessors are the ones this file already used at the two routes that
+ * were correctly scoped; hoisted so a new route cannot invent a third way of
+ * asking, and so "no org ⇒ refuse" is one decision rather than five.
+ */
+function requestOrgId(req: Request): number | null {
+  const raw =
+    (req as unknown as { user?: { organizationId?: unknown } }).user?.organizationId ??
+    (req as unknown as { tenantContext?: { organizationId?: unknown } }).tenantContext?.organizationId;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -326,7 +393,22 @@ const router = Router();
  * Get all signatures for a document
  */
 router.get('/signatures/:documentId', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  /* SECURITY. This SELECT filtered on `document_id` ALONE, and `documents.id`
+     is a serial — so with a working connection any authenticated user of any
+     tenant could enumerate ids and read another tenant's §11.50 signature rows:
+     signer name, title, email, meaning, hash, IP address.
+
+     It has never actually leaked, because `req.pool` is undefined and the route
+     500s before reaching Postgres. That is not a control, it is an accident,
+     and it is why the predicate lands in the SAME change as the repair rather
+     than after it. The clause is mandatory — no org on the request is a 403,
+     not an unscoped read — which is the difference from the manifest route
+     below, whose optional clause silently became a read-by-id. */
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const pool: SqlClient = requestSql(req);
   const { documentId } = req.params;
 
   try {
@@ -341,10 +423,10 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
              signature_meaning, signature_hash, binding_basis,
              second_factor_verified, is_valid, signed_at, ip_address
       FROM electronic_signatures
-      WHERE document_id = $1
+      WHERE document_id = $1 AND organization_id = $2
       ORDER BY signed_at DESC
     `,
-      [documentId]
+      [documentId, orgId]
     );
 
     res.json({ success: true, data: result.rows });
@@ -369,7 +451,11 @@ router.get('/signatures/:documentId', async (req: Request, res: Response) => {
  * record. Read-only; the data is captured at signing time, this assembles it.
  */
 router.get('/signatures/:signatureId/manifest', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const pool: SqlClient = requestSql(req);
   const { signatureId } = req.params as { signatureId: string };
 
   // electronic_signatures.id is a serial integer — reject a non-numeric id
@@ -390,26 +476,22 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
     // falls back to signature_type when no explicit meaning was declared —
     // a derivation from stored fields, never an invented value.
     //
-    // Tenant scope: when the authenticated request carries an organization,
-    // only that org's rows (plus legacy pre-tenancy rows with NULL org) are
-    // servable — no cross-tenant signature probing by id.
-    const orgIdRaw =
-      (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
-    const orgId = Number(orgIdRaw);
-    const params: unknown[] = [idNum];
-    let tenantClause = '';
-    if (Number.isFinite(orgId)) {
-      params.push(orgId);
-      tenantClause = ' AND (es.organization_id = $2 OR es.organization_id IS NULL)';
-    }
+    /* Tenant scope, now MANDATORY and without the NULL escape.
+       It was neither. The clause was appended only `if (Number.isFinite(orgId))`,
+       so a token carrying no numeric organization turned this into an unscoped
+       read-by-id — a conditional predicate is not a predicate, it is a default.
+       And `OR es.organization_id IS NULL` let every tenant read any
+       unattributed row, which is looser than the RLS policy behind it, and that
+       policy excludes NULL for the same reason. The org is checked once at the
+       top of the handler now (see above). */
     const result = await pool.query(
       `SELECT es.id, es.signer_name, es.signer_title, o.name AS signer_organization,
               COALESCE(es.signature_meaning, es.signature_type) AS meaning,
               es.signed_at, es.signed_target, es.binding_basis
          FROM electronic_signatures es
          LEFT JOIN organizations o ON o.id = es.organization_id
-        WHERE es.id = $1${tenantClause}`,
-      params
+        WHERE es.id = $1 AND es.organization_id = $2`,
+      [idNum, orgId]
     );
     if (!result.rows.length) {
       return res.status(404).json({ success: false, error: 'Signature not found' });
@@ -504,6 +586,30 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response, next: N
   if (entityId === 'chain-integrity' || entityId === 'seal-integrity') {
     return next();
   }
+  /* DELIBERATELY NOT CONNECTED. Do not "fix the 500" by handing this a working
+     client — it is broken twice over and a connection makes it worse, not
+     better.
+
+     1. The columns do not exist. This selects `user_role`, `previous_value`,
+        `new_value`, `change_reason`, `session_id` and `record_hash` from an
+        unqualified `audit_trail`. The runtime connection sets no `search_path`,
+        so that resolves to `public.audit_trail`, whose only DDL in this repo
+        (migrations/0000_sweet_joseph.sql) defines none of those six. The
+        `compliance.audit_trail` that has some of them is in another schema this
+        query cannot reach, and has no `action`/`entity_type`/`entity_id`. A
+        working client turns the TypeError into a 42703, which the catch below
+        does not map (it handles 42P01 only) — a 500 either way.
+     2. There is no tenant predicate, and `entity_id` is a serial. The table has
+        no `organization_id` to add one from; it is isolated only by a
+        parent-scoped RLS policy through `leaf_id → leaves.organization_id`, and
+        both of those columns are nullable, so under enforcement the rows are
+        visible to nobody and with enforcement off they are visible to everyone.
+
+     There is also no writer: nothing in the repo INSERTs into `public.audit_trail`.
+     `appendAuditEntry` writes `audit_events`, the tamper-proof observer writes
+     `audit_logs`. The fix is to re-point this at `audit_events` — which has every
+     column it wants plus `organization_id` — or to delete it, as `POST /signatures`
+     was deleted above. Both are product decisions, not repairs. */
   const pool: Pool = (req as any).pool || (req.app as any).pool;
   const entityType = req.query.type as string;
 
@@ -609,18 +715,20 @@ router.post('/audit-trail', (req: Request, res: Response) => {
  * hashes from the DB and comparing against stored record_hash values.
  */
 router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
   // SECURITY: pre-fix the orgId came from req.query, so any caller
   // could verify the chain integrity of any tenant's audit trail.
   // When the query was empty the filter was OMITTED entirely — meaning
   // the verifier ran across all tenants combined, which would fail
   // chain consistency and leak hash data from foreign rows. JWT-bound now.
-  const orgIdRaw =
-    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
-  if (orgIdRaw == null) {
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
     return res.status(403).json({ error: 'Tenant context required' });
   }
-  const orgId = Number(orgIdRaw);
+  /* Connected. This is the one route of the five whose predicate was already
+     mandatory and unconditional, and the only one with a live client caller
+     (Part11Console) — which has therefore been reading a 500 for as long as the
+     pool has been undefined. */
+  const pool: SqlClient = requestSql(req);
 
   try {
     const orgFilter = `WHERE organization_id = $1`;
@@ -1007,9 +1115,38 @@ router.get('/health', (_req: Request, res: Response) => {
 router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) => {
   const user = (req as any).user;
   const roles: string[] = user?.roles || (user?.role ? [user.role] : []);
-  if (!roles.includes('admin') && !roles.includes('super_admin')) {
-    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Admin role required for system audit-integrity verification.' } });
+  /* `admin` is an ORG-scoped role, not a platform one. server/middleware/auth.ts
+     states it directly: self-service signup mints `admin` for the first user of
+     every new organization, so an org admin is an ordinary customer. This route
+     reads the estate-wide `audit_logs` chain deliberately un-scoped, so that
+     guard let any customer who signed themselves up verify — and receive hash
+     material from — every tenant's audit chain.
+
+     `super_admin` is genuine, and is retained. `admin` is removed. The full
+     platform guard is server/middleware/requirePlatformAdmin.ts, which also
+     honours PLATFORM_ADMIN_EMAILS; wiring it here needs a mount-order change
+     that belongs with the connection work below. */
+  if (!roles.includes('super_admin') && !roles.includes('platform_admin')) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Platform-admin role required for system audit-integrity verification.' } });
   }
+  /* DELIBERATELY NOT CONNECTED, and this one is wrong in BOTH enforcement
+     modes, in opposite directions.
+
+     With RLS off, `verifyAuditIntegrity` walks the whole `audit_logs` table
+     across every tenant — which is what it is for, but it means the response
+     carries hash material spanning the estate.
+
+     With RLS ON, `requestPgClient` pins a per-tenant scope and `audit_logs`
+     carries `tenant_id`, so the walk sees a SUBSET of a chain whose hashes were
+     computed over the whole table. Every row after the first tenant boundary
+     mismatches and the endpoint reports a false "chain broken" on an intact
+     chain — the most alarming possible output of a §11.10(e) surface, produced
+     by the isolation working correctly.
+
+     It needs an explicit SYSTEM scope (establishRequestSystemScope), not a
+     request scope, and that is a different change from this one. Note also that
+     the `if (!pool)` check below is incompatible with a client accessor that
+     THROWS on missing context — it would never be reached. */
   const pool: Pool = (req as any).pool || (req.app as any).pool;
   if (!pool) {
     return res.status(503).json({ error: { code: 'NO_DB', message: 'Audit database not available.' } });

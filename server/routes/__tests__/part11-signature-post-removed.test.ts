@@ -57,7 +57,7 @@ function buildApp() {
     req.user = { id: 42, userId: 42, email: 'genuine.owner@example.com', role: 'admin', organizationId: 7 };
     // A pool that THROWS on any query: if some handler still tried to sign here,
     // the test would surface it rather than silently accepting stubbed SQL.
-    req.pool = { query: async () => { throw new Error('no query expected on this path'); } };
+    req.dbClient = { query: async () => { throw new Error('no query expected on this path'); } };
     next();
   });
   app.use('/api/part11', part11Router);
