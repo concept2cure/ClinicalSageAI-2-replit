@@ -84,6 +84,7 @@ import {
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { AuthoringSignatures } from './AuthoringSignatures';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -292,7 +293,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const [saving, setSaving] = useState(false);
 
   // Right rail: AnA, revision history, comments, or the section's sources.
-  const [rail, setRail] = useState<'ana' | 'history' | 'comments' | 'sources' | null>(null);
+  const [rail, setRail] = useState<'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null>(null);
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -995,6 +996,12 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'sources' ? null : 'sources')} data-active={rail === 'sources' || undefined}>
               {I.fileText} Sources{activeSection && num(activeSection.citation_count) > 0 ? ' ' + num(activeSection.citation_count) : ''}
             </button>
+            {/* §11.50(b): the signature record was stored, exposed by
+                GET /docs/:docId/signatures, and read by nothing. The only
+                manifestation a signer saw was a toast that fades in 4.2s. */}
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'signatures' ? null : 'signatures')} data-active={rail === 'signatures' || undefined}>
+              {I.shieldCheck} Signatures
+            </button>
             <button className="btn primary" style={{ height: 30 }} onClick={save} disabled={!dirty || saving}>
               {I.check} {saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}
             </button>
@@ -1243,6 +1250,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           is a citation someone recorded, with its standing against the source's
           content today computed server-side from stored checksums — nothing here
           is inferred from the draft text. */}
+      {rail === 'signatures' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h">Electronic signatures</div>
+          <AuthoringSignatures docId={activeDocId} />
+        </aside>
+      )}
+
       {rail === 'sources' && (
         <aside className="ed-comments">
           <div className="ed-comments-h">Drafted from</div>
