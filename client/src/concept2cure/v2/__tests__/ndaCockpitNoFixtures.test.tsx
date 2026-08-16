@@ -216,6 +216,83 @@ describe('NdaCockpit — no fabricated filing identity or review clock', () => {
   });
 });
 
+/**
+ * SF-4 of the Wave 0 design review.
+ *
+ * The lead narrative was rewritten (BP-W0-3) to stop deriving clearance from an
+ * empty findings set, and it says "Reading this application's filing readiness…"
+ * while the read is in flight and "Filing readiness could not be read." when it
+ * fails. The KPI strip three inches below it went on rendering `overall`,
+ * `m1open` and `highs.length` unconditionally — and all three are 0 before any
+ * read returns.
+ *
+ * So the surface said nothing was known and, in a much larger font, that the
+ * application was 0% ready with 0 high Refuse-to-File risks. The second is the
+ * empty-set-as-clearance claim the first was rewritten to stop making.
+ */
+describe('NdaCockpit — the KPI strip reports no figure it does not have', () => {
+  function heldReads() {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    apiRequest.mockImplementation(async () => {
+      await gate;
+      return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) } as Response;
+    });
+    return release;
+  }
+
+  function kpiValues() {
+    return Array.from(document.querySelectorAll('.reg-kpi')).map((k) => ({
+      label: k.querySelector('.reg-kpi-l')!.textContent ?? '',
+      value: k.querySelector('.reg-kpi-v')!.textContent ?? '',
+    }));
+  }
+
+  it('shows no readiness percentage while the reads are in flight', () => {
+    const release = heldReads();
+    try {
+      render(<NdaCockpit {...props()} />);
+      const readiness = kpiValues().find((k) => k.label.includes('Application readiness'))!;
+      expect(readiness.value).not.toContain('0%');
+      expect(readiness.value).toBe('—');
+    } finally {
+      release();
+    }
+  });
+
+  it('shows no high-RTF count while the reads are in flight', () => {
+    const release = heldReads();
+    try {
+      render(<NdaCockpit {...props()} />);
+      const rtf = kpiValues().find((k) => k.label.includes('High RTF risk'))!;
+      expect(rtf.value).toBe('—');
+    } finally {
+      release();
+    }
+  });
+
+  /* A failed read is not a clean zero. This is the same rule the lead already
+     holds, applied to the figures beside it. */
+  it('shows no figures when the reads FAIL, rather than a clean zero', async () => {
+    apiRequest.mockImplementation(async () => ({
+      ok: false, status: 403, json: async () => ({ error: { code: 'AUTH_REQUIRED' } }),
+    }) as Response);
+    render(<NdaCockpit {...props()} />);
+    await screen.findByText(/Filing readiness could not be read/);
+    for (const label of ['Application readiness', 'Module 1 admin open', 'High RTF risk']) {
+      expect(kpiValues().find((k) => k.label.includes(label))!.value).toBe('—');
+    }
+  });
+
+  it('does render the real figures once every read has settled', async () => {
+    mockApi({ ok: true, status: 200, body: { assessments: [] } });
+    render(<NdaCockpit {...props()} />);
+    await screen.findByText(/Nothing has been assessed for this application yet/);
+    const readiness = kpiValues().find((k) => k.label.includes('Application readiness'))!;
+    expect(readiness.value).toBe('0%');
+  });
+});
+
 describe('NdaCockpit BLA tab — honest error state', () => {
   beforeEach(() =>
     mockApi({ ok: false, status: 403, body: { error: 'FORBIDDEN' } }),

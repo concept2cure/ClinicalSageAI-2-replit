@@ -319,6 +319,13 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   });
   const reassuring = mayReassure(filingState, overall);
 
+  /* The KPI strip may show a figure only once there IS one. `m1Live` is in the
+     test because the Module 1 count is its own read: the modules and RTF reads
+     can settle while it has not, and a 0 from an unsettled read is the same
+     false zero whichever read produced it. */
+  const kpiSettled =
+    filingState !== 'loading' && filingState !== 'unreadable' && !m1Live.loading && !m1Live.error;
+
   /* Each state gets its own sentence. No state borrows another's vocabulary,
      and only `assessed-clear` — unreachable here for the reason above — may
      speak of blockers being absent. */
@@ -350,7 +357,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
         : <>You're <b>{overall}% ready</b>, with {rtf.length} filing-risk {rtf.length === 1 ? 'item' : 'items'} open.</>,
       body: topHigh
-        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()} &mdash; and the same review that refuses today accepts. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
+        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()}. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
         : <>{openItems} {openItems === 1 ? 'item' : 'items'} to work before you submit. None is currently rated high severity.</>,
     },
     'assessed-clear': {
@@ -412,11 +419,25 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {lead}
 
+      {/* Every figure here is a claim about the application, and under `loading`
+          and `unreadable` all three are 0 — not because the application is
+          empty but because nothing has been read. So "0% Application readiness"
+          rendered directly beneath "Reading this application's filing
+          readiness…", and, on a failed read, beneath "Filing readiness could not
+          be read." A zero next to a sentence saying nothing is known is the
+          empty-set-as-clearance error the lead above was rewritten to stop
+          making, restated three inches lower in a larger font.
+
+          An em-dash is what this strip ALREADY uses for a figure it cannot
+          report — the review clock, which has no store — so the unsettled
+          states borrow that idiom rather than inventing a second one. The tone
+          attribute goes with it: `data-tone="err"` on a count of 0 would paint
+          an unread program as an assessed-clean one. */}
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{overall}%</div><div className="reg-kpi-l">Application readiness</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kpiSettled ? <>{overall}%</> : <>&mdash;</>}</div><div className="reg-kpi-l">Application readiness</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">&mdash;</div><div className="reg-kpi-l">Review clock {I.dot} not started</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v" data-tone="warn">{m1open}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={highs.length ? 'err' : undefined}>{highs.length}</div><div className="reg-kpi-l">High RTF risk</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={kpiSettled ? 'warn' : undefined}>{kpiSettled ? m1open : <>&mdash;</>}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={kpiSettled && highs.length ? 'err' : undefined}>{kpiSettled ? highs.length : <>&mdash;</>}</div><div className="reg-kpi-l">High RTF risk</div></div>
       </div>
 
       <div className="reg-tabs">

@@ -208,6 +208,84 @@ describe('BiopharmaSpecialty — honest error states', () => {
   });
 });
 
+/**
+ * SF-2 of the Wave 0 design review. All four surfaces had reached the same
+ * judgment — an empty result set is not a finding of "none" — and each wrote it
+ * by hand against a different local signal (`nextMs`, `designated.length`,
+ * `nextRen`, `top`). Right four times, copy-pasted four times.
+ *
+ * Converging them onto `assessmentState` closed a case none of the four had:
+ * the lead renders ABOVE the tables and had no loading or unreadable state, so
+ * while the fetch was in flight — and, worse, when it FAILED — the lead asserted
+ * its not-assessed sentence about a read that had returned nothing yet. The
+ * tables below already showed an honest error panel; the narrative above them
+ * did not.
+ */
+describe('BiopharmaSpecialty — the lead does not judge an unsettled read', () => {
+  /* A deferred rather than a never-resolving promise: the surface is held in
+     `loading` for the assertion and then released, so the test does not leave a
+     pending fetch behind for the next one. */
+  function heldRead() {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    apiRequest.mockImplementation(async () => {
+      await gate;
+      return { ok: true, status: 200, json: async () => ({ data: [], meta: { count: 0 } }) } as Response;
+    });
+    return release;
+  }
+
+  it('asserts nothing about pediatric standing while the read is in flight', () => {
+    const release = heldRead();
+    try {
+      render(<Pediatric {...props()} />);
+      expect(screen.getByText(/Reading pediatric milestone standing/)).toBeTruthy();
+      expect(screen.queryByText(/No PREA milestones have been recorded/)).toBeNull();
+    } finally {
+      release();
+    }
+  });
+
+  it('asserts nothing about safety standing while the board read is in flight', () => {
+    const release = heldRead();
+    try {
+      render(<Pharmacovigilance {...props()} />);
+      expect(screen.getByText(/Reading safety standing/)).toBeTruthy();
+      expect(screen.queryByText(/No signals have been screened/)).toBeNull();
+      expect(screen.queryByText(/Safety standing is unknown, not clear/)).toBeNull();
+    } finally {
+      release();
+    }
+  });
+
+  /* The one that matters most: a FAILED read must not read as an empty one.
+     "No signals have been screened for this organization" over a 403 is a
+     statement about the org, and it is false — it is a statement about the
+     fetch. */
+  it('says a failed pharmacovigilance read is a failed read, not an empty one', async () => {
+    mockAllFailed();
+    render(<Pharmacovigilance {...props()} />);
+    expect(await screen.findByText(/Safety standing could not be read/)).toBeTruthy();
+    expect(screen.queryByText(/No signals have been screened/)).toBeNull();
+    expect(screen.queryByText(/Nothing is alarming today/)).toBeNull();
+  });
+
+  it('says a failed lifecycle read is a failed read, not an untracked portfolio', async () => {
+    mockAllFailed();
+    render(<Lifecycle {...props()} />);
+    expect(await screen.findByText(/Post-approval portfolio standing could not be read/)).toBeTruthy();
+    expect(screen.queryByText(/No renewal cycle is recorded/)).toBeNull();
+    expect(screen.queryByText(/Nothing recorded is overdue/)).toBeNull();
+  });
+
+  it('says a failed orphan read is a failed read, not an absence of designations', async () => {
+    mockAllFailed();
+    render(<Orphan {...props()} />);
+    expect(await screen.findByText(/Rare-disease designation standing could not be read/)).toBeTruthy();
+    expect(screen.queryByText(/No orphan or rare-disease designations are on file/)).toBeNull();
+  });
+});
+
 describe('BiopharmaSpecialty — no fixture/SampleTag symbol remains in source', () => {
   const src = readFileSync(
     resolve(process.cwd(), 'client/src/concept2cure/v2/surfaces/BiopharmaSpecialty.tsx'),
