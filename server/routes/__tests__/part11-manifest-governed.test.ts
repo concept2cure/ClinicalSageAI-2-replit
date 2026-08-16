@@ -28,8 +28,10 @@ function appWithPool(query: (sql: string, params?: unknown[]) => Promise<{ rows:
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).pool = { query };
-    if (user) (req as any).user = user;
+    (req as any).dbClient = { query };
+    // The route now refuses without a tenant, so the default supplies one —
+    // otherwise every case below asserts the 403 instead of what it is about.
+    (req as any).user = user ?? { organizationId: 7 };
     next();
   });
   app.use('/', part11Router);
@@ -63,7 +65,11 @@ describe('GET /signatures/:signatureId/manifest — governed signatures (§11.50
     const res = await request(appWithPool(query, { organizationId: 7 })).get('/signatures/12/manifest');
     expect(res.status).toBe(200);
     const [sql, params] = query.mock.calls[0];
-    expect(sql).toMatch(/organization_id = \$2 OR es\.organization_id IS NULL/);
+    // Was `organization_id = $2 OR es.organization_id IS NULL`. The NULL arm let
+    // every tenant read any unattributed row — looser than the RLS policy behind
+    // it, which excludes NULL for the same reason. Removed.
+    expect(sql).toMatch(/es\.organization_id = \$2/);
+    expect(sql).not.toMatch(/IS NULL/);
     expect(params).toEqual([12, 7]);
   });
 

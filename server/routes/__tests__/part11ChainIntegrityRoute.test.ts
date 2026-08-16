@@ -18,7 +18,7 @@ function makeApp() {
   app.use(express.json());
   (app as any).pool = { query: mockQuery };
   app.use((req: any, _res, next) => {
-    req.pool = { query: mockQuery };
+    req.dbClient = { query: mockQuery };
     req.user = { id: 1, organizationId: 101, roles: ['admin'] };
     req.tenantContext = { organizationId: 101 };
     next();
