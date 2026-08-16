@@ -151,6 +151,56 @@ export default function createManufacturingRoutes(pool: Pool): Router {
     return orgId;
   }
 
+  /**
+   * The tenant scope, or a refusal. Handlers must use THIS, not `getOrgId`.
+   *
+   * ── The defect ──────────────────────────────────────────────────────────────
+   * `getOrgId` returns null when the request carries no UUID tenant scope, and
+   * its own warning says the consequence is that "org-scoped queries return
+   * empty rather than cross-tenant data". That was true of `/overview`, which
+   * fails closed at the top of this file, and false everywhere else: ten sites
+   * wrote the predicate as
+   *
+   *     if (orgId) { where += ` AND org_id = $n`; params.push(orgId); }
+   *
+   * so a null scope did not narrow the query to nothing — it removed the
+   * boundary and returned EVERY tenant's rows. An optional predicate is not a
+   * filter, it is a default, and the default was "all tenants".
+   *
+   * What is behind it: GMP batch execution records with yields and deviations,
+   * equipment qualification state, quality test dispositions, and drafted
+   * responses to regulatory deficiency findings.
+   *
+   * Three INSERTs had the mirror-image bug — `orgId || null` wrote rows with a
+   * NULL `org_id`, and the RLS policy on these tables carries an
+   * `OR org_id IS NULL` arm, so an unscoped write was permanently readable by
+   * every tenant.
+   *
+   * ── Why 403 and not an empty list ───────────────────────────────────────────
+   * An empty list is a claim: "your organization has no batch records". A
+   * request that could not establish which organization is asking has not
+   * earned that claim. `/overview` degrades to empty KPIs because a dashboard
+   * with no numbers is legible; a record list is not, and a scientist reading
+   * an empty deviation log would draw the wrong conclusion from it.
+   *
+   * Returns null and HAS ALREADY ANSWERED when there is no scope — callers must
+   * `return` immediately without writing to `res` again.
+   */
+  function requireOrgId(req: Request, res: Response): string | null {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      res.status(403).json({
+        error: {
+          code: 'MFG_NO_TENANT_SCOPE',
+          message:
+            'This request carries no organization scope, so manufacturing records cannot be read or written. Sign in again, or contact your administrator if the problem persists.',
+        },
+      });
+      return null;
+    }
+    return orgId;
+  }
+
   function safeError(
     res: Response,
     error: any,
@@ -216,6 +266,11 @@ export default function createManufacturingRoutes(pool: Pool): Router {
       // wide counts to any authenticated caller — a cross-tenant metadata leak.
       // With no resolvable uuid tenant scope, report honest zeros rather than
       // another tenant's (or every tenant's) numbers.
+      /* This handler alone keeps `getOrgId` and degrades to empty KPIs rather
+         than refusing: a dashboard with no numbers is legible, and it already
+         fails closed into that path at the `throw` below. Every OTHER handler
+         returns records, where an empty list would be read as "your
+         organization has none" — see requireOrgId. */
       const orgId = getOrgId(req);
       if (!orgId) {
         dataAvailable = false;
@@ -285,7 +340,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   router.get('/equipment', async (req: Request, res: Response) => {
     try {
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const status = req.query.status as string | undefined;
       const needsCalibration = req.query.needsCalibration === 'true';
 
@@ -293,10 +349,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
       const params: unknown[] = [];
       let idx = 1;
 
-      if (orgId) {
-        whereClause += ` AND org_id = $${idx++}`;
-        params.push(orgId);
-      }
+      whereClause += ` AND org_id = $${idx++}`;
+      params.push(orgId);
       if (status) {
         whereClause += ` AND status = $${idx++}`;
         params.push(status);
@@ -353,7 +407,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   router.post('/equipment', async (req: Request, res: Response) => {
     try {
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const parsed = equipmentSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
@@ -397,7 +452,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
           cleanRoomClass || null,
           nextCalibrationDue || null,
           nextMaintenanceDue || null,
-          orgId || null,
+          orgId,
         ]
       );
 
@@ -419,7 +474,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   router.get('/batches', async (req: Request, res: Response) => {
     try {
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const status = req.query.status as string | undefined;
       const limit = Math.min(parseInt(req.query.limit as string, 10) || 50, 200);
       const offset = parseInt(req.query.offset as string, 10) || 0;
@@ -428,10 +484,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
       const params: unknown[] = [];
       let idx = 1;
 
-      if (orgId) {
-        whereClause += ` AND org_id = $${idx++}`;
-        params.push(orgId);
-      }
+      whereClause += ` AND org_id = $${idx++}`;
+      params.push(orgId);
       if (status) {
         whereClause += ` AND status = $${idx++}`;
         params.push(status);
@@ -476,7 +530,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   router.post('/batches', async (req: Request, res: Response) => {
     try {
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const parsed = batchSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
@@ -509,7 +564,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
           plannedQuantity || null,
           quantityUnit || null,
           masterBatchRecordRef || null,
-          orgId || null,
+          orgId,
         ]
       );
 
@@ -566,12 +621,11 @@ export default function createManufacturingRoutes(pool: Pool): Router {
       }
 
       // Add org_id guard to prevent cross-tenant access
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       let whereClause = 'WHERE id = $2';
-      if (orgId) {
-        whereClause += ` AND org_id = $${idx}`;
-        params.push(orgId);
-      }
+      whereClause += ` AND org_id = $${idx}`;
+      params.push(orgId);
 
       const result = await pool.query(
         `UPDATE manufacturing.batch_execution_records
@@ -615,13 +669,12 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         state: 'Investigating',
       };
 
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const devParams: unknown[] = [JSON.stringify([deviation]), id];
       let devWhere = 'WHERE id = $2';
-      if (orgId) {
-        devParams.push(orgId);
-        devWhere += ` AND org_id = $${devParams.length}`;
-      }
+      devParams.push(orgId);
+      devWhere += ` AND org_id = $${devParams.length}`;
 
       const result = await pool.query(
         `UPDATE manufacturing.batch_execution_records
@@ -680,13 +733,12 @@ export default function createManufacturingRoutes(pool: Pool): Router {
       }
 
       // Fetch batch_number for reference (with org_id guard)
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const batchParams: unknown[] = [id];
       let batchWhere = 'WHERE id = $1';
-      if (orgId) {
-        batchParams.push(orgId);
-        batchWhere += ` AND org_id = $${batchParams.length}`;
-      }
+      batchParams.push(orgId);
+      batchWhere += ` AND org_id = $${batchParams.length}`;
       const batchRow = await pool.query(
         `SELECT batch_number FROM manufacturing.batch_execution_records ${batchWhere}`,
         batchParams
@@ -838,14 +890,13 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   router.get('/responses', async (req: Request, res: Response) => {
     try {
       await ensureResponsesTable();
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
 
       let query = `SELECT * FROM manufacturing.responses`;
       const params: unknown[] = [];
-      if (orgId) {
-        query += ` WHERE org_id = $1`;
-        params.push(orgId);
-      }
+      query += ` WHERE org_id = $1`;
+      params.push(orgId);
       query += ` ORDER BY updated_at DESC`;
 
       const result = await pool.query(query, params);
@@ -864,7 +915,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
   router.post('/response', async (req: Request, res: Response) => {
     try {
       await ensureResponsesTable();
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const parsed = responseSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: 'Validation failed', details: parsed.error.issues });
@@ -876,10 +928,8 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         // Org_id guard on update to prevent cross-tenant modification
         const updateParams: unknown[] = [findingId, section || null, text, JSON.stringify(evidenceIds || []), id];
         let updateWhere = 'WHERE id = $5';
-        if (orgId) {
-          updateParams.push(orgId);
-          updateWhere += ` AND org_id = $${updateParams.length}`;
-        }
+        updateParams.push(orgId);
+        updateWhere += ` AND org_id = $${updateParams.length}`;
         const result = await pool.query(
           `UPDATE manufacturing.responses
            SET finding_id = $1, section = $2, response_text = $3,
@@ -898,7 +948,7 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         `INSERT INTO manufacturing.responses (finding_id, section, response_text, evidence_ids, org_id)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [findingId, section || null, text, JSON.stringify(evidenceIds || []), orgId || null]
+        [findingId, section || null, text, JSON.stringify(evidenceIds || []), orgId]
       );
 
       return res.status(201).json({ response: result.rows[0] });
@@ -916,13 +966,12 @@ export default function createManufacturingRoutes(pool: Pool): Router {
       const { batchId } = req.params;
 
       // Fetch batch (with org_id guard)
-      const orgId = getOrgId(req);
+      const orgId = requireOrgId(req, res);
+      if (!orgId) return;
       const releaseParams: unknown[] = [batchId];
       let releaseWhere = 'WHERE id = $1';
-      if (orgId) {
-        releaseParams.push(orgId);
-        releaseWhere += ` AND org_id = $${releaseParams.length}`;
-      }
+      releaseParams.push(orgId);
+      releaseWhere += ` AND org_id = $${releaseParams.length}`;
       const batchRes = await pool.query(
         `SELECT * FROM manufacturing.batch_execution_records ${releaseWhere}`,
         releaseParams
