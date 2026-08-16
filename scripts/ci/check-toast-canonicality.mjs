@@ -86,24 +86,24 @@ const CANONICAL = 'client/src/concept2cure/v2/toast.tsx';
  * an existing one, fails the gate.
  */
 const UNCONVERGED_BASELINE = {
-  /* Was 6. Those six — AdminSurfaces, CommunicationCenter, DesignControls,
-     HumanFactors, Labeling, Risk — are converged, so the floor is 0 and a new
-     one fails.
+  /* All five are now 0, so any reappearance fails.
 
-     The deferral this baseline records was on the grounds that changing the
-     class changes appearance. It does, and the change is small: both are
-     bottom-centre dark pills, differing by 2px of offset, 0.5px of type, one
-     font weight, 2px of padding and a border radius, plus the entry animation
-     `.de-toast` already has. Set against that, `.pdev-toast` rendered
-     `{I.check}` with NO live region and no error tone at all, so on those six
-     surfaces a failed write was both green AND silent to a screen reader.
-     That is the same correctness defect this gate exists for, and it outweighs
-     two pixels. */
+     The deferral this map recorded was that converging them changes their
+     appearance, which is a design decision rather than a bug fix. That was two
+     questions treated as one. `sn-toast`, `ac-toast` and `amem-toast` sat at
+     `top: 18px` — a deliberate choice on surfaces where a bottom-centre pill
+     covers the composer — while `pdev-toast` and `etmf-toast` were already at
+     the bottom. But NONE of the five could express an error or reach a screen
+     reader, and that half is unambiguously a bug.
+
+     So the position survives the migration (`<C2CToast position="top">`) and
+     the defect does not. Nothing moved; ten toasts that could only ever say
+     "success" can now say a write failed. */
   'pdev-toast': 0,
-  'sn-toast': 1,
-  'ac-toast': 1,
-  'amem-toast': 1,
-  'etmf-toast': 1,
+  'sn-toast': 0,
+  'ac-toast': 0,
+  'amem-toast': 0,
+  'etmf-toast': 0,
 };
 
 /** Props that carry a toast fire function under one of its several names. */

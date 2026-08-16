@@ -4,6 +4,7 @@ import { liveGetOrNull, liveMutateOrNull, useLiveData, EmptyState } from '../dat
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ════ AnA Memory — cross-session memory surface ════
 
@@ -92,8 +93,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
   const [atomsLoading, setAtomsLoading] = useState(true);
   const [atomsError, setAtomsError] = useState<string | null>(null);
   const [cat, setCat] = useState('all');
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2400); };
+  const [toast, fire] = useToast();
 
   /* Left panel — AnA's self-maintained relational notes. Read-only from the
      REAL ana_relational_profiles store; honest empty / error, no fixture. */
@@ -129,7 +129,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
       .then((r) => {
         if (r.error) {
           setAtoms(list => list.map(a => (a.id === id ? { ...a, is_verified_by_user: false, verified_at: undefined } : a)));
-          fire('Could not verify -- the change was not saved.');
+          fire('Could not verify -- the change was not saved.', 'error');
         } else {
           fire('Verified -- AnA will weight this memory more.');
         }
@@ -149,7 +149,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="amem">
-      {toast && <div className="amem-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} position="top" />
 
       {loading ? (
         <div className="amem-lead-sub" style={{ padding: '18px 14px' }}>Loading AnA's memory…</div>

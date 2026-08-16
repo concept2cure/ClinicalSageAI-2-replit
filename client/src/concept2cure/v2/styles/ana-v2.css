@@ -9,8 +9,8 @@
      Uses the app's tokens (--accent-*, --bg-*, --text-*, --success, --error).
      ════════════════════════════════════════════════════════════════════ */
   .ac{ max-width:1280px; margin:0 auto; padding:26px 30px 90px; position:relative; }
-  .ac-toast{ position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:60; display:flex; align-items:center; gap:7px; background:var(--text-100); color:var(--bg-000); font-size:12.5px; font-weight:600; padding:9px 15px; border-radius:9px; box-shadow:0 8px 24px rgba(0,0,0,.18); }
-  .ac-toast svg{ width:15px; height:15px; }
+  /* `.ac-toast` is deleted: its four surfaces render the canonical <C2CToast>, which
+   carries an error tone and a live region this rule's pill never could. */
   .ac-head{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; }
   .ac-eyebrow{ font-size:11px; font-weight:600; letter-spacing:.04em; color:var(--accent-200); }
   .ac-title{ font-size:27px; font-weight:600; color:var(--text-100); margin:5px 0 0; letter-spacing:-.02em; }
@@ -189,11 +189,8 @@
      AnA Memory surface — grounded in app.css tokens.
      ═══════════════════════════════════════════════════════════════ */
   .amem{ max-width:1200px; margin:0 auto; padding:28px 30px 60px; }
-  .amem-toast{ position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:60;
-    display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:10px;
-    background:var(--text-100); color:var(--bg-000); font-size:13px; font-weight:600;
-    box-shadow:0 8px 24px rgba(0,0,0,.18); }
-  .amem-toast svg{ width:15px; height:15px; }
+  /* `.amem-toast` is deleted: its four surfaces render the canonical <C2CToast>, which
+   carries an error tone and a live region this rule's pill never could. */
 
   /* Answer-first lead */
   .amem-lead{ display:flex; gap:16px; padding:22px 24px; border-radius:16px;

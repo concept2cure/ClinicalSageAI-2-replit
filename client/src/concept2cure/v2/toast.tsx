@@ -106,12 +106,34 @@ export function useToast(): [ToastState, (m: string, tone?: ToastTone) => void] 
 }
 
 /**
+ * Where the pill sits. Bottom-centre is the house default and what every
+ * `.de-toast` consumer uses.
+ *
+ * `top` exists for the four surfaces that had their own pill class —
+ * `sn-toast`, `ac-toast`, `amem-toast` (all `top: 18px`) and `etmf-toast`
+ * (bottom) — and it is the whole reason they could be converged now rather than
+ * left as a pending design decision. Their defect was that none of them could
+ * express an error or reach a screen reader; their POSITION was a deliberate
+ * choice on surfaces where a bottom-centre pill would sit over the composer.
+ * Those are two different questions, and only the first is a bug. Keeping the
+ * position lets the bug be fixed without relocating three toasts, which is a
+ * design call nobody has made.
+ */
+export type ToastPosition = 'top' | 'bottom';
+
+/**
  * Accepts a bare string as well as a `ToastState` so that a surface with a
  * genuinely tone-free acknowledgement is not forced to construct an object.
  * A bare string is `'ok'` — which is safe here and only here, because the type
  * of `fire` means an error can no longer arrive as one by omission.
  */
-export function C2CToast({ msg }: { msg: ToastState | string }) {
+export function C2CToast({
+  msg,
+  position = 'bottom',
+}: {
+  msg: ToastState | string;
+  position?: ToastPosition;
+}) {
   const state: ToastState = typeof msg === 'string' ? { msg, tone: 'ok' } : msg;
   if (!state.msg) return null;
   const isError = state.tone === 'error';
@@ -119,6 +141,7 @@ export function C2CToast({ msg }: { msg: ToastState | string }) {
     <div
       className="de-toast"
       data-tone={isError ? 'error' : undefined}
+      data-pos={position === 'top' ? 'top' : undefined}
       role={isError ? 'alert' : 'status'}
     >
       <span className="ico">{isError ? I.alertTriangle : I.checkCircle}</span>

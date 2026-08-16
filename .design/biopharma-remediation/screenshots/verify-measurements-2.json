@@ -1,0 +1,99 @@
+{
+  "concat": [
+    {
+      "labelText": "Phase Phase 1 Phase 2 Phase 3 Phase 4",
+      "fieldValue": "Phase 3",
+      "fieldTop": 97.5,
+      "labelBottom": null,
+      "gapPx": null,
+      "display": "block",
+      "glued": null
+    },
+    {
+      "labelText": "Indication",
+      "fieldValue": "",
+      "fieldTop": 97.5,
+      "labelBottom": null,
+      "gapPx": null,
+      "display": "block",
+      "glued": null
+    },
+    {
+      "labelText": "Study design",
+      "fieldValue": "",
+      "fieldTop": 97.5,
+      "labelBottom": null,
+      "gapPx": null,
+      "display": "block",
+      "glued": null
+    },
+    {
+      "labelText": "Primary endpoint",
+      "fieldValue": "",
+      "fieldTop": 97.5,
+      "labelBottom": null,
+      "gapPx": null,
+      "display": "block",
+      "glued": null
+    },
+    {
+      "labelText": "Sample size",
+      "fieldValue": "",
+      "fieldTop": 157.5,
+      "labelBottom": null,
+      "gapPx": null,
+      "display": "block",
+      "glued": null
+    },
+    {
+      "labelText": "Prior mean effect (δ) Standardized effect size the prior is centred on.",
+      "fieldValue": "",
+      "fieldTop": 677,
+      "labelBottom": 671,
+      "gapPx": 6,
+      "display": "block",
+      "glued": false
+    },
+    {
+      "labelText": "Prior SD Uncertainty about δ. Larger ⇒ lower assurance.",
+      "fieldValue": "",
+      "fieldTop": 677,
+      "labelBottom": 671,
+      "gapPx": 6,
+      "display": "block",
+      "glued": false
+    },
+    {
+      "labelText": "n per arm",
+      "fieldValue": "",
+      "fieldTop": 677,
+      "labelBottom": 671,
+      "gapPx": 6,
+      "display": "block",
+      "glued": false
+    },
+    {
+      "labelText": "Alpha (optional) Default 0.025.",
+      "fieldValue": "",
+      "fieldTop": 677,
+      "labelBottom": 671,
+      "gapPx": 6,
+      "display": "block",
+      "glued": false
+    }
+  ],
+  "contrast": {
+    "fieldBackground": "rgb(250, 249, 245)",
+    "fieldTextColor": "rgb(20, 20, 19)",
+    "placeholderToken_text300": "#6b6963",
+    "borderColor": "oklch(0.8847 0.0069 97.3627)",
+    "placeholder(--text-300) on field bg": 5.21,
+    "field text on field bg": 17.5,
+    "border on field bg  [SC 1.4.11 wants >= 3]": 16.96
+  },
+  "placeholder": {
+    "placeholder": "e.g. NSCLC",
+    "color": "rgb(107, 105, 99)",
+    "fontStyle": "italic"
+  }
+}
