@@ -108,7 +108,6 @@ async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Pr
   }
 }
 
-
 function humanize(key: string): string {
   const s = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
   return s.charAt(0).toUpperCase() + s.slice(1);

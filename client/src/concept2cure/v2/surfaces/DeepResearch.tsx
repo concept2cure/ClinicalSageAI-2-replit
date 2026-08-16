@@ -63,7 +63,7 @@ interface DrRunJob {
   connectorLogs?: Record<string, { resultCount?: number; state?: string }> | null;
 }
 
-
+/* ── Inline shared kit helpers ── */
 
 /* ════ DeepResearch — connectors & deep research surface ════ */
 

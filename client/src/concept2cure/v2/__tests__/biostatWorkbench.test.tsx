@@ -162,12 +162,13 @@ describe('BiostatWorkbench — real statistical engine', () => {
       if (!el) throw new Error('no toast');
       return el as HTMLElement;
     });
-    // A refusal is an ERROR toast, so it is announced as `role="alert"` — which
-    // is assertive by definition and needs no aria-live override. It used to be
-    // announced politely, which is what the shared toast changed: a refusal that
-    // queues behind other chatter is not a refusal the user hears in time.
+    // A REFUSAL, so it is an alert rather than a polite status — and it carries
+    // `data-tone="error"`, which is what stops it drawing the green success
+    // tick. This assertion used to require `status` + `polite`: the surface
+    // could not express failure at all, so the only live region it could
+    // produce was the reassuring one, and the test pinned that as correct.
     expect(toast.getAttribute('role')).toBe('alert');
-    expect(toast.getAttribute('aria-live')).toBeNull();
+    expect(toast.getAttribute('data-tone')).toBe('error');
   });
 
   it('marks the selected calculator for assistive technology, not by colour alone', () => {

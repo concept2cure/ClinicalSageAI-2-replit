@@ -513,8 +513,6 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
 
 /* ── Inline helpers ── */
 
-
-
 /* ── Provenance string ── */
 function roProv(refs?: { sourceTable: string; sourceField?: string; recordId?: string; transformation?: string }[]): string | undefined {
   if (!refs || !refs.length) return undefined;

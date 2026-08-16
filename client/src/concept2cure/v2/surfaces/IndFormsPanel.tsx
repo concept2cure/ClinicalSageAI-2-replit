@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import type { FireToast } from '../toast';
 
 interface BuildResult { formId?: string; missingRequired?: string[]; fields?: Record<string, unknown> | Array<unknown>; }
 
@@ -43,7 +44,7 @@ function readProjectIdent(): string | null {
   return raw !== '' ? raw : null;
 }
 
-export function IndFormsPanel({ note }: { note: (m: string) => void }) {
+export function IndFormsPanel({ note }: { note: FireToast }) {
   const [forms, setForms] = useState<string[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
   const [meta, setMeta] = useState({ sponsorName: '', drugName: '', indNumber: '', studyPhase: 'Phase 1', indication: '', serialNumber: '' });
@@ -74,12 +75,12 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
     try {
       const res = await apiRequest('POST', `/api/ind-forms/${formId}/build`, metadataBody());
       const json = (await res.json().catch(() => null)) as BuildResult | BuildResult[] | null;
-      if (res.status === 401 || res.status === 403) { note('Building forms requires the regulatory-author role.'); return; }
+      if (res.status === 401 || res.status === 403) { note('Building forms requires the regulatory-author role.', 'error'); return; }
       // The server's own sentence when it sent one — filtered, so a code or a
       // driver message degrades to the panel's own copy rather than reaching the
       // note line.
       if (!res.ok || !json) {
-        note(serverMessage(json) ?? `Couldn’t build form ${formId} (HTTP ${res.status}).`);
+        note(serverMessage(json) ?? `Couldn’t build form ${formId} (HTTP ${res.status}).`, 'error');
         return;
       }
       // 1572 returns one build per investigator; summarize the first.
@@ -94,14 +95,14 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
     setBusy('pdf-' + formId);
     try {
       const res = await apiRequest('POST', `/api/ind-forms/${formId}/pdf`, metadataBody());
-      if (res.status === 401 || res.status === 403) { note('Rendering forms requires the regulatory-author role.'); return; }
+      if (res.status === 401 || res.status === 403) { note('Rendering forms requires the regulatory-author role.', 'error'); return; }
       if (!res.ok) {
         const json = await res.json().catch(() => null);
         // `json.error` was read raw: an enum token printed as itself, and an
         // object-shaped error printed as "[object Object]". serverMessage takes
         // the sentence beside the code, and nothing at all when there is none.
         const detail = serverMessage(json) ?? `the render was refused (HTTP ${res.status})`;
-        note(`Couldn’t render form ${formId} — ` + detail + '.');
+        note(`Couldn’t render form ${formId} — ` + detail + '.', 'error');
         return;
       }
       const blob = await res.blob();
@@ -136,7 +137,7 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
   const save = useCallback(async (formId: string) => {
     const ident = readProjectIdent();
     if (ident == null) {
-      note('Open a project first — a governed artifact must be saved to a project’s dossier.');
+      note('Open a project first — a governed artifact must be saved to a project’s dossier.', 'error');
       return;
     }
     setBusy('save-' + formId);
@@ -144,8 +145,8 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
       const idBody = /^\d+$/.test(ident) ? { projectId: Number(ident) } : { projectIdent: ident };
       const res = await apiRequest('POST', `/api/ind-forms/${formId}/artifact`, { ...metadataBody(), ...idBody });
       const json = await res.json().catch(() => null);
-      if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.'); return; }
-      if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.'); return; }
+      if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.', 'error'); return; }
+      if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.', 'error'); return; }
       const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
       const readiness = json?.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)';
       if (res.ok && json?.artifactId) {
@@ -163,7 +164,7 @@ export function IndFormsPanel({ note }: { note: (m: string) => void }) {
       // `message` or `detail` degraded to a bare status. serverMessage reads all
       // three in order and rejects codes and infrastructure text.
       const detail = serverMessage(json) ?? `the save was refused (HTTP ${res.status})`;
-      note(`Couldn’t save form ${formId} — ` + detail + '.');
+      note(`Couldn’t save form ${formId} — ` + detail + '.', 'error');
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 

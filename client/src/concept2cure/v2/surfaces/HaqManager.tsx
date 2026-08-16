@@ -71,8 +71,6 @@ const EMPTY_QUESTIONS: Record<string, HaqQuestion[]> = {};
 
 /* ── Inline shared helpers ── */
 
-
-
 /* ════ HaqManager -- Health Authority Questions response workbench ════ */
 
 export function HaqManager({ onAsk }: SurfaceViewProps) {

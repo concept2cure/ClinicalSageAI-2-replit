@@ -300,6 +300,15 @@ jobs:
       - name: Guardrails — chip tones must have a CSS rule
         run: npm run ci:check-chip-tones
 
+      # `.de-toast .ico` is green, so a one-tone toast announces failures with a
+      # success tick. Twenty-eight surfaces had each hand-rolled that one-tone
+      # toast, so fixing it on Word export and on the §11.50 signature dialog
+      # left twenty-six. Now there is one implementation and this refuses a
+      # twenty-ninth — including the invisible case, a tone narrowed away at a
+      # prop boundary, which TypeScript accepts without a word.
+      - name: Guardrails — one toast implementation, and it can say "failed"
+        run: npm run ci:toast-canonicality
+
       - name: Guardrails — phantom design tokens (ratchet, may only shrink)
         run: npm run ci:check-phantom-tokens
 

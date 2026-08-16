@@ -1,44 +1,53 @@
 /**
- * The one transient channel a write has to report what happened.
+ * The one transient acknowledgement channel the v2 surfaces have.
  *
- * ── Why this module exists ──────────────────────────────────────────────────
- * Twenty-six surfaces each defined their own `useToast` + `C2CToast`. Twenty-four
- * of those copies were identical and TONE-LESS:
+ * ── The defect this exists to make unrepresentable ───────────────────────────
+ * `.de-toast .ico` is styled green. A toast whose only parameter is a string
+ * therefore reports EVERY outcome with a success tick, including the ones that
+ * are failures. BP-W0-6 found this on Word export — a 500 announced as though
+ * the document had been produced — and the Wave 0 design review then found the
+ * same shape on the §11.50 e-signature dialog, where a REJECTED PIN drew the
+ * green tick on the one action in the product that is a legally binding
+ * attestation.
  *
- *   function useToast(): [string, (m: string) => void] { … }
- *   function C2CToast({ msg }: { msg: string }) {
- *     return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
- *   }
+ * Both were fixed where they were found. They were not the bug. The bug is that
+ * twenty-five surfaces each declared their own
  *
- * `.de-toast .ico` is unconditionally `var(--success)`, so the icon is a green
- * tick and the tick is not conditional on anything. A failure had no way to
- * render as a failure. "Couldn't save the specification. Nothing was persisted."
- * arrived under a green check mark, which is precisely the wrong first
- * impression in a regulated record — and on a Part 11 e-signature, a REJECTED
- * PIN drew the success tick.
+ *   function useToast(): [string, (m: string) => void]
  *
- * The fix is not a shared file for its own sake. It is that tone becomes a
- * parameter a caller must think about, in the one place the icon and the colour
- * are chosen.
+ * so "the toast cannot express failure" was not one defect to fix but a
+ * property re-created at every call site, and fixing two of them left
+ * twenty-three. This module is the fix: the tone is a required part of the
+ * type, so a surface can no longer be built that is unable to say a write
+ * failed.
  *
- * ── What this merges ────────────────────────────────────────────────────────
- * Two tone-aware copies already existed and each was correct about something the
- * other got wrong. This takes both:
+ * ── Why this is not in `cmcShared.tsx` ───────────────────────────────────────
+ * It used to be, and three CMC surfaces imported it from there. But the
+ * remaining twenty-two consumers are not CMC — they are identity, licensing,
+ * pharmacovigilance, gateway transmittals, reporting. A shared component whose
+ * module name claims a domain it does not belong to is the reason the other
+ * copies were written instead of the import being found. It lives beside
+ * `assessmentState.ts` now, at the layer it actually serves.
  *
- *   · from `surfaces/cmcShared.tsx` — the `ToastState` object, the
- *     length-sensitive dismiss delay, and the unmount cleanup. The
- *     `DocumentAuthoring` copy had no cleanup, so a surface unmounted inside the
- *     dismiss window set state on a dead component.
+ * `cmcShared.tsx` does NOT re-export it. A re-export is a second name for one
+ * thing, which is the parallel path this change exists to remove.
  *
- *   · from `surfaces/DocumentAuthoring.tsx` — `role="alert"` for errors. The
- *     cmcShared copy paired `role="status"` with `aria-live="assertive"`, which
- *     is self-contradictory: `role="status"` carries an implicit POLITE live
- *     region, and assistive tech has historically diverged on whether an
- *     explicit assertive override wins. `role="alert"` implies assertive and
- *     `aria-atomic="true"` with nothing to override. The design review named
- *     this a must-fix and it was fixed in the duplicate but never carried back
- *     to the copy the review called canonical — which is the exact failure mode
- *     that makes duplication a correctness problem rather than a tidiness one.
+ * ── The implementation is the best of the three that existed, not a pick ─────
+ *   · the ARIA is `DocumentAuthoring`'s. `role="status"` + `aria-live="assertive"`
+ *     is contradictory — `status` carries an implicit polite live region and AT
+ *     has historically diverged on whether an explicit assertive override wins.
+ *     `role="alert"` implies assertive AND `aria-atomic` with nothing to
+ *     override.
+ *   · the unmount cleanup is `cmcShared`'s. `DocumentAuthoring`'s copy never
+ *     cleared its timer, so a surface unmounted inside the dismissal window set
+ *     state on a dead component.
+ *   · preserving the tone on dismissal is `cmcShared`'s. `DocumentAuthoring`'s
+ *     copy reset it to `'ok'`, which flips an error toast to the success
+ *     styling for the frame in which it disappears.
+ *   · the durations are `DocumentAuthoring`'s longer pair, kept with
+ *     `cmcShared`'s long-message clause: a failure says more than "Saved" and
+ *     is worth reading twice as long, and so is any confirmation long enough to
+ *     be a sentence.
  */
 
 import React from 'react';
@@ -51,6 +60,31 @@ export interface ToastState {
   tone: ToastTone;
 }
 
+/**
+ * The type a component takes when its parent owns the toast.
+ *
+ * Declare the prop as `FireToast`, never as `(m: string) => void`. Narrowing it
+ * at the boundary is how the tone was lost even on surfaces whose own toast
+ * could express it: `AuthoringFilingBar` typed the prop one-tone, so a REJECTED
+ * §11.50 signature PIN drew the green tick although the caller had passed a
+ * tone-aware `fire`. TypeScript accepts the narrowing silently — a two-argument
+ * function is assignable to a one-argument type — so nothing warns; the second
+ * argument simply becomes unpassable inside the child.
+ */
+export type FireToast = (m: string, tone?: ToastTone) => void;
+
+/** Anything longer than this is a sentence, not an acknowledgement. */
+const LONG_MESSAGE = 90;
+const HOLD_BRIEF = 4200;
+const HOLD_LONG = 8000;
+
+/**
+ * The tone is explicit rather than inferred from the text. Inference was tried
+ * — matching on "Couldn't", "failed", "not" — and it is exactly as reliable as
+ * it sounds: "Nothing was persisted." is a failure with none of those words in
+ * it, and "Signature accepted — no further approvals are required." is a
+ * success with two.
+ */
 export function useToast(): [ToastState, (m: string, tone?: ToastTone) => void] {
   const [state, setState] = React.useState<ToastState>({ msg: '', tone: 'ok' });
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,21 +97,19 @@ export function useToast(): [ToastState, (m: string, tone?: ToastTone) => void] 
   const fire = React.useCallback((m: string, tone: ToastTone = 'ok') => {
     setState({ msg: m, tone });
     if (timer.current) clearTimeout(timer.current);
-    // A failure matters more and is longer, so it is held longer than the
-    // "saved" acknowledgement it replaces. Length is part of the test because a
-    // long confirmation is also one a reader cannot finish in 3.2s.
     timer.current = setTimeout(
       () => setState({ msg: '', tone }),
-      tone === 'error' || m.length > 90 ? 7000 : 3200,
+      tone === 'error' || m.length > LONG_MESSAGE ? HOLD_LONG : HOLD_BRIEF,
     );
   }, []);
   return [state, fire];
 }
 
 /**
- * Accepts a bare string as well as a `ToastState` so that a surface mid-migration
- * still renders. A bare string is treated as `ok`, which is the pre-existing
- * behaviour of every tone-less copy this replaces.
+ * Accepts a bare string as well as a `ToastState` so that a surface with a
+ * genuinely tone-free acknowledgement is not forced to construct an object.
+ * A bare string is `'ok'` — which is safe here and only here, because the type
+ * of `fire` means an error can no longer arrive as one by omission.
  */
 export function C2CToast({ msg }: { msg: ToastState | string }) {
   const state: ToastState = typeof msg === 'string' ? { msg, tone: 'ok' } : msg;
@@ -86,10 +118,7 @@ export function C2CToast({ msg }: { msg: ToastState | string }) {
   return (
     <div
       className="de-toast"
-      data-tone={state.tone}
-      // See the header note: `role="alert"` is assertive by definition. Pairing
-      // `role="status"` with `aria-live="assertive"` is the contradiction this
-      // deliberately does not reproduce.
+      data-tone={isError ? 'error' : undefined}
       role={isError ? 'alert' : 'status'}
     >
       <span className="ico">{isError ? I.alertTriangle : I.checkCircle}</span>

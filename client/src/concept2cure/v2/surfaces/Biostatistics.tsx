@@ -493,7 +493,7 @@ const BS_PRESETS: Record<string, Preset> = {
 
 function vf(v: string): number | undefined { return v === undefined || v === null || v === '' ? undefined : parseFloat(v); }
 
-
+/* ── Inline toast helper ── */
 
 /* ════ Biostatistics surface ════ */
 

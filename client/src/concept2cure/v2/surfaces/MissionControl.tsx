@@ -102,7 +102,6 @@ async function get<T>(path: string): Promise<Load<T>> {
   }
 }
 
-
 /** Insert spaces before capitals: `artifactCompleteness` → `Artifact completeness`. */
 function humanize(key: string): string {
   const spaced = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
@@ -542,10 +541,9 @@ export function MissionControl(_props: SurfaceViewProps) {
         </>
       )}
 
-      {/* The live region the toast carries every validation message ("Enter a
-          program name.") and every write confirmation through — WCAG 2.2 SC
-          4.1.3 — is now the shared component's, which also picks role="alert"
-          over role="status" when the message is a failure. */}
+      {/* role="status" + aria-live: the toast carries every validation message
+          ("Enter a program name.") and every write confirmation, and without a
+          live region none of it reaches a screen reader. WCAG 2.2 SC 4.1.3. */}
       <C2CToast msg={toast} />
     </div>
   );

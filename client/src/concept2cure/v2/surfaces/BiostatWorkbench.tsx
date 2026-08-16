@@ -45,7 +45,8 @@ import {
   type CalculatorField,
 } from './biostatCalculators';
 import '../styles/project-home-v2.css';
-import { C2CToast, useToast, type ToastTone } from '../toast';
+import { C2CToast, useToast } from '../toast';
+import type { FireToast } from '../toast';
 
 interface Defensibility {
   overallScore?: number;
@@ -210,11 +211,7 @@ function Field({ field, value, error, onChange }: {
   );
 }
 
-/* `fireToast: (m: string) => void` erased the tone on the way down, so a child
-   could not report a failure AS a failure however carefully it worded the
-   string — the same signature-narrowing that put a green tick on a rejected
-   Part 11 PIN in AuthoringFilingBar. The prop carries the real type. */
-function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m: string, tone?: ToastTone) => void }) {
+function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: FireToast }) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
   const [result, setResult] = useState<any>(null);
   const [busy, setBusy] = useState(false);

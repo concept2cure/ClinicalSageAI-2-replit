@@ -69,8 +69,6 @@ function AdminHeader({ eyebrow, title, sub, actions }: AdminHeaderProps) {
   );
 }
 
-
-
 /* ── Setup settings shape ── */
 
 /**
@@ -1485,7 +1483,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       );
       if (!res.ok) {
         setOn(groupIdx, appId, !next);
-        fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} -- sign in required`, 'error');
+        fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} -- sign in required`);
         return;
       }
       fireToast((next ? 'Enabled ' : 'Disabled ') + label);
@@ -1496,8 +1494,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
           // Only apiRequest's own error has been through the envelope reader;
           // a bare rejection is the fetch failing ("Failed to fetch").
-          (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
-        'error',
+          (e instanceof ApiRequestError && e.message ? e.message : 'request failed')
       );
     }
   };

@@ -236,7 +236,6 @@ function parseProtocol(text: string): ParsedProtocol {
    removed rather than depended upon never to arrive -- and it is already
    covered by its own tests, which the hand-rolled copies never were. */
 
-
 /* ═══ Main surface ═══ */
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
@@ -395,8 +394,6 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <AnalyticsDashboard />
-      {/* Was `.c2c-toast`, a class with no live region and no error tone — the
-          one surface rendering its confirmations through a fifth parallel path. */}
       <C2CToast msg={toast} />
     </div>
   );

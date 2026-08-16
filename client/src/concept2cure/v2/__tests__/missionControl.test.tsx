@@ -195,12 +195,11 @@ describe('Mission Control — reads the real program engine', () => {
       return el as HTMLElement;
     });
     expect(toast.textContent).toContain('Enter a program name.');
-    // A refusal is an ERROR toast, so it is announced as `role="alert"` — which
-    // is assertive by definition and needs no aria-live override. It used to be
-    // announced politely, which is what the shared toast changed: a refusal that
-    // queues behind other chatter is not a refusal the user hears in time.
+    // The create was REFUSED, so the toast interrupts (`role="alert"`) and
+    // carries the error tone. It previously asserted `status` + `polite`,
+    // which was the only thing a one-tone toast could produce.
     expect(toast.getAttribute('role')).toBe('alert');
-    expect(toast.getAttribute('aria-live')).toBeNull();
+    expect(toast.getAttribute('data-tone')).toBe('error');
     expect(apiRequest.mock.calls.some(c => c[0] === 'POST')).toBe(false);
   });
 

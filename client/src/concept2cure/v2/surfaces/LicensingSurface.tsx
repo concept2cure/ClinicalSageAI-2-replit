@@ -23,8 +23,6 @@ import { C2CToast, useToast } from '../toast';
 
 /* -- Inline helpers -- */
 
-
-
 function money(n: number | null): string {
   return n == null ? 'Custom' : '$' + n.toLocaleString();
 }

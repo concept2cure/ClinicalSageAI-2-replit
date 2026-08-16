@@ -9,13 +9,10 @@
  *   • the write-error reader — a rejected field must be shown as the field it
  *     was, not as "something went wrong".
  *
- * The toast used to live here too, and it was the version the design review
- * called canonical. It now lives in `../toast`, because it was never CMC-shaped:
- * twenty-four surfaces outside this module had each cloned a TONE-LESS copy of
- * it, and importing "cmcShared" from the identity console to get a toast is the
- * wrong dependency. Moving it is what let those copies be deleted. It is NOT
- * re-exported from here — a second import path for one implementation is the
- * parallel path this repo requires be deleted rather than aliased.
+ * The toast used to be a third. It moved to `../toast` when the other
+ * twenty-two surfaces that needed it turned out not to be CMC surfaces, and it
+ * is deliberately NOT re-exported from here — a re-export would leave two names
+ * for one component, which is the shape the move exists to remove.
  */
 
 import { serverMessage } from '@/lib/queryClient';

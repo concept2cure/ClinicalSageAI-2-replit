@@ -35,7 +35,6 @@ interface DriftAlert { id: number | string; driftType: string | null; severity: 
 interface ChangeImpact { id: number | string; changeType: string | null; impactSeverity: string | null; impactDescription: string | null; remediation: string | null; resolved: boolean; }
 interface NextArtifact { artifactType: string | null; rationale: string | null; priority: string | null; }
 
-
 /** Unwraps the {success,data} envelope; never throws. */
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
   try {

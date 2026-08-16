@@ -194,16 +194,6 @@ function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn'
   }
 }
 
-/* The toast this surface used to define was BP-W0-6's second half: the Word
-   export's 500 was reported as a SILENT failure, and the handler did call
-   fireToast on every failure path. It was not silent because nothing fired — it
-   was silent because of WHAT fired, an unconditional `I.checkCircle` over
-   `.de-toast .ico`'s unconditional var(--success).
-
-   That reasoning, and the `role="alert"` conclusion it reached, now live in
-   `../toast` and apply to every surface rather than to this one. The local copy
-   is deleted; see that module's header for what survived from it. */
-
 /* ── Helpers ── */
 
 /** GET via apiRequest without throwing — honest {ok,status,body}. */
@@ -878,7 +868,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                       const m = /^(\d)/.exec(node.key)?.[1];
                       if (m) setModule(`M${m}`);
                     } else {
-                      fireToast(`${node.key} ${node.label} — no draft yet in this document.`);
+                      fireToast(`${node.key} ${node.label} — no draft yet in this document.`, 'error');
                     }
                   }}
                 >

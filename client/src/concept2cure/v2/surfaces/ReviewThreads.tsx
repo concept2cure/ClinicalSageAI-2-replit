@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiCall, apiErrorText } from '../apiCall';
+import type { FireToast } from '../toast';
 
 /* ================================================================
    Review threads — the compose side of the Phase-13 collaboration
@@ -82,7 +83,7 @@ function initials(name: string): string {
 }
 
 
-export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void }) {
+export function ReviewThreadsPane({ onNotice }: { onNotice: FireToast }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
   const [body, setBody] = useState('');
@@ -161,7 +162,7 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
       refresh();
       onNotice(requestChanges ? 'Changes requested — the author has been notified.' : 'Comment posted.');
     } else {
-      onNotice(apiErrorText(res, "Couldn't post the comment."));
+      onNotice(apiErrorText(res, "Couldn't post the comment."), 'error');
     }
     setBusy(false);
   };
@@ -173,7 +174,7 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
       refresh();
       onNotice('Thread resolved — the linked task is closed.');
     } else {
-      onNotice(apiErrorText(res, "Couldn't resolve the thread."));
+      onNotice(apiErrorText(res, "Couldn't resolve the thread."), 'error');
     }
   };
 
@@ -183,7 +184,7 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: (m: string) => void 
       refresh();
       onNotice(`Resolved: ${title}`);
     } else {
-      onNotice(apiErrorText(res, "Couldn't resolve the task."));
+      onNotice(apiErrorText(res, "Couldn't resolve the task."), 'error');
     }
   };
 

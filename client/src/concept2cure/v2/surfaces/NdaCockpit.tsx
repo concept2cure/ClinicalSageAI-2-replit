@@ -98,7 +98,7 @@ const BLA_KIND_LABEL: Record<string, string> = {
 const BLA_PASSING_VERDICTS = new Set(['similar', 'comparable', 'low', 'minimal', 'negligible', 'none']);
 const isPassingBlaVerdict = (v?: string | null): boolean => !!v && BLA_PASSING_VERDICTS.has(v.toLowerCase());
 
-
+/* ── Inline shared kit helpers ── */
 
 /* ════ NdaCockpit -- NDA / BLA filing cockpit ════ */
 
@@ -208,7 +208,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       // Read failed (no org/session) — nothing to persist to; show it locally
       // and say so instead of faking success.
       addRtf(local());
-      fireToast('Filing risk logged · ' + v.area + ' · shown locally, not persisted');
+      fireToast('Filing risk logged · ' + v.area + ' · shown locally, not persisted', 'error');
       return;
     }
     try {
@@ -249,7 +249,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       // Read failed (no org/session) — nothing to persist to; show it locally
       // and say so instead of faking success.
       addM1(local());
-      fireToast('Module 1 document added · shown locally, not persisted');
+      fireToast('Module 1 document added · shown locally, not persisted', 'error');
       return;
     }
     try {

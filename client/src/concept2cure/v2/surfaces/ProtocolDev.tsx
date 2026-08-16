@@ -2,13 +2,14 @@
  *  ProtocolDev.tsx -- protocol development hub (C2C-17 + C2C-18..22)
  *  Ported from protocol-dev.jsx IIFE to typed React module.
  * ------------------------------------------------------------------ */
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { C2CToast, useToast } from '../toast';
 
 const Ic = PG.Ic;
 
@@ -506,18 +507,12 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
   // these POST to the real protocol-* routers, replacing the former reason-only
   // governed dialog whose onConfirm was a no-op.
   const [reg, setReg] = useState<RegisterKind | null>(null);
-  const [toast, setToast] = useState('');
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fireToast = useCallback((m: string) => {
-    setToast(m);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(''), 4200);
-  }, []);
+  const [toast, fireToast] = useToast();
   // The write routers key on the numeric c2c_protocol_dev id.
   const numericDocId = Number(doc.id);
   const canWrite = Number.isInteger(numericDocId) && numericDocId > 0;
   const openReg = (kind: RegisterKind) => {
-    if (!canWrite) { fireToast('This protocol row has no numeric document id — register writes need the governed store.'); return; }
+    if (!canWrite) { fireToast('This protocol row has no numeric document id — register writes need the governed store.', 'error'); return; }
     setReg(kind);
   };
   // A protocol row whose `sections` column is null is a well-formed row of a
@@ -597,10 +592,10 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
             fireToast('Recorded — the ' + kind + ' was written to the governed register.');
             onChanged?.();
           }}
-          onError={(m) => fireToast(m)}
+          onError={(m) => fireToast(m, 'error')}
         />
       )}
-      {toast && <div className="de-toast"><span className="ico">{I.checkCircle}</span>{toast}</div>}
+      <C2CToast msg={toast} />
     </div>);
 }
 

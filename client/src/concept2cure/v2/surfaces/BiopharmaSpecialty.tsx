@@ -244,8 +244,6 @@ function SpListState({
   return <EmptyState icon={I.fileText} title={emptyTitle} hint={emptyHint} />;
 }
 
-
-
 /* ═══════════════════════════════════════════════════════════════════
    Pediatric -- PREA / iPSP / EMA PIP
    ═══════════════════════════════════════════════════════════════════ */
@@ -305,7 +303,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
       status: v.status,
     });
     setForm(false);
-    fireToast('Pediatric plan added · ' + v.product + ' · shown locally, not persisted');
+    fireToast('Pediatric plan added · ' + v.product + ' · shown locally, not persisted', 'error');
   };
 
   /* AnswerLead computation — from the REAL rows only. Field-level access is
@@ -506,7 +504,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
       benefit: v.benefit || 'exclusivity', status: 'requested',
     });
     setForm(false);
-    fireToast('Designation request created · ' + v.product + ' ' + v.agency + ' · shown locally, not persisted');
+    fireToast('Designation request created · ' + v.product + ' ' + v.agency + ' · shown locally, not persisted', 'error');
   };
 
   /* AnswerLead computation — from the REAL rows only. Field-level access is
@@ -762,7 +760,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
       id: v.id || '--', filed: '--', due: v.due || 'drafting', status: v.status,
     });
     setForm(false);
-    fireToast('Supplement created · ' + v.agency + ' · ' + v.product + ' · shown locally, not persisted');
+    fireToast('Supplement created · ' + v.agency + ' · ' + v.product + ' · shown locally, not persisted', 'error');
   };
 
   /* AnswerLead computation — from the REAL rows only. Field-level access is
@@ -1006,7 +1004,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
       prr, owner: 'PV', age: 'new · ' + (v.source || 'FAERS'), status: v.status,
     });
     setForm(false);
-    fireToast('Signal logged · ' + v.product + ' · ' + v.term + ' · shown locally, not persisted');
+    fireToast('Signal logged · ' + v.product + ' · ' + v.term + ' · shown locally, not persisted', 'error');
   };
 
   /* AnswerLead computation — from the REAL rows only. Field-level access is

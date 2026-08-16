@@ -208,12 +208,11 @@ describe('robustness and accessibility', () => {
     render(<FilingStrategy {...props()} />);
     fireEvent.click(screen.getByRole('button', { name: /Optimise sequence/ }));
     await waitFor(() => expect(toast()).toBeTruthy());
-    // A refusal is an ERROR toast, so it is announced as `role="alert"` — which
-    // is assertive by definition and needs no aria-live override. It used to be
-    // announced politely, which is what the shared toast changed: a refusal that
-    // queues behind other chatter is not a refusal the user hears in time.
+    // A refusal interrupts: `role="alert"`, not a polite status. The tone is
+    // asserted alongside it because the role alone does not stop the toast
+    // rendering the green tick — `data-tone` is what does.
     expect(toast()!.getAttribute('role')).toBe('alert');
-    expect(toast()!.getAttribute('aria-live')).toBeNull();
+    expect(toast()!.getAttribute('data-tone')).toBe('error');
   });
 
   it('groups the agency toggles under a legend', () => {

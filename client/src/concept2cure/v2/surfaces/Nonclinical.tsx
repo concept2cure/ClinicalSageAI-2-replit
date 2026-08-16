@@ -258,8 +258,6 @@ function useRows(seed: NcStudy[]): readonly [NcStudy[], (r: NcStudy) => void] {
   return [rows, add] as const;
 }
 
-
-
 /* ── Honest loading / error / empty guard for the /api/nonclinical-summary
    object (the M2.6 / Module 4 / SEND projection). The route fails closed to a
    real ICH M4S skeleton, so `data` is normally present; a null payload or a

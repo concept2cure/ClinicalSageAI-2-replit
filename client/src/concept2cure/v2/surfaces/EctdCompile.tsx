@@ -98,7 +98,6 @@ interface CompilationRow {
   created_at: string | null;
 }
 
-
 async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -199,16 +198,18 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       }
       setCompileResult(body);
       setFindings(body.validationResults ?? null);
-      fireToast(body.status === 'completed'
-        // The backbone compiled; that is what the toast reports. It does not
-        // claim the package can be submitted — that is the blockers panel's job,
-        // and saying "submission-ready" in a toast over an unrendered package is
-        // the claim this surface got wrong.
-        ? `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`
-        : `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`,
-        // The request succeeded either way; the tone follows which of the two
-        // things the backbone actually did, not whether the HTTP call returned.
-        body.status === 'completed' ? 'ok' : 'error');
+      fireToast(
+        body.status === 'completed'
+          // The backbone compiled; that is what the toast reports. It does not
+          // claim the package can be submitted — that is the blockers panel's job,
+          // and saying "submission-ready" in a toast over an unrendered package is
+          // the claim this surface got wrong.
+          ? `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`
+          : `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`,
+        // One call, two opposite outcomes: the tone has to follow the same
+        // branch the sentence does, or a blocked compile keeps the tick.
+        body.status === 'completed' ? 'ok' : 'error',
+      );
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
   }, [identPath, submissionType, region, fireToast, loadStatus, loadHistory]);

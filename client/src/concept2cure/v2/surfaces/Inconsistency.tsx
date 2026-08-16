@@ -8,6 +8,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 // GI_META (enum labels/tones/authority ranks), the regulator overlay rules, and
 // the deterministic overlay/promotion-gate functions are canonical config +
@@ -26,7 +27,6 @@ import type {
   GiDecision,
   GiCheck,
 } from '../fixtures/governed-intelligence-data';
-import { C2CToast, useToast } from '../toast';
 
 /* ── Cross-surface data (IC_FACTS from CMC surface, not in our source) ── */
 declare global {
@@ -69,8 +69,6 @@ interface GiBoard {
 }
 
 /* ── Inline shared helpers (same pattern as Nonclinical.tsx) ── */
-
-
 
 /* Current project id — the runtime channel set by Projects.tsx when a project is
    opened (read the same way by CmcModule / ProjectHome / VaultSources). The board

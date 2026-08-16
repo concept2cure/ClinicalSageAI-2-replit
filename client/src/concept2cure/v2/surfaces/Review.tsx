@@ -62,8 +62,6 @@ function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
   return <span className={`rd-chip tone-${tone}`}>{children}</span>;
 }
 
-
-
 /* ── E-sign modal (21 CFR Part 11) ── */
 
 function ESignModal({ onClose, item, onSigned }: {

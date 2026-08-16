@@ -78,8 +78,6 @@ type LiveMeeting = Meeting & {
 
 /* -- Inline shared helpers -- */
 
-
-
 function MtgStat({ children, tone }: { children: React.ReactNode; tone?: string }) {
   return <span className={'mtg-stat ' + (tone || '')}>{children}</span>;
 }

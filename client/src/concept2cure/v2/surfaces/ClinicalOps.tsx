@@ -239,8 +239,6 @@ function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T)
   return [rows, add] as const;
 }
 
-
-
 /**
  * Map the raw rbm_site_risk_scores rows the backend returns
  * (GET /api/mdx/rbm-site-risk — DB columns: site_number, site_name,
