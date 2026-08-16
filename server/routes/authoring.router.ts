@@ -767,6 +767,89 @@ const verifyUserPin = async (email: string, pin: string, tenantId: number): Prom
  */
 const SIGNATURE_MEANINGS = ['AUTHOR', 'REVIEWER', 'APPROVER'] as const;
 
+/**
+ * §11.50(a)(3) wording for a stored meaning token.
+ *
+ * The store holds AUTHOR / REVIEWER / APPROVER. Printing those into a filed
+ * document puts a database enum where the regulation asks for the meaning of
+ * the signature. An unrecognised value is printed verbatim rather than mapped
+ * to a guess — inventing a meaning is worse than showing an unfamiliar one.
+ */
+const MEANING_LABEL: Record<string, string> = {
+  AUTHOR: 'Authorship',
+  REVIEWER: 'Review',
+  APPROVER: 'Approval',
+};
+const meaningLabel = (m: string | null | undefined): string =>
+  !m ? 'Not recorded' : (MEANING_LABEL[String(m).toUpperCase()] ?? String(m));
+
+interface SignatureRow {
+  signer_email: string | null;
+  signer_name: string | null;
+  meaning: string | null;
+  reason: string | null;
+  method: string | null;
+  content_hash: string | null;
+  covered_freeze_version: string | null;
+  pin_verified: boolean | null;
+  signed_at: Date | string | null;
+}
+
+/**
+ * The §11.50(b) manifestation, as ordered lines, for a human-readable export.
+ *
+ * ── Why one function for three formats ───────────────────────────────────────
+ * DOCX, PDF and XML are three renderings of ONE regulated statement. Written
+ * per-format they drift, and the drift is silent: a manifest that omits the
+ * meaning in the PDF and carries it in the DOCX is non-compliant in exactly one
+ * of the two files a reviewer might open. The formats differ in how these lines
+ * are marked up, never in what they say.
+ *
+ * ── The printed name ─────────────────────────────────────────────────────────
+ * `signer_name` is NULL precisely when no printed name is on record, and the
+ * line says so. Substituting the email — which is what the storage layer used
+ * to do — would put an identifier in the §11.50(a)(1) position of a FILED
+ * document, where an inspector reads it as the printed name.
+ */
+function signatureManifestLines(sigs: SignatureRow[]): string[][] {
+  return sigs.map((s) => {
+    const when = s.signed_at ? new Date(s.signed_at).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : 'Not recorded';
+    const lines = [
+      // §11.50(a)(1)
+      s.signer_name
+        ? `Signed by: ${s.signer_name}${s.signer_email ? ` (${s.signer_email})` : ''}`
+        : `Signed by: ${s.signer_email ?? 'Unknown signer'} — no printed name on record`,
+      // §11.50(a)(3)
+      `Meaning: ${meaningLabel(s.meaning)}`,
+      // §11.50(a)(2)
+      `Executed: ${when}`,
+    ];
+    if (s.reason) lines.push(`Reason: ${s.reason}`);
+    lines.push(`Method: ${s.method ?? 'Not recorded'}${s.pin_verified ? ' (PIN verified)' : ''}`);
+    // §11.70 — which record this signature is linked to.
+    lines.push(
+      s.covered_freeze_version
+        ? `Covers: frozen version ${s.covered_freeze_version}`
+        : 'Covers: no frozen snapshot was in force when this was signed',
+    );
+    if (s.content_hash) lines.push(`Content hash at signing: ${s.content_hash}`);
+    return lines;
+  });
+}
+
+/** The signatures on a document, tenant-scoped, oldest first for a manifest. */
+async function readSignaturesForExport(docId: string, tenantId: number): Promise<SignatureRow[]> {
+  const r = await pool.query<SignatureRow>(
+    `SELECT signer_email, signer_name, meaning, reason, method, content_hash,
+            covered_freeze_version, pin_verified, signed_at
+       FROM authoring_signatures
+      WHERE doc_id = $1 AND tenant_id = $2
+      ORDER BY signed_at ASC`,
+    [docId, tenantId],
+  );
+  return r.rows;
+}
+
 const resolveSignerName = async (email: string): Promise<string | null> => {
   try {
     const r = await pool.query<{ name: string | null }>(
@@ -3498,316 +3581,6 @@ function sha256(obj: any): string {
 }
 
 // Build DOCX from sections with full 21 CFR Part 11 compliance
-async function buildDocx(
-  docMeta: any,
-  sections: any[],
-  citationsBySection: Map<string, any[]>,
-  docHash?: string,
-  signatures?: any[],
-  tenantId?: number
-): Promise<Buffer> {
-  // Evidence-CONDITIONAL compliance language. The export previously asserted, on
-  // every document unconditionally, that it was "21 CFR Part 11 compliant", that
-  // its citations were "verified", and that it carried "legally binding"
-  // signatures — regardless of whether any backing evidence existed. Those
-  // claims are only true when the evidence is actually present: a content
-  // integrity hash for the record, citation content-hashes for verification, and
-  // manifested signatures. When the evidence is absent we state the neutral,
-  // honest position (governed export / verification pending / signatures
-  // pending) rather than overstating what the export proves.
-  const hasIntegrityHash = typeof docHash === 'string' && docHash.length > 0;
-  const hasSignatures = Array.isArray(signatures) && signatures.length > 0;
-  const allCitations = sections.flatMap((s: any) => citationsBySection.get(s.section_id) || []);
-  const citationsVerified =
-    allCitations.length > 0 && allCitations.every((c: any) => !!c.payload_sha256);
-  // Lazy load docx library to prevent startup failures
-  try {
-    const { Document, Packer, Paragraph, HeadingLevel, TextRun, PageBreak, AlignmentType } =
-      await import('docx');
-
-    const children = [];
-
-    // === COMPLIANCE HEADER ===
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: hasIntegrityHash
-              ? '21 CFR PART 11 COMPLIANT DOCUMENT'
-              : 'GOVERNED EXPORT — 21 CFR PART 11 VERIFICATION PENDING',
-            bold: true,
-            size: 28,
-          }),
-        ],
-        alignment: AlignmentType.CENTER,
-      }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: `Document Integrity Hash: ${docHash || 'PENDING CALCULATION'}`,
-            size: 20,
-            italics: true,
-          }),
-        ],
-        alignment: AlignmentType.CENTER,
-      }),
-      new Paragraph({ text: '' })
-    );
-
-    // === TITLE ===
-    children.push(
-      new Paragraph({
-        text: docMeta.title || 'Module 3 Document',
-        heading: HeadingLevel.TITLE,
-      })
-    );
-
-    // === METADATA ===
-    children.push(
-      new Paragraph({
-        text: `Product Code: ${docMeta.product_code || 'N/A'}`,
-      }),
-      new Paragraph({
-        text: `Status: ${docMeta.status || 'Draft'}`,
-      }),
-      new Paragraph({
-        text: `Version: ${docMeta.version || '1.0'}`,
-      }),
-      new Paragraph({
-        text: `Author: ${docMeta.author || 'Unknown'}`,
-      }),
-      new Paragraph({
-        text: `Created: ${docMeta.created_at ? new Date(docMeta.created_at).toISOString() : 'N/A'}`,
-      }),
-      new Paragraph({ text: '' })
-    );
-
-    // === ELECTRONIC SIGNATURES MANIFEST ===
-    if (signatures && signatures.length > 0) {
-      children.push(
-        new Paragraph({
-          text: 'ELECTRONIC SIGNATURES',
-          heading: HeadingLevel.HEADING_1,
-        })
-      );
-
-      for (const sig of signatures) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: `${sig.signature_meaning}: `,
-                bold: true,
-              }),
-              new TextRun({
-                text: `${sig.signer_name || sig.signer_email}`,
-              }),
-            ],
-          }),
-          new Paragraph({
-            text: `Intent: ${sig.signature_intent}`,
-            indent: { left: 720 },
-          }),
-          new Paragraph({
-            text: `Signed at: ${sig.signature_timestamp}`,
-            indent: { left: 720 },
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: `Document Hash at Signing: ${sig.document_hash}`,
-                size: 18,
-              }),
-            ],
-            indent: { left: 720 },
-          }),
-          new Paragraph({ text: '' })
-        );
-      }
-      children.push(new PageBreak());
-    }
-
-    // === DOCUMENT CONTENT ===
-    children.push(
-      new Paragraph({
-        text: 'DOCUMENT SECTIONS',
-        heading: HeadingLevel.HEADING_1,
-      }),
-      new Paragraph({ text: '' })
-    );
-
-    for (const s of sections) {
-      children.push(
-        new Paragraph({
-          text: `${s.code} — ${s.title}`,
-          heading: HeadingLevel.HEADING_2,
-        })
-      );
-
-      // Extract and process content with resolved tokens
-      let plainText = extractPlainText(s.content) || '(No content)';
-
-      // Resolve token references in the text
-      const tokenPattern = /\{\{token:([^}]+)\}\}/g;
-      const tokens = citationsBySection.get(s.section_id) || [];
-
-      plainText = plainText.replace(tokenPattern, (match, tokenId) => {
-        const token = tokens.find((t: any) => t.id === tokenId || t.cite_id === tokenId);
-        if (token) {
-          return token.citation_text || token.payload?.data || '[RESOLVED]';
-        }
-        return '[UNRESOLVED TOKEN]';
-      });
-
-      children.push(
-        new Paragraph({
-          text: plainText,
-        })
-      );
-      children.push(new Paragraph({ text: '' }));
-    }
-
-    // === EVIDENCE APPENDIX ===
-    children.push(
-      new PageBreak(),
-      new Paragraph({
-        text: 'EVIDENCE APPENDIX & CITATIONS',
-        heading: HeadingLevel.HEADING_1,
-      }),
-      new Paragraph({ text: '' })
-    );
-
-    for (const s of sections) {
-      const cites = citationsBySection.get(s.section_id) || [];
-
-      if (cites.length > 0) {
-        children.push(
-          new Paragraph({
-            text: `${s.code} — ${s.title}`,
-            heading: HeadingLevel.HEADING_2,
-          })
-        );
-
-        for (const c of cites) {
-          const frozen = c.frozen_at ? 'FROZEN' : 'ACTIVE';
-          const line = `• ${c.source || c.citation_text || 'Citation'} — SHA256: ${
-            c.payload_sha256 || 'PENDING'
-          } — Status: ${frozen} — Created: ${new Date(c.created_at).toISOString()}`;
-          children.push(
-            new Paragraph({
-              text: line,
-              indent: { left: 360 },
-            })
-          );
-
-          // Add reference details if available
-          if (c.anchor || c.reference_id) {
-            children.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `  Reference: ${c.reference_id || ''} ${c.anchor ? `(${c.anchor})` : ''}`,
-                    italics: true,
-                    size: 20,
-                  }),
-                ],
-                indent: { left: 720 },
-              })
-            );
-          }
-        }
-        children.push(new Paragraph({ text: '' }));
-      }
-    }
-
-    // === COMPLIANCE FOOTER ===
-    children.push(
-      new PageBreak(),
-      new Paragraph({
-        text: hasIntegrityHash ? 'COMPLIANCE CERTIFICATION' : 'EXPORT SUMMARY',
-        heading: HeadingLevel.HEADING_1,
-      }),
-      new Paragraph({ text: '' }),
-      new Paragraph({
-        text: hasIntegrityHash
-          ? 'This document was generated in compliance with 21 CFR Part 11 requirements for electronic records and electronic signatures.'
-          : 'This is a governed export from the authoring store. A 21 CFR Part 11 content-integrity hash is not present for this export, so Part 11 record integrity is pending.',
-      }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: `Document Hash: ${docHash || 'CALCULATION PENDING'}`,
-            bold: true,
-          }),
-        ],
-      }),
-      new Paragraph({
-        text: `Export Timestamp: ${new Date().toISOString()}`,
-      }),
-      new Paragraph({
-        text: citationsVerified
-          ? 'All citations and tokens have been resolved and verified.'
-          : 'Citation and token verification pending — not every citation carries a content hash.',
-      }),
-      new Paragraph({
-        text: hasSignatures
-          ? 'Electronic signatures contained herein are legally binding and equivalent to handwritten signatures.'
-          : 'No electronic signatures are manifested in this export; signatures pending.',
-      }),
-      new Paragraph({ text: '' }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: '--- END OF COMPLIANT DOCUMENT ---',
-            bold: true,
-          }),
-        ],
-        alignment: AlignmentType.CENTER,
-      })
-    );
-
-    const doc = new Document({
-      creator: 'Concept2Cure Platform - 21 CFR Part 11 Compliant',
-      title: docMeta.title || 'Module 3 Document',
-      description: 'FDA 21 CFR Part 11 Compliant Electronic Document',
-      sections: [
-        {
-          properties: {},
-          children: children as any,
-        },
-      ],
-      customProperties: [
-        {
-          name: 'DocumentHash',
-          value: docHash || 'PENDING',
-        },
-        {
-          name: 'ComplianceStandard',
-          value: '21 CFR Part 11',
-        },
-        {
-          name: 'TenantId',
-          value: String(tenantId),
-        },
-      ],
-    });
-
-    const buf = await Packer.toBuffer(doc);
-    return buf;
-  } catch (error) {
-    console.error('Failed to build compliant DOCX document:', error);
-    // Return a simple text buffer as fallback with an honest, evidence-conditional header
-    const text =
-      `${hasIntegrityHash ? '21 CFR PART 11 COMPLIANT DOCUMENT' : 'GOVERNED EXPORT — 21 CFR PART 11 VERIFICATION PENDING'}\n` +
-      `Document Hash: ${docHash || 'PENDING'}\n\n` +
-      `${docMeta.title || 'Module 3 Document'}\n\n` +
-      sections
-        .map(s => `${s.code} — ${s.title}\n${extractPlainText(s.content) || '(No content)'}`)
-        .join('\n\n') +
-      `\n\n--- END OF COMPLIANT DOCUMENT ---\nGenerated: ${new Date().toISOString()}`;
-    return Buffer.from(text, 'utf-8');
-  }
-}
 
 function extractPlainText(contentJson: any): string {
   // Minimal safe extractor; UI remains rich. Improve as needed.
@@ -5127,6 +4900,15 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       tenantId
     );
 
+    /* §11.50(b): the printed name, the date and time, and the meaning of each
+       signature "shall be included as part of any human readable form of the
+       electronic record (e.g. electronic display or printout)". All three
+       formats below carried the title and the sections and nothing else, so a
+       filed DOCX of a signed, frozen document showed no evidence it had been
+       signed at all. Read once here and rendered by each branch. */
+    const exportSignatures = await readSignaturesForExport(String(docId), tenantId);
+    const manifest = signatureManifestLines(exportSignatures);
+
     // Generate export based on format
     let fileContent: Buffer | undefined;
     let fileName: string = 'export';
@@ -5134,25 +4916,49 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
 
     if (format === 'xml') {
       // XML export
+      /* Nothing here was escaped. A document titled "Safety & Efficacy", or a
+         section code carrying a quote, produced malformed XML that no parser
+         would accept — the export "succeeded" and returned a broken file. The
+         signature manifest below makes this unavoidable rather than merely
+         wrong: signer names carry apostrophes and reasons carry ampersands. */
+      const xe = (v: unknown) =>
+        String(v ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      // CDATA cannot contain `]]>`; split the sequence so content survives it.
+      const cdata = (v: unknown) => String(v ?? '').replace(/]]>/g, ']]]]><![CDATA[>');
       const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <document>
   <metadata>
-    <id>${doc.id}</id>
-    <title>${doc.title}</title>
-    <module>${doc.module}</module>
-    <status>${doc.status}</status>
-    <created_at>${doc.created_at}</created_at>
+    <id>${xe(doc.id)}</id>
+    <title>${xe(doc.title)}</title>
+    <module>${xe(doc.module)}</module>
+    <status>${xe(doc.status)}</status>
+    <created_at>${xe(doc.created_at)}</created_at>
   </metadata>
   <sections>
 ${sectionsResult.rows
   .map(
-    s => `    <section code="${s.code}">
-      <title>${s.title}</title>
-      <content><![CDATA[${s.content}]]></content>
+    s => `    <section code="${xe(s.code)}">
+      <title>${xe(s.title)}</title>
+      <content><![CDATA[${cdata(s.content)}]]></content>
     </section>`
   )
   .join('\n')}
   </sections>
+  <electronic_signatures count="${manifest.length}">
+${manifest.length === 0
+  ? '    <!-- No electronic signatures are recorded against this document. -->'
+  : manifest
+      .map(
+        (lines) => `    <signature>
+${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
+    </signature>`,
+      )
+      .join('\n')}
+  </electronic_signatures>
 </document>`;
 
       fileContent = Buffer.from(xmlContent, 'utf-8');
@@ -5185,6 +4991,20 @@ ${sectionsResult.rows
         children.push(new Paragraph({ text: section.content || '' }));
       }
 
+      /* §11.50(b) manifestation. Ordered after the content so the record reads
+         document-then-attestation, which is how a reviewer expects a signed
+         filing to be laid out. Rendered from the same lines the PDF and XML
+         use, so the three cannot drift. */
+      children.push(new Paragraph({ text: 'Electronic signatures', heading: HeadingLevel.HEADING_1 }));
+      if (manifest.length === 0) {
+        children.push(new Paragraph({ text: 'No electronic signatures are recorded against this document.' }));
+      } else {
+        for (const lines of manifest) {
+          for (const line of lines) children.push(new Paragraph({ text: line }));
+          children.push(new Paragraph({ text: '' }));
+        }
+      }
+
       const docxDoc = new Document({ sections: [{ children }] });
       fileContent = await Packer.toBuffer(docxDoc);
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
@@ -5208,6 +5028,12 @@ ${sectionsResult.rows
               `<h2>${esc(s.code)} — ${esc(s.title)}</h2><p>${esc(s.content || '')}</p>`
           )
           .join('\n')}
+        <h2>Electronic signatures</h2>
+        ${manifest.length === 0
+          ? '<p>No electronic signatures are recorded against this document.</p>'
+          : manifest
+              .map((lines) => `<p>${lines.map(esc).join('<br/>')}</p>`)
+              .join('\n')}
         </body></html>`;
       fileContent = await renderHtmlToPdf(html);
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;

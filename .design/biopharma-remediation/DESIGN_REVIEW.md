@@ -172,15 +172,19 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
 
 ### Still open, found while scoping item 5
 
-- **§11.50(b) printout is unmet.** `POST /docs/:docId/export` emits DOCX, PDF and
-  XML containing title and sections only — no signature block in any of the
-  three. The one function that renders an "ELECTRONIC SIGNATURES" manifest,
-  `buildDocx`, is **dead code**: one repo-wide hit, its own definition, absent
-  from the built bundle — and it reads four field names that do not exist on the
-  table (`signature_meaning`, `signature_intent`, `signature_timestamp`,
-  `document_hash` vs `meaning` / `reason` / `signed_at` / `content_hash`), so it
-  would render `undefined` for the meaning and the date if it ever ran. The new
-  rail is the electronic display half only and must not be read as closing this.
+- ~~**§11.50(b) printout is unmet.**~~ **RESOLVED.** All three export formats now
+  carry the manifestation, rendered from one `signatureManifestLines()` so DOCX,
+  PDF and XML cannot drift — a manifest that omits the meaning in one of two
+  files a reviewer might open is non-compliant in exactly one of them. The dead
+  `buildDocx` (310 lines, absent from the built bundle, reading four field names
+  that do not exist on the table) is **deleted** rather than repaired: its
+  presence suggested exports already had a manifest.
+
+  Found while adding it: **the XML export escaped nothing.** A document titled
+  "Safety & Efficacy" produced a bare ampersand and a file no parser accepts —
+  the export returned 200 with a broken artifact. Signature reasons and signer
+  names made this unavoidable rather than latent. Now escaped, with `]]>`
+  handled inside CDATA, and pinned by a test that parses the bytes.
 
 - **A latent cross-tenant read in `part11-compliance.ts`, armed but not firing.**
   All five routes do `const pool = (req as any).pool || (req.app as any).pool`,
