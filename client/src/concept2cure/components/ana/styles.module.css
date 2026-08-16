@@ -886,7 +886,7 @@
 .signoffLabel { font-size: 12px; font-weight: 600; color: var(--text-200, var(--ink)); margin-top: 4px; }
 .signoffInput {
   font: inherit; font-size: 13px;
-  border: 1px solid var(--border); border-radius: 8px;
+  border: 1px solid var(--border-control); border-radius: 8px;
   padding: 6px 8px; background: var(--bg-000, var(--background)); color: var(--text-100, var(--ink));
 }
 .signoffInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-100, #78716c); }

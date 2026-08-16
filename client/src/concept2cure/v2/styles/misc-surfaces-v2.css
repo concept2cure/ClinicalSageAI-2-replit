@@ -56,7 +56,7 @@
   /* Inline single-line input for the collaboration toolbar (lock-takeover
      reason). Matches .tb-field's input treatment so the two surfaces do not
      drift, but sized for a toolbar row rather than a form column. */
-  .rd-input{ font:inherit; font-size:12px; padding:6px 9px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-000); color:var(--text-100); }
+  .rd-input{ font:inherit; font-size:12px; padding:6px 9px; border:1px solid var(--border-control); border-radius:var(--radius-md); background:var(--bg-000); color:var(--text-100); }
   .rd-input::placeholder{ color:var(--text-500); }
   .rd-input:focus{ outline:none; border-color:var(--accent-100); box-shadow:0 0 0 3px var(--accent-000); }
   .rd-chip.tone-ok{ background:var(--success-muted); color:var(--success); }
@@ -94,7 +94,7 @@
   .pdev-fld .val{ font-size:13px; color:var(--text-100); }
   .pdev-fld .val.mono{ font-family:var(--font-mono); font-size:11.5px; color:var(--text-300); }
   .pdev-modtag{ font-family:var(--font-mono); font-size:10px; background:var(--accent-000); color:var(--accent-200); padding:1px 6px; border-radius:5px; margin-left:6px; }
-  .pdev-fld textarea{ width:100%; border:1px solid var(--border-strong); border-radius:8px; padding:9px 11px; font-size:13px; font-family:inherit; resize:vertical; background:var(--bg-000); color:var(--text-100); }
+  .pdev-fld textarea{ width:100%; border:1px solid var(--border-control); border-radius:8px; padding:9px 11px; font-size:13px; font-family:inherit; resize:vertical; background:var(--bg-000); color:var(--text-100); }
   .pdev-note{ font-size:11.5px; color:var(--text-400); line-height:1.5; display:flex; gap:7px; }
   .pdev-note svg{ width:14px; height:14px; flex-shrink:0; margin-top:1px; }
   .pdev-aid-right{ padding:22px; overflow-y:auto; }
@@ -321,7 +321,7 @@
   .ph-act-n{font-size:11px;color:var(--text-400);}
 
   /* Evidence search */
-  .ev-search{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:var(--radius-xl);padding:8px 10px 8px 14px;background:var(--bg-050);}
+  .ev-search{display:flex;align-items:center;gap:10px;border:1px solid var(--border-control);border-radius:var(--radius-xl);padding:8px 10px 8px 14px;background:var(--bg-050);}
   .ev-search:focus-within{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
   .ev-search .ico{color:var(--text-400);font-size:17px;}
   .ev-search input{flex:1;font-size:14px;height:34px;}
@@ -351,7 +351,7 @@
   .vd-coexist-cta:hover{ text-decoration:underline; }
   .vd-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:2px 0 3px; letter-spacing:-0.01em; display:flex; align-items:center; gap:8px; }
   .vd-sub{ font-size:12.5px; color:var(--text-400); }
-  .vd-searchbar{ flex:1; min-width:240px; display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:10px; padding:8px 12px; background:var(--bg-050); }
+  .vd-searchbar{ flex:1; min-width:240px; display:flex; align-items:center; gap:8px; border:1px solid var(--border-control); border-radius:10px; padding:8px 12px; background:var(--bg-050); }
   .vd-searchbar:focus-within{ border-color:var(--accent-100); background:var(--bg-000); }
   .vd-search-ic{ color:var(--text-400); display:inline-flex; }
   .vd-search-ic svg{ width:15px; height:15px; }

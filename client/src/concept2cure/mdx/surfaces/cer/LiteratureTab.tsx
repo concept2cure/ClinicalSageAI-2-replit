@@ -73,7 +73,7 @@ const inputStyle: React.CSSProperties = {
   fontSize: 12,
   padding: '5px 8px',
   background: 'var(--bg-050)',
-  border: '1px solid var(--border)',
+  border: '1px solid var(--border-control)',
   borderRadius: 6,
   color: 'var(--text-200)',
 };
@@ -295,7 +295,7 @@ export function LiteratureTab({
                       fontSize: 12,
                       padding: '5px 8px',
                       background: 'var(--bg-050)',
-                      border: '1px solid var(--border)',
+                      border: '1px solid var(--border-control)',
                       borderRadius: 6,
                       color: 'var(--text-200)',
                     }}
@@ -314,7 +314,7 @@ export function LiteratureTab({
                       fontSize: 12,
                       padding: '5px 8px',
                       background: 'var(--bg-050)',
-                      border: '1px solid var(--border)',
+                      border: '1px solid var(--border-control)',
                       borderRadius: 6,
                       color: 'var(--text-200)',
                     }}
@@ -332,7 +332,7 @@ export function LiteratureTab({
                       fontSize: 12,
                       padding: '5px 8px',
                       background: 'var(--bg-050)',
-                      border: '1px solid var(--border)',
+                      border: '1px solid var(--border-control)',
                       borderRadius: 6,
                       color: 'var(--text-200)',
                     }}

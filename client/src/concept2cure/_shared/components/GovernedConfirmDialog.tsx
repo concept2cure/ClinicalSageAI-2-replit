@@ -323,7 +323,7 @@ export function GovernedConfirmDialog({
               width: '100%',
               padding: 8,
               borderRadius: 6,
-              border: '1px solid var(--border, rgba(0,0,0,0.16))',
+              border: '1px solid var(--border-control, rgba(0,0,0,0.16))',
               fontFamily: 'inherit',
               fontSize: 13,
               resize: 'vertical',
@@ -358,7 +358,7 @@ export function GovernedConfirmDialog({
               width: '100%',
               padding: '6px 10px',
               borderRadius: 6,
-              border: '1px solid var(--border, rgba(0,0,0,0.16))',
+              border: '1px solid var(--border-control, rgba(0,0,0,0.16))',
               fontFamily: 'var(--font-mono, ui-monospace, monospace)',
               fontSize: 13,
             }}

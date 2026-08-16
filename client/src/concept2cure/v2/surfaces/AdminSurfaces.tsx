@@ -467,7 +467,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                 fontSize: 12.5,
                 padding: '7px 10px',
                 borderRadius: 6,
-                border: '1px solid var(--border)',
+                border: '1px solid var(--border-control)',
                 background: 'var(--bg-050)',
                 color: 'var(--text-100)',
                 minWidth: 220,
@@ -526,7 +526,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                     fontSize: 13,
                     padding: '8px 10px',
                     borderRadius: 6,
-                    border: '1px solid var(--border)',
+                    border: '1px solid var(--border-control)',
                     background: 'var(--bg-050)',
                     width: '100%',
                     maxWidth: 340,
@@ -707,7 +707,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                       fontSize: 12.5,
                       padding: '7px 10px',
                       borderRadius: 6,
-                      border: '1px solid var(--border)',
+                      border: '1px solid var(--border-control)',
                       background: 'var(--bg-050)',
                       color: 'var(--text-100)',
                       minWidth: 240,
@@ -2700,7 +2700,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     onChange={(e) => setKeyName(e.target.value)}
                     placeholder="Key name (e.g. CI pipeline)"
                     maxLength={255}
-                    style={{ padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-000)', maxWidth: 360 }}
+                    style={{ padding: '8px 10px', border: '1px solid var(--border-control)', borderRadius: 8, background: 'var(--bg-000)', maxWidth: 360 }}
                   />
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {API_KEY_SCOPE_OPTIONS.map((s) => {

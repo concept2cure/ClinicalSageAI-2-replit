@@ -339,7 +339,7 @@ svg { display: block; }
 .pdev-sheet-section { display: flex; flex-direction: column; gap: 4px; }
 .pdev-sheet-section .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-400); font-weight: 600; }
 .pdev-sheet-section .val { font-size: 13px; color: var(--text-100); }
-.pdev-sheet-section textarea, .pdev-sheet-section input { padding: 8px 10px; background: var(--bg-050); border: 1px solid var(--border-100); border-radius: 6px; resize: vertical; font-size: 13px; }
+.pdev-sheet-section textarea, .pdev-sheet-section input { padding: 8px 10px; background: var(--bg-050); border: 1px solid var(--border-control); border-radius: 6px; resize: vertical; font-size: 13px; }
 .pdev-sheet-section textarea:focus, .pdev-sheet-section input:focus { border-color: var(--accent-100); box-shadow: 0 0 0 3px var(--accent-000); }
 .pdev-sheet-hint { font-size: 11px; color: var(--text-400); font-style: italic; }
 .pdev-sheet-foot { display: flex; justify-content: space-between; padding: 14px 22px; border-top: 1px solid var(--border-100); }
@@ -453,7 +453,7 @@ svg { display: block; }
 .pdev-confirm-count { font-size: 11px; }
 .pdev-confirm-count.low { color: var(--warning); }
 .pdev-confirm-count.ok { color: var(--success); }
-.pdev-confirm-field textarea, .pdev-confirm-input { padding: 10px 12px; background: var(--bg-050); border: 1px solid var(--border-100); border-radius: 6px; font-size: 13px; resize: vertical; min-height: 32px; }
+.pdev-confirm-field textarea, .pdev-confirm-input { padding: 10px 12px; background: var(--bg-050); border: 1px solid var(--border-control); border-radius: 6px; font-size: 13px; resize: vertical; min-height: 32px; }
 .pdev-confirm-field textarea:focus, .pdev-confirm-input:focus { border-color: var(--accent-100); box-shadow: 0 0 0 3px var(--accent-000); }
 .pdev-confirm-foot { display: flex; justify-content: space-between; gap: 8px; padding: 14px 22px 18px; border-top: 1px solid var(--border-100); }
 

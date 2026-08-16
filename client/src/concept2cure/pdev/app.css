@@ -998,7 +998,7 @@
 .pdev-confirm-field textarea,
 .pdev-confirm-input {
   padding: 10px 12px; background: var(--bg-050);
-  border: 1px solid var(--border-100); border-radius: 6px;
+  border: 1px solid var(--border-control); border-radius: 6px;
   font-size: 13px; resize: vertical; min-height: 32px;
   outline: 0;
 }
@@ -1025,7 +1025,7 @@
 .pdev-sheet-section textarea,
 .pdev-sheet-section input {
   padding: 8px 10px; background: var(--bg-050);
-  border: 1px solid var(--border-100); border-radius: 6px;
+  border: 1px solid var(--border-control); border-radius: 6px;
   resize: vertical; font-size: 13px; outline: 0;
 }
 .pdev-sheet-section textarea:focus,

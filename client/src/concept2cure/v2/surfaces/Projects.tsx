@@ -375,19 +375,19 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
                 <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Project name</span>
                 <input value={name} onChange={e => setName(e.target.value)}
                   placeholder={`e.g. ${selTpl.id === '510k' ? 'Aurora CGM — 510(k)' : 'BX-204 — ' + selTpl.label}`}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-100)', fontSize: 13 }} />
+                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }} />
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Product name</span>
                 <input value={product} onChange={e => setProduct(e.target.value)} placeholder="e.g. BX-204"
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-100)', fontSize: 13 }} />
+                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }} />
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Therapeutic area</span>
                 <select value={ta} onChange={e => setTa(e.target.value)}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-100)', fontSize: 13 }}>
+                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }}>
                   {taGroups.map(g => {
                     const items = taList.filter(t => t.group === g.id);
                     return items.length
@@ -400,7 +400,7 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)' }}>Target submission date</span>
                 <input type="date" value={target} onChange={e => setTarget(e.target.value)}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-100)', fontSize: 13 }} />
+                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-control)', background: 'var(--bg-100)', fontSize: 13 }} />
               </label>
 
               <div>

@@ -55,7 +55,7 @@ input, textarea { font-family: inherit; color: inherit; outline: none; }
 
 .es-field { display: block; margin-bottom: 14px; }
 .es-field-lbl { display: block; font-size: 11px; font-weight: 600; color: var(--text-200); margin-bottom: 6px; letter-spacing: 0.01em; }
-.es-field textarea, .es-field input { width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: #fff; resize: none; transition: border-color 200ms, box-shadow 200ms; }
+.es-field textarea, .es-field input { width: 100%; padding: 8px 11px; border: 1px solid var(--border-control); border-radius: 8px; font-size: 13px; background: #fff; resize: none; transition: border-color 200ms, box-shadow 200ms; }
 .es-field textarea:focus, .es-field input:focus { border-color: var(--accent-main-100); box-shadow: 0 0 0 3px var(--accent-main-000, rgba(217,119,87,0.12)); }
 .es-field-hint { display: block; font-size: 11px; color: var(--text-400); margin-top: 5px; }
 
