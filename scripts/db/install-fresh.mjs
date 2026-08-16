@@ -170,12 +170,18 @@ function describeStatement(sql) {
   return sql.replace(/\s+/g, ' ').slice(0, 80);
 }
 
-/** Table a statement creates or targets, used to trace cascading skips. */
+/**
+ * Table a statement creates or targets, used to trace cascading skips.
+ * Handles both `"table"` and `"schema"."table"` — the schema-qualified form
+ * must yield the TABLE, not the schema, or every vault/precedent object would
+ * poison the skip set under the key "vault".
+ */
 function targetTable(sql) {
+  const qualified = '(?:"?[\\w]+"?\\.)?"?([\\w]+)"?';
   const m =
-    sql.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([\w]+)"?/i) ||
-    sql.match(/ALTER\s+TABLE\s+(?:ONLY\s+)?"?([\w]+)"?/i) ||
-    sql.match(/\bON\s+"?([\w]+)"?/i);
+    sql.match(new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${qualified}`, 'i')) ||
+    sql.match(new RegExp(`ALTER\\s+TABLE\\s+(?:ONLY\\s+)?${qualified}`, 'i')) ||
+    sql.match(new RegExp(`\\bON\\s+${qualified}`, 'i'));
   return m ? m[1] : null;
 }
 
@@ -277,11 +283,28 @@ async function main() {
     }
     const marker = out.indexOf('You are about to execute current statements:');
     if (marker < 0) {
-      console.error(out.slice(0, 4000));
-      throw new Error(
-        'could not obtain the push statement list (drizzle-kit did not print it) — ' +
-          'cannot provision tables without pgvector',
+      // drizzle-kit did not hand back a statement list (it can end during
+      // introspection on an already-large database). Do NOT decide here what
+      // that means for the install — step 8 counts the tables and says. This
+      // is recorded, not thrown, so an idempotent re-run over an already
+      // provisioned database is not turned into a total failure by a step that
+      // had nothing left to do.
+      console.log('  ⚠ drizzle-kit did not return a statement list; last output:');
+      console.log(
+        out
+          .trim()
+          .split('\n')
+          .slice(-5)
+          .map((l) => `      ${l}`)
+          .join('\n'),
       );
+      console.log('    No tables were pushed in this step. Verification (8/8) decides the verdict.');
+      recordIncomplete(
+        'drizzle push (pgvector absent)',
+        'could not obtain the push statement list from drizzle-kit; no tables were pushed in this step ' +
+          '(see the table count in 8/8 for what the database actually contains)',
+      );
+      return;
     }
     const lines = out.slice(marker).split('\n').slice(1);
     const stop = lines.findIndex((l) => /^\s*(❯|Yes, I want to|No, abort|Found data-loss statements:)/.test(l));
@@ -393,6 +416,15 @@ async function main() {
         if (isVectorTypeMissing(err)) {
           recordVectorSkip(`pre-overlay creator ${rel} (${(err.message || '').split('\n')[0]})`);
           console.log(`  ⚠ pre-overlay creator ${rel} skipped — needs pgvector`);
+          continue;
+        }
+        if (ALLOW_INCOMPLETE) {
+          // Same contract as everywhere else under this flag: record it, keep
+          // going, and let 8/8 count what actually exists. Throwing here ended
+          // the run before ANY report was printed, which is the opposite of
+          // what an operator who asked for a partial install needs to see.
+          console.log(`  ⚠ pre-overlay creator ${rel}: ${(err.message || '').split('\n')[0]}`);
+          recordIncomplete('pre-overlay creators', `${rel} failed: ${(err.message || '').split('\n')[0]}`);
           continue;
         }
         throw new Error(`pre-overlay creator ${rel} failed: ${err.message}`);
