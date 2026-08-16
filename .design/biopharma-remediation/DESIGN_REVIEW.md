@@ -120,10 +120,32 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
    appearance, which is a design decision rather than a bug fix, so the gate
    pins the count instead of migrating them. That decision is the follow-up.
 
-4. **`NdaCockpit`'s KPI strip is not gated on the loading state** the new narrative
-   was built to speak honestly about — "0% Application readiness" renders directly
-   under "Reading this application's filing readiness…". Pre-existing, but adjacent
-   and undercutting.
+4. ~~**`NdaCockpit`'s KPI strip is not gated on the loading state.**~~ **RESOLVED**,
+   and it was six ungated items, not one. The four KPI tiles, plus both arms of
+   the lead's action — which on a failed read offered to "Draft the final
+   readiness plan" and prompted AnA about "the open administrative items on this
+   NDA program", asserting to the model that such items exist. That is the one
+   with reach beyond the surface.
+
+   The **error** case matters more than the loading one the review named: loading
+   resolves, a failed read does not, so `0% / 0 / 0` is the final answer the user
+   is left with — and `data-tone={highs.length ? 'err' : undefined}` rendered a
+   failed Refuse-to-File read as a neutral-toned zero beside the words "High RTF
+   risk", which is an empty findings set presented as a finding of none, in the
+   one form that reads faster than prose.
+
+   Also found and fixed: the "Review clock · not started" tile. There is no
+   review-clock store at all — the surface's own header says so and the clock tab
+   renders "No review clock recorded" — so "not started" was a stronger,
+   unevidenced claim contradicting the tab 90 lines below it. Now "not recorded".
+
+   **A design decision left open.** `CmcModule`, on the same taxonomy, *deleted*
+   its KPI strip rather than gate it: _"Repeating a figure three times does not
+   make it more true."_ Two of these four tiles are likewise restatements of
+   figures the lead already narrates. Deleting them would remove the
+   contradiction rather than gate it, and would leave zero ungated numbers. It
+   is not done here, because removing a scannable summary is a product decision.
+   **Your call.**
 
 5. **Signature manifestation is never shown back.** `authoring_signatures` stores
    signer, meaning, reason, timestamp and hash, and `GET /docs/:id/signatures`

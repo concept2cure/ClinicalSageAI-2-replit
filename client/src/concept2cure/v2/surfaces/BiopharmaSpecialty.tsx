@@ -21,55 +21,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
-import { AnswerLead } from '../AnswerLead';
+import { AnswerLead, UnresolvedLead } from '../AnswerLead';
+import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
-import { assessmentState, type AssessmentState } from '../assessmentState';
-
-/**
- * The unsettled half of every lead on this file.
- *
- * All four surfaces here reached the same judgment independently — that an
- * empty result set is not a finding of "none" — and each wrote it out by hand
- * against a different local signal. The reasoning was right in all four and
- * copy-pasted in all four, which is the condition under which the fifth one
- * regresses. `assessmentState` is now the judgment, and this is the copy for
- * the two states none of the four had at all.
- *
- * They mattered: the lead renders above the tables, and while the read was in
- * flight every one of these surfaces asserted its not-assessed sentence — "No
- * PREA milestones have been recorded", "No signals have been screened" — about
- * a fetch that had not returned. A failed read said the same thing, which is
- * the "an error is never rendered as an empty result" rule in CLAUDE.md.
- */
-function unsettledLead(
-  state: AssessmentState,
-  subject: string,
-): { tone: 'calm' | 'urgent'; headline: React.ReactNode; body: React.ReactNode } | null {
-  if (state === 'loading') {
-    return {
-      tone: 'calm',
-      headline: <>Reading {subject}&hellip;</>,
-      body: <>Nothing is being asserted about {subject} until the read settles.</>,
-    };
-  }
-  if (state === 'unreadable') {
-    return {
-      tone: 'urgent',
-      headline: <>{subject.charAt(0).toUpperCase() + subject.slice(1)} could not be read.</>,
-      body: (
-        <>
-          This is a failed read, not an empty one. Nothing on this surface should be taken as an
-          assessment of {subject}. Sign in to your tenant and retry.
-        </>
-      ),
-    };
-  }
-  return null;
-}
 
 /* ── Inline shared kit helpers (Nonclinical.tsx pattern) ── */
 
@@ -312,17 +270,20 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
   const nextMs = prea[0];
   const topDraft = drafts[0];
   const nextMsLabel = nextMs && typeof nextMs.ms === 'string' ? nextMs.ms.toLowerCase() : 'upcoming milestone';
-
-  /* `assessmentRan` is a RECORDED milestone, never `prea.length === 0`. An
-     empty milestone table says nobody has entered one, not that none is due. */
-  const preaState = assessmentState({
-    loading: livePlans.loading || livePrea.loading,
-    unreadable: Boolean(livePlans.error || livePrea.error),
-    scopeExists: plans.length > 0,
-    findingCount: drafts.length,
-    assessmentRan: Boolean(nextMs),
+  /* The milestone read's OWN state, not `prea.length`. An empty `prea` is in
+     flight, failed, or genuinely empty, and only the third may say "nothing is
+     recorded" — see assessmentStateFor. `assessmentRan: false` because nothing
+     screens PREA milestones; they are recorded or they are not. */
+  const plansState = assessmentStateFor(livePlans, {
+    scopeExists: true,
+    findingCount: plans.length,
+    assessmentRan: false,
   });
-  const preaUnsettled = unsettledLead(preaState, 'pediatric milestone standing');
+  const preaState = assessmentStateFor(livePrea, {
+    scopeExists: plans.length > 0,
+    findingCount: prea.length,
+    assessmentRan: false,
+  });
 
   return (
     <BpComposer
@@ -330,13 +291,12 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
       title="Pediatric strategy"
       state={<>FDA iPSP and EMA PIP plans, deferrals, waivers and PREA milestones across the portfolio.</>}
       lead={
-        preaUnsettled ? (
-          <AnswerLead
-            tone={preaUnsettled.tone}
-            eyebrow="Where do your pediatric obligations stand"
-            headline={preaUnsettled.headline}
-            body={preaUnsettled.body}
-          />
+        /* The plan read's own state first. `plans.length === 0` was answering
+           "nothing on file" while the request was still in flight and while it
+           had FAILED — the most prominent sentence on the surface asserting a
+           fact about the org's regulatory record that nobody had established. */
+        !hasAnswer(plansState) ? (
+          <UnresolvedLead state={plansState} eyebrow="Where do your pediatric obligations stand" subject="pediatric plans" />
         ) : plans.length === 0 ? (
           <AnswerLead
             tone="calm"
@@ -359,13 +319,20 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
               /* BP-W0-3: `prea` being empty means no PREA milestone has been
                  RECORDED, which is not the same as none being overdue. The old
                  copy read "No milestones are overdue -- you're in good standing",
-                 which is a clearance claim derived from an empty list. */
-              : <>{preaState === 'assessed-clear' && nextMs
-                  ? <>The {nextMsLabel} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</>
-                  : <>No PREA milestones have been recorded against {plans.length === 1 ? 'this plan' : 'these plans'} yet, so milestone standing is unknown rather than clear. Record the deferral and study-completion dates and they are tracked here.</>}</>}
+                 which is a clearance claim derived from an empty list.
+                 Then: `prea` is ALSO empty while the read is in flight and when
+                 it has failed, and this branch spoke the recorded-nothing
+                 sentence in all three. The state now comes from the read. */
+              : <>{preaState === 'loading'
+                  ? <>Reading the PREA and PIP milestones recorded against {plans.length === 1 ? 'this plan' : 'these plans'}…</>
+                  : preaState === 'unreadable'
+                    ? <>The PREA milestone record could not be read, so nothing is claimed about milestone standing here. The table below reports the failure.</>
+                    : nextMs
+                      ? <>The {nextMsLabel} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</>
+                      : <>No PREA milestones have been recorded against {plans.length === 1 ? 'this plan' : 'these plans'} yet, so milestone standing is unknown rather than clear. Record the deferral and study-completion dates and they are tracked here.</>}</>}
             reassure={drafts.length
               ? "You don't have to draft the extrapolation rationale from scratch -- I'll write the first pass with you."
-              : preaState === 'assessed-clear'
+              : nextMs
                 ? "I'll watch each milestone and flag anything before it slips."
                 : undefined}
             action={{
@@ -513,18 +480,13 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
   const designated = des.filter((d) => d.status === 'designated');
   const topPending = pending[0];
   const topPendingIndication = topPending ? String(topPending.indication ?? 'the recorded indication').toLowerCase() : '';
-
-  /* `assessmentRan` is a GRANTED designation. `des.length > 0` only says a
-     record exists — with every record withdrawn, denied or merely requested,
-     no entitlement follows and none may be claimed. */
-  const orphanState = assessmentState({
-    loading: liveDes.loading,
-    unreadable: Boolean(liveDes.error),
-    scopeExists: des.length > 0,
-    findingCount: pending.length,
-    assessmentRan: designated.length > 0,
+  /* A designation is GRANTED or it is not — nothing screens for one — so the
+     positive evidence is a `designated` record, never an empty list. */
+  const desState = assessmentStateFor(liveDes, {
+    scopeExists: true,
+    findingCount: des.length,
+    assessmentRan: false,
   });
-  const orphanUnsettled = unsettledLead(orphanState, 'rare-disease designation standing');
 
   return (
     <BpComposer
@@ -532,13 +494,8 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
       title="Orphan and rare programs"
       state={<>Designations across FDA / EMA / PMDA, RPD vouchers and grants, and patient-advocacy engagements.</>}
       lead={
-        orphanUnsettled ? (
-          <AnswerLead
-            tone={orphanUnsettled.tone}
-            eyebrow="Where do your rare-disease designations stand"
-            headline={orphanUnsettled.headline}
-            body={orphanUnsettled.body}
-          />
+        !hasAnswer(desState) ? (
+          <UnresolvedLead state={desState} eyebrow="Where do your rare-disease designations stand" subject="orphan and rare-disease designations" />
         ) : des.length === 0 ? (
           <AnswerLead
             tone="calm"
@@ -571,17 +528,17 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
                  been saved. Only an explicitly recorded 'submitted' status may
                  carry that sentence; everything else reads as not yet filed. */
               ? <>Your closest opportunity is <b>{topPending.product}</b> -- {topPendingIndication} -- {topPending.status === 'submitted' ? 'awaiting an agency decision' : 'not yet submitted'}.</>
-              : orphanState === 'assessed-clear'
+              : designated.length > 0
                 ? <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>
                 : <>None of the <b>{des.length}</b> recorded {des.length === 1 ? 'designation has' : 'designations have'} been granted.</>}
             body={topPending
               ? <>Orphan status brings 7-year exclusivity, fee waivers, and RPD-voucher eligibility -- real value worth getting right. The prevalence evidence and scientific rationale are what carry the application; that's where I can help most.</>
-              : orphanState === 'assessed-clear'
+              : designated.length > 0
                 ? <>Across the portfolio these designations translate to years of exclusivity and priority review. The next move is keeping the patient-advocacy engagements and any RPD-voucher opportunities warm.</>
                 : <>No exclusivity or incentive entitlement follows from these records in their current state. Their dispositions are below.</>}
             reassure={topPending
               ? "Designation narratives follow a pattern reviewers recognize -- I'll draft the prevalence and rationale sections with you."
-              : orphanState === 'assessed-clear'
+              : designated.length > 0
                 ? "Your designations are in hand. I'll help you make the most of the incentives that come with them."
                 : undefined}
             action={{
@@ -771,17 +728,20 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
   const topChg = highChg[0];
   const topChgTitle = topChg ? String(topChg.title ?? 'the proposed change').toLowerCase() : '';
   const nothingOnFile = supp.length === 0 && cmc.length === 0 && ren.length === 0;
-
-  /* `assessmentRan` is a RECORDED renewal cycle. With none, "nothing is
-     overdue" is a statement about an empty table, not about the portfolio. */
-  const lcmState = assessmentState({
-    loading: liveSupp.loading || liveRen.loading || liveCmc.loading,
-    unreadable: Boolean(liveSupp.error || liveRen.error || liveCmc.error),
-    scopeExists: !nothingOnFile,
-    findingCount: highChg.length,
-    assessmentRan: Boolean(nextRen),
+  /* Three reads feed this one narrative, so it may only speak once ALL THREE
+     have answered — a supplement list that arrived while the renewal read is
+     still in flight is not grounds for "your post-approval portfolio is
+     steady". Any one of them failing makes the whole lead unreadable rather
+     than partially true. */
+  const lcmRead = {
+    loading: liveSupp.loading || liveCmc.loading || liveRen.loading,
+    error: liveSupp.error ?? liveCmc.error ?? liveRen.error,
+  };
+  const lcmState = assessmentStateFor(lcmRead, {
+    scopeExists: true,
+    findingCount: supp.length + cmc.length + ren.length,
+    assessmentRan: false,
   });
-  const lcmUnsettled = unsettledLead(lcmState, 'post-approval portfolio standing');
 
   return (
     <BpComposer
@@ -789,13 +749,8 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
       title="Lifecycle management"
       state={<>Supplements, variations, CMC change control and renewal cycles across the approved portfolio.</>}
       lead={
-        lcmUnsettled ? (
-          <AnswerLead
-            tone={lcmUnsettled.tone}
-            eyebrow="What needs your attention across the approved portfolio"
-            headline={lcmUnsettled.headline}
-            body={lcmUnsettled.body}
-          />
+        !hasAnswer(lcmState) ? (
+          <UnresolvedLead state={lcmState} eyebrow="What needs your attention across the approved portfolio" subject="post-approval records" />
         ) : nothingOnFile ? (
           <AnswerLead
             tone="calm"
@@ -820,12 +775,12 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
                  truthful statement is that nothing is TRACKED, not that nothing
                  is late — and with no CMC change records, "you're on top of
                  this" was clearance derived from an empty change log. */
-              : <>{lcmState === 'assessed-clear' && nextRen
+              : <>{nextRen
                   ? <>Nothing recorded is overdue. The next thing on the horizon is the {nextRen.authority} {nextRen.next} for {nextRen.product}, due {nextRen.due}.</>
                   : <>No renewal cycle is recorded, so renewal standing is untracked rather than clear.</>}{cmc.length === 0 ? <> No CMC changes have been assessed either.</> : null}</>}
             reassure={highChg.length
               ? "You don't have to guess the pathway -- I'll classify it against Q12 and draft the justification with you."
-              : cmc.length > 0 && lcmState === 'assessed-clear'
+              : cmc.length > 0 && nextRen
                 ? "I'll prep the next renewal whenever you want to start."
                 : undefined}
             action={{
@@ -1014,21 +969,20 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   const top = ranked[0];
   const topTerm = top ? String(top.term ?? 'the top signal') : '';
   const agg = aggs.find((a) => a.status === 'drafting') || aggs[0];
+  /* The sharpest one. `top` is the highest SCREENED signal, so its absence is
+     positive evidence that no disproportionality screen has run — that part was
+     already right. What was missing is that `top` is equally absent while the
+     board read is in flight and when it has failed, and the surface then said
+     "Safety standing is unknown … no screen has been run" about a record it had
+     not read. On a pharmacovigilance surface that is a claim about patient
+     safety derived from a network state. */
+  const pvState = assessmentStateFor(board, {
+    scopeExists: true,
+    findingCount: sigs.length + aggs.length,
+    assessmentRan: false,
+  });
   const highPrr = Boolean(top && prrOf(top) >= 3);
   const nothingOnFile = sigs.length === 0 && aggs.length === 0;
-
-  /* The sharpest instance in this file, and the reason `assessmentRan` may
-     never be `findingCount === 0`: an empty signal set is not a negative
-     screen. `top` existing IS the positive evidence — a real screened signal
-     that was the highest one. */
-  const pvState = assessmentState({
-    loading: board.loading,
-    unreadable: Boolean(board.error),
-    scopeExists: !nothingOnFile,
-    findingCount: highPrr ? 1 : 0,
-    assessmentRan: Boolean(top),
-  });
-  const pvUnsettled = unsettledLead(pvState, 'safety standing');
 
   return (
     <BpComposer
@@ -1036,13 +990,8 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
       title="Safety surveillance"
       state={<>Signal detection, aggregate reports in cycle and expedited submissions across approved products.</>}
       lead={
-        pvUnsettled ? (
-          <AnswerLead
-            tone={pvUnsettled.tone}
-            eyebrow="Is anything in your safety data asking for action right now"
-            headline={pvUnsettled.headline}
-            body={pvUnsettled.body}
-          />
+        !hasAnswer(pvState) ? (
+          <UnresolvedLead state={pvState} eyebrow="Is anything in your safety data asking for action right now" subject="safety-surveillance records" />
         ) : nothingOnFile ? (
           <AnswerLead
             tone="calm"
@@ -1074,17 +1023,17 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
                signal to have been the highest one. */
             headline={highPrr && top
               ? <>Yes -- <b>{topTerm.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{prrOf(top)}</b> across {top.count} cases.</>
-              : pvState === 'assessed-clear' && top
+              : top
                 ? <>Nothing is alarming today -- the highest screened signal is {topTerm.toLowerCase()} (PRR {prrOf(top)}), still within routine monitoring.</>
                 : <>No signals have been screened for this organization.</>}
             body={highPrr && top
               ? <>A PRR above 3 with this many cases is worth a real causality read, not a wait-and-see. This is about patients on the drug now -- pulling the case narratives and running the assessment tells you whether a label change is warranted. {agg ? <>The {agg.cycle} is also in {agg.status} for the {agg.due} window.</> : null}</>
-              : pvState === 'assessed-clear'
+              : top
                 ? <>You're keeping watch across FAERS and EudraVigilance and nothing crosses the threshold for expedited action. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that's the next scheduled obligation.</> : null}</>
                 : <>Safety standing is unknown, not clear: no disproportionality screen has been run against the adverse-event store, so there is no highest signal to report. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that obligation is tracked independently of signal screening.</> : null}</>}
             reassure={highPrr
               ? "You caught this early -- that's the system working. I'll pull every case narrative and draft the causality assessment with you."
-              : pvState === 'assessed-clear'
+              : top
                 ? "Your surveillance is doing its job. I'll flag the moment anything crosses the line."
                 : undefined}
             action={{

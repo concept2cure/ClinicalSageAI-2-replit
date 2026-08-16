@@ -82,6 +82,53 @@ export function assessmentState(x: AssessmentInputs): AssessmentState {
   return x.assessmentRan ? 'assessed-clear' : 'not-assessed';
 }
 
+/** The shape every live read in this shell returns (`useLiveRows`, `useLiveData`). */
+export interface ReadState {
+  loading: boolean;
+  error?: string;
+}
+
+/**
+ * The same judgment, taken directly from the read that produced the rows.
+ *
+ * ── Why this exists rather than callers passing the two flags themselves ─────
+ * Because they did not. Four narratives on `BiopharmaSpecialty` — pediatric
+ * PREA, orphan designations, lifecycle renewals and pharmacovigilance signals —
+ * each derived their state from `rows` ALONE, having written `const prea =
+ * livePrea.rows` and dropped `loading` and `error` on that line. Each surface
+ * then passed those same two flags to the TABLE below the narrative, so the
+ * table said "couldn't load" while the paragraph above it said the set was
+ * empty.
+ *
+ * An empty array is what a live read holds in three different situations: the
+ * request is in flight, the request FAILED, or the request succeeded and there
+ * is genuinely nothing. Copy written off `rows.length === 0` cannot tell them
+ * apart, and the third is the only one that may say "nothing is recorded".
+ * Reporting a failed read as an empty result is the error CLAUDE.md names
+ * outright — "an error is never rendered as an empty result".
+ *
+ * `assessmentState` already had `loading` and `unreadable` for exactly this.
+ * The gap was the adapter, so every caller re-derived the mapping and all four
+ * re-derived it wrongly by omission. There is one mapping now.
+ */
+export function assessmentStateFor(
+  read: ReadState,
+  x: Omit<AssessmentInputs, 'loading' | 'unreadable'>,
+): AssessmentState {
+  return assessmentState({ ...x, loading: read.loading, unreadable: Boolean(read.error) });
+}
+
+/**
+ * Is this state one the surface may speak a substantive narrative from at all?
+ *
+ * `loading` and `unreadable` are not weaker versions of "nothing found" — they
+ * are the absence of an answer, and a narrative that renders its
+ * nothing-found paragraph in either is asserting a fact it does not have.
+ */
+export function hasAnswer(state: AssessmentState): boolean {
+  return state !== 'loading' && state !== 'unreadable';
+}
+
 /**
  * May this state carry reassuring copy — "you're close", "building steadily",
  * "no blockers left"?
