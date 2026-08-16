@@ -451,7 +451,7 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
           : port.length === 0
             ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
             : irOverdue
-              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}) -- agencies read a late IR response as a readiness signal. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}). {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
                 : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move -- clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}

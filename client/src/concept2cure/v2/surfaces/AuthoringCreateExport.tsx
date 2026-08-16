@@ -139,7 +139,12 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       const res = await apiRequest('POST', `/api/authoring/docs/${docId}/export`, { format });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        fireToast('Export failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error');
+        /* Every other failure in this file says what was NOT done and what to
+           do next; these two stopped at the status code. Nothing partial is
+           written on a failed export — the assembler streams or it does not —
+           so saying so is accurate and is the thing the author needs to know
+           before retrying. */
+        fireToast('Export failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. No file was produced; the document is unchanged. Try again, or export a single section to narrow it down.', 'error');
         return;
       }
       const blob = await res.blob();
@@ -151,7 +156,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       URL.revokeObjectURL(url);
       fireToast('Published ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
     } catch (e) {
-      fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '. No file was produced; the document is unchanged. Check your connection and try again.', 'error');
     }
   };
 

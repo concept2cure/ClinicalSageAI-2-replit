@@ -13,6 +13,7 @@ import '../styles/project-home-v2.css';
 // fixture and is gone: the surface now reads the org's real risk file.
 import { RISK_ENUMS, SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
 import type { RiskRow, RiskControl } from '../fixtures/risk-data';
+import { C2CToast, useToast } from '../toast';
 
 /* ---- Risk management (ISO 14971) ---- */
 
@@ -167,8 +168,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const [view, setView] = useState<'initial' | 'residual'>('initial');
   const [form, setForm] = useState(false);
   const [ctrlForm, setCtrlForm] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
 
   useEffect(() => {
     try {
@@ -455,7 +455,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
       {form && <C2CForm config={hazardFormConfig} onCancel={() => setForm(false)} onSubmit={addHazard} />}
       {ctrlForm && <C2CForm config={ctrlFormConfig} onCancel={() => setCtrlForm(false)} onSubmit={addControl} />}
-      {toast && <div className="pdev-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

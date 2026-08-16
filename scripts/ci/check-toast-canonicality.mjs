@@ -86,7 +86,20 @@ const CANONICAL = 'client/src/concept2cure/v2/toast.tsx';
  * an existing one, fails the gate.
  */
 const UNCONVERGED_BASELINE = {
-  'pdev-toast': 6,
+  /* Was 6. Those six — AdminSurfaces, CommunicationCenter, DesignControls,
+     HumanFactors, Labeling, Risk — are converged, so the floor is 0 and a new
+     one fails.
+
+     The deferral this baseline records was on the grounds that changing the
+     class changes appearance. It does, and the change is small: both are
+     bottom-centre dark pills, differing by 2px of offset, 0.5px of type, one
+     font weight, 2px of padding and a border radius, plus the entry animation
+     `.de-toast` already has. Set against that, `.pdev-toast` rendered
+     `{I.check}` with NO live region and no error tone at all, so on those six
+     surfaces a failed write was both green AND silent to a screen reader.
+     That is the same correctness defect this gate exists for, and it outweighs
+     two pixels. */
+  'pdev-toast': 0,
   'sn-toast': 1,
   'ac-toast': 1,
   'amem-toast': 1,

@@ -1449,11 +1449,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   // (avoids a one-frame blank between the fetch resolving and the seed effect).
   const groups = cat.length > 0 ? cat : liveGroups ?? [];
   const [admin, setAdmin] = useState(false);
-  const [toast, setToast] = useState('');
-  const fireToast = (m: string) => {
-    setToast(m);
-    setTimeout(() => setToast(''), 3200);
-  };
+  const [toast, fireToast] = useToast();
 
   const tierLabel = lic?.tier || '';
   const pj = lic?.usage?.projects || { current: 0, limit: 0 };
@@ -1728,11 +1724,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
           ))}
         </div>
       </div>
-      {toast && (
-        <div className="pdev-toast">
-          {I.check} {toast}
-        </div>
-      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

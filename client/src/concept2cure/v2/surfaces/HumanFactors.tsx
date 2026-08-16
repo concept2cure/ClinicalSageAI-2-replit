@@ -7,6 +7,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Render contract (GET /api/human-factors → { data: HfFileData | null }) ── */
 
@@ -102,8 +103,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
   const device = file?.device ?? '';
 
   const [form, setForm] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
   const sevLabel = (s: string) => (HF_SEV.find(x => x[0] === s) || [])[1] || s;
 
   const hfe = useMemo(() => hfAssessCompleteness(present), [present]);
@@ -256,7 +256,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       </div>
 
       {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={addScenario} />}
-      {toast && <div className="pdev-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

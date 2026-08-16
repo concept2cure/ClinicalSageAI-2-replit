@@ -376,7 +376,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         ? <>You're <b>{overall}% ready</b>, but <b>{topHigh.area.split('·')[1]?.trim() || topHigh.area}</b> would get you refused at the filing door.</>
         : <>You're <b>{overall}% ready</b>, with {rtf.length} filing-risk {rtf.length === 1 ? 'item' : 'items'} open.</>,
       body: topHigh
-        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()} &mdash; and the same review that refuses today accepts. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
+        ? <>The one that matters right now: {topHigh.text.charAt(0).toLowerCase() + topHigh.text.slice(1)} Clear it &mdash; {topHigh.fix.toLowerCase()}. {gateMod ? <>Module {gateMod.m} at {gateMod.pct}% is the next thing behind it.</> : null}</>
         : <>{openItems} {openItems === 1 ? 'item' : 'items'} to work before you submit. None is currently rated high severity.</>,
     },
     'assessed-clear': {
