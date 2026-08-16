@@ -80,6 +80,37 @@ function isTestFile(filePath) {
   return TEST_PATTERNS.some((re) => re.test(filePath));
 }
 
+/**
+ * Is this matched line a COMMENT rather than code?
+ *
+ * ── Why this exists ──────────────────────────────────────────────────────────
+ * This gate has been failing since `906d4d8`, the commit that FIXED the Word
+ * export by replacing `require('docx')` with `await import('docx')`. That
+ * commit documented the defect, and `scripts/ci/check-commonjs-require.mjs` —
+ * the gate written to stop `require` coming back — quotes the offending line in
+ * its own header so the next reader knows what it is looking for:
+ *
+ *       const { Document, Packer } = require('docx');
+ *
+ * This scanner is a raw grep, so it read that explanation as an occurrence and
+ * reported two "unapproved DOCX entry points" inside another gate's
+ * documentation. The result was a red gate that could only be silenced by
+ * deleting the sentence explaining the bug — so it stayed red instead, which is
+ * how a gate stops being read.
+ *
+ * A scanner that cannot tell an explanation from an occurrence forces a choice
+ * between a working gate and a comment worth having. It should not.
+ *
+ * Line-level and deliberately so: this is a `grep -n` over whole files, and the
+ * cheap check covers every real case here (JSDoc continuations, `//`, and `#`
+ * for the Python runtimes). A `require('docx')` genuinely inside a multi-line
+ * comment that does not start its own line would still be caught, which is the
+ * safe direction to be wrong in.
+ */
+function isCommentLine(content) {
+  return /^\s*(\*|\/\/|\/\*|#)/.test(content);
+}
+
 function grepFiles(pattern) {
   try {
     // --exclude-dir keeps installed packages out of the scan: with
@@ -101,7 +132,9 @@ function grepFiles(pattern) {
         const lineNo = line.slice(firstColon + 1, secondColon);
         const content = line.slice(secondColon + 1).trim();
         return { file, lineNo, content };
-      });
+      })
+      // A quoted example in a docblock is not an entry point.
+      .filter((hit) => !isCommentLine(hit.content));
   } catch {
     // grep returns exit 1 when no matches — that's fine
     return [];
