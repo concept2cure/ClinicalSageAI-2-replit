@@ -74,6 +74,18 @@ is absent, even under `--allow-incomplete`, so a fresh machine without
 
 Both are why a design review could not see the product it was reviewing.
 
+**Reproducing it, so the next review does not have to rediscover this.** Both
+defects are fixed at source, so setup now produces an environment you can sign
+into:
+
+    bash scripts/setup-local-db.sh     # provisions, writes ALLOW_DEV_AUTH=1, seeds the demo admin
+    npm run dev                        # then click "Demo access" on the sign-in card
+
+`setup-local-db.sh` reports whether dev sign-in is actually usable rather than
+assuming it, and warns when a pre-existing `.env` predates the flag. On a machine
+without the `postgresql-N-pgvector` package the install now completes and names
+the objects it skipped, instead of dying at step 1/8 with zero tables.
+
 ## Must fix — all resolved in commit `7d7b303`
 
 1. **Freeze and §11.50 e-signature failures rendered as success.**
