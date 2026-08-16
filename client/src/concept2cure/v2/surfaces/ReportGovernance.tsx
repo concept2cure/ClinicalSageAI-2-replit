@@ -19,7 +19,7 @@
  * and hashes come only from the server; seal/revoke require a justification and
  * refetch so status is the server's.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -27,6 +27,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface GovReport {
   id: number;
@@ -40,16 +41,6 @@ interface GovReport {
   createdAt?: string | null;
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -89,7 +80,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
 
   const verify = useCallback(async (r: GovReport) => {
     const { ok, status, data } = await readData<Record<string, unknown>>('GET', `/api/intelligent-reports/${r.id}/verify`);
-    if (!ok || !data) { fireToast(status === 401 ? 'Sign in to verify.' : `Verification didn’t run (HTTP ${status}).`); return; }
+    if (!ok || !data) { fireToast(status === 401 ? 'Sign in to verify.' : `Verification didn’t run (HTTP ${status}).`, 'error'); return; }
     setVerifyRes({ id: r.id, verdict: data });
   }, [fireToast]);
 
@@ -105,7 +96,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
     if (!dialog) return;
     const { kind, report } = dialog;
     const { ok, status } = await readData('POST', `/api/intelligent-reports/${report.id}/${kind}`, { justification: v.justification });
-    if (!ok) { fireToast(status === 401 ? 'Sign in first.' : `Couldn’t ${kind} the report (HTTP ${status}). Nothing changed.`); return; }
+    if (!ok) { fireToast(status === 401 ? 'Sign in first.' : `Couldn’t ${kind} the report (HTTP ${status}). Nothing changed.`, 'error'); return; }
     setDialog(null);
     fireToast('Report ' + (kind === 'seal' ? 'sealed' : 'revoked') + ' · ' + (report.reportCode ?? report.id) + '.');
     void load();

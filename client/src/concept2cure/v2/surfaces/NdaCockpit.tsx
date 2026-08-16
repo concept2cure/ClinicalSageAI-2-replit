@@ -8,6 +8,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Inline fixture types ── */
 
@@ -97,26 +98,7 @@ const BLA_KIND_LABEL: Record<string, string> = {
 const BLA_PASSING_VERDICTS = new Set(['similar', 'comparable', 'low', 'minimal', 'negligible', 'none']);
 const isPassingBlaVerdict = (v?: string | null): boolean => !!v && BLA_PASSING_VERDICTS.has(v.toLowerCase());
 
-/* ── Inline shared kit helpers ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* ════ NdaCockpit -- NDA / BLA filing cockpit ════ */
 
@@ -238,7 +220,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       });
       if (!res.ok) {
         addRtf(local());
-        fireToast('Could not log filing risk · sign in required — shown locally, not persisted');
+        fireToast('Could not log filing risk · sign in required — shown locally, not persisted', 'error');
         return;
       }
       const body = await res.json().catch(() => null);
@@ -254,6 +236,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         'Could not log filing risk · ' +
           (e instanceof Error && e.message ? e.message : 'request failed') +
           ' — shown locally, not persisted',
+        'error',
       );
     }
   };
@@ -277,7 +260,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       });
       if (!res.ok) {
         addM1(local());
-        fireToast('Could not save Module 1 document · sign in required — shown locally, not persisted');
+        fireToast('Could not save Module 1 document · sign in required — shown locally, not persisted', 'error');
         return;
       }
       const body = await res.json().catch(() => null);
@@ -293,6 +276,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         'Could not save Module 1 document · ' +
           (e instanceof Error && e.message ? e.message : 'request failed') +
           ' — shown locally, not persisted',
+        'error',
       );
     }
   };

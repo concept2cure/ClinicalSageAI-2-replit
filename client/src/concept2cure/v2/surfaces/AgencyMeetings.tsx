@@ -6,6 +6,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ════ AgencyMeetings — regulator-interaction worklist ════
 
@@ -77,24 +78,7 @@ type LiveMeeting = Meeting & {
 
 /* -- Inline shared helpers -- */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
 
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 function MtgStat({ children, tone }: { children: React.ReactNode; tone?: string }) {
   return <span className={'mtg-stat ' + (tone || '')}>{children}</span>;
@@ -226,13 +210,13 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
         goal: v.goal,
       });
       if (!res.ok) {
-        fireToast('Could not save meeting request · signed in?');
+        fireToast('Could not save meeting request · signed in?', 'error');
         return;
       }
       const payload = await res.json().catch(() => null);
       const row = payload?.data as LiveMeeting | undefined;
       if (!row || !row.id) {
-        fireToast('Could not save meeting request · signed in?');
+        fireToast('Could not save meeting request · signed in?', 'error');
         return;
       }
       const { briefingBook: _bb, minutes: _mn, ...meeting } = row;
@@ -243,6 +227,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         'Could not save meeting request · ' +
           (e instanceof Error && e.message ? e.message : 'signed in?'),
+        'error',
       );
     }
   };

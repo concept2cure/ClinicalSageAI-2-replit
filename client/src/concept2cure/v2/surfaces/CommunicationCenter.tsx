@@ -40,6 +40,7 @@ import {
 } from '../fixtures/commcenter';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/commcenter-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
@@ -187,11 +188,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = React.useState('inbox');
   const [owner, setOwner] = React.useState<'all' | 'mine'>('all');
   const [form, setForm] = React.useState(false);
-  const [toast, setToast] = React.useState('');
-  const fire = (m: string) => {
-    setToast(m);
-    setTimeout(() => setToast(''), 2800);
-  };
+  const [toast, fire] = useToast();
 
   const projectId = currentProjectId();
 
@@ -851,11 +848,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         />
       )}
 
-      {toast && (
-        <div className="pdev-toast">
-          {I.check} {toast}
-        </div>
-      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

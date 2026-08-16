@@ -7,6 +7,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Display types — aligned to the GET /api/haq-manager/rounds contract.
    server/routes/haq-manager.ts maps the governed HAQ store (feature store over
@@ -70,24 +71,7 @@ const EMPTY_QUESTIONS: Record<string, HaqQuestion[]> = {};
 
 /* ── Inline shared helpers ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
 
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* ════ HaqManager -- Health Authority Questions response workbench ════ */
 
@@ -148,7 +132,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       v.tone === 'critical' ? 'err' : v.tone === 'minor' ? 'idle' : 'warn';
 
     if (!effRoundId) {
-      fireToast('Select an agency round before logging a question');
+      fireToast('Select an agency round before logging a question', 'error');
       return;
     }
 
@@ -166,13 +150,13 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       });
       if (!res.ok) {
         // apiRequest only reaches here non-OK on 401 (auth); others throw.
-        fireToast('Could not log question -- sign in and retry');
+        fireToast('Could not log question -- sign in and retry', 'error');
         return;
       }
       const body = await res.json().catch(() => null);
       const created = body?.data;
       if (!created || !created.id) {
-        fireToast('Could not log question -- unexpected response');
+        fireToast('Could not log question -- unexpected response', 'error');
         return;
       }
       setExtra((xs) => [
@@ -186,6 +170,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       fireToast(
         'Could not log question -- ' +
           (e instanceof Error && e.message ? e.message : 'request failed'),
+        'error',
       );
     }
   };
@@ -217,7 +202,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   // the server confirms (adopting the server's status), never optimistically.
   const setStatus = async (q: HaqQuestion, st: 'in-review' | 'approved') => {
     if (q.dbId == null || !q.roundId) {
-      fireToast('This question predates the id-mapped feed — reload the rounds to enable governed transitions.');
+      fireToast('This question predates the id-mapped feed — reload the rounds to enable governed transitions.', 'error');
       return;
     }
     const verb = st === 'approved' ? 'approve' : 'review';
@@ -225,7 +210,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('POST', `/api/haq-manager/letters/${encodeURIComponent(q.roundId)}/questions/${q.dbId}/${verb}`, {});
       const json = await res.json().catch(() => null);
       if (!res.ok || !(json as any)?.success) {
-        fireToast(res.status === 401 ? 'Sign in to update the question.' : `Couldn’t ${verb} — ` + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+        fireToast(res.status === 401 ? 'Sign in to update the question.' : `Couldn’t ${verb} — ` + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error');
         return;
       }
       const serverStatus = String((json as any)?.data?.status ?? st);
@@ -233,7 +218,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       setStatusMap((m) => ({ ...m, [q.id]: display }));
       fireToast((st === 'approved' ? 'Approved ' : 'Routed to review ') + q.id + ' — persisted to the HAQ store.');
     } catch (e) {
-      fireToast(`Couldn’t ${verb} — ` + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast(`Couldn’t ${verb} — ` + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
   const approved = qs.filter((x) => x.status === 'approved').length;

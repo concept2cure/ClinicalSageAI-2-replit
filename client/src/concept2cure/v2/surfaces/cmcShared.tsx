@@ -1,73 +1,24 @@
 /**
  * Shared plumbing for the CMC surfaces.
  *
- * Three things were written per-file across the CMC module and are written once
- * here instead, because every one of them is a place a surface can quietly lie:
+ * Two things were written per-file across the CMC module and are written once
+ * here instead, because both are a place a surface can quietly lie:
  *
- *   • the toast — the only channel a write has to report that it failed;
  *   • the project-in-context read — CMC records are per-project, and a surface
  *     that guesses the project writes a scientist's data onto the wrong one;
  *   • the write-error reader — a rejected field must be shown as the field it
  *     was, not as "something went wrong".
+ *
+ * The toast used to live here too, and it was the version the design review
+ * called canonical. It now lives in `../toast`, because it was never CMC-shaped:
+ * twenty-four surfaces outside this module had each cloned a TONE-LESS copy of
+ * it, and importing "cmcShared" from the identity console to get a toast is the
+ * wrong dependency. Moving it is what let those copies be deleted. It is NOT
+ * re-exported from here — a second import path for one implementation is the
+ * parallel path this repo requires be deleted rather than aliased.
  */
 
 import { serverMessage } from '@/lib/queryClient';
-import React from 'react';
-import { I } from '../icons';
-
-/* ── Toast ──────────────────────────────────────────────────────────────── */
-
-export type ToastTone = 'ok' | 'error';
-
-/**
- * The one channel a write has to report what happened.
- *
- * The tone is explicit rather than inferred from the text. `.de-toast .ico` is
- * styled green, so a failure announced with the default check mark reads as a
- * success at a glance — "Couldn't save the specification. Nothing was
- * persisted." under a green tick is precisely the wrong first impression in a
- * regulated record.
- */
-export interface ToastState {
-  msg: string;
-  tone: ToastTone;
-}
-
-export function useToast(): [ToastState, (m: string, tone?: ToastTone) => void] {
-  const [state, setState] = React.useState<ToastState>({ msg: '', tone: 'ok' });
-  const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  React.useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
-  const fire = React.useCallback((m: string, tone: ToastTone = 'ok') => {
-    setState({ msg: m, tone });
-    if (timer.current) clearTimeout(timer.current);
-    // A failure matters more and is longer, so it is held longer than the
-    // "saved" acknowledgement it replaces.
-    timer.current = setTimeout(() => setState({ msg: '', tone }), tone === 'error' || m.length > 90 ? 7000 : 3200);
-  }, []);
-  return [state, fire];
-}
-
-export function C2CToast({ msg }: { msg: ToastState | string }) {
-  const state: ToastState = typeof msg === 'string' ? { msg, tone: 'ok' } : msg;
-  if (!state.msg) return null;
-  return (
-    <div
-      className="de-toast"
-      data-tone={state.tone}
-      role="status"
-      // An error must interrupt; an acknowledgement must not.
-      aria-live={state.tone === 'error' ? 'assertive' : 'polite'}
-    >
-      <span className="ico">{state.tone === 'error' ? I.alertTriangle : I.checkCircle}</span>
-      {state.msg}
-    </div>
-  );
-}
 
 /* ── Project in context ─────────────────────────────────────────────────── */
 

@@ -7,6 +7,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ════ Design Controls -- DHF surface ════
 
@@ -101,8 +102,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   }, [live.loading, live.error, live.rows]);
 
   const [form, setForm] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
   const catLabel = (c: string) => (DC_INPUT_CATS.find(x => x[0] === c) || [])[1] || c;
 
   /* Traceability roll-up — derived from the REAL rows. */
@@ -291,7 +291,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       )}
 
       {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={addInput} />}
-      {toast && <div className="pdev-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

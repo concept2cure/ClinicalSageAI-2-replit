@@ -9,6 +9,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { LABEL_ENUMS } from '../fixtures/labeling-data';
 import type { LabelTranslation } from '../fixtures/labeling-data';
+import { C2CToast, useToast } from '../toast';
 
 /* ---- Labeling and IFU ---- */
 
@@ -172,8 +173,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
   }, [seedTrans]);
 
   const [tForm, setTForm] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
 
   const cov = useMemo(() => {
     const total = trans.length;
@@ -461,7 +461,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
         </>
       )}
 
-      {toast && <div className="pdev-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

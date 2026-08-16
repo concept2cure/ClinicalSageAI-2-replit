@@ -42,13 +42,14 @@
  * because a blank filing-sequence panel and a filing sequence with no risks are
  * the same pixels and opposite meanings.
  */
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 const BASE = '/api/regulatory-precedent-intelligence';
 
@@ -107,16 +108,6 @@ async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Pr
   }
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => {
-    setMsg(m);
-    if (t.current) clearTimeout(t.current);
-    t.current = setTimeout(() => setMsg(''), 4200);
-  }, []);
-  return [msg, fire];
-}
 
 function humanize(key: string): string {
   const s = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
@@ -240,8 +231,8 @@ export function FilingStrategy(_props: SurfaceViewProps) {
   }, []);
 
   const runSequence = useCallback(async () => {
-    if (!seq.productType.trim()) { fireToast('Enter a product type.'); return; }
-    if (agencies.length < 2) { fireToast('Select at least two agencies to sequence.'); return; }
+    if (!seq.productType.trim()) { fireToast('Enter a product type.', 'error'); return; }
+    if (agencies.length < 2) { fireToast('Select at least two agencies to sequence.', 'error'); return; }
     setSequence({ state: 'loading', data: null });
     setSequence(await call<any>('POST', `${BASE}/cross-jurisdictional/optimize-filing`, {
       productType: seq.productType.trim(),
@@ -252,7 +243,7 @@ export function FilingStrategy(_props: SurfaceViewProps) {
   }, [seq, agencies, fireToast]);
 
   const runDivergence = useCallback(async () => {
-    if (div.agencyA === div.agencyB) { fireToast('Choose two different agencies.'); return; }
+    if (div.agencyA === div.agencyB) { fireToast('Choose two different agencies.', 'error'); return; }
     setDivergences({ state: 'loading', data: null });
     setDivergences(await call<any[]>('POST', `${BASE}/cross-jurisdictional/divergences/search`, {
       agencyA: div.agencyA,
@@ -481,11 +472,7 @@ export function FilingStrategy(_props: SurfaceViewProps) {
         </>
       )}
 
-      {toast && (
-        <div className="de-toast" role="status" aria-live="polite">
-          <span className="ico">{I.checkCircle}</span>{toast}
-        </div>
-      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

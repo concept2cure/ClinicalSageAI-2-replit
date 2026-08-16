@@ -20,6 +20,7 @@ import {
   type ConnectorTier,
 } from '../fixtures/deep-research-data';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* Real deep-research contract — GET /api/deep-research/board (credits) and
    POST/GET /api/deep-research/jobs (launch + poll). No fabricated fields;
@@ -62,26 +63,7 @@ interface DrRunJob {
   connectorLogs?: Record<string, { resultCount?: number; state?: string }> | null;
 }
 
-/* ── Inline shared kit helpers ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* ════ DeepResearch — connectors & deep research surface ════ */
 
@@ -189,7 +171,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       const detail =
         known && (e as Error).message ? (e as Error).message : 'the request did not complete';
       setPhase('idle');
-      fireToast(`Couldn't reach the research engine — ${detail}.`);
+      fireToast(`Couldn't reach the research engine — ${detail}.`, 'error');
       return;
     }
     const j = (await res.json().catch(() => null)) as DrRunJob | null;
@@ -197,7 +179,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       setPhase('idle');
       // The body is already parsed here, so the server's own sentence is
       // preferred over the generic one; the status stays for support.
-      fireToast(serverMessage(j) ?? `Couldn't read the research job (HTTP ${res.status}).`);
+      fireToast(serverMessage(j) ?? `Couldn't read the research job (HTTP ${res.status}).`, 'error');
       return;
     }
     const done =
@@ -212,11 +194,11 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
     // A blank question is no longer backfilled by a fixture default, so the
     // action has to say why it did nothing rather than silently returning.
     if (!query.trim()) {
-      fireToast('Enter a research question first.');
+      fireToast('Enter a research question first.', 'error');
       return;
     }
     if (!sel.length) {
-      fireToast('Select at least one connected source to query.');
+      fireToast('Select at least one connected source to query.', 'error');
       return;
     }
     if (pollRef.current) clearTimeout(pollRef.current);
@@ -238,7 +220,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
         known && (e as Error).message ? (e as Error).message : 'the request did not complete';
       setPhase('idle');
       setJobs([]);
-      fireToast(`Couldn't reach the research engine — ${detail}.`);
+      fireToast(`Couldn't reach the research engine — ${detail}.`, 'error');
       return;
     }
     const j = (await res.json().catch(() => null)) as DrRunJob | null;
@@ -253,6 +235,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
         res.status === 403
           ? 'Deep research needs a higher plan, or you are out of research credits this period.'
           : serverMessage(j) ?? `Couldn't start research (HTTP ${res.status}).`,
+        'error',
       );
       return;
     }
@@ -327,6 +310,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
             ? 'Storing connector credentials needs a professional plan. Nothing was saved.'
             : (serverMessage(body) ?? `Couldn't store the credentials (HTTP ${res.status}).`) +
                 ' Nothing was saved.',
+          'error',
         );
         return;
       }
@@ -337,7 +321,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
       const detail =
         known && (e as Error).message ? (e as Error).message : 'the request did not complete';
-      fireToast(`Couldn't reach the connector service — ${detail}. Nothing was saved.`);
+      fireToast(`Couldn't reach the connector service — ${detail}. Nothing was saved.`, 'error');
     } finally {
       setConnBusy('');
     }

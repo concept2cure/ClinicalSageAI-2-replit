@@ -34,7 +34,7 @@
  * audit trail and frees the transmit lock. It does not retract anything at the
  * agency, and the copy no longer implies that it does.
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -43,6 +43,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface GatewayInfo { region?: string; gateway?: string; name?: string; configured?: boolean; environment?: string; [k: string]: unknown; }
 interface Transmittal {
@@ -57,16 +58,6 @@ interface Transmittal {
 const REGIONS = ['fda', 'ema', 'pmda', 'ca'];
 const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'];
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 5200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -146,15 +137,15 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     if (v.packageId) body.packageId = Number(v.packageId);
     if (v.submissionType) body.submissionType = v.submissionType;
     const { ok, status, raw } = await readData('POST', `/api/mdx/gateways/${region}/${gateway}/transmit`, body);
-    if (status === 401) { fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.'); return; }
+    if (status === 401) { fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
     if (status === 409) {
       const held = (raw as any)?.data ?? raw;
-      fireToast(`Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`);
+      fireToast(`Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`, 'error');
       return;
     }
-    if (status === 412) { fireToast('Not transmitted — gateway credentials are not configured for this environment.'); return; }
-    if (status === 422) { fireToast('Not transmitted — the structural gate rejected the bundle: ' + ((raw as any)?.error ?? 'validation failed') + '.'); return; }
-    if (!ok) { fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.'); return; }
+    if (status === 412) { fireToast('Not transmitted — gateway credentials are not configured for this environment.', 'error'); return; }
+    if (status === 422) { fireToast('Not transmitted — the structural gate rejected the bundle: ' + ((raw as any)?.error ?? 'validation failed') + '.', 'error'); return; }
+    if (!ok) { fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
     setDialog(null);
     const txId = (raw as any)?.data?.result?.transactionId ?? (raw as any)?.data?.transactionId;
     fireToast('Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.');
@@ -163,7 +154,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
 
   const checkStatus = useCallback(async (id: number) => {
     const { ok, status, data } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);
-    if (!ok || !data) { fireToast(`Status check failed (HTTP ${status}).`); return; }
+    if (!ok || !data) { fireToast(`Status check failed (HTTP ${status}).`, 'error'); return; }
     setStatusView({ id, body: data });
     void load();
   }, [load, fireToast]);
@@ -173,7 +164,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       const res = await apiRequest('GET', `/api/mdx/gateways/transmittals/${id}/ack`);
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        fireToast('No ACK available — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.');
+        fireToast('No ACK available — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error');
         return;
       }
       const provenance = res.headers.get('X-Ack-Provenance');
@@ -190,7 +181,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         ? 'Agency acknowledgment downloaded — the agency’s own bytes.'
         : 'Downloaded this platform’s transmittal record. It is NOT an agency acknowledgment — obtain the agency receipt from the agency portal.');
     } catch (e) {
-      fireToast('ACK download failed — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      fireToast('ACK download failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   }, [fireToast]);
 
@@ -200,8 +191,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const { ok, status, raw } = await readData('POST', `/api/mdx/gateways/transmittals/${id}/rollback`, {
       reason: v.reason, reauth: v.password ? { password: v.password, totp: v.totp || undefined } : undefined,
     });
-    if (status === 401) { fireToast('Not rolled back — re-authentication failed.'); return; }
-    if (!ok) { fireToast(`Rollback failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing changed') + '.'); return; }
+    if (status === 401) { fireToast('Not rolled back — re-authentication failed.', 'error'); return; }
+    if (!ok) { fireToast(`Rollback failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing changed') + '.', 'error'); return; }
     setDialog(null);
     fireToast(`Transmittal #${id} marked rolled back in the audit trail. The agency still holds the transmitted bytes — file the agency-side retraction separately.`);
     void load();

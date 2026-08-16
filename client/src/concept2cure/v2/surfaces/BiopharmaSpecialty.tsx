@@ -26,6 +26,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Inline shared kit helpers (Nonclinical.tsx pattern) ── */
 
@@ -200,24 +201,7 @@ function SpListState({
   return <EmptyState icon={I.fileText} title={emptyTitle} hint={emptyHint} />;
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
 
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════════════════
    Pediatric -- PREA / iPSP / EMA PIP

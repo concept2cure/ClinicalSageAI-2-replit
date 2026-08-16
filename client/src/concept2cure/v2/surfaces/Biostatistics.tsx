@@ -6,6 +6,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -492,23 +493,7 @@ const BS_PRESETS: Record<string, Preset> = {
 
 function vf(v: string): number | undefined { return v === undefined || v === null || v === '' ? undefined : parseFloat(v); }
 
-/* ── Inline toast helper ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2400); };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* ════ Biostatistics surface ════ */
 
@@ -583,7 +568,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = async () => {
     if (openingRef.current) return; // a second click must not create a second document
     const title = docDef?.label || 'Statistical document';
-    if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.'); return; }
+    if (!md.trim()) { fireToast('Nothing to open yet — the document has not been generated.', 'error'); return; }
     openingRef.current = true; setOpening(true);
     try {
       // Statistical documentation files under Module 5; the server would
@@ -595,7 +580,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       // Navigate only on a clean write. On a half-failure the document exists
       // but is empty, so going there would show the user an editor without
       // their work — stay put and say so.
-      if (!r.ok) { fireToast(r.message); return; }
+      if (!r.ok) { fireToast(r.message, 'error'); return; }
       if (onNav) onNav('document-authoring');
       else fireToast(r.message);
     } finally {

@@ -26,6 +26,7 @@ import type {
   GiDecision,
   GiCheck,
 } from '../fixtures/governed-intelligence-data';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Cross-surface data (IC_FACTS from CMC surface, not in our source) ── */
 declare global {
@@ -69,24 +70,7 @@ interface GiBoard {
 
 /* ── Inline shared helpers (same pattern as Nonclinical.tsx) ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
 
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 /* Current project id — the runtime channel set by Projects.tsx when a project is
    opened (read the same way by CmcModule / ProjectHome / VaultSources). The board
@@ -207,6 +191,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           res.status === 404
             ? 'That finding is no longer on the board — refresh to see the current state.'
             : 'Couldn’t update "' + f.title + '" — ' + detail + '. Nothing was changed.',
+          'error',
         );
         return;
       }
@@ -217,7 +202,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       // reduction; every other throw here is the browser's own "Failed to fetch".
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
       const detail = known && (e as Error).message ? (e as Error).message : 'request failed';
-      fireToast('Couldn’t reach the contradiction service — ' + detail + '. Nothing was changed.');
+      fireToast('Couldn’t reach the contradiction service — ' + detail + '. Nothing was changed.', 'error');
     } finally {
       setPendingId('');
     }
@@ -260,13 +245,14 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
         // than a bare status, which is not user copy on its own.
         const detail =
           serverMessage(json) ?? 'the service could not start it (HTTP ' + res.status + ')';
-        fireToast('Re-detection didn’t run — ' + detail + '. Showing the last known findings.');
+        fireToast('Re-detection didn’t run — ' + detail + '. Showing the last known findings.', 'error');
       }
     } catch (e) {
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
       const detail = known && (e as Error).message ? (e as Error).message : 'request failed';
       fireToast(
         'Couldn’t reach the contradiction engine — ' + detail + '. Showing the last known findings.',
+        'error',
       );
     } finally {
       setScanning(false);

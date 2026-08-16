@@ -162,8 +162,12 @@ describe('BiostatWorkbench — real statistical engine', () => {
       if (!el) throw new Error('no toast');
       return el as HTMLElement;
     });
-    expect(toast.getAttribute('role')).toBe('status');
-    expect(toast.getAttribute('aria-live')).toBe('polite');
+    // A refusal is an ERROR toast, so it is announced as `role="alert"` — which
+    // is assertive by definition and needs no aria-live override. It used to be
+    // announced politely, which is what the shared toast changed: a refusal that
+    // queues behind other chatter is not a refusal the user hears in time.
+    expect(toast.getAttribute('role')).toBe('alert');
+    expect(toast.getAttribute('aria-live')).toBeNull();
   });
 
   it('marks the selected calculator for assistive technology, not by colour alone', () => {

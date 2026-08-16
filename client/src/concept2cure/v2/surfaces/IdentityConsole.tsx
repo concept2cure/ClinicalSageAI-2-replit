@@ -23,7 +23,7 @@
  * surfaced as "requires a platform administrator"). The one-time token is shown
  * exactly once from the server's response and never persisted client-side.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -31,20 +31,11 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface ScimTenant { id: number; organizationId: number; label: string | null; enabled: boolean; createdAt?: string; updatedAt?: string; }
 interface ScimRule { id: number; organizationId: number; cidr: string; label: string | null; enabled: boolean; }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -111,7 +102,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     const { ok, status, body } = await rawJson<ScimTenant & { token?: string }>('POST', '/api/admin/scim-tenants', {
       organizationId: Number(v.organizationId), label: v.label || undefined,
     });
-    if (!ok || !body?.token) { fireToast(status === 400 ? 'Couldn’t issue — organizationId (integer) is required.' : `Couldn’t issue the token (HTTP ${status}).`); return; }
+    if (!ok || !body?.token) { fireToast(status === 400 ? 'Couldn’t issue — organizationId (integer) is required.' : `Couldn’t issue the token (HTTP ${status}).`, 'error'); return; }
     setDialog(null);
     setRevealed({ id: body.id, token: body.token });
     fireToast('SCIM token issued — copy it now; it will not be shown again.');
@@ -120,7 +111,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
   const rotate = useCallback(async (id: number) => {
     const { ok, status, body } = await rawJson<ScimTenant & { token?: string }>('POST', `/api/admin/scim-tenants/${id}/rotate`);
-    if (!ok || !body?.token) { fireToast(`Couldn’t rotate (HTTP ${status}).`); return; }
+    if (!ok || !body?.token) { fireToast(`Couldn’t rotate (HTTP ${status}).`, 'error'); return; }
     setRevealed({ id, token: body.token });
     fireToast('Token rotated — the previous token is now invalid. Copy the new one now.');
     void load();
@@ -128,14 +119,14 @@ export function IdentityConsole(_props: SurfaceViewProps) {
 
   const toggleTenant = useCallback(async (t: ScimTenant) => {
     const { ok, status } = await rawJson('PATCH', `/api/admin/scim-tenants/${t.id}`, { enabled: !t.enabled });
-    if (!ok) { fireToast(`Couldn’t update (HTTP ${status}).`); return; }
+    if (!ok) { fireToast(`Couldn’t update (HTTP ${status}).`, 'error'); return; }
     fireToast((t.enabled ? 'Disabled' : 'Enabled') + ' SCIM tenant #' + t.id + '.');
     void load();
   }, [load, fireToast]);
 
   const revoke = useCallback(async (id: number) => {
     const { ok, status } = await rawJson('DELETE', `/api/admin/scim-tenants/${id}`);
-    if (!ok) { fireToast(`Couldn’t revoke (HTTP ${status}).`); return; }
+    if (!ok) { fireToast(`Couldn’t revoke (HTTP ${status}).`, 'error'); return; }
     fireToast('SCIM tenant #' + id + ' revoked.');
     if (revealed?.id === id) setRevealed(null);
     void load();
@@ -145,7 +136,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
     const { ok, status, body } = await rawJson<ScimRule>('POST', '/api/admin/scim-ip-allowlist', {
       organizationId: Number(v.organizationId), cidr: v.cidr, label: v.label || undefined,
     });
-    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : `Couldn’t add the rule (HTTP ${status}).`); return; }
+    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t add — a valid organizationId and CIDR are required.' : `Couldn’t add the rule (HTTP ${status}).`, 'error'); return; }
     setDialog(null);
     fireToast('Allowlist rule added · ' + body.cidr);
     void load();
@@ -154,7 +145,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
   const copy = useCallback((text: string, what: string) => {
     void navigator.clipboard?.writeText(text).then(
       () => fireToast(what + ' copied to the clipboard.'),
-      () => fireToast('Couldn’t copy — select and copy manually.'),
+      () => fireToast('Couldn’t copy — select and copy manually.', 'error'),
     );
   }, [fireToast]);
 

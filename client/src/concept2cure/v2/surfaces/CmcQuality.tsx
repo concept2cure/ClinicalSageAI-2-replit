@@ -38,7 +38,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
-import { C2CToast, cmcProjectUuid, cmcWriteError, useToast } from './cmcShared';
+import { cmcProjectUuid, cmcWriteError } from './cmcShared';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Read models (mirrors of the service types) ──────────────────────────── */
 

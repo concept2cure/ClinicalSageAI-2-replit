@@ -6,6 +6,7 @@ import { getOrgId } from '@/utils/authToken';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -512,16 +513,7 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
 
 /* ── Inline helpers ── */
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2400); };
-  return [msg, fire];
-}
 
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 
 /* ── Provenance string ── */
 function roProv(refs?: { sourceTable: string; sourceField?: string; recordId?: string; transformation?: string }[]): string | undefined {
@@ -917,7 +909,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      with no run id cannot be sealed. This is the run's real integrity seal, not
      a claimed event I did not create. */
   const exportRep = async (rep: RenderedReport) => {
-    if (reportRunId == null) { fireToast('Only a freshly-run governed report can be sealed — run one first.'); return; }
+    if (reportRunId == null) { fireToast('Only a freshly-run governed report can be sealed — run one first.', 'error'); return; }
     try {
       const res = await apiRequest('POST', `/api/report-os/runs/${reportRunId}/finalize`);
       const body = await res.json().catch(() => null);
@@ -925,16 +917,16 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
         const reasons = Array.isArray(body?.reasons)
           ? body.reasons.join('; ')
           : (serverMessage(body) || 'the truthfulness gate holds it below final');
-        fireToast(`Not sealed — "${rep.reportTypeLabel}" is held below final: ${reasons}.`);
+        fireToast(`Not sealed — "${rep.reportTypeLabel}" is held below final: ${reasons}.`, 'error');
         return;
       }
-      if (!res.ok) { fireToast(`Couldn't seal — ${serverMessage(body) ?? 'the server did not say why'}.`); return; }
+      if (!res.ok) { fireToast(`Couldn't seal — ${serverMessage(body) ?? 'the server did not say why'}.`, 'error'); return; }
       const seal = body?.data?.seal;
       const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
       setReport(r => (r ? { ...r, status: 'final' } : r));
       fireToast(`Sealed · ${seal?.algorithm || 'sha256'}${hash ? ' ' + hash + '…' : ''} · ${seal?.atomCount ?? 0} provenance atoms · run locked final`);
     } catch (e) {
-      fireToast(`Couldn't seal — ${e instanceof Error ? e.message : String(e)}.`);
+      fireToast(`Couldn't seal — ${e instanceof Error ? e.message : String(e)}.`, 'error');
     }
   };
 

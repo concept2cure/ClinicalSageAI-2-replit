@@ -33,7 +33,8 @@ import { I } from '../icons';
 import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
-import { C2CToast, cmcProjectId, cmcWriteError, useToast } from './cmcShared';
+import { cmcProjectId, cmcWriteError } from './cmcShared';
+import { C2CToast, useToast } from '../toast';
 
 /* ── The read models ─────────────────────────────────────────────────────── */
 

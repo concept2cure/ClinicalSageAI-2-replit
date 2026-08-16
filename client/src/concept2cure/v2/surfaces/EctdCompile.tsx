@@ -30,13 +30,14 @@
  * resolves it; a program with no linked section store gets the server's own
  * blocker text, not a silent 0%.)
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -97,16 +98,6 @@ interface CompilationRow {
   created_at: string | null;
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 
 async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
@@ -189,7 +180,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         'POST', `/api/ectd-compile/${identPath}/validate`, { region },
       );
       if (!ok || !body) {
-        fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`);
+        fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
         setFindings([]); return;
       }
       setFindings(body.results ?? []);
@@ -203,7 +194,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
     try {
       const { ok, status: st, body } = await readJson<CompileResult>('POST', `/api/ectd-compile/${identPath}/compile`, { submissionType, region });
       if (!ok || !body) {
-        fireToast(st === 401 ? 'Sign in to your tenant to compile.' : `Compile failed (HTTP ${st}). Nothing was assembled.`);
+        fireToast(st === 401 ? 'Sign in to your tenant to compile.' : `Compile failed (HTTP ${st}). Nothing was assembled.`, 'error');
         return;
       }
       setCompileResult(body);
@@ -214,7 +205,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         // and saying "submission-ready" in a toast over an unrendered package is
         // the claim this surface got wrong.
         ? `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`
-        : `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`);
+        : `Compile blocked — ${(body.errors ?? []).length} error(s) must be resolved.`,
+        // The request succeeded either way; the tone follows which of the two
+        // things the backbone actually did, not whether the HTTP call returned.
+        body.status === 'completed' ? 'ok' : 'error');
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
   }, [identPath, submissionType, region, fireToast, loadStatus, loadHistory]);
