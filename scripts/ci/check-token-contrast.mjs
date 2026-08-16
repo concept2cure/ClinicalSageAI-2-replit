@@ -23,6 +23,11 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+/* The WCAG arithmetic — luminance, ratio, and the oklch the palette is authored
+   in — lives in one module shared with scripts/visual-qa/check-contrast.mjs.
+   It used to be written out in both, which is two implementations of one
+   capability: a correction to either would have applied to half the product. */
+import { contrastRatio, measurable, parseColor } from '../lib/wcag.mjs';
 
 const TOKENS = path.join(process.cwd(), 'design-system', 'colors_and_type.css');
 const AA_NORMAL = 4.5;
@@ -47,73 +52,18 @@ function parseBlocks(src) {
 }
 
 /**
- * `oklch(L C H)` → sRGB 0–255.
- *
- * The palette is authored in oklch and this file could only read hex, so the
- * tokens that most needed measuring — `--border` and `--sidebar-border`, the
- * two that turned out to be wrong — were the ones it had to skip. Reading the
- * `/* #dad9d4 *\/` comments beside them was the alternative and it is worse: a
- * comment can disagree with its value, and then the gate reports on a colour
- * that is not on screen.
- *
- * Standard OKLab → linear sRGB (Björn Ottosson's matrices), then gamma encode.
- * Verified against the hex comments the palette already carries: light
- * `--border` oklch(0.8847 0.0069 97.3627) resolves to #dad9d4, the value its
- * own comment states.
- */
-function oklchToRgb(L, C, Hdeg) {
-  const h = (Hdeg * Math.PI) / 180;
-  const a = C * Math.cos(h);
-  const bb = C * Math.sin(h);
-  const l_ = L + 0.3963377774 * a + 0.2158037573 * bb;
-  const m_ = L - 0.1055613458 * a - 0.0638541728 * bb;
-  const s_ = L - 0.0894841775 * a - 1.2914855480 * bb;
-  const l = l_ ** 3, m = m_ ** 3, s = s_ ** 3;
-  const lin = [
-    +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
-    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
-    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
-  ];
-  return lin.map((v) => {
-    const c = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(Math.max(v, 0), 1 / 2.4) - 0.055;
-    return Math.round(Math.min(1, Math.max(0, c)) * 255);
-  });
-}
-
-const OKLCH_RE = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)\s*\)$/i;
-
-/** A colour this gate can measure, or null. Accepts hex and oklch. */
-const toRgb = (value) => {
-  const v = String(value).trim();
-  const ok = v.match(OKLCH_RE);
-  if (ok) {
-    const L = ok[1].endsWith('%') ? parseFloat(ok[1]) / 100 : parseFloat(ok[1]);
-    return oklchToRgb(L, parseFloat(ok[2]), parseFloat(ok[3]));
-  }
-  let h = v.replace('#', '');
-  if (h.length === 3) h = [...h].map((c) => c + c).join('');
-  return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
-};
-
-/** Is this a colour literal the gate can measure at all? */
-const measurable = (v) => typeof v === 'string' && (v.startsWith('#') || OKLCH_RE.test(v.trim()));
-const luminance = (rgb) => {
-  const [r, g, b] = rgb.map((v) => {
-    const s = v / 255;
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-};
-/**
  * Resolve a single level of `var(--x)` aliasing.
  *
  * Half the border family is declared as an alias — `--border-strong:
  * var(--bg-300)`, `--border-focus: var(--accent-main-100)`, `--border-subtle:
- * var(--sidebar-border)` — and the checks below require a literal hex on both
+ * var(--sidebar-border)` — and the checks below need a colour literal on both
  * sides. So those three could not be registered here at all, and the palette's
  * least-contrasty tokens were the ones the contrast gate could not see. One
- * level is enough for every alias in this file and keeps the resolution
- * obvious; a chain that needs two is a smell worth failing on.
+ * level covers every alias in this file; a chain needing two is a smell worth
+ * failing on.
+ *
+ * This stays here rather than in `lib/wcag.mjs`: it is about how THIS palette
+ * is written, not about WCAG.
  */
 function deref(palette, name) {
   const v = palette[name];
@@ -121,12 +71,6 @@ function deref(palette, name) {
   const m = v.match(/^var\(\s*--([a-z0-9-]+)\s*\)$/i);
   return m ? palette[m[1]] : v;
 }
-
-const contrast = (a, b) => {
-  const [la, lb] = [luminance(toRgb(a)), luminance(toRgb(b))];
-  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
-  return (hi + 0.05) / (lo + 0.05);
-};
 
 /** Pairs that must meet AA for normal text, in BOTH themes. */
 const ENFORCED = [
@@ -240,7 +184,7 @@ for (const [themeName, palette] of [['light', light], ['dark', dark]]) {
         continue;
       }
       checked += 1;
-      const r = contrast(a, b);
+      const r = contrastRatio(parseColor(a), parseColor(b));
       if (r > SUBTLE_MAX) {
         failures.push(
           `${themeName}: --${fg} (${a}) on --${bg} (${b}) = ${r.toFixed(2)}:1, ABOVE the ${name} ceiling ${SUBTLE_MAX}:1 — ` +
@@ -258,7 +202,7 @@ for (const [themeName, palette] of [['light', light], ['dark', dark]]) {
         continue;
       }
       checked += 1;
-      const r = contrast(a, b);
+      const r = contrastRatio(parseColor(a), parseColor(b));
       if (r < min) {
         failures.push(`${themeName}: --${fg} (${a}) on --${bg} (${b}) = ${r.toFixed(2)}:1, below ${tier} ${min}:1`);
       }
@@ -272,7 +216,7 @@ for (const e of EXCEPTIONS) {
   const b = deref(palette, e.bg);
   if (!measurable(a) || !measurable(b)) continue;
   checked += 1;
-  const r = contrast(a, b);
+  const r = contrastRatio(parseColor(a), parseColor(b));
   // Rounded to the recorded precision so a no-op reformat cannot trip it.
   if (Number(r.toFixed(2)) < e.min) {
     regressions.push(`${e.theme}: --${e.fg} on --${e.bg} fell to ${r.toFixed(2)}:1 (was ${e.min}:1)`);
