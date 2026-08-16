@@ -5,6 +5,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ════════════════════════════════════════════════════════════════════════
    AnA Command Center — re-anchored to the real orchestration backend.
@@ -308,8 +309,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   const [pid, setPid] = useState<number | null>(null);
   const [role, setRole] = useState('all');
   const [gateOpen, setGateOpen] = useState(false);
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
 
   /* Action runner — a run is staged (pending confirm), in flight, done, or
      errored. Executing mutates + audits, so nothing fires until confirm. */
@@ -457,7 +457,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="ac">
-      {toast && <div className="ac-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
 
       {/* Header -- portfolio scale + role lens */}
       <div className="ac-head">

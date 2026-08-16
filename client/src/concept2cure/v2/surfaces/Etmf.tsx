@@ -41,6 +41,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { tmfArtifactName } from '../fixtures/etmf';
 import type { TmfCompletenessResult } from '../fixtures/etmf';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 type MissingDoc = { zone: number; zoneName: string; code: string; name: string };
 
@@ -85,7 +86,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   const [trialId, setTrialId] = useState('');
   const [scope, setScope] = useState<'essential' | 'all'>('essential');
   const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState('');
+  const [toast, fire] = useToast();
   const [dl, setDl] = useState<string | null>(null);
   // Bumped after a successful real file/bulk-file to re-fetch the live
   // completeness so the surface reflects the persisted truth (no optimistic
@@ -123,11 +124,11 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     try {
       const res = await apiRequest('POST', '/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts', { artifactCode: code, documentRef: 'vault://' + tid + '/' + code });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      setToast(tmfArtifactName(code) + ' filed to the TMF'); reload();
+      fire(tmfArtifactName(code) + ' filed to the TMF'); reload();
     } catch {
-      setToast('Couldn’t file ' + tmfArtifactName(code) + ' -- not persisted, try again');
+      fire('Couldn’t file ' + tmfArtifactName(code) + ' -- not persisted, try again', 'error');
     } finally {
-      setBusy(false); setTimeout(() => setToast(''), 2800);
+      setBusy(false);
     }
   };
 
@@ -145,11 +146,11 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       const body = (j && typeof j === 'object' && 'data' in j) ? (j as { data: { filed?: number; total?: number } }).data : j;
       const n = (body && body.filed != null) ? body.filed : codes.length;
       const t = (body && body.total != null) ? body.total : codes.length;
-      setToast(n + ' of ' + t + ' essentials filed to the TMF'); reload();
+      fire(n + ' of ' + t + ' essentials filed to the TMF'); reload();
     } catch {
-      setToast('Couldn’t file the essentials -- not persisted, try again');
+      fire('Couldn’t file the essentials -- not persisted, try again', 'error');
     } finally {
-      setBusy(false); setTimeout(() => setToast(''), 3000);
+      setBusy(false);
     }
   };
 
@@ -173,8 +174,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       downloadBlob(tid + '_inspection-package.zip', blob);
       const sha = res.headers.get('X-TMF-SHA256');
       const rdy = res.headers.get('X-TMF-Ready');
-      setToast('Inspection index generated' + (rdy != null ? ' -- ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' -- SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' -- index + readiness, not the document bytes');
-      setTimeout(() => setToast(''), 4400);
+      fire('Inspection index generated' + (rdy != null ? ' -- ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' -- SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' -- index + readiness, not the document bytes');
       finish('zip');
     } catch {
       downloadReport();
@@ -375,7 +375,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
         </>
       )}
 
-      {toast && <div className="etmf-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

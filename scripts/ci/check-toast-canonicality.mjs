@@ -100,10 +100,21 @@ const UNCONVERGED_BASELINE = {
      That is the same correctness defect this gate exists for, and it outweighs
      two pixels. */
   'pdev-toast': 0,
-  'sn-toast': 1,
-  'ac-toast': 1,
-  'amem-toast': 1,
-  'etmf-toast': 1,
+  /* The last four, converged on the same reasoning that settled `pdev-toast`:
+     the visual delta is a few pixels of offset, padding and radius (and, for
+     the three top-centre ones, a move to the bottom), while the correctness
+     delta is that NONE of them could express a failure — each rendered
+     `{I.check}` unconditionally, with no live region, so a failed write was
+     both green and silent to a screen reader.
+
+     Etmf was the one with real work in it: it called `setToast` directly from
+     five sites and cleared it with a hand-rolled `setTimeout` in each `finally`,
+     and two of those five say "not persisted, try again" under the green tick.
+     Those two are now toned. */
+  'sn-toast': 0,
+  'ac-toast': 0,
+  'amem-toast': 0,
+  'etmf-toast': 0,
 };
 
 /** Props that carry a toast fire function under one of its several names. */

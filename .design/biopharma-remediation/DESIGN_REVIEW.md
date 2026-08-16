@@ -97,9 +97,29 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
    changing `--border` moves every divider in the product. Recorded in the rule's
    comment; needs a call.
 
-2. **`BiopharmaSpecialty` hand-rolls the not-assessed judgment four times** instead
-   of importing `assessmentState`. The reasoning is right in all four, but
-   copy-pasted — the fifth surface will regress. Violates CLAUDE.md zero-duplication.
+2. ~~**`BiopharmaSpecialty` hand-rolls the not-assessed judgment four times.**~~
+   **RESOLVED**, and the duplication was the symptom rather than the defect.
+
+   What the four copies had in common was not that they were typed out four
+   times: it was that each derived its state from `rows` alone — written as
+   `const prea = livePrea.rows`, dropping `loading` and `error` on that line —
+   and therefore could not represent either. Each section then passed those same
+   two flags to the TABLE below the narrative, so on a failed load the surface
+   said both things at once, forty pixels apart: the table said "Couldn't load
+   pediatric plans" and the headline above it said "No pediatric plans are on
+   file for this organization yet."
+
+   The sharpest instance is pharmacovigilance, where "no disproportionality
+   screen has been run against the adverse-event store" — a claim about patient
+   safety — was being derived from a network failure.
+
+   Eight gates, not four: the reviewer counted the inner not-assessed judgments
+   and there is an outer `X.length === 0` above each, which is the more visible
+   half because it owns the headline. `assessmentStateFor(read, …)` is the
+   missing adapter (`assessmentState` always had `loading` and `unreadable`; no
+   caller passed them), and `UnresolvedLead` returns null when the state has an
+   answer, so callers keep their two-branch shape instead of restructuring it
+   and getting it wrong four more times.
 
 3. ~~**~20 surfaces still carry the one-tone toast.**~~ **RESOLVED.** Measured, it
    was 28, not ~20 — the estimate counted `function useToast` declarations and
@@ -113,12 +133,21 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
    boundary, which TypeScript accepts silently and which is how
    `AuthoringFilingBar` lost it in the first place.
 
-   Found while doing it, and **still open**: five more pill classes
-   (`pdev-toast` ×6, `sn-toast`, `ac-toast`, `amem-toast`, `etmf-toast`) are the
-   same dark pill under different names, in two positions, and *none of them can
-   express an error at all*. Ten render sites. Converging them changes their
-   appearance, which is a design decision rather than a bug fix, so the gate
-   pins the count instead of migrating them. That decision is the follow-up.
+   Found while doing it: five more pill classes were the same dark pill under
+   different names, in two positions, and *none of them could express an error
+   at all* — ten render sites. **`pdev-toast` (6 of the 10) has since been
+   converged** and its gate baseline ratcheted to 0, on the reasoning that the
+   visual delta is 2px of offset and one font weight while the correctness delta
+   was a failed write rendering green AND silent to a screen reader.
+
+   **The remaining four are now converged too** — `sn-toast`, `ac-toast`,
+   `amem-toast`, `etmf-toast`. The whole `UNCONVERGED_BASELINE` is at **0**, so
+   the gate now refuses a sixth pill class outright rather than pinning a count.
+   Etmf carried the real work: five direct `setToast` calls each cleared by a
+   hand-rolled `setTimeout` in its own `finally`, two of which say "not
+   persisted, try again" — under the green tick. Both are toned.
+
+   **One toast component in the v2 shell, and it can say a thing failed.**
 
 4. ~~**`NdaCockpit`'s KPI strip is not gated on the loading state.**~~ **RESOLVED**,
    and it was six ungated items, not one. The four KPI tiles, plus both arms of

@@ -9,6 +9,7 @@ import '../styles/project-home-v2.css';
 // SAE_CASES fixture array is dropped; the worklist now loads from the real backend.
 import { composeSafetyNarrative } from '../fixtures/safety-narrative-data';
 import type { SaeCase } from '../fixtures/safety-narrative-data';
+import { C2CToast, useToast } from '../toast';
 
 /* -- Constants -- */
 
@@ -72,8 +73,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
     }
   }, [seed]);
 
-  const [toast, setToast] = useState('');
-  const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+  const [toast, fire] = useToast();
 
   const sel = cases.find((c) => c.id === selId) || cases[0];
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
@@ -126,7 +126,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="sn">
-      {toast && <div className="sn-toast">{I.check} {toast}</div>}
+      <C2CToast msg={toast} />
 
       <div className="sn-head">
         <div className="sn-eyebrow">Safety narrative / PV -- ICH E3 section 16 -- E2B</div>
