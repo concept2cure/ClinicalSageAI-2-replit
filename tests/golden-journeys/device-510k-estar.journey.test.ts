@@ -112,6 +112,7 @@ const R = new JourneyRecorder(
     'migrations/20260524_program_workbench_schema.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
+    'migrations/20260817_reconcile_declared_updated_at_columns.sql',
   ],
 );
 
@@ -161,6 +162,10 @@ beforeAll(async () => {
       'migrations/20260506_kit_section_draft_provenance.sql',
       // Slice C1: projects.regulatory_program_id, the program ↔ PM-spine bridge.
       'migrations/20260814_projects_regulatory_program_anchor.sql',
+      // cerv2_section_versions.updated_at — the column shared/schema.ts declares
+      // and the section INSERT names. Loaded as a REAL migration, not granted as
+      // test-only sql, so this journey proves the deploy path provides it.
+      'migrations/20260817_reconcile_declared_updated_at_columns.sql',
     ],
     // The REAL referential rule for the governed artifact registry. The drizzle
     // baseline applies it as a separate ALTER (extractTableDdl deliberately does
@@ -171,29 +176,22 @@ beforeAll(async () => {
         ADD CONSTRAINT concept2cure_artifacts_project_id_projects_id_fk
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
 
-      -- TEST-ONLY, and a finding in its own right (see observations):
-      -- shared/schema.ts declares cerv2_section_versions.updated_at and the
-      -- section-create INSERT enumerates it, but NO migration in either lineage
-      -- creates that column. On a migration-provisioned database every
-      -- POST /api/cerv2-sections answers 500 "Failed to create section" (42703).
-      -- Added here so the journey can proceed past authoring; reconciliation is
-      -- a schema decision, not a test fix.
-      ALTER TABLE cerv2_section_versions
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();
-
-      -- TEST-ONLY, modelling the DRIZZLE-PUSH lineage: shared/schema.ts declares
-      -- concept2cure_artifact_versions.updated_at and regulatory_audit_logs
-      -- .created_at/.updated_at, and registerArtifactWithGovernance's raw INSERTs
-      -- name them, but migrations/0000_sweet_joseph.sql creates none of them.
-      -- Granting the journey the most FORGIVING real provisioning state is
-      -- deliberate: it makes the governed-export failure below land on the ONE
-      -- column that exists in NO lineage at all (see observations), rather than
-      -- on a divergence a drizzle-push database would not have.
-      ALTER TABLE concept2cure_artifact_versions
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();
-      ALTER TABLE regulatory_audit_logs
-        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now(),
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();
+      -- The three TEST-ONLY column grants that used to live here are gone,
+      -- deliberately, and their absence is now part of what this journey
+      -- proves:
+      --
+      --   cerv2_section_versions.updated_at   → reconciled for real by
+      --     migrations/20260817_reconcile_declared_updated_at_columns.sql, which is
+      --     in the canonical set below, so the journey gets it the same way a
+      --     deployment does.
+      --   concept2cure_provenance_events.updated_at
+      --   regulatory_audit_logs.created_at/.updated_at
+      --     → these columns exist in NO lineage AND in no drizzle declaration;
+      --       the raw INSERTs naming them were simply wrong and no longer do.
+      --
+      -- Granting them here would hide exactly the failure this journey exists to
+      -- catch, so the schema the journey runs against is now the migrated one,
+      -- unassisted.
     `,
   });
   h.db = jdb.db;
@@ -533,11 +531,15 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       return { deviceProjectId, anchorProjectId };
     });
 
-    // 6a. KNOWN-BAD, and the sharpest finding of this journey: the governed
-    //     registry writeback names a column NO schema lineage defines, so the
-    //     placed path cannot complete. It fails CLOSED — the whole writeback is
-    //     one transaction, so no half-registered artifact survives.
-    await R.expectBlocked('governed-registry-placement-fails-closed-on-an-undefined-column', async () => {
+    // 6a. Governed registry placement COMPLETES. This step was a known-bad: the
+    //     writeback named `updated_at` on concept2cure_provenance_events and
+    //     `created_at`/`updated_at` on regulatory_audit_logs — columns no
+    //     lineage creates and no drizzle model declares — so every governed
+    //     export that reached placement rolled back with 500
+    //     GOVERNED_EXPORT_FAILED, on EVERY database. The column lists are now
+    //     reconciled against the tables that actually exist, and this asserts
+    //     the whole three-row writeback lands atomically.
+    await R.step('governed-registry-placement-writes-artifact-version-and-provenance', async () => {
       const before = await jdb.pool.query(
         `SELECT (SELECT count(*)::int FROM concept2cure_artifacts) AS a,
                 (SELECT count(*)::int FROM concept2cure_artifact_versions) AS v,
@@ -558,25 +560,35 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       );
       const b = before.rows[0] as { a: number; v: number; p: number };
       const a = after.rows[0] as { a: number; v: number; p: number };
+
+      // All three governed rows land together — artifact, its version, and the
+      // provenance event. Asserted with `expect` (not folded into a boolean)
+      // because this is a normal step: a throw here is a real failure, which is
+      // exactly what it should be now that the path is supposed to work.
+      expect(res.status).toBe(200);
+      expect(a.a).toBe(b.a + 1);
+      expect(a.v).toBe(b.v + 1);
+      expect(a.p).toBe(b.p + 1);
       return {
-        blocked:
-          res.status === 500 &&
-          res.body.error === 'GOVERNED_EXPORT_FAILED' &&
-          /updated_at/.test(String(res.body.message)) &&
-          // Fail-closed: nothing partially registered.
-          b.a === a.a &&
-          b.v === a.v &&
-          b.p === a.p,
         status: res.status,
-        message: res.body?.message,
+        artifactId: res.body?.artifact_id ?? null,
+        placementState: res.body?.placement_state ?? null,
         artifactsBefore: b.a,
         artifactsAfter: a.a,
+        versionsAfter: a.v,
+        provenanceAfter: a.p,
       };
     });
 
-    // ── 6b/7. The UUID-program export: the draft ZIP IS produced and delivered,
-    //     audited with its digest, and explicitly NOT registry-placed.
-    await R.expectBlocked('uuid-program-build-is-delivered-audited-but-unplaced', async () => {
+    // ── 6b/7. The UUID-program export is REGISTRY-PLACED. This step used to
+    //     assert the opposite, and its own observation said why: the route
+    //     imported resolveProgramProjectAnchor and never called it, so a
+    //     governed export for a program whose C1 anchor demonstrably EXISTS
+    //     (asserted in step 1) was still delivered audited-unplaced. The wiring
+    //     has landed, so the anchored program now takes the governed path — and
+    //     the delivered package is asserted exactly as before, because what the
+    //     user receives must not change just because it got registered.
+    await R.step('uuid-program-build-is-delivered-and-registry-placed', async () => {
       const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/build')).send({
         meta: { id: 'K-JOURNEY-001', ident: programId },
@@ -622,30 +634,29 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       const auditRow = audit.rows[0] as
         | { new_values: { artifactRegistry: string; sha256: string; officialEstarPdf: boolean } }
         | undefined;
+      // The export is governed and placed: one new artifact row, and the
+      // response carries a real artifact id instead of the unplaced reason.
+      expect(res.status).toBe(200);
+      expect(res.body.governed).toBe(true);
+      expect(res.body.artifact_id).toBeTruthy();
+      expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n + 1);
+      // The DELIVERED package is unchanged — still the six FDA-named section
+      // PDFs rendered from the org's real authored sections. Registration must
+      // not alter what the user actually receives.
+      expect(packageMatches).toBe(true);
+      expect(everyEntryIsPdf).toBe(true);
       return {
-        // "Blocked" = registry placement did NOT happen and says so plainly,
-        // while the export itself is delivered and audited with its digest.
-        blocked:
-          res.status === 200 &&
-          res.body.governed === false &&
-          res.body.audited === true &&
-          res.body.artifact_id === null &&
-          /unplaced/.test(res.body.artifact_registry) &&
-          res.body.sha256 === zipSha &&
-          packageMatches &&
-          everyEntryIsPdf &&
-          auditRow?.new_values?.artifactRegistry === 'unplaced_pending_document_identity_contract' &&
-          auditRow?.new_values?.officialEstarPdf === false &&
-          (before.rows[0] as { n: number }).n === (after.rows[0] as { n: number }).n,
         status: res.status,
-        programId: res.body.program_id,
-        registry: res.body.artifact_registry,
+        governed: res.body.governed,
+        artifactId: res.body.artifact_id,
+        placementState: res.body.placement_state ?? null,
         packageFiles: names,
         everyEntryIsPdf,
-        sha256Matches: res.body.sha256 === zipSha,
-        auditedRegistryState: auditRow?.new_values?.artifactRegistry ?? null,
-        auditedOfficialEstarPdf: auditRow?.new_values?.officialEstarPdf ?? null,
-        anchorExistsForThisProgram: anchorProjectId,
+        zipSha256: zipSha,
+        artifactsBefore: (before.rows[0] as { n: number }).n,
+        artifactsAfter: (after.rows[0] as { n: number }).n,
+        anchorUsedForThisProgram: anchorProjectId,
+        priorUnplacedAudit: auditRow?.new_values?.artifactRegistry ?? null,
       };
     });
 
@@ -729,22 +740,24 @@ describe('golden journey — device 510(k) eSTAR path', () => {
     });
 
     R.observations.push(
-      'Slice C1 lands the anchor but the eSTAR export does not read it. ' +
-        'migrations/20260814 + services/c2c/program-project-anchor.ts create and resolve ' +
-        'projects.regulatory_program_id (asserted above: the anchor exists and resolveProgramProjectAnchor ' +
-        'returns it, org-scoped). server/routes/510k-estar-routes.ts imports resolveProgramProjectAnchor ' +
-        'at line 42 and NEVER CALLS IT — commit 0b38f7f changed exactly one line in that file (the import). ' +
-        'Its resolveProjectAnchor still returns anchorProjectId:null for every UUID/code program, so a ' +
-        'governed 510(k) export for an anchored program is still delivered audited-unplaced. This journey ' +
-        'asserts the REAL behaviour (step "uuid-program-build-is-delivered-audited-but-unplaced") rather ' +
-        'than the placement the commit message claims; when the wiring lands, that step is where it will fail.',
+      'RESOLVED — slice C1 is now read by the eSTAR export. This journey previously recorded that ' +
+        'server/routes/510k-estar-routes.ts imported resolveProgramProjectAnchor and NEVER CALLED IT, so a ' +
+        'governed 510(k) export for a program whose anchor demonstrably exists was still delivered ' +
+        'audited-unplaced, and predicted that the "uuid-program-build" step is where the fix would surface. ' +
+        'It did: resolveProjectAnchor now asks resolveProgramProjectAnchor for the numeric anchor before ' +
+        'degrading, and the step asserts registry placement. The audited-unplaced path is retained and still ' +
+        'covered by unit tests, for the genuinely unanchored case (a program created before C1, or an intake ' +
+        'that skipped the anchor for one of its stated reasons) — absence of an anchor is a fact about the ' +
+        'data, never a failure to look. The same wiring was applied to the CER export and the IND-form ' +
+        'artifact route, which had copied the identical degradation.',
       'Two id spaces are conflated at the placement boundary: the eSTAR route resolves its numeric anchor ' +
         'from fda_510k_projects.id, while concept2cure_artifacts.project_id carries a FOREIGN KEY to ' +
         'projects.id (migrations/0000_sweet_joseph.sql:6488, applied in this journey). Placement therefore ' +
         'only succeeds where an fda_510k_projects row happens to share an id with a real projects row — ' +
         'which is what this journey seeds deliberately. Where they diverge the governed export fails at the ' +
         'registry, not at the gate.',
-      'FOUND BY THIS JOURNEY — the governed artifact registry cannot be written on ANY database. ' +
+      'FOUND BY THIS JOURNEY, NOW FIXED — the governed artifact registry could not be written on ANY ' +
+        'database. ' +
         'server/services/compute/artifactWriteback.ts INSERTs `updated_at` into ' +
         'concept2cure_provenance_events, and that column exists in NO lineage: not in ' +
         'migrations/0000_sweet_joseph.sql, not in db/migrations/20260311_concept2cure_provenance_events.sql, ' +
@@ -753,10 +766,16 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         'function also names concept2cure_artifact_versions.updated_at and regulatory_audit_logs' +
         '.created_at/.updated_at, which the SQL lineage does not create either (this journey grants those ' +
         'from the drizzle-push shape so the failure lands on the un-createable one). Every governed export ' +
-        'that reaches placement — 510(k), CER and IND-form alike — therefore rolls back with 500 ' +
-        'GOVERNED_EXPORT_FAILED. Step "governed-registry-placement-fails-closed-on-an-undefined-column" ' +
-        'asserts that real outcome AND that the writeback leaves nothing partially registered; it is the ' +
-        'step that must be rewritten when the column list is reconciled.',
+        'that reached placement — 510(k), CER and IND-form alike — rolled back with 500 ' +
+        'GOVERNED_EXPORT_FAILED. Two different defects were tangled here and are fixed differently: the ' +
+        'columns named by code but declared NOWHERE (concept2cure_provenance_events.updated_at, ' +
+        'regulatory_audit_logs.created_at/.updated_at) were removed from the INSERTs — an append-only ' +
+        'provenance row has no updated_at by design; the columns shared/schema.ts DOES declare while the SQL ' +
+        'lineage never created them (concept2cure_artifact_versions.updated_at, ' +
+        'cerv2_section_versions.updated_at) are created by ' +
+        'migrations/20260817_reconcile_declared_updated_at_columns.sql, which this journey now loads as a ' +
+        'REAL migration in place of the test-only grants it used to rely on. The step asserts placement ' +
+        'completing — artifact, version and provenance rows landing together.',
       'FOUND BY THIS JOURNEY — shared/schema.ts declares cerv2_section_versions.updated_at and the ' +
         'section-create route INSERTs it, but no migration in either lineage creates that column, so ' +
         'POST /api/cerv2-sections answers 500 on a migration-provisioned database. Granted as test-only ' +

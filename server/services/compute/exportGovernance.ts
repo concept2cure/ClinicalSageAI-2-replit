@@ -151,12 +151,19 @@ export async function registerGovernedExport(
     // 3. Create provenance event
     const provenanceEventId = `prov_export_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
+      // No `updated_at`: this table does not have one. A provenance event is an
+      // immutable record of something that happened, so it carries only a
+      // creation time — shared/schema.ts says so at the Drizzle definition, and
+      // a Drizzle `updatedAt` there was removed for exactly this reason.
+      // Postgres rejects an unknown column at PLAN time (42703), so naming it
+      // here failed 100% of the time this ran, taking the whole governed export
+      // down with it.
       `INSERT INTO concept2cure_provenance_events (
         event_id, artifact_id, artifact_version_id, organization_id,
         event_type, event_action, actor_id, actor_name, actor_email,
         details, source_description, backend_route, backend_service,
-        ip_address, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,'export',$5,$6,$7,NULL,$8,$9,$10,'cerv2-export',$11,$12,$12)`,
+        ip_address, created_at
+      ) VALUES ($1,$2,$3,$4,'export',$5,$6,$7,NULL,$8,$9,$10,'cerv2-export',$11,$12)`,
       [
         provenanceEventId,
         artifactPk,
@@ -185,11 +192,15 @@ export async function registerGovernedExport(
     // 4. Create audit log entry
     const auditId = `audit_export_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
+      // No created_at/updated_at: this table's time column is `timestamp`
+      // (shared/schema.ts declares that and nothing else), and no lineage
+      // creates the other two. An audit row is a record of a moment, not a
+      // mutable entity — `timestamp` IS its creation time.
       `INSERT INTO regulatory_audit_logs (
         audit_id, organization_id, entity_type, entity_id, action, action_category,
         previous_value, new_value, user_id, user_name, user_role, ip_address,
-        is_gxp_relevant, timestamp, metadata, created_at, updated_at
-      ) VALUES ($1,$2,'artifact',$3,'EXPORT','data-change',NULL,$4,$5,$6,$7,$8,TRUE,$9,$10,$9,$9)`,
+        is_gxp_relevant, timestamp, metadata
+      ) VALUES ($1,$2,'artifact',$3,'EXPORT','data-change',NULL,$4,$5,$6,$7,$8,TRUE,$9,$10)`,
       [
         auditId,
         input.organizationId,
