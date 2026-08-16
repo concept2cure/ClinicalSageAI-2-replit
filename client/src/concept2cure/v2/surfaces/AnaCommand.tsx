@@ -457,7 +457,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="ac">
-      <C2CToast msg={toast} />
+      <C2CToast msg={toast} position="top" />
 
       {/* Header -- portfolio scale + role lens */}
       <div className="ac-head">

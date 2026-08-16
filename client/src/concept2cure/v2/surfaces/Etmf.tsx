@@ -86,7 +86,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   const [trialId, setTrialId] = useState('');
   const [scope, setScope] = useState<'essential' | 'all'>('essential');
   const [busy, setBusy] = useState(false);
-  const [toast, fire] = useToast();
+  const [toast, fireToast] = useToast();
   const [dl, setDl] = useState<string | null>(null);
   // Bumped after a successful real file/bulk-file to re-fetch the live
   // completeness so the surface reflects the persisted truth (no optimistic
@@ -124,9 +124,9 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     try {
       const res = await apiRequest('POST', '/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts', { artifactCode: code, documentRef: 'vault://' + tid + '/' + code });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      fire(tmfArtifactName(code) + ' filed to the TMF'); reload();
+      fireToast(tmfArtifactName(code) + ' filed to the TMF'); reload();
     } catch {
-      fire('Couldn’t file ' + tmfArtifactName(code) + ' -- not persisted, try again', 'error');
+      fireToast('Couldn’t file ' + tmfArtifactName(code) + ' -- not persisted, try again', 'error');
     } finally {
       setBusy(false);
     }
@@ -146,9 +146,9 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       const body = (j && typeof j === 'object' && 'data' in j) ? (j as { data: { filed?: number; total?: number } }).data : j;
       const n = (body && body.filed != null) ? body.filed : codes.length;
       const t = (body && body.total != null) ? body.total : codes.length;
-      fire(n + ' of ' + t + ' essentials filed to the TMF'); reload();
+      fireToast(n + ' of ' + t + ' essentials filed to the TMF'); reload();
     } catch {
-      fire('Couldn’t file the essentials -- not persisted, try again', 'error');
+      fireToast('Couldn’t file the essentials -- not persisted, try again', 'error');
     } finally {
       setBusy(false);
     }
@@ -174,7 +174,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       downloadBlob(tid + '_inspection-package.zip', blob);
       const sha = res.headers.get('X-TMF-SHA256');
       const rdy = res.headers.get('X-TMF-Ready');
-      fire('Inspection index generated' + (rdy != null ? ' -- ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' -- SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' -- index + readiness, not the document bytes');
+      fireToast('Inspection index generated' + (rdy != null ? ' -- ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' -- SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' -- index + readiness, not the document bytes');
       finish('zip');
     } catch {
       downloadReport();

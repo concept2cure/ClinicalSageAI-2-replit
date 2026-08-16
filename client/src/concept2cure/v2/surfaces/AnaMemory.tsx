@@ -129,7 +129,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
       .then((r) => {
         if (r.error) {
           setAtoms(list => list.map(a => (a.id === id ? { ...a, is_verified_by_user: false, verified_at: undefined } : a)));
-          fire('Could not verify -- the change was not saved.');
+          fire('Could not verify -- the change was not saved.', 'error');
         } else {
           fire('Verified -- AnA will weight this memory more.');
         }
@@ -149,7 +149,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="amem">
-      <C2CToast msg={toast} />
+      <C2CToast msg={toast} position="top" />
 
       {loading ? (
         <div className="amem-lead-sub" style={{ padding: '18px 14px' }}>Loading AnA's memory…</div>

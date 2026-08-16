@@ -86,31 +86,20 @@ const CANONICAL = 'client/src/concept2cure/v2/toast.tsx';
  * an existing one, fails the gate.
  */
 const UNCONVERGED_BASELINE = {
-  /* Was 6. Those six — AdminSurfaces, CommunicationCenter, DesignControls,
-     HumanFactors, Labeling, Risk — are converged, so the floor is 0 and a new
-     one fails.
+  /* All five are now 0, so any reappearance fails.
 
-     The deferral this baseline records was on the grounds that changing the
-     class changes appearance. It does, and the change is small: both are
-     bottom-centre dark pills, differing by 2px of offset, 0.5px of type, one
-     font weight, 2px of padding and a border radius, plus the entry animation
-     `.de-toast` already has. Set against that, `.pdev-toast` rendered
-     `{I.check}` with NO live region and no error tone at all, so on those six
-     surfaces a failed write was both green AND silent to a screen reader.
-     That is the same correctness defect this gate exists for, and it outweighs
-     two pixels. */
+     The deferral this map recorded was that converging them changes their
+     appearance, which is a design decision rather than a bug fix. That was two
+     questions treated as one. `sn-toast`, `ac-toast` and `amem-toast` sat at
+     `top: 18px` — a deliberate choice on surfaces where a bottom-centre pill
+     covers the composer — while `pdev-toast` and `etmf-toast` were already at
+     the bottom. But NONE of the five could express an error or reach a screen
+     reader, and that half is unambiguously a bug.
+
+     So the position survives the migration (`<C2CToast position="top">`) and
+     the defect does not. Nothing moved; ten toasts that could only ever say
+     "success" can now say a write failed. */
   'pdev-toast': 0,
-  /* The last four, converged on the same reasoning that settled `pdev-toast`:
-     the visual delta is a few pixels of offset, padding and radius (and, for
-     the three top-centre ones, a move to the bottom), while the correctness
-     delta is that NONE of them could express a failure — each rendered
-     `{I.check}` unconditionally, with no live region, so a failed write was
-     both green and silent to a screen reader.
-
-     Etmf was the one with real work in it: it called `setToast` directly from
-     five sites and cleared it with a hand-rolled `setTimeout` in each `finally`,
-     and two of those five say "not persisted, try again" under the green tick.
-     Those two are now toned. */
   'sn-toast': 0,
   'ac-toast': 0,
   'amem-toast': 0,

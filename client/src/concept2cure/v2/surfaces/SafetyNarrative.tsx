@@ -126,7 +126,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="sn">
-      <C2CToast msg={toast} />
+      <C2CToast msg={toast} position="top" />
 
       <div className="sn-head">
         <div className="sn-eyebrow">Safety narrative / PV -- ICH E3 section 16 -- E2B</div>
@@ -255,7 +255,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 {/* MOCK ACTION (flagged): no case-narrative version-write endpoint
                     exists, so this button persists nothing. Copy softened so it does
                     not claim a save that did not occur. */}
-                <button className="bs-da alt" onClick={() => fire('Narrative versioning isn’t wired to the safety store yet — nothing was saved')}>
+                <button className="bs-da alt" onClick={() => fire('Narrative versioning isn’t wired to the safety store yet — nothing was saved', 'error')}>
                   {I.check} Save version
                 </button>
               </div>

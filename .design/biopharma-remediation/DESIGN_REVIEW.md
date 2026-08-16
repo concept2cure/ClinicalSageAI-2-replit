@@ -27,28 +27,52 @@ not have.
 | `screenshots/review-concept2cure-tablet-768.png` | Tablet 768×1024 | Sign-in card |
 | `screenshots/review-concept2cure-mobile-375.png` | Mobile 375×812 | Sign-in card |
 | `screenshots/review-landing-*.png` | all three | Landing route |
-| `screenshots/review-{biostat-workbench,nda-cockpit,cmc-module,pv-cockpit}-desktop-1280.png` | Desktop | **Sign-in redirect, not the surfaces** |
+| `screenshots/review-{biostat-workbench,nda-cockpit,cmc-module,pv-cockpit}-desktop-1280.png` | Desktop | **Sign-in redirect, not the surfaces** — kept as the record of the gap |
+| `screenshots/verify-01-login-redirect.png` | Desktop 1280×800 | The redirect itself, reproduced |
+| `screenshots/verify-02-authenticated-landing.png` | Desktop | Authenticated, org in header |
+| `screenshots/verify-03,04-biostat-workbench*.png` | Desktop | **The surface, signed in** |
+| `screenshots/verify-05-focus-ring.png` | Desktop | `.c2c-input` focus ring |
+| `screenshots/verify-06-fields-closeup.png` | Desktop | `.c2c-input` fields, bordered, label above |
+| `screenshots/verify-07,08-engine-form*.png` | Desktop | The reported label/value collision, fixed |
 
-### The screenshots do not show the changed surfaces, and that is a real limit
+### The screenshots did not show the changed surfaces — RESOLVED, and the cause was a defect
 
-The dev server boots and serves, and the sign-in card renders correctly at all
-three breakpoints. But every `/concept2cure/<surface>` route redirects to
-`/concept2cure/login?returnTo=…`, and the dev-only **Demo access** button on the
-card does not establish a session in this environment. So the four surfaces this
-session actually changed — BiostatWorkbench (the `.c2c-input` fix), NdaCockpit and
-CmcModule (the narrative states), PvCockpit — were never visually verified.
+*Original finding, kept because it was accurate:* every `/concept2cure/<surface>`
+route redirected to `/concept2cure/login?returnTo=…`, the dev-only **Demo access**
+button did not establish a session, and so the four surfaces this session changed
+were never visually verified. Every `review-*.png` above is a screenshot of the
+sign-in card. **The `.c2c-input` repair had not been seen rendering**; the layout
+claims were reasoned, not observed.
 
-Consequence, stated plainly: **the `.c2c-input` repair has not been seen rendering.**
-Its correctness here rests on reading the CSS cascade and computing the contrast
-ratios by hand, not on looking at it. The contrast finding below was found that
-way and is arithmetic rather than opinion, but the layout claims — that fields
-now sit below their labels and that `min-height: 30px` matches the pinned inline
-heights — are reasoned, not observed. They need one authenticated pass before
-this is called done.
+**Now closed.** An authenticated session was obtained through the real UI — the
+actual Demo access button, a real JWT in localStorage, the org name in the header
+— and `.c2c-input` was measured in the browser rather than reasoned about. See
+`screenshots/verify-*.png` and `verify-measurements*.json`.
 
-The sign-in card itself is a useful control: its inputs use `.auth-input`, which
-*does* have CSS, and they render as proper bordered fields. That is what
-`.c2c-input` controls should now look like.
+| Claim | Measured |
+| --- | --- |
+| field sits **below** its label | `belowLabel: true` on all 8 sampled; label bottom 325.5 → field top 331.5, a 6px gap |
+| `display: block` | `block` |
+| `min-height: 30px` matches the pinned inline heights | computed 30px; stripping the inline `height:30px` from a live field still renders 30.00px, so the rule alone reproduces it |
+| placeholder contrast (`--text-300`) | **5.21:1** — matches the hand-computed figure exactly |
+| border contrast (the "KNOWN, NOT FIXED" item) | **1.34:1** — also matches exactly, and is what SF-1 below resolves |
+| placeholder italic, focus ring | `font-style: italic`; `rgb(217,119,87) solid 2px`, offset 2px |
+
+The reported defect is fixed and was looked at: `verify-07-engine-form.png` shows
+"Prior mean effect (δ)" on its own line with `0.4` in a bordered box below, not
+the reported `"Prior mean effect (δ)0.4"`.
+
+**Why it could not be verified before, which is the more useful finding.** Not
+the button. `Concept2CureLogin.tsx` POSTs `/api/auth/dev-login`; that route is
+gated behind `isDevAuthAllowed()`, which requires `NODE_ENV=development` **and**
+`ALLOW_DEV_AUTH=1` — and `scripts/setup-local-db.sh`, which generates the local
+`.env`, never sets it. The endpoint answers **404** when disabled (deliberately,
+so it is invisible), so the button failed silently. Separately,
+`scripts/db/install-fresh.mjs` still aborts outright when the `vector` extension
+is absent, even under `--allow-incomplete`, so a fresh machine without
+`postgresql-16-pgvector` ends setup with **0 tables**.
+
+Both are why a design review could not see the product it was reviewing.
 
 ## Must fix — all resolved in commit `7d7b303`
 
@@ -89,37 +113,49 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
    through an overloaded field. _Fixed: only an explicit `'submitted'` status
    carries that sentence._
 
-## Should fix — open
+## Should fix — all resolved
 
-1. **`--border` is 1.34:1 (light) / 1.41:1 (dark) against `--bg-000`**, below the
-   3:1 SC 1.4.11 wants for a control boundary. No palette token clears it
-   (`--border-strong` is 1.70:1). This is a **token decision**, not a rule bug:
-   changing `--border` moves every divider in the product. Recorded in the rule's
-   comment; needs a call.
+1. ~~**`--border` is 1.34:1 against `--bg-000`**, below SC 1.4.11's 3:1.~~
+   **RESOLVED — the call is a second token, not a new value for the first.**
+
+   Two corrections to the finding first. `--border-strong` is **1.49:1** in
+   light, not 1.70 — that was the dark figure, and light (which aliases
+   `--bg-300`) is the binding constraint, so the gap was worse than recorded.
+   And `--sidebar-border` was declared *identically* in both theme blocks, so
+   #ebebeb cascaded onto the #262624 dark page as a **12.72:1** near-white rule:
+   not a subtle divider, a glaring line.
+
+   `--border` is used 1242 times and ~964 of those are dividers, row rules and
+   card edges. SC 1.4.11 does not reach them — it governs "visual information
+   required to identify user interface components and states". Repainting every
+   divider to fix the edge of an input is the wrong instrument, which is exactly
+   why this sat open. `--border-control` is declared instead: 3.91:1 light,
+   4.36:1 dark, clearing 3:1 on all three fills controls sit on.
+
+   **The gate could not have caught any of it, for three separate reasons**, all
+   fixed: it had no non-text tier at all (`4.5` was the only threshold in the
+   file, while its own header talked about "the 3:1 non-text floor" in prose);
+   it could not read `oklch()`, which is how the palette is authored, so the two
+   tokens that turned out to be wrong were precisely the ones it skipped; and it
+   could not follow a `var()` alias, which is how half the border family is
+   declared. A fourth check was added that is not a floor — a **divider
+   ceiling**, because a minimum cannot see the sidebar-border bug: 12.72:1
+   passes every floor in the file. 22 pairs checked before, 44 now.
+
+   Also now recorded with a number rather than prose: `--border-focus` is the
+   brand orange at **2.96:1**, below what SC 1.4.11 and 2.4.11 want of a focus
+   indicator. Unchanged — that is the same decision as the existing accent
+   exception — but it can no longer silently worsen.
 
 2. ~~**`BiopharmaSpecialty` hand-rolls the not-assessed judgment four times.**~~
-   **RESOLVED**, and the duplication was the symptom rather than the defect.
-
-   What the four copies had in common was not that they were typed out four
-   times: it was that each derived its state from `rows` alone — written as
-   `const prea = livePrea.rows`, dropping `loading` and `error` on that line —
-   and therefore could not represent either. Each section then passed those same
-   two flags to the TABLE below the narrative, so on a failed load the surface
-   said both things at once, forty pixels apart: the table said "Couldn't load
-   pediatric plans" and the headline above it said "No pediatric plans are on
-   file for this organization yet."
-
-   The sharpest instance is pharmacovigilance, where "no disproportionality
-   screen has been run against the adverse-event store" — a claim about patient
-   safety — was being derived from a network failure.
-
-   Eight gates, not four: the reviewer counted the inner not-assessed judgments
-   and there is an outer `X.length === 0` above each, which is the more visible
-   half because it owns the headline. `assessmentStateFor(read, …)` is the
-   missing adapter (`assessmentState` always had `loading` and `unreadable`; no
-   caller passed them), and `UnresolvedLead` returns null when the state has an
-   answer, so callers keep their two-branch shape instead of restructuring it
-   and getting it wrong four more times.
+   **RESOLVED**, and the duplication was the symptom rather than the defect. What
+   the four copies had in common was not that they were typed out four times: it
+   was that each derived from `rows` alone (`const prea = livePrea.rows`), so
+   none could represent `loading` or `unreadable`. The lead therefore asserted
+   "No signals have been screened for this organization" over a **failed** read,
+   forty pixels above a table that said "Couldn't load". `assessmentStateFor(read, …)`
+   takes the read object, so dropping the flags now requires going out of your
+   way. Eight gates, not four.
 
 3. ~~**~20 surfaces still carry the one-tone toast.**~~ **RESOLVED.** Measured, it
    was 28, not ~20 — the estimate counted `function useToast` declarations and
@@ -133,21 +169,16 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
    boundary, which TypeScript accepts silently and which is how
    `AuthoringFilingBar` lost it in the first place.
 
-   Found while doing it: five more pill classes were the same dark pill under
-   different names, in two positions, and *none of them could express an error
-   at all* — ten render sites. **`pdev-toast` (6 of the 10) has since been
-   converged** and its gate baseline ratcheted to 0, on the reasoning that the
-   visual delta is 2px of offset and one font weight while the correctness delta
-   was a failed write rendering green AND silent to a screen reader.
-
-   **The remaining four are now converged too** — `sn-toast`, `ac-toast`,
-   `amem-toast`, `etmf-toast`. The whole `UNCONVERGED_BASELINE` is at **0**, so
-   the gate now refuses a sixth pill class outright rather than pinning a count.
-   Etmf carried the real work: five direct `setToast` calls each cleared by a
-   hand-rolled `setTimeout` in its own `finally`, two of which say "not
-   persisted, try again" — under the green tick. Both are toned.
-
-   **One toast component in the v2 shell, and it can say a thing failed.**
+   Found while doing it, and now **also resolved**: five more pill classes
+   (`pdev-toast` ×6, `sn-toast`, `ac-toast`, `amem-toast`, `etmf-toast`) — the
+   same dark pill under different names, in two positions, none able to express
+   an error. Pinning the count treated two questions as one. The *position* is a
+   design decision (three sit at `top: 18px` on surfaces where a bottom-centre
+   pill covers the composer); being unable to report a failure, or to reach a
+   screen reader at all, is a bug. `C2CToast` takes an optional `position`, so
+   the position survived the migration and the defect did not. Nothing moved on
+   screen; ten toasts that could only say "success" can now say a write failed.
+   All five baselines are 0, so any reappearance fails.
 
 4. ~~**`NdaCockpit`'s KPI strip is not gated on the loading state.**~~ **RESOLVED**,
    and it was six ungated items, not one. The four KPI tiles, plus both arms of
@@ -230,14 +261,14 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
   untouched deliberately: the blast radius could not be verified in this pass,
   and a half-verified fix here opens a tenant leak.
 
-## Could improve
+## Could improve — all three resolved
 
-1. `CmcModule.tsx` — "agencies read a late IR response as a readiness signal"
-   tells a regulatory professional what agencies think. Lecturing; drop the clause.
-2. `NdaCockpit.tsx` — "the same review that refuses today accepts" is a turn of
-   phrase in a record that is otherwise admirably plain.
-3. Export-failure toasts stop at the HTTP status with no next step, unlike every
-   other toast in the same file.
+1. ~~`CmcModule.tsx` — "agencies read a late IR response as a readiness signal".~~
+   Dropped. The overdue count is the fact, and it was already in the sentence.
+2. ~~`NdaCockpit.tsx` — "the same review that refuses today accepts".~~ Dropped.
+3. ~~Export-failure toasts stop at the HTTP status with no next step.~~ Both now
+   say no file was produced and the document is unchanged — true, because the
+   assembler streams or it does not — and what to try next.
 
 ## What works well
 

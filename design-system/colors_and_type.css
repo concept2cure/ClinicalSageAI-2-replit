@@ -107,6 +107,26 @@
   --border-strong:           var(--bg-300);
   --border-focus:            var(--accent-main-100);
 
+  /* The boundary of an INTERACTIVE control, and the only border token that
+     clears WCAG 2.2 SC 1.4.11's 3:1.
+
+     `--border` is 1.34:1 on --bg-000 and `--border-strong` is 1.49:1, so until
+     now no token in the palette could draw a compliant control edge — the
+     `.c2c-input` rule carried a "KNOWN, NOT FIXED" note saying exactly that.
+     The reason it stayed open is that `--border` is used 1242 times and ~964 of
+     those are dividers, row rules and card edges, which SC 1.4.11 does NOT
+     cover: it governs "visual information required to identify user interface
+     components and states". Moving --border would have repainted every divider
+     in the product to fix the boundary of an input.
+
+     So this is a second token rather than a new value for the first, and it is
+     applied only where a border is what identifies a control.
+
+     Measured (light): 3.91:1 on --bg-000, 3.55:1 on --bg-100, 3.30:1 on
+     --bg-200 — the three fills controls actually sit on. Spelled as hex, not as
+     `var(--text-400)`, because ci:token-contrast can only measure a literal. */
+  --border-control:          #7f7d75;
+
   --accent-hover:            var(--accent-main-200);
   --accent-muted:            #f5ddd4;
   --accent-subtle:           var(--accent-main-000);
@@ -259,7 +279,15 @@
   --sidebar-primary-foreground: oklch(0.9881 0 0);
   --sidebar-accent:          oklch(0.1680 0.0020 106.6177);
   --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
-  --sidebar-border:          oklch(0.9401 0 0);
+  /* Was `oklch(0.9401 0 0)` — #ebebeb, declared IDENTICALLY to light. A
+     near-white 1px rule on a #262624 page: 12.72:1, so not a subtle divider
+     but a glaring line. This is the same defect ci:token-contrast was built
+     after finding in `--error` ("never declared for dark, so the light value
+     cascaded onto the dark page"), still present here because `--border-subtle`
+     aliases this token in light but is overridden in dark, which hid it.
+     #30302e matches what --border-subtle already uses in dark: 1.15:1, the
+     same visual weight the light side has at 1.13:1. */
+  --sidebar-border:          #30302e;
   --sidebar-ring:            oklch(0.7731 0 0);
 
   /* Raw Claude dark scales */
@@ -286,6 +314,8 @@
   --canvas-elevated:         #30302e;
   --border-subtle:           #30302e;
   --border-strong:           #4a4a46;
+  /* 4.36:1 on --bg-000, 3.80:1 on --bg-100, 3.13:1 on --bg-200. */
+  --border-control:          #8a8a82;
   --accent-subtle:           rgba(217, 119, 87, 0.12);
   --accent-muted:            #4a2e24;
 

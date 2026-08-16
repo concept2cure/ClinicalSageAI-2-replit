@@ -1,0 +1,27 @@
+{
+  "borderCss": "oklch(0.8847 0.0069 97.3627)",
+  "borderResolved": {
+    "rgb": [
+      218,
+      217,
+      212
+    ],
+    "appliedFillStyle": "oklch(0.8847 0.0069 97.3627)",
+    "parsed": true
+  },
+  "bgCss": "rgb(250, 249, 245)",
+  "bgResolved": {
+    "rgb": [
+      250,
+      249,
+      245
+    ],
+    "appliedFillStyle": "#faf9f5",
+    "parsed": true
+  },
+  "ratios": {
+    "border vs field background  [SC 1.4.11 needs >= 3]": 1.34,
+    "placeholder vs field background [SC 1.4.3 needs >= 4.5]": 17.5,
+    "field text vs field background": 17.5
+  }
+}

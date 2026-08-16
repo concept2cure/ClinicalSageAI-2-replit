@@ -1,0 +1,260 @@
+{
+  "measurements": [
+    {
+      "tag": "select",
+      "label": "Phase",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "243.5px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 311.5,
+        "bottom": 325.5,
+        "left": 153,
+        "right": 187.03
+      },
+      "fieldRect": {
+        "top": 331.5,
+        "bottom": 361.5,
+        "left": 153,
+        "right": 396.5
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    },
+    {
+      "tag": "input",
+      "label": "Indication",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "243.5px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 311.5,
+        "bottom": 325.5,
+        "left": 404.5,
+        "right": 455.88
+      },
+      "fieldRect": {
+        "top": 331.5,
+        "bottom": 361.5,
+        "left": 404.5,
+        "right": 648
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    },
+    {
+      "tag": "input",
+      "label": "Study design",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "243.5px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 311.5,
+        "bottom": 325.5,
+        "left": 656,
+        "right": 725.39
+      },
+      "fieldRect": {
+        "top": 331.5,
+        "bottom": 361.5,
+        "left": 656,
+        "right": 899.5
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    },
+    {
+      "tag": "input",
+      "label": "Primary endpoint",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "243.5px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 311.5,
+        "bottom": 325.5,
+        "left": 907.5,
+        "right": 998.22
+      },
+      "fieldRect": {
+        "top": 331.5,
+        "bottom": 361.5,
+        "left": 907.5,
+        "right": 1151
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    },
+    {
+      "tag": "input",
+      "label": "Sample size",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "243.5px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 371.5,
+        "bottom": 385.5,
+        "left": 153,
+        "right": 218.38
+      },
+      "fieldRect": {
+        "top": 391.5,
+        "bottom": 421.5,
+        "left": 153,
+        "right": 396.5
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    },
+    {
+      "tag": "input",
+      "label": "Prior mean effect (δ)",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "242px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 891,
+        "bottom": 905,
+        "left": 153,
+        "right": 262.17
+      },
+      "fieldRect": {
+        "top": 911,
+        "bottom": 941,
+        "left": 153,
+        "right": 395
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    },
+    {
+      "tag": "input",
+      "label": "Prior SD",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "242px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 891,
+        "bottom": 905,
+        "left": 405,
+        "right": 450.34
+      },
+      "fieldRect": {
+        "top": 911,
+        "bottom": 941,
+        "left": 405,
+        "right": 647
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    },
+    {
+      "tag": "input",
+      "label": "n per arm",
+      "inlineHeightAttr": "height: 30px;",
+      "display": "block",
+      "computedHeight": "30px",
+      "rectHeight": 30,
+      "minHeight": "30px",
+      "width": "242px",
+      "padding": "4px 10px 4px 10px",
+      "fontSize": "12.5px",
+      "border": "1px solid oklch(0.8847 0.0069 97.3627)",
+      "borderColor": "oklch(0.8847 0.0069 97.3627)",
+      "backgroundColor": "rgb(250, 249, 245)",
+      "color": "rgb(20, 20, 19)",
+      "borderRadius": "6px",
+      "labelRect": {
+        "top": 891,
+        "bottom": 905,
+        "left": 657,
+        "right": 708.36
+      },
+      "fieldRect": {
+        "top": 911,
+        "bottom": 941,
+        "left": 657,
+        "right": 899
+      },
+      "belowLabel": true,
+      "sharesLineWithLabel": false
+    }
+  ],
+  "tokens": {
+    "--border": "oklch(0.8847 0.0069 97.3627)",
+    "--bg-000": "#faf9f5",
+    "--text-100": "#141413",
+    "--text-300": "#6b6963"
+  },
+  "hasC2cV2": true,
+  "placeholderExample": "e.g. NSCLC"
+}

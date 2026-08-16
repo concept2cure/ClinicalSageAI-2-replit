@@ -467,5 +467,14 @@
 .c2c-v2 .de-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:130;background:var(--text-100);color:var(--bg-000);border-radius:var(--radius-lg);padding:11px 16px;font-size:12.5px;font-weight:500;box-shadow:var(--v2-shadow-lg);display:flex;align-items:center;gap:9px;animation:de-toast-in var(--dur) var(--ease);}
 .c2c-v2 .de-toast .ico{color:var(--success);}.c2c-v2 .de-toast .ico svg{width:16px;height:16px;}
 @keyframes de-toast-in{from{opacity:0;transform:translate(-50%,8px);}to{opacity:1;transform:translate(-50%,0);}}
+/* Top-anchored variant, for the four surfaces that had their own pill class —
+   SafetyNarrative, AnaCommand and AnaMemory sat at top:18px so the pill would
+   not cover the composer, and Etmf at the bottom. Converging them onto the
+   canonical component is what gives them an error tone and a live region at
+   all; MOVING them is a separate design decision nobody has made, so the
+   position survives the migration. The entrance slides from above rather than
+   below, or the pill would animate away from the edge it is anchored to. */
+.c2c-v2 .de-toast[data-pos="top"]{bottom:auto;top:18px;animation-name:de-toast-in-top;}
+@keyframes de-toast-in-top{from{opacity:0;transform:translate(-50%,-8px);}to{opacity:1;transform:translate(-50%,0);}}
 .c2c-v2 .de-row-new{animation:de-hl 1.4s var(--ease);}
 @keyframes de-hl{0%{background:var(--success-muted);}100%{background:transparent;}}

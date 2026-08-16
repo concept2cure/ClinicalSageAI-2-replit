@@ -64,6 +64,23 @@ describe('C2CToast — a failure may not wear the success tick', () => {
     expect(badIcon).not.toBe(okIcon);
   });
 
+  /* The four surfaces that had their own pill class kept their position through
+     the migration. Three of them (SafetyNarrative, AnaCommand, AnaMemory) sat at
+     the TOP because a bottom-centre pill covers the composer on those screens.
+     Moving them is a design decision nobody made; being unable to report a
+     failure was a bug. Only the second was fixed, and this pins that. */
+  it('anchors to the top when asked, without giving up the tone or the role', () => {
+    render(<C2CToast msg={{ msg: 'Couldn’t verify — nothing was saved.', tone: 'error' }} position="top" />);
+    const el = screen.getByRole('alert');
+    expect(el.getAttribute('data-pos')).toBe('top');
+    expect(el.getAttribute('data-tone')).toBe('error');
+  });
+
+  it('defaults to the house bottom position, marking nothing', () => {
+    render(<C2CToast msg={{ msg: 'Filed to the TMF.', tone: 'ok' }} />);
+    expect(screen.getByRole('status').getAttribute('data-pos')).toBeNull();
+  });
+
   it('accepts a bare string, and treats it as an acknowledgement', () => {
     render(<C2CToast msg="Copied to clipboard." />);
     expect(screen.getByRole('status').textContent).toContain('Copied to clipboard.');
