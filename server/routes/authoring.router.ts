@@ -731,6 +731,58 @@ const verifyUserPin = async (email: string, pin: string, tenantId: number): Prom
   }
 };
 
+/**
+ * The signer's PRINTED NAME, for 21 CFR §11.50(a)(1).
+ *
+ * ── The defect this replaces ─────────────────────────────────────────────────
+ * Both sign paths read the name as
+ *
+ *     ((req.user as { name?: string })?.name) || email
+ *
+ * and this router's own first middleware builds `req.user` from the verified
+ * token as `{ id, userId, email, role, roles, organizationId }` — there is no
+ * `name` key, and the access token carries no `name` claim to put in one. The
+ * left side was therefore ALWAYS undefined, so `signer_name` on every
+ * `authoring_signatures` row ever written is the signer's EMAIL ADDRESS.
+ *
+ * §11.50(a)(1) requires the printed name of the signer. An email address is an
+ * identifier, not a printed name, and the fallback silently substituted one for
+ * the other on a legally binding attestation.
+ *
+ * ── Why NULL rather than the email when it cannot be resolved ────────────────
+ * Returning the email is what produced the defect: it is indistinguishable, at
+ * every later point, from a genuinely resolved name. `signer_name` is nullable,
+ * so NULL is available and is the honest value — it lets the manifestation say
+ * "no printed name on record for this signer" instead of presenting an address
+ * as if it satisfied §11.50(a)(1). The signature itself is NOT refused: a
+ * missing display name is a record-quality problem, and blocking a signer from
+ * attesting over it would be the worse failure.
+ *
+ * `users.email` is UNIQUE and `users.name` is NOT NULL, so a matched row always
+ * yields a name.
+ */
+/**
+ * The closed set of §11.50(a)(3) signature meanings this subsystem stores.
+ * Declared once: `/e-sign` inlined this list and `/sign` had no check at all.
+ */
+const SIGNATURE_MEANINGS = ['AUTHOR', 'REVIEWER', 'APPROVER'] as const;
+
+const resolveSignerName = async (email: string): Promise<string | null> => {
+  try {
+    const r = await pool.query<{ name: string | null }>(
+      'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
+      [email]
+    );
+    const name = r.rows[0]?.name?.trim();
+    return name ? name : null;
+  } catch (error) {
+    // A failed lookup must not take down the signing act. NULL is the honest
+    // outcome and the manifestation reports it as unresolved.
+    console.error('Signer name lookup failed:', error);
+    return null;
+  }
+};
+
 // Helper to create or update user PIN
 const createUserPin = async (email: string, pin: string, tenantId: number): Promise<boolean> => {
   try {
@@ -3942,7 +3994,6 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // signature must come from the verified JWT, never from client-supplied
     // headers. x-user-email here meant anyone could sign as anyone.
     const email = getActorEmail(req);
-    const name = ((req.user as { name?: string } | undefined)?.name) || email;
     const tenantId = getTenantId(req);
 
     if (!email) {
@@ -3953,13 +4004,17 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'PIN required for signature' });
     }
 
-    if (!meaning || !['AUTHOR', 'REVIEWER', 'APPROVER'].includes(meaning)) {
+    if (!meaning || !SIGNATURE_MEANINGS.includes(meaning)) {
       return res.status(400).json({ error: 'Invalid signature meaning' });
     }
 
     if (!intent) {
       return res.status(400).json({ error: 'Signature intent is required' });
     }
+
+    // §11.50(a)(1) printed name, from the user record — never `req.user.name`,
+    // which this router never populates, and never the email in its place.
+    const name = await resolveSignerName(email);
 
     // Verify PIN
     const pinValid = await verifyUserPin(email, pin, tenantId);
@@ -5362,12 +5417,23 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     if (!signerEmail) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    const signerName =
-      ((req.user as { name?: string } | undefined)?.name) || signerEmail;
+    // §11.50(a)(1) printed name — see resolveSignerName. NULL when the user
+    // record yields none, so a manifestation can say so rather than render an
+    // address as a printed name.
+    const signerName = await resolveSignerName(signerEmail as string);
 
     // Validate required fields
     if (!pin || !reason) {
       return res.status(400).json({ error: 'PIN and reason are required for signing' });
+    }
+
+    // §11.50(a)(3) — the MEANING of the signature is a closed set, and this
+    // path took it as a free string with a default. `/e-sign` has validated it
+    // against this same list since it was written; this one did not, so an
+    // arbitrary token could be stored as the meaning of a legally binding
+    // attestation and would render verbatim in any manifestation of it.
+    if (!SIGNATURE_MEANINGS.includes(meaning)) {
+      return res.status(400).json({ error: 'Invalid signature meaning' });
     }
 
     // Verify PIN
@@ -5499,9 +5565,19 @@ router.get('/docs/:docId/signatures', async (req: Request, res: Response) => {
     const tenantId = getTenantId(req);
 
     const result = await pool.query(
-      `SELECT id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash, signature_digest, signed_at, tenant_id FROM authoring_signatures
-       WHERE doc_id = $1 AND tenant_id = $2
-       ORDER BY signed_at DESC`,
+      /* covered_freeze_version / covered_content_hash are the §11.70
+         signature-to-record link: WHICH frozen snapshot this signature covers.
+         The freeze-binding migration added them and this SELECT never returned
+         them, so a manifestation built from this endpoint could show that a
+         document was signed but not what was signed. pin_verified likewise
+         records that the signature was PIN-authenticated (§11.200(a)(1)) and
+         was unreadable. */
+      `SELECT id, doc_id, signer_email, signer_name, meaning, reason, method,
+              content_hash, signature_digest, covered_freeze_version,
+              covered_content_hash, pin_verified, signed_at, tenant_id
+         FROM authoring_signatures
+        WHERE doc_id = $1 AND tenant_id = $2
+        ORDER BY signed_at DESC`,
       [docId, tenantId]
     );
 
