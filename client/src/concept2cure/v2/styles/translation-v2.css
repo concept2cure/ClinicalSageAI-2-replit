@@ -148,7 +148,7 @@
 .txw-gloss-scope[data-scope="org"]{background:var(--ai-muted);color:var(--ai);}
 .txw-gloss-scope[data-scope="project"]{background:var(--accent-000);color:var(--accent-200);}
 .txw-gloss-search{position:relative;display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg-050);border-bottom:1px solid var(--border);}
-.txw-gloss-search input{flex:1;font-size:11px;padding:5px 8px;border-radius:var(--radius-md);background:var(--bg-000);border:1px solid var(--border);}
+.txw-gloss-search input{flex:1;font-size:11px;padding:5px 8px;border-radius:var(--radius-md);background:var(--bg-000);border:1px solid var(--border-control);}
 .txw-gloss-search input:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .txw-gloss-add{font-size:10px;font-weight:600;color:var(--accent-200);padding:4px 9px;border:1px solid var(--accent-100);border-radius:var(--radius-md);background:var(--accent-000);display:inline-flex;gap:4px;align-items:center;}
 .txw-gloss-add:hover{background:var(--accent-100);color:#fff;}
@@ -164,7 +164,7 @@
 .txw-gov-summ b{color:var(--text-100);font-weight:600;}
 .txw-gov-field{margin-bottom:12px;}
 .txw-gov-field label{display:block;font-size:10.5px;font-weight:600;color:var(--text-300);margin-bottom:5px;letter-spacing:.02em;}
-.txw-gov-field input,.txw-gov-field select,.txw-gov-field textarea{width:100%;font-size:12.5px;padding:8px 10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-050);color:var(--text-100);}
+.txw-gov-field input,.txw-gov-field select,.txw-gov-field textarea{width:100%;font-size:12.5px;padding:8px 10px;border-radius:var(--radius-md);border:1px solid var(--border-control);background:var(--bg-050);color:var(--text-100);}
 .txw-gov-field input:focus,.txw-gov-field select:focus,.txw-gov-field textarea:focus{border-color:var(--accent-100);background:var(--bg-000);box-shadow:0 0 0 3px var(--accent-000);}
 .txw-gov-field textarea{min-height:64px;resize:vertical;font-family:inherit;}
 .txw-gov-manif{font-size:11px;color:var(--text-400);line-height:1.5;padding:8px 10px;background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-md);}

@@ -195,7 +195,7 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
       {!isLocked && (
         <div className="dc-ribbon" style={{display:'flex',alignItems:'center',gap:2,padding:'4px 8px',background:'var(--bg-000)',borderBottom:'1px solid var(--border)',flexShrink:0,flexWrap:'wrap'}}>
           <select value={style} onChange={e => setBlock(e.target.value)}
-            style={{fontSize:11,border:'1px solid var(--border)',borderRadius:4,padding:'2px 6px',background:'var(--bg-50)',color:'var(--text-100)',cursor:'pointer',height:24}}>
+            style={{fontSize:11,border:'1px solid var(--border-control)',borderRadius:4,padding:'2px 6px',background:'var(--bg-50)',color:'var(--text-100)',cursor:'pointer',height:24}}>
             <option value="p">Paragraph</option>
             <option value="h1">Heading 1</option>
             <option value="h2">Heading 2</option>

@@ -430,7 +430,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                 placeholder="e.g. Precedent accelerated approvals on an overall-response-rate endpoint in second-line NSCLC"
                 style={{
                   width: '100%',
-                  border: '1px solid var(--border)',
+                  border: '1px solid var(--border-control)',
                   borderRadius: 10,
                   padding: '10px 12px',
                   fontSize: 14,
