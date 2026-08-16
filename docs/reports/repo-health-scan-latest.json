@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-15T06:15:52.107Z",
+  "generatedAt": "2026-08-16T17:32:56.547Z",
   "git": {
-    "sha": "2a03dc16dba3c04ff522740d079c2a4208e358ac",
+    "sha": "2e9854f5ee5523deaf6b6d6c31208995872c4fcc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 219,
+    "duplicateBasenames": 220,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 35,
@@ -2085,6 +2085,14 @@
         ]
       },
       {
+        "basename": "toast",
+        "count": 2,
+        "paths": [
+          "client/src/components/ui/toast.tsx",
+          "client/src/concept2cure/v2/toast.tsx"
+        ]
+      },
+      {
         "basename": "tree",
         "count": 2,
         "paths": [
@@ -2205,7 +2213,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126609
+        "bytes": 126632
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2221,7 +2229,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 115542
+        "bytes": 115336
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2339,7 +2347,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2790
+        "lines": 2776
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2395,7 +2403,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2186
+        "lines": 2185
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2637,13 +2645,13 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 55,
+      "duplicateGroups": 56,
       "largeByBytes": 2,
       "largeByLines": 3
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 9,
+      "duplicateGroups": 10,
       "largeByBytes": 0,
       "largeByLines": 0
     },
