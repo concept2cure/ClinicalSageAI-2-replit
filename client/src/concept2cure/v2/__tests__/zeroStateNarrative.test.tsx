@@ -22,11 +22,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { assessmentState, mayReassure } from '../assessmentState';
 
-vi.mock('@/lib/queryClient', () => ({
+/* PARTIAL mock, not a replacement.
+   This was a hand-written stand-in listing four exports. It worked only because
+   every test here drove the success path: the moment a read fails, `ErrorState`
+   renders and reaches for `redactInternals`, which the stand-in did not export
+   — so the component threw, React unmounted the whole tree, and the assertion
+   saw an empty document rather than the surface. A stand-in that has to be kept
+   in step by hand with the module it replaces will drift, and it drifts
+   silently on exactly the paths that are hardest to test. */
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest: vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ data: [] }) })),
-  serverMessage: () => null,
-  extractApiError: () => null,
-  errorCodeOf: () => null,
 }));
 
 import { NdaCockpit } from '../surfaces/NdaCockpit';
@@ -90,5 +96,73 @@ describe('NDA cockpit over an empty program', () => {
     for (const phrase of CLEARANCE_LANGUAGE) {
       expect(phrase.test(body), `zero state must not say: ${phrase}`).toBe(false);
     }
+  });
+
+  it('does not assert a review clock it has no store for', async () => {
+    render(<NdaCockpit {...EMPTY_PROPS} />);
+    await waitFor(() => expect(screen.getByText(/nothing has been assessed/i)).toBeTruthy());
+    // "not started" says a clock exists and has not begun. There is no
+    // review-clock store at all, and the clock tab says "No review clock
+    // recorded" — the KPI label said something stronger and unevidenced.
+    expect(document.body.textContent).not.toContain('not started');
+  });
+});
+
+/**
+ * The narrative was rebuilt to speak honestly about an unresolved read. The
+ * numbers beside it were not, and a number is the more confident assertion.
+ *
+ * `overall`, `m1open` and `highs.length` are all 0 while their reads are in
+ * flight and when those reads have FAILED — the same zero for four different
+ * realities. So the strip said "0% Application readiness" directly beneath
+ * "Nothing is being asserted … until the read settles", and, worse, beneath
+ * "This is a failed read, not a clean program."
+ */
+describe('NDA cockpit over a FAILED read', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { apiRequest } = await import('@/lib/queryClient');
+    (apiRequest as unknown as ReturnType<typeof vi.fn>).mockImplementation(async () => ({
+      ok: false,
+      status: 403,
+      json: async () => ({ error: { code: 'AUTH_REQUIRED' } }),
+    }));
+  });
+
+  it('says the read failed rather than narrating a clean program', async () => {
+    render(<NdaCockpit {...EMPTY_PROPS} />);
+    await waitFor(() => expect(screen.getByText(/could not be read/i)).toBeTruthy());
+  });
+
+  it('renders no number for a quantity it could not read', async () => {
+    render(<NdaCockpit {...EMPTY_PROPS} />);
+    await waitFor(() => expect(screen.getByText(/could not be read/i)).toBeTruthy());
+    // 0% readiness beneath "filing readiness could not be read" is the whole
+    // finding. On a failed read this is terminal, not transient: nothing
+    // re-resolves it, so it is the last thing the user is left looking at.
+    expect(screen.queryByText('0%')).toBeNull();
+  });
+
+  it('never renders a failed Refuse-to-File read in the language of clearance', async () => {
+    render(<NdaCockpit {...EMPTY_PROPS} />);
+    await waitFor(() => expect(screen.getByText(/could not be read/i)).toBeTruthy());
+    const rtfTile = Array.from(document.querySelectorAll('.reg-kpi'))
+      .find((el) => el.textContent?.includes('High RTF risk'));
+    expect(rtfTile).toBeTruthy();
+    // A neutral-toned "0" beside the words "High RTF risk" is an empty findings
+    // set presented as a finding of none — in the one form that reads faster
+    // than prose.
+    expect(rtfTile!.querySelector('.reg-kpi-v')?.textContent).toBe('—');
+  });
+
+  it('offers no next step that would carry the failure into AnA', async () => {
+    const ask = vi.fn();
+    render(<NdaCockpit {...EMPTY_PROPS} onAsk={ask} />);
+    await waitFor(() => expect(screen.getByText(/could not be read/i)).toBeTruthy());
+    // The button used to read "Draft the final readiness plan" and prompt AnA
+    // about "the open administrative items on this NDA program" — asserting to
+    // the model that such items exist, off a read that returned nothing.
+    expect(screen.queryByText(/Draft the final readiness plan/i)).toBeNull();
+    expect(document.querySelector('.al-lead .al-btn')).toBeNull();
   });
 });

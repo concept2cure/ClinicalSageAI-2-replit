@@ -319,6 +319,32 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   });
   const reassuring = mayReassure(filingState, overall);
 
+  /* The KPI strip speaks from the SAME state the lead does, derived here rather
+     than re-tested at each tile, so the two cannot drift apart.
+
+     They had drifted. `overall`, `m1open` and `highs.length` all evaluate to 0
+     while their reads are in flight AND when those reads have failed, because
+     `useLiveRows` returns a frozen empty array in both cases and the local
+     working sets seed from it only once `!loading`. So the strip rendered
+     "0% Application readiness / 0 Module 1 admin open / 0 High RTF risk"
+     directly beneath the lead's own "Nothing is being asserted about
+     Refuse-to-File risk until the read settles" — and, on the failed-read path,
+     beneath "This is a failed read, not a clean program."
+
+     The failure case is the worse one and not only because the contradiction is
+     sharper: loading resolves, a failed read does not, so 0/0/0 is the FINAL
+     answer the user is left with. And `data-tone={highs.length ? 'err' : …}`
+     renders a failed Refuse-to-File read in the visual language of clearance —
+     a neutral-toned zero beside the words "High RTF risk". That is the precise
+     claim assessmentState exists to make unrepresentable, arriving in the one
+     form that reads faster than prose. */
+  const kpiReady = filingState !== 'loading' && filingState !== 'unreadable';
+  /* `m1Live` is deliberately NOT an input to `filingState` — widening those
+     inputs would change what the Refuse-to-File narrative means — so the
+     Module 1 tile carries its own gate. */
+  const m1Ready = !m1Live.loading && !m1Live.error;
+  const kv = (ready: boolean, n: number | string) => (ready ? String(n) : '—');
+
   /* Each state gets its own sentence. No state borrows another's vocabulary,
      and only `assessed-clear` — unreachable here for the reason above — may
      speak of blockers being absent. */
@@ -379,7 +405,23 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             ? "I'll help you close out the last items and assemble the sequence."
             : undefined
       }
-      action={{
+      /* No action while the read is unresolved.
+
+         The ternaries below had no `loading` or `unreadable` arm, so both fell
+         through to the final one: beneath the headline "Filing readiness could
+         not be read", the surface's one focal button offered to draft a FINAL
+         READINESS PLAN, and its prompt told AnA to work "the open administrative
+         items on this NDA program" — asserting to the model that such items
+         exist and are known, off a read that returned nothing. Of everything
+         ungated on this surface that is the one with reach beyond it: the other
+         claims stay on screen, this one enters the assistant's context and is
+         reasoned from.
+
+         Offering nothing is the honest option, and matches the reassurance
+         above, which is already withheld in both states. `alt` goes too — it
+         navigates to a Refuse-to-File tab that is itself showing a failed
+         read. */
+      action={!kpiReady ? undefined : {
         label: filingState === 'assessed-with-findings'
           ? 'Fix the filing risks with AnA'
           : filingState === 'not-assessed'
@@ -412,11 +454,22 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {lead}
 
+      {/* CmcModule, on the same taxonomy, DELETED its strip rather than gate it
+          — "Repeating a figure three times does not make it more true" — and
+          two of these four tiles are likewise restatements of figures the lead
+          above already narrates. That is a live design option and is recorded
+          in the review; it is not taken here, because removing a scannable
+          summary is a product decision rather than a defect fix. */}
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{overall}%</div><div className="reg-kpi-l">Application readiness</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">&mdash;</div><div className="reg-kpi-l">Review clock {I.dot} not started</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v" data-tone="warn">{m1open}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={highs.length ? 'err' : undefined}>{highs.length}</div><div className="reg-kpi-l">High RTF risk</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kpiReady ? `${overall}%` : '—'}</div><div className="reg-kpi-l">Application readiness</div></div>
+        {/* "not started" asserted that a clock exists and has not begun. There
+            is no review-clock store at all (see the header note), and the clock
+            tab below says so in its own words — this label now matches it
+            instead of making the stronger, unevidenced claim. */}
+        <div className="reg-kpi"><div className="reg-kpi-v">&mdash;</div><div className="reg-kpi-l">Review clock {I.dot} not recorded</div></div>
+        {/* The warn tone was hardcoded, so a value of 0 wore it too. */}
+        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={m1Ready && m1open ? 'warn' : undefined}>{kv(m1Ready, m1open)}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={kpiReady && highs.length ? 'err' : undefined}>{kv(kpiReady, highs.length)}</div><div className="reg-kpi-l">High RTF risk</div></div>
       </div>
 
       <div className="reg-tabs">
