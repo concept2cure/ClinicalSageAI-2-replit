@@ -147,10 +147,55 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
    is not done here, because removing a scannable summary is a product decision.
    **Your call.**
 
-5. **Signature manifestation is never shown back.** `authoring_signatures` stores
-   signer, meaning, reason, timestamp and hash, and `GET /docs/:id/signatures`
-   exposes it — no client calls it. The only manifestation is a toast that fades
-   in 4.2s and omits the printed name and exact time. §11.50 wants it visible.
+5. ~~**Signature manifestation is never shown back.**~~ **RESOLVED for the
+   electronic display** — a Signatures rail in `DocumentAuthoring` renders the
+   §11.50(a) triple plus the reason and the §11.70 covered version. Confirmed
+   first that no client anywhere called that endpoint, or the other two
+   signature stores' endpoints either.
+
+   Scoping it turned up something worse than the missing view. **`signer_name`
+   was the signer's EMAIL ADDRESS on every row ever written.** Both sign paths
+   read `((req.user as {name?: string})?.name) || email`, and the router's own
+   middleware builds `req.user` without a `name` key — the access token carries
+   no `name` claim to put in one. The left operand was always `undefined`, so
+   the fallback always won, and §11.50(a)(1) "printed name of the signer" was
+   satisfied with an identifier. Now resolved from `users.name` at signing time,
+   returning **NULL** rather than the email when nothing resolves, so the display
+   can say "no printed name on record" instead of silently substituting one.
+
+   Also closed while in there: `/sign` accepted `meaning` as a free string with a
+   `'REVIEWER'` default and no validation (`/e-sign` had validated it all along),
+   so an arbitrary token could be stored as the meaning of a binding attestation;
+   and `GET /signatures` never selected `covered_freeze_version` /
+   `covered_content_hash`, so a manifestation could show that a document was
+   signed but not *what* was signed.
+
+### Still open, found while scoping item 5
+
+- **§11.50(b) printout is unmet.** `POST /docs/:docId/export` emits DOCX, PDF and
+  XML containing title and sections only — no signature block in any of the
+  three. The one function that renders an "ELECTRONIC SIGNATURES" manifest,
+  `buildDocx`, is **dead code**: one repo-wide hit, its own definition, absent
+  from the built bundle — and it reads four field names that do not exist on the
+  table (`signature_meaning`, `signature_intent`, `signature_timestamp`,
+  `document_hash` vs `meaning` / `reason` / `signed_at` / `content_hash`), so it
+  would render `undefined` for the meaning and the date if it ever ran. The new
+  rail is the electronic display half only and must not be read as closing this.
+
+- **A latent cross-tenant read in `part11-compliance.ts`, armed but not firing.**
+  All five routes do `const pool = (req as any).pool || (req.app as any).pool`,
+  and **nothing in the repo assigns either** — so every one 500s on
+  `pool.query` of `undefined`. The identical bug was found and fixed in
+  `graphrag.ts:543` with a `|| getPool()` fallback. **Do not apply that fix here
+  alone.** `GET /signatures/:documentId` has no tenant predicate and
+  `document_id` is an enumerable `serial`, so repairing the pool *creates* the
+  cross-tenant leak; `GET /audit-trail/:entityId` is likewise unpredicated over a
+  table with no `organization_id` column (it relies on parent-scoped RLS through
+  `leaf_id`, and reads columns absent from the public `audit_trail`, so which
+  table it targets needs establishing first). The predicate to copy for the
+  signatures route already exists 60 lines below it in the same file. Left
+  untouched deliberately: the blast radius could not be verified in this pass,
+  and a half-verified fix here opens a tenant leak.
 
 ## Could improve
 
