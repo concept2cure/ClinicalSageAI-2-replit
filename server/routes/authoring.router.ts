@@ -852,6 +852,12 @@ async function readSignaturesForExport(docId: string, tenantId: number): Promise
 
 const resolveSignerName = async (email: string): Promise<string | null> => {
   try {
+    // Both call sites (the /e-sign PIN path and the /sign path) pass
+    // getActorEmail(req) — the AUTHENTICATED actor's own address, never a body
+    // or header value. That was the point of the earlier fix noting
+    // "x-user-email here meant anyone could sign as anyone".
+    //
+    // tenant-isolation-safe: self-lookup of the caller's own §11.50(a)(1) printed name; `users` is the global identity table (membership lives in organization_users) so it has no tenant column to filter on, and getActorEmail(req) makes the caller's own row the only one reachable.
     const r = await pool.query<{ name: string | null }>(
       'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
       [email]
