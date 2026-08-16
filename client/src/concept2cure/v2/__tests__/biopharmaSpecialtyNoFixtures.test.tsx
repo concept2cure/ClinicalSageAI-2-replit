@@ -19,7 +19,7 @@ import React from 'react';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -205,6 +205,65 @@ describe('BiopharmaSpecialty — honest error states', () => {
     expect(await screen.findByText("Couldn't load safety signals")).toBeTruthy();
     expect(document.querySelector('.c2c-error-state')).toBeTruthy();
     expectNoFixtureArtifacts();
+  });
+});
+
+/**
+ * The tables were always honest about a failed read. The AnswerLead ABOVE each
+ * table was not: it derived its headline from `rows.length`, and `rows` is
+ * equally empty in flight, on failure, and on a genuine empty. So on a failed
+ * load the most prominent sentence on the surface stated a fact about the
+ * organization's regulatory record that nobody had established — while the
+ * table 40px below it said the read had failed.
+ *
+ * These assert the LEAD, which is why they read the `.al-h` headline directly
+ * rather than any-text-on-the-page: the error EmptyState tested above would
+ * satisfy a looser query and the regression would pass unnoticed.
+ */
+describe('BiopharmaSpecialty — a failed read is never narrated as an empty one', () => {
+  beforeEach(mockAllFailed);
+
+  const headline = () => document.querySelector('.al-h')?.textContent ?? '';
+
+  it('Pediatric does not claim "no plans on file" when the plan read failed', async () => {
+    render(<Pediatric {...props()} />);
+    await screen.findByText("Couldn't load pediatric plans");
+    expect(headline()).toContain('could not be read');
+    expect(headline()).not.toContain('No pediatric plans are on file');
+  });
+
+  it('Orphan does not claim "no designations on file" when the read failed', async () => {
+    render(<Orphan {...props()} />);
+    await waitFor(() => expect(headline()).not.toBe(''));
+    expect(headline()).toContain('could not be read');
+    expect(headline()).not.toContain('No orphan or rare-disease designations are on file');
+  });
+
+  it('Lifecycle does not claim "no post-approval records" when the reads failed', async () => {
+    render(<Lifecycle {...props()} />);
+    await waitFor(() => expect(headline()).not.toBe(''));
+    expect(headline()).toContain('could not be read');
+    expect(headline()).not.toContain('No post-approval records are on file');
+  });
+
+  it('Pharmacovigilance does not report safety standing off an unread board', async () => {
+    render(<Pharmacovigilance {...props()} />);
+    await screen.findByText("Couldn't load safety signals");
+    // The sharpest case: "no disproportionality screen has been run" is a claim
+    // about patient safety, and it was being derived from a network failure.
+    expect(document.body.textContent).not.toContain('no disproportionality screen has been run');
+    expect(headline()).toContain('could not be read');
+  });
+
+  it('offers no next step and no reassurance over a record it could not read', async () => {
+    render(<Pharmacovigilance {...props()} />);
+    await screen.findByText("Couldn't load safety signals");
+    const lead = document.querySelector('.al-lead');
+    expect(lead).toBeTruthy();
+    // Reassurance is the one thing an absent answer can never justify, and an
+    // action invites work on a premise that may not hold.
+    expect(lead!.querySelector('.al-re')).toBeNull();
+    expect(lead!.querySelector('.al-btn')).toBeNull();
   });
 });
 
