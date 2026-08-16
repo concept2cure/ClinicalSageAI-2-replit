@@ -111,6 +111,23 @@ jobs:
         # gate every PR. This guard is narrow enough to be blocking on day one.
         run: npm run ci:committed-secrets
 
+      - name: Guardrails — requirements.txt pins must install on the declared Python
+        # Dependabot #1014 proposed numpy 2.4.6 -> 2.5.1. numpy 2.5.1 is
+        # requires_python >=3.12 and ships only cp312/cp313/cp314 wheels; this
+        # project declares python-3.11 (.replit line 1, and every setup-python
+        # in CI). With an exact pin pip hard-fails rather than degrading.
+        #
+        # The hole was not the bad pin, it was the silence: NOTHING installs the
+        # root requirements.txt. All four CI references resolve to sub-project
+        # manifests (shadow_service/, ind_automation/, services/), and neither
+        # Dockerfile installs it — so merging that bump would have turned no job
+        # red and surfaced only at deploy time on the 3.11 runtime.
+        #
+        # Reads the target interpreter from .replit rather than hardcoding it,
+        # so a real Python upgrade moves the check instead of stranding it.
+        # A PyPI outage skips loudly (never silently) so it cannot wedge CI.
+        run: npm run ci:requirements-pins
+
       - name: Guardrails — content cannot be saved without its data lineage
         # Every span of a saved document must trace to where it came from. The
         # gate that enforces it is a few lines inside a 6,000-line router, so a

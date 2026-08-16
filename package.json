@@ -84,6 +84,7 @@
     "ci:tenant-entry-points:write-baseline": "node scripts/ci/check-tenant-entry-points.mjs --write-baseline",
     "ci:unreferenced-modules": "node scripts/ci/check-unreferenced-modules.mjs",
     "ci:committed-secrets": "node scripts/ci/check-committed-secrets.mjs",
+    "ci:requirements-pins": "node scripts/ci/check-requirements-pins.mjs",
     "ci:lineage-save-gate": "node scripts/ci/check-lineage-save-gate.mjs",
     "ci:artifact-provenance": "node scripts/ci/check-artifact-provenance.mjs",
     "ci:unreferenced-modules:strict": "node scripts/ci/check-unreferenced-modules.mjs --strict",
