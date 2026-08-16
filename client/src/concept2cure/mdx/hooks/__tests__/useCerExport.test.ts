@@ -204,7 +204,21 @@ describe('useCerExport', () => {
     await act(async () => {
       outcome = await result.current.exportCer(PROGRAM, 'pdf', { humanReviewApproved: true });
     });
-    expect(outcome).toMatchObject({ ok: false, error: 'offline', filename: null });
+    /* The hook's own wording, NOT the thrown message.
+       This asserted `error: 'offline'` — the raw text of the rejection — and had
+       been failing since 9a5e892 routed every error path through one envelope
+       reader. The hook substitutes its own sentence deliberately: a `fetch`
+       rejection's native message is "Failed to fetch" / "Load failed" / a DNS
+       string, which is plumbing, and this session has spent most of its length
+       removing exactly that from what a regulatory user reads. The mock's
+       "offline" is only legible here because a test author chose a tidy word;
+       the real value is not a sentence.
+
+       So the code is right and the assertion was left behind. What matters and
+       is still asserted: the failure is reported as a failure, and no download
+       is fabricated. */
+    expect(outcome).toMatchObject({ ok: false, error: 'Export request failed', filename: null });
+    expect(outcome!.error).not.toContain('offline');
     expect(createObjectURL).not.toHaveBeenCalled();
   });
 });
