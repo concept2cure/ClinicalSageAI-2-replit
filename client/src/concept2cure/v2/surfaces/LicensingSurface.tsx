@@ -19,27 +19,9 @@ import {
   type BillingStatus,
 } from '../fixtures/licensing';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* -- Inline helpers -- */
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
-}
 
 function money(n: number | null): string {
   return n == null ? 'Custom' : '$' + n.toLocaleString();
@@ -130,7 +112,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         return;
       }
       // No URL back means no checkout was created — never report one that was not.
-      fireToast(r.error ? 'Checkout failed · ' + r.error : 'Checkout did not return a payment link');
+      fireToast(r.error ? 'Checkout failed · ' + r.error : 'Checkout did not return a payment link', 'error');
     });
   };
 
@@ -140,7 +122,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         window.open(r.data.portalUrl, '_blank');
         return;
       }
-      fireToast(r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable');
+      fireToast(r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable', 'error');
     });
   };
 

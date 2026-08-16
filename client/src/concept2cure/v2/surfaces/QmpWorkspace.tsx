@@ -16,7 +16,7 @@
  * an honest error — never a fixture. Create/activate are real awaited writes
  * that adopt the server's returned row and refetch; nothing is fabricated.
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -25,6 +25,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface Plan { id: number; name: string; version: string | null; status: string | null; description: string | null; }
 interface Dashboard {
@@ -35,16 +36,6 @@ interface Dashboard {
   riskProfile: { highRiskPercentage: number; mediumRiskPercentage: number; lowRiskPercentage: number };
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 /** Reads the RAW body (QMP endpoints are not {data}-wrapped); never throws. */
 async function rawJson<T = any>(method: 'GET' | 'POST' | 'PATCH', path: string, body?: unknown): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
@@ -111,7 +102,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
     const { ok, status, body } = await rawJson<Plan>('POST', '/api/quality/plans', {
       name: v.name, version: v.version || '1.0', status: v.status || 'draft', description: v.description || undefined,
     });
-    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t create the plan — check the name (3–100 chars).' : `Couldn’t create the plan (HTTP ${status}).`); return; }
+    if (!ok || !body?.id) { fireToast(status === 400 ? 'Couldn’t create the plan — check the name (3–100 chars).' : `Couldn’t create the plan (HTTP ${status}).`, 'error'); return; }
     setCreating(false);
     fireToast('Quality-management plan created · ' + body.name);
     setPlans((ps) => [body, ...ps.filter((p) => p.id !== body.id)]);
@@ -120,7 +111,7 @@ export function QmpWorkspace({ onAsk }: SurfaceViewProps) {
 
   const activate = useCallback(async (id: number) => {
     const { ok, status, body } = await rawJson<Plan>('PATCH', `/api/quality/plans/${id}`, { status: 'active' });
-    if (!ok || !body) { fireToast(`Couldn’t activate the plan (HTTP ${status}).`); return; }
+    if (!ok || !body) { fireToast(`Couldn’t activate the plan (HTTP ${status}).`, 'error'); return; }
     fireToast('Plan activated · ' + (body.name ?? id));
     setPlans((ps) => ps.map((p) => (p.id === id ? { ...p, ...body } : p)));
     if (active === id) void loadDashboard(id);

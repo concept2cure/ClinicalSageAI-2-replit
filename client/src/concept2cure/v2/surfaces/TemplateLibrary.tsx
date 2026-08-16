@@ -5,6 +5,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── TemplateSpec types (templateSpec.ts) ── */
 
@@ -264,8 +265,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
   // from (extract is preview-only server-side; from-upload extracts + saves).
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [flash, setFlash] = useState('');
-  const note = (m: string) => { setFlash(m); setTimeout(() => setFlash(''), 4200); };
+  const [flash, note] = useToast();
 
   const startExtract = () => fileRef.current?.click();
 
@@ -284,7 +284,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       const res = await fetch('/api/c2c/templates/extract', { method: 'POST', headers: getAuthHeaders(), credentials: 'include', body: fd });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.spec) {
-        note(res.status === 401 ? 'Sign in to extract a template.' : 'Extraction failed — ' + (serverMessage(json) ?? 'the server did not say why') + '. Nothing was read.');
+        note(res.status === 401 ? 'Sign in to extract a template.' : 'Extraction failed — ' + (serverMessage(json) ?? 'the server did not say why') + '. Nothing was read.', 'error');
         setUploading(false);
         return;
       }
@@ -295,7 +295,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         spec: json.spec as TemplateSpec,
       });
     } catch (e) {
-      note('Extraction failed — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      note('Extraction failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
       setUploading(false);
     } finally {
       if (fileRef.current) fileRef.current.value = '';
@@ -313,7 +313,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       const res = await fetch('/api/c2c/templates/from-upload', { method: 'POST', headers: getAuthHeaders(), credentials: 'include', body: fd });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.template?.id) {
-        note(res.status === 401 ? 'Sign in to save the template.' : 'Couldn’t save — ' + (serverMessage(json) ?? 'the server did not say why') + '. Nothing was persisted.');
+        note(res.status === 401 ? 'Sign in to save the template.' : 'Couldn’t save — ' + (serverMessage(json) ?? 'the server did not say why') + '. Nothing was persisted.', 'error');
         return;
       }
       const rec = { ...(json.template as TemplateRecord), _new: true };
@@ -324,7 +324,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       setPendingFile(null);
       note('Template saved · ' + rec.name);
     } catch (e) {
-      note('Couldn’t save — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      note('Couldn’t save — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
 
@@ -333,7 +333,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
     try {
       const res = await apiRequest('PUT', '/api/c2c/templates/' + t.id, { verified: !t.verified });
       const json = await res.json().catch(() => null);
-      if (!res.ok || !json?.template) { note('Couldn’t update verification — ' + (serverMessage(json) ?? 'the server did not say why') + '.'); return; }
+      if (!res.ok || !json?.template) { note('Couldn’t update verification — ' + (serverMessage(json) ?? 'the server did not say why') + '.', 'error'); return; }
       setRows((r) => r.map((x) => (x.id === t.id ? { ...x, ...(json.template as TemplateRecord) } : x)));
     } catch (e) {
       // Only an ApiRequestError message is user copy; a browser fetch throw
@@ -341,7 +341,9 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       // "[object Object]".
       note((e as { name?: unknown } | null)?.name === 'ApiRequestError' && (e as Error).message
         ? 'Couldn’t update verification — ' + (e as Error).message
-        : 'Couldn’t update verification. Check your connection and try again.');
+        : 'Couldn’t update verification. Check your connection and try again.',
+  'error',
+);
     }
   };
 
@@ -365,7 +367,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        note(res.status === 401 ? 'Sign in to render.' : 'Render failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.');
+        note(res.status === 401 ? 'Sign in to render.' : 'Render failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error');
         return;
       }
       const blob = await res.blob();
@@ -377,7 +379,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       URL.revokeObjectURL(url);
       note('Rendered ' + format.toUpperCase() + ' with the real template engine.');
     } catch (e) {
-      note('Render failed — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      note('Render failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
 
@@ -414,7 +416,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         />
       </div>
 
-      {flash && <div className="de-toast"><span className="ico">{I.checkCircle}</span>{flash}</div>}
+      <C2CToast msg={flash} />
 
       {uploading && (
         <div className="pj-card" style={{ marginBottom: 16, borderColor: 'var(--accent-muted)' }}>

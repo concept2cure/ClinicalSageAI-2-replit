@@ -22,6 +22,7 @@ import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/revi
 import { STATUS_TONE, ESIGN_MEANINGS } from '../fixtures/review-data';
 import { ReviewThreadsPane } from './ReviewThreads';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /** Sub-headline shared by the surface header and its honest empty/error states. */
 const REVIEW_SUB = 'Review queue, threaded comments, reject-with-reason, delegate a step.';
@@ -59,25 +60,6 @@ function PageHead({ eyebrow, title, sub, actions }: {
 
 function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
   return <span className={`rd-chip tone-${tone}`}>{children}</span>;
-}
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
 }
 
 /* ── E-sign modal (21 CFR Part 11) ── */

@@ -38,6 +38,7 @@ import {
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* `window.TXW_ADMIN` used to be published from the Setup panel below and was
    read by nothing in the repository -- 0 consumers, so the translation policy
@@ -64,25 +65,6 @@ function AdminHeader({ eyebrow, title, sub, actions }: AdminHeaderProps) {
         {sub && <div className="ph-sub">{sub}</div>}
       </div>
       {actions && <div style={{ display: 'flex', gap: 8 }}>{actions}</div>}
-    </div>
-  );
-}
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
     </div>
   );
 }
@@ -1516,7 +1498,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
           // Only apiRequest's own error has been through the envelope reader;
           // a bare rejection is the fetch failing ("Failed to fetch").
-          (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
+          (e instanceof ApiRequestError && e.message ? e.message : 'request failed')
       );
     }
   };
@@ -2065,11 +2047,11 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
 
   const doGrant = async () => {
     if (!form.email.trim()) {
-      fireToast('Enter an email');
+      fireToast('Enter an email', 'error');
       return;
     }
     if (form.reason.trim().length < 3) {
-      fireToast('A reason (min 3 chars) is required');
+      fireToast('A reason (min 3 chars) is required', 'error');
       return;
     }
     const roleMeta = LIC_ROLES.find((r) => r.id === form.role);
@@ -2087,7 +2069,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         reason: form.reason.trim(),
       });
       if (!res.ok) {
-        fireToast('Could not grant -- sign in as a platform admin');
+        fireToast('Could not grant -- sign in as a platform admin', 'error');
         return;
       }
       const row = await res.json().catch(() => null);
@@ -2109,6 +2091,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         // bare rejection is the fetch failing ("Failed to fetch").
         'Could not grant -- ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
+        'error',
       );
     }
   };
@@ -2129,7 +2112,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
      */
     const canPrompt = typeof window !== 'undefined' && typeof window.prompt === 'function';
     if (!canPrompt) {
-      fireToast('This browser blocks the reason prompt — revoke from a window that allows it');
+      fireToast('This browser blocks the reason prompt — revoke from a window that allows it', 'error');
       return;
     }
     // Replace with an in-product reason dialog — not by dropping the reason.
@@ -2139,7 +2122,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
     );
     if (reason == null) return; // cancelled
     if (reason.trim().length < 3) {
-      fireToast('A reason (min 3 chars) is required to revoke');
+      fireToast('A reason (min 3 chars) is required to revoke', 'error');
       return;
     }
     // Real, audited DELETE — only drop the row and report success on a real 2xx.
@@ -2148,7 +2131,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         reason: reason.trim(),
       });
       if (!res.ok) {
-        fireToast('Could not revoke -- sign in as a platform admin');
+        fireToast('Could not revoke -- sign in as a platform admin', 'error');
         return;
       }
       setGrants((g) => g.filter((x) => x.id !== id));
@@ -2159,6 +2142,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         // bare rejection is the fetch failing ("Failed to fetch").
         'Could not revoke -- ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
+        'error',
       );
     }
   };
@@ -2173,11 +2157,11 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   const mintKey = async () => {
     const name = keyName.trim();
     if (!name) {
-      fireToast('Enter a name for the key');
+      fireToast('Enter a name for the key', 'error');
       return;
     }
     if (keyScopes.length === 0) {
-      fireToast('Select at least one scope');
+      fireToast('Select at least one scope', 'error');
       return;
     }
     try {
@@ -2188,6 +2172,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         // message: '<a real sentence>' } toasted the token.
         fireToast(
           'Could not create the key -- ' + (serverMessage(json) ?? 'sign in as an admin'),
+          'error',
         );
         return;
       }
@@ -2203,6 +2188,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         // bare rejection is the fetch failing ("Failed to fetch").
         'Could not create the key -- ' +
           (e instanceof ApiRequestError && e.message ? e.message : 'request failed'),
+        'error',
       );
     }
   };
@@ -2703,7 +2689,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                             void navigator.clipboard?.writeText(mintedKey.secret);
                             fireToast('Copied to clipboard');
                           } catch {
-                            fireToast('Copy failed — select the key and copy it manually');
+                            fireToast('Copy failed — select the key and copy it manually', 'error');
                           }
                         }}
                       >

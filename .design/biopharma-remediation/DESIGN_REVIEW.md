@@ -101,9 +101,24 @@ The sign-in card itself is a useful control: its inputs use `.auth-input`, which
    of importing `assessmentState`. The reasoning is right in all four, but
    copy-pasted — the fifth surface will regress. Violates CLAUDE.md zero-duplication.
 
-3. **~20 surfaces still carry the one-tone toast.** A canonical tone-aware
-   implementation already exists in `cmcShared.tsx`; `DocumentAuthoring` added a
-   third parallel copy rather than importing it. The migration is the fix.
+3. ~~**~20 surfaces still carry the one-tone toast.**~~ **RESOLVED.** Measured, it
+   was 28, not ~20 — the estimate counted `function useToast` declarations and
+   missed five surfaces that inlined the same thing in a component body. The
+   canonical now lives at `v2/toast.tsx`, not in `cmcShared.tsx`: the other
+   twenty-two consumers are identity, licensing, PV, gateway and reporting
+   surfaces, and a shared component under a module name claiming a domain it
+   does not belong to is *why* the copies were written instead of the import
+   being found. 106 failure sites now carry `'error'`; `ci:toast-canonicality`
+   holds it, including the invisible case — a tone narrowed away at a prop
+   boundary, which TypeScript accepts silently and which is how
+   `AuthoringFilingBar` lost it in the first place.
+
+   Found while doing it, and **still open**: five more pill classes
+   (`pdev-toast` ×6, `sn-toast`, `ac-toast`, `amem-toast`, `etmf-toast`) are the
+   same dark pill under different names, in two positions, and *none of them can
+   express an error at all*. Ten render sites. Converging them changes their
+   appearance, which is a design decision rather than a bug fix, so the gate
+   pins the count instead of migrating them. That decision is the follow-up.
 
 4. **`NdaCockpit`'s KPI strip is not gated on the loading state** the new narrative
    was built to speak honestly about — "0% Application readiness" renders directly

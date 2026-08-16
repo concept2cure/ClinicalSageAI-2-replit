@@ -20,13 +20,14 @@
  * can be non-finite (division by an empty cell); those are shown as "∞"/"n/a",
  * never a fabricated number.
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface Overview {
   kpis: { totalAdverseEvents: number; seriousEvents: number; expeditedReports: number; overdueReports: number; pendingSignals: number; upcomingPeriodicReports: number; complianceRate: number };
@@ -40,16 +41,6 @@ interface Disproportion { prr: number; ror: number; rorCi: { lower: number; uppe
 interface ComplianceRow { region?: string; totalEvents: number; overdueCount: number; complianceStatus?: string; }
 interface DeadlineResult { deadline: string; expeditedReport: boolean; daysRemaining: number; region: string; eventType: string; seriousnessCriteria: string; }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null }> {
   try {
     const res = await apiRequest(method, path, body);
@@ -102,14 +93,14 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
 
   const runScreen = useCallback(async () => {
     const counts = { a: Number(scr.a), b: Number(scr.b), c: Number(scr.c), d: Number(scr.d) };
-    if (![counts.a, counts.b, counts.c, counts.d].every((x) => Number.isFinite(x))) { fireToast('Enter all four 2×2 cell counts (a, b, c, d).'); return; }
+    if (![counts.a, counts.b, counts.c, counts.d].every((x) => Number.isFinite(x))) { fireToast('Enter all four 2×2 cell counts (a, b, c, d).', 'error'); return; }
     setScrBusy(true);
     try {
       const { ok, status, data } = await readData<{ rows: Array<{ result: Disproportion }>; summary: { total: number; signals: number } }>(
         'POST', '/api/pharmacovigilance/signals/screen',
         { pairs: [{ drug: scr.drug || 'drug', event: scr.event || 'event', counts }] },
       );
-      if (!ok || !data?.rows?.[0]) { fireToast(status === 401 ? 'Sign in to screen signals.' : `Screening failed (HTTP ${status}).`); return; }
+      if (!ok || !data?.rows?.[0]) { fireToast(status === 401 ? 'Sign in to screen signals.' : `Screening failed (HTTP ${status}).`, 'error'); return; }
       setScrRes(data.rows[0].result);
       fireToast(data.rows[0].result.signalDetected ? 'Disproportionality signal detected.' : 'No disproportionality signal.');
     } finally { setScrBusy(false); }
@@ -119,7 +110,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
     setDlBusy(true);
     try {
       const { ok, status, data } = await readData<DeadlineResult>('POST', '/api/pharmacovigilance/calculate-deadline', dl);
-      if (!ok || !data) { fireToast(status === 401 ? 'Sign in to calculate.' : `Calculation failed (HTTP ${status}).`); return; }
+      if (!ok || !data) { fireToast(status === 401 ? 'Sign in to calculate.' : `Calculation failed (HTTP ${status}).`, 'error'); return; }
       setDlRes(data);
     } finally { setDlBusy(false); }
   }, [dl, fireToast]);

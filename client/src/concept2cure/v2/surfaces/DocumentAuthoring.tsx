@@ -83,6 +83,7 @@ import {
 } from '../editorTarget';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -191,61 +192,6 @@ function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn'
         hint: 'No checksum was recorded for this citation, so no claim is made about whether the source has changed.',
       };
   }
-}
-
-/* ── Small toast (local per-surface pattern, matches sibling surfaces) ──
-   BP-W0-6, the second half. The Word export's 500 was reported as a SILENT
-   failure, and the export handler does call fireToast on every failure path. It
-   was not silent because nothing fired — it was silent because of what fired.
-
-   This toast rendered `I.checkCircle` unconditionally, and `.de-toast .ico` is
-   unconditionally var(--success). So "Export failed — HTTP 500" arrived as a
-   green tick on the house's normal dark chip: at a glance, indistinguishable
-   from "Published DOCX". A failure announced in the vocabulary of success is
-   not an announcement.
-
-   `.de-toast[data-tone="error"]` already exists in journey-v2.css, added when
-   the same defect was fixed on the CMC surface, carrying a comment that says
-   exactly this. This local copy never adopted it. Now it does, and the icon
-   changes with it — colour alone would not carry the distinction for a
-   colour-blind reviewer, and this chip's whole job is to say which of two
-   opposite things happened (WCAG 2.2 SC 1.4.1).
-
-   role="status" + aria-live is added for the same reason: this is the ONLY
-   channel by which a failed export is reported, and without a live region a
-   screen-reader user clicks Word, gets nothing, and has no way to learn the
-   export did not happen (SC 4.1.3). Errors are announced assertively — a
-   failed governed action should not wait behind other chatter. */
-type ToastTone = 'ok' | 'error';
-function useToast(): [{ msg: string; tone: ToastTone }, (m: string, tone?: ToastTone) => void] {
-  const [state, setState] = useState<{ msg: string; tone: ToastTone }>({ msg: '', tone: 'ok' });
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string, tone: ToastTone = 'ok') => {
-    setState({ msg: m, tone });
-    if (t.current) clearTimeout(t.current);
-    // A failure is worth reading twice as long as a confirmation.
-    t.current = setTimeout(() => setState({ msg: '', tone: 'ok' }), tone === 'error' ? 8000 : 4200);
-  }, []);
-  return [state, fire];
-}
-function C2CToast({ msg, tone = 'ok' }: { msg: string; tone?: ToastTone }) {
-  if (!msg) return null;
-  const isError = tone === 'error';
-  return (
-    <div
-      className="de-toast"
-      data-tone={isError ? 'error' : undefined}
-      /* role="alert" rather than role="status" + aria-live="assertive". The
-         latter is contradictory: role="status" carries an implicit polite live
-         region, and AT has historically diverged on whether an explicit
-         assertive override wins. role="alert" implies assertive AND
-         aria-atomic="true" with nothing to override. */
-      role={isError ? 'alert' : 'status'}
-    >
-      <span className="ico">{isError ? I.alertTriangle : I.checkCircle}</span>
-      {msg}
-    </div>
-  );
 }
 
 /* ── Helpers ── */
@@ -922,7 +868,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                       const m = /^(\d)/.exec(node.key)?.[1];
                       if (m) setModule(`M${m}`);
                     } else {
-                      fireToast(`${node.key} ${node.label} — no draft yet in this document.`);
+                      fireToast(`${node.key} ${node.label} — no draft yet in this document.`, 'error');
                     }
                   }}
                 >
@@ -1430,7 +1376,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         </aside>
       )}
 
-      <C2CToast msg={toast.msg} tone={toast.tone} />
+      <C2CToast msg={toast} />
     </div>
   );
 }

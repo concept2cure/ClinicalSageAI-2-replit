@@ -195,8 +195,11 @@ describe('Mission Control — reads the real program engine', () => {
       return el as HTMLElement;
     });
     expect(toast.textContent).toContain('Enter a program name.');
-    expect(toast.getAttribute('role')).toBe('status');
-    expect(toast.getAttribute('aria-live')).toBe('polite');
+    // The create was REFUSED, so the toast interrupts (`role="alert"`) and
+    // carries the error tone. It previously asserted `status` + `polite`,
+    // which was the only thing a one-tone toast could produce.
+    expect(toast.getAttribute('role')).toBe('alert');
+    expect(toast.getAttribute('data-tone')).toBe('error');
     expect(apiRequest.mock.calls.some(c => c[0] === 'POST')).toBe(false);
   });
 

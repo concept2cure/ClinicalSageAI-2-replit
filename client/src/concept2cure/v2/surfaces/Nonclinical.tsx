@@ -5,6 +5,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Inline fixture types ── */
 
@@ -255,25 +256,6 @@ function useRows(seed: NcStudy[]): readonly [NcStudy[], (r: NcStudy) => void] {
     setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
   };
   return [rows, add] as const;
-}
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
 }
 
 /* ── Honest loading / error / empty guard for the /api/nonclinical-summary

@@ -162,8 +162,13 @@ describe('BiostatWorkbench — real statistical engine', () => {
       if (!el) throw new Error('no toast');
       return el as HTMLElement;
     });
-    expect(toast.getAttribute('role')).toBe('status');
-    expect(toast.getAttribute('aria-live')).toBe('polite');
+    // A REFUSAL, so it is an alert rather than a polite status — and it carries
+    // `data-tone="error"`, which is what stops it drawing the green success
+    // tick. This assertion used to require `status` + `polite`: the surface
+    // could not express failure at all, so the only live region it could
+    // produce was the reassuring one, and the test pinned that as correct.
+    expect(toast.getAttribute('role')).toBe('alert');
+    expect(toast.getAttribute('data-tone')).toBe('error');
   });
 
   it('marks the selected calculator for assistive technology, not by colour alone', () => {

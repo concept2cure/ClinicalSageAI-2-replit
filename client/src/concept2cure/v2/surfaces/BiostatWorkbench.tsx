@@ -30,7 +30,7 @@
  * work immediately; the design calculators require a signed-in org and surface a
  * 401 honestly rather than showing an empty result.
  */
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
@@ -45,6 +45,8 @@ import {
   type CalculatorField,
 } from './biostatCalculators';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
+import type { FireToast } from '../toast';
 
 interface Defensibility {
   overallScore?: number;
@@ -55,20 +57,6 @@ interface Defensibility {
   recommendations?: any;
 }
 
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  // role="status" + aria-live: this is the ONLY channel for validation errors
-  // ("Prior SD is required.") and for result confirmations, and without a live
-  // region a screen-reader user submits the form and is told nothing at all.
-  // WCAG 2.2 SC 4.1.3.
-  return <div className="de-toast" role="status" aria-live="polite"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 async function readData<T = any>(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
   try {
     const res = await apiRequest('POST', path, body);
@@ -223,7 +211,7 @@ function Field({ field, value, error, onChange }: {
   );
 }
 
-function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m: string) => void }) {
+function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: FireToast }) {
   const [values, setValues] = useState<Record<string, string>>(() => initialValues(calc));
   const [result, setResult] = useState<any>(null);
   const [busy, setBusy] = useState(false);
@@ -241,7 +229,7 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
     if (errors.length > 0) {
       // The toast announces (via its live region) that submission was refused
       // and names the first problem; the per-field messages say which controls.
-      fireToast(errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length} fields need attention.)`);
+      fireToast(errors.length === 1 ? errors[0] : `${errors[0]} (${errors.length} fields need attention.)`, 'error');
       return;
     }
     setBusy(true);
@@ -251,7 +239,8 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: (m:
         fireToast(
           res.status === 401
             ? 'Sign in to your tenant to run the design calculators.'
-            : res.error ?? `Calculation failed (HTTP ${res.status}).`
+            : res.error ?? `Calculation failed (HTTP ${res.status}).`,
+          'error',
         );
         return;
       }
@@ -397,14 +386,14 @@ export function BiostatWorkbench(_props: SurfaceViewProps) {
   usePublishSurfaceContext('biostat-workbench', anaContext);
 
   const runAssess = useCallback(async () => {
-    if (!asmt.indication || !asmt.studyDesign || !asmt.primaryEndpoint) { fireToast('Enter indication, study design, and primary endpoint.'); return; }
+    if (!asmt.indication || !asmt.studyDesign || !asmt.primaryEndpoint) { fireToast('Enter indication, study design, and primary endpoint.', 'error'); return; }
     setAsmtBusy(true);
     try {
       const { ok, status, data } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
         studyPhase: asmt.studyPhase, indication: asmt.indication, studyDesign: asmt.studyDesign,
         primaryEndpoint: asmt.primaryEndpoint, sampleSize: asmt.sampleSize ? Number(asmt.sampleSize) : 0,
       });
-      if (!ok || !data) { fireToast(`Assessment failed (HTTP ${status}).`); return; }
+      if (!ok || !data) { fireToast(`Assessment failed (HTTP ${status}).`, 'error'); return; }
       setAsmtRes(data);
       fireToast('Reviewer-risk assessment complete.');
     } finally { setAsmtBusy(false); }

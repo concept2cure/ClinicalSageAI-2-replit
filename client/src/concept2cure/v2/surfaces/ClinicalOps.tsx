@@ -5,6 +5,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { useLiveRows, unwrapList, EmptyState } from '../dataConnect';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Inline fixture types ── */
 
@@ -236,25 +237,6 @@ function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T)
     setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
   };
   return [rows, add] as const;
-}
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => {
-    setMsg(m);
-    setTimeout(() => setMsg(''), 2400);
-  };
-  return [msg, fire];
-}
-
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return (
-    <div className="de-toast">
-      <span className="ico">{I.checkCircle}</span>
-      {msg}
-    </div>
-  );
 }
 
 /**

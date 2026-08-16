@@ -46,6 +46,7 @@ import { I } from '../icons';
 import { liveGetOrNull } from '../dataConnect';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS, SC_SEQ_STATUS } from '../fixtures/submission';
+import type { FireToast } from '../toast';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -119,7 +120,7 @@ export interface AuthoringPlaceIntoFilingProps {
    *  document that silently omits what is on screen. */
   dirty: boolean;
   onNav: (id: string) => void;
-  fireToast: (m: string) => void;
+  fireToast: FireToast;
 }
 
 type Verdict = { tone: 'ok' | 'err'; text: string } | null;

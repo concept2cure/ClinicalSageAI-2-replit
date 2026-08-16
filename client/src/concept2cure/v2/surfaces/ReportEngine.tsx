@@ -7,6 +7,7 @@ import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ═══════════════════════════════════════════════════════════════════
    Reporting & Analytics -- a protocol-analysis document producer,
@@ -235,14 +236,6 @@ function parseProtocol(text: string): ParsedProtocol {
    removed rather than depended upon never to arrive -- and it is already
    covered by its own tests, which the hand-rolled copies never were. */
 
-/* ── Inline toast helper ── */
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const fire = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2400); };
-  return [msg, fire];
-}
-
 /* ═══ Main surface ═══ */
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
@@ -255,7 +248,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
 
   const runLocal = () => { const a = parseProtocol(text); setAnalysis({ protocol_data: a, similar_protocols: [], source: 'local' }); };
   const analyze = () => {
-    if (text.trim().length < 50) { fireToast('Add more protocol detail (min ~50 chars)'); return; }
+    if (text.trim().length < 50) { fireToast('Add more protocol detail (min ~50 chars)', 'error'); return; }
     // The old guard read `window.C2C_API`, which nothing assigns, so this always
     // fell through to the local analyzer and the server was never consulted.
     // dataConnect now carries the POST mapping its comment said was missing.
@@ -310,7 +303,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = async () => {
     if (openingRef.current) return; // a second click must not create a second document
     const title = docDef?.label || 'Protocol analysis';
-    if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.'); return; }
+    if (!md.trim()) { fireToast('Nothing to open yet — analyze a protocol first.', 'error'); return; }
     openingRef.current = true; setOpening(true);
     try {
       // Protocol-derived analysis files under Module 5; the server would
@@ -320,7 +313,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         content: md, subject: 'the analysis',
       });
       // Navigate only on a clean write — see authoringHandoff.
-      if (!r.ok) { fireToast(r.message); return; }
+      if (!r.ok) { fireToast(r.message, 'error'); return; }
       if (onNav) onNav('document-authoring');
       else fireToast(r.message);
     } finally {
@@ -401,7 +394,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <AnalyticsDashboard />
-      {toast && <div className="c2c-toast">{toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

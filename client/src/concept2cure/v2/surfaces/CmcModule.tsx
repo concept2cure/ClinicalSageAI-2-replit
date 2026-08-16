@@ -52,14 +52,13 @@ import {
 } from './cmcRegisterForms';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import {
-  C2CToast,
   cmcProjectId,
   cmcProjectUuid,
   cmcWriteError,
   cmcWriteFailed,
   cmcWriteThrew,
-  useToast,
 } from './cmcShared';
+import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 

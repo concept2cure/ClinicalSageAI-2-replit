@@ -146,7 +146,12 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
     fireEvent.click(screen.getAllByRole('button', { name: /Save to dossier/ })[0]);
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/Open a project first/)));
+    // Toned `'error'`: nothing was saved, so the note must not arrive under the
+    // success tick. The panel's `note` prop is `FireToast`, not `(m: string) =>
+    // void` — narrowing it there is what silently dropped the tone before.
+    await waitFor(() =>
+      expect(note).toHaveBeenCalledWith(expect.stringMatching(/Open a project first/), 'error'),
+    );
     // No artifact call was made — the panel never invents a project id.
     expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-forms/1571/artifact')).toBe(false);
   });

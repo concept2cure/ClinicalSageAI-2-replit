@@ -21,29 +21,19 @@
  * editable field (defaulting to the open program's id when numeric) rather than
  * guessed silently — with no valid package, the surface says so.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 interface Readiness { readinessScore: number; fragilityScore: number; weakZones: Array<Record<string, unknown>>; }
 interface Challenge { id: number | string; reviewerLens: string | null; challengeText: string; targetSection: string | null; severity: string | null; deficiencyLikelihood: string | number | null; suggestedResponse: string | null; suggestedArtifact: string | null; }
 interface DriftAlert { id: number | string; driftType: string | null; severity: string | null; description: string | null; suggestedFix: string | null; resolved: boolean; }
 interface ChangeImpact { id: number | string; changeType: string | null; impactSeverity: string | null; impactDescription: string | null; remediation: string | null; resolved: boolean; }
 interface NextArtifact { artifactType: string | null; rationale: string | null; priority: string | null; }
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => { setMsg(m); if (t.current) clearTimeout(t.current); t.current = setTimeout(() => setMsg(''), 4200); }, []);
-  return [msg, fire];
-}
-function C2CToast({ msg }: { msg: string }) {
-  if (!msg) return null;
-  return <div className="de-toast"><span className="ico">{I.checkCircle}</span>{msg}</div>;
-}
 
 /** Unwraps the {success,data} envelope; never throws. */
 async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
@@ -113,7 +103,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     setBusy('assess');
     try {
       const { ok, status, data } = await readData<any>('POST', `/api/submission-twin/assess/${pkg}`);
-      if (!ok) { fireToast(status === 401 ? 'Sign in to assess.' : `Assessment failed (HTTP ${status}).`); return; }
+      if (!ok) { fireToast(status === 401 ? 'Sign in to assess.' : `Assessment failed (HTTP ${status}).`, 'error'); return; }
       const aid = Number(data?.assessmentId ?? data?.id ?? data?.assessment?.id);
       if (Number.isInteger(aid) && aid > 0) setLastAssessmentId(aid);
       fireToast('Twin assessment complete.');
@@ -126,7 +116,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     setBusy('drift');
     try {
       const { ok, status } = await readData('POST', `/api/submission-twin/drift/detect/${pkg}`);
-      if (!ok) { fireToast(status === 401 ? 'Sign in to detect drift.' : `Drift detection failed (HTTP ${status}).`); return; }
+      if (!ok) { fireToast(status === 401 ? 'Sign in to detect drift.' : `Drift detection failed (HTTP ${status}).`, 'error'); return; }
       fireToast('Narrative-drift scan complete.');
       void refreshAll(pkg);
     } finally { setBusy(null); }
@@ -137,7 +127,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     setBusy('challenges');
     try {
       const { ok, status } = await readData('POST', `/api/submission-twin/challenges/simulate/${pkg}`, { assessmentId: lastAssessmentId });
-      if (!ok) { fireToast(status === 401 ? 'Sign in to simulate.' : `Challenge simulation failed (HTTP ${status}).`); return; }
+      if (!ok) { fireToast(status === 401 ? 'Sign in to simulate.' : `Challenge simulation failed (HTTP ${status}).`, 'error'); return; }
       fireToast('Reviewer-challenge simulation complete.');
       void refreshAll(pkg);
     } finally { setBusy(null); }
@@ -145,12 +135,12 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
 
   const resolveDrift = useCallback(async (alertId: number | string) => {
     const { ok } = await readData('POST', `/api/submission-twin/drift/${alertId}/resolve`);
-    if (ok && pkg != null) { fireToast('Drift alert resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the drift alert.');
+    if (ok && pkg != null) { fireToast('Drift alert resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the drift alert.', 'error');
   }, [pkg, refreshAll, fireToast]);
 
   const resolveImpact = useCallback(async (impactId: number | string) => {
     const { ok } = await readData('POST', `/api/submission-twin/change-impact/${impactId}/resolve`);
-    if (ok && pkg != null) { fireToast('Change impact resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the change impact.');
+    if (ok && pkg != null) { fireToast('Change impact resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the change impact.', 'error');
   }, [pkg, refreshAll, fireToast]);
 
   return (

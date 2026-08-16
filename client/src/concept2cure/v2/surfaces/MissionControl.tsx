@@ -30,13 +30,14 @@
  * readiness of 0% and a readiness that could not be loaded are different facts,
  * and only one of them means the program is in trouble.
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 const BASE = '/api/mission-control';
 
@@ -99,17 +100,6 @@ async function get<T>(path: string): Promise<Load<T>> {
       error: known && (e as Error).message ? (e as Error).message : 'The request did not complete.',
     };
   }
-}
-
-function useToast(): [string, (m: string) => void] {
-  const [msg, setMsg] = useState('');
-  const t = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fire = useCallback((m: string) => {
-    setMsg(m);
-    if (t.current) clearTimeout(t.current);
-    t.current = setTimeout(() => setMsg(''), 4200);
-  }, []);
-  return [msg, fire];
 }
 
 /** Insert spaces before capitals: `artifactCompleteness` → `Artifact completeness`. */
@@ -265,7 +255,7 @@ export function MissionControl(_props: SurfaceViewProps) {
   }, [selectedId]);
 
   const createProgram = useCallback(async () => {
-    if (!draft.name.trim()) { fireToast('Enter a program name.'); return; }
+    if (!draft.name.trim()) { fireToast('Enter a program name.', 'error'); return; }
     setBusy(true);
     try {
       const res = await apiRequest('POST', `${BASE}/programs`, {
@@ -281,7 +271,8 @@ export function MissionControl(_props: SurfaceViewProps) {
           // user as its token. serverMessage returns only a real sentence, and
           // null when there is none — which is when this surface's own copy is
           // the better answer.
-          : serverMessage(parsed) ?? `Could not create the program (HTTP ${res.status}).`
+          : serverMessage(parsed) ?? `Could not create the program (HTTP ${res.status}).`,
+          'error',
         );
         return;
       }
@@ -297,7 +288,7 @@ export function MissionControl(_props: SurfaceViewProps) {
       // nothing — an error rendered as no result. Only an ApiRequestError's
       // message is safe to show; a native fetch rejection keeps the copy below.
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      fireToast(known && (e as Error).message ? (e as Error).message : 'Could not create the program.');
+      fireToast(known && (e as Error).message ? (e as Error).message : 'Could not create the program.', 'error');
     } finally { setBusy(false); }
   }, [draft, fireToast, loadPrograms]);
 
@@ -553,7 +544,7 @@ export function MissionControl(_props: SurfaceViewProps) {
       {/* role="status" + aria-live: the toast carries every validation message
           ("Enter a program name.") and every write confirmation, and without a
           live region none of it reaches a screen reader. WCAG 2.2 SC 4.1.3. */}
-      {toast && <div className="de-toast" role="status" aria-live="polite"><span className="ico">{I.checkCircle}</span>{toast}</div>}
+      <C2CToast msg={toast} />
     </div>
   );
 }

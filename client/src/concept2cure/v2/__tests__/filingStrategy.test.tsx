@@ -208,8 +208,11 @@ describe('robustness and accessibility', () => {
     render(<FilingStrategy {...props()} />);
     fireEvent.click(screen.getByRole('button', { name: /Optimise sequence/ }));
     await waitFor(() => expect(toast()).toBeTruthy());
-    expect(toast()!.getAttribute('role')).toBe('status');
-    expect(toast()!.getAttribute('aria-live')).toBe('polite');
+    // A refusal interrupts: `role="alert"`, not a polite status. The tone is
+    // asserted alongside it because the role alone does not stop the toast
+    // rendering the green tick — `data-tone` is what does.
+    expect(toast()!.getAttribute('role')).toBe('alert');
+    expect(toast()!.getAttribute('data-tone')).toBe('error');
   });
 
   it('groups the agency toggles under a legend', () => {

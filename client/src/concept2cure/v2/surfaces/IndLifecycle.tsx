@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
@@ -18,6 +18,7 @@ import type {
   IndlSection,
 } from '../fixtures/ind-lifecycle-data';
 import '../styles/project-home-v2.css';
+import { C2CToast, useToast } from '../toast';
 
 /* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist).
    Assembled by server/services/ind-lifecycle/ind-checklist-view-assembler.ts from
@@ -177,13 +178,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const checklist = rows[0] ?? null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
   // Status note from the Module-1 forms panel (build/QC/render outcomes).
-  const [formsNote, setFormsNoteRaw] = useState('');
-  const formsNoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const setFormsNote = useCallback((m: string) => {
-    setFormsNoteRaw(m);
-    if (formsNoteTimer.current) clearTimeout(formsNoteTimer.current);
-    formsNoteTimer.current = setTimeout(() => setFormsNoteRaw(''), 4200);
-  }, []);
+  const [formsNote, setFormsNote] = useToast();
 
   // Null-safe derivation with stable empty seeds while the checklist is
   // unresolved (loading or failed load) so the readiness memo below is stable.
@@ -938,9 +933,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 <span className="indl-h-x">-- real form engine</span>
               </h3>
               <IndFormsPanel note={setFormsNote} />
-              {formsNote && (
-                <div className="de-toast"><span className="ico">{I.checkCircle}</span>{formsNote}</div>
-              )}
+              <C2CToast msg={formsNote} />
 
               <h3>
                 3 -- Blockers to filing{' '}

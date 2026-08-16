@@ -4,7 +4,8 @@ import { EmptyState, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { C2CFormConfig } from '../C2CForm';
 import { C2CForm } from '../C2CForm';
-import { C2CToast, cmcProjectUuid, cmcWriteFailed, cmcWriteThrew, useToast } from './cmcShared';
+import { cmcProjectUuid, cmcWriteFailed, cmcWriteThrew } from './cmcShared';
+import { C2CToast, useToast } from '../toast';
 import {
   methodForm, methodBody,
   qcTestForm, qcTestBody, qcReviewForm, qcReviewBody,
