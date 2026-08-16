@@ -126,9 +126,13 @@ SQL
 # else does.
 if $PSQL -d "$DB_NAME" -c "CREATE EXTENSION IF NOT EXISTS vector;" >/dev/null 2>&1; then
   log "pgvector ready"
+  PGVECTOR=1
 else
+  PGVECTOR=0
   err "pgvector unavailable — embedding features will degrade. Install it with:"
   err "  apt-get install -y postgresql-${PG_VERSION}-pgvector   (then re-run)"
+  err "install-fresh will provision everything that does not need it and name"
+  err "the objects it had to skip."
 fi
 
 # ── 5. Write .env (only if absent — never clobber an operator's config) ─────
@@ -136,6 +140,15 @@ if [ -f .env ]; then
   log ".env already present — leaving it untouched"
   if ! grep -q '^DATABASE_URL=' .env; then
     err ".env exists but has no DATABASE_URL. Add: DATABASE_URL=${DATABASE_URL}"
+  fi
+  # The sign-in card's dev-only "Demo access" button POSTs /api/auth/dev-login,
+  # which server/auth/dev-auth-policy.ts gates behind NODE_ENV=development AND
+  # ALLOW_DEV_AUTH=1. Without the flag the route answers 404 and the button
+  # appears to do nothing — the reason the Wave 0 design review could not get
+  # past the login page and screenshotted it for every surface it had changed.
+  if ! grep -q '^ALLOW_DEV_AUTH=' .env; then
+    err ".env exists but has no ALLOW_DEV_AUTH. The sign-in card's 'Demo access'"
+    err "button will 404 without it. Add:  ALLOW_DEV_AUTH=1"
   fi
 else
   log "Writing dev .env"
@@ -153,6 +166,21 @@ JWT_SECRET_DEV=dev_local_jwt_secret_change_me_0123456789abcdef
 
 # RLS rollout is off (shadow) in dev; see server/db/rlsEnforcement.ts.
 RLS_ENFORCE=off
+
+# Enables POST /api/auth/dev-login — the sign-in card's dev-only "Demo access"
+# button (client/src/concept2cure/components/concept2cure-auth/Concept2CureLogin.tsx).
+#
+# The route is gated by server/auth/dev-auth-policy.ts → isDevAuthAllowed(),
+# which requires BOTH NODE_ENV=development AND ALLOW_DEV_AUTH=1, and returns
+# 404 otherwise. This file never ships: it is gitignored, local-only, and
+# production injects its environment from the host. Setting the flag HERE does
+# not weaken that gate — with NODE_ENV=production the route still refuses even
+# with this set.
+#
+# It is written because the flag was the missing half: setup produced a dev
+# environment whose only usable sign-in path was silently disabled, so the
+# button did nothing and no session could be established to look at the product.
+ALLOW_DEV_AUTH=1
 ENV
 fi
 
@@ -197,6 +225,23 @@ else
   err "deploy-migrate failed — see /tmp/c2c-migrate.log"
 fi
 
+# ── 6b. Seed the account the dev sign-in actually uses ──────────────────────
+# ALLOW_DEV_AUTH=1 only opens the route. /api/auth/dev-login then LOOKS UP the
+# email it was given, and the sign-in card's "Demo access" button hardcodes
+# jm.smith@concept2cure.pro — so on a freshly provisioned database, with the
+# flag set and the route reachable, the button still answers
+# 401 "User not found. Please sign up first." Seeding that user (idempotent
+# upsert, plus its organization and admin membership) is the other half of a
+# dev environment you can actually sign into and look at.
+log "Seeding the demo admin account (scripts/seed-admin.mjs)"
+SEEDED=0
+if DATABASE_URL="$DATABASE_URL" NODE_ENV=development node scripts/seed-admin.mjs >/tmp/c2c-seed.log 2>&1; then
+  SEEDED=1
+  log "Demo account ready: jm.smith@concept2cure.pro"
+else
+  err "seed-admin failed — 'Demo access' will answer 401. See /tmp/c2c-seed.log"
+fi
+
 # ── 7. Verify, and say what is actually true ────────────────────────────────
 # The point of this block is that the script must not report readiness it has
 # not checked. It counts the tables the product's own route handlers read.
@@ -223,4 +268,29 @@ else
   err "${MISSING} core route table(s) MISSING. The app will boot and its"
   err "specialist surfaces will report that services did not respond."
   err "See /tmp/c2c-install.log and /tmp/c2c-migrate.log."
+fi
+
+if [ "${PGVECTOR:-0}" = "1" ]; then
+  log "  pgvector:    installed"
+else
+  err "pgvector is NOT installed. Everything that does not need it was"
+  err "provisioned; the vector-dependent tables were skipped and are named at"
+  err "the end of /tmp/c2c-install.log. Embedding storage and similarity"
+  err "search are unavailable until you install postgresql-${PG_VERSION}-pgvector"
+  err "and re-run this script."
+fi
+
+# ── 8. How to sign in ───────────────────────────────────────────────────────
+# A provisioned database nobody can log into is not a usable dev environment.
+# State the exact path, and state it only when both halves are actually true.
+if grep -q '^ALLOW_DEV_AUTH=1' .env 2>/dev/null && [ "${SEEDED:-0}" = "1" ]; then
+  log "Dev sign-in is available:"
+  log "  the 'Demo access' button on the sign-in card (POST /api/auth/dev-login)"
+  log "  or email jm.smith@concept2cure.pro / password 'pass-word'."
+  log "  ALLOW_DEV_AUTH=1 is set in .env; the route stays 404 in any environment"
+  log "  where NODE_ENV is not 'development' (server/auth/dev-auth-policy.ts)."
+else
+  err "Dev sign-in is NOT usable: ALLOW_DEV_AUTH=1 in .env and a seeded"
+  err "jm.smith@concept2cure.pro are BOTH required. /api/auth/dev-login answers"
+  err "404 without the flag and 401 without the user."
 fi

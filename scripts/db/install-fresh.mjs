@@ -116,6 +116,69 @@ function recordIncomplete(area, detail) {
   incomplete.push({ area, detail });
 }
 
+/**
+ * pgvector posture — decided in step 1, consulted by every later step.
+ *
+ * `vector` is a SEPARATE OS package (postgresql-N-pgvector) that a fresh
+ * machine frequently does not have. Until now step 1 issued
+ * `CREATE EXTENSION vector` inside the same multi-statement query as the
+ * schemas, so its absence threw out of step 1/8 and the whole install died
+ * with `Install failed: extension "vector" is not available` — creating ZERO
+ * tables, EVEN under `--allow-incomplete`. `scripts/setup-local-db.sh` then ran
+ * deploy-migrate against an empty database, which correctly refused ("this
+ * database has not been provisioned"), and the operator was left with a
+ * 0-table database and a dev server that can serve nothing. That is the state
+ * in which the Wave 0 design review could not visually verify a single surface.
+ *
+ * The extension is now attempted on its own. If it is missing the install
+ * CONTINUES and every object whose definition needs the `vector` type is
+ * skipped BY NAME and reported — it is not silently faked. There is no stub
+ * type: `vector(1536)` needs a typmod-bearing base type, which cannot be
+ * created without the C extension, so pretending is not even available as a
+ * shortcut. Anything vector-backed (similarity search, embeddings) is
+ * genuinely unavailable in such a database, the final report says exactly
+ * that, and `report()` never prints the success banner for it.
+ */
+let pgvectorAvailable = true;
+
+/** Objects not created because pgvector is absent — named in the final report. */
+const vectorSkipped = [];
+function recordVectorSkip(what) {
+  vectorSkipped.push(what);
+}
+
+/** True when `err` is the shape a missing pgvector produces (and it IS missing). */
+function isVectorTypeMissing(err) {
+  if (pgvectorAvailable) return false;
+  const msg = String(err?.message ?? err ?? '');
+  return /type "?vector"? does not exist|extension "vector" is not available|access method "?(ivfflat|hnsw)"? does not exist|operator class "?vector_/i.test(
+    msg,
+  );
+}
+
+/** SQL that cannot execute without pgvector. */
+const NEEDS_VECTOR = /vector\s*\(\s*\d+\s*\)|\b(ivfflat|hnsw)\b|vector_(cosine|l2|ip)_ops/i;
+
+/** Best-effort human label for a DDL statement, for the skip report. */
+function describeStatement(sql) {
+  const table = sql.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([\w.]+)"?/i);
+  if (table) return `table ${table[1]}`;
+  const index = sql.match(/CREATE\s+(?:UNIQUE\s+)?INDEX\s+(?:CONCURRENTLY\s+)?(?:IF\s+NOT\s+EXISTS\s+)?"?([\w.]+)"?/i);
+  if (index) return `index ${index[1]}`;
+  const alter = sql.match(/ALTER\s+TABLE\s+(?:ONLY\s+)?"?([\w.]+)"?/i);
+  if (alter) return `alter on ${alter[1]}`;
+  return sql.replace(/\s+/g, ' ').slice(0, 80);
+}
+
+/** Table a statement creates or targets, used to trace cascading skips. */
+function targetTable(sql) {
+  const m =
+    sql.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([\w]+)"?/i) ||
+    sql.match(/ALTER\s+TABLE\s+(?:ONLY\s+)?"?([\w]+)"?/i) ||
+    sql.match(/\bON\s+"?([\w]+)"?/i);
+  return m ? m[1] : null;
+}
+
 async function step(label, fn) {
   process.stdout.write(`\n▶ ${label}\n`);
   await fn();
@@ -136,28 +199,153 @@ async function main() {
       CREATE SCHEMA IF NOT EXISTS extensions;
       CREATE EXTENSION IF NOT EXISTS pgcrypto;
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-      CREATE EXTENSION IF NOT EXISTS vector;
       CREATE EXTENSION IF NOT EXISTS pg_trgm;
     `);
-    console.log('  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
+    console.log('  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)');
+
+    // pgvector on its own: it is the one extension here that ships as a
+    // separate OS package, so it is the one that is routinely absent. Grouping
+    // it with the others meant its absence aborted the entire install (see the
+    // `pgvectorAvailable` note above).
+    try {
+      await pool.query('CREATE EXTENSION IF NOT EXISTS vector');
+      console.log('  ✓ pgvector (extension "vector") present');
+    } catch (err) {
+      pgvectorAvailable = false;
+      console.log(`  ⚠ pgvector NOT available: ${(err.message || '').split('\n')[0]}`);
+      console.log('    Install it and re-run (this script is idempotent) to get the skipped objects:');
+      console.log('      apt-get install -y postgresql-16-pgvector    # Debian/Ubuntu');
+      console.log('    Continuing WITHOUT it. Every object whose definition needs the `vector`');
+      console.log('    type is SKIPPED and named below — nothing is faked, and no stub type is');
+      console.log('    created. Embedding storage and similarity search backed by those objects');
+      console.log('    are UNAVAILABLE in this database.');
+      recordIncomplete(
+        'pgvector extension',
+        `extension "vector" is not available on this server; vector-dependent objects were skipped ` +
+          `(embedding / similarity-search features unavailable)`,
+      );
+    }
   });
 
   await step('2/8 Tables — drizzle-kit push', async () => {
-    // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
-    // destructive changes so it proceeds. Inherit env so drizzle.config.ts
-    // resolves the same DATABASE_URL.
-    const res = spawnSync('npx', ['drizzle-kit', 'push'], {
-      cwd: path.resolve(__dirname, '..', '..'),
-      input: '\n',
-      encoding: 'utf8',
-      env: process.env,
-    });
-    if (res.status !== 0) {
-      console.error(res.stdout || '');
-      console.error(res.stderr || '');
-      throw new Error(`drizzle-kit push failed (exit ${res.status})`);
+    if (pgvectorAvailable) {
+      // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
+      // destructive changes so it proceeds. Inherit env so drizzle.config.ts
+      // resolves the same DATABASE_URL.
+      const res = spawnSync('npx', ['drizzle-kit', 'push'], {
+        cwd: path.resolve(__dirname, '..', '..'),
+        input: '\n',
+        encoding: 'utf8',
+        env: process.env,
+      });
+      if (res.status !== 0) {
+        console.error(res.stdout || '');
+        console.error(res.stderr || '');
+        throw new Error(`drizzle-kit push failed (exit ${res.status})`);
+      }
+      console.log('  ✓ schema pushed from shared/schema.ts');
+      return;
     }
-    console.log('  ✓ schema pushed from shared/schema.ts');
+
+    // ── Degraded push: pgvector absent ──────────────────────────────────────
+    // eleven tables in shared/schema.ts carry a `vector(N)` column. drizzle-kit
+    // push applies its statements in one sequential loop and STOPS at the first
+    // error (it also exits 0 while doing so — see drizzle-kit pgPush), so on a
+    // server without pgvector it dies on the first such table and creates zero
+    // of the ~950 others. Nothing about the remaining tables needs the
+    // extension.
+    //
+    // So: ask push for the statements WITHOUT executing them (`--verbose
+    // --strict` prints the exact statement list, then the Select prompt is
+    // answered "No, abort"), and run them here — skipping the vector-dependent
+    // ones by name and everything that transitively depends on them. This is
+    // the same DDL push would have run, minus the objects the server cannot
+    // represent.
+    console.log('  • pgvector absent — applying push statements individually so the');
+    console.log('    non-vector schema still lands (push itself stops at the first error).');
+    const res = spawnSync('npx', ['drizzle-kit', 'push', '--verbose', '--strict'], {
+      cwd: path.resolve(__dirname, '..', '..'),
+      input: '\n', // selects "No, abort" — we execute the statements ourselves
+      encoding: 'utf8',
+      env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    const out = `${res.stdout || ''}\n${res.stderr || ''}`.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '');
+    if (/No changes detected/.test(out) && !/about to execute current statements/.test(out)) {
+      console.log('  • push reports no changes — schema already present');
+      return;
+    }
+    const marker = out.indexOf('You are about to execute current statements:');
+    if (marker < 0) {
+      console.error(out.slice(0, 4000));
+      throw new Error(
+        'could not obtain the push statement list (drizzle-kit did not print it) — ' +
+          'cannot provision tables without pgvector',
+      );
+    }
+    const lines = out.slice(marker).split('\n').slice(1);
+    const stop = lines.findIndex((l) => /^\s*(❯|Yes, I want to|No, abort|Found data-loss statements:)/.test(l));
+    const body = lines.slice(0, stop < 0 ? lines.length : stop).join('\n');
+    const statements = body
+      .split(/;\s*\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!statements.length) {
+      throw new Error('push statement list parsed as empty — cannot provision tables without pgvector');
+    }
+
+    const isDuplicate = (err) =>
+      ['42710', '42P07', '42P06', '42P16', '42723', '42711', '42P05'].includes(err.code) ||
+      /already exists/i.test(err.message || '');
+
+    const skippedTables = new Set();
+    let applied = 0;
+    let present = 0;
+    const hardFailures = [];
+    for (const stmt of statements) {
+      if (NEEDS_VECTOR.test(stmt)) {
+        const t = targetTable(stmt);
+        if (t) skippedTables.add(t.toLowerCase());
+        recordVectorSkip(`${describeStatement(stmt)} (needs the vector type)`);
+        continue;
+      }
+      // An object hanging off — or pointing at — a table we skipped cannot
+      // exist either. Foreign keys name their target in REFERENCES.
+      const deps = [targetTable(stmt), ...[...stmt.matchAll(/REFERENCES\s+"?([\w]+)"?/gi)].map((m) => m[1])];
+      const blockedBy = deps.find((d) => d && skippedTables.has(d.toLowerCase()));
+      if (blockedBy) {
+        recordVectorSkip(`${describeStatement(stmt)} (depends on skipped table ${blockedBy})`);
+        continue;
+      }
+      try {
+        await pool.query(stmt);
+        applied++;
+      } catch (err) {
+        // `relation "public.foo" does not exist` — compare on the bare name.
+        const named = (err.message || '').match(/relation "([\w.]+)" does not exist/i);
+        const namedTable = named ? named[1].split('.').pop().toLowerCase() : null;
+        if (isDuplicate(err)) {
+          present++;
+        } else if (isVectorTypeMissing(err) || (namedTable && skippedTables.has(namedTable))) {
+          recordVectorSkip(`${describeStatement(stmt)} (${(err.message || '').split('\n')[0]})`);
+        } else {
+          hardFailures.push(`${describeStatement(stmt)} — ${(err.message || '').split('\n')[0]}`);
+        }
+      }
+    }
+    console.log(
+      `  ✓ push applied statement-by-statement: ${applied} applied, ${present} already present, ` +
+        `${vectorSkipped.length} skipped for pgvector, ${hardFailures.length} failed`,
+    );
+    if (hardFailures.length) {
+      for (const f of hardFailures.slice(0, 20)) console.log(`  ⚠ ${f}`);
+      if (hardFailures.length > 20) console.log(`  ⚠ …and ${hardFailures.length - 20} more`);
+      recordIncomplete(
+        'drizzle push (statement-by-statement)',
+        `${hardFailures.length} statement(s) failed for reasons unrelated to pgvector: ` +
+          hardFailures.slice(0, 5).join(' | '),
+      );
+    }
   });
 
   await step('3/8 Complete schema — raw migration overlay', async () => {
@@ -202,6 +390,11 @@ async function main() {
         console.log(`  ✓ pre-overlay creator: ${rel}`);
       } catch (err) {
         await pool.query('ROLLBACK').catch(() => {});
+        if (isVectorTypeMissing(err)) {
+          recordVectorSkip(`pre-overlay creator ${rel} (${(err.message || '').split('\n')[0]})`);
+          console.log(`  ⚠ pre-overlay creator ${rel} skipped — needs pgvector`);
+          continue;
+        }
         throw new Error(`pre-overlay creator ${rel} failed: ${err.message}`);
       }
     }
@@ -254,6 +447,7 @@ async function main() {
       let passPresent = 0;
       let deferred = 0;
       let hard = 0;
+      let vectorFiles = 0;
       for (const file of files) {
         if (done.has(file)) continue;
         const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
@@ -279,6 +473,14 @@ async function main() {
             passPresent++;
             present++;
             progressed = true;
+          } else if (isVectorTypeMissing(err)) {
+            // Not a defect in the file: this server has no pgvector, so the
+            // file's vector-typed objects cannot be created. Named in the
+            // final report rather than counted as a hard failure.
+            done.add(file);
+            vectorFiles++;
+            progressed = true;
+            recordVectorSkip(`migrations/${file} (${(err.message || '').split('\n')[0]})`);
           } else if (isMissingDep(err)) {
             deferred++; // retry on a later pass once its dependency is created
             lastErr.set(file, (err.message || '').split('\n')[0]);
@@ -291,7 +493,8 @@ async function main() {
         }
       }
       console.log(
-        `  pass ${pass}: applied=${passApplied} already-present=${passPresent} deferred=${deferred} hard=${hard}`,
+        `  pass ${pass}: applied=${passApplied} already-present=${passPresent} deferred=${deferred} hard=${hard}` +
+          (vectorFiles ? ` needs-pgvector=${vectorFiles}` : ''),
       );
       if (!progressed) break;
     }
@@ -420,6 +623,17 @@ async function main() {
           console.log(`  • ${file} — objects already present, recorded`);
           continue;
         }
+        if (isVectorTypeMissing(err)) {
+          // 0005_csr_knowledge_database.sql defines vector-typed CSR knowledge
+          // tables together with their RLS. Without pgvector the file cannot
+          // apply at all; the OTHER RLS files (the 0019→0020→0021 tenant
+          // rollout) do not need it and still apply, so tenant isolation is
+          // still established. Not recorded as applied — a later re-run with
+          // pgvector installed picks it up.
+          console.log(`  ⚠ ${file} — skipped, needs pgvector`);
+          recordVectorSkip(`RLS migration ${file} (${(err.message || '').split('\n')[0]})`);
+          continue;
+        }
         throw new Error(`failed applying ${file}: ${err.message}`);
       }
     }
@@ -465,6 +679,7 @@ async function main() {
 
     let ok = 0;
     const failed = [];
+    let vectorBlocked = 0;
     for (const f of gccFiles) {
       const full = path.join(gccDir, f);
       const res = spawnSync('psql', [url, '-v', 'ON_ERROR_STOP=1', '-f', full], {
@@ -474,12 +689,30 @@ async function main() {
       if (res.status === 0) {
         ok++;
       } else {
-        const why = ((res.stderr || '').trim().split('\n').pop() || '').slice(0, 160);
+        const stderr = (res.stderr || '').trim();
+        const why = (stderr.split('\n').pop() || '').slice(0, 160);
+        // A file that only fails because this server has no pgvector is
+        // attributed to that, not counted as a governed-content defect.
+        if (isVectorTypeMissing({ message: stderr })) {
+          vectorBlocked++;
+          recordVectorSkip(`governed-content file ${f} (${why})`);
+          console.log(`  ⚠ ${f}: skipped, needs pgvector`);
+          continue;
+        }
         failed.push(`${f} — ${why}`);
         console.log(`  ⚠ ${f}: ${why}`);
       }
     }
-    console.log(`  ${failed.length ? '⚠' : '✓'} governed content: ${ok}/${gccFiles.length} applied`);
+    console.log(
+      `  ${failed.length || vectorBlocked ? '⚠' : '✓'} governed content: ${ok}/${gccFiles.length} applied` +
+        (vectorBlocked ? `, ${vectorBlocked} blocked by missing pgvector` : ''),
+    );
+    if (vectorBlocked) {
+      recordIncomplete(
+        'governed content (Part 11 audit)',
+        `${vectorBlocked} of ${gccFiles.length} file(s) could not be applied because pgvector is absent`,
+      );
+    }
     if (failed.length) {
       recordIncomplete(
         'governed content (Part 11 audit)',
@@ -513,6 +746,26 @@ async function main() {
   });
 
   await step('8/8 Verify', async () => {
+    /**
+     * A COMPLETENESS shortfall found by verification.
+     *
+     * These used to throw unconditionally, which meant `--allow-incomplete`
+     * did not actually allow an incomplete install: the run still died here
+     * with exit 1 and no final report. The flag's documented contract is
+     * "finish and exit 0 even when part of the install did not land", so
+     * completeness gaps are now recorded and adjudicated by report() — which
+     * still names every one of them and still withholds the success banner.
+     *
+     * This is for MISSING things only. Unsafe things (the runtime-role posture
+     * checks below) still throw regardless of the flag: an install must never
+     * hand over a role that would defeat RLS, no matter what was opted into.
+     */
+    const verifyFail = (area, detail) => {
+      if (!ALLOW_INCOMPLETE) throw new Error(detail);
+      console.log(`  ⚠ ${detail}`);
+      recordIncomplete(area, detail);
+    };
+
     const tables = await pool.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`,
     );
@@ -521,8 +774,12 @@ async function main() {
     const policyCount = policies.rows[0].n;
     console.log(`  tables (public): ${tableCount}`);
     console.log(`  RLS policies:    ${policyCount}`);
-    if (tableCount < 100) throw new Error(`expected the full schema (100s of tables); only ${tableCount} created`);
-    if (policyCount < 1) throw new Error('no RLS policies created — tenant isolation would be absent');
+    if (tableCount < 100) {
+      verifyFail('schema completeness', `expected the full schema (100s of tables); only ${tableCount} created`);
+    }
+    if (policyCount < 1) {
+      verifyFail('row-level security', 'no RLS policies created — tenant isolation would be absent');
+    }
 
     // Assert the core product tables the shipping routes read actually exist —
     // these come from the raw overlay, not push, and their absence is exactly
@@ -542,7 +799,8 @@ async function main() {
     const missingCore = core.rows.filter((r) => !r.present).map((r) => r.name);
     console.log(`  core route tables: ${CORE_TABLES.length - missingCore.length}/${CORE_TABLES.length} present`);
     if (missingCore.length) {
-      throw new Error(
+      verifyFail(
+        'core product tables',
         `core product tables missing (routes would read absent tables → UI shows sample data): ${missingCore.join(', ')}`,
       );
     }
@@ -561,7 +819,8 @@ async function main() {
       `  authoring subsystem: ${AUTHORING_SUBSYSTEM_TABLES.length - missingAuthoring.length}/${AUTHORING_SUBSYSTEM_TABLES.length} tables present`,
     );
     if (missingAuthoring.length) {
-      throw new Error(
+      verifyFail(
+        'authoring subsystem',
         `authoring subsystem incomplete (authoring routes would throw; /readyz would fail closed): missing ${missingAuthoring.join(', ')}`,
       );
     }
@@ -633,6 +892,25 @@ async function main() {
  * it still says what is missing and exits 0.
  */
 function report() {
+  // Say what a missing pgvector cost, in objects, before anything else. The
+  // rule this script is built on is that it does not claim readiness it has
+  // not checked; the corollary is that it must state what it KNOWS is absent.
+  if (!pgvectorAvailable) {
+    console.error('\n⚠️  pgvector (extension "vector") is NOT installed on this server.');
+    console.error(`   ${vectorSkipped.length} object(s) were skipped because of it:`);
+    for (const what of vectorSkipped.slice(0, 40)) console.error(`     • ${what}`);
+    if (vectorSkipped.length > 40) {
+      console.error(`     …and ${vectorSkipped.length - 40} more`);
+    }
+    console.error('   Vector-dependent features — embedding storage, semantic/similarity');
+    console.error('   search, and anything reading the skipped tables — are UNAVAILABLE in');
+    console.error('   this database. The rest of the schema was installed and the app can');
+    console.error('   boot and serve from it.');
+    console.error('   To get them: install the pgvector package for your PostgreSQL major');
+    console.error('   version (e.g. `apt-get install -y postgresql-16-pgvector`) and re-run');
+    console.error('   this script — it is idempotent and will fill in what it skipped.');
+  }
+
   if (!incomplete.length) {
     console.log('\n✅ Application schema install complete.');
     console.log('   Next:');
