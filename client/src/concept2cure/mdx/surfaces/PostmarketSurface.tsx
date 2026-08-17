@@ -26,6 +26,7 @@ import { usePostmarket } from '../hooks/usePostmarket';
 import { useTriageQueue } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
 import { readyRows } from '../lib/dataState';
+import { useSampleRows } from '../lib/useSampleRows';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 import type { Program } from '../data/programs';
 
@@ -62,8 +63,13 @@ export function PostmarketSurface({
      clock is a countdown to a statutory deadline shown as though it
      were real. */
   const triage = useTriageQueue({ programId: program?.id ?? null });
-  const documents = PV_DOCUMENTS as unknown as KitDocument[];
-  const frameworks = PV_DOC_FRAMEWORKS as unknown as KitDocFramework[];
+  /* Documents/frameworks have no live feed yet. They were wired to fixtures
+     UNCONDITIONALLY on the one surface where an example row is least
+     acceptable — a fabricated MDR submission reads as a statutory filing that
+     never happened. Same gate as every other panel now: live rows would win,
+     sample only in explicit sample mode, honest empty otherwise. */
+  const documents = useSampleRows<KitDocument>(null, PV_DOCUMENTS as unknown as readonly KitDocument[]);
+  const frameworks = useSampleRows<KitDocFramework>(null, PV_DOC_FRAMEWORKS as unknown as readonly KitDocFramework[]);
 
   /* Critical or under-review signals not yet wrapped in a doc. */
   const triageQueue = React.useMemo(

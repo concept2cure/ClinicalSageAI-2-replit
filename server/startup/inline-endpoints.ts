@@ -13,6 +13,7 @@
 
 import type { Express, NextFunction, Request, Response } from 'express';
 import type { Pool } from 'pg';
+import { BUILD_COMMIT, PROCESS_STARTED_AT } from '../buildStamp';
 import { createScopedLogger } from '../utils/logger';
 import {
   getSchemaReadiness,
@@ -145,7 +146,21 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
     return res.json(body);
   });
   app.get('/api/health', (_req: Request, res: Response) => {
-    res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      // The served commit, so a running instance is a checkable fact rather
+      // than a guess about what was last manually deployed (server/buildStamp).
+      commit: BUILD_COMMIT,
+    });
+  });
+
+  /* The build stamp on its own: which commit this process serves and when it
+     started. Public and unauthenticated like /api/health — it exists precisely
+     so anyone looking at a running environment can answer "what is deployed
+     here?" without shell access. */
+  app.get('/api/version', (_req: Request, res: Response) => {
+    res.json({ commit: BUILD_COMMIT, startedAt: PROCESS_STARTED_AT });
   });
 }
 

@@ -7,6 +7,11 @@ import './cspNonce';
 // Initialize Sentry error monitoring early, before other imports
 import './utils/sentry';
 
+// The build stamp: which commit this bundle was built from, on the window and
+// one console line, so a running deployment is a checkable fact.
+import { announceBuild } from './buildStamp';
+announceBuild();
+
 // Initialize i18next (side-effect import) before any component renders so the
 // first paint already reflects the detected language and <html lang>.
 import i18n from './i18n';
