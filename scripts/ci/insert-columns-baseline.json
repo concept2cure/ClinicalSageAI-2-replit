@@ -38,8 +38,6 @@
     "lumen_atom_conflicts.evidence",
     "lumen_atom_conflicts.severity",
     "lumen_atom_conflicts.suggested_resolution",
-    "lumen_atom_quality_scores.source_reliability",
-    "lumen_atom_quality_scores.timeliness_score",
     "lumen_atom_versions.atom_type",
     "lumen_atom_versions.change_summary",
     "lumen_atom_versions.changed_fields",
