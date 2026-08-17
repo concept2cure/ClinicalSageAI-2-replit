@@ -72,6 +72,8 @@
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
     "oq:localai": "tsx server/eval/localai/oq-live-check.ts",
     "benchmark:rtf": "tsx server/services/shadow-review/benchmark/cli.ts",
+    "ci:insert-columns-declared": "node scripts/ci/check-insert-columns-declared.mjs",
+    "ci:insert-columns-declared:write-baseline": "node scripts/ci/check-insert-columns-declared.mjs --write-baseline",
     "ci:duplicate-table-ddl": "node scripts/ci/check-duplicate-table-ddl.mjs",
     "ci:duplicate-table-ddl:strict": "node scripts/ci/check-duplicate-table-ddl.mjs --strict",
     "ci:duplicate-table-ddl:write-baseline": "node scripts/ci/check-duplicate-table-ddl.mjs --write-baseline",
