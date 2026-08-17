@@ -20,9 +20,18 @@
  * regulated document may not change by a single character.
  */
 
-/** True when the stored string is HTML rather than textarea-era plain text. */
+/** True when the stored string is HTML rather than textarea-era plain text.
+ *
+ * Matches KNOWN html tags only, deliberately: prose can legitimately contain
+ * tag-shaped tokens (`temperature <critical> threshold`), and any-tag
+ * detection routed such text through an HTML parse that swallowed the token —
+ * the exact silent-loss class this module exists to stop. Mirrored by
+ * `contentLooksLikeHtml` in server/export/authoring-section-content.ts; keep
+ * the two in agreement. */
+const KNOWN_HTML_TAG =
+  /<\/?(p|div|br|h[1-6]|ul|ol|li|b|strong|i|em|u|s|strike|ins|del|span|table|thead|tbody|tfoot|tr|td|th|blockquote|pre|a|img|hr|sub|sup|mark|code|font|section|article)\b[^>]*>/i;
 export function looksLikeHtml(stored: string): boolean {
-  return /<([a-z][a-z0-9-]*)(\s[^>]*)?>/i.test(stored);
+  return KNOWN_HTML_TAG.test(stored);
 }
 
 /** Block-level tags whose boundaries read as line breaks in extracted text. */

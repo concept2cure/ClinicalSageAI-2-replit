@@ -1199,10 +1199,12 @@ router.post('/templates/apply/:id', async (req: Request, res: Response) => {
 
     const template = templateResult.rows[0];
 
-    // Update usage count
-    await pool.query(`UPDATE authoring_templates SET usage_count = usage_count + 1 WHERE id = $1`, [
-      id,
-    ]);
+    // Update usage count — same tenant predicate as the SELECT above; without
+    // it this was the one write in the handler that crossed tenants.
+    await pool.query(
+      `UPDATE authoring_templates SET usage_count = usage_count + 1 WHERE id = $1 AND tenant_id = $2`,
+      [id, tenantId]
+    );
 
     // Track usage
     await pool.query(
@@ -2205,6 +2207,18 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
       });
     }
 
+    // The section must belong to this tenant before anything is attached to
+    // it. The comment row itself always carried the caller's tenant_id (reads
+    // stayed scoped), but without this check a comment could be pinned to a
+    // foreign section UUID — and 201-vs-500 confirmed foreign ids.
+    const sectionOwned = await pool.query(
+      'SELECT id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+      [sectionId, tenantId]
+    );
+    if (((sectionOwned.rowCount ?? 0) === 0)) {
+      return res.status(404).json({ success: false, error: 'Section not found' });
+    }
+
     const result = await pool.query(
       `INSERT INTO authoring_comments
        (id, section_id, doc_id, body, anchor, status, created_by, user_name, user_email,
@@ -2535,9 +2549,9 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
               COALESCE(c.user_name, c.created_by) as author_name,
               c.user_email as author_email
              FROM authoring_comments c
-             WHERE c.parent_comment_id = $1
+             WHERE c.parent_comment_id = $1 AND c.tenant_id = $2
              ORDER BY c.created_at ASC`,
-            [comment.id]
+            [comment.id, tenantId]
           );
           comment.replies = repliesResult.rows;
         }
@@ -3277,6 +3291,8 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
        DELETE … RETURNING, so this is the last moment the generator exists
        anywhere — after the transaction it lives only in what we record. */
     let generator: Record<string, unknown> | null = null;
+    /* Whether the caller's accepted text still IS the generated draft. */
+    let draftModifiedOnAccept = false;
     try {
       await client.query('BEGIN');
 
@@ -3296,8 +3312,12 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
 
       // The author may have edited the draft before accepting; attribute what they
       // actually save. Fall back to the draft as generated when no edit is sent.
+      // Whether the accepted text still IS the generated draft is recorded on
+      // the audit row (draft_modified_on_accept below): "accepted AI draft"
+      // must not vouch for words the model never produced.
       acceptedContent =
         typeof req.body?.content === 'string' ? req.body.content : candidate.content;
+      draftModifiedOnAccept = acceptedContent !== candidate.content;
 
       saved = await client.query(
         `UPDATE authoring_sections SET content = $1, updated_at = NOW()
@@ -3362,7 +3382,12 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
          this text?" was answerable for about as long as the tab stayed open —
          the first question an assessor asks about AI-assisted content, and the
          one piece of provenance being collected and then discarded. */
-      { source: 'ai-draft-accept', generator },
+      /* draft_modified_on_accept: the accept endpoint allows the author to
+         hand-edit the draft before accepting, so "Accepted AI draft" on its
+         own could vouch for words the model never produced. True here means
+         the saved text differs from the generated candidate — the generator
+         metadata describes the draft's origin, not the final wording. */
+      { source: 'ai-draft-accept', generator, draft_modified_on_accept: draftModifiedOnAccept },
     );
 
     res.json({
@@ -3969,15 +3994,20 @@ router.get('/docs/:docId/frozen', async (req: Request, res: Response) => {
 // GET all citations by doc (grouped)
 router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
   try {
+    // Tenant-scoped like every other read in this router. This query carried
+    // tenant_id in its SELECT list and nowhere in its WHERE, so any
+    // authenticated user could enumerate another organization's citations —
+    // source names, citation text, checksums — by guessing document UUIDs.
+    const tenantId = getTenantId(req);
     const { rows } = await pool.query(
       `
       SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code, s.title
       FROM authoring_citations c
       JOIN authoring_sections s ON s.id=c.section_id
-      WHERE s.doc_id=$1
+      WHERE s.doc_id=$1 AND c.tenant_id=$2 AND s.tenant_id=$2
       ORDER BY c.created_at ASC
     `,
-      [req.params.docId]
+      [req.params.docId, tenantId]
     );
     res.json(rows);
   } catch (e) {
@@ -3992,15 +4022,34 @@ router.post('/docs/:docId/send-to-packager', async (req: Request, res: Response)
       return res.status(400).json({ error: 'seqId and path are required' });
     }
 
+    /* This bridge re-enters the platform's own HTTP routes, and as written it
+       could never have worked:
+         - it sent NO Authorization header, so the export route's own JWT
+           middleware answered 401 on every call;
+         - it passed `?fmt=` while the export handler reads `req.body.format`,
+           so even authenticated it would always have exported DOCX;
+         - it never checked the export response, so that 401 JSON body was
+           base64-encoded and shipped to the packager as the "document".
+       The caller's verified credentials are forwarded to both hops (the export
+       and the packager enforce their own authorization with them), and every
+       hop is checked before its output is used. */
+    const authHeaders: Record<string, string> = {};
+    if (req.headers.authorization) authHeaders.Authorization = String(req.headers.authorization);
+
     // 1) Export DOCX (or PDF if requested)
     const exp = await fetch(
-      `${req.protocol}://${req.get('host')}/api/authoring/docs/${req.params.docId}/export?fmt=${
-        fmt || 'docx'
-      }`,
+      `${req.protocol}://${req.get('host')}/api/authoring/docs/${req.params.docId}/export`,
       {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ format: fmt || 'docx' }),
       }
     );
+    if (!exp.ok) {
+      return res
+        .status(502)
+        .json({ error: `Export failed (HTTP ${exp.status}) — nothing was sent to the packager` });
+    }
     const buf = Buffer.from(await exp.arrayBuffer());
     const base64 = buf.toString('base64');
 
@@ -4009,7 +4058,7 @@ router.post('/docs/:docId/send-to-packager', async (req: Request, res: Response)
       `${req.protocol}://${req.get('host')}/api/regulatory/ectd/${seqId}/leaf`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           module: 3,
           path: relPath,
@@ -4457,10 +4506,14 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
       return res.status(400).json({ error: 'templateKey required' });
     }
 
-    // Get document locale
-    const docResult = await pool.query('SELECT locale FROM authoring_documents WHERE id = $1', [
-      req.params.docId,
-    ]);
+    // Get document locale — tenant-scoped. The section writes below were
+    // already scoped; this read was the one predicate-free query left in the
+    // handler, and 404-vs-200 on it confirmed whether a guessed document UUID
+    // exists in another organization (plus that document's locale).
+    const docResult = await pool.query(
+      'SELECT locale FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      [req.params.docId, tenantId]
+    );
 
     if (((docResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Document not found' });
@@ -4982,19 +5035,78 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          `await import(...)`, and the XML branch imports nothing. Only this
          branch used CommonJS, so only this branch was unreachable. Nothing was
          wrong with the docx generation below it — it had simply never run. */
-      const { Document, Packer, Paragraph, HeadingLevel } = await import('docx');
+      const { Document, Packer, Paragraph, HeadingLevel, TextRun } = await import('docx');
+      const { sectionContentToBlocks, countPendingSuggestions } = await import(
+        '../export/authoring-section-content.js'
+      );
 
       const children = [];
       children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));
 
-      for (const section of sectionsResult.rows) {
+      /* Section content is an opaque string holding plain text or editor HTML
+         (which can carry ins/del track-changes marks). It used to be written
+         into one paragraph verbatim, so markup rendered literally in a filed
+         Word document. It is parsed to typed runs now; an unresolved
+         suggestion exports AS redline (insertion underlined, deletion struck)
+         with an up-front notice — settling it silently either way at export
+         time would fabricate a decision nobody made. */
+      let pendingIns = 0;
+      let pendingDel = 0;
+      const sectionBlocks = sectionsResult.rows.map((section: any) => {
+        const blocks = sectionContentToBlocks(section.content);
+        const pending = countPendingSuggestions(blocks);
+        pendingIns += pending.insertions;
+        pendingDel += pending.deletions;
+        return { section, blocks };
+      });
+      if (pendingIns + pendingDel > 0) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text:
+                  `This document contains unresolved tracked changes ` +
+                  `(${pendingIns} proposed insertion(s), ${pendingDel} proposed deletion(s)), ` +
+                  `rendered below as redline.`,
+                italics: true,
+              }),
+            ],
+          })
+        );
+      }
+      const headingFor = (level: number | undefined) =>
+        level === 1 ? HeadingLevel.HEADING_2 : level === 2 ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4;
+      for (const { section, blocks } of sectionBlocks) {
         children.push(
           new Paragraph({
             text: `${section.code} - ${section.title}`,
             heading: HeadingLevel.HEADING_1,
           })
         );
-        children.push(new Paragraph({ text: section.content || '' }));
+        for (const block of blocks) {
+          children.push(
+            new Paragraph({
+              ...(block.kind === 'heading' ? { heading: headingFor(block.level) } : {}),
+              ...(block.kind === 'list-item' ? { bullet: { level: 0 } } : {}),
+              children: block.runs.map(
+                (r) =>
+                  new TextRun({
+                    text: r.text,
+                    bold: r.bold,
+                    italics: r.italics,
+                    underline: r.underline ? {} : undefined,
+                    strike: r.strike,
+                    color:
+                      r.suggestion === 'insertion'
+                        ? '067647'
+                        : r.suggestion === 'deletion'
+                          ? 'B42318'
+                          : undefined,
+                  })
+              ),
+            })
+          );
+        }
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
@@ -5020,20 +5132,61 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       // template render path uses). The previous implementation returned DOCX
       // bytes under a PDF label — a mislabeled file is worse than no file.
       const { renderHtmlToPdf } = await import('../export/renderers');
+      const { sectionContentToBlocks, countPendingSuggestions } = await import(
+        '../export/authoring-section-content.js'
+      );
       const esc = (s: string) =>
         String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      /* Section content parsed to typed runs and re-emitted as a WHITELISTED
+         structure with every text node escaped — stored markup never reaches
+         the renderer raw (the previous escape-everything approach printed
+         editor HTML as literal tags in a filed PDF). Unresolved suggestions
+         render as redline with an up-front notice, same as the DOCX branch. */
+      let pdfPendingIns = 0;
+      let pdfPendingDel = 0;
+      const pdfSections = sectionsResult.rows.map(
+        (s: { code: string; title: string; content: string | null }) => {
+          const blocks = sectionContentToBlocks(s.content);
+          const pending = countPendingSuggestions(blocks);
+          pdfPendingIns += pending.insertions;
+          pdfPendingDel += pending.deletions;
+          const body = blocks
+            .map((b) => {
+              const runs = b.runs
+                .map((r) => {
+                  let t = esc(r.text);
+                  if (r.bold) t = `<b>${t}</b>`;
+                  if (r.italics) t = `<i>${t}</i>`;
+                  if (r.suggestion === 'insertion') return `<ins>${t}</ins>`;
+                  if (r.suggestion === 'deletion') return `<del>${t}</del>`;
+                  if (r.underline) t = `<u>${t}</u>`;
+                  if (r.strike) t = `<s>${t}</s>`;
+                  return t;
+                })
+                .join('');
+              if (b.kind === 'heading') return `<h3>${runs}</h3>`;
+              if (b.kind === 'list-item') return `<p class="li">• ${runs}</p>`;
+              return `<p>${runs}</p>`;
+            })
+            .join('');
+          return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
+        }
+      );
       const html = `<!doctype html><html><head><meta charset="utf-8"><style>
           body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
-          h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; }
-          p { white-space: pre-wrap; }
+          h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; } h3 { font-size: 12.5pt; margin-top: 1em; }
+          p { white-space: pre-wrap; } p.li { margin: 0 0 0 1.2em; }
+          ins { color: #067647; text-decoration: underline; }
+          del { color: #b42318; text-decoration: line-through; }
+          .redline-note { font-style: italic; }
         </style></head><body>
         <h1>${esc(doc.title)}</h1>
-        ${sectionsResult.rows
-          .map(
-            (s: { code: string; title: string; content: string | null }) =>
-              `<h2>${esc(s.code)} — ${esc(s.title)}</h2><p>${esc(s.content || '')}</p>`
-          )
-          .join('\n')}
+        ${
+          pdfPendingIns + pdfPendingDel > 0
+            ? `<p class="redline-note">This document contains unresolved tracked changes (${pdfPendingIns} proposed insertion(s), ${pdfPendingDel} proposed deletion(s)), rendered below as redline.</p>`
+            : ''
+        }
+        ${pdfSections.join('\n')}
         <h2>Electronic signatures</h2>
         ${manifest.length === 0
           ? '<p>No electronic signatures are recorded against this document.</p>'

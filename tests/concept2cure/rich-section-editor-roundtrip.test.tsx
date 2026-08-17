@@ -144,6 +144,24 @@ describe('round-trip fidelity gate', () => {
     expect(text).toContain('struck claim');
   });
 
+  it('prose containing tag-shaped tokens is plain text, not HTML to parse away', () => {
+    // A textarea author can legitimately write `<critical>` as prose. Any-tag
+    // detection routed this through an HTML parse that swallowed the token on
+    // BOTH sides of the fidelity comparison — a silent loss the gate itself
+    // could not see. Known-tag detection keeps it literal.
+    const stored = 'Alarm fires above the <critical> threshold & logs the event.';
+    expect(looksLikeHtml(stored)).toBe(false);
+    const html = plainTextToHtml(stored);
+    const ed = makeEditor(html);
+    const text = ed.getText();
+    ed.destroy();
+    expect(text).toContain('<critical>');
+    expect(text).toContain('& logs');
+    // Real markup still detects as markup.
+    expect(looksLikeHtml('<p>real markup</p>')).toBe(true);
+    expect(looksLikeHtml('x <ins data-author-id="a">y</ins>')).toBe(true);
+  });
+
   it('plain text with single newlines survives the text-format serializer', () => {
     const stored = 'Line one\nLine two\n\nParagraph two';
     const ed = makeEditor(plainTextToHtml(stored));
