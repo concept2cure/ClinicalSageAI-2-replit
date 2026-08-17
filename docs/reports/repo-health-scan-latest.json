@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-17T20:54:00.041Z",
+  "generatedAt": "2026-08-17T21:28:49.840Z",
   "git": {
-    "sha": "a8f551c5d5fc7f61863646a54de7e54666ec9640",
+    "sha": "bdd21b7fd801ed333e91903d2b66ce5d253d8fda",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2164,7 +2164,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 233366
+        "bytes": 239610
       },
       {
         "file": "server/statistics-service.ts",
@@ -2302,7 +2302,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6007
+        "lines": 6143
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2573,6 +2573,10 @@
         "lines": 1678
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 1667
+      },
+      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
@@ -2599,10 +2603,6 @@
       {
         "file": "shared/schema/csr-knowledge-db.ts",
         "lines": 1600
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 1588
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
