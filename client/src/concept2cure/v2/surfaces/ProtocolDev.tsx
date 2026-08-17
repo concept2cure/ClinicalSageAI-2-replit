@@ -114,10 +114,11 @@ export function Outline({ doc, activeSec, onSec, onFinalize }: OutlineProps) {
    and the static render was always what shipped. The branch is gone rather than
    fixed, because there was nothing to fix it to.
 
-   The live `DocCanvas` is a different thing that happens to share the name: a
-   real React component exported from `surfaces/EditorCanvas.tsx` and rendered by
-   `DocumentAuthoring` behind ENABLE_RICH_SECTION_EDITOR. It reaches its host by
-   `import`, not by `window`, and was never reachable from this surface. */
+   `DocCanvas` was later a different thing that happened to share the name: a
+   real React component in `surfaces/EditorCanvas.tsx`, rendered by
+   `DocumentAuthoring` behind the ENABLE_RICH_SECTION_EDITOR flag and never
+   reachable from this surface. Both are gone now — the one section editor is
+   `v2/editor/RichSectionEditor`, and this tab remains a read-only render. */
 export function DocumentTab({ doc, sec, onGenerate }: DocumentTabProps) {
   // `content` is absent on a protocol whose sections exist but whose body has
   // never been drafted; the not-started branch below is already that state.
