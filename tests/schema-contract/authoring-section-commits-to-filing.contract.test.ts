@@ -110,6 +110,7 @@ beforeAll(async () => {
     prereqSql: PREREQ,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
       // append-only triggers. Same position the durable applier uses.
