@@ -4,7 +4,9 @@
  * The unit test proves verification catches tampering in the abstract; this
  * proves the DATABASE half: the 20260817 migration applies to a real engine,
  * the ledger columns land, and — the load-bearing fact — the append-only
- * trigger REFUSES UPDATE and DELETE on doc_revisions. The tamper is attempted
+ * triggers REFUSE UPDATE, DELETE and TRUNCATE on doc_revisions (the last one
+ * needs its own statement-level trigger: a row trigger never sees a TRUNCATE,
+ * so the whole-table erasure went through silently). The tamper is attempted
  * for real and shown refused, per the working agreement ("verify by making
  * the check fail": a gate only ever seen passing has not been tested).
  */
@@ -158,6 +160,20 @@ describe('doc_revisions immutable ledger — real engine', () => {
     await expect(
       db.query(`DELETE FROM doc_revisions WHERE id = $1`, [R2]),
     ).rejects.toThrow(/append-only ledger/);
+    const { rows } = await db.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM doc_revisions WHERE section_id = $1`,
+      [SEC],
+    );
+    expect(rows[0].n).toBe(2);
+  });
+
+  it('REFUSES the whole-table erasure: TRUNCATE is rejected by the engine', async () => {
+    // A row-level trigger does NOT fire on TRUNCATE. Before the statement-level
+    // guard was added, this exact statement emptied doc_revisions with no error
+    // — every revision of every section, gone past the row trigger that had
+    // just refused a single DELETE. The largest erasure the ledger exists to
+    // refuse was the one it could not see.
+    await expect(db.query(`TRUNCATE doc_revisions`)).rejects.toThrow(/append-only ledger/);
     const { rows } = await db.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM doc_revisions WHERE section_id = $1`,
       [SEC],
