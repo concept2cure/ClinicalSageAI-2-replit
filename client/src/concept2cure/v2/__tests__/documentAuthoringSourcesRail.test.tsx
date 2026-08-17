@@ -39,6 +39,21 @@ vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));
 
+
+/* jsdom implements no layout: ProseMirror's scroll-into-view (scheduled by
+   insertContent and selection changes) asks Ranges, Elements and text nodes
+   for client rects and crashes the worker when a node type lacks the method.
+   Stub the geometry to empty — scrolling is meaningless in jsdom anyway. */
+const emptyRects = function () { return [] as unknown as DOMRectList; };
+for (const proto of [Range.prototype, Element.prototype, Text.prototype] as Array<Record<string, unknown>>) {
+  if (typeof proto.getClientRects !== 'function') proto.getClientRects = emptyRects;
+  if (typeof proto.getBoundingClientRect !== 'function') {
+    proto.getBoundingClientRect = function () {
+      return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 } as DOMRect;
+    };
+  }
+}
+
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 
 const PID = '11111111-1111-4111-8111-111111111111';

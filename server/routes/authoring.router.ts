@@ -27,6 +27,12 @@ import {
 // (interactive save AND section create) applies the identical rule.
 // See server/services/clinical-regulatory-evidence/lineage-gate.ts.
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+import {
+  computeChainHash,
+  sha256Hex,
+  verifyLedger,
+  type RevisionOrigin,
+} from '../services/authoring/revision-ledger';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -893,7 +899,18 @@ const createUserPin = async (email: string, pin: string, tenantId: number): Prom
   }
 };
 
-// Helper function to create revision automatically
+// Helper function to create revision automatically.
+//
+// LEDGER (see server/services/authoring/revision-ledger.ts and the
+// 20260817_doc_revisions_immutable_ledger migration): every revision row is a
+// link in a per-section hash chain — content hash, link to the previous
+// revision's chain head, the write path that produced it (`origin`), and a
+// frozen snapshot of the citation inputs in force at the moment of the save.
+// UPDATE/DELETE on the table are refused by a database trigger, so the history
+// this writes is append-only by engine rule, and
+// GET /sections/:sectionId/history/verify recomputes the whole chain on
+// demand. Transactional callers hold the section row lock from their own
+// UPDATE, which serializes same-section chain extension.
 const createRevision = async (
   sectionId: string | string[] | undefined,
   content: string,
@@ -902,14 +919,46 @@ const createRevision = async (
   // When part of a lifecycle transaction, the caller passes its BEGIN'd client
   // so the revision commits atomically with the section update. Defaults to the
   // pool for standalone callers.
-  executor: Queryable = pool
+  executor: Queryable = pool,
+  origin: RevisionOrigin = 'human-edit'
 ) => {
   try {
     const revisionId = crypto.randomUUID();
+
+    // The chain head this revision extends — the section's latest revision.
+    const prev = await executor.query(
+      `SELECT chain_sha256 FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = $2
+        ORDER BY created_at DESC, id DESC LIMIT 1`,
+      [sectionId, tenantId]
+    );
+    const prevChain: string | null = prev.rows[0]?.chain_sha256 ?? null;
+    const contentSha = sha256Hex(content ?? '');
+    const chain = computeChainHash({
+      prevChain,
+      contentSha256: contentSha,
+      createdBy: updatedBy,
+      origin,
+    });
+
+    // The documentary inputs this state was drafted against: the section's
+    // citation set with the checksums recorded at cite time, frozen with the
+    // revision. Lineage of every input, per revision, immutable.
+    const cites = await executor.query(
+      `SELECT id AS citation_id, source, reference_id, payload_sha256, created_at
+         FROM authoring_citations
+        WHERE section_id = $1 AND tenant_id = $2
+        ORDER BY created_at ASC`,
+      [sectionId, tenantId]
+    );
+    const inputs = JSON.stringify({ citations: cites.rows });
+
     await executor.query(
-      `INSERT INTO doc_revisions (id, section_id, content, created_by, created_at, tenant_id)
-       VALUES ($1, $2, $3, $4, NOW(), $5)`,
-      [revisionId, sectionId, content, updatedBy, tenantId]
+      `INSERT INTO doc_revisions
+         (id, section_id, content, created_by, created_at, tenant_id,
+          content_sha256, prev_chain_sha256, chain_sha256, origin, inputs)
+       VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10)`,
+      [revisionId, sectionId, content, updatedBy, tenantId, contentSha, prevChain, chain, origin, inputs]
     );
     return revisionId;
   } catch (error) {
@@ -1628,7 +1677,7 @@ router.post('/docs', async (req: Request, res: Response) => {
       // at the top of this handler — not re-derived, so a seeded section is
       // attributed to exactly the principal the document is.
       for (const row of seeded.rows) {
-        await createRevision(row.id, row.content ?? '', createdBy, tenantId);
+        await createRevision(row.id, row.content ?? '', createdBy, tenantId, pool, 'genesis');
         await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
           template_id,
           section_code: row.code,
@@ -1825,7 +1874,7 @@ router.post('/sections', async (req: Request, res: Response) => {
     }
 
     // Genesis revision: this content, by this author.
-    await createRevision(sectionId, content, createdBy, tenantId);
+    await createRevision(sectionId, content, createdBy, tenantId, pool, 'genesis');
     await createAuditTrail(req, doc_id, sectionId, 'CREATE', null, content ?? null, req.body?.changeReason ?? null, {
       code,
       title,
@@ -1938,7 +1987,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       // edit path agree with it. The prior content is not lost — it is the
       // preceding row. Only when content changed.
       if (recordRevision) {
-        await createRevision(sectionId, content, updatedByUser, tenantId, client);
+        await createRevision(sectionId, content, updatedByUser, tenantId, client, 'human-edit');
       }
 
       result = await client.query(updateQuery, values);
@@ -2050,6 +2099,7 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
     const result = await pool.query(
       `SELECT
         r.id, r.section_id, r.content, r.created_by, r.created_at, r.tenant_id,
+        r.content_sha256, r.chain_sha256, r.origin,
         u.name as created_by_name,
         u.email as created_by_email
        FROM doc_revisions r
@@ -2086,6 +2136,32 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
   }
 });
 
+// GET /api/authoring/sections/:sectionId/history/verify — recompute the
+// revision ledger. Every verdict is recomputed from stored content; the hash
+// columns are treated as claims to check, never as answers. An intact chain
+// means: no revision's content was altered after it was written, no link was
+// re-pointed, and nothing was appended unchained since the ledger was adopted.
+// Rows predating the ledger are reported as pre-ledger, honestly, rather than
+// backfilled into an integrity history nobody recorded at the time.
+router.get('/sections/:sectionId/history/verify', async (req: Request, res: Response) => {
+  try {
+    const { sectionId } = req.params;
+    const tenantId = getTenantId(req);
+    const { rows } = await pool.query(
+      `SELECT id, content, created_by, origin, content_sha256, prev_chain_sha256, chain_sha256
+         FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = $2
+        ORDER BY created_at ASC, id ASC`,
+      [sectionId, tenantId]
+    );
+    const verdict = verifyLedger(rows);
+    res.json({ success: true, revisionCount: rows.length, ...verdict });
+  } catch (error) {
+    console.error('Error verifying revision ledger:', error);
+    res.status(500).json({ success: false, error: 'Failed to verify the revision ledger' });
+  }
+});
+
 // POST /api/authoring/sections/:sectionId/revert - Revert to specific revision
 router.post('/sections/:sectionId/revert', async (req: Request, res: Response) => {
   try {
@@ -2119,28 +2195,52 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
 
     const revision = revResult.rows[0];
 
-    // Create new revision for current state before reverting
     const currentSection = await pool.query(
       'SELECT content FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
       [sectionId, tenantId]
     );
+    if (((currentSection.rowCount ?? 0) === 0)) {
+      return res.status(404).json({ success: false, error: 'Section not found' });
+    }
 
-    // Update section with revision content
-    const result = await pool.query(
-      `UPDATE authoring_sections
-       SET content = $1, updated_at = NOW()
-       WHERE id = $2 AND tenant_id = $3
-       RETURNING *`,
-      [revision.content, sectionId, tenantId]
-    );
-
-    // The revert is itself an authored state: this content, restored by this
-    // actor, now. Written AFTER the update for the same reason as the edit
-    // path, and it replaces a pre-update createRevision that stored the
-    // content being replaced under the reverter's name — the same
-    // misattribution the edit path had.
-    if (currentSection.rowCount && ((currentSection.rowCount ?? 0) > 0)) {
-      await createRevision(sectionId, revision.content, revertedBy, tenantId);
+    /* Content, its lineage and its ledger entry commit together or not at all
+       — the identical rule the interactive save and the AI accept follow.
+       Revert was the one content writer left non-transactional AND outside
+       the lineage gate, so a reverted section's provenance quietly went stale.
+       The restorer IS asserting this content now: author lineage records
+       exactly that, and the revision's `origin: 'revert'` records that it was
+       a restoration rather than fresh authorship. The section-row lock the
+       UPDATE takes also serializes the ledger chain extension. */
+    const client = await pool.connect();
+    let result: { rows: any[] };
+    try {
+      await client.query('BEGIN');
+      result = await client.query(
+        `UPDATE authoring_sections
+         SET content = $1, updated_at = NOW()
+         WHERE id = $2 AND tenant_id = $3
+         RETURNING *`,
+        [revision.content, sectionId, tenantId]
+      );
+      await enforceAuthorLineage(
+        client,
+        tenantId,
+        { documentTable: 'authoring_sections', documentId: String(sectionId) },
+        revision.content ?? '',
+        revertedBy,
+      );
+      // The revert is itself an authored state: this content, restored by this
+      // actor, now. Written AFTER the update for the same reason as the edit
+      // path, and it replaces a pre-update createRevision that stored the
+      // content being replaced under the reverter's name — the same
+      // misattribution the edit path had.
+      await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert');
+      await client.query('COMMIT');
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      client.release();
     }
 
     await createAuditTrail(
@@ -3365,7 +3465,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     // edit already landed; failing here would report failure for a change that
     // succeeded).
     try {
-      await createRevision(String(sectionId), acceptedContent, actor, tenantId);
+      await createRevision(String(sectionId), acceptedContent, actor, tenantId, pool, 'ai-draft-accept');
     } catch (revErr: any) {
       console.warn('[Authoring] AI draft accept: revision write failed (non-fatal):', revErr?.message);
     }
@@ -4555,6 +4655,16 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
 
     let upserts = 0;
 
+    /* Every content write below passes the lineage gate and lands a ledger
+       revision, inside ONE transaction — the identical rule the interactive
+       save, the AI accept and the revert follow. Template apply was the last
+       content writer outside it: it wrote sections with no lineage and (for
+       the insert branch) no revision at all, so a template-applied section
+       had provenance for neither its words nor its arrival. */
+    const applyActor = getActorId(req) ?? 'template';
+    const txClient = await pool.connect();
+    try {
+    await txClient.query('BEGIN');
     // Apply template sections
     for (const section of template.sections || []) {
       const existing = existingMap.get(section.code);
@@ -4582,11 +4692,12 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
         // Snapshot before the UPDATE, not after: the point is to preserve the
         // superseded text.
         if (existing?.content) {
-          await createRevision(existingId, existing.content, getActorId(req) ?? 'template', tenantId);
+          await createRevision(existingId, existing.content, applyActor, tenantId, txClient, 'pre-template-snapshot');
         }
 
         // Update existing section
-        await pool.query(
+        const templContent = JSON.stringify(section.content || {});
+        await txClient.query(
           `UPDATE authoring_sections
               SET title = $2, order_index = $3, content = $4, updated_at = NOW()
             WHERE id = $1 AND tenant_id = $5`,
@@ -4594,28 +4705,53 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
             existingId,
             section.title || '',
             section.order_idx || 0,
-            JSON.stringify(section.content || {}),
+            templContent,
             tenantId,
           ]
         );
+        await enforceAuthorLineage(
+          txClient,
+          tenantId,
+          { documentTable: 'authoring_sections', documentId: String(existingId) },
+          templContent,
+          applyActor,
+        );
+        await createRevision(existingId, templContent, applyActor, tenantId, txClient, 'template-apply');
         upserts++;
       } else {
         // Insert new section
-        await pool.query(
+        const newSectionId = crypto.randomUUID();
+        const templContent = JSON.stringify(section.content || {});
+        await txClient.query(
           `INSERT INTO authoring_sections (id, doc_id, code, title, order_index, content, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
-            crypto.randomUUID(),
+            newSectionId,
             req.params.docId,
             section.code,
             section.title || '',
             section.order_idx || 0,
-            JSON.stringify(section.content || {}),
+            templContent,
             tenantId,
           ]
         );
+        await enforceAuthorLineage(
+          txClient,
+          tenantId,
+          { documentTable: 'authoring_sections', documentId: newSectionId },
+          templContent,
+          applyActor,
+        );
+        await createRevision(newSectionId, templContent, applyActor, tenantId, txClient, 'template-apply');
         upserts++;
       }
+    }
+    await txClient.query('COMMIT');
+    } catch (txErr) {
+      await txClient.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      txClient.release();
     }
 
     res.json({ ok: true, upserts });

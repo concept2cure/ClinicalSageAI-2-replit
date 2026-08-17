@@ -136,6 +136,29 @@ interface AuthRevision {
   created_at: string | null;
   created_by_name: string | null;
   created_by_email: string | null;
+  /** Ledger columns (null on revisions predating the ledger). */
+  content_sha256?: string | null;
+  chain_sha256?: string | null;
+  origin?: string | null;
+}
+
+/** How each ledger origin reads to an author. */
+const REVISION_ORIGIN_LABELS: Record<string, string> = {
+  genesis: 'created',
+  'human-edit': 'edited',
+  'ai-draft-accept': 'AI draft accepted',
+  revert: 'reverted',
+  'template-apply': 'template applied',
+  'pre-template-snapshot': 'pre-template snapshot',
+};
+
+/** The server's recomputed ledger verdict for a section's history. */
+interface LedgerVerdict {
+  intact: boolean;
+  revisionCount: number;
+  chainedCount: number;
+  preLedgerCount: number;
+  breaks: Array<{ revisionId: string; reason: string }>;
 }
 
 interface AuthComment {
@@ -351,6 +374,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
   const [comments, setComments] = useState<AuthComment[]>([]);
   const [newComment, setNewComment] = useState('');
+  /* The revision ledger's recomputed verdict — null until asked, 'error' on a
+     failed read (which is a failure to CHECK, never a claim about the chain). */
+  const [ledger, setLedger] = useState<LedgerVerdict | 'error' | 'checking' | null>(null);
 
   // What the active section is drafted from, plus the project's Data Room for the
   // picker. Both are live reads; neither has a fixture fallback.
@@ -686,6 +712,21 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     );
     setProjectSources(ok && Array.isArray(body?.sources) ? body!.sources! : []);
   }, []);
+
+  /* ── Recompute the revision ledger server-side ──
+     The server walks the section's revision chain oldest-first and recomputes
+     every hash from stored content. "Verified" here is a computation result,
+     never a cached flag. */
+  const verifyLedger = useCallback(async (sectionId: string) => {
+    setLedger('checking');
+    const { ok, body } = await readJson<LedgerVerdict & { success?: boolean }>(
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history/verify`,
+    );
+    if (!ok || !body) { setLedger('error'); return; }
+    setLedger(body);
+  }, []);
+
+  useEffect(() => { setLedger(null); }, [activeSectionId]);
 
   useEffect(() => {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
@@ -1362,6 +1403,34 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       {rail === 'history' && (
         <aside className="ed-comments">
           <div className="ed-comments-h">Revision history</div>
+          {/* ── The ledger: history as a checkable fact ──
+              Every revision is a link in a hash chain the database refuses to
+              edit; this control recomputes the whole chain from stored content
+              and reports exactly what it found. */}
+          {activeSection && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8, padding: '0 2px', fontSize: 11.5 }}>
+              <button className="nda-open" onClick={() => void verifyLedger(activeSection.id)} disabled={ledger === 'checking'}>
+                {I.shieldCheck} {ledger === 'checking' ? 'Recomputing ledger…' : 'Verify ledger'}
+              </button>
+              {ledger === 'error' && (
+                <span style={{ color: 'var(--c2c-err,#b42318)' }}>
+                  Couldn’t recompute the ledger — this is a failed check, not a verdict about the record.
+                </span>
+              )}
+              {ledger != null && ledger !== 'error' && ledger !== 'checking' && (
+                ledger.intact ? (
+                  <span className="sp-tone-ok">
+                    Ledger intact — {ledger.chainedCount} chained revision{ledger.chainedCount === 1 ? '' : 's'} recomputed and verified
+                    {ledger.preLedgerCount > 0 ? `; ${ledger.preLedgerCount} pre-ledger` : ''}.
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--c2c-err,#b42318)', fontWeight: 600 }}>
+                    Ledger BROKEN at {ledger.breaks.length} point{ledger.breaks.length === 1 ? '' : 's'} — {ledger.breaks.map((b) => b.reason).join(', ')}. The history has been altered or forked; treat this section’s record as disputed.
+                  </span>
+                )
+              )}
+            </div>
+          )}
           {!activeSection ? (
             <EmptyState icon={I.clock} title="No section selected" hint="Select a section to see its revision history." />
           ) : revisionsState === 'error' ? (
@@ -1376,7 +1445,17 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                 <div className="cmt-meta">
                   <span className="cmt-av">{(r.created_by_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
                   <b>{r.created_by_name ?? r.created_by_email ?? 'Unknown author'}</b>
+                  {/* Which write path produced this state — the input's kind,
+                      from the ledger, never inferred. */}
+                  {r.origin && (
+                    <span className="cmt-role">{REVISION_ORIGIN_LABELS[r.origin] ?? r.origin}</span>
+                  )}
                   <span className="cmt-when">· {relTime(r.created_at)}</span>
+                  {r.chain_sha256 && (
+                    <span className="cmt-when" style={{ fontFamily: 'var(--font-mono, monospace)' }} title={`Ledger link ${r.chain_sha256}`}>
+                      · {r.chain_sha256.slice(0, 8)}
+                    </span>
+                  )}
                   <button className="nda-open" style={{ marginLeft: 'auto' }} onClick={() => revert(r.id)}>{I.rotateCcw} Revert</button>
                 </div>
                 <div className="cmt-body" style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}>
