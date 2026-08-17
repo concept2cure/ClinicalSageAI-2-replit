@@ -129,11 +129,23 @@ describe('confidence interval and significance behavior', () => {
     expect(large.pValue).toBeLessThan(0.05);
   });
 
-  it('reports Infinity and a NaN CI when there are no losses', () => {
+  it('reports a NULL win ratio and a NULL CI when there are no losses', () => {
+    // This test pinned `Infinity` and `NaN`, both of which were replaced on
+    // purpose and for the same reason: each JSON-serializes to `null` anyway,
+    // so the wire carried `"winRatio": null` beside `"success": true` with no
+    // way for a client to tell "every pair a win" from "every pair a tie".
+    // Returning null makes that wire value intentional rather than incidental.
+    // See the contract notes on WinRatioResult.winRatio / .ciLower.
     const r = winRatioAnalysis([sub(3), sub(4)], [sub(1), sub(2)], [cont]);
     expect(r.losses).toBe(0);
-    expect(r.winRatio).toBe(Infinity);
-    expect(Number.isNaN(r.ciLower)).toBe(true);
+    expect(r.winRatio).toBeNull();
+    expect(r.ciLower).toBeNull();
+    expect(r.ciUpper).toBeNull();
+    // The counts are how a caller distinguishes the two cases that the old
+    // Infinity/NaN values collapsed together — which is the entire reason for
+    // the null, so assert they are still there and still informative.
+    expect(r.wins).toBe(4);
+    expect(r.ties).toBe(0);
   });
 
   it('is deterministic with stable provenance', () => {
