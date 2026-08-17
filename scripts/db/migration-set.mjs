@@ -1134,6 +1134,17 @@ export const C2C_MIGRATION_FILES = [
   // even if every target table were present on every database.
   'migrations/20260814d_document_alias_map.sql',
 
+  // ── cerv2_section_versions.updated_at (added 2026-08-17) ────────────────────
+  // Reconciles the SQL lineage with shared/schema.ts, which declares this
+  // column while no migration created it. section-version.ts enumerates
+  // `updated_at` in its INSERT, so on a migration-provisioned database every
+  // POST /api/cerv2-sections answered 500 (42703 at PLAN time) while a
+  // drizzle-push database worked — the two provisioning paths disagreed, and
+  // only one of them is what deployment runs. ADD COLUMN IF NOT EXISTS,
+  // nullable with a default, guarded on the table existing so an environment
+  // without the CERV2 bundle no-ops instead of aborting a stopOnFirstFailure run.
+  'migrations/20260817_reconcile_declared_updated_at_columns.sql',
+
   // ── Submission leaf source pin, GA ledger L23 (added 2026-08-14) ─────────
   // Two nullable columns on submission_leaves recording the SHA-256 of the
   // source document's content at the moment a leaf was filed, and when that was

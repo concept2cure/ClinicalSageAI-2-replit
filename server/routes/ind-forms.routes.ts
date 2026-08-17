@@ -62,6 +62,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { projects, concept2cureArtifacts } from '@shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import auditService from '../services/auditService';
 import { recordArtifactProvenanceDrizzle } from '../services/provenance/artifact-provenance';
 
@@ -311,61 +312,93 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
       },
     });
   }
+  // The project this artifact is registered against. For a program ident it is
+  // filled from the C1 anchor below when one exists; the audited-unplaced
+  // degradation is taken only when it does not.
+  let effectiveProjectId = projectId;
+
   try {
     if (isProgramIdent) {
-      // Program-spine path: resolve org-scoped, then audited-unplaced degradation.
+      // Program-spine path: resolve org-scoped, then anchor, then — only if
+      // there is no anchor — the audited-unplaced degradation.
       const program = await resolveProgramIdent(rawIdent, ctx.organizationId);
       if (!program) {
         return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
       }
-      const builtForProgram = buildFormById(formId, body);
-      const programContent = JSON.stringify({
-        formId: builtForProgram.formId,
-        fields: builtForProgram.fields,
-        missingRequired: builtForProgram.missingRequired,
-      });
-      const programContentHash = crypto.createHash('sha256').update(programContent).digest('hex');
-      const ready = builtForProgram.missingRequired.length === 0;
-      // The audit row is the ONLY persisted trace on this path — it is required,
-      // not best-effort. If it throws, the catch below answers 500 and the
-      // response never claims `audited: true` over nothing.
-      await auditService.logAction({
-        action: 'ind_form.artifact.unplaced',
-        userId: ctx.userId,
-        organizationId: ctx.organizationId,
-        resourceType: 'ind_form',
-        resourceId: `${formId}:${program.id}`,
-        metadata: {
-          formId,
-          programId: program.id,
-          programCode: program.code,
-          ready,
-          contentHash: programContentHash,
-          artifactRegistry: 'unplaced_pending_document_identity_contract',
-        },
-      });
-      return res.status(200).json({
-        governed: false,
-        audited: true,
-        artifactId: null,
-        formId,
-        projectId: null,
+
+      // Document Identity Contract slice C1 gave the program spine the numeric
+      // anchor this registry needs (`projects.regulatory_program_id`, written by
+      // intake in the same transaction that creates the program). Ask for it
+      // before degrading: the v2 wizard hands out program idents, so this is the
+      // id space real users' Module-1 forms actually arrive with — every one of
+      // them was landing unregistered.
+      //
+      // The resolver is fail-soft by contract: null when the program predates
+      // C1, when intake skipped the anchor for one of its stated reasons, or
+      // when the migration is not applied here. Null keeps the existing
+      // behaviour exactly; a real anchor takes the governed path below.
+      const anchoredProjectId = await resolveProgramProjectAnchor(db, {
         programId: program.id,
-        ready,
-        missingRequired: builtForProgram.missingRequired,
-        contentHash: programContentHash,
-        artifact_registry:
-          'unplaced — the governed artifact registry (concept2cure_artifacts) requires a legacy ' +
-          'numeric project row; the built field map is audit-logged with its content hash ' +
-          '(pending document-identity contract)',
+        orgId: ctx.organizationId,
+        context: 'ind-forms.artifact',
       });
+      if (anchoredProjectId === null) {
+        const builtForProgram = buildFormById(formId, body);
+        const programContent = JSON.stringify({
+          formId: builtForProgram.formId,
+          fields: builtForProgram.fields,
+          missingRequired: builtForProgram.missingRequired,
+        });
+        const programContentHash = crypto.createHash('sha256').update(programContent).digest('hex');
+        const ready = builtForProgram.missingRequired.length === 0;
+        // The audit row is the ONLY persisted trace on this path — it is required,
+        // not best-effort. If it throws, the catch below answers 500 and the
+        // response never claims `audited: true` over nothing.
+        await auditService.logAction({
+          action: 'ind_form.artifact.unplaced',
+          userId: ctx.userId,
+          organizationId: ctx.organizationId,
+          resourceType: 'ind_form',
+          resourceId: `${formId}:${program.id}`,
+          metadata: {
+            formId,
+            programId: program.id,
+            programCode: program.code,
+            ready,
+            contentHash: programContentHash,
+            // Stable audit enum, deliberately unchanged: existing Part 11 rows
+            // carry this value and queries match on it. What changed is WHICH
+            // requests reach here — only genuinely unanchored programs now do.
+            artifactRegistry: 'unplaced_pending_document_identity_contract',
+          },
+        });
+        return res.status(200).json({
+          governed: false,
+          audited: true,
+          artifactId: null,
+          formId,
+          projectId: null,
+          programId: program.id,
+          ready,
+          missingRequired: builtForProgram.missingRequired,
+          contentHash: programContentHash,
+          artifact_registry:
+            'unplaced — this program has no anchored project row, and the governed artifact ' +
+            'registry (concept2cure_artifacts) requires one; the built field map is ' +
+            'audit-logged with its content hash',
+        });
+      }
+      effectiveProjectId = anchoredProjectId;
     }
 
-    // Tenant scope: the project must belong to the caller's org.
+    // Tenant scope: the project must belong to the caller's org. This re-checks
+    // the anchored id too. The anchor resolver already filters on org, so this
+    // is belt-and-braces — and it keeps ONE place deciding a project is in-org
+    // rather than two that could drift apart.
     const [project] = await db
       .select({ id: projects.id })
       .from(projects)
-      .where(and(eq(projects.id, projectId), eq(projects.organizationId, ctx.organizationId)))
+      .where(and(eq(projects.id, effectiveProjectId), eq(projects.organizationId, ctx.organizationId)))
       .limit(1);
     if (!project) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
@@ -379,7 +412,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
 
     const formIns = await db.insert(concept2cureArtifacts).values({
       artifactId,
-      projectId,
+      projectId: effectiveProjectId,
       organizationId: ctx.organizationId,
       createdById: ctx.userId,
       title: `FDA Form ${formId.replace(/^FDA_/, '')}`,
@@ -427,13 +460,13 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
         organizationId: ctx.organizationId,
         resourceType: 'concept2cure_artifact',
         resourceId: artifactId,
-        metadata: { formId, projectId, ready, contentHash },
+        metadata: { formId, projectId: effectiveProjectId, ready, contentHash },
       });
     } catch (auditErr) {
       logger.warn('audit log failed for ind-form artifact', { err: auditErr instanceof Error ? auditErr.message : String(auditErr) });
     }
 
-    res.status(201).json({ artifactId, formId, projectId, ready, missingRequired: built.missingRequired, contentHash });
+    res.status(201).json({ artifactId, formId, projectId: effectiveProjectId, ready, missingRequired: built.missingRequired, contentHash });
   } catch (err) {
     fail(res, err);
   }
