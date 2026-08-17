@@ -1213,8 +1213,14 @@ Recommended label storage: ${tokens.LABEL_STORAGE}
     // Store export record
     await pool.query(
       `
-      INSERT INTO stab_exports (study_id, export_type, tokens_json, markdown_content, generated_at)
-      VALUES ($1, 'p8_authoring', $2, $3, NOW())
+      -- Column names corrected: the table declares tokens / markdown /
+      -- created_at (db/migrations/030_stability_results.sql), not tokens_json /
+      -- markdown_content / generated_at. All three were unknown columns, so
+      -- pushing P.8 content to authoring recorded nothing and 42703'd on every
+      -- call. created_at is omitted rather than passed NOW() — it already
+      -- defaults to it. Found by ci:insert-columns-declared.
+      INSERT INTO stab_exports (study_id, export_type, tokens, markdown)
+      VALUES ($1, 'p8_authoring', $2, $3)
     `,
       [id, JSON.stringify(tokens), markdown]
     );
