@@ -8,13 +8,23 @@
 # deletion, so the cleanup cannot run from a session. GITHUB_TOKEN inside this
 # repo can, which is why the prune lives here.
 #
-# SAFETY. Manual dispatch only, dry run by DEFAULT, and a real run additionally
-# requires typing the branch count as `confirm`. Nothing outside the agent
-# prefixes is eligible, and `concept2cure-v2`, `dependabot/*`, `deps/*` and the
-# default branch are refused even if a prefix somehow matched. Every ref this
-# job deletes is printed with its tip SHA in the job summary FIRST, so the tips
-# stay recoverable (`git fetch origin <sha>`) for as long as GitHub keeps
-# unreachable objects.
+# TWO WAYS IN, because neither is available to everyone:
+#   1. workflow_dispatch — the button, for a human with repo UI access.
+#   2. a push that adds .github/prune-agent-branches.request — for an agent
+#      session, whose GitHub App is refused `actions: write` ("Resource not
+#      accessible by integration" on the dispatch endpoint) but which can
+#      commit a file. The request file carries the same confirmation the
+#      dispatch form asks for, and the job DELETES it on success so a prune
+#      never silently re-fires on the next push.
+#
+# SAFETY. Dry run by DEFAULT on both paths, and a real run additionally requires
+# the exact eligible count as `confirm` — a stale count (someone pushed another
+# agent branch meanwhile) fails the job closed rather than deleting a set nobody
+# reviewed. Nothing outside the agent prefixes is eligible, and
+# `concept2cure-v2`, `dependabot/*`, `deps/*` and the default branch are refused
+# even if a prefix somehow matched. Every ref this job deletes is printed with
+# its tip SHA in the job summary FIRST, so the tips stay recoverable
+# (`git fetch origin <sha>`) for as long as GitHub keeps unreachable objects.
 name: Prune agent branches
 
 on:
@@ -30,6 +40,9 @@ on:
         type: string
         required: false
         default: ''
+  push:
+    branches: [concept2cure-v2]
+    paths: ['.github/prune-agent-branches.request']
 
 permissions:
   contents: write
@@ -42,11 +55,47 @@ jobs:
   prune:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      # Resolve the request into the same two values the dispatch form collects.
+      # A push with no readable `DELETE <n>` line is a DRY RUN: the default on
+      # this path is always the harmless one.
+      - name: Resolve mode
+        id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          INPUT_CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          REQUEST='.github/prune-agent-branches.request'
+          if [ "$EVENT" = 'workflow_dispatch' ]; then
+            echo "dry_run=${INPUT_DRY_RUN}"   >> "$GITHUB_OUTPUT"
+            echo "confirm=${INPUT_CONFIRM}"   >> "$GITHUB_OUTPUT"
+            echo "clear_request=false"        >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          COUNT=''
+          if [ -f "$REQUEST" ]; then
+            COUNT="$(grep -oE '^DELETE[[:space:]]+[0-9]+' "$REQUEST" | grep -oE '[0-9]+' | head -1 || true)"
+          fi
+          if [ -n "$COUNT" ]; then
+            echo "Request file asks for a real prune of $COUNT branches."
+            echo "dry_run=false"        >> "$GITHUB_OUTPUT"
+            echo "confirm=$COUNT"       >> "$GITHUB_OUTPUT"
+            echo "clear_request=true"   >> "$GITHUB_OUTPUT"
+          else
+            echo "No DELETE <n> line found — treating as a dry run."
+            echo "dry_run=true"         >> "$GITHUB_OUTPUT"
+            echo "confirm="             >> "$GITHUB_OUTPUT"
+            echo "clear_request=false"  >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Collect, report, and prune
         uses: actions/github-script@v7
         env:
-          DRY_RUN: ${{ inputs.dry_run }}
-          CONFIRM: ${{ inputs.confirm }}
+          DRY_RUN: ${{ steps.mode.outputs.dry_run }}
+          CONFIRM: ${{ steps.mode.outputs.confirm }}
         with:
           script: |
             const AGENT_PREFIXES = /^(claude|codex|copilot|openai|cursor|agent|ai|bot)\//;
@@ -123,3 +172,19 @@ jobs:
             } else {
               core.notice(`Deleted ${deleted} agent branches; ${kept.length} kept.`);
             }
+
+      # Spend the request so the prune cannot silently re-fire on a later push.
+      # Runs only after a real prune that reported no failures.
+      - name: Clear the request file
+        if: success() && steps.mode.outputs.clear_request == 'true'
+        run: |
+          set -euo pipefail
+          REQUEST='.github/prune-agent-branches.request'
+          [ -f "$REQUEST" ] || exit 0
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git rm --quiet "$REQUEST"
+          git commit -m 'chore(prune): spend the agent-branch prune request [skip ci]'
+          # The branch may have moved while the prune ran; rebase rather than force.
+          git pull --rebase --quiet origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
