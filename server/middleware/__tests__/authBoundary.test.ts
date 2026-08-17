@@ -92,9 +92,13 @@ describe('resolveAuthBoundaryMode', () => {
 
 describe('createAuthBoundary', () => {
   const ORIGINAL_MODE = process.env.AUTH_BOUNDARY_MODE;
+  const ORIGINAL_RLS = process.env.RLS_ENFORCE;
+
   afterEach(() => {
     if (ORIGINAL_MODE === undefined) delete process.env.AUTH_BOUNDARY_MODE;
     else process.env.AUTH_BOUNDARY_MODE = ORIGINAL_MODE;
+    if (ORIGINAL_RLS === undefined) delete process.env.RLS_ENFORCE;
+    else process.env.RLS_ENFORCE = ORIGINAL_RLS;
   });
 
   it('passes CORS preflight without authenticating', () => {
@@ -149,11 +153,18 @@ describe('createAuthBoundary', () => {
   });
 
   it('rejects an authenticated request that carries no resolvable tenant (AUTH_011)', () => {
-    // The one control this boundary adds over the scope installer, and it had
-    // no test: an identity that authenticated upstream but resolves to no
-    // organization must NOT be allowed through unscoped. Under RLS_ENFORCE=on
-    // an unscoped pooled query fails closed anyway, so letting it past here
-    // would turn a clear 401 into an opaque downstream failure.
+    // The one control this boundary adds over the scope installer: an identity
+    // that authenticated upstream but resolves to no organization must NOT be
+    // allowed through unscoped. Under RLS_ENFORCE=on an unscoped pooled query
+    // fails closed anyway, so letting it past here would turn a clear 401 into
+    // an opaque downstream failure.
+    //
+    // The enforcement mode is set EXPLICITLY because that is the condition the
+    // control is written for (authBoundary.ts: `readEnforcementMode() === 'on'`).
+    // This test previously asserted the rejection with RLS_ENFORCE unset, where
+    // the middleware deliberately passes the request through — so it had never
+    // passed since it was written.
+    process.env.RLS_ENFORCE = 'on';
     const authenticate = vi.fn();
     const next = vi.fn() as unknown as NextFunction;
     const res = mockRes();
@@ -170,6 +181,25 @@ describe('createAuthBoundary', () => {
         error: expect.objectContaining({ code: 'AUTH_011' }),
       })
     );
+  });
+
+  it('and lets the same request through when RLS is not enforcing', () => {
+    // The other half of the same control, pinned so the carve-out stays
+    // deliberate rather than becoming an accident. Identities that predate the
+    // tenant claim (system consoles, platform tokens) keep working in dev, test
+    // and CI, where an unscoped query is not fenced by the database; production
+    // is the environment that sets RLS_ENFORCE=on and gets the 401 above.
+    process.env.RLS_ENFORCE = 'off';
+    const authenticate = vi.fn();
+    const next = vi.fn() as unknown as NextFunction;
+    const res = mockRes();
+    createAuthBoundary({ authenticate })(
+      mockReq({ baseUrl: '/api', path: '/documents', user: { id: 1 } } as Partial<Request>),
+      res,
+      next
+    );
+    expect(res.status).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
   });
 
   it('enforce mode delegates a protected unauthenticated request to the canonical 401', () => {

@@ -106,14 +106,33 @@ describe('every section-content overwrite is preceded by a revision snapshot', (
 
   it('createRevision itself still writes the revision ledger', () => {
     // The pairing above is worthless if the helper stops inserting. Anchored on
-    // the table and the columns the history endpoint reads back.
-    expect(src).toMatch(/INSERT INTO doc_revisions\s*\(id, section_id, content, created_by, created_at, tenant_id\)/);
+    // the table and the columns the history endpoint reads back — column by
+    // column rather than as one literal tuple, so reformatting the statement
+    // does not read as a missing write.
+    const insert = /INSERT INTO doc_revisions\s*\(([\s\S]{0,400}?)\)\s*VALUES/.exec(src);
+    expect(insert, 'INSERT INTO doc_revisions not found in createRevision').not.toBeNull();
+    const columns = insert![1].split(',').map((c) => c.trim());
+    expect(columns).toEqual(
+      expect.arrayContaining(['id', 'section_id', 'content', 'created_by', 'created_at', 'tenant_id']),
+    );
+    // And the ledger half: a revision that carries no chain link or origin is
+    // an ordinary row again, which is the regression this pins.
+    expect(columns).toEqual(
+      expect.arrayContaining(['content_sha256', 'prev_chain_sha256', 'chain_sha256', 'origin', 'inputs']),
+    );
   });
 
   it('and it is tenant-scoped, so a snapshot cannot land in another org', () => {
-    const helper = /const createRevision = async \(([\s\S]{0,900}?)\n\};/.exec(src);
+    // Bounded by the helper's own closing brace at column 0 rather than a
+    // character budget: the ledger work grew this helper past the old 900-char
+    // window, which made the gate fail for length instead of for substance.
+    const helper = /const createRevision = async \(([\s\S]*?)\n\};\n/.exec(src);
     expect(helper, 'createRevision helper not found').not.toBeNull();
     expect(helper![1]).toMatch(/tenantId/);
+    // Every statement in the helper reads or writes within the tenant, so the
+    // chain-head lookup and the citation manifest cannot cross an org either.
+    const tenantScoped = helper![1].match(/tenant_id = \$\d/g) ?? [];
+    expect(tenantScoped.length).toBeGreaterThanOrEqual(2);
   });
 });
 
