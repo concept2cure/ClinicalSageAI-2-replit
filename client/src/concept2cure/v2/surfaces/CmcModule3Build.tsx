@@ -33,7 +33,7 @@ import { I } from '../icons';
 import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
-import { cmcProjectId, cmcWriteError } from './cmcShared';
+import { cmcProjectId, cmcWriteError, openProgramAction } from './cmcShared';
 import { C2CToast, useToast } from '../toast';
 
 /* ── The read models ─────────────────────────────────────────────────────── */
@@ -289,7 +289,9 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
             <EmptyState
               icon={I.layers}
               title="Open a program to build its Module 3"
-              hint="The §3.2 build state, its contradictions and its export readiness are all per-project. Select a program and this becomes the board it is built from."
+              hint="The §3.2 build state, its contradictions and its export readiness are all per-project."
+              action={openProgramAction(nav)}
+              regulation="Serves the CTD Module 3 record (ICH M4Q)"
             />
           </div>
         </div>

@@ -623,11 +623,26 @@ export function ErrorState({
  * card. `tone="error"` is for a failed load; the default idle tone is for a
  * genuine empty result.
  *
+ * W0-5 — the four-part contract. A finished empty state answers, in order:
+ *   what this is        → `title`
+ *   why it is empty     → `hint`
+ *   the ONE action that fixes it → `action` (a real CTA — navigate, create;
+ *                          never an instruction the panel does not implement)
+ *   the regulation it serves     → `regulation` (so a screen with nothing on
+ *                          it still says what record it exists to keep)
+ * `title` alone is a legal minimum for panels whose emptiness needs no fixing
+ * (an audit trail with no events yet is complete, not deficient). What the
+ * contract retires is the PASSIVE INSTRUCTION — "Select a program" as prose
+ * with nothing to click. If the fix is an action, render the action.
+ *
  * `tone="error"` DELEGATES to `<ErrorState>` rather than rendering its own
  * error panel. That is deliberate and is what converges the 139 existing error
  * call sites without touching any of them: they inherit the internals filter,
  * the assertive announcement and the correlation-id slot by construction. New
- * code should call `<ErrorState>` directly.
+ * code should call `<ErrorState>` directly. A failure is not an empty state,
+ * so `action` and `regulation` are deliberately NOT forwarded: the one action
+ * on a failure is recovery (`retry`), and a "create" CTA over a failed read
+ * would invite writing into a store that just refused to answer.
  */
 export function EmptyState({
   title,
@@ -642,6 +657,8 @@ export function EmptyState({
      failure in the product rather than differing by which component happened to
      render it. A caller that passes a label still wins. */
   retryLabel,
+  action,
+  regulation,
   testId,
 }: {
   title: string;
@@ -653,6 +670,12 @@ export function EmptyState({
   /** A recovery path for a failed load. UI standards §8: errors always have one. */
   retry?: () => void;
   retryLabel?: string;
+  /** The one action that resolves the emptiness — a real control, not prose.
+   *  Distinct from `retry`, which recovers a failure. */
+  action?: { label: string; onAct: () => void };
+  /** The regulation or record this surface serves, stated factually
+   *  (e.g. "Serves the CTD Module 3 record (ICH M4Q)"). */
+  regulation?: string;
   testId?: string;
 }) {
   /* A failure is not an empty state. It has one renderer, and this is not it —
@@ -687,11 +710,17 @@ export function EmptyState({
       {icon && <span className="c2c-empty-ic" aria-hidden="true">{icon}</span>}
       <div className="c2c-empty-t">{title}</div>
       {hint && <div className="c2c-empty-h">{hint}</div>}
+      {action && (
+        <button type="button" className="c2c-empty-action" onClick={action.onAct}>
+          {action.label}
+        </button>
+      )}
       {retry && (
         <button type="button" className="c2c-empty-retry" onClick={retry}>
           {retryLabel ?? 'Retry'}
         </button>
       )}
+      {regulation && <div className="c2c-empty-reg">{regulation}</div>}
     </div>
   );
 }

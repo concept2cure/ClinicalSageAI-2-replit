@@ -317,3 +317,50 @@ prerequisite for BP-W1-6 rather than a vague one.
 Deliberately different words for different facts — "unknown" where nothing was
 screened, "untracked" where nothing was recorded — read as precision, not
 inconsistency.
+
+---
+
+## W0-5 — standardise empty states (2026-08-17)
+
+The contract, as landed: a finished empty state answers **what this is**
+(`title`), **why it is empty** (`hint`), **the one action that fixes it**
+(`action` — a real control), and **the regulation it serves** (`regulation`).
+`EmptyState` in `v2/dataConnect.tsx` carries the two new slots; the docstring
+names the contract and the thing it retires — the passive instruction, "Select
+a program" as prose above a panel with nothing to click.
+
+Two boundary decisions worth recording:
+
+- **A failure is not an empty state.** `tone="error"` still delegates to
+  `ErrorState`, and the new slots are deliberately NOT forwarded: the one
+  action on a failure is recovery, and a "create" CTA over a failed read would
+  invite writing into a store that just refused to answer. Pinned by test.
+- **The CTA is real or absent.** `openProgramAction(nav)` (cmcShared — one
+  label, one destination) navigates to Mission Control, where programs are both
+  opened and created. When a host has not threaded `nav`, the CTA is honestly
+  absent rather than rendered dead — a button that cannot navigate would be the
+  passive instruction back in a button costume.
+
+Converted call sites (the biopharma wave's three; mdx device surfaces are the
+device wave's): `CmcModule3Build` (Serves the CTD Module 3 record, ICH M4Q),
+`CmcQuality` (Serves the quality design record, ICH Q8/Q9/Q10), `CmcModule`'s
+records tab (Serves the per-program audit history, 21 CFR Part 11 §11.10(e)).
+
+**The sample-data banner is closed as superseded, not built.** Measured before
+building: no v2 surface renders fixture content as content any more. Zero
+`useLiveList` consumers remain under `v2/surfaces/`; the three remaining
+`useLive`/`sample` reads (DispatchReadiness, Registrations, V2App) use the flag
+*defensively* — to refuse sample data, not to show it — and the one surviving
+`<SampleTag>` render (AdminSurfaces) is derived from a real fetch outcome and
+says "Live". The fixture-free contract this file's own header describes has
+overtaken the banner: a persistent banner for a state that no longer renders
+would be scaffolding around a wall that is already down. If a fixture path
+returns, the banner spec in `.design/surface-layer-assessment/DESIGN_BRIEF.md`
+(persistent, non-dismissible) still stands.
+
+Proof: `__tests__/emptyState.contract.test.tsx` — 7 assertions, including
+source-level phrase retirement per converted file, verified non-vacuous by
+reintroducing the phrase and watching exactly one test fail. Suites around the
+touched components (errorState, zeroStateNarrative, cmcSuiteWrites): 51/51.
+Gates: design-system, token-contrast, microcopy, compliance-claims,
+css-selector-shadowing, token-cascade — all pass; typecheck 0.

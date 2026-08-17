@@ -43,6 +43,22 @@ export function cmcProjectUuid(): string | undefined {
   return id && UUID_RE.test(id) ? id : undefined;
 }
 
+/**
+ * W0-5: the one action that fixes "no program open" — real navigation to
+ * Mission Control, where programs are both opened and created. Defined once so
+ * every CMC empty state offers the same words and the same destination.
+ * Honestly absent when the host did not thread `nav` (tests render sub-surfaces
+ * bare); a CTA that could not navigate would be the passive instruction back
+ * in a button costume.
+ */
+export function openProgramAction(
+  nav?: (id: string) => void,
+): { label: string; onAct: () => void } | undefined {
+  return nav
+    ? { label: 'Choose or create a program', onAct: () => nav('mission-control') }
+    : undefined;
+}
+
 /* ── Write errors ───────────────────────────────────────────────────────── */
 
 interface ZodIssueLike {

@@ -57,6 +57,7 @@ import {
   cmcWriteError,
   cmcWriteFailed,
   cmcWriteThrew,
+  openProgramAction,
 } from './cmcShared';
 import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
@@ -1942,7 +1943,9 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
             <EmptyState
               icon={I.scroll}
               title="Open a program to see its records"
-              hint="The Module 3 audit chain and the contradiction history are recorded per project. Select a program to load them."
+              hint="The Module 3 audit chain and the contradiction history are recorded per project."
+              action={openProgramAction(nav)}
+              regulation="Serves the per-program audit history (21 CFR Part 11 §11.10(e))"
             />
           </div>
         </div>

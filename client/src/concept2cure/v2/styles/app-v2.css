@@ -196,6 +196,27 @@
 .c2c-v2 .c2c-empty-state .c2c-empty-retry:hover { background: var(--accent-100); color: #fff; border-color: var(--accent-100); }
 @media (pointer: coarse) { .c2c-v2 .c2c-empty-state .c2c-empty-retry { min-height: 44px; padding: 11px 18px; } }
 
+/* W0-5: the empty-state contract's ONE action — a real CTA, filled where the
+   retry pill is outlined, because resolving the emptiness is the panel's
+   primary act and recovery is its fallback. Same fill the retry pill already
+   uses on hover, so the pair reads as one control family. */
+.c2c-v2 .c2c-empty-state .c2c-empty-action {
+  margin-top: 6px; min-height: 32px; padding: 7px 16px;
+  font-size: 12px; font-weight: 600; color: #fff;
+  border: 1px solid var(--accent-100); border-radius: 99px;
+  background: var(--accent-100);
+  transition: background var(--dur, .15s), border-color var(--dur, .15s);
+}
+.c2c-v2 .c2c-empty-state .c2c-empty-action:hover { background: var(--accent-200); border-color: var(--accent-200); }
+@media (pointer: coarse) { .c2c-v2 .c2c-empty-state .c2c-empty-action { min-height: 44px; padding: 11px 20px; } }
+
+/* W0-5: the regulation line — the record this screen exists to keep, stated
+   even when the screen is empty. Quiet by design: reference, not badge. */
+.c2c-v2 .c2c-empty-state .c2c-empty-reg {
+  margin-top: 8px; font-size: 11px; letter-spacing: .01em;
+  color: var(--text-400);
+}
+
 /* ErrorState — the ONE surface a failure is reported on.
  *
  * Replaces four parallel implementations: EmptyState's tone-error panel (139
