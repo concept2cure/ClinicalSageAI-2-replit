@@ -25,6 +25,7 @@ import {
   getAnaContext,
   getSegment,
   surfacesByTier,
+  getSegmentModules,
 } from '../registryModel';
 
 describe('ui-v2 registry model ↔ shared registry parity', () => {
@@ -128,6 +129,37 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     for (const c of CLIENT_CATEGORIES) {
       expect(c.icon, `icon for ${c.id}`).toBeTruthy();
     }
+  });
+
+  // ── BP-W2-1: the lane merge, and the redirect it promised ────────────────
+
+  it('the retired lane ids are gone from SEGMENTS — one lane, not three', () => {
+    const ids = SEGMENTS.map((s) => s.id);
+    expect(ids).toContain('biopharma');
+    expect(ids).not.toContain('biotech');
+    expect(ids).not.toContain('pharma');
+  });
+
+  it("getSegment('biotech') and getSegment('pharma') resolve to the merged lane", () => {
+    // Stored prefs and deep links carry the retired ids; without the alias
+    // they would silently fall back to SEGMENTS[0] (medtech) — a biotech user
+    // waking up in the device lane.
+    expect(getSegment('biotech')?.id).toBe('biopharma');
+    expect(getSegment('pharma')?.id).toBe('biopharma');
+  });
+
+  it('one module list serves both retired ids — the duplicate is deleted, not hidden', () => {
+    expect((SEGMENT_MODULES as Record<string, unknown>)['pharma']).toBeUndefined();
+    expect((SEGMENT_MODULES as Record<string, unknown>)['biotech']).toBeUndefined();
+    expect(getSegmentModules('pharma')).toBe(getSegmentModules('biotech'));
+    expect(getSegmentModules('pharma')).toBe(SEGMENT_MODULES.biopharma);
+  });
+
+  it('the rail offers the merged lane once, not the two company labels', () => {
+    const ids = CLIENT_CATEGORIES.map((c) => c.id);
+    expect(ids).toContain('biopharma');
+    expect(ids).not.toContain('biotech');
+    expect(ids).not.toContain('pharma');
   });
 
   it('every rail client-category id resolves to a real segment', () => {

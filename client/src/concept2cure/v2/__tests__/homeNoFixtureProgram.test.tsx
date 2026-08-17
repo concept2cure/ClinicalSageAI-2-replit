@@ -135,8 +135,14 @@ describe('SEGMENT_CONTEXT is reference config, not programme data', () => {
 
   it('still carries the category label and its regulatory pathways', () => {
     // The half that is genuinely tenant-independent, and is still rendered.
-    const biotech = getSegmentContext('biotech');
-    expect(biotech.label).toBe('Biotech');
-    expect(biotech.pathways).toContain('BLA');
+    // BP-W2-1: the lanes merged — and the retired ids must keep resolving,
+    // because stored prefs and deep links carry them. Both land on the merged
+    // lane rather than tripping the unknown-id fallback.
+    const viaBiotech = getSegmentContext('biotech');
+    const viaPharma = getSegmentContext('pharma');
+    expect(viaBiotech.label).toBe('Biotech & Pharma');
+    expect(viaPharma).toBe(viaBiotech);
+    expect(viaBiotech.pathways).toContain('BLA');
+    expect(viaBiotech.pathways).toContain('NDA');
   });
 });

@@ -31,7 +31,7 @@ import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import { getAction, getSegment } from './registryModel';
+import { getAction, getSegment, resolveSegmentId } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
@@ -96,14 +96,21 @@ const DEFAULT_PREFS: Prefs = {
   railCollapsed: true,
   anaOpen: false,
   anaMode: 'standard',
-  segment: 'biotech',
+  segment: 'biopharma',
   welcomeDismissed: false,
 };
 
 function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    if (raw) return { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) };
+    if (raw) {
+      const stored = JSON.parse(raw) as Partial<Prefs>;
+      /* BP-W2-1: a pref persisted before the lane merge may carry the retired
+         'biotech'/'pharma' segment ids — normalize on read so the stored value
+         lands on the merged lane instead of tripping the unknown-id fallback. */
+      if (stored.segment) stored.segment = resolveSegmentId(stored.segment);
+      return { ...DEFAULT_PREFS, ...stored };
+    }
   } catch {
     /* default */
   }
