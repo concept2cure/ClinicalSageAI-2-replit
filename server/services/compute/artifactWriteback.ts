@@ -89,10 +89,13 @@ export async function registerArtifactWithGovernance(input: WritebackInput): Pro
 
     const provenanceEventId = `prov_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
+      // No `updated_at` — the table has no such column (see the note at the
+      // matching insert in exportGovernance.ts). Postgres rejects an unknown
+      // column at PLAN time, so this failed on every writeback.
       `INSERT INTO concept2cure_provenance_events (
         event_id, artifact_id, artifact_version_id, organization_id, event_type, event_action,
-        actor_id, actor_name, actor_email, details, source_description, backend_route, backend_service, ip_address, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,'generation','artifact_compute_writeback',$5,$6,NULL,$7,$8,$9,$10,'127.0.0.1',$11,$11)`,
+        actor_id, actor_name, actor_email, details, source_description, backend_route, backend_service, ip_address, created_at
+      ) VALUES ($1,$2,$3,$4,'generation','artifact_compute_writeback',$5,$6,NULL,$7,$8,$9,$10,'127.0.0.1',$11)`,
       [
         provenanceEventId,
         artifactPk,
@@ -115,11 +118,13 @@ export async function registerArtifactWithGovernance(input: WritebackInput): Pro
     const auditAction = input.auditAction ?? 'CREATE';
     const auditId = `audit_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
+      // No created_at/updated_at — see the note at the matching insert in
+      // exportGovernance.ts. `timestamp` is this table's only time column.
       `INSERT INTO regulatory_audit_logs (
         audit_id, organization_id, entity_type, entity_id, action, action_category,
         previous_value, new_value, user_id, user_name, user_role, ip_address,
-        is_gxp_relevant, timestamp, metadata, created_at, updated_at
-      ) VALUES ($1,$2,'artifact',$3,$4,'data-change',NULL,$5,$6,$7,'system','127.0.0.1',TRUE,$8,$9,$8,$8)`,
+        is_gxp_relevant, timestamp, metadata
+      ) VALUES ($1,$2,'artifact',$3,$4,'data-change',NULL,$5,$6,$7,'system','127.0.0.1',TRUE,$8,$9)`,
       [
         auditId,
         input.organizationId,

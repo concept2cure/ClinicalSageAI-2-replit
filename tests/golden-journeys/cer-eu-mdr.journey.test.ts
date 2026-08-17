@@ -112,6 +112,7 @@ const R = new JourneyRecorder(
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260506_kit_section_draft_provenance.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
+    'migrations/20260817_reconcile_declared_updated_at_columns.sql',
   ],
 );
 
@@ -167,21 +168,17 @@ beforeAll(async () => {
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260506_kit_section_draft_provenance.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',
+      // The declared-but-never-created updated_at columns, reconciled for real
+      // rather than granted as test-only sql.
+      'migrations/20260817_reconcile_declared_updated_at_columns.sql',
     ],
-    // See device-510k-estar.journey.test.ts for the full note on these three:
-    // columns that live in shared/schema.ts (or in no lineage at all) while the
-    // SQL lineage never creates them. Granting the most forgiving REAL
-    // provisioning state keeps the governed-export failure below attributable to
-    // the one column that exists nowhere.
-    testOnlySql: `
-      ALTER TABLE cerv2_section_versions
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();
-      ALTER TABLE concept2cure_artifact_versions
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();
-      ALTER TABLE regulatory_audit_logs
-        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now(),
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT now();
-    `,
+    // The three TEST-ONLY column grants that were here are gone. Two of them
+    // (cerv2_section_versions / concept2cure_artifact_versions .updated_at) are
+    // now created for real by the migration loaded above, and the third
+    // (regulatory_audit_logs .created_at/.updated_at) named columns that exist
+    // in no lineage AND in no drizzle model — the INSERTs naming them were
+    // simply wrong and no longer do. See device-510k-estar.journey.test.ts for
+    // the full note.
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -541,8 +538,14 @@ describe('golden journey — CER (EU MDR) clinical evaluation', () => {
       };
     });
 
-    // ── 6. The ZIP export IS the MEDDEV-shaped section set ──────────────────
-    await R.expectBlocked('meddev-shaped-zip-is-delivered-audited-but-unplaced', async () => {
+    // ── 6. The ZIP export IS the MEDDEV-shaped section set, and it is now
+    //     REGISTRY-PLACED. This step asserted the audited-unplaced degradation,
+    //     because the CER export resolved a program ident to a null anchor and
+    //     never asked the C1 resolver for the real one. It does now, so an
+    //     anchored programme takes the governed path — with the delivered ZIP
+    //     asserted exactly as before, since registration must not change what
+    //     the user receives.
+    await R.step('meddev-shaped-zip-is-delivered-and-registry-placed', async () => {
       const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM concept2cure_artifacts`);
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/cerv2/export/zip')).send({
         docType: 'cerv2_cer',
@@ -592,24 +595,23 @@ describe('golden journey — CER (EU MDR) clinical evaluation', () => {
       const auditRow = audit.rows[0] as
         | { new_values: { artifactRegistry: string; sha256: string; docType: string } }
         | undefined;
+      expect(res.status).toBe(200);
+      expect(res.body.governed).toBe(true);
+      expect(res.body.artifact_id).toBeTruthy();
+      expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n + 1);
+      // The MEDDEV-shaped section set is unchanged.
+      expect(packageMatches).toBe(true);
+      expect(everyPdfEntryIsPdf).toBe(true);
       return {
-        blocked:
-          res.status === 200 &&
-          res.body.governed === false &&
-          res.body.audited === true &&
-          res.body.artifact_id === null &&
-          /unplaced/.test(res.body.artifact_registry) &&
-          res.body.sha256 === sha &&
-          packageMatches &&
-          everyPdfEntryIsPdf &&
-          auditRow?.new_values?.artifactRegistry === 'unplaced_pending_document_identity_contract' &&
-          (before.rows[0] as { n: number }).n === (after.rows[0] as { n: number }).n,
         status: res.status,
+        governed: res.body.governed,
+        artifactId: res.body.artifact_id,
         meddevSectionSet: names.filter((f) => /^\d\d_/.test(f)),
         everyPdfEntryIsPdf,
-        registry: res.body?.artifact_registry,
-        auditedDocType: auditRow?.new_values?.docType ?? null,
-        anchorExistsForThisProgram: anchorProjectId,
+        artifactsBefore: (before.rows[0] as { n: number }).n,
+        artifactsAfter: (after.rows[0] as { n: number }).n,
+        anchorUsedForThisProgram: anchorProjectId,
+        priorUnplacedAudit: auditRow?.new_values?.artifactRegistry ?? null,
       };
     });
 
@@ -642,8 +644,10 @@ describe('golden journey — CER (EU MDR) clinical evaluation', () => {
     });
 
     // The governed REGISTRY path — the same shared writeback the 510(k) journey
-    // pins — cannot complete on any database (see observations). It fails closed.
-    await R.expectBlocked('governed-registry-placement-fails-closed-on-an-undefined-column', async () => {
+    // pins — now completes. It used to fail closed on EVERY database because the
+    // writeback named columns no lineage creates; those column lists are
+    // reconciled, so the artifact and its provenance event land together.
+    await R.step('governed-registry-placement-writes-artifact-and-provenance', async () => {
       const before = await jdb.pool.query(
         `SELECT (SELECT count(*)::int FROM concept2cure_artifacts) AS a,
                 (SELECT count(*)::int FROM concept2cure_provenance_events) AS p`,
@@ -660,17 +664,50 @@ describe('golden journey — CER (EU MDR) clinical evaluation', () => {
       );
       const b = before.rows[0] as { a: number; p: number };
       const a = after.rows[0] as { a: number; p: number };
+      expect(res.status).toBe(200);
+      expect(a.a).toBe(b.a + 1);
+      expect(a.p).toBe(b.p + 1);
       return {
-        blocked:
-          res.status === 500 &&
-          res.body.error === 'GOVERNED_EXPORT_FAILED' &&
-          /updated_at/.test(String(res.body.message)) &&
-          b.a === a.a &&
-          b.p === a.p,
         status: res.status,
-        message: res.body?.message,
+        artifactId: res.body?.artifact_id ?? null,
         artifactsBefore: b.a,
         artifactsAfter: a.a,
+        provenanceAfter: a.p,
+      };
+    });
+
+    // The tenant guard on the numeric projectId. This was a live hole the
+    // moment the registry writeback started working: `meta.ident` was resolved
+    // org-scoped but `data.projectId` went straight through to placement, so a
+    // caller could file their own export into another tenant's project lineage.
+    await R.expectBlocked('cannot-place-an-export-into-another-tenants-project', async () => {
+      const before = await jdb.pool.query(
+        `SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE project_id = $1`,
+        [anchorProjectId],
+      );
+      // OTHER_ORG's principal names THIS org's anchored project id directly.
+      const res = await asPrincipal(OTHER_ORG, OTHER_USER)(
+        request(app).post('/api/cerv2/export/pdf'),
+      ).send({
+        docType: 'cerv2_cer',
+        useProjectContent: true,
+        projectId: anchorProjectId,
+        meta: { id: 'CER-JOURNEY-001', title: 'cross-tenant attempt' },
+      });
+      const after = await jdb.pool.query(
+        `SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE project_id = $1`,
+        [anchorProjectId],
+      );
+      return {
+        // 404 — and it must not distinguish "not yours" from "does not exist".
+        // Nothing was written into the victim project either way.
+        blocked:
+          res.status === 404 &&
+          (before.rows[0] as { n: number }).n === (after.rows[0] as { n: number }).n,
+        status: res.status,
+        error: res.body?.error,
+        victimProjectArtifactsBefore: (before.rows[0] as { n: number }).n,
+        victimProjectArtifactsAfter: (after.rows[0] as { n: number }).n,
       };
     });
 
@@ -686,17 +723,22 @@ describe('golden journey — CER (EU MDR) clinical evaluation', () => {
     });
 
     R.observations.push(
-      'The CER export shares the 510(k) export governance plane, so it inherits the same finding: ' +
-        'server/services/compute/artifactWriteback.ts INSERTs concept2cure_provenance_events.updated_at, a ' +
-        'column that exists in NO schema lineage (see device-510k-estar.journey.test.ts for the full ' +
-        'evidence). The step "governed-registry-placement-fails-closed-on-an-undefined-column" pins that ' +
-        'the CER path fails the same way and leaves nothing partially registered. The audited-unplaced ' +
-        'delivery path — which is what a uuid programme takes — is unaffected and is asserted in full.',
-      'A numeric `projectId` in the export body is NOT org-checked. resolveExportRequest resolves ' +
-        '`meta.ident` org-scoped (404 outside the org, asserted above) but passes `data.projectId` straight ' +
-        'through to the artifact registry, so a caller can file their own export into another tenant\'s ' +
-        'project lineage. The placement step above is exactly that path: it reaches the registry writeback ' +
-        'rather than a 404. Not fixed here — it is a route change, not a test change.',
+      'RESOLVED — the CER export shares the 510(k) export governance plane and inherited its blocking ' +
+        'finding: artifactWriteback.ts / exportGovernance.ts INSERTed concept2cure_provenance_events' +
+        '.updated_at and regulatory_audit_logs.created_at/.updated_at, columns in NO schema lineage and no ' +
+        'drizzle model, so registry placement 500\'d on every database. Those column lists are corrected ' +
+        'and the step now asserts placement completing. A uuid programme no longer takes the ' +
+        'audited-unplaced path either, because the CER route now resolves the C1 anchor.',
+      'FIXED, AND IT HAD TO BE FIXED IN THE SAME CHANGE — a numeric `projectId` in the export body was ' +
+        'not org-checked: resolveExportRequest resolved `meta.ident` org-scoped (404 outside the org) but ' +
+        'passed `data.projectId` straight through to the artifact registry, so a caller could file their ' +
+        'own export into another tenant\'s project lineage. That was inert ONLY because the registry ' +
+        'writeback above 500\'d before reaching the insert. Reconciling the column list without also ' +
+        'closing this would have converted a dead bug into a live cross-tenant write. resolveExportRequest ' +
+        'now proves the supplied projectId belongs to the caller\'s org against `projects` — the table ' +
+        'concept2cure_artifacts.project_id actually references — and 404s identically for "not yours" and ' +
+        '"does not exist". Step "cannot-place-an-export-into-another-tenants-project" asserts it, and that ' +
+        'the victim project gains no artifact row.',
       'Recording literature and appraising it are kept apart on purpose, and the route says so: the ' +
         'response carries screeningState:null plus the notes naming what the corpus table cannot hold ' +
         '(no program column; screening state recorded elsewhere). The journey asserts the notes are ' +

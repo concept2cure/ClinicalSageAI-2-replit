@@ -143,6 +143,57 @@ describe('POST /:formId/artifact — program-spine ident (audited-unplaced degra
     expect(fakeDb.insert).not.toHaveBeenCalled();
   });
 
+  it('registers a GOVERNED artifact when the program HAS a C1 project anchor', async () => {
+    // Document Identity Contract slice C1 gives a uuid program a numeric
+    // `projects` row through `projects.regulatory_program_id`. Three selects run
+    // now: the program lookup, the anchor lookup, then the org re-check on the
+    // anchored project.
+    mockSelectRows
+      .mockReturnValueOnce([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }])
+      .mockReturnValueOnce([{ id: 4242 }])
+      .mockReturnValueOnce([{ id: 4242 }]);
+
+    const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
+    const res = createMockResponse() as any;
+
+    await artifactHandler()(req, res);
+
+    // This is the Module-1 form a pilot user actually saves: the v2 wizard hands
+    // out program idents, so before C1 was wired in EVERY such save landed
+    // unregistered. It must now be a real governed artifact row.
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(fakeDb.insert).toHaveBeenCalledTimes(1);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload).toMatchObject({ formId: 'FDA_1571', projectId: 4242 });
+    expect(String(payload.artifactId)).toMatch(/^artifact_indform_1571_/);
+    // And it must NOT also claim the registry placement is pending.
+    expect(auditLog).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'ind_form.artifact.unplaced' }),
+    );
+  });
+
+  it('keeps the audited-unplaced path when the program has NO anchor', async () => {
+    // A program with no anchored project row is a fact about the data — created
+    // before C1, or intake skipped the anchor for one of its stated reasons —
+    // not a failure to try. It must degrade exactly as it did before.
+    mockSelectRows
+      .mockReturnValueOnce([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }])
+      .mockReturnValueOnce([]);
+
+    const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
+    const res = createMockResponse() as any;
+
+    await artifactHandler()(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(fakeDb.insert).not.toHaveBeenCalled();
+    expect(res.json.mock.calls[0][0]).toMatchObject({
+      governed: false,
+      audited: true,
+      artifactId: null,
+    });
+  });
+
   it('404s an ident that resolves to nothing in the caller org', async () => {
     mockSelectRows.mockReturnValue([]);
     const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
