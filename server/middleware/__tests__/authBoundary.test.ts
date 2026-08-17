@@ -125,12 +125,51 @@ describe('createAuthBoundary', () => {
     const authenticate = vi.fn();
     const next = vi.fn() as unknown as NextFunction;
     createAuthBoundary({ authenticate })(
-      mockReq({ baseUrl: '/api', path: '/documents', user: { id: 1 } } as Partial<Request>),
+      // "Already authenticated upstream" means the scope came WITH it: an
+      // attached request client is exactly what establishRequestTenantScope
+      // treats as authoritative and passes through untouched.
+      //
+      // The fixture used to be `{ id: 1 }` alone, which stopped exercising
+      // pass-through as the boundary grew. An identity with no organization
+      // claim now hits the AUTH_011 rejection (pinned by its own test below),
+      // and adding only `organizationId` runs off the far end into real scope
+      // installation, which needs a pool — and this suite is DB-free by
+      // construction. Both are the wrong shape for a test named "passes".
+      mockReq({
+        baseUrl: '/api',
+        path: '/documents',
+        user: { id: 1, organizationId: 1 },
+        dbClient: {} as never,
+      } as Partial<Request>),
       mockRes(),
       next
     );
     expect(authenticate).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an authenticated request that carries no resolvable tenant (AUTH_011)', () => {
+    // The one control this boundary adds over the scope installer, and it had
+    // no test: an identity that authenticated upstream but resolves to no
+    // organization must NOT be allowed through unscoped. Under RLS_ENFORCE=on
+    // an unscoped pooled query fails closed anyway, so letting it past here
+    // would turn a clear 401 into an opaque downstream failure.
+    const authenticate = vi.fn();
+    const next = vi.fn() as unknown as NextFunction;
+    const res = mockRes();
+    createAuthBoundary({ authenticate })(
+      mockReq({ baseUrl: '/api', path: '/documents', user: { id: 1 } } as Partial<Request>),
+      res,
+      next
+    );
+    expect(authenticate).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ code: 'AUTH_011' }),
+      })
+    );
   });
 
   it('enforce mode delegates a protected unauthenticated request to the canonical 401', () => {
