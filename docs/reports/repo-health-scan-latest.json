@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-16T23:06:37.709Z",
+  "generatedAt": "2026-08-17T00:23:37.429Z",
   "git": {
-    "sha": "44ca13f42b2c7b5a9fe77293976a198ac0a6b98a",
+    "sha": "ec8378bdaa0cef2b41464715755c36820163a757",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -256,27 +256,6 @@
         ]
       },
       {
-        "basename": "routes",
-        "count": 15,
-        "paths": [
-          "server/api/ai/routes.ts",
-          "server/api/cmc/routes.ts",
-          "server/api/drafting/routes.ts",
-          "server/api/ectd/routes.ts",
-          "server/api/enterprise/routes.js",
-          "server/api/gcc/ectd/routes.js",
-          "server/api/gcc/labeling/routes.js",
-          "server/api/gcc/signing/routes.js",
-          "server/api/gcc/site-intel/routes.js",
-          "server/api/labeling/routes.ts",
-          "server/api/neuro-symbolic/routes.ts",
-          "server/api/signing/routes.ts",
-          "server/api/site-intel/routes.ts",
-          "server/api/templates/routes.ts",
-          "server/startup/routes.ts"
-        ]
-      },
-      {
         "basename": "client",
         "count": 14,
         "paths": [
@@ -294,6 +273,26 @@
           "server/integrations/veeva-vault/client.ts",
           "server/integrations/verapdf/client.ts",
           "server/prisma/client.js"
+        ]
+      },
+      {
+        "basename": "routes",
+        "count": 14,
+        "paths": [
+          "server/api/ai/routes.ts",
+          "server/api/cmc/routes.ts",
+          "server/api/drafting/routes.ts",
+          "server/api/ectd/routes.ts",
+          "server/api/enterprise/routes.js",
+          "server/api/gcc/ectd/routes.js",
+          "server/api/gcc/labeling/routes.js",
+          "server/api/gcc/signing/routes.js",
+          "server/api/gcc/site-intel/routes.js",
+          "server/api/labeling/routes.ts",
+          "server/api/neuro-symbolic/routes.ts",
+          "server/api/site-intel/routes.ts",
+          "server/api/templates/routes.ts",
+          "server/startup/routes.ts"
         ]
       },
       {
@@ -2627,7 +2626,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 400,
+      "duplicateGroups": 399,
       "largeByBytes": 30,
       "largeByLines": 73
     },
