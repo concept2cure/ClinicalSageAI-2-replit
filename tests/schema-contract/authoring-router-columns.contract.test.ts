@@ -63,6 +63,10 @@ const ROUTER = path.join(REPO_ROOT, 'server/routes/authoring.router.ts');
  */
 const MIGRATIONS = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
+  // ALTERs doc_revisions above with the ledger columns the router now writes
+  // (content/chain hashes, origin, input manifest) and installs the
+  // append-only triggers. Same position the durable applier uses.
+  'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
   'db/migrations/20260725_authoring_signatures_and_workflow.sql',
   'db/migrations/20260725_authoring_audit_trail.sql',
   'db/migrations/20260725_authoring_signature_freeze_binding.sql',

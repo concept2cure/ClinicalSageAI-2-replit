@@ -161,6 +161,10 @@ beforeAll(async () => {
     prereqSql: PREREQ,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // ALTERs doc_revisions above with the ledger columns the router now writes
+      // (content/chain hashes, origin, input manifest) and installs the
+      // append-only triggers. Same position the durable applier uses.
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       // The tamper-proof audit log the router ALSO writes on governed actions.
       // Omitting it did not merely lose audit rows, it corrupted unrelated
