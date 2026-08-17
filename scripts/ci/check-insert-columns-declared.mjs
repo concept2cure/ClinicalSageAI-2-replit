@@ -61,6 +61,42 @@
 
 import { readFileSync, readdirSync, statSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+/**
+ * True only when this file is the process entry point. The parser below is
+ * imported by check-insert-columns-declared.selftest.mjs, and without this the
+ * import would run the whole guard as a side effect of testing it.
+ */
+const IS_MAIN =
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+/**
+ * The migration files deployment actually applies, in order. Read from the same
+ * durable list `db:migrate:deploy` runs, so this guard and the deployer cannot
+ * disagree about what the schema is.
+ */
+let MIGRATION_SET_FILES = [];
+try {
+  // process.cwd() rather than ROOT: this block runs BEFORE ROOT is declared,
+  // and referencing it here threw a ReferenceError that the catch below then
+  // swallowed — leaving the guard silently comparing against no lineage at all.
+  const mod = await import(
+    pathToFileURL(path.join(process.cwd(), 'scripts/db/migration-set.mjs')).href
+  );
+  const set = mod.C2C_MIGRATION_FILES ?? mod.default;
+  if (Array.isArray(set)) MIGRATION_SET_FILES = set.filter((f) => typeof f === 'string' && f.endsWith('.sql'));
+} catch (err) {
+  // Falling back to Drizzle alone can only over-report, never under-report, so
+  // this is safe — but it is SAID, not swallowed. A silent fallback here once
+  // made every lineage lookup return nothing while the guard still printed a
+  // confident summary.
+  console.warn(
+    `[ci:insert-columns-declared] migration set unreadable (${
+      err instanceof Error ? err.message : String(err)
+    }); comparing against Drizzle declarations only.`
+  );
+}
 
 const ROOT = process.cwd();
 const VERBOSE = process.argv.includes('--verbose');
@@ -108,7 +144,7 @@ function walk(dir, ext, out = []) {
  * being matched is mechanical and uniform across this repo —
  * `pgTable('name', { field: type('sql_name') ... })`.
  */
-function declaredColumns() {
+export function declaredColumns() {
   const byTable = new Map();
   for (const file of walk(path.join(ROOT, 'shared'), '.ts')) {
     const src = readFileSync(file, 'utf8');
@@ -134,6 +170,136 @@ function declaredColumns() {
         cols.add(cm[1]);
       }
       byTable.set(table, cols);
+    }
+  }
+  return byTable;
+}
+
+/**
+ * Map SQL table name → Set of column names the MIGRATION LINEAGE creates.
+ *
+ * Needed because Drizzle alone is not the whole truth. A column can be real in
+ * every provisioned database and simply missing from shared/schema.ts — the
+ * model goes stale, the migration does not. `audit_logs` is the live example:
+ * migrations/20260527_mutation_primitives.sql and 20260609_audit_hmac_seal.sql
+ * add sha256_chain, hmac_seal, actor_id, occurred_at and six more that the
+ * Drizzle model never got. Code writing those is CORRECT; flagging it would be
+ * the guard crying wolf on the Part 11 audit chain.
+ *
+ * So a column counts as legitimate when Drizzle declares it OR the lineage
+ * creates it. Only a column in NEITHER is the 42703-on-every-execution defect
+ * this guard exists for.
+ *
+ * Both statement forms are read, and both matter: CREATE TABLE for the original
+ * shape, ALTER TABLE ... ADD COLUMN for everything added since (which is where
+ * most of the interesting columns live).
+ *
+ * Pinned by check-insert-columns-declared.selftest.mjs against cases whose
+ * truth was established against a real database — an earlier version of this
+ * parse reported a column present when it was not, which is the failure mode
+ * that silences the guard.
+ */
+export function sqlLineageColumns() {
+  const byTable = new Map();
+  const add = (table, column) => {
+    if (!table || !column) return;
+    const set = byTable.get(table) ?? new Set();
+    set.add(column.toLowerCase());
+    byTable.set(table, set);
+  };
+
+  // Every migration EXCEPT the archived snapshots.
+  //
+  // Two wrong answers were tried before this one, in opposite directions, and
+  // both matter:
+  //
+  //   Scanning literally everything vouched for `users.username`, which exists
+  //   ONLY in db/migrations/_consolidated/ — archived snapshots of a LEGACY
+  //   schema that no applier runs. Those are exactly the columns storage.ts
+  //   createUser wrote while 42703-ing on every call, so the guard would have
+  //   blessed the defect it exists to catch. An old snapshot is not evidence
+  //   about the live database.
+  //
+  //   Restricting to scripts/db/migration-set.mjs went too far the other way.
+  //   That list is the C2C increment set; it is not the whole schema. The
+  //   Drizzle baseline is not in it (by design), and neither is
+  //   db/migrations/20260725_authoring_document_loop_tables.sql, which CREATEs
+  //   authoring_comments under the db/migrations manifest applier. Narrowing to
+  //   it made the guard report body / doc_id / created_at as undeclared on a
+  //   table that plainly has them — crying wolf, which is how a guard gets
+  //   baselined into uselessness.
+  //
+  // So: all migration DDL, minus the archive. The error direction is chosen
+  // deliberately. Over-counting what exists can only make this guard miss a
+  // defect; under-counting makes it block correct code, and a guard nobody
+  // trusts catches nothing at all. The self-test pins both ends — the columns
+  // that must be found AND the archived ones that must not.
+  const files = [
+    ...walk(path.join(ROOT, 'migrations'), '.sql'),
+    ...walk(path.join(ROOT, 'db/migrations'), '.sql'),
+  ].filter((f) => !f.includes(`${path.sep}_consolidated${path.sep}`));
+
+  for (const file of files) {
+    let src;
+    try {
+      src = readFileSync(file, 'utf8');
+    } catch {
+      continue;
+    }
+
+    // ── CREATE TABLE [IF NOT EXISTS] [public.]<t> ( … ) ──────────────────────
+    const create = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?["`]?([a-z0-9_]+)["`]?\s*\(/gi;
+    let m;
+    while ((m = create.exec(src)) !== null) {
+      const table = m[1].toLowerCase();
+      // Balance parens rather than matching a terminator: the generated files
+      // are tab-indented and end `);`, while the hand-written ones are not —
+      // a terminator regex got this wrong before.
+      let depth = 1;
+      let i = create.lastIndex;
+      while (i < src.length && depth > 0) {
+        const c = src[i];
+        if (c === '(') depth++;
+        else if (c === ')') depth--;
+        i++;
+      }
+      const body = src.slice(create.lastIndex, i - 1);
+
+      // Split on TOP-LEVEL commas only; a type like numeric(10,2) has its own.
+      let d = 0;
+      let cur = '';
+      const parts = [];
+      for (const ch of body) {
+        if (ch === '(') d++;
+        else if (ch === ')') d--;
+        if (ch === ',' && d === 0) {
+          parts.push(cur);
+          cur = '';
+        } else cur += ch;
+      }
+      parts.push(cur);
+
+      for (const part of parts) {
+        const line = part.replace(/--[^\n]*/g, '').trim();
+        if (!line) continue;
+        // Table-level constraints are not columns.
+        if (/^(CONSTRAINT|PRIMARY\s+KEY|UNIQUE|FOREIGN\s+KEY|CHECK|EXCLUDE|LIKE)\b/i.test(line)) continue;
+        const nameMatch = line.match(/^["`]?([a-z0-9_]+)["`]?/i);
+        if (nameMatch) add(table, nameMatch[1]);
+      }
+    }
+
+    // ── ALTER TABLE [ONLY] [public.]<t> … ADD COLUMN [IF NOT EXISTS] <col> ───
+    // One ALTER may add several columns, so every ADD COLUMN in the statement
+    // is collected, not just the first.
+    const alter = /ALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?(?:public\.)?["`]?([a-z0-9_]+)["`]?([\s\S]*?);/gi;
+    while ((m = alter.exec(src)) !== null) {
+      const table = m[1].toLowerCase();
+      for (const cm of m[2].matchAll(
+        /ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?([a-z0-9_]+)["`]?/gi
+      )) {
+        add(table, cm[1]);
+      }
     }
   }
   return byTable;
@@ -185,18 +351,30 @@ function insertStatements() {
   return { found, skipped };
 }
 
+if (!IS_MAIN) {
+  // Imported for its parsers only (see IS_MAIN).
+} else {
+
 const declared = declaredColumns();
+const lineage = sqlLineageColumns();
 const { found, skipped } = insertStatements();
+
+/** A column is legitimate if EITHER source has it (see sqlLineageColumns). */
+const known = (table, column) =>
+  (declared.get(table)?.has(column) ?? false) || (lineage.get(table)?.has(column) ?? false);
 
 const violations = [];
 const noModel = new Map();
 for (const stmt of found) {
-  const cols = declared.get(stmt.table);
-  if (!cols || cols.size === 0) {
+  const hasDrizzle = (declared.get(stmt.table)?.size ?? 0) > 0;
+  const hasLineage = (lineage.get(stmt.table)?.size ?? 0) > 0;
+  if (!hasDrizzle && !hasLineage) {
+    // Neither source knows this table at all — the TABLE itself is the
+    // question, and ci:unbacked-tables already asks it. Nothing to say here.
     noModel.set(stmt.table, (noModel.get(stmt.table) ?? 0) + 1);
     continue;
   }
-  const missing = stmt.columns.filter((c) => !cols.has(c));
+  const missing = stmt.columns.filter((c) => !known(stmt.table, c.toLowerCase()));
   if (missing.length > 0) violations.push({ ...stmt, missing });
 }
 
@@ -214,7 +392,8 @@ console.log('[ci:insert-columns-declared] columns written vs columns declared');
 console.log(`  Drizzle models parsed        : ${declared.size}`);
 console.log(`  static INSERTs examined      : ${found.length}`);
 console.log(`  skipped (unjudgeable)        : ${skipped.length}`);
-console.log(`  tables with no Drizzle model : ${noModel.size}`);
+console.log(`  migration lineage tables     : ${lineage.size}`);
+console.log(`  tables unknown to BOTH       : ${noModel.size}`);
 
 if (VERBOSE) {
   for (const s of skipped) console.log(`    skip ${s.file}:${s.line} ${s.table} — ${s.why}`);
@@ -281,3 +460,5 @@ console.log(
     ? `\n✅ no new violations. ${baseline.size} baselined and awaiting burn-down.`
     : '\n✅ every INSERTed column is declared on its table.'
 );
+
+}
