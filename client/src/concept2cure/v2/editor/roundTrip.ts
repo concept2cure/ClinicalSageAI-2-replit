@@ -69,7 +69,11 @@ export function htmlVisibleText(html: string): string {
 
 /** Whitespace-insensitive normalization: the words, in order, nothing else. */
 export function normalizeForCompare(text: string): string {
-  return text.replace(/ /g, ' ').split(/\s+/).filter(Boolean).join(' ');
+  return text
+    .replace(/\u00a0/g, ' ') // nbsp — DOM text and editor text disagree on it
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(' ');
 }
 
 export interface FidelityVerdict {
