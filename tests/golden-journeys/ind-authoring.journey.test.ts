@@ -96,6 +96,31 @@ const OUTSIDER = {
 const MEMBERSHIP_ID = Number.parseInt(AUTHOR.id, 10); // 3f1c2a10-… → 3
 
 const PREREQ = `
+  -- The canonical audit ledger auditService.logAction writes on every governed
+  -- mutation the router performs. Same reason as the tamper-proof table in the
+  -- migration list below: its absence did not just lose audit rows, it aborted
+  -- the shared PGlite transaction and rolled back the business write under test.
+  -- Column set mirrors writeChainedAuditRow's INSERT plus the FOR UPDATE
+  -- chain-head read (sha256_chain / occurred_at), and matches the shape already
+  -- used by server/routes/c2c/__tests__/governed-action.pglite.integration.test.ts.
+  CREATE TABLE audit_logs (
+    id            TEXT PRIMARY KEY,
+    tenant_id     INTEGER,
+    user_id       INTEGER,
+    action        TEXT,
+    table_name    TEXT,
+    record_id     TEXT,
+    actor_id      INTEGER,
+    target        TEXT,
+    payload_hash  TEXT,
+    sha256_chain  TEXT,
+    occurred_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    hmac_seal     TEXT,
+    old_values    JSON,
+    new_values    JSON,
+    ip_address    TEXT,
+    user_agent    TEXT
+  );
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
   -- users.id is UUID here: the history handler joins users ON
   -- u.id = doc_revisions.created_by::uuid, and created_by holds JWT subject ids.
@@ -137,6 +162,21 @@ beforeAll(async () => {
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
+      // The tamper-proof audit log the router ALSO writes on governed actions.
+      // Omitting it did not merely lose audit rows, it corrupted unrelated
+      // assertions: the write failed with 42P01, and because PGlite is a SINGLE
+      // connection shared by the whole request, that error put the surrounding
+      // transaction into "current transaction is aborted" — so the export
+      // record, which had already INSERTed successfully (rowCount 1, id
+      // returned), was rolled back with it. The endpoint still answered 200 and
+      // the durability assertion below failed with an empty table, pointing at
+      // the export path rather than at the missing audit table.
+      //
+      // Production is unaffected: the table is on the durable apply path
+      // (C2C_MIGRATION_FILES), and a real pool gives the audit write its own
+      // connection, so its failure could not poison another statement's
+      // transaction. This list was simply behind the schema.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
       // The router's own tables (templates/tokens/export_history/…), moved out of
