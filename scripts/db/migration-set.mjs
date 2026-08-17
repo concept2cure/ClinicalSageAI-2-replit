@@ -998,6 +998,23 @@ export const C2C_MIGRATION_FILES = [
   // locally-provisioned database looked healthy while every deployed one did
   // not. That divergence between "what a human ran" and "what a deploy runs" is
   // the failure mode this array exists to close.
+  // …and the same asymmetry one level up: 20260507 declares
+  // `q_submission_id uuid NOT NULL REFERENCES q_submissions(id)`, but the
+  // migration that CREATES q_submissions was itself never listed. The child was
+  // added to this set without its parent, so applying the set to a database
+  // that has not had the root-tree overlay run against it fails outright with
+  // `relation "q_submissions" does not exist` — exactly the divergence the note
+  // above describes, one dependency deeper.
+  //
+  // install-fresh hides it because readdirSync applies the whole root tree and
+  // 20260501 sorts before 20260507. Only deploy-migrate, which applies this
+  // array alone, sees the gap — which is why the C-33 sweep contract (the one
+  // test that replays this set against a blank database) is where it surfaced.
+  //
+  // Fully idempotent: every CREATE in it is IF NOT EXISTS, so it is a no-op on
+  // any database the overlay already provisioned. The db/migrations/ copy is
+  // byte-identical; the root-tree one is listed to match its dependent.
+  'migrations/20260501_q_sub.sql',
   'migrations/20260507_mdx_beta_surfaces.sql',
   'migrations/001_create_ivdr_tables.sql',
 

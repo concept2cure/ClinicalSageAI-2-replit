@@ -26,6 +26,35 @@
 import { Pool, PoolClient } from 'pg';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import { isIP } from 'node:net';
+
+/**
+ * `audit.tamper_proof_log.ip_address` is INET, and callers routinely supply a
+ * SENTINEL STRING rather than an address:
+ *
+ *   server/routes/authoring.router.ts:520  `req.ip || req.connection?.remoteAddress || 'unknown'`
+ *   server/routes/authoring.router.ts:641  `ip: 'legacy-call'` (internal, non-HTTP call)
+ *
+ * Postgres rejects those with 22P02 `invalid input syntax for type inet`, and
+ * because every write here is best-effort behind a catch, the whole Part 11
+ * tamper-proof entry was discarded — silently — for any audit event that had no
+ * real client IP. The first sentinel is the general case: it fires whenever
+ * `req.ip` is absent, not just on the legacy path.
+ *
+ * NULL is the honest encoding of "this action had no client address", and INET
+ * accepts it. Anything that is not a real IP becomes NULL.
+ *
+ * Normalised ONCE, before the content hash is computed, and the same value is
+ * used for the hash and the column — otherwise the verifier (which rebuilds the
+ * hash from the stored row, ip_address included) would compare a hash over
+ * 'unknown' against a stored NULL and report tampering on a row nobody touched.
+ */
+export function normalizeInetOrNull(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  // X-Forwarded-For style lists arrive as "client, proxy1, proxy2".
+  const first = value.split(',')[0]!.trim();
+  return isIP(first) === 0 ? null : first;
+}
 
 // =============================================================================
 // Types
@@ -271,6 +300,9 @@ export class TamperProofAuditLog {
       // Create content hash (hash of the audit data)
       const entryId = uuidv4();
       const timestamp = new Date();
+      // Resolved once so the hashed value and the stored column can never
+      // disagree — see normalizeInetOrNull.
+      const ipAddress = normalizeInetOrNull(context?.ipAddress);
       const contentHash = this.computeHash(
         TamperProofAuditLog.stringifyForHash(
           TamperProofAuditLog.buildContentData({
@@ -284,7 +316,7 @@ export class TamperProofAuditLog {
             correlationId: context?.correlationId,
             resourceType: context?.resourceType,
             resourceId: context?.resourceId,
-            ipAddress: context?.ipAddress,
+            ipAddress,
             userAgent: context?.userAgent,
           }),
         ),
@@ -320,7 +352,7 @@ export class TamperProofAuditLog {
           contentHash,
           chainHash,
           signature,
-          context?.ipAddress,
+          ipAddress,
           context?.userAgent,
         ]
       );
