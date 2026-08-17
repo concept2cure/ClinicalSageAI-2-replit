@@ -36,6 +36,12 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import {
+  MODALITIES,
+  MODALITY_LABEL,
+  frameSummary,
+  normalizeModality,
+} from '@shared/regulatory/modality';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -46,6 +52,7 @@ interface Program {
   name: string;
   code?: string;
   customerTrack?: string;
+  modality?: string;
   indication?: string;
   therapeuticArea?: string;
   developmentStage?: string;
@@ -219,7 +226,7 @@ export function MissionControl(_props: SurfaceViewProps) {
   const [stale, setStale] = useState<Load<any[]>>(idle<any[]>());
 
   const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState({ name: '', customerTrack: 'biotech', indication: '' });
+  const [draft, setDraft] = useState({ name: '', customerTrack: 'biotech', modality: '', indication: '' });
   const [busy, setBusy] = useState(false);
 
   const loadPrograms = useCallback(async () => {
@@ -261,6 +268,7 @@ export function MissionControl(_props: SurfaceViewProps) {
       const res = await apiRequest('POST', `${BASE}/programs`, {
         name: draft.name.trim(),
         customerTrack: draft.customerTrack,
+        ...(draft.modality ? { modality: draft.modality } : {}),
         ...(draft.indication.trim() ? { indication: draft.indication.trim() } : {}),
       });
       const parsed = (await res.json().catch(() => null)) as any;
@@ -277,7 +285,7 @@ export function MissionControl(_props: SurfaceViewProps) {
         return;
       }
       setCreating(false);
-      setDraft({ name: '', customerTrack: 'biotech', indication: '' });
+      setDraft({ name: '', customerTrack: 'biotech', modality: '', indication: '' });
       fireToast('Program created.');
       await loadPrograms();
       if (parsed?.data?.id) setSelectedId(parsed.data.id);
@@ -296,6 +304,11 @@ export function MissionControl(_props: SurfaceViewProps) {
     () => asArray<Program>(programs.data).find(p => p.id === selectedId) ?? null,
     [programs.data, selectedId]
   );
+
+  /* BP-W2-2: the stored value may predate normalization (the schema accepted
+     any string for months), so the read side normalizes too — an unrecognized
+     historical value renders nothing rather than a wrong frame. */
+  const selectedModality = normalizeModality(selected?.modality);
 
   const readinessRows = useMemo(() => {
     const r = readiness.data?.readiness;
@@ -325,6 +338,8 @@ export function MissionControl(_props: SurfaceViewProps) {
         programId: selected.id,
         programName: selected.name,
         customerTrack: selected.customerTrack ?? null,
+        modality: selectedModality ? MODALITY_LABEL[selectedModality] : null,
+        regulatoryFrame: selectedModality ? frameSummary(selectedModality) : null,
         indication: selected.indication ?? null,
         overallConfidence: readiness.data?.overallConfidence ?? null,
         readinessLoaded: readiness.state === 'ready',
@@ -341,7 +356,7 @@ export function MissionControl(_props: SurfaceViewProps) {
         'Explain what is blocking this program',
       ],
     };
-  }, [selected, programs.data, readiness.state, readiness.data, artifacts.data, risks.data, stale.data]);
+  }, [selected, selectedModality, programs.data, readiness.state, readiness.data, artifacts.data, risks.data, stale.data]);
 
   usePublishSurfaceContext('mission-control', anaContext);
 
@@ -402,6 +417,15 @@ export function MissionControl(_props: SurfaceViewProps) {
                   {TRACKS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </label>
+              <label style={{ fontSize: 12 }}>Modality <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                {/* BP-W2-2: the variable the regulatory work is actually keyed on —
+                    centre, pathway, fee programme and CMC core all derive from it.
+                    Canonical members only; "Not set" is an honest value, a guess is not. */}
+                <select className="c2c-input" style={{ height: 30 }} value={draft.modality} onChange={e => setDraft({ ...draft, modality: e.target.value })}>
+                  <option value="">Not set</option>
+                  {MODALITIES.map(m => <option key={m} value={m}>{MODALITY_LABEL[m]}</option>)}
+                </select>
+              </label>
               <label style={{ fontSize: 12 }}>Indication <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
                 <input className="c2c-input" style={{ height: 30 }} value={draft.indication} onChange={e => setDraft({ ...draft, indication: e.target.value })} placeholder="e.g. NSCLC" />
               </label>
@@ -418,6 +442,16 @@ export function MissionControl(_props: SurfaceViewProps) {
 
       {selected && (
         <>
+          {selectedModality && (
+            /* BP-W2-2: the program states its regulatory frame where its name is —
+               centre, default pathway with its fee programme, CMC core. Derived
+               from modality by shared/regulatory/modality.ts, never stored, so
+               the header cannot drift from the registry. */
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '2px 2px 0', fontSize: 12 }}>
+              <span className="rd-chip">{MODALITY_LABEL[selectedModality]}</span>
+              <span style={{ color: 'var(--text-300, #6b6963)' }}>{frameSummary(selectedModality)}</span>
+            </div>
+          )}
           {/* ── Readiness ── */}
           <div className="pj-card">
             <div className="pj-card-h">

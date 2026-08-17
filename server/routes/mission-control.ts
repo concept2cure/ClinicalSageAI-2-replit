@@ -17,6 +17,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createFeatureStore } from '../utils/feature-persistence';
+import { MODALITIES, normalizeModality } from '../../shared/regulatory/modality';
 
 const router = Router();
 const store = createFeatureStore('mission_control');
@@ -38,6 +39,25 @@ function getUserId(req: Request): number {
     (req as any).user?.id;
   if (!userId) throw new Error('User context required');
   return userId;
+}
+
+/**
+ * BP-W2-2: `modality` persists in canonical form or not at all. The schema
+ * accepted any string here for months and nothing ever normalized it, which is
+ * how a field ends up holding 'mAb', 'Monoclonal antibody' and 'antibody' as
+ * three different values that no derivation can key on. Returns the canonical
+ * member, null for "absent", or an Error carrying the client-facing message.
+ */
+function resolveModality(value: unknown): string | null | Error {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string') return new Error('modality must be a string');
+  const m = normalizeModality(value);
+  return (
+    m ??
+    new Error(
+      `Unrecognized modality '${value}'. One of: ${MODALITIES.join(', ')} (common spellings like 'mAb' or 'siRNA' are accepted).`,
+    )
+  );
 }
 
 async function logProvenance(
@@ -117,6 +137,11 @@ router.post('/programs', async (req: Request, res: Response) => {
     const parsed = programSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
+    const modality = resolveModality(parsed.data.modality);
+    if (modality instanceof Error) return res.status(400).json({ error: modality.message });
+    if (modality) parsed.data.modality = modality;
+    else delete parsed.data.modality;
+
     const orgId = getOrgId(req);
     const userId = getUserId(req);
     const data = {
@@ -144,6 +169,12 @@ router.put('/programs/:id', async (req: Request, res: Response) => {
     const id = parseInt(String(req.params.id));
     const existing = await store.getById(id, orgId);
     if (!existing) return res.status(404).json({ error: 'Program not found' });
+
+    if ('modality' in req.body) {
+      const modality = resolveModality(req.body.modality);
+      if (modality instanceof Error) return res.status(400).json({ error: modality.message });
+      req.body.modality = modality; // canonical, or null to clear
+    }
 
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...prev } = existing;
     const updated = { ...prev, ...req.body };
