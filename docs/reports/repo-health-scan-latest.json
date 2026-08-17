@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-17T04:22:01.573Z",
+  "generatedAt": "2026-08-17T20:54:00.041Z",
   "git": {
-    "sha": "bacfc087e183ec37613e33e9de573a27f86b598c",
+    "sha": "a8f551c5d5fc7f61863646a54de7e54666ec9640",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,11 +14,11 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 220,
+    "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 35,
-    "largeFilesByLines": 86
+    "largeFilesByLines": 87
   },
   "findings": {
     "duplicateBasenames": [
@@ -1172,6 +1172,14 @@
         ]
       },
       {
+        "basename": "buildstamp",
+        "count": 2,
+        "paths": [
+          "client/src/buildStamp.ts",
+          "server/buildStamp.ts"
+        ]
+      },
+      {
         "basename": "calibration.test",
         "count": 2,
         "paths": [
@@ -2156,7 +2164,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 225232
+        "bytes": 233366
       },
       {
         "file": "server/statistics-service.ts",
@@ -2294,7 +2302,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5854
+        "lines": 6007
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2593,6 +2601,10 @@
         "lines": 1600
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 1588
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
         "lines": 1582
       },
@@ -2626,7 +2638,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 399,
+      "duplicateGroups": 400,
       "largeByBytes": 30,
       "largeByLines": 73
     },
@@ -2646,11 +2658,11 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 2,
-      "largeByLines": 3
+      "largeByLines": 4
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 10,
+      "duplicateGroups": 11,
       "largeByBytes": 0,
       "largeByLines": 0
     },
