@@ -31,6 +31,7 @@ import type {
   SectionTarget,
 } from '../../types';
 import type { EditorSectionRef } from '../../../v2/editorTarget';
+import { RichSectionEditor } from '../../../v2/editor/RichSectionEditor';
 
 type PaneTab = 'workspace' | 'audit' | 'correspondence' | 'approvals' | 'files';
 type OpenSection = (t: SectionTarget) => void;
@@ -775,7 +776,9 @@ export function DossierDrawer({ open, target, pathway, documentId = null, onClos
         </div>
 
         <div className="dd-body">
-          {tab === 'document' && <DDDocumentTab body={body} onCommit={onCommitBody} saveState={sectionSave.state} />}
+          {/* Keyed per section: the editor owns its buffer, so a section
+              switch must remount it on the new body rather than syncing. */}
+          {tab === 'document' && <DDDocumentTab key={String(safeTarget.id)} body={body} onCommit={onCommitBody} saveState={sectionSave.state} />}
           {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} />}
           {tab === 'activity' && <DDActivityTab events={activity} />}
         </div>
@@ -862,47 +865,35 @@ function DDSaveStatus({ dirty, state }: { dirty: boolean; state: SaveState }) {
   }
 }
 
+/**
+ * The drawer's document tab — the ONE canonical editor, in plain-text mode.
+ *
+ * This replaced the last hand-rolled `contentEditable` in the client (the
+ * other two canvases — the Document Authoring textarea and the execCommand
+ * DocCanvas — were replaced in the same change; CLAUDE.md zero-duplication).
+ * The backing store is the c2c dossier section (`content: { text }` via
+ * useSectionSave), a PLAIN TEXT column, so the editor serializes text rather
+ * than HTML; the 600ms-debounced commit contract is unchanged, and
+ * DDSaveStatus keeps reporting the SERVER's outcome, not the keystroke.
+ */
 function DDDocumentTab({ body, onCommit, saveState }: { body: string; onCommit: (next: string) => void; saveState: SaveState }) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dirty, setDirty] = React.useState(false);
-
-  React.useEffect(() => {
-    if (ref.current && ref.current.innerText !== body) {
-      ref.current.innerText = body;
-      setDirty(false);
-    }
-  }, [body]);
-
-  const onInput = (e: React.FormEvent<HTMLDivElement>) => {
-    setDirty(true);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    const next = e.currentTarget.innerText;
-    debounceRef.current = setTimeout(() => {
-      onCommit(next);
-      setDirty(false);
-    }, 600);
-  };
-
-  const onBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    const next = e.currentTarget.innerText;
-    if (next !== body) { onCommit(next); setDirty(false); }
-  };
-
   return (
     <div className="dd-doc-wrap">
       <div className="dd-doc-status">
         <DDSaveStatus dirty={dirty} state={saveState} />
       </div>
-      <div
-        ref={ref}
-        className="dd-doc-edit"
-        contentEditable
-        suppressContentEditableWarning
-        onInput={onInput}
-        onBlur={onBlur}
-        spellCheck
+      <RichSectionEditor
+        value={body}
+        format="text"
+        chrome="bare"
+        autosaveMs={600}
+        onSave={(text) => {
+          onCommit(text);
+        }}
+        onDirtyChange={setDirty}
+        ariaLabel="Section body"
+        placeholder="Write the section body…"
       />
     </div>
   );

@@ -1,0 +1,869 @@
+/**
+ * RichSectionEditor — THE section editing canvas.
+ *
+ * One implementation for every editable document surface (CLAUDE.md: zero
+ * duplication). It replaces, in the same change that introduced it:
+ *   - the Document Authoring plain <textarea> (whole-section string PATCH),
+ *   - DocCanvas (`EditorCanvas.tsx`) — contentEditable driven by the
+ *     deprecated `document.execCommand`, deleted with this file's adoption,
+ *   - the MDX dossier drawer's bare contentEditable (`PathwayPanes.tsx`).
+ *
+ * Built on TipTap v3 / ProseMirror — dependencies that sat in package.json
+ * with zero importers while three hand-rolled canvases shipped.
+ *
+ * What it preserves from the canvases it replaces:
+ *   - honest save-state labels: server-persisted, in-flight, failed-but-cached,
+ *     and device-only are distinct states with distinct words (DocCanvas);
+ *   - a device-local crash cache (`dc::<key>`) so a reload never loses
+ *     in-progress work — offered back via an explicit restore notice, never
+ *     silently loaded over the server's content (fixes DocCanvas, which
+ *     hydrated stale localStorage OVER newer server content);
+ *   - the Data Origins right-click with the drift refusal contract
+ *     (`lineage.canonicalText`);
+ *   - per-store serialization: `format: 'html'` for the authoring store,
+ *     `format: 'text'` for the c2c dossier store (plain-text column).
+ *
+ * What it adds (previously impossible in any canvas):
+ *   - real track changes bound to `authoring_sections.track_changes` — see
+ *     `./suggestions.ts`;
+ *   - range-anchored comments — see `./commentAnchor.ts`;
+ *   - optional live co-editing over the server's Hocuspocus `/collab` socket
+ *     (Yjs CRDT sync; server-side auth + persistence already live behind
+ *     ENABLE_COLLAB_CRDT).
+ *
+ * FAIL-CLOSED FIDELITY GATE (the round-trip precondition the old
+ * ENABLE_RICH_SECTION_EDITOR flag said must be verified before rich editing
+ * ships): before a section becomes rich-editable, the stored content's text is
+ * compared against what the schema parse retained (`roundTrip.ts`). On any
+ * mismatch the editor refuses rich mode for that section and edits the raw
+ * stored string in source mode instead — the governed record is never
+ * silently rewritten by a lossy parse.
+ */
+
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { generateJSON } from '@tiptap/core';
+import type { JSONContent } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import { TableKit } from '@tiptap/extension-table';
+import { Collaboration } from '@tiptap/extension-collaboration';
+import { HocuspocusProvider } from '@hocuspocus/provider';
+import * as Y from 'yjs';
+
+import { DataOriginsMenu } from '../../lineage';
+import {
+  TrackChanges,
+  collectSuggestions,
+  type SuggestionAuthor,
+  type SuggestionRange,
+} from './suggestions';
+import {
+  CommentAnchor,
+  collectCommentAnchors,
+  type CommentAnchorPayload,
+} from './commentAnchor';
+import {
+  assessFidelity,
+  looksLikeHtml,
+  plainTextToHtml,
+} from './roundTrip';
+
+/* ── Public contract ──────────────────────────────────────────── */
+
+export interface RichSectionEditorHandle {
+  /** Serialize and persist through `onSave`. Resolves true on confirmed save. */
+  save: () => Promise<boolean>;
+  /** Insert proposed text at the caret as a tracked suggestion. */
+  insertSuggestion: (text: string, author: SuggestionAuthor) => boolean;
+  /** Current serialized content (unsaved included). */
+  getContent: () => string;
+  /** Select + scroll to a comment's anchored range. False when the annotated
+   *  text no longer exists in the current draft. */
+  selectCommentAnchor: (commentId: string) => boolean;
+  focus: () => void;
+}
+
+export interface RichSectionEditorProps {
+  /** The stored section content — HTML or textarea-era plain text. */
+  value: string;
+  /** Serialization contract of the backing store. Default 'html'. */
+  format?: 'html' | 'text';
+  /** Governed write-through. Throw/reject on failure — the footer reports it. */
+  onSave: (serialized: string) => void | Promise<void>;
+  /** Debounced autosave in ms, or null for explicit save (button / Mod-S). */
+  autosaveMs?: number | null;
+  onDirtyChange?: (dirty: boolean) => void;
+  readOnly?: boolean;
+  placeholder?: string;
+  /** Device crash-cache key (stored under `dc::<storageKey>`). Null disables. */
+  storageKey?: string | null;
+  ariaLabel?: string;
+  /** 'full' draws ribbon + footer; 'bare' is just the canvas (host owns chrome). */
+  chrome?: 'full' | 'bare';
+  /** Hide the footer's own Save control when the host surface renders one —
+   *  two visible Save buttons for one save path is duplicated affordance. */
+  showSaveButton?: boolean;
+  /** Ask AnA — powers the cite-selection and empty-state draft affordances. */
+  onAsk?: ((prompt: string) => void) | null;
+  /** Span-lineage right-click contract (see DataOriginsMenu). */
+  lineage?: {
+    documentTable: string;
+    documentId: string;
+    documentTitle?: string;
+    canonicalText?: string;
+  } | null;
+  /** Track changes. Omit to hide the capability entirely. */
+  track?: {
+    enabled: boolean;
+    author: SuggestionAuthor;
+    /** Persist the toggle (PATCH track_changes). Reject to refuse the flip. */
+    onToggle?: (enabled: boolean) => void | Promise<void>;
+  } | null;
+  /** Range-anchored comments. Omit to hide the capability. */
+  commentsApi?: {
+    /** Create the thread server-side; resolve the server comment id. */
+    onCreate: (anchor: CommentAnchorPayload) => Promise<string | null>;
+    /** A click on annotated text — open the thread in the host's rail. */
+    onOpen?: (commentId: string) => void;
+  } | null;
+  /** Live co-editing over the server's /collab Hocuspocus socket. */
+  collab?: {
+    /** Server grammar: `authoring:<docUuid>` or `authoring:<docUuid>:<sectionUuid>`. */
+    docName: string;
+    /** Verified access JWT; the socket refuses anything else. */
+    token: string | null;
+    /** ws(s) URL; defaults to same-origin `/collab`. */
+    url?: string;
+  } | null;
+}
+
+/* ── Honest save states ───────────────────────────────────────── */
+
+type SaveState = 'saved' | 'dirty' | 'saving' | 'error';
+const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
+  saved: { dot: 'var(--success)', label: 'All changes saved' },
+  dirty: { dot: 'var(--warning)', label: 'Unsaved changes — cached on this device' },
+  saving: { dot: 'var(--warning)', label: 'Saving…' },
+  error: { dot: 'var(--error)', label: 'Save failed — kept on this device' },
+};
+
+const cacheKeyFor = (storageKey: string) => 'dc::' + storageKey;
+
+function wordsOf(text: string): number {
+  const t = text.trim();
+  return t ? t.split(/\s+/).filter(Boolean).length : 0;
+}
+
+/** Serialize an editor per the backing store's contract. Module-level so
+ *  `onCreate` (which fires during editor construction) can use it without
+ *  touching component bindings that are not initialized yet. */
+function serializeEditor(
+  ed: { getHTML: () => string; getText: (o?: any) => string },
+  format: 'html' | 'text',
+): string {
+  return format === 'text'
+    ? ed.getText({
+        blockSeparator: '\n\n',
+        // Without this, a hard break serializes to nothing and the stored
+        // plain text silently loses its single newlines.
+        textSerializers: { hardBreak: () => '\n' },
+      })
+    : ed.getHTML();
+}
+
+/** Text of a parsed TipTap JSON doc, every element boundary a break — the
+ *  comparison normalizes whitespace, so all that matters is that words from
+ *  adjacent blocks never fuse. */
+function jsonDocText(node: JSONContent): string {
+  if (node.type === 'text') return node.text ?? '';
+  if (node.type === 'hardBreak') return '\n';
+  const inner = (node.content ?? []).map(jsonDocText).join('');
+  return node.type === 'doc' ? inner : inner + '\n';
+}
+
+/* ── Component ────────────────────────────────────────────────── */
+
+export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSectionEditorProps>(
+  function RichSectionEditor(
+    {
+      value,
+      format = 'html',
+      onSave,
+      autosaveMs = null,
+      onDirtyChange,
+      readOnly = false,
+      placeholder,
+      storageKey = null,
+      ariaLabel,
+      chrome = 'full',
+      showSaveButton = true,
+      onAsk = null,
+      lineage = null,
+      track = null,
+      commentsApi = null,
+      collab = null,
+    },
+    ref,
+  ) {
+    const [saveState, setSaveState] = useState<SaveState>('saved');
+    const [dirty, setDirty] = useState(false);
+    const [words, setWords] = useState(0);
+    const [trackOn, setTrackOn] = useState<boolean>(track?.enabled ?? false);
+    const [suggestions, setSuggestions] = useState<SuggestionRange[]>([]);
+    const [reviewOpen, setReviewOpen] = useState(false);
+    const [collabStatus, setCollabStatus] = useState<
+      'off' | 'connecting' | 'connected' | 'disconnected' | 'denied'
+    >(collab ? 'connecting' : 'off');
+    const [restoreOffer, setRestoreOffer] = useState<string | null>(null);
+    const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastSavedRef = useRef<string>(value ?? '');
+    const editorHostRef = useRef<HTMLDivElement>(null);
+
+    /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
+    const collabRuntime = useMemo(() => {
+      if (!collab) return null;
+      const doc = new Y.Doc();
+      const proto = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const url =
+        collab.url ??
+        (typeof window !== 'undefined' ? `${proto}://${window.location.host}/collab` : '');
+      const provider = new HocuspocusProvider({
+        url,
+        name: collab.docName,
+        token: collab.token ?? '',
+        document: doc,
+        onStatus: ({ status }) => {
+          setCollabStatus(status === 'connected' ? 'connected' : status === 'connecting' ? 'connecting' : 'disconnected');
+        },
+        onAuthenticationFailed: () => setCollabStatus('denied'),
+      });
+      return { doc, provider };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [collab?.docName]);
+
+    useEffect(
+      () => () => {
+        collabRuntime?.provider.destroy();
+        collabRuntime?.doc.destroy();
+      },
+      [collabRuntime],
+    );
+
+    /* ── Extension set (stable per mount) ── */
+    const extensions = useMemo(() => {
+      const exts: any[] = [
+        StarterKit.configure({
+          heading: { levels: [1, 2, 3] },
+          // Yjs owns undo/redo when live co-editing is on.
+          ...(collabRuntime ? { undoRedo: false } : {}),
+        }),
+        TableKit.configure({ table: { resizable: false } }),
+        TrackChanges.configure({
+          enabled: (track?.enabled ?? false) && !readOnly,
+          author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
+        }),
+        CommentAnchor.configure({
+          onAnchorClick: commentsApi?.onOpen ?? null,
+        }),
+      ];
+      if (placeholder) exts.push(Placeholder.configure({ placeholder }));
+      if (collabRuntime) exts.push(Collaboration.configure({ document: collabRuntime.doc }));
+      return exts;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    /* ── Fail-closed fidelity gate, assessed once per mount ── */
+    const boot = useMemo(() => {
+      const stored = value ?? '';
+      if (format === 'text') {
+        // Plain text is always faithfully representable.
+        return { mode: 'rich' as const, html: plainTextToHtml(stored), verdict: null };
+      }
+      const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
+      try {
+        const json = generateJSON(html, extensions);
+        const verdict = assessFidelity(stored, jsonDocText(json));
+        if (verdict.lossy) return { mode: 'source' as const, html: null, verdict };
+        return { mode: 'rich' as const, html, verdict };
+      } catch {
+        // A parse that throws proves the content is not representable.
+        return { mode: 'source' as const, html: null, verdict: null };
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    /* ── Source mode state (raw stored string, same save path) ── */
+    const [sourceText, setSourceText] = useState<string>(value ?? '');
+
+    const editor = useEditor(
+      {
+        extensions,
+        editable: !readOnly && boot.mode === 'rich',
+        editorProps: {
+          attributes: {
+            role: 'textbox',
+            'aria-multiline': 'true',
+            ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
+          },
+        },
+        // With Yjs, content comes from the synced doc (seeded below), never
+        // from props — passing it here would duplicate on every join.
+        ...(collabRuntime ? {} : { content: boot.html ?? '' }),
+        onUpdate: ({ editor: ed }) => {
+          const serialized = serialize(ed);
+          const isDirty = serialized !== lastSavedRef.current;
+          setDirty(isDirty);
+          setSaveState((s) => (isDirty ? (s === 'saving' ? s : 'dirty') : 'saved'));
+          setWords(wordsOf(ed.getText()));
+          setSuggestions(collectSuggestions(ed.state.doc));
+          cacheDraft(serialized);
+          if (autosaveMs != null && isDirty) {
+            if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+            autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
+          }
+        },
+        onCreate: ({ editor: ed }) => {
+          // The clean baseline is this editor's OWN serialization of the
+          // parsed content, not the stored string: legacy plain text parses
+          // to equivalent HTML that would otherwise read as "unsaved changes"
+          // on a canvas nobody has touched. The record itself is only ever
+          // rewritten by a real edit followed by a real save.
+          if (boot.mode === 'rich' && !collabRuntime) {
+            lastSavedRef.current = serializeEditor(ed, format);
+          }
+          setWords(wordsOf(ed.getText()));
+          setSuggestions(collectSuggestions(ed.state.doc));
+        },
+      },
+      [],
+    );
+
+    /* Seed a first-ever collab doc from the stored content once synced. */
+    useEffect(() => {
+      if (!collabRuntime || !editor) return;
+      const onSynced = () => {
+        const frag = collabRuntime.doc.getXmlFragment('default');
+        if (frag.length === 0 && boot.html) {
+          editor.commands.setContent(boot.html);
+        }
+        // Whether seeded here or adopted from peers, what the synced doc
+        // holds now is the clean baseline for dirty-tracking.
+        lastSavedRef.current = serializeEditor(editor, format);
+        setDirty(false);
+        setSaveState('saved');
+      };
+      collabRuntime.provider.on('synced', onSynced);
+      return () => {
+        collabRuntime.provider.off('synced', onSynced);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [collabRuntime, editor]);
+
+    /* ── Serialization per the backing store's contract ── */
+    const serialize = useCallback(
+      (ed: NonNullable<typeof editor>): string => serializeEditor(ed, format),
+      [format],
+    );
+
+    /* ── Device crash cache: offered back explicitly, never auto-loaded ── */
+    const cacheDraft = useCallback(
+      (serialized: string) => {
+        if (!storageKey) return;
+        try {
+          if (serialized === lastSavedRef.current) localStorage.removeItem(cacheKeyFor(storageKey));
+          else localStorage.setItem(cacheKeyFor(storageKey), serialized);
+        } catch {
+          /* storage full — the server save path is unaffected */
+        }
+      },
+      [storageKey],
+    );
+
+    useEffect(() => {
+      if (!storageKey) return;
+      try {
+        const cached = localStorage.getItem(cacheKeyFor(storageKey));
+        if (cached != null && cached !== (value ?? '')) setRestoreOffer(cached);
+      } catch {
+        /* unreadable storage — nothing to offer */
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [storageKey]);
+
+    const restoreCached = useCallback(() => {
+      if (restoreOffer == null) return;
+      if (boot.mode === 'source') {
+        setSourceText(restoreOffer);
+        setDirty(true);
+        setSaveState('dirty');
+      } else if (editor) {
+        const html =
+          format === 'text' || !looksLikeHtml(restoreOffer)
+            ? plainTextToHtml(restoreOffer)
+            : restoreOffer;
+        editor.commands.setContent(html);
+      }
+      setRestoreOffer(null);
+    }, [restoreOffer, editor, boot.mode, format]);
+
+    const discardCached = useCallback(() => {
+      if (storageKey) {
+        try {
+          localStorage.removeItem(cacheKeyFor(storageKey));
+        } catch {
+          /* ignore */
+        }
+      }
+      setRestoreOffer(null);
+    }, [storageKey]);
+
+    /* ── The one save path ── */
+    const doSave = useCallback(async (): Promise<boolean> => {
+      const serialized =
+        boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
+      if (serialized == null) return false;
+      if (serialized === lastSavedRef.current) return true;
+      setSaveState('saving');
+      try {
+        await onSave(serialized);
+        lastSavedRef.current = serialized;
+        setDirty(false);
+        onDirtyChange?.(false);
+        setSaveState('saved');
+        if (storageKey) {
+          try {
+            localStorage.removeItem(cacheKeyFor(storageKey));
+          } catch {
+            /* ignore */
+          }
+        }
+        return true;
+      } catch {
+        // The host surface reports the server's reason; this footer reports
+        // the state truthfully: not persisted, still cached on this device.
+        setSaveState('error');
+        return false;
+      }
+    }, [boot.mode, sourceText, editor, serialize, onSave, onDirtyChange, storageKey]);
+
+    useEffect(() => {
+      onDirtyChange?.(dirty);
+    }, [dirty, onDirtyChange]);
+
+    /* ── Track changes toggle (server column first, then the plugin) ── */
+    const toggleTrack = useCallback(async () => {
+      if (!track || !editor) return;
+      const next = !trackOn;
+      try {
+        await track.onToggle?.(next);
+        setTrackOn(next);
+        editor.commands.setTrackChangesEnabled(next && !readOnly);
+      } catch {
+        /* refused server-side — state stays truthful */
+      }
+    }, [track, editor, trackOn, readOnly]);
+
+    /* ── Comment from selection ──
+       The host resolves the server comment id (the thread row must exist
+       before anything references it). The anchor mark is then applied and the
+       section saved immediately: an anchor that exists only in unsaved state
+       is a highlight the next reader would never see. */
+    const commentOnSelection = useCallback(async () => {
+      if (!commentsApi || !editor) return;
+      const { from, to } = editor.state.selection;
+      if (from === to) return;
+      const quote = editor.state.doc.textBetween(from, to, ' ');
+      const id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
+      if (id) {
+        editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
+        await doSave();
+      }
+    }, [commentsApi, editor, doSave]);
+
+    /* ── Cite the selection (parity with the retired DocCanvas) ── */
+    const citeSelection = useCallback(() => {
+      if (!editor || !onAsk) return;
+      const { from, to } = editor.state.selection;
+      const s = editor.state.doc.textBetween(from, to, ' ').trim();
+      if (s) onAsk(`Cite this claim: "${s}"`);
+    }, [editor, onAsk]);
+
+    /* ── Imperative handle ── */
+    useImperativeHandle(
+      ref,
+      () => ({
+        save: doSave,
+        insertSuggestion: (text: string, author: SuggestionAuthor) =>
+          editor ? editor.chain().focus().insertSuggestedContent(text, author).run() : false,
+        getContent: () =>
+          boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
+        selectCommentAnchor: (commentId: string) => {
+          if (!editor) return false;
+          const range = collectCommentAnchors(editor.state.doc).get(commentId);
+          if (!range) return false;
+          editor.chain().focus().setTextSelection(range).scrollIntoView().run();
+          return true;
+        },
+        focus: () => editor?.commands.focus(),
+      }),
+      [doSave, editor, boot.mode, sourceText, serialize],
+    );
+
+    const onKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+          e.preventDefault();
+          void doSave();
+        }
+      },
+      [doSave],
+    );
+
+    /* ── Suggestion review actions ── */
+    const resolveOne = useCallback(
+      (r: SuggestionRange, action: 'accept' | 'reject') => {
+        editor?.chain().focus().resolveSuggestion(r, action).run();
+      },
+      [editor],
+    );
+    const resolveAll = useCallback(
+      (action: 'accept' | 'reject') => {
+        editor?.chain().focus().resolveAllSuggestions(action).run();
+        setReviewOpen(false);
+      },
+      [editor],
+    );
+    const jumpTo = useCallback(
+      (r: SuggestionRange) => {
+        editor?.chain().focus().setTextSelection({ from: r.from, to: r.to }).scrollIntoView().run();
+      },
+      [editor],
+    );
+
+    const isEmpty = words === 0;
+    const full = chrome === 'full';
+
+    /* ── Ribbon button helper ── */
+    const RB = ({
+      onClick,
+      active,
+      title,
+      children,
+      disabled,
+    }: {
+      onClick: () => void;
+      active?: boolean;
+      title: string;
+      children: React.ReactNode;
+      disabled?: boolean;
+    }) => (
+      <button
+        type="button"
+        title={title}
+        aria-label={title}
+        aria-pressed={active || undefined}
+        disabled={disabled}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          if (!disabled) onClick();
+        }}
+        className="rse-rb"
+        data-active={active || undefined}
+      >
+        {children}
+      </button>
+    );
+
+    const blockValue = !editor
+      ? 'p'
+      : editor.isActive('heading', { level: 1 })
+        ? 'h1'
+        : editor.isActive('heading', { level: 2 })
+          ? 'h2'
+          : editor.isActive('heading', { level: 3 })
+            ? 'h3'
+            : 'p';
+
+    return (
+      <div className="rse-root" onKeyDown={onKeyDown}>
+        {/* ── Fail-closed notice: rich mode refused for this content ── */}
+        {boot.mode === 'source' && (
+          <div className="rse-gate" role="status">
+            Rich editing is off for this section: its stored content could not be
+            represented without altering text (the round-trip check failed), so
+            you are editing the raw source instead. Nothing was rewritten.
+          </div>
+        )}
+
+        {/* ── Crash-cache restore offer (explicit, never silent) ── */}
+        {restoreOffer != null && (
+          <div className="rse-gate" role="status">
+            A draft cached on this device differs from the saved section.
+            <button type="button" className="rse-link" onClick={restoreCached}>
+              Restore the device draft
+            </button>
+            <button type="button" className="rse-link" onClick={discardCached}>
+              Discard it
+            </button>
+          </div>
+        )}
+
+        {/* ── Ribbon ── */}
+        {full && boot.mode === 'rich' && !readOnly && (
+          <div className="rse-ribbon" role="toolbar" aria-label="Formatting">
+            <select
+              className="rse-sel"
+              value={blockValue}
+              aria-label="Paragraph style"
+              onChange={(e) => {
+                const v = e.target.value;
+                if (!editor) return;
+                if (v === 'p') editor.chain().focus().setParagraph().run();
+                else editor.chain().focus().toggleHeading({ level: Number(v.slice(1)) as 1 | 2 | 3 }).run();
+              }}
+            >
+              <option value="p">Paragraph</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+            </select>
+            <span className="rse-sep" />
+            <RB title="Bold" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
+              <b>B</b>
+            </RB>
+            <RB title="Italic" active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
+              <i>I</i>
+            </RB>
+            <RB title="Underline" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
+              <span style={{ textDecoration: 'underline' }}>U</span>
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Bullet list" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+              {'☰'}
+            </RB>
+            <RB title="Numbered list" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+              1.
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Undo" onClick={() => editor?.chain().focus().undo().run()}>
+              {'↩'}
+            </RB>
+            <RB title="Redo" onClick={() => editor?.chain().focus().redo().run()}>
+              {'↪'}
+            </RB>
+            {onAsk && (
+              <>
+                <span className="rse-sep" />
+                <RB title="Cite the selected claim" onClick={citeSelection}>
+                  Cite
+                </RB>
+              </>
+            )}
+            {commentsApi && (
+              <RB title="Comment on the selection" onClick={() => void commentOnSelection()}>
+                Comment
+              </RB>
+            )}
+            <span style={{ flex: 1 }} />
+            {suggestions.length > 0 && (
+              <button
+                type="button"
+                className="rse-chip"
+                onClick={() => setReviewOpen((o) => !o)}
+                aria-expanded={reviewOpen}
+              >
+                {suggestions.length} suggested edit{suggestions.length === 1 ? '' : 's'}
+              </button>
+            )}
+            {track && (
+              <label className="rse-track" title="Suggest edits instead of applying them — every change is attributed and reviewable">
+                <input type="checkbox" checked={trackOn} onChange={() => void toggleTrack()} />
+                Track changes
+              </label>
+            )}
+          </div>
+        )}
+
+        {/* ── Suggestion review strip ── */}
+        {full && reviewOpen && suggestions.length > 0 && (
+          <div className="rse-review" role="region" aria-label="Suggested edits">
+            <div className="rse-review-h">
+              <span>Suggested edits</span>
+              <span style={{ flex: 1 }} />
+              <button type="button" className="rse-link" onClick={() => resolveAll('accept')}>
+                Accept all
+              </button>
+              <button type="button" className="rse-link" onClick={() => resolveAll('reject')}>
+                Reject all
+              </button>
+            </div>
+            {suggestions.map((s, i) => (
+              <div key={`${s.from}-${i}`} className="rse-review-row">
+                <button type="button" className="rse-review-jump" onClick={() => jumpTo(s)} title="Show in the text">
+                  <span className="rse-review-kind" data-kind={s.kind}>
+                    {s.kind === 'insertion' ? 'insert' : 'delete'}
+                  </span>
+                  <span className="rse-review-by">{s.authorName ?? 'Unknown author'}</span>
+                  <span className="rse-review-txt">{s.text.slice(0, 80) || '(formatting)'}</span>
+                </button>
+                <button type="button" className="rse-link" onClick={() => resolveOne(s, 'accept')}>
+                  Accept
+                </button>
+                <button type="button" className="rse-link" onClick={() => resolveOne(s, 'reject')}>
+                  Reject
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Canvas ── */}
+        <div className="rse-body" ref={editorHostRef}>
+          {boot.mode === 'source' ? (
+            <textarea
+              className="rse-source"
+              value={sourceText}
+              readOnly={readOnly}
+              aria-label={ariaLabel ?? 'Section source'}
+              onChange={(e) => {
+                setSourceText(e.target.value);
+                const isDirty = e.target.value !== lastSavedRef.current;
+                setDirty(isDirty);
+                setSaveState(isDirty ? 'dirty' : 'saved');
+                if (storageKey) {
+                  try {
+                    if (isDirty) localStorage.setItem(cacheKeyFor(storageKey), e.target.value);
+                    else localStorage.removeItem(cacheKeyFor(storageKey));
+                  } catch {
+                    /* ignore */
+                  }
+                }
+                if (autosaveMs != null && isDirty) {
+                  if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+                  autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
+                }
+              }}
+            />
+          ) : (
+            <>
+              {isEmpty && !readOnly && onAsk && (
+                <div className="rse-empty-cta">
+                  <button
+                    type="button"
+                    className="rse-link"
+                    onClick={() => onAsk('Draft this section from the linked section evidence.')}
+                  >
+                    Draft with AnA
+                  </button>
+                </div>
+              )}
+              {lineage ? (
+                <DataOriginsMenu
+                  documentTable={lineage.documentTable}
+                  documentId={lineage.documentId}
+                  documentTitle={lineage.documentTitle}
+                  canonicalText={lineage.canonicalText}
+                >
+                  <EditorContent editor={editor} aria-label={ariaLabel} />
+                </DataOriginsMenu>
+              ) : (
+                <EditorContent editor={editor} aria-label={ariaLabel} />
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── Footer ── */}
+        {full && (
+          <div className="rse-foot">
+            <span className="rse-save">
+              <span className="rse-dot" style={{ background: SAVE_META[saveState].dot }} />
+              {SAVE_META[saveState].label}
+            </span>
+            <span className="rse-foot-sep">{'·'}</span>
+            <span>{words.toLocaleString()} words</span>
+            {trackOn && (
+              <>
+                <span className="rse-foot-sep">{'·'}</span>
+                <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Track changes on</span>
+              </>
+            )}
+            {collabStatus !== 'off' && (
+              <>
+                <span className="rse-foot-sep">{'·'}</span>
+                <span data-collab={collabStatus}>
+                  {collabStatus === 'connected'
+                    ? 'Live sync connected'
+                    : collabStatus === 'connecting'
+                      ? 'Live sync connecting…'
+                      : collabStatus === 'denied'
+                        ? 'Live sync refused — editing solo'
+                        : 'Live sync offline — editing solo'}
+                </span>
+              </>
+            )}
+            <span style={{ flex: 1 }} />
+            {autosaveMs == null && !readOnly && showSaveButton && (
+              <button type="button" className="rse-link" onClick={() => void doSave()} disabled={!dirty || saveState === 'saving'}>
+                {saveState === 'saving' ? 'Saving…' : 'Save (⌘S)'}
+              </button>
+            )}
+          </div>
+        )}
+
+        <style>{`
+        .rse-root { display:flex; flex-direction:column; min-height:0; background:var(--bg-000,#fff); border-radius:inherit; }
+        .rse-gate { display:flex; gap:10px; align-items:baseline; padding:8px 12px; font-size:12px; color:var(--text-300,#475467); background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); }
+        .rse-ribbon { display:flex; align-items:center; gap:2px; padding:4px 8px; background:var(--bg-000,#fff); border-bottom:1px solid var(--border,#e4e7ec); flex-wrap:wrap; }
+        .rse-sel { font-size:11px; border:1px solid var(--border-control,#d0d5dd); border-radius:4px; padding:2px 6px; background:var(--bg-50,#f9fafb); color:var(--text-100,#101828); cursor:pointer; height:24px; }
+        .rse-sep { width:1px; height:18px; background:var(--border,#e4e7ec); margin:0 3px; }
+        .rse-rb { min-width:24px; height:24px; padding:0 4px; font-size:12px; border:1px solid transparent; border-radius:4px; background:transparent; cursor:pointer; color:var(--text-200,#344054); display:inline-flex; align-items:center; justify-content:center; }
+        .rse-rb[data-active] { background:var(--bg-100,#f2f4f7); border-color:var(--border,#e4e7ec); }
+        .rse-chip { font-size:11px; height:24px; padding:0 10px; border-radius:12px; border:1px solid var(--warning,#b54708); color:var(--warning,#b54708); background:transparent; cursor:pointer; font-weight:600; }
+        .rse-track { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-400,#667085); cursor:pointer; margin-left:6px; }
+        .rse-review { border-bottom:1px solid var(--border,#e4e7ec); background:var(--bg-50,#f9fafb); max-height:200px; overflow-y:auto; }
+        .rse-review-h { display:flex; gap:10px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--text-300,#475467); }
+        .rse-review-row { display:flex; align-items:center; gap:8px; padding:4px 12px; font-size:12px; }
+        .rse-review-jump { display:flex; align-items:baseline; gap:8px; flex:1; min-width:0; background:none; border:none; cursor:pointer; text-align:left; padding:0; }
+        .rse-review-kind { font-size:10px; font-weight:700; text-transform:uppercase; }
+        .rse-review-kind[data-kind="insertion"] { color:var(--success,#067647); }
+        .rse-review-kind[data-kind="deletion"] { color:var(--error,#b42318); }
+        .rse-review-by { font-weight:600; color:var(--text-200,#344054); white-space:nowrap; }
+        .rse-review-txt { color:var(--text-300,#475467); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .rse-link { font-size:11px; border:none; background:none; color:var(--accent-100,#2563eb); cursor:pointer; padding:2px 4px; }
+        .rse-link:disabled { color:var(--text-400,#667085); cursor:default; }
+        .rse-body { flex:1; min-height:0; overflow-y:auto; }
+        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:Georgia,"Times New Roman",serif; }
+        .rse-body .tiptap p { margin:0 0 12px; }
+        .rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
+        .rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }
+        .rse-body .tiptap h3 { font-size:13px; font-weight:600; margin:16px 0 6px; }
+        .rse-body .tiptap ul, .rse-body .tiptap ol { margin:0 0 12px 24px; }
+        .rse-body .tiptap li { margin-bottom:6px; }
+        .rse-body .tiptap table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
+        .rse-body .tiptap th { padding:8px 12px; background:var(--bg-50,#f9fafb); border:1px solid var(--border,#e4e7ec); font-weight:600; text-align:left; }
+        .rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border,#e4e7ec); }
+        .rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400,#667085); pointer-events:none; height:0; }
+        .rse-ins { background:color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success,#067647); }
+        .rse-del { background:color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error,#b42318); }
+        .rse-comment-anchor { background:color-mix(in srgb, var(--accent-100,#2563eb) 14%, transparent); border-bottom:1px dotted var(--accent-100,#2563eb); cursor:pointer; }
+        .rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100,#101828); background:var(--bg-000,#fff); }
+        .rse-empty-cta { padding:10px 20px 0; }
+        .rse-foot { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-000,#fff); border-top:1px solid var(--border,#e4e7ec); font-size:10px; color:var(--text-400,#667085); flex-wrap:wrap; }
+        .rse-save { display:flex; align-items:center; gap:5px; }
+        .rse-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+        .rse-foot-sep { color:var(--bg-200,#eaecf0); }
+        `}</style>
+      </div>
+    );
+  },
+);

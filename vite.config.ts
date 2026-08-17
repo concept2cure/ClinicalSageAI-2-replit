@@ -101,10 +101,11 @@ export default defineConfig({
             return 'vendor-tiptap';
           }
 
-          // Real-time collaboration (Yjs, Socket.io client)
+          // Real-time collaboration (Yjs, Hocuspocus, Socket.io client)
           if (
             id.includes('/yjs') ||
             id.includes('/y-protocols') ||
+            id.includes('/@hocuspocus/') ||
             id.includes('/socket.io-client')
           ) {
             return 'vendor-realtime';

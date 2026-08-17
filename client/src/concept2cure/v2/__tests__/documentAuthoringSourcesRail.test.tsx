@@ -30,6 +30,11 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // The editor's header widgets are unrelated to the rail under test, and
 // AuthoringCollab reaches for the app-wide AuthProvider that a surface-level test
 // does not stand up. Stubbed so a failure here is about source context.
+// The surface itself now reads the auth identity too (suggestion attribution),
+// so the auth service is mocked the way the sibling tests mock it.
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+}));
 vi.mock('../surfaces/AuthoringCollab', () => ({ AuthoringCollab: () => null }));
 vi.mock('../surfaces/AuthoringFilingBar', () => ({ AuthoringFilingBar: () => null }));
 vi.mock('../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: () => null }));

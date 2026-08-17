@@ -5,7 +5,8 @@
  * Client surfaces:
  *   - BriefingBookPanel        — the "anticipated FDA pushback" trust-strip.
  *   - mapBriefingPremortem     — SSE tool-result → BriefingBookPremortemResult.
- *   - flag-gating              — ENABLE_ANA_DOCUMENT_STUDIO (default false).
+ *   - flag-gating              — the client ENABLE_ANA_DOCUMENT_STUDIO flag is
+ *                                deleted; unknown flags must read as disabled.
  *   - honesty guard            — anticipated≠actual; sample non-exportable.
  *
  * A `DocumentStudioPane — briefing-book wiring` block used to sit between the
@@ -146,14 +147,16 @@ describe('mapBriefingPremortem — SSE parse + honesty guard', () => {
   });
 });
 
-describe('flag-gating — ENABLE_ANA_DOCUMENT_STUDIO', () => {
-  it('defaults to disabled', () => {
+describe('flag-gating — ENABLE_ANA_DOCUMENT_STUDIO (client flag deleted)', () => {
+  // The CLIENT flag was deleted: it gated nothing after DocumentStudioPane was
+  // removed as unreachable, and a flag with no call sites is documentation
+  // pretending to be a control. The SERVER env gate of the same name
+  // (server/routes/ana-ri/seal-verified.ts, se-discussion-author.ts) is a
+  // separate, live control and is unaffected. An unknown client flag must
+  // read as disabled — never as a permission.
+  it('an unknown flag reads as disabled, and cannot be enabled', () => {
     expect(isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO')).toBe(false);
-  });
-
-  it('can be enabled per-org', () => {
-    setFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO', true);
-    expect(isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO')).toBe(true);
-    setFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO', false); // restore
+    setFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO', true); // no-op with a console.warn
+    expect(isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO')).toBe(false);
   });
 });

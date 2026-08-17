@@ -32,6 +32,11 @@ function ok(payload: unknown) {
   return { ok: true, status: 200, json: async () => payload } as Response;
 }
 
+/** Text of the canonical canvas (RichSectionEditor's ProseMirror mount). */
+function canvasText(): string {
+  return (document.querySelector('.rse-body .tiptap')?.textContent ?? '').trim();
+}
+
 /* Two draft documents in scope. D1 is the editor's default (first row); the
    deep-linked section lives in D2 — the resolution has to LOOK, not assume. */
 const DOCS = {
@@ -87,8 +92,7 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     // The named section — in D2, NOT the default document — is open in the
     // canvas with its real content.
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('SE discussion body.');
+      expect(canvasText()).toBe('SE discussion body.');
     });
     // …and the masthead shows the section identity the click named.
     expect(screen.getByRole('heading', { name: 'Substantial Equivalence Discussion' })).toBeTruthy();
@@ -113,8 +117,7 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     expect(notice.textContent).toMatch(/default view/i);
     // …over the DEFAULT view, which still works (D1's first section).
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('Default document content.');
+      expect(canvasText()).toBe('Default document content.');
     });
   });
 
@@ -135,16 +138,14 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     const notice = await screen.findByText(/OR-801 Orthopedic Screw System/);
     expect(notice.textContent).toMatch(/Couldn’t open/);
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('Default document content.');
+      expect(canvasText()).toBe('Default document content.');
     });
   });
 
   it('a mount with no pending target behaves exactly as before — default view, no notice', async () => {
     render(<DocumentAuthoring {...props()} />);
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('Default document content.');
+      expect(canvasText()).toBe('Default document content.');
     });
     expect(screen.queryByText(/Couldn’t (find|open)/)).toBeNull();
   });

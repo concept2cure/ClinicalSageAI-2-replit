@@ -15,7 +15,9 @@
  *
  * Microcopy is factual (no emoji, no cheerleading). The probability strip is a
  * live region. The component owns no chat state — it is a pure view over the
- * artifact the chat hook produced. Gated by ENABLE_ANA_DOCUMENT_STUDIO upstream.
+ * artifact the chat hook produced. Gated upstream by the SERVER env flag
+ * ENABLE_ANA_DOCUMENT_STUDIO (the client flag of that name was deleted —
+ * it had no call sites).
  *
  * E1 INTEGRATION: when E1's Sign-and-seal + SealBadge/ProvenanceTrail land, the
  * seal action and the SealBadge attach here — next to the export action, keyed

@@ -18,11 +18,20 @@
  *                the text by code. GET /api/authoring/docs?status= lists the
  *                documents, and GET /api/authoring/docs/:docId/sections their
  *                sections.
- *   • canvas   — the selected section's `content` is edited in place and saved
- *                with PATCH /api/authoring/sections/:sectionId. The server
- *                snapshots the prior content into doc_revisions on every
- *                content change (revision_created:true), so every save is an
- *                auditable revision — no client-side fabrication of version ids.
+ *   • canvas   — the selected section opens in the ONE canonical editor
+ *                (`v2/editor/RichSectionEditor`, TipTap/ProseMirror), which
+ *                replaced the plain <textarea> and the execCommand DocCanvas
+ *                in the same change (zero duplication). Saves go through the
+ *                SAME governed PATCH /api/authoring/sections/:sectionId; the
+ *                server records a revision row for the new content on every
+ *                content change, so every save is an auditable revision — no
+ *                client-side fabrication of version ids. Rich editing is
+ *                fail-closed per section: content whose text the editor's
+ *                parse cannot faithfully retain is edited as raw source, never
+ *                silently rewritten. Track changes binds the store's
+ *                `track_changes` column to real attributed ins/del suggestions
+ *                with accept/reject; comments can anchor to text ranges; the
+ *                history rail renders a word-level diff between revisions.
  *   • history  — GET /api/authoring/sections/:sectionId/history lists the real
  *                revisions (author + timestamp from the server); Revert POSTs
  *                /revert {rev_id}, which itself snapshots current content first.
@@ -69,7 +78,14 @@ import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
-import { DocCanvas } from './EditorCanvas';
+import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
+import {
+  RichSectionEditor,
+  type RichSectionEditorHandle,
+} from '../editor/RichSectionEditor';
+import type { CommentAnchorPayload } from '../editor/commentAnchor';
+import { useAuth } from '@/services/portal/authService';
+import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
 
 import { useFilingOutline, findSectionForNode, nodeHasDraft } from '../useFilingOutline';
@@ -105,6 +121,8 @@ interface AuthSection {
   title: string;
   content: string | null;
   order_index: number | null;
+  /** The store's own column — the editor binds real suggestions to it. */
+  track_changes?: boolean | null;
   comment_count: number | string | null;
   revision_count: number | string | null;
   citation_count: number | string | null;
@@ -129,6 +147,17 @@ interface AuthComment {
   section_code: string | null;
   section_title: string | null;
   created_at: string | null;
+  /** Range anchor recorded at creation (authoring_comments.anchor JSONB). */
+  anchor?: unknown;
+}
+
+/** Runtime guard over the JSONB the server returns verbatim. */
+function asTextRangeAnchor(v: unknown): CommentAnchorPayload | null {
+  if (!v || typeof v !== 'object') return null;
+  const a = v as Record<string, unknown>;
+  return a.kind === 'text-range' && typeof a.quote === 'string'
+    ? (a as unknown as CommentAnchorPayload)
+    : null;
 }
 
 /**
@@ -287,10 +316,31 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const [sectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
-  // The editable buffer for the active section, plus the last-saved baseline.
-  const [draft, setDraft] = useState('');
-  const [savedContent, setSavedContent] = useState('');
+  // The canonical editor owns the in-flight buffer; the section row in
+  // `sections` is the last-saved server truth (saves adopt the returned row).
+  // `editorDirty` mirrors unsaved-changes state for the header Save button and
+  // the leave-guard on filing actions.
+  const [editorDirty, setEditorDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** Bumped when the server replaces content out from under the editor
+   *  (revert) so the canvas remounts on the new truth. */
+  const [contentEpoch, setContentEpoch] = useState(0);
+  const editorRef = useRef<RichSectionEditorHandle | null>(null);
+  /** The signed-in author, for suggestion attribution and comment anchors. */
+  const { user } = useAuth();
+
+  /* ── A comment being anchored to a text range ──
+     The editor's Comment button hands over the selection's anchor and waits;
+     the comments rail collects the body and posts, and the server-issued
+     comment id resolves the wait so the editor can apply the highlight mark.
+     One pending request at a time; superseding or leaving resolves null. */
+  const pendingAnchorRef = useRef<{
+    anchor: CommentAnchorPayload;
+    resolve: (id: string | null) => void;
+  } | null>(null);
+  const [pendingAnchor, setPendingAnchor] = useState<CommentAnchorPayload | null>(null);
+  /** The comment whose anchored range was last clicked in the canvas. */
+  const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null);
 
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null>(null);
@@ -333,7 +383,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
 
   const activeDoc = docs.find((d) => d.id === activeDocId) ?? null;
   const activeSection = sections.find((s) => s.id === activeSectionId) ?? null;
-  const dirty = activeSection != null && draft !== savedContent;
+  const dirty = activeSection != null && editorDirty;
 
   /* ── The editor's own conversation ──
      Grounded on what is open: `authoringContext` is the contract the server's
@@ -461,11 +511,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     void loadSections(activeDocId);
   }, [activeDocId, loadSections]);
 
-  /* ── Sync the editable buffer to the active section ── */
+  /* ── Reset editor bookkeeping on section switch ──
+     The canonical editor remounts per section (key includes the id) and reads
+     its content from the section row, so there is no separate draft buffer to
+     sync — only the dirty mirror and any pending comment anchor to clear. */
   useEffect(() => {
-    const content = activeSection?.content ?? '';
-    setDraft(content);
-    setSavedContent(content);
+    setEditorDirty(false);
+    pendingAnchorRef.current?.resolve(null);
+    pendingAnchorRef.current = null;
+    setPendingAnchor(null);
   }, [activeSectionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Honour the deep-link target ──
@@ -695,59 +749,86 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     void loadSources(activeSectionId);
   }, [activeSectionId, fireToast, loadSources]);
 
-  /* ── Save the section content (real, awaited, auto-revisioned) ── */
-  const save = useCallback(async () => {
-    if (!activeSection || !dirty || saving) return;
+  /* ── Save the section content (real, awaited, auto-revisioned) ──
+     The ONE save path: the canonical editor serializes and calls this; the
+     header Save button and Cmd/Ctrl-S route through the editor's own save so
+     the footer save-state, the device cache and this governed PATCH cannot
+     disagree. Throwing on failure lets the editor report the truth. */
+  const saveSectionContent = useCallback(async (serialized: string) => {
+    if (!activeSection) throw new Error('No section open');
     setSaving(true);
     try {
       const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-        content: draft,
+        content: serialized,
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error'); return; }
+      if (res.status === 401) {
+        fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error');
+        throw new Error('unauthenticated');
+      }
       if (!res.ok) {
         fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error');
-        return;
+        throw new Error('save failed');
       }
       const adopted = (json as { section?: AuthSection })?.section;
-      const persisted = adopted?.content ?? draft;
-      setSavedContent(persisted);
-      setDraft(persisted);
+      const persisted = adopted?.content ?? serialized;
       // Adopt the server row (revision counter, updated_at) into the tree.
       setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s)));
       fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
       // Keep the history rail fresh if it's open.
       if (rail === 'history') void loadHistory(activeSection.id);
-    } catch (e) {
-      fireToast('Couldn’t save the section — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     } finally {
       setSaving(false);
     }
-  }, [activeSection, dirty, saving, draft, rail, loadHistory, fireToast]);
+  }, [activeSection, rail, loadHistory, fireToast]);
 
-  /* ── Rich editor (DocCanvas) — gated behind ENABLE_RICH_SECTION_EDITOR
-     (default OFF, so the textarea below is the shipping default). When on, the
-     canvas auto-saves the HTML it emits through the SAME governed, auto-revisioned
-     PATCH the textarea uses. Throwing on failure lets DocCanvas show its error
-     save-state instead of silently implying a save that did not happen. ── */
-  const richEditor = isFeatureEnabled('ENABLE_RICH_SECTION_EDITOR');
-  const saveHtml = useCallback(async (html: string) => {
-    if (!activeSection) return;
+  /* ── Track changes: the store's own column drives the suggestion engine ──
+     The server column is flipped FIRST; the editor enables suggestion capture
+     only after the PATCH confirms, so the canvas never claims a mode the
+     record does not hold. */
+  const toggleTrackChanges = useCallback(async (on: boolean) => {
+    if (!activeSection) throw new Error('No section open');
     const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-      content: html,
+      track_changes: on,
     });
     const json = await res.json().catch(() => null);
     if (!res.ok) {
-      fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error');
-      throw new Error('save failed');
+      fireToast('Couldn’t change track changes — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. The mode is unchanged.', 'error');
+      throw new Error('track toggle refused');
     }
-    const adopted = (json as { section?: AuthSection })?.section;
-    const persisted = adopted?.content ?? html;
-    setSavedContent(persisted);
-    setDraft(persisted);
-    setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s)));
-    if (rail === 'history') void loadHistory(activeSection.id);
-  }, [activeSection, rail, loadHistory, fireToast]);
+    setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
+    fireToast(on
+      ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'
+      : 'Track changes off — edits apply directly. Existing suggestions remain until resolved.');
+  }, [activeSection, fireToast]);
+
+  /* ── Comment anchoring hand-off (editor → comments rail → editor) ── */
+  const requestAnchoredComment = useCallback((anchor: CommentAnchorPayload) => {
+    return new Promise<string | null>((resolve) => {
+      pendingAnchorRef.current?.resolve(null); // supersede any prior request
+      pendingAnchorRef.current = { anchor, resolve };
+      setPendingAnchor(anchor);
+      setRail('comments');
+    });
+  }, []);
+
+  const cancelAnchoredComment = useCallback(() => {
+    pendingAnchorRef.current?.resolve(null);
+    pendingAnchorRef.current = null;
+    setPendingAnchor(null);
+  }, []);
+
+  /** A click on annotated text in the canvas opens its thread in the rail. */
+  const openCommentFromAnchor = useCallback((commentId: string) => {
+    setFocusedCommentId(commentId);
+    setRail('comments');
+  }, []);
+
+  /** Live co-editing rides the server's /collab Hocuspocus socket. Dark by
+   *  default: both this client flag AND the server's ENABLE_COLLAB_CRDT must
+   *  be on. When the socket is absent the editor reports "editing solo" and
+   *  the governed PATCH path is unaffected. */
+  const liveCoedit = isFeatureEnabled('ENABLE_LIVE_COEDITING');
 
   /* ── Revert to a prior revision (server snapshots current first) ── */
   const revert = useCallback(async (revId: string) => {
@@ -759,9 +840,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       if (!res.ok) { fireToast('Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
       const adopted = (json as { section?: AuthSection })?.section;
       const content = adopted?.content ?? '';
-      setDraft(content);
-      setSavedContent(content);
       setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s)));
+      // The server replaced the content out from under the editor — remount
+      // the canvas on the new truth rather than leaving a stale buffer.
+      setContentEpoch((e) => e + 1);
+      setEditorDirty(false);
       fireToast('Section reverted to the selected revision.');
       void loadHistory(activeSection.id);
     } catch (e) {
@@ -769,19 +852,33 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     }
   }, [activeSection, loadHistory, fireToast]);
 
-  /* ── Add a comment on the active section ── */
+  /* ── Add a comment on the active section ──
+     When a text-range anchor is pending (the editor's Comment button), it is
+     recorded into the row's `anchor` JSONB and the server-issued comment id is
+     resolved back to the editor so the highlight mark can be applied — the row
+     is the thread, the mark is the anchor. */
   const addComment = useCallback(async () => {
     if (!activeSection || !activeDocId || !newComment.trim()) return;
+    const pending = pendingAnchorRef.current;
     try {
       const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/comment`, {
         body: newComment.trim(),
         doc_id: activeDocId,
+        ...(pending ? { anchor: pending.anchor } : {}),
       });
       const json = await res.json().catch(() => null);
       if (res.status === 401) { fireToast('Comment not posted — your session isn’t authenticated.', 'error'); return; }
       if (!res.ok) { fireToast('Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
       setNewComment('');
-      fireToast('Comment added.');
+      const created = (json as { comment?: { id?: string } })?.comment;
+      if (pending) {
+        pending.resolve(typeof created?.id === 'string' ? created.id : null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+        fireToast('Comment anchored to the selected text.');
+      } else {
+        fireToast('Comment added.');
+      }
       void loadComments(activeDocId);
     } catch (e) {
       fireToast('Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
@@ -1002,7 +1099,12 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'signatures' ? null : 'signatures')} data-active={rail === 'signatures' || undefined}>
               {I.shieldCheck} Signatures
             </button>
-            <button className="btn primary" style={{ height: 30 }} onClick={save} disabled={!dirty || saving}>
+            <button
+              className="btn primary"
+              style={{ height: 30 }}
+              onClick={() => void editorRef.current?.save()}
+              disabled={!dirty || saving}
+            >
               {I.check} {saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}
             </button>
             <button className="btn ghost" style={{ height: 30 }} onClick={() => askAna(draftPrompt)}>
@@ -1083,38 +1185,55 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     {dirty ? ' · unsaved changes' : activeSection.updated_at ? ` · saved ${relTime(activeSection.updated_at)}` : ''}
                   </div>
                 </div>
-                {richEditor ? (
-                  <div style={{ minHeight: 460, border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 10, overflow: 'hidden' }}>
-                    <DocCanvas
-                      key={activeSection.id}
-                      sec={{ id: activeSection.id, num: activeSection.code, title: activeSection.title }}
-                      blocks={[{ p: draft }]}
-                      onAsk={askAna}
-                      onSave={saveHtml}
-                      /* The text this section's lineage was recorded against —
-                         the last SAVED content, not the in-flight draft. With
-                         it, "Data Origins" refuses to answer once the canvas
-                         has drifted from what lineage describes, rather than
-                         reporting the provenance of the wrong words. */
-                      lineageCanonicalText={savedContent}
-                    />
-                  </div>
-                ) : (
-                  <textarea
-                    className="ed-canvas"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); void save(); } }}
+                <div style={{ minHeight: 460, border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <RichSectionEditor
+                    /* contentEpoch remounts the canvas when the server
+                       replaces content out from under it (revert). */
+                    key={activeSection.id + ':' + contentEpoch}
+                    ref={editorRef}
+                    value={activeSection.content ?? ''}
+                    format="html"
+                    onSave={saveSectionContent}
+                    autosaveMs={null}
+                    showSaveButton={false}
+                    onDirtyChange={setEditorDirty}
                     placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
-                    spellCheck
-                    style={{
-                      width: '100%', minHeight: 460, resize: 'vertical', border: '1px solid var(--c2c-line,#e4e7ec)',
-                      borderRadius: 10, padding: '18px 20px', fontSize: 15, lineHeight: 1.7,
-                      fontFamily: 'Georgia, "Times New Roman", serif', color: 'var(--c2c-ink,#101828)',
-                      background: 'var(--c2c-surface,#fff)', outline: 'none',
+                    storageKey={activeSection.id}
+                    ariaLabel={`Section ${activeSection.code} — ${activeSection.title}`}
+                    onAsk={askAna}
+                    /* The text this section's lineage was recorded against —
+                       the last SAVED content, not the in-flight draft. With
+                       it, "Data Origins" refuses to answer once the canvas
+                       has drifted from what lineage describes, rather than
+                       reporting the provenance of the wrong words. */
+                    lineage={{
+                      documentTable: 'authoring_sections',
+                      documentId: activeSection.id,
+                      documentTitle: activeSection.title,
+                      canonicalText: activeSection.content ?? '',
                     }}
+                    track={{
+                      enabled: !!activeSection.track_changes,
+                      author: {
+                        id: user?.email ?? 'unknown',
+                        name: user?.displayName || user?.email || 'Unknown author',
+                      },
+                      onToggle: toggleTrackChanges,
+                    }}
+                    commentsApi={{
+                      onCreate: requestAnchoredComment,
+                      onOpen: openCommentFromAnchor,
+                    }}
+                    collab={
+                      liveCoedit && activeDoc
+                        ? {
+                            docName: `authoring:${activeDoc.id}:${activeSection.id}`,
+                            token: getAuthToken(),
+                          }
+                        : null
+                    }
                   />
-                )}
+                </div>
               </>
             )}
           </div>
@@ -1161,6 +1280,30 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     <div className="cmt-body" style={{ whiteSpace: 'pre-wrap' }}>
                       {m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}
                     </div>
+                    {/* AI output enters the record ONLY as an attributed
+                        in-text suggestion — struck-in green, pending until a
+                        human accepts or rejects each edit in the canvas.
+                        Never as settled text. */}
+                    {!m.streaming && m.text && activeSection && (
+                      <div style={{ marginTop: 6 }}>
+                        <button
+                          className="nda-open"
+                          onClick={() => {
+                            const ok = editorRef.current?.insertSuggestion(m.text, {
+                              id: 'ana',
+                              name: 'AnA (AI draft)',
+                            });
+                            if (ok) {
+                              fireToast('Draft inserted as tracked suggestions — review each edit in the canvas, then save.');
+                            } else {
+                              fireToast('Couldn’t insert — the canvas is not editable right now.', 'error');
+                            }
+                          }}
+                        >
+                          {I.penLine} Insert into {activeSection.code} as tracked suggestion
+                        </button>
+                      </div>
+                    )}
                     {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                         {m.executedActions.map((a, ai) => (
@@ -1228,7 +1371,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             <EmptyState icon={I.clock} title="No prior revisions"
               hint="Each save records the new content here under its author, so you can compare and revert." />
           ) : (
-            revisions.map((r) => (
+            revisions.map((r, i) => (
               <div key={r.id} className="cmt">
                 <div className="cmt-meta">
                   <span className="cmt-av">{(r.created_by_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
@@ -1239,6 +1382,14 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                 <div className="cmt-body" style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}>
                   {(r.content ?? '').slice(0, 400) || <span style={{ opacity: 0.6 }}>(empty)</span>}
                 </div>
+                {/* The word-level redline against the revision before this
+                    one (the list is newest-first, so that is the next row).
+                    Computed from the two stored contents already loaded —
+                    nothing fetched, nothing inferred. */}
+                <AuthoringRevisionDiff
+                  current={r.content ?? ''}
+                  previous={revisions[i + 1]?.content ?? ''}
+                />
               </div>
             ))
           )}
@@ -1361,9 +1512,21 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           <div className="ed-comments-h">Comments</div>
           {activeSection && (
             <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+              {/* The range being commented on, handed over by the editor's
+                  Comment button. Posting resolves the server id back to the
+                  canvas so the highlight mark can be applied and saved. */}
+              {pendingAnchor && (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 6, fontSize: 12 }}>
+                  <span className="rd-chip tone-idle" style={{ flexShrink: 0 }}>Anchoring to</span>
+                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                    “{pendingAnchor.quote}”
+                  </span>
+                  <button className="nda-open" onClick={cancelAnchoredComment}>Cancel</button>
+                </div>
+              )}
               <textarea
                 className="c2c-input" value={newComment} onChange={(e) => setNewComment(e.target.value)}
-                placeholder={`Comment on ${activeSection.code}…`}
+                placeholder={pendingAnchor ? 'Comment on the selected text…' : `Comment on ${activeSection.code}…`}
                 style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
@@ -1374,18 +1537,46 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           {comments.length === 0 ? (
             <EmptyState icon={I.checkCircle} title="No comments yet" hint="Review comments on this document appear here." />
           ) : (
-            comments.map((c) => (
-              <div key={c.id} className="cmt">
-                <div className="cmt-meta">
-                  <span className="cmt-av">{(c.author_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
-                  <b>{c.author_name ?? 'Unknown'}</b>
-                  {c.section_code && <span className="cmt-role">{c.section_code}</span>}
-                  <span className="cmt-when">· {relTime(c.created_at)}</span>
-                  {c.status && c.status !== 'open' && <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>{c.status}</span>}
+            comments.map((c) => {
+              const anchor = asTextRangeAnchor(c.anchor);
+              return (
+                <div key={c.id} className="cmt" data-active={focusedCommentId === c.id || undefined}
+                  style={focusedCommentId === c.id ? { background: 'color-mix(in srgb, var(--accent-100,#2563eb) 7%, transparent)' } : undefined}>
+                  <div className="cmt-meta">
+                    <span className="cmt-av">{(c.author_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
+                    <b>{c.author_name ?? 'Unknown'}</b>
+                    {c.section_code && <span className="cmt-role">{c.section_code}</span>}
+                    <span className="cmt-when">· {relTime(c.created_at)}</span>
+                    {c.status && c.status !== 'open' && <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>{c.status}</span>}
+                  </div>
+                  {/* The quoted range this thread is anchored to, with a jump
+                      into the canvas. An anchor whose text no longer exists is
+                      reported as exactly that — never silently repointed. */}
+                  {anchor && (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', margin: '2px 0 4px', fontSize: 11.5 }}>
+                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic', opacity: 0.8 }}>
+                        “{anchor.quote}”
+                      </span>
+                      {c.section_id === activeSectionId && (
+                        <button
+                          className="nda-open"
+                          onClick={() => {
+                            setFocusedCommentId(c.id);
+                            const found = editorRef.current?.selectCommentAnchor(c.id);
+                            if (!found) {
+                              fireToast('The annotated text no longer exists in the current draft — the comment is kept, its highlight is gone.', 'error');
+                            }
+                          }}
+                        >
+                          Show in text
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="cmt-body">{c.body}</div>
                 </div>
-                <div className="cmt-body">{c.body}</div>
-              </div>
-            ))
+              );
+            })
           )}
         </aside>
       )}
