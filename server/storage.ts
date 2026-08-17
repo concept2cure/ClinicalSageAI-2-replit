@@ -40,7 +40,15 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: Omit<User, 'id'>): Promise<User>;
+  // createUser is deliberately absent. Its implementation INSERTed username /
+  // password / role / subscribed into `users`, which declares none of them
+  // (email, name, password_hash, status), so it 42703'd at PLAN time on every
+  // call. It had no callers — only this declaration — and its catch logged the
+  // whole userData object, which would have written a plaintext password to the
+  // logs the first time anyone wired it up. Five working creation paths already
+  // exist (db/bootstrap/seed-default-org, routes/users, routes/setup,
+  // routes/scim, routes/sso); this was a sixth that could never work. Found by
+  // ci:insert-columns-declared.
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
 
@@ -2173,25 +2181,7 @@ export class DatabaseStorage {
     }
   }
 
-  async createUser(userData: Omit<User, 'id'>): Promise<User> {
-    if (!pool) {
-      throw new Error('Database connection not available');
-    }
-
-    try {
-      const { username, password, email, role, name, subscribed } = userData;
-      // tenant-isolation-safe: user creation is org-less by design — a users row is a global identity; org membership is created separately via organization_users.
-      const result = await query(
-        'INSERT INTO users (username, password, email, role, name, subscribed) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [username, password, email, role, name, subscribed]
-      );
-
-      return result.rows[0];
-    } catch (error) {
-      logger.error('Failed to create user', { userData, error });
-      throw error;
-    }
-  }
+  // createUser deleted — see the note on the IStorage declaration above.
 
   async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
     if (!pool) return undefined;
