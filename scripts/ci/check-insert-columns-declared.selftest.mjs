@@ -45,6 +45,13 @@ const CASES = [
   // pin that the union is consulted rather than the lineage alone.
   ['users', 'email', true, 'Drizzle baseline (not in the increment set)'],
   ['users', 'password_hash', true, 'Drizzle baseline (not in the increment set)'],
+  // A column declared AFTER a comment that itself contains commas. The DDL is
+  // `label text not null,  -- '0M','3M','6M',…` then `month int not null`.
+  // Splitting on commas before stripping comments glued `month` onto a fragment
+  // starting with a quote, so it vanished — and the guard reported it missing
+  // while the router both writes it and ORDER BYs it.
+  ['stab_timepoints', 'month', true, 'db/migrations/022_stability_v2.sql, after a comma-bearing comment'],
+  ['stab_timepoints', 'label', true, 'same CREATE TABLE'],
   // Proven ABSENT: storage.ts wrote these and 42703'd every call.
   ['users', 'username', false, 'never declared or created'],
   ['users', 'subscribed', false, 'never declared or created'],

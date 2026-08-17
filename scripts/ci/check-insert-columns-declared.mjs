@@ -263,7 +263,20 @@ export function sqlLineageColumns() {
         else if (c === ')') depth--;
         i++;
       }
-      const body = src.slice(create.lastIndex, i - 1);
+      // Comments come out BEFORE the split, not after.
+      //
+      // A trailing comment can contain commas, and 022_stability_v2.sql has
+      // exactly that: `label text not null,  -- '0M','3M','6M',…` — splitting
+      // first turned that comment into six phantom fragments and glued the NEXT
+      // real column (`month int not null`) onto the tail of the last one, where
+      // it began with a quote and matched no name. The guard then reported
+      // stab_timepoints.month as existing nowhere, when the DDL declares it and
+      // the router both writes AND orders by it. Crying wolf on a real column,
+      // from a comma inside a comment.
+      const body = src
+        .slice(create.lastIndex, i - 1)
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/--[^\n]*/g, '');
 
       // Split on TOP-LEVEL commas only; a type like numeric(10,2) has its own.
       let d = 0;
@@ -280,7 +293,7 @@ export function sqlLineageColumns() {
       parts.push(cur);
 
       for (const part of parts) {
-        const line = part.replace(/--[^\n]*/g, '').trim();
+        const line = part.trim();
         if (!line) continue;
         // Table-level constraints are not columns.
         if (/^(CONSTRAINT|PRIMARY\s+KEY|UNIQUE|FOREIGN\s+KEY|CHECK|EXCLUDE|LIKE)\b/i.test(line)) continue;
