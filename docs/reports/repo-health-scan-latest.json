@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-17T01:06:12.706Z",
+  "generatedAt": "2026-08-17T01:52:27.867Z",
   "git": {
-    "sha": "8ac3baf5f1d891bcc92146f38bd08b5554dfdd2e",
+    "sha": "7cc80670a59ef6095a837d89ad9bb41561ccb240",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2342,7 +2342,7 @@
       },
       {
         "file": "server/src/routes/stability.router.ts",
-        "lines": 2826
+        "lines": 2832
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
