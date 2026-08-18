@@ -38,8 +38,27 @@
  * It is still a heuristic, not dataflow analysis: it will miss a value passed
  * through a helper function. Stated so nobody reads a green result as proof.
  *
+ * ── What the baseline pins ────────────────────────────────────────────────────
+ * The exact TEXT of each reviewed line, not a digest of the whole file.
+ *
+ * It was the file digest, and the guarantee that bought — "a baseline cannot
+ * quietly cover new code" — is worth keeping. The cost was not. This router is
+ * ~4600 lines and touched constantly; in a single day three unrelated commits
+ * re-flagged it, and because every other CI job declares `needs: lint`, each one
+ * took the whole pipeline down until someone re-read a function that had not
+ * changed. A gate that fires on edits it has nothing to say about is a gate
+ * people learn to clear by re-running --write-baseline, which is precisely how
+ * a reviewed baseline becomes an unreviewed one.
+ *
+ * Pinning the site text keeps the guarantee and drops the noise. A NEW offending
+ * line anywhere in a baselined file is a site the baseline does not carry, and
+ * fails. An EDIT to a reviewed line changes its text, and fails. An edit
+ * anywhere else does not, because there is nothing new to review. The failure
+ * also names the line instead of the file, so re-verification starts at the
+ * code rather than at a 4600-line search.
+ *
  * Exit 0 — no unjustified occurrences.
- * Exit 1 — a new one appeared, or a baselined file changed shape.
+ * Exit 1 — a new one appeared, or a baselined site changed.
  *
  * Usage:
  *   node scripts/ci/check-path-containment.mjs
@@ -48,7 +67,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -144,10 +162,15 @@ for (const dir of SCAN_DIRS) {
     const hits = offendingLines(src);
     if (hits.length === 0) continue;
 
+    const lines = src.split('\n');
     findings.push({
       file: path.relative(repoRoot, file),
-      lines: hits.slice(0, 5),
-      digest: crypto.createHash('sha256').update(src).digest('hex').slice(0, 16),
+      lines: hits,
+      // The pin is the TEXT of each matching line, not a digest of the file.
+      // See "What the baseline pins" above. Every hit is recorded, with no cap:
+      // a cap would let hit N+1 appear unseen, which is the hole the pin exists
+      // to close.
+      sites: hits.map(n => lines[n - 1].trim()),
     });
   }
 }
@@ -159,8 +182,10 @@ if (writeBaseline) {
   const entries = {};
   for (const f of findings) {
     entries[f.file] = {
-      digest: f.digest,
-      lines: f.lines,
+      // Line NUMBERS are deliberately not stored: they move whenever anything
+      // above them moves, which would reintroduce exactly the churn this pin
+      // removes. The line TEXT is the locator, and it is greppable.
+      sites: f.sites,
       reason: existing.entries?.[f.file]?.reason ?? 'TODO: state why this is safe, or fix it.',
     };
   }
@@ -172,9 +197,10 @@ if (writeBaseline) {
         _comment:
           'Files where a request-controlled value reaches a filesystem path with no ' +
           'containment check detectable by scripts/ci/check-path-containment.mjs. Every ' +
-          'entry needs a REASON. The digest pins the file contents: change the file and ' +
-          'it re-flags, so a baseline cannot quietly cover new code. This list may shrink, ' +
-          'never grow.',
+          'entry needs a REASON. `sites` pins the exact text of each reviewed line: a new ' +
+          'or edited site re-flags, so a baseline cannot quietly cover new code, while an ' +
+          'unrelated edit elsewhere in the same file does not. This list may shrink, never ' +
+          'grow.',
         entries,
       },
       null,
@@ -196,10 +222,16 @@ for (const f of findings) {
     problems.push(`NEW  ${f.file}:${f.lines.join(',')} — a request value reaches a path with no containment check`);
     continue;
   }
-  if (entry.digest !== f.digest) {
+  const reviewed = [...(entry.sites ?? [])].sort();
+  const current = [...f.sites].sort();
+  if (reviewed.length !== current.length || reviewed.some((s, i) => s !== current[i])) {
+    const added = f.sites.filter((s, i) => !reviewed.includes(s)).map((s, i) => `+ ${s}`);
+    const gone = reviewed.filter(s => !f.sites.includes(s)).map(s => `- ${s}`);
     problems.push(
-      `CHANGED  ${f.file} — baselined as "${entry.reason}" but the file has changed; ` +
-        're-verify and refresh the baseline'
+      `CHANGED  ${f.file}:${f.lines.join(',')} — the reviewed sites no longer match.\n` +
+        `${[...added, ...gone].map(l => `      ${l}`).join('\n')}\n` +
+        `      baselined as: "${entry.reason}"\n` +
+        '      re-verify the site above and refresh the baseline'
     );
   }
 }
