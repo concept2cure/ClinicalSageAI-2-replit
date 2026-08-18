@@ -32,10 +32,30 @@
  * only when the harness already builds the table being altered. A harness that
  * stays away from the authoring subsystem is untouched by this gate.
  *
+ * ── Listed must mean applied ──────────────────────────────────────────────────
+ * The closure rule above is satisfied by the TEXT of a filename appearing in a
+ * harness, and that is a hole a fix walked straight into. Three harnesses build
+ * their schema as a sequence of `await pglite.exec(migration('…'))` statements,
+ * not as an array; two filenames were inserted into that sequence in array
+ * style, as bare strings:
+ *
+ *   await pglite.exec(migration('db/migrations/…_loop_tables.sql'));
+ *   'db/migrations/20260817_doc_revisions_immutable_ledger.sql',   // <- no-op
+ *
+ * A bare string statement evaluates and is discarded. The migration was never
+ * applied, the closure rule above was satisfied, and the suite stayed green
+ * because those three harnesses do not yet read the ledger columns — the exact
+ * latent break this gate exists to prevent, reintroduced by the gate's own fix.
+ * (tsc caught it as TS2695, one job after the one that was failing.)
+ *
+ * So the second rule: a migration literal must sit inside a bracket — a call
+ * argument or an array element. Anything else is a mention, not an application.
+ *
  * ── Scope ─────────────────────────────────────────────────────────────────────
- * Static: it reads source text, so it proves the file is LISTED, not that the
- * harness executed it. The execution half is covered by
- * authoring-durable-applier.contract.test.ts, which runs the real applier.
+ * Static: it reads source text, so it proves the file is listed AND passed to
+ * something, not that the call it is passed to ran. The execution half is
+ * covered by authoring-durable-applier.contract.test.ts, which runs the real
+ * applier.
  */
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
@@ -76,8 +96,64 @@ function tablesOf(relPath: string): { created: Set<string>; altered: Set<string>
 const APPLIER_FILES: string[] = [...AUTHORING_SUBSYSTEM_FILES];
 const applierMeta = new Map(APPLIER_FILES.map((f) => [f, tablesOf(f)]));
 
+const TEST_FILES = SEARCH_ROOTS.flatMap((root) => walk(path.join(REPO_ROOT, root)));
+
+/**
+ * Migration literals that are a bare expression statement — mentioned, never
+ * passed to anything.
+ *
+ * Bracket-aware, because the surrounding bracket is what separates the two
+ * shapes: an array element or a call argument sits inside `[` or `(`, while a
+ * bare statement sits directly in a `{` block (or at module top level). The
+ * token before it disambiguates the rest — `= '…'`, `: '…'`, `case '…'` are
+ * bindings, not statements. Comments and nested strings are skipped so a
+ * filename inside a SQL string or a doc comment is not mistaken for code.
+ */
+function bareStatementLiterals(src: string): { file: string; line: number }[] {
+  const stack: string[] = [];
+  const out: { file: string; line: number }[] = [];
+  const STATEMENT_START = new Set([';', '{', '}', ',', '']);
+  let prev = '';
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === '/' && src[i + 1] === '/') {
+      while (i < src.length && src[i] !== '\n') i++;
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i++;
+      i += 2;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') {
+      const quote = c;
+      const start = i++;
+      while (i < src.length && src[i] !== quote) {
+        if (src[i] === '\\') i++;
+        i++;
+      }
+      const text = src.slice(start, i + 1);
+      const m = /^'(db\/migrations\/[^']+\.sql)'$/.exec(text);
+      const enclosing = stack.length ? stack[stack.length - 1] : '';
+      if (m && (enclosing === '' || enclosing === '{') && STATEMENT_START.has(prev)) {
+        out.push({ file: m[1], line: src.slice(0, start).split('\n').length });
+      }
+      prev = "'";
+      i++;
+      continue;
+    }
+    if (c === '(' || c === '[' || c === '{') stack.push(c);
+    else if (c === ')' || c === ']' || c === '}') stack.pop();
+    if (!/\s/.test(c)) prev = c;
+    i++;
+  }
+  return out;
+}
+
 /** Every harness that lists at least one applier migration, with its list. */
-const harnesses = SEARCH_ROOTS.flatMap((root) => walk(path.join(REPO_ROOT, root)))
+const harnesses = TEST_FILES
   .map((abs) => {
     const listed = [
       ...fs.readFileSync(abs, 'utf8').matchAll(MIGRATION_LITERAL),
@@ -116,6 +192,20 @@ describe('authoring migration lists in test harnesses are ALTER-closed', () => {
             `${h.file}\n    builds ${altersBuiltTable.join(', ')} but does not apply ${applierFile}`,
           );
         }
+      }
+    }
+
+    expect(violations, `\n${violations.join('\n')}\n`).toEqual([]);
+  });
+
+  it('lists its migrations as calls or array elements, never as bare strings', () => {
+    const violations: string[] = [];
+
+    for (const abs of TEST_FILES) {
+      for (const lit of bareStatementLiterals(fs.readFileSync(abs, 'utf8'))) {
+        violations.push(
+          `${path.relative(REPO_ROOT, abs)}:${lit.line}\n    '${lit.file}' is a bare string statement — mentioned, never applied`,
+        );
       }
     }
 

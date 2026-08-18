@@ -133,8 +133,8 @@ beforeAll(async () => {
 
   pglite = new PGlite();
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
-  'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
-  'db/migrations/20260730_authoring_comments_router_columns.sql',
+  await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
+  await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
   await pglite.exec(migration('db/migrations/20260727_collab_document_state.sql'));
 
   // Two tenants, one document each, one section each.

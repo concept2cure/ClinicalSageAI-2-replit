@@ -94,8 +94,8 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('migrations/20260726_cre_source_program_scope.sql'));
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
-  'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
-  'db/migrations/20260730_authoring_comments_router_columns.sql',
+  await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
+  await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
   // Four real migrations into a cold WASM Postgres exceeds the 10s default hook
   // timeout on a loaded runner.
