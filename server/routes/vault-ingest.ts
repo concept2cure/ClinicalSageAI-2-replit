@@ -24,8 +24,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
-import { verifyFileSignature } from '../utils/fileSignature';
-import { scanBuffer as scanForViruses } from '../utils/virusScan';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -134,22 +133,25 @@ export default function createVaultIngestRoutes(): Router {
     const fileSize = fileBuffer.length;
     const userId = (req as any).user?.id ?? null;
 
-    // File signature verification
-    const sig = verifyFileSignature(fileBuffer, mimeType);
-    if (!sig.ok) {
-      logger.warn('Vault ingest rejected by signature check', { fileName, reason: sig.reason });
-      return res.status(400).json({
-        error: { code: 'FILE_SIGNATURE_MISMATCH', message: 'File content does not match declared type' },
-      });
-    }
-
-    // Virus scan
-    const scan = await scanForViruses(fileBuffer);
-    if (!scan.clean) {
-      logger.warn('Vault ingest rejected by virus scanner', { fileName, signature: scan.signature });
-      return res.status(400).json({
-        error: { code: 'FILE_SCAN_REJECTED', message: 'File rejected by content scan' },
-      });
+    // Magic-byte signature + AV, via the shared helper.
+    //
+    // This route used to call verifyFileSignature and scanBuffer directly. The
+    // signature half was equivalent; the AV half was not. scanBuffer fails OPEN
+    // by design — with CLAMAV_HOST unset or clamd unreachable it returns
+    // { scanned: false, clean: true } so dev and CI work without the infra — and
+    // this handler only ever checked `clean`. A production deployment with no
+    // reachable scanner therefore admitted every file while logging nothing.
+    // assertUploadSafe is where the fail-closed policy lives: it rejects 503
+    // when the scan did not actually run. Its two error codes are the same two
+    // this handler returned by hand, so the client contract is unchanged apart
+    // from that new 503.
+    try {
+      await assertUploadSafe(fileBuffer, mimeType, fileName);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        return res.status(err.status).json({ error: { code: err.code, message: err.message } });
+      }
+      throw err;
     }
 
     const contentHash = sha256Bytes(fileBuffer);
