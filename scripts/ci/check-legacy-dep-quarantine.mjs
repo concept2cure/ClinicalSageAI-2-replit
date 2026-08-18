@@ -16,23 +16,29 @@
 
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { assertAllowlistPathsExist } from './lib/allowlist-paths.mjs';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '../..');
 
 // Known existing consumers of @supabase/supabase-js (allowlisted)
 const SUPABASE_ALLOWLIST = new Set([
-  'server/services/pdfGenerator.js',
   'server/services/indCopilot.js',
-  'server/services/esgService.js',
-  'scripts/test_reference_model.js',
   'scripts/setup_reference_model.js',
-  'scripts/migrate_legacy_types.js',
 ]);
 
 // Known existing consumers of aws-sdk v2 (allowlisted)
 const AWSV2_ALLOWLIST = new Set([
-  'server/routes/cerRoutes.ts',
 ]);
+
+// See scripts/ci/lib/allowlist-paths.mjs. A quarantine allowlist for a deleted
+// file is a standing permission to reintroduce the quarantined dependency at
+// that path.
+for (const [name, list] of [['SUPABASE_ALLOWLIST', SUPABASE_ALLOWLIST], ['AWSV2_ALLOWLIST', AWSV2_ALLOWLIST]]) {
+  if (assertAllowlistPathsExist({ tag: '[ci:legacy-dep-quarantine]', repoRoot: ROOT, name, paths: list }).length) {
+    process.exit(1);
+  }
+}
+
 
 // Test file patterns (always allowed)
 const TEST_PATTERNS = [/\.test\./, /\.spec\./, /\/__tests__\//, /\/test\//, /\/tests\//];

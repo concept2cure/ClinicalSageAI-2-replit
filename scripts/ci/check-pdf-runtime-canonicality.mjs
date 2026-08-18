@@ -24,6 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertAllowlistPathsExist } from './lib/allowlist-paths.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -37,16 +38,13 @@ const APPROVED = new Set([
   'server/export/renderers.ts',
   'server/services/documentExportService.ts',
   'server/services/documentQuality/pdfValidationAttachment.ts',
-  'server/services/eSTARValidator.ts',
   'server/services/biotech-artifact-generator.ts',
   'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
-  'server/services/claude/ClaudeToolExecutor.ts',
   'server/services/tools/index.ts',
   'server/routes/concept2cure.ts',
   'server/src/routes/stability.router.ts',
   'server/pdf-processor.ts',
-  'server/generate-all-submissions.js',
   // Additional pre-existing consumers (documented at gate-introduction time,
   // 2026-05-07). New PDF surfaces must use pdf-converter.ts instead of
   // adding entries here.
@@ -102,6 +100,12 @@ const APPROVED = new Set([
   // platform least able to afford it.
   'server/services/clinical-regulatory-evidence/data-origins-pdf.ts',
 ]);
+
+// See scripts/ci/lib/allowlist-paths.mjs: an entry for an absent file is a
+// pre-approval, not dead weight. Three of these were orphaned by deletions.
+if (assertAllowlistPathsExist({ tag: '[ci:pdf-runtime]', repoRoot, name: 'APPROVED', paths: APPROVED }).length) {
+  process.exit(1);
+}
 
 const PDF_LIB_IMPORT = /from\s+['"](pdfkit|pdf-lib)['"]/;
 const PDF_LIB_DYNAMIC = /import\(\s*['"](pdfkit|pdf-lib)['"]\s*\)/;

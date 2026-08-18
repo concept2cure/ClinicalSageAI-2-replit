@@ -28,6 +28,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertAllowlistPathsExist } from './lib/allowlist-paths.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -56,12 +57,17 @@ const APPROVED = new Set([
   // Additional pre-existing direct callers documented at gate-introduction
   // time (2026-05-07). Migration target: enhancedEmbeddingService.embed().
   'server/api/drafting/routes.ts',
-  'server/brain/vaultIndexer.js',
   // server/brain/vaultRetriever.js — migrated 2026-05-07 to
   // embeddingService.embed() with corpus 'vaultDocumentChunks'.
   'server/openai-service.ts',
-  'server/utils/populate_vector_database.js',
 ]);
+
+// See scripts/ci/lib/allowlist-paths.mjs. Two entries here were orphaned by
+// deletions — note the list already retires entries as comments when someone
+// remembers; this makes remembering unnecessary.
+if (assertAllowlistPathsExist({ tag: '[ci:embedding-runtime]', repoRoot, name: 'APPROVED', paths: APPROVED }).length) {
+  process.exit(1);
+}
 
 const DIRECT_CALL_PATTERNS = [
   /\bopenai\.embeddings\.create\s*\(/,

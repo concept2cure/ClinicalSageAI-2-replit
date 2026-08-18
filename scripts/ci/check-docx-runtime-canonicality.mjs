@@ -10,7 +10,14 @@
  *   1. JS `docx` library       — server/services/docx/docxFactory.ts
  *                                 server/services/docxGenerator.ts
  *   2. Python `python-docx`    — workers/artifact-compute/docx-python-runtime.py
- *   3. Shadow service renderer — shadow_service/shadow_service/docx_renderer.py
+ *
+ * There were three. The shadow-service renderer
+ * (shadow_service/shadow_service/docx_renderer.py) was deleted by b79f020e1
+ * along with the rest of that Python service, and this gate went on listing it
+ * — and printing it in its own PASS banner — for months afterwards. See
+ * docs/architecture/docx-pipeline-canonical-designation.md, which still
+ * designates that runtime the canonical path for regulatory submission
+ * documents; that designation now names nothing and needs re-deciding.
  *
  * Exit 0 = all DOCX generation is within approved files.
  * Exit 1 = unapproved DOCX generation entry point detected.
@@ -18,6 +25,7 @@
 
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { assertAllowlistPathsExist } from './lib/allowlist-paths.mjs';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '../..');
 
@@ -29,13 +37,11 @@ const APPROVED_JS = new Set([
   'server/services/docxGenerator.ts',
   // Known legacy consumers — documented, not new entry points
   'server/services/documentReconstruction.js',
-  'server/services/diffChecker.js',
   'server/services/cerGenerationService.ts',
   'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
   'server/routes/authoring.router.ts',
   'scripts/generate_sso_spec.js',
-  'client/src/services/Fda510kExportService.js',
   // Imports ONLY the convertInchesToTwip unit helper from 'docx' — no
   // Document generation (AnA integration, 2026-06-29).
   'server/services/templates/templateRenderAdapter.ts',
@@ -51,21 +57,19 @@ const APPROVED_PYTHON = new Set([
   'workers/artifact-compute/docx-insert-runtime.py',
   'workers/artifact-compute/docx-xml-runtime.py',
   'workers/artifact-compute/docx-validate-runtime.py',
-  'shadow_service/shadow_service/docx_renderer.py',
-  'shadow_service/shadow_service/generators/evidence_cell_renderer.py',
-  'shadow_service/shadow_service/generators/docx_factory.py',
-  'shadow_service/shadow_service/generate_seed_templates.py',
-  'shadow_service/shadow_service/router_docx_factory.py',
   // Legacy backend consumers — quarantined, not new entry points
-  'backend/generateSection.py',
-  'backend/knowledge_ingestion.py',
   'scripts/extract_protocol_data.py',
-  'ind_automation/templates.py',
-  'ind_automation/create_template.py',
-  'ind_automation/create_form_templates.py',
-  'ind_automation/compilers/ectd4_compiler.py',
-  'lumen_cortex/core/extractors/text_extract.py',
 ]);
+
+// An approved-runtime entry naming a file that no longer exists pre-approves a
+// future file at that path. 13 of these 28 were orphaned by b79f020e1 (the
+// dead-code purge), including all five shadow_service renderers — while this
+// gate's success banner still advertised one of them as canonical runtime #3.
+for (const [name, list] of [['APPROVED_JS', APPROVED_JS], ['APPROVED_PYTHON', APPROVED_PYTHON]]) {
+  if (assertAllowlistPathsExist({ tag: '[ci:docx-runtime]', repoRoot: ROOT, name, paths: list }).length) {
+    process.exit(1);
+  }
+}
 
 // Patterns that indicate test files (always allowed)
 const TEST_PATTERNS = [
@@ -216,7 +220,8 @@ if (violations.length === 0) {
   console.log('  1. JS docx    → server/services/docx/docxFactory.ts');
   console.log('                  server/services/docxGenerator.ts');
   console.log('  2. python-docx → workers/artifact-compute/docx-python-runtime.py');
-  console.log('  3. Shadow svc  → shadow_service/shadow_service/docx_renderer.py');
+  console.log('                  (+ the docx-insert / docx-xml / docx-validate');
+  console.log('                   surgical-edit runtimes in the same directory)');
   process.exit(0);
 } else {
   console.log(`Result: FAIL — ${violations.length} unapproved DOCX entry point(s) detected.\n`);
