@@ -18,14 +18,27 @@
 # =============================================================================
 set -euo pipefail
 
-MIGRATIONS_DIR="db/migrations"
+# BOTH migration roots, not one.
+#
+# This gate watched db/migrations only. The repo has two live roots, and
+# scripts/db/migration-set.mjs puts 68 entries under migrations/ on the same
+# durable apply path as the 116 under db/migrations/. The newest migration in
+# the tree at the time of writing — migrations/20260817_reconcile_declared_
+# updated_at_columns.sql — was in the unwatched one. A 2026-dated migration
+# added there passed this compliance gate with no header, silently.
+#
+# The scope is unchanged in kind: still changed-files-only, still 2026+
+# date-prefixed. Only the set of directories it can see grows, so this cannot
+# retroactively fail anything — it applies to migrations a change actually
+# touches.
+MIGRATIONS_DIRS=("db/migrations" "migrations")
 HEADER_MARKER="eCTD REGULATORY AUDIT CONTEXT"
 
 missing=0
 checked=0
 
 echo "🔍 Checking migrations for eCTD regulatory audit headers..."
-echo "   (Scope: 2026+ date-prefixed migrations + vault prerequisite)"
+echo "   (Scope: 2026+ date-prefixed migrations + vault prerequisite, in ${MIGRATIONS_DIRS[*]})"
 echo ""
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -72,7 +85,8 @@ if [[ -z "$BASE_REF" ]]; then
   exit 1
 fi
 
-CHANGED_MIGRATIONS=$(git diff --name-only "$BASE_REF"...HEAD -- "$MIGRATIONS_DIR"/*.sql 2>/dev/null || true)
+CHANGED_MIGRATIONS=$(git diff --name-only "$BASE_REF"...HEAD -- \
+  "${MIGRATIONS_DIRS[0]}"/*.sql "${MIGRATIONS_DIRS[1]}"/*.sql 2>/dev/null || true)
 
 if [[ -z "$CHANGED_MIGRATIONS" ]]; then
   echo "✅ No migration changes detected vs ${BASE_REF}."
