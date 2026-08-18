@@ -2,11 +2,11 @@
   "_comment": "Files where a request-controlled value reaches a filesystem path with no containment check detectable by scripts/ci/check-path-containment.mjs. Every entry needs a REASON. The digest pins the file contents: change the file and it re-flags, so a baseline cannot quietly cover new code. This list may shrink, never grow.",
   "entries": {
     "server/routes/authoring.router.ts": {
-      "digest": "99f5977c4c043805",
+      "digest": "355916f88c2ad15b",
       "lines": [
-        4436
+        4585
       ],
-      "reason": "FALSE POSITIVE. `path.join(dir, file)` in loadTemplates(): `dir` is templatesDir() (a server constant) and `file` comes from fs.readdirSync on that directory, filtered to *.json. Neither is request input — the detector matches because the NAME `file` is also bound from a request elsewhere in this 4500-line router. Verified by reading the enclosing function."
+      "reason": "FALSE POSITIVE. `path.join(dir, file)` in loadTemplates(): `dir` is templatesDir() (a server constant, cwd/server/templates/m3) and `file` comes from fs.readdirSync on that directory, filtered to *.json. Neither is request input. The detector matches on the assignment target `content`, which is ALSO bound from req.body elsewhere in this ~4600-line router — a name collision, not a dataflow. (It previously matched on the name `file` for the same reason; the line itself is unchanged.) Re-verified by reading loadTemplates() and templatesDir() in full."
     },
     "server/routes/protocol_routes.ts": {
       "digest": "5ffaf000aa718664",
