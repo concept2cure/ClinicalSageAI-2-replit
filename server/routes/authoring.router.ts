@@ -5171,7 +5171,11 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          `await import(...)`, and the XML branch imports nothing. Only this
          branch used CommonJS, so only this branch was unreachable. Nothing was
          wrong with the docx generation below it — it had simply never run. */
-      const { Document, Packer, Paragraph, HeadingLevel, TextRun } = await import('docx');
+      const docxNs = await import('docx');
+      const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docxNs;
+      const { blocksToDocx, orderedListNumbering } = await import(
+        '../export/authoring-blocks-to-docx.js'
+      );
       const { sectionContentToBlocks, countPendingSuggestions } = await import(
         '../export/authoring-section-content.js'
       );
@@ -5210,8 +5214,6 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           })
         );
       }
-      const headingFor = (level: number | undefined) =>
-        level === 1 ? HeadingLevel.HEADING_2 : level === 2 ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4;
       for (const { section, blocks } of sectionBlocks) {
         children.push(
           new Paragraph({
@@ -5219,30 +5221,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             heading: HeadingLevel.HEADING_1,
           })
         );
-        for (const block of blocks) {
-          children.push(
-            new Paragraph({
-              ...(block.kind === 'heading' ? { heading: headingFor(block.level) } : {}),
-              ...(block.kind === 'list-item' ? { bullet: { level: 0 } } : {}),
-              children: block.runs.map(
-                (r) =>
-                  new TextRun({
-                    text: r.text,
-                    bold: r.bold,
-                    italics: r.italics,
-                    underline: r.underline ? {} : undefined,
-                    strike: r.strike,
-                    color:
-                      r.suggestion === 'insertion'
-                        ? '067647'
-                        : r.suggestion === 'deletion'
-                          ? 'B42318'
-                          : undefined,
-                  })
-              ),
-            })
-          );
-        }
+        children.push(...blocksToDocx(docxNs, blocks));
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
@@ -5259,7 +5238,13 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
         }
       }
 
-      const docxDoc = new Document({ sections: [{ children }] });
+      const docxDoc = new Document({
+        /* Without a declared numbering definition the ordered-list reference is
+           inert and numbered steps silently render unnumbered — which is the
+           shape of the bug this replaced. */
+        numbering: orderedListNumbering(docxNs),
+        sections: [{ children }],
+      });
       fileContent = await Packer.toBuffer(docxDoc);
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
       contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -5271,8 +5256,9 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       const { sectionContentToBlocks, countPendingSuggestions } = await import(
         '../export/authoring-section-content.js'
       );
-      const esc = (s: string) =>
-        String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const { blocksToHtml, escapeHtml: esc, PRINT_STYLES } = await import(
+        '../export/authoring-blocks-to-html.js'
+      );
       /* Section content parsed to typed runs and re-emitted as a WHITELISTED
          structure with every text node escaped — stored markup never reaches
          the renderer raw (the previous escape-everything approach printed
@@ -5286,25 +5272,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           const pending = countPendingSuggestions(blocks);
           pdfPendingIns += pending.insertions;
           pdfPendingDel += pending.deletions;
-          const body = blocks
-            .map((b) => {
-              const runs = b.runs
-                .map((r) => {
-                  let t = esc(r.text);
-                  if (r.bold) t = `<b>${t}</b>`;
-                  if (r.italics) t = `<i>${t}</i>`;
-                  if (r.suggestion === 'insertion') return `<ins>${t}</ins>`;
-                  if (r.suggestion === 'deletion') return `<del>${t}</del>`;
-                  if (r.underline) t = `<u>${t}</u>`;
-                  if (r.strike) t = `<s>${t}</s>`;
-                  return t;
-                })
-                .join('');
-              if (b.kind === 'heading') return `<h3>${runs}</h3>`;
-              if (b.kind === 'list-item') return `<p class="li">• ${runs}</p>`;
-              return `<p>${runs}</p>`;
-            })
-            .join('');
+          const body = blocksToHtml(blocks);
           return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
         }
       );
@@ -5312,6 +5280,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
           h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; } h3 { font-size: 12.5pt; margin-top: 1em; }
           p { white-space: pre-wrap; } p.li { margin: 0 0 0 1.2em; }
+          ${PRINT_STYLES}
           ins { color: #067647; text-decoration: underline; }
           del { color: #b42318; text-decoration: line-through; }
           .redline-note { font-style: italic; }
