@@ -28,6 +28,20 @@ import { databaseUrl } from '../setup.db';
 
 const MIGRATION = path.join(__dirname, '../../migrations/20260815_workflow_approval_tables.sql');
 
+/**
+ * The workflow migration's `document_workflows` carries
+ * `REFERENCES unified_documents(id)`, so the referenced table has to exist
+ * before it will apply. It does on a fully provisioned database — its creator,
+ * migrations/20260729_unified_documents_provision.sql, is in C2C_MIGRATION_FILES
+ * and deploy-migrate runs it — but the integration-tests job builds its database
+ * from the `*_gcc_*` migrations only, and that set does not include it.
+ *
+ * This suite's header already claims it is self-provisioning and "does not
+ * depend on which migrations the surrounding CI job happened to run". It was
+ * not: it depended on this one. Applying the prerequisite makes the claim true.
+ */
+const PREREQUISITE = path.join(__dirname, '../../migrations/20260729_unified_documents_provision.sql');
+
 /** Every table the migration is responsible for. */
 const TABLES = [
   'workflow_templates',
@@ -41,6 +55,7 @@ let owner: Pool;
 
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
+  await owner.query(fs.readFileSync(PREREQUISITE, 'utf8'));
   const sql = fs.readFileSync(MIGRATION, 'utf8');
   await owner.query(sql);
   // Idempotency is a property the deploy path relies on: applyMigrationFiles

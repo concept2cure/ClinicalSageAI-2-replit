@@ -801,14 +801,49 @@ jobs:
       #
       # RLS_ENFORCE=on is the mode production hard-requires, and until this step
       # existed no CI job ran a single test in it.
+      # ── The database the real-database tests actually need ──────────────────
+      #
+      # These suites were pointed at concept2cure-ri_test, which this job builds
+      # from the `*_gcc_*` migrations alone. That schema has `organizations` and
+      # almost nothing else — no `users`, no `audit_logs`, no `c2c_documents`,
+      # no `regulatory_programs`, no `unified_documents`, and neither
+      # `organizations_slug_unique` nor `users_email_unique`. So
+      # c2c-project-persistence died in beforeAll with `42P10 invalid ON CONFLICT
+      # specification` (no unique index to infer an arbiter from) and
+      # workflow-approval-tables with `42P01 relation "unified_documents" does
+      # not exist` — 18 assertions never ran.
+      #
+      # Nobody had seen it: this step only executes when the step above it
+      # passes, and that one had been failing. The moment it went green, these
+      # two surfaced.
+      #
+      # The right database for a suite whose whole premise is "the real deployed
+      # shape" is one built the way a deployment builds it. install-fresh cannot
+      # run over the GCC-migrated database (it fails applying
+      # 0005_csr_knowledge_database.sql onto that partial schema), so this
+      # provisions a SEPARATE one from blank — the same install-fresh +
+      # deploy-migrate pair blank-db-provisioning proves works. Verified: 8 files
+      # / 65 tests pass against it, versus 2 files failing on the GCC-only one.
+      - name: Provision a deploy-shaped database for the real-database tests
+        run: |
+          set -euo pipefail
+          PAGER=cat psql "$ADMIN_URL" -v ON_ERROR_STOP=1 \
+            -c 'DROP DATABASE IF EXISTS "concept2cure-ri_dbtest"' \
+            -c 'CREATE DATABASE "concept2cure-ri_dbtest"'
+          node scripts/db/install-fresh.mjs
+          node scripts/db/deploy-migrate.mjs
+        env:
+          ADMIN_URL: postgresql://postgres@localhost:5432/postgres
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+
       - name: Run real-database tests (unmocked pg, RLS_ENFORCE=on)
         run: npm run test:db
         env:
           CI: true
           NODE_ENV: test
           RLS_ENFORCE: 'on'
-          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
-          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+          DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
+          TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_dbtest
 
   # ── Blank-database provisioning + deploy-migration proof ──────────────────
   #
