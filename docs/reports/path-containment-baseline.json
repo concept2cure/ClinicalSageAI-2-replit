@@ -2,7 +2,7 @@
   "_comment": "Files where a request-controlled value reaches a filesystem path with no containment check detectable by scripts/ci/check-path-containment.mjs. Every entry needs a REASON. The digest pins the file contents: change the file and it re-flags, so a baseline cannot quietly cover new code. This list may shrink, never grow.",
   "entries": {
     "server/routes/authoring.router.ts": {
-      "digest": "355916f88c2ad15b",
+      "digest": "63c2d6d57f3d16ff",
       "lines": [
         4585
       ],
