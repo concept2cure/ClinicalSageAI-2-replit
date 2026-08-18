@@ -1005,6 +1005,19 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before use.
+    // This route read and parsed the upload without either check while its two
+    // siblings in this file (POST /analyze-file, POST /parse-file) ran both.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json({ success: false, ...err.body });
+      }
+      throw err;
+    }
+
     const filePath = req.file.path;
     const fileExtension = path.extname(req.file.originalname).toLowerCase();
 
