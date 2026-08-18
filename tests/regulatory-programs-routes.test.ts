@@ -165,10 +165,19 @@ describe('regulatory-programs routes — list', () => {
   });
 
   it('GET / returns 500 with sanitized envelope on service error', async () => {
+    // This case is named for the sanitized envelope and used to assert the
+    // opposite — `{ error: 'DB down' }`, the raw thrown message echoed to the
+    // client. 952d8c088 made respondInternalError sanitize (a 500 was telling
+    // the browser which table was missing) and did not update this expectation,
+    // so the test contradicted both its own title and the fix.
     vi.mocked(svc.listPrograms).mockRejectedValueOnce(new Error('DB down'));
     const res = await request(makeApp()).get('/api/regulatory-programs');
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'DB down' });
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    // The property that matters: nothing about the internal failure crosses the
+    // boundary. Asserted over the whole serialized body, not one field, so a
+    // future leak through `message`, `details` or any new key fails here.
+    expect(JSON.stringify(res.body)).not.toMatch(/DB down/);
   });
 });
 
@@ -447,10 +456,13 @@ describe('mdx module health — /api/mdx/health', () => {
   });
 
   it('returns 500 with sanitized envelope when probe throws', async () => {
+    // Same stale expectation as the list endpoint above. 'pg pool exhausted'
+    // names the failing infrastructure; the client gets the generic envelope.
     vi.mocked(healthSvc.probeMdxHealth).mockRejectedValueOnce(new Error('pg pool exhausted'));
     const res = await request(makeApp()).get('/api/mdx/health');
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'pg pool exhausted' });
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(JSON.stringify(res.body)).not.toMatch(/pg pool exhausted/);
   });
 });
 
