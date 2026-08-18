@@ -31,7 +31,7 @@ vi.mock('@/services/portal/authService', () => ({
    for client rects and crashes the worker when a node type lacks the method.
    Stub the geometry to empty — scrolling is meaningless in jsdom anyway. */
 const emptyRects = function () { return [] as unknown as DOMRectList; };
-for (const proto of [Range.prototype, Element.prototype, Text.prototype] as Array<Record<string, unknown>>) {
+for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
   if (typeof proto.getClientRects !== 'function') proto.getClientRects = emptyRects;
   if (typeof proto.getBoundingClientRect !== 'function') {
     proto.getBoundingClientRect = function () {
