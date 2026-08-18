@@ -39,7 +39,10 @@ fi
 # except the canonical DB module(s).
 ALLOWLIST_FILES=(
   "server/db.ts"
-  "server/db/pool.ts"
+  # "server/db/pool.ts" removed — deleted in 85616c46f. This script's own header
+  # records the same shape (an allowlisted "server/repositories" that did not
+  # exist); a dead entry here pre-approves a raw `new Pool(` in any future file
+  # at that very plausible path.
   "server/db/runtime.ts"
   "server/db/ensureCoreTables.ts"
   "server/utils/database.js"

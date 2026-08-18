@@ -187,7 +187,11 @@ const ALLOWLIST_FILES = new Set([
   // own merits, not via this allowlist.
   'server/routes/c2c/actions.ts',
   // System / admin tools that legitimately operate cross-tenant.
-  'server/routes/admin.ts',
+  // ('server/routes/admin.ts' was listed here and has never existed in this
+  //  repo's history — `git log --all -- server/routes/admin.ts` is empty. A
+  //  phantom entry in an exact-path allowlist is a pre-approval: the day
+  //  someone adds a file at that plausible name, every raw query in it skips
+  //  this gate without review. Removed.)
   // Master Administration — the platform-owner + support console. EVERY query
   // here is cross-tenant by design (estate-wide monitoring of all clients /
   // users / audit). The whole router is gated by authMiddleware →
@@ -213,9 +217,9 @@ const ALLOWLIST_FILES = new Set([
   // audit_logs unfiltered; a tenant predicate would fork/break the chain and
   // make verification meaningless. Same rationale as chainIntegrityMonitor.
   'server/services/audit/chain.ts',
-  // Diagnostics / health.
-  'server/diagnostics.js',
-  'server/services/diagnostics.ts',
+  // Diagnostics / health — both entries removed as dead pre-approvals:
+  // server/diagnostics.js was deleted in 066acdb19, and
+  // server/services/diagnostics.ts has never existed in this repo's history.
   // Runtime-guarded: tenant isolation is enforced at function entry by
   // explicit throws when where.organizationId / tenantId / documentId is
   // missing (see server/prisma/__tests__/tenant-guards.test.ts). The
