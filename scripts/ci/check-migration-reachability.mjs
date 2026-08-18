@@ -204,7 +204,21 @@ const REF_RE = new RegExp(
     // prose — `'AnA batch draft accepted into document'` yielded a table called
     // `document` — and in PL/pgSQL's `SELECT … INTO <variable>`, which names a
     // variable, not a relation.
-    String.raw`(?:\bFROM|\bJOIN|\bINSERT\s+INTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?`,
+    String.raw`(?:\bFROM|\bJOIN|\bINSERT\s+INTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?` +
+    // A qualified name whose OBJECT half is a template expression —
+    // `FROM regulatory_intel.${table}` in services/precedent-engine.ts — is
+    // composed at runtime and cannot be resolved statically. Without this, the
+    // schema-qualified alternative fails to match `${…}`, the engine backtracks
+    // to the unqualified branch, and the SCHEMA name is captured as if it were a
+    // table. `regulatory_intel` then resolves against no relation on a live
+    // database — the phantom-named-after-its-schema this file's header warns
+    // about, arriving through the dynamic-name door instead of the qualified one.
+    //
+    // `(?!\w)` first, and not merely for tidiness: without it the engine answers
+    // the rejection by backtracking to a SHORTER object name — `regulatory_inte`
+    // — which satisfies the lookahead and produces a phantom one character off
+    // the original. The name must end where the identifier ends.
+    String.raw`(?!\w)(?!\s*\.\s*\$)`,
   'gi',
 );
 

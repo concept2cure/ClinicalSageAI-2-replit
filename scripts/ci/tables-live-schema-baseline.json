@@ -1,9 +1,9 @@
 {
-  "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability \u2014 which compare the repo to itself and can only tell you whether some file CLAIMS to create a table \u2014 every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one.",
+  "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability — which compare the repo to itself and can only tell you whether some file CLAIMS to create a table — every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one.",
   "generatedAt": "2026-08-13T03:51:34.426Z",
   "liveRelationCount": 1246,
   "referencedCount": 787,
-  "count": 95,
+  "count": 85,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -111,9 +111,6 @@
     "document_audit_logs": [
       "server/services/workflow/decision-lineage-view-assembler.ts"
     ],
-    "document_workflows": [
-      "server/services/workflow/decision-lineage-view-assembler.ts"
-    ],
     "ectd_v4.submissions": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
     ],
@@ -152,35 +149,6 @@
     ],
     "firecrawl_usage_daily": [
       "server/integrations/firecrawl/usage.ts"
-    ],
-    "ivdr_analytical_validations": [
-      "server/routes/ivdr-routes.ts",
-      "server/routes/workspace-summary.ts",
-      "server/services/ivdrPackContent.ts",
-      "server/workers/ivdr-pack-worker.ts"
-    ],
-    "ivdr_cdx_status_history": [
-      "server/routes/ivdr-routes.ts"
-    ],
-    "ivdr_cdx_workflows": [
-      "server/routes/ivdr-routes.ts",
-      "server/services/ivdrPackContent.ts",
-      "server/workers/ivdr-pack-worker.ts"
-    ],
-    "ivdr_clinical_evidence": [
-      "server/routes/ivdr-routes.ts",
-      "server/services/ivdrPackContent.ts",
-      "server/workers/ivdr-pack-worker.ts"
-    ],
-    "ivdr_evidence_result_history": [
-      "server/routes/ivdr-routes.ts"
-    ],
-    "ivdr_gspr_assessments": [
-      "server/routes/ivd-completeness-routes.ts",
-      "server/routes/ivdr-routes.ts"
-    ],
-    "ivdr_validation_parameter_history": [
-      "server/routes/ivdr-routes.ts"
     ],
     "license_acceptances": [
       "server/services/licensing/eula-service.ts"
@@ -286,9 +254,6 @@
     "trials": [
       "server/storage.ts"
     ],
-    "uploads": [
-      "server/services/autoExtractionPipeline.ts"
-    ],
     "user_roles": [
       "server/services/rules-engine/actions/index.ts"
     ],
@@ -320,9 +285,6 @@
     ],
     "workflow_step_definitions": [
       "server/services/workflow/WorkflowExecutionEngine.ts"
-    ],
-    "workflow_templates": [
-      "server/api/cmc/blueprintRoutes.ts"
     ]
   }
 }
