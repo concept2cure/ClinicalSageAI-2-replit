@@ -30,7 +30,7 @@
  *   • `python -m <a.b.c>`              — only when `a` is a directory in the
  *                                        repo, so `python -m pytest` is left
  *                                        alone
- *   • any `…/name.{py,sh,mjs,cjs,sql}` token in a `run:` block
+ *   • any `…/name.{py,sh,mjs,cjs,js,jsx,ts,tsx,sql}` token in a `run:` block
  *
  * Resolution follows the step's working directory, and a leading `cd X &&` on
  * the same line, so `cd ind_automation && pip install -r requirements.txt` is
@@ -66,12 +66,25 @@ const baselinePath = path.join(repoRoot, 'docs/reports/workflow-target-baseline.
 const writeBaseline = process.argv.includes('--write-baseline');
 
 /** A path token that names a script or manifest, with a directory part. */
-const SCRIPT_TOKEN = /(?<![\w${}/-])((?:[\w.-]+\/)+[\w.-]+\.(?:py|sh|mjs|cjs|sql))(?![\w-])/g;
+const SCRIPT_TOKEN = /(?<![\w${}/-])((?:[\w.-]+\/)+[\w.-]+\.(?:py|sh|mjs|cjs|js|jsx|ts|tsx|sql))(?![\w-])/g;
 const PIP_REQUIREMENTS = /pip\s+install\s+(?:[^\n]*?\s)?-r\s+(\S+)/g;
 const PYTHON_MODULE = /python3?\s+-m\s+([A-Za-z_][\w.]*)/g;
 const CD_PREFIX = /(?:^|&&|;)\s*cd\s+([^\s&;|]+)\s*&&/;
 
 const unresolvable = (p) => /\$\{\{|\*|\?|\$\(/.test(p);
+
+/**
+ * Directories a job BUILDS during the run.
+ *
+ * `node dist/index.js` is not a dead reference — `npm run build` two steps
+ * earlier put it there, and .gitignore keeps it out of the tree by design.
+ * Flagging it would be the noise this gate exists to avoid, and baselining it
+ * would be worse: a permanent "known broken" entry for something that works.
+ * Anything git deliberately ignores as build output is out of scope here; what
+ * this gate polices is a reference to a file the REPOSITORY was supposed to
+ * carry.
+ */
+const BUILD_OUTPUT = /^(dist|build|out|coverage|\.next|node_modules)\//;
 
 /** Steps, with the working directory each one actually runs in. */
 function stepsOf(doc) {
@@ -99,7 +112,7 @@ function referencedPaths(step) {
   const guarded = guardedPaths(step.run);
   const refs = [];
   const add = (raw, kind, cwd) => {
-    if (!raw || unresolvable(raw) || guarded.has(raw)) return;
+    if (!raw || unresolvable(raw) || guarded.has(raw) || BUILD_OUTPUT.test(raw)) return;
     const rel = path.normalize(path.join(cwd, raw));
     if (rel.startsWith('..')) return;
     refs.push({ rel, kind, raw });
