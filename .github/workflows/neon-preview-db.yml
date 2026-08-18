@@ -162,20 +162,6 @@ jobs:
             echo "::notice::scripts/db_compliance_check.sql not present; skipping compliance probe."
           fi
 
-      - name: Setup Python
-        if: steps.check_secrets.outputs.skip != 'true'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: '3.11'
-
-      - name: Install shadow_service deps + run tests
-        if: steps.check_secrets.outputs.skip != 'true' && steps.db_url.outputs.skip_db != 'true'
-        continue-on-error: true # Allow pass while schema alignment WIP (#94)
-        working-directory: shadow_service
-        run: |
-          pip install -r requirements.txt
-          pytest -q --tb=short
-
       - name: Setup Node.js
         if: steps.check_secrets.outputs.skip != 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -199,7 +185,11 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🗄️ **Neon Preview DB Created**\n\nBranch: \`${branch}\`\n\n✅ Migrations applied successfully\n✅ Schema verification passed\n✅ Tests completed\n\n_This branch will be automatically deleted when the PR is closed._`
+              // Only claim what this job actually ran. The schema verifier
+              // (scripts/db_verify.sql) was never authored, so its step is a
+              // guarded no-op — a comment asserting "verification passed" was
+              // reporting a check that did not happen.
+              body: `🗄️ **Neon Preview DB Created**\n\nBranch: \`${branch}\`\n\n✅ Migrations applied successfully\n✅ Tests completed\n\n_This branch will be automatically deleted when the PR is closed._`
             });
 
   cleanup_preview_db:

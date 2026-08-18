@@ -246,6 +246,9 @@ jobs:
         # `../../` — "it is only one segment" is not a defence.
         run: npm run ci:path-containment
 
+      - name: Guardrails — workflows must not invoke files that do not exist
+        run: npm run ci:workflow-targets
+
       - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
         # The production deploy registers a pinned task-def revision
         # (image @sha256:<digest>) and updates the service by ARN.

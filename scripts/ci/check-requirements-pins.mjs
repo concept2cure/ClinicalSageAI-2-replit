@@ -14,13 +14,16 @@
  * The dangerous part was not the bad pin. It was that **merging it would have
  * turned nothing red.** Nothing installs the root `requirements.txt`:
  *
- *   .github/workflows/neon-preview-db.yml   -> shadow_service/requirements.txt
- *                                              (`working-directory: shadow_service`,
- *                                               and `continue-on-error: true`)
- *   .github/workflows/regulatory-smoke.yml  -> ind_automation/requirements.txt
  *   .github/workflows/test_generator.yml    -> services/requirements.txt
  *   .github/workflows/ci.yml                -> a comment; the step pins
  *                                              python-docx/lxml inline
+ *
+ * Two more manifests were listed here when this guard was written —
+ * shadow_service/requirements.txt (neon-preview-db.yml) and
+ * ind_automation/requirements.txt (regulatory-smoke.yml). Both manifests, and
+ * the trees around them, were removed by the dead-code purge; the steps that
+ * installed them are gone with them, and ci:workflow-targets now fails if a
+ * workflow names a file that is not there.
  *
  * Neither Dockerfile installs it either. So the root manifest — which pins
  * numpy, pandas, openai, pydantic — is declared but unconsumed, and its only
