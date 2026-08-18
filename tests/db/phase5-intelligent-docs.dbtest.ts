@@ -28,91 +28,34 @@
  * and that setup FAILS rather than skips when the database is unreachable, so
  * the class of silent pass this file demonstrated cannot recur here.
  *
- * Moved as-is otherwise. Against a database built by install-fresh +
- * deploy-migrate, 16 of the 17 assertions pass on their first real execution.
- * The seventeenth failed, on a bug in its own SQL: it selected `polname` from
- * pg_policies, which exposes `policyname` (polname is the column on the
- * underlying pg_policy catalog). Four years of green ticks never touched it.
+ * Against a database built by install-fresh + deploy-migrate, 16 of the 17
+ * assertions passed on their first real execution. The seventeenth failed on a
+ * bug in its own SQL: it selected `polname` from pg_policies, which exposes
+ * `policyname` (`polname` is the column on the underlying pg_policy catalog).
+ * Every green tick this file ever printed was over a query Postgres would have
+ * rejected. Fixed here; all 17 now run and pass.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-
-const execFileAsync = promisify(execFile);
-
 
 describe('Phase 5: Intelligent Document System Migration', () => {
   let pool: Pool;
-  let schemaExists: boolean = false;
-  let migrationsReady: boolean = false;
 
   beforeAll(async () => {
     // pg is NOT mocked in this project, and tests/setup.db.ts has already
     // refused to run if the database is unreachable or still the unit-test
-    // placeholder — so there is nothing to guard here.
+    // placeholder. So: connect, and let a failure fail.
+    //
+    // What stood here was a schema probe wrapped in try/catch that logged
+    // "Failed to check schema existence" and continued, plus an
+    // APPLY_PHASE5_MIGRATIONS branch that shelled out to a migration script
+    // mid-suite. That catch is the one that swallowed `role "test" does not
+    // exist` for the life of this file while every test below reported a pass.
+    // A suite whose entire story is "an error was swallowed" does not get to
+    // keep the swallow.
     pool = new Pool({ connectionString: databaseUrl, connectionTimeoutMillis: 5000 });
-    
-    // Check if schema exists first
-    try {
-      const result = await pool.query(`
-        SELECT schema_name FROM information_schema.schemata 
-        WHERE schema_name = 'intelligent_docs'
-      `);
-      schemaExists = (result.rowCount ?? 0) > 0;
-    } catch (error) {
-      console.warn('Failed to check schema existence:', error);
-    }
-
-    // If schema exists, verify Phase 5 artifacts are present. Optionally attempt to apply them.
-    if (schemaExists) {
-      try {
-        const tblCheck = await pool.query(`
-          SELECT 1 FROM information_schema.tables
-          WHERE table_schema = 'intelligent_docs' AND table_name = 'source_documents' LIMIT 1
-        `);
-
-        if ((tblCheck.rowCount ?? 0) > 0) {
-          migrationsReady = true;
-          console.log('Phase 5 tables detected.');
-          return;
-        }
-
-        console.warn('Phase 5 schema exists but expected tables are missing.');
-
-        if (process.env.APPLY_PHASE5_MIGRATIONS === 'true') {
-          console.log('APPLY_PHASE5_MIGRATIONS=true — attempting to apply Phase 5 migrations now.');
-          try {
-            const scriptPath = 'scripts/apply_phase5_migrations.mjs';
-            const env = { ...process.env, APPLY_PHASE5_MIGRATIONS: 'true' };
-            const { stdout, stderr } = await execFileAsync('node', [scriptPath], { env, cwd: process.cwd(), timeout: 5 * 60 * 1000 });
-            if (stdout) console.log(stdout);
-            if (stderr) console.error(stderr);
-
-            // re-check
-            const recheck = await pool.query(`
-              SELECT 1 FROM information_schema.tables
-              WHERE table_schema = 'intelligent_docs' AND table_name = 'source_documents' LIMIT 1
-            `);
-
-            if ((recheck.rowCount ?? 0) > 0) {
-              migrationsReady = true;
-              console.log('Phase 5 tables detected after applying migrations.');
-            } else {
-              console.warn('Phase 5 migration script ran but tables are still missing.');
-            }
-          } catch (err) {
-            console.error('Failed to apply Phase 5 migrations:', err);
-          }
-        } else {
-          console.info('To auto-apply Phase 5 migrations for tests, set APPLY_PHASE5_MIGRATIONS=true and re-run tests or run scripts/apply_phase5_migrations.mjs manually.');
-        }
-      } catch (err) {
-        console.warn('Error checking Phase 5 tables:', err);
-      }
-    }
   });
 
   afterAll(async () => {
@@ -126,7 +69,10 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have intelligent_docs schema', async () => {
-    expect(schemaExists).toBe(true);
+    const result = await pool.query(
+      `SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'intelligent_docs'`,
+    );
+    expect(result.rowCount).toBe(1);
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -134,7 +80,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have source_documents table with required columns', async () => {
-
     const result = await pool.query(`
       SELECT column_name, data_type 
       FROM information_schema.columns 
@@ -154,7 +99,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have traceability_links table with required columns', async () => {
-
     const result = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -173,7 +117,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have change_propagation_events table', async () => {
-
     const result = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -192,7 +135,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have impacted_sections table', async () => {
-
     const result = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -209,7 +151,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have compliance_scores table', async () => {
-
     const result = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -228,7 +169,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have compliance_rules table', async () => {
-
     const result = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -246,7 +186,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have auto_generated_tables table', async () => {
-
     const result = await pool.query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -268,7 +207,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have RLS enabled on all tables', async () => {
-
     const result = await pool.query(`
       SELECT tablename, rowsecurity 
       FROM pg_tables 
@@ -281,7 +219,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have RLS policies for tenant isolation', async () => {
-
     const result = await pool.query(`
       SELECT policyname, tablename
       FROM pg_policies
@@ -306,7 +243,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have immutability trigger on traceability_links', async () => {
-
     const result = await pool.query(`
       SELECT tgname 
       FROM pg_trigger 
@@ -317,7 +253,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have immutability trigger on change_propagation_events', async () => {
-
     const result = await pool.query(`
       SELECT tgname 
       FROM pg_trigger 
@@ -332,7 +267,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have detect_impacted_links function', async () => {
-
     const result = await pool.query(`
       SELECT proname 
       FROM pg_proc 
@@ -344,7 +278,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have calculate_compliance_score function', async () => {
-
     const result = await pool.query(`
       SELECT proname 
       FROM pg_proc 
@@ -360,7 +293,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have seeded compliance rules', async () => {
-
     const result = await pool.query(`
       SELECT rule_id, name, category, severity 
       FROM intelligent_docs.compliance_rules 
@@ -380,7 +312,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   });
 
   it('should have rules for all submission types', async () => {
-
     const result = await pool.query(`
       SELECT DISTINCT unnest(applicable_submissions) as submission_type
       FROM intelligent_docs.compliance_rules
@@ -403,7 +334,6 @@ describe('Phase 5: Intelligent Document System Migration', () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have search index on source_documents', async () => {
-
     const result = await pool.query(`
       SELECT indexname 
       FROM pg_indexes 
