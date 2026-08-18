@@ -68,12 +68,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const baselinePath = path.join(repoRoot, 'docs/reports/path-containment-baseline.json');
 const writeBaseline = process.argv.includes('--write-baseline');
 
 const SCAN_DIRS = ['server'];
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:path-containment]', SCAN_DIRS.map(d => path.join(repoRoot, d)));
 const SKIP = /(__tests__|\.test\.ts|\.spec\.ts|node_modules|_archive|_deprecated)/;
 
 /**

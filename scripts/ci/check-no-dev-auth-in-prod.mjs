@@ -31,6 +31,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -60,6 +61,9 @@ const SCAN_ROOTS = [
   path.join(repoRoot, 'server', 'routes'),
   path.join(repoRoot, 'server'),
 ];
+
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:no-dev-auth-in-prod]', SCAN_ROOTS);
 
 const ALLOWLIST_RELATIVE = new Set([
   // The helper itself documents the rule.

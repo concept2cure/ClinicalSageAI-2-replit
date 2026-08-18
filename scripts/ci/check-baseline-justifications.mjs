@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { INLINE_SUPPRESS_RE } from './lib/inline-suppression.mjs';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 /** Source files the tenant-isolation scanner reads, same shape as that gate. */
 function walkSource(dir, out = []) {
@@ -71,6 +72,9 @@ if (missingJustification.length === 0 && staleJustifications.length === 0) {
   // there must still BE markers — if they all vanish, this file is measuring
   // nothing again and should be retired rather than left printing OK.
   if (baselineFiles.size === 0) {
+    // The marker scan is the whole check in this branch; a missing server/
+    // would make it report zero suppressions and then fail for the wrong reason.
+    requireScanRoots('[ci:baseline-justifications]', [path.join(repoRoot, 'server')]);
     const markers = [];
     const bare = [];
     for (const file of walkSource(path.join(repoRoot, 'server'))) {

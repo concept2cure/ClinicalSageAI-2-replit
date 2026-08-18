@@ -29,6 +29,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -46,6 +47,8 @@ const SCAN_DIRS = [
   'client/src/concept2cure',
   'client/src/styles',
 ];
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:token-cascade]', SCAN_DIRS.map(d => path.join(ROOT, d)));
 const ALWAYS_SKIP = [
   'client/src/components/canvas',
   'client/src/components/dashboard',
