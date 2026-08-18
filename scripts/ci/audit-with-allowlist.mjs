@@ -140,6 +140,41 @@ try {
   process.exit(2);
 }
 
+// A registry npm could not reach is NOT a clean audit.
+//
+// `npm audit --json` against an unreachable registry exits 0 and prints valid
+// JSON with no `vulnerabilities` key and an `error`/`message` instead:
+//
+//   { "message": "request to .../security/audits/quick failed, reason: ECONNREFUSED", ... }
+//
+// spawn succeeded, JSON.parse succeeded, `report.vulnerabilities || {}` swallowed
+// the difference, and this gate printed "0 blocking high/critical advisories" —
+// on the CI security job AND on the pre-deploy gate in deploy-aws.yml. A proxy
+// 407, a rate limit or a registry blip therefore shipped a green security check.
+// The stale-entry report below made it look MORE authoritative, cheerfully
+// noting that all three accepted advisories were "no longer flagged" — because
+// nothing was flagged at all.
+//
+// Demonstrated: `npm_config_registry=http://127.0.0.1:9/ node <this file>`
+// exited 0 with "0 blocking" before this check, and exits 2 with the registry
+// error after it.
+if (report && (report.error || (report.message && !report.vulnerabilities))) {
+  const detail =
+    (report.error && (report.error.summary || report.error.detail)) || report.message;
+  console.error('npm audit did not reach the advisory database:\n  ' + detail);
+  console.error('Refusing to report a clean audit for a scan that did not run.');
+  process.exit(2);
+}
+if (!Object.prototype.hasOwnProperty.call(report ?? {}, 'vulnerabilities')) {
+  console.error('npm audit returned no `vulnerabilities` key. Raw keys: ' + Object.keys(report ?? {}).join(', '));
+  console.error('Refusing to report a clean audit for a scan that did not run.');
+  process.exit(2);
+}
+if (!report.metadata || !report.metadata.vulnerabilities) {
+  console.error('npm audit returned no `metadata.vulnerabilities` summary — the report is not the shape this gate parses.');
+  process.exit(2);
+}
+
 const vulns = report.vulnerabilities || {};
 const blocking = [];
 
