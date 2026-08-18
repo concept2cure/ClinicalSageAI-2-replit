@@ -2,7 +2,7 @@
 # Multi-strategy PDF text extraction with OCR fallback
 # System requirements: tesseract-ocr, mupdf (see replit.nix)
 
-PyMuPDF==1.28.0               # Strategy 1: best layout preservation for native PDFs
+PyMuPDF==1.28.2               # Strategy 1: best layout preservation for native PDFs
 PyPDF2==3.0.1                 # Strategy 2: native PDF fallback
 pdfminer.six==20260107        # Strategy 3: layout-aware extraction with LAParams
 pytesseract==0.3.13           # Strategy 4 & 5: OCR for scanned PDFs
@@ -19,7 +19,7 @@ pdf2image==1.17.0             # Strategy 6: pdf->image via poppler (OCR fallback
 python-docx==1.2.0            # Read/write DOCX (extraction + generation; 0.8.11 fails to build on Python 3.11)
 lxml==6.1.1                  # OOXML/XML surgery: artifact-compute docx-xml/docx-validate runtimes import it directly
 openpyxl==3.1.5               # Read XLSX spreadsheets
-mammoth==1.12.0                # DOCX plain-text extraction
+mammoth==1.12.1                # DOCX plain-text extraction
 docx2txt==0.9                 # DOCX fallback extractor
 tiktoken==0.13.0               # Token counting for context window trimming
 
