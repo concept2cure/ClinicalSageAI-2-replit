@@ -309,7 +309,14 @@ function writeSectionBody(
       target:    label || `§${sectionId}`,
       target_id: sectionId,
       diff:      diffApprox,
-      ip:        '10.0.4.21',
+      /* NO `ip`. A browser cannot observe its own source address — only the
+         server that received the request can — so any value written here is
+         invented. This field held one hard-coded private address on every event: a
+         fabricated attribution in a 21 CFR Part 11 surface, not a placeholder.
+         `AuditEvent.ip` is optional and the detail pane already renders an em
+         dash when it is absent, so omitting it reports exactly what this store
+         knows. A real address arrives when these events are written
+         server-side; until then the honest value is none. */
       live:      true,
     });
   }
@@ -352,7 +359,7 @@ function attachFile(
       target:    label || `§${sectionId}`,
       target_id: sectionId,
       file:      `${file.name} · ${fmtSize(file.size || 0)}`,
-      ip:        '10.0.4.21',
+      /* No `ip` — a browser cannot know its source address. See above. */
       live:      true,
     });
   }

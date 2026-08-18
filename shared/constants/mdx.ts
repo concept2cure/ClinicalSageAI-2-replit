@@ -294,4 +294,13 @@ export interface ApiEnvelope<T> {
 export interface ApiErrorEnvelope {
   error: string;
   details?: Record<string, unknown>;
+  /* Human-readable sentence for the screen, when `error` carries a
+     machine-readable CODE rather than prose. The client prefers `message` and
+     refuses to display anything that looks like a code or an internal
+     (client/src/lib/queryClient.ts extractApiError), so a 500 can name its
+     failure to an operator without naming it to whoever holds the session. */
+  message?: string;
+  /* The request id, echoed as X-Request-Id, that the log line is keyed by.
+     Quoting it is how an operator finds the real error the client never saw. */
+  correlationId?: string;
 }

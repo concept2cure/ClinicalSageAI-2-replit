@@ -66,3 +66,46 @@ describe('dossierStore live-data integrity', () => {
     );
   });
 });
+
+describe('live audit events attribute only what the client can actually observe', () => {
+  /* A browser cannot see its own source address. Both writers used to stamp one
+     hard-coded private address onto every event, so the Activity drawer showed
+     a specific, identical, invented origin for every action in a 21 CFR Part 11
+     surface. That is a fabricated attribution, not a placeholder — and the kind
+     of thing that is only ever noticed when someone is asked to defend the
+     record. `AuditEvent.ip` is optional and the detail pane renders an em dash
+     when it is absent, so the honest value here is none.
+
+     Falsified by re-adding the literal to attachFile and re-running: two of the
+     three assertions below go red. */
+
+  it('records a section edit with no invented source address', () => {
+    DossierStore.writeSectionBody('k510', 11, 'Performance testing', 'first');
+    DossierStore.writeSectionBody('k510', 11, 'Performance testing', 'second');
+    const events = DossierStore.activityForSection('k510', 11);
+    expect(events.length).toBeGreaterThan(0);
+    for (const e of events) expect(e.ip, 'a source address was invented').toBeUndefined();
+  });
+
+  it('records a file attach with no invented source address', () => {
+    DossierStore.attachFile(
+      'k510',
+      11,
+      'Performance testing',
+      { name: 'mard-by-age-band.pdf', size: 1_400_000, kind: 'pdf' },
+      { who: 'You', role: 'Reg Lead' },
+    );
+    const events = DossierStore.activityForSection('k510', 11);
+    expect(events.some((e) => e.kind === 'attach')).toBe(true);
+    for (const e of events) expect(e.ip).toBeUndefined();
+  });
+
+  it('holds for every live event the store can emit, not only the two probed above', () => {
+    DossierStore.writeSectionBody('k510', 7, 'Indications', 'a');
+    DossierStore.writeSectionBody('k510', 7, 'Indications', 'b');
+    DossierStore.attachFile('k510', 7, 'Indications', { name: 'x.pdf', size: 10, kind: 'pdf' });
+    const live = DossierStore.liveEventsForPathway('k510');
+    expect(live.length).toBeGreaterThan(0);
+    expect(live.filter((e) => e.ip !== undefined)).toEqual([]);
+  });
+});
