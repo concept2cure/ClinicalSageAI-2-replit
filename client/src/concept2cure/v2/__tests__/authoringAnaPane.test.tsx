@@ -103,7 +103,17 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     // No pane before the ask — this is not a rail that was already open.
     expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /Draft with AnA/ }));
+    // Two controls carry this name once a section is genuinely empty: this
+    // surface's toolbar button (the one under test — it prompts with the
+    // section number) and RichSectionEditor's empty-state CTA (which prompts
+    // from linked evidence). Name the one this test means instead of taking
+    // whichever the query reaches first; an unqualified getByRole threw
+    // "Found multiple elements" in CI the moment the second one appeared.
+    const toolbarDraft = screen
+      .getAllByRole('button', { name: /Draft with AnA/ })
+      .find((b) => !b.closest('.rse-empty-cta'));
+    expect(toolbarDraft, 'the toolbar "Draft with AnA" button').toBeTruthy();
+    fireEvent.click(toolbarDraft!);
 
     const pane = await screen.findByLabelText(/AnA — document authoring/);
     await waitFor(() => expect(pane.textContent).toMatch(/Draft 3\.2\.S\.1 General Information/));
@@ -112,6 +122,39 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
       expect(streamTurns().some((t) => t.screen === 'document-authoring' && /Draft 3\.2\.S\.1/.test(t.message ?? ''))).toBe(true),
     );
     expect(p.onAsk).not.toHaveBeenCalled();
+  });
+
+  it('an empty section shows BOTH draft controls, and the toolbar one still asks for the section', async () => {
+    // The ambiguity above is not hypothetical: once a section is genuinely
+    // empty, RichSectionEditor offers its own "Draft with AnA" beneath the
+    // toolbar's. Both are real controls with different prompts, so this pins
+    // which one the toolbar is — otherwise the disambiguation above is a line
+    // nothing would notice losing.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+        return ok({ ...SECTIONS, sections: [{ ...SECTIONS.sections[0], content: '' }] });
+      }
+      if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) return ok({ success: true, revisions: [] });
+      if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments')) return ok({ success: true, comments: [] });
+      return ok({ success: true });
+    });
+
+    render(<DocumentAuthoring {...props()} />);
+    await screen.findAllByText('General Information');
+
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /Draft with AnA/ }).length).toBe(2),
+    );
+
+    const toolbarDraft = screen
+      .getAllByRole('button', { name: /Draft with AnA/ })
+      .find((b) => !b.closest('.rse-empty-cta'))!;
+    fireEvent.click(toolbarDraft);
+
+    await waitFor(() =>
+      expect(streamTurns().some((t) => /Draft 3\.2\.S\.1/.test(t.message ?? ''))).toBe(true),
+    );
   });
 
   it('the pane composer sends into the same conversation', async () => {

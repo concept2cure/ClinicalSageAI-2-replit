@@ -217,6 +217,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [saveState, setSaveState] = useState<SaveState>('saved');
     const [dirty, setDirty] = useState(false);
     const [words, setWords] = useState(0);
+    // `words` starts at 0 and is only real once TipTap has parsed the content
+    // in onCreate. Reading "0 words" as "this section is empty" before then
+    // means the empty-state CTA below is offered over a section that may be
+    // full — an empty state asserted before anything was read, which is the
+    // one kind this repo does not ship. It also made the ambiguity that failed
+    // authoringAnaPane's test in CI: two buttons named "Draft with AnA" on
+    // screen at once, the second of which should not have been there at all.
+    const [editorReady, setEditorReady] = useState(false);
     const [trackOn, setTrackOn] = useState<boolean>(track?.enabled ?? false);
     const [suggestions, setSuggestions] = useState<SuggestionRange[]>([]);
     const [reviewOpen, setReviewOpen] = useState(false);
@@ -342,6 +350,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           }
           setWords(wordsOf(ed.getText()));
           setSuggestions(collectSuggestions(ed.state.doc));
+          setEditorReady(true);
         },
       },
       [],
@@ -549,7 +558,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       [editor],
     );
 
-    const isEmpty = words === 0;
+    const isEmpty = editorReady && words === 0;
     const full = chrome === 'full';
 
     /* ── Ribbon button helper ── */
