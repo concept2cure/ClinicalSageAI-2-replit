@@ -1,44 +1,59 @@
 /**
- * Phase 5: Intelligent Document System - Migration Verification Tests
- * 
- * Verifies the Phase 5 database schema was correctly applied:
- * - intelligent_docs schema and all tables
- * - RLS policies
- * - Immutability triggers
- * - Seed data for compliance rules
- * 
- * NOTE: These tests require a direct database connection with the
- * intelligent_docs schema. They are skipped in CI without proper DB setup.
+ * Phase 5 — Intelligent Document System, against real PostgreSQL.
+ *
+ * Verifies that the intelligent_docs schema a deployment actually produces
+ * carries its tables, RLS policies, immutability triggers, functions and seeded
+ * compliance rules.
+ *
+ * ── Why this file moved ─────────────────────────────────────────────────────
+ * It lived at tests/phase5/migration.test.ts, in the MOCKED vitest project, and
+ * reported 17 passing tests while executing no assertion at all — in every CI
+ * run since it was written.
+ *
+ * Three things stacked up. Its own guard,
+ * `!process.env.DATABASE_URL && !process.env.DATABASE_NEON_NEW_SECRET`, could
+ * never be true, because tests/setup.ts sets a placeholder DATABASE_URL before
+ * it is read — so describe.skipIf never skipped. Every test then opened with
+ * `if (!pool || !migrationsReady) return`, a silent early return that vitest
+ * scores as a pass. And `migrationsReady` could never be true either, because
+ * tests/setup.ts:351 unconditionally overwrites DATABASE_URL with
+ * `postgresql://test:test@localhost:5432/test` in a global beforeAll, so the
+ * pool connected as a role that does not exist. The suite's own error handler
+ * swallowed that ("Failed to check schema existence: role \"test\" does not
+ * exist") and carried on to report success.
+ *
+ * That is not a fixable condition in the mocked project: pg is mocked there by
+ * design, and the placeholder URL is deliberate. A real-database suite belongs
+ * in the real-database project, which runs unmocked under tests/setup.db.ts —
+ * and that setup FAILS rather than skips when the database is unreachable, so
+ * the class of silent pass this file demonstrated cannot recur here.
+ *
+ * Moved as-is otherwise. Against a database built by install-fresh +
+ * deploy-migrate, 16 of the 17 assertions pass on their first real execution.
+ * The seventeenth failed, on a bug in its own SQL: it selected `polname` from
+ * pg_policies, which exposes `policyname` (polname is the column on the
+ * underlying pg_policy catalog). Four years of green ticks never touched it.
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import type { Pool } from 'pg';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { Pool } from 'pg';
+import { databaseUrl } from '../setup.db';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 
-// Skip these tests if no database is available
-const SKIP_MIGRATION_TESTS = !process.env.DATABASE_URL && !process.env.DATABASE_NEON_NEW_SECRET;
 
-describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migration', () => {
+describe('Phase 5: Intelligent Document System Migration', () => {
   let pool: Pool;
   let schemaExists: boolean = false;
   let migrationsReady: boolean = false;
 
   beforeAll(async () => {
-    const connectionString = process.env.DATABASE_URL || 
-      process.env.DATABASE_NEON_NEW_SECRET?.replace(/^psql '|'$/g, '');
-    
-    if (!connectionString) {
-      return;
-    }
-
-    // This is a real integration test: it must connect to the live Postgres
-    // it was handed, not the unit-test pool mock registered globally in
-    // tests/setup.ts. Pull the real driver so `new Pool()` is a constructor.
-    const { Pool } = await vi.importActual<typeof import('pg')>('pg');
-    pool = new Pool({ connectionString, connectionTimeoutMillis: 5000 });
+    // pg is NOT mocked in this project, and tests/setup.db.ts has already
+    // refused to run if the database is unreachable or still the unit-test
+    // placeholder — so there is nothing to guard here.
+    pool = new Pool({ connectionString: databaseUrl, connectionTimeoutMillis: 5000 });
     
     // Check if schema exists first
     try {
@@ -111,10 +126,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have intelligent_docs schema', async () => {
-    if (!pool || !schemaExists) {
-      console.log('Skipping: schema not available');
-      return;
-    }
     expect(schemaExists).toBe(true);
   });
 
@@ -123,7 +134,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have source_documents table with required columns', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name, data_type 
@@ -144,7 +154,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have traceability_links table with required columns', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -164,7 +173,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have change_propagation_events table', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -184,7 +192,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have impacted_sections table', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -202,7 +209,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have compliance_scores table', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -222,7 +228,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have compliance_rules table', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -241,7 +246,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have auto_generated_tables table', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT column_name 
@@ -264,7 +268,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have RLS enabled on all tables', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT tablename, rowsecurity 
@@ -278,15 +281,18 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have RLS policies for tenant isolation', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
-      SELECT polname, tablename 
-      FROM pg_policies 
+      SELECT policyname, tablename
+      FROM pg_policies
       WHERE schemaname = 'intelligent_docs'
     `);
 
-    const policies = result.rows.map(r => r.polname);
+    // pg_policies exposes the policy name as \`policyname\`; \`polname\` is the
+    // column on the underlying pg_policy catalog. The mistake never surfaced
+    // because this suite ran in the mocked project, where it could not reach a
+    // database to be wrong against.
+    const policies = result.rows.map(r => r.policyname);
     expect(policies).toContain('source_docs_org_policy');
     expect(policies).toContain('trace_links_org_policy');
     expect(policies).toContain('propagation_org_policy');
@@ -300,7 +306,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have immutability trigger on traceability_links', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT tgname 
@@ -312,7 +317,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have immutability trigger on change_propagation_events', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT tgname 
@@ -328,7 +332,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have detect_impacted_links function', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT proname 
@@ -341,7 +344,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have calculate_compliance_score function', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT proname 
@@ -358,7 +360,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have seeded compliance rules', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT rule_id, name, category, severity 
@@ -379,7 +380,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   });
 
   it('should have rules for all submission types', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT DISTINCT unnest(applicable_submissions) as submission_type
@@ -403,7 +403,6 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
   // ─────────────────────────────────────────────────────────────────────────────
 
   it('should have search index on source_documents', async () => {
-    if (!pool || !migrationsReady) { console.log('Skipping Phase 5: migrations not applied'); return; }
 
     const result = await pool.query(`
       SELECT indexname 
