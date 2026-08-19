@@ -1757,9 +1757,12 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
         COUNT(DISTINCT c.id) as comment_count,
         COUNT(DISTINCT r.id) as revision_count
        FROM authoring_documents d
-       LEFT JOIN authoring_sections s ON s.doc_id = d.id
-       LEFT JOIN authoring_comments c ON c.doc_id = d.id
-       LEFT JOIN doc_revisions r ON r.section_id = s.id
+       -- Same defect, same fix as the per-section counters below: only the
+       -- document was tenant-scoped, so its own section / comment / revision
+       -- counts included rows belonging to other tenants.
+       LEFT JOIN authoring_sections s ON s.doc_id     = d.id AND s.tenant_id = d.tenant_id
+       LEFT JOIN authoring_comments c ON c.doc_id     = d.id AND c.tenant_id = d.tenant_id
+       LEFT JOIN doc_revisions r      ON r.section_id = s.id AND r.tenant_id = s.tenant_id
        WHERE d.id = $1 AND d.tenant_id = $2
        GROUP BY d.id`,
       [docId, tenantId]
@@ -1799,9 +1802,23 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
         COUNT(DISTINCT r.id) as revision_count,
         COUNT(DISTINCT ct.id) as citation_count
        FROM authoring_sections s
-       LEFT JOIN authoring_comments c ON c.section_id = s.id
-       LEFT JOIN doc_revisions r ON r.section_id = s.id
-       LEFT JOIN authoring_citations ct ON ct.section_id = s.id
+       -- The counters must count what the panels list (MDX UAT item A5).
+       -- Reported as an off-by-one: the toolbar read "History 2" / "2 revisions"
+       -- while the history panel said "No prior revisions". It is not an
+       -- off-by-one -- the two sides ran differently-scoped queries. Only the
+       -- section carried a tenant predicate, so these joins counted every row in
+       -- the three child tables that matched on id ALONE, across tenants, while
+       -- every panel that LISTS them is tenant-scoped (history, comments and
+       -- citations all filter their own tenant_id). Any row whose tenant_id did
+       -- not match the section's -- another tenant's, or a null one -- was
+       -- counted and then not shown.
+       --
+       -- Scoping the joins makes the label and the list the same question. It
+       -- also closes a cross-tenant count leak: the old form disclosed the
+       -- existence of other tenants' rows through a number on the toolbar.
+       LEFT JOIN authoring_comments c  ON c.section_id  = s.id AND c.tenant_id  = s.tenant_id
+       LEFT JOIN doc_revisions r       ON r.section_id  = s.id AND r.tenant_id  = s.tenant_id
+       LEFT JOIN authoring_citations ct ON ct.section_id = s.id AND ct.tenant_id = s.tenant_id
        WHERE s.doc_id = $1 AND s.tenant_id = $2
        GROUP BY s.id
        ORDER BY s.order_index, s.created_at`,

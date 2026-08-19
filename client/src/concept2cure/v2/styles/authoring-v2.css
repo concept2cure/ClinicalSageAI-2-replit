@@ -61,10 +61,34 @@
   .ed-dot[data-s="draft"]{background:var(--idle);}
 
   .ed-doc{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-000);}
-  .ed-doc-h{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
-  .ed-crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-400);}
-  .ed-crumbs .here{color:var(--text-100);font-weight:500;}
-  .ed-crumbs .sep{color:var(--text-500);}
+  /* ── Editor header layout (MDX UAT item A7) ──────────────────────────────
+     Two symptoms, one cause: this row had a growable breadcrumb block and an
+     unconstrained action row, and nothing told the browser which of the two
+     should give up space.
+
+     A flex item's automatic minimum size is its MIN-CONTENT width, so
+     `.ed-crumbs` could not shrink below its longest word — instead the title
+     wrapped one word per line into a ~50px column that ran down over the
+     buttons. `min-width:0` is what lets it shrink; the ellipsis is what it
+     does instead of wrapping. The full title stays available as a tooltip, so
+     truncation hides nothing.
+
+     The action row then reflowed as the crumbs' measured width changed between
+     paints, which visibly reordered the buttons — the UAT recorded a click
+     aimed at "Sources" landing on "AnA" because the row had moved underneath
+     it. That is a correctness problem on a surface where the adjacent buttons
+     insert content into a regulated document, not a cosmetic one. The actions
+     no longer shrink or wrap: their order and position are fixed, and a
+     genuinely narrow viewport scrolls them instead of rearranging them. */
+  .ed-doc-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .ed-crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-400);flex:1 1 auto;min-width:0;white-space:nowrap;}
+  /* The document title is the long part; the module and the section code are
+     short and must stay legible, so only the title yields. */
+  .ed-crumbs .doc-title{overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .ed-crumbs .sep-first{flex-shrink:0;}
+  .ed-crumbs .here{color:var(--text-100);font-weight:500;flex-shrink:0;}
+  .ed-crumbs .sep{color:var(--text-500);flex-shrink:0;}
+  .ed-doc-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;flex-wrap:nowrap;max-width:100%;overflow-x:auto;}
   .ed-doc-scroll{flex:1;overflow-y:auto;}
   .ed-doc-inner{max-width:760px;margin:0 auto;padding:36px 44px 80px;}
   .ed-mast{padding-bottom:20px;margin-bottom:22px;border-bottom:1px solid var(--border);}

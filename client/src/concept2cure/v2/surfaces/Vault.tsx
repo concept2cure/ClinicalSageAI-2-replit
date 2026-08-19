@@ -137,13 +137,90 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const vaultPath = projectId
     ? '/api/c2c/project-vault/' + encodeURIComponent(projectId)
     : null;
-  const vaultState = useLiveData<VaultDisplayShape>(vaultPath);
+  /* Bumped after an upload so the tree is re-read from the server rather than
+     patched locally: what the Vault shows is what the Vault stored. */
+  const [vaultEpoch, setVaultEpoch] = useState(0);
+  const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
   const vault = vaultState.data;
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
   const tree: VaultFolder[] = vault?.tree ?? EMPTY_TREE;
   const allDocs = useMemo(() => flattenDocs(tree), [tree]);
+
+  /* ── A real file picker behind "Upload" (MDX UAT item A6) ──────────────────
+     The button was styled with an upload icon and handed the user a chat
+     prompt: "Upload documents to the vault and index them…". There was no file
+     input on this surface at all, so the one thing an upload affordance
+     promises — choose a file from your machine — could not be done anywhere in
+     the product. The conversational route stays (it is the entry point for
+     "import from Veeva", which is a different act), but it is no longer the
+     only one.
+
+     Posts to POST /api/vault/ingest, the real ingest path: multipart, magic-byte
+     + ClamAV verified, tenant-scoped storage, one vault.documents row per file.
+     Nothing is faked here — the row appears in the tree because the server
+     wrote it, and a refusal is reported as a refusal. */
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadNote, setUploadNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (!projectId) return;
+    setUploading(true);
+    setUploadNote(null);
+    const done: string[] = [];
+    const failed: string[] = [];
+    try {
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('programId', String(projectId));
+        /* The ingest schema requires a code, a title and a type. The filename
+           is the only thing the user has actually told us here, so it supplies
+           the first two verbatim and the type is recorded as OTHER rather than
+           guessed from the extension — a document filed as a CSR because it was
+           named like one is a classification this surface has no basis to make.
+           Both are editable on the document once it lands. */
+        form.append('documentCode', file.name);
+        form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
+        form.append('documentType', 'OTHER');
+
+        const res = await fetch('/api/vault/ingest', {
+          method: 'POST',
+          body: form,
+          credentials: 'include',
+        });
+        if (res.ok) done.push(file.name);
+        else {
+          const body = await res.json().catch(() => null);
+          const why = (body && (body.message || body.error)) || `HTTP ${res.status}`;
+          failed.push(`${file.name} (${String(why)})`);
+        }
+      }
+      if (failed.length === 0) {
+        setUploadNote({ tone: 'ok', text: `Uploaded ${done.length} document${done.length === 1 ? '' : 's'} to the Vault.` });
+      } else {
+        setUploadNote({
+          tone: 'error',
+          text:
+            (done.length ? `Uploaded ${done.length}. ` : '') +
+            `Not uploaded: ${failed.join('; ')}. Nothing partial was filed for those.`,
+        });
+      }
+      // Re-read the tree so what is shown is what the server stored.
+      if (done.length) setVaultEpoch((n) => n + 1);
+    } catch (e) {
+      setUploadNote({
+        tone: 'error',
+        text: `Upload failed — ${e instanceof Error ? e.message : String(e)}. Nothing was filed.`,
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -221,17 +298,55 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         >
           {I.shieldCheck} Inspection readiness
         </button>
+        {/* The picker itself. Accepts exactly what POST /api/vault/ingest
+            accepts, so the OS dialog does not offer files the server will
+            refuse. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv,.md"
+          style={{ display: 'none' }}
+          onChange={(e) => void uploadFiles(e.target.files)}
+          data-testid="vault-upload-input"
+        />
         <button
           className="sp-primary"
+          disabled={uploading || !projectId}
+          onClick={() => fileInputRef.current?.click()}
+          title={
+            projectId
+              ? 'Choose files to file into this project’s Vault'
+              : 'Open a project first — a Vault document is filed against a program.'
+          }
+          data-testid="vault-upload-button"
+        >
+          {I.upload || I.plus} {uploading ? 'Uploading…' : 'Upload'}
+        </button>
+        {/* The conversational route is kept, but as what it is: a second way
+            in, not the thing the upload icon promises. */}
+        <button
+          className="sp-ask"
           onClick={() =>
             onAsk(
               'Upload documents to the vault and index them for semantic search.',
             )
           }
+          title="Describe an import to AnA instead — e.g. bulk import from another system"
         >
-          {I.upload || I.plus} Upload
+          {I.sparkles || I.plus} Ask AnA to import
         </button>
       </div>
+
+      {uploadNote && (
+        <div
+          className="scaf-note"
+          role="status"
+          style={{ margin: '0 0 12px', color: uploadNote.tone === 'error' ? 'var(--error)' : undefined }}
+        >
+          {uploadNote.text}
+        </div>
+      )}
 
       <div className="vd-coexist">
         <span className="vd-coexist-txt">

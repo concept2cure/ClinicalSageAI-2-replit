@@ -429,6 +429,22 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const docSealed = activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const dirty = activeSection != null && editorDirty && !docSealed;
 
+  /* ── Scroll position is per-document, not per-pane (MDX UAT item A8) ──
+     The scroll offset lives on the pane, which does not remount when the
+     section does, so opening a new section from the tree left the reader
+     partway down a document they had not read the top of — and on a shorter
+     section, past its end entirely, which looks like an empty document rather
+     than a scrolled one. On a regulated surface "looks empty" is the wrong
+     thing for a navigation to produce.
+
+     Keyed on the section id, and on contentEpoch so a revert (which replaces
+     content under the same id) also returns to the top of what it replaced. */
+  const docScrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const pane = docScrollRef.current;
+    if (pane) pane.scrollTop = 0;
+  }, [activeSectionId, activeDocId, contentEpoch]);
+
   /* ── The editor's own conversation ──
      Grounded on what is open: `authoringContext` is the contract the server's
      orchestrator uses to resolve project / document / section instead of
@@ -1121,12 +1137,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       <section className="ed-doc">
         <header className="ed-doc-h">
           <div className="ed-crumbs">
-            <span>{activeDoc?.module ?? 'eCTD'}</span>
+            <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
             <span className="sep">›</span>
-            <span>{activeDoc?.title ?? 'No document'}</span>
+            {/* Truncates rather than wrapping — see .ed-crumbs in
+                authoring-v2.css. `title` keeps the full name reachable, which
+                matters here because 510(k) and CTD titles carry the regulation
+                they answer to ("… — 510(k) Summary (21 CFR 807.92)"). */}
+            <span className="doc-title" title={activeDoc?.title ?? undefined}>
+              {activeDoc?.title ?? 'No document'}
+            </span>
             {activeSection && <><span className="sep">›</span><span className="here">{activeSection.code}</span></>}
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div className="ed-doc-actions">
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
@@ -1232,7 +1254,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           </div>
         )}
 
-        <div className="ed-doc-scroll">
+        <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
             {!activeSection ? (
               <div style={{ paddingTop: 48 }}>
