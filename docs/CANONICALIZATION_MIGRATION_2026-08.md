@@ -118,9 +118,12 @@ tangled with the migration in one diff.
    exports are version 2 and signed over the whole manifest, pre-fix exports resolve to
    version 1 and still verify against the original expression. **This is the version-tag
    mechanism in miniature — copy its shape for step 3.**
-3. **The version-tag mechanism, once.** One helper, one column convention, one branch shape,
-   applied to the six Class B tables. Doing this once and copying it is the difference
-   between a week and a month.
+3. ~~**The version-tag mechanism, once.**~~ **Done.** `shared/versioned-digest.ts` —
+   `sealCanonical` for the write path, `canonicalAsSealed` / `verifyAsSealed` for the verify
+   path, and `readCanonVersion` making the "absent means version 1" decision in one place so
+   it cannot be made differently at six call sites. The legacy serializer is a required
+   argument rather than optional: a site with stored digests always has one, and a site
+   without does not need this module at all — it should call `stableStringify` directly.
 4. **Class B, site by site, IVDR pair together.** Each is now mechanical.
 5. **`part11ComplianceService` and the seed question last** — both need a product answer
    (which signatures are in scope; which simulations must reproduce) more than they need code.
