@@ -114,10 +114,10 @@ tangled with the migration in one diff.
 
 1. ~~**Class A, one commit.**~~ **Done.** Six sites, no decisions, and `provenance.ts` — the
    copy producing invalid JSON — is on the correct serializer. Baseline 15 → 9.
-2. **L55, on its own.** It is a live Part 11 defect and it should not wait behind a
-   migration. Fix the canonicalization, add the manifest version field in the same change
-   since the manifest already carries `hashAlgorithm`, and state the verification boundary
-   for exports already issued.
+2. ~~**L55, on its own.**~~ **Done.** `manifestVersion` sits beside `hashAlgorithm`; new
+   exports are version 2 and signed over the whole manifest, pre-fix exports resolve to
+   version 1 and still verify against the original expression. **This is the version-tag
+   mechanism in miniature — copy its shape for step 3.**
 3. **The version-tag mechanism, once.** One helper, one column convention, one branch shape,
    applied to the six Class B tables. Doing this once and copying it is the difference
    between a week and a month.
