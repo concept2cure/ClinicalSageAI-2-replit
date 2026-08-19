@@ -83,7 +83,7 @@ All six are now on `shared/canonical-json.ts`; `ci:canonicalizers` reads 9.
 | `intelligence-engine/reviewer-simulator.service.ts` | Same. |
 | `audit/audit-archive.service.ts` | Compares a locally-computed checksum to what the S3 sink echoes back, within one call. Both sides move together. |
 
-### Class B — version first, then re-point (6 sites)
+### Class B — version first, then re-point (6 sites, 2 done, 1 reclassified)
 
 Each recomputes from stored content and compares to a stored digest. Each needs the version
 tag before the serializer changes.
@@ -94,7 +94,7 @@ tag before the serializer changes.
 | ~~`report-os/sealing/seal.ts`~~ **DONE** | `SealedRecord` carries `canonVersion` (a jsonb field — no migration needed). Measured: v1 and v2 agree on all ordinary JSON content, so re-pointing changed no existing hash; they diverge only on a `Date`, which v1 seals as `{}` — a small sibling of L55, and the reason the marker is load-bearing rather than ceremonial. |
 | `part11/signature-persistence.ts` | Normalizes the signature payload. Persisted §11 signatures stop matching. |
 | `tenant-export/attestation-report.service.ts` | Verifies chain links across stored rows. |
-| `ivdrPackManifest.ts` + `workers/ivdr-pack-worker.ts` | The byte-identical pair. Re-point **together, in one commit** — they hash the same manifest from the service and the worker, so a split migration makes them disagree, which is the exact failure this whole row is about. |
+| ~~`ivdrPackManifest.ts` + `workers/ivdr-pack-worker.ts`~~ **DONE — and it was Class A** | **Correction to this document.** I listed the pair as Class B on the assumption that a pack manifest hash gets verified. It does not: `manifest_sha256` is written and read back for display, and nothing recomputes it to compare. So no version tag was needed — both were re-pointed directly, together in one commit as this row always required, which also removed the byte-identical duplicate. A regenerated pack now gets a different hash than it would have before; that is a discontinuity in a displayed value, not a broken check. **The lesson is the method: classify by tracing the verify path, not by how important the artifact sounds.** |
 
 ### Class C — fix the defect first, then treat as Class B (3 sites)
 
