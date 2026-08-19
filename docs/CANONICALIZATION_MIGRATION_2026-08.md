@@ -91,7 +91,7 @@ tag before the serializer changes.
 | Site | What breaks without a version tag |
 |---|---|
 | `resolution/receipt-store.ts` | `sha256Hex(canonicalJson(row.receipt_body)) === row.receipt_hash` — every existing receipt fails integrity check. |
-| `report-os/sealing/seal.ts` | `verifySeal` recomputes the content hash; every sealed report reads as modified. |
+| ~~`report-os/sealing/seal.ts`~~ **DONE** | `SealedRecord` carries `canonVersion` (a jsonb field — no migration needed). Measured: v1 and v2 agree on all ordinary JSON content, so re-pointing changed no existing hash; they diverge only on a `Date`, which v1 seals as `{}` — a small sibling of L55, and the reason the marker is load-bearing rather than ceremonial. |
 | `part11/signature-persistence.ts` | Normalizes the signature payload. Persisted §11 signatures stop matching. |
 | `tenant-export/attestation-report.service.ts` | Verifies chain links across stored rows. |
 | `ivdrPackManifest.ts` + `workers/ivdr-pack-worker.ts` | The byte-identical pair. Re-point **together, in one commit** — they hash the same manifest from the service and the worker, so a split migration makes them disagree, which is the exact failure this whole row is about. |
@@ -124,7 +124,15 @@ tangled with the migration in one diff.
    it cannot be made differently at six call sites. The legacy serializer is a required
    argument rather than optional: a site with stored digests always has one, and a site
    without does not need this module at all — it should call `stableStringify` directly.
-4. **Class B, site by site, IVDR pair together.** Each is now mechanical.
+4. **Class B, site by site, IVDR pair together.** `seal.ts` is done and is the worked
+   example — copy its shape. One trap it surfaced, now rule 3 in `versioned-digest.ts`:
+   **do not pass a stored marker into a default parameter.** A JS default fires on
+   `undefined`, which is exactly what a legacy record's missing marker is, so
+   `computeContentHash(report, record.canonVersion)` against a signature
+   `(report, version = CURRENT)` silently verifies every historical record with the current
+   serializer — the failure the whole mechanism exists to prevent. Normalize with
+   `readCanonVersion` before the call. It was caught only because a test sealed a record the
+   old way first, which is the test each remaining site needs.
 5. **`part11ComplianceService` and the seed question last** — both need a product answer
    (which signatures are in scope; which simulations must reproduce) more than they need code.
 

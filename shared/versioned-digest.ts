@@ -34,6 +34,14 @@
  *    means "written before versioning existed". Defaulting it to the current
  *    version would silently declare every historical record to have been sealed
  *    by a serializer that did not exist yet, and they would all fail to verify.
+ * 3. **Do not pass a stored marker into a default parameter.** A JavaScript
+ *    default fires on `undefined`, which is exactly what a legacy record's
+ *    missing marker is — so `canonicalize(value, record.canonVersion)` against a
+ *    signature `(value, version = CURRENT)` verifies every historical record
+ *    with the current serializer, silently, which is the failure this whole
+ *    module exists to prevent. This bit `report-os/sealing/seal.ts` during its
+ *    migration and was caught only because a test sealed a record the old way
+ *    first. Call `readCanonVersion` before the call, not inside it.
  *
  * @module shared/versioned-digest
  */

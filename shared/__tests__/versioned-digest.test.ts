@@ -116,6 +116,24 @@ describe('sealing and verifying across the boundary', () => {
   });
 });
 
+describe('the default-parameter trap (rule 3)', () => {
+  it('normalizing first is what makes an absent marker mean version 1', () => {
+    // A caller whose canonicalizer has a default parameter and passes the raw
+    // stored value gets the DEFAULT for a legacy record, because a JS default
+    // fires on undefined. readCanonVersion turns absence into an explicit 1.
+    const withDefault = (v: unknown, version: unknown = 2) => canonicalAsSealed(v, version, legacy);
+    // Nested content — the input where this stand-in legacy and v2 diverge.
+    const body = { header: 1, detail: { status: 'intact' } };
+
+    // Raw: undefined triggers the default, so a v1 record is read as v2.
+    expect(withDefault(body, undefined)).toBe(canonicalAsSealed(body, 2, legacy));
+    // Normalized first: absence is an explicit 1, and the default never fires.
+    expect(withDefault(body, readCanonVersion(undefined))).toBe(canonicalAsSealed(body, 1, legacy));
+    // And the two genuinely differ, so this is not a distinction without one.
+    expect(canonicalAsSealed(body, 1, legacy)).not.toBe(canonicalAsSealed(body, 2, legacy));
+  });
+});
+
 describe('canonicalAsSealed', () => {
   it('is insensitive to key order at v2, at every depth', () => {
     const a = { outer: { y: 1, x: 2 }, z: 3 };
