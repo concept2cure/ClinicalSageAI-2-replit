@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-18T03:53:02.065Z",
+  "generatedAt": "2026-08-19T16:57:58.210Z",
   "git": {
-    "sha": "14e87baa67d1d5250e920e7e5ac18151bc037b67",
+    "sha": "3747da3bbe0d8e5ed8d72fa0f185973ec5269446",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 35,
-    "largeFilesByLines": 87
+    "largeFilesByLines": 86
   },
   "findings": {
     "duplicateBasenames": [
@@ -2164,7 +2164,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 238303
+        "bytes": 242219
       },
       {
         "file": "server/statistics-service.ts",
@@ -2302,7 +2302,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6112
+        "lines": 6174
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2561,6 +2561,10 @@
         "lines": 1751
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 1745
+      },
+      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
@@ -2571,10 +2575,6 @@
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 1667
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2625,12 +2625,8 @@
         "lines": 1531
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1509
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1501
+        "lines": 1516
       }
     ]
   },
@@ -2640,7 +2636,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
       "largeByBytes": 30,
-      "largeByLines": 73
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
