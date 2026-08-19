@@ -87,8 +87,61 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  logger.error('submissions route error', { err: err instanceof Error ? err.message : String(err) });
-  res.status(500).json({ error: { code: 'INTERNAL', message: 'Request failed.' } });
+
+  /* The support handle: `auditLog` (middleware/enterprise-security.ts) sets it
+     before any route runs and echoes it as `X-Request-Id`, which is the
+     "Reference <id>" the user reads off the error banner. Logging it is what
+     makes a reported failure findable. */
+  const header = res.getHeader('X-Request-Id');
+  const correlationId = typeof header === 'string' && header ? header : null;
+
+  /* ── 42P01: an unprovisioned store is not an internal error ────────────────
+     MDX UAT 2026-08-18, item A2: GET /api/submissions returned 500 while
+     GET /api/510k/estar/submissions returned 200. They are two different
+     STORES, not two services: the canonical core lives in the `submissions`
+     family created by migrations/20260604_submission_core_canonical.sql, which
+     reached no durable applier until it was added to
+     scripts/db/migration-set.mjs. On a database that never got it,
+     `listSubmissions`' first statement raises 42P01.
+
+     Reported as 500 INTERNAL that read as "the product is broken", when the
+     true state is "this environment is not fully set up" — a different problem,
+     with a different owner and a different fix. Every other router in this
+     repository already answers 503 PENDING_STORE for exactly this (see
+     `pendingStore` in routes/c2c/projects.ts, whose envelope this mirrors), and
+     the client already branches on the code. Nothing here names the relation:
+     the store is identified in the LOG, not in the response.
+
+     Wiring the migration is the fix; this is the honest state for any database
+     that has not applied it yet, and for the next store that goes missing. */
+  if (code === '42P01') {
+    const raw = err instanceof Error ? err.message : String(err);
+    logger.error('Submission store not provisioned — request failed closed', {
+      correlationId,
+      code,
+      store: /relation "([^"]+)" does not exist/i.exec(raw)?.[1] ?? null,
+    });
+    res.status(503).json({
+      error: {
+        code: 'PENDING_STORE',
+        message:
+          'This environment is not fully set up, so the submissions could not be read. ' +
+          'Share the reference below with your system administrator or Concept2Cure support.',
+      },
+      ...(correlationId ? { correlationId } : {}),
+    });
+    return;
+  }
+
+  logger.error('submissions route error', {
+    err: err instanceof Error ? err.message : String(err),
+    correlationId,
+    code: code ?? null,
+  });
+  res.status(500).json({
+    error: { code: 'INTERNAL', message: 'Request failed.' },
+    ...(correlationId ? { correlationId } : {}),
+  });
 }
 
 const idParam = (v: string | string[] | undefined) => {

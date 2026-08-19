@@ -409,7 +409,25 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
 
   const activeDoc = docs.find((d) => d.id === activeDocId) ?? null;
   const activeSection = sections.find((s) => s.id === activeSectionId) ?? null;
-  const dirty = activeSection != null && editorDirty;
+
+  /* ── Is the open document sealed? (21 CFR 11 — MDX UAT item A4) ──
+     The toolbar has always READ this status — `AuthoringFilingBar` renders
+     "Frozen" from exactly these two values — but nothing connected it to the
+     canvas. So a frozen document's section was fully typeable: characters went
+     into the content, the meta line flipped to "unsaved changes", and the
+     author only discovered the document was sealed when Save was refused.
+
+     The server has always refused that write (the `/sections/:sectionId` guard
+     in authoring.router.ts), so no sealed record was ever altered — the defect
+     is that the UI invited an edit it knew could not land, against a document
+     the product tells the user is frozen by an approval signature. Letting
+     someone type a paragraph into a signed record and then discarding it is
+     its own kind of dishonesty, even when the record survives.
+
+     Kept in the same vocabulary as the server and the filing bar: FROZEN, and
+     APPROVED (an approval signature freezes the document). */
+  const docSealed = activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
+  const dirty = activeSection != null && editorDirty && !docSealed;
 
   /* ── The editor's own conversation ──
      Grounded on what is open: `authoringContext` is the contract the server's
@@ -1144,11 +1162,21 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
-              disabled={!dirty || saving}
+              disabled={!dirty || saving || docSealed}
+              title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}
             >
-              {I.check} {saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}
+              {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => askAna(draftPrompt)}>
+            {/* Drafting into a sealed section produces text with nowhere to go:
+                the accept path is refused by the same server gate as a typed
+                edit. Offering it would be inviting work the record cannot take. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => askAna(draftPrompt)}
+              disabled={docSealed}
+              title={docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined}
+            >
               {I.sparkles} Draft with AnA
             </button>
             {activeDoc && (
@@ -1226,6 +1254,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     {dirty ? ' · unsaved changes' : activeSection.updated_at ? ` · saved ${relTime(activeSection.updated_at)}` : ''}
                   </div>
                 </div>
+                {/* An inert editor with no explanation reads as a broken one.
+                    Says which state the document is in and what the way
+                    forward is, in the same words the server's refusal uses. */}
+                {docSealed && (
+                  <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>
+                    {I.lock}{' '}
+                    {String(activeDoc?.status).toUpperCase() === 'APPROVED'
+                      ? 'This document has been approved and frozen. Its content is part of the signed record and cannot be edited.'
+                      : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}
+                    {' '}Create a new version to make further changes.
+                  </div>
+                )}
                 <div style={{ minHeight: 460, border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   <RichSectionEditor
                     /* contentEpoch remounts the canvas when the server
@@ -1238,6 +1278,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     autosaveMs={null}
                     showSaveButton={false}
                     onDirtyChange={setEditorDirty}
+                    /* The seal, enforced where the content is actually mutated.
+                       RichSectionEditor threads this into TipTap's `editable`,
+                       so the canvas stops accepting keystrokes rather than
+                       accepting them and losing them at save time. */
+                    readOnly={docSealed}
                     placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
                     storageKey={activeSection.id}
                     ariaLabel={`Section ${activeSection.code} — ${activeSection.title}`}

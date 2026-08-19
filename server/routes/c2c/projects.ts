@@ -54,6 +54,14 @@ import {
   DEVICE_FAMILY_PRODUCT_TYPES,
   workstreamSqlCase,
 } from '../../../shared/constants/domain/product-types.js';
+/* Every 5xx on this router goes through the canonical helper. Its job here is
+   the one the MDX UAT (item A1) proved was missing: it logs the failure keyed
+   by the SAME `X-Request-Id` the user is shown as "Reference <id>", and echoes
+   that id back in the body. Before this, the catch ran `console.error` with no
+   correlation id at all, so the three reference ids the UAT captured for the
+   create failure could not be looked up in the logs — the reference the UI
+   invited the user to quote pointed at nothing. */
+import { serverError } from '../../lib/api-response.js';
 
 const router = Router();
 
@@ -512,8 +520,7 @@ router.get('/', async (req: Request, res: Response) => {
         meta: { count: 0, limit, offset, hasMore: false, pendingStore: true },
       });
     }
-    console.error('[c2c/projects] GET /', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'listing the projects', err);
   }
 });
 
@@ -872,8 +879,7 @@ router.post('/', async (req: Request, res: Response) => {
     if ((err as { code?: string })?.code === '42P01') {
       return res.status(503).json(pendingStore(err, 'creating the project', req));
     }
-    console.error('[c2c/projects] POST /', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'creating the project', err);
   }
 });
 
@@ -908,8 +914,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     if (rows.length === 0) return send404(res);
     return res.json(rows[0]);
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the project', err, { programId: String(req.params.id) });
   }
 });
 
@@ -958,8 +963,7 @@ router.get('/:id/workstreams', async (req: Request, res: Response) => {
 
     return res.json({ workstreams: rows });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/workstreams', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the workstreams', err, { programId: String(req.params.id) });
   }
 });
 
@@ -997,8 +1001,7 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
 
     return res.json({ drafts: rows });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/drafts', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the recent drafts', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1076,12 +1079,7 @@ router.get('/:id/team', async (req: Request, res: Response) => {
     if ((err as { code?: string })?.code === '42P01') {
       return res.json({ team: [] });
     }
-    logger.error('GET /:id/team failed', {
-      programId: String(req.params.id),
-      error: err instanceof Error ? err.message : String(err),
-      code: (err as { code?: string })?.code ?? null,
-    });
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the project team', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1116,12 +1114,7 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
       // c2c_project_pinned_evidence may not exist in all environments yet.
       return res.status(503).json(pendingStore(err, 'reading pinned evidence', req));
     }
-    logger.error('GET /:id/evidence failed', {
-      programId: String(req.params.id),
-      error: err instanceof Error ? err.message : String(err),
-      code: (err as { code?: string })?.code ?? null,
-    });
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the pinned evidence', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1168,8 +1161,7 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
 
     return res.status(201).json(rows[0] ?? { message: 'already pinned' });
   } catch (err: unknown) {
-    console.error('[c2c/projects] POST /:id/evidence', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'pinning the evidence', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1195,8 +1187,7 @@ router.delete('/:id/evidence/:evId', async (req: Request, res: Response) => {
     if (del.rows.length === 0) return send404(res);
     return res.status(204).send();
   } catch (err: unknown) {
-    console.error('[c2c/projects] DELETE /:id/evidence/:evId', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'unpinning the evidence', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1242,12 +1233,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     if ((err as { code?: string })?.code === '42P01') {
       return res.status(503).json(pendingStore(err, 'reading the activity feed', req));
     }
-    logger.error('GET /:id/activity failed', {
-      programId: String(req.params.id),
-      error: err instanceof Error ? err.message : String(err),
-      code: (err as { code?: string })?.code ?? null,
-    });
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the project activity', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1374,8 +1360,7 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
       documents,
     });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/vault-structure', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the Vault structure', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1461,8 +1446,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       unscoped: unscoped.map(shape),
     });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/sources', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the sources', err, { programId: String(req.params.id) });
   }
 });
 
@@ -1500,8 +1484,7 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
 
     return res.json({ projectId: String(req.params.id), changes, count: changes.length });
   } catch (err: unknown) {
-    console.error('[c2c/projects] GET /:id/source-changes', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });
   }
 });
 

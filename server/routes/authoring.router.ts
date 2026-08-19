@@ -33,6 +33,10 @@ import {
   verifyLedger,
   type RevisionOrigin,
 } from '../services/authoring/revision-ledger';
+import {
+  checkSectionWritable,
+  LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
+} from '../services/authoring/document-lock';
 
 const logger = createScopedLogger('authoring-router');
 
@@ -179,7 +183,11 @@ type Queryable = { query: (text: string, params?: any[]) => Promise<any> };
  * `'APPROVED'` in upper case. A case-sensitive comparison would silently miss a
  * locked record.
  */
-const LOCKED_DOCUMENT_STATUSES = new Set(['FROZEN', 'APPROVED']);
+/* Re-exported from the canonical lock service rather than redeclared: the set
+   is also read by the write gate below and by the client's frozen affordance,
+   and three copies of "which statuses seal a record" is three chances for them
+   to disagree about a Part 11 guarantee. */
+const LOCKED_DOCUMENT_STATUSES = LOCKED_STATUSES;
 
 /**
  * Is the fine-grained per-user section-permission matrix enforced?
@@ -379,6 +387,34 @@ const requireAny = (roles: string[]) => {
 router.use('/sections/:sectionId', async (req: Request, res: Response, next: any) => {
   try {
     if (['PATCH', 'POST', 'DELETE'].includes(req.method)) {
+      /* ── Say WHICH refusal this is (MDX UAT item A4) ──────────────────────
+         `canEditSection` already refuses a FROZEN or APPROVED document — that
+         part of Part 11 §11.10(c)/(e) has been enforced here all along, on the
+         editor save, the history revert and the AnA draft accept alike (this
+         middleware is a prefix match, so all three are covered).
+
+         What it could not do is say WHY, because it returns a boolean: a
+         sealed record and a missing grant both came back as
+         403 "No edit permission for this section". Those are different facts
+         with different remedies — one is "ask an administrator", the other is
+         "this content is signed; create a new version" — and the author who
+         typed a paragraph into a frozen section was told the wrong one.
+
+         Reading the lock first turns that into a 409 naming the seal. It is
+         the same query `canEditSection` runs, through the canonical helper, so
+         the two cannot drift; `canEditSection` keeps its own lock check as the
+         fail-closed backstop this middleware is documented to be. */
+      const tenantId = authedOrgId(req);
+      if (tenantId != null && typeof req.params.sectionId === 'string') {
+        const lock = await checkSectionWritable(pool, req.params.sectionId, tenantId);
+        if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+          return res.status(409).json({
+            error: 'DOCUMENT_FROZEN',
+            message: lock.reason,
+          });
+        }
+      }
+
       const ok = await canEditSection(req, req.params.sectionId);
       if (!ok) return res.status(403).json({ error: 'No edit permission for this section' });
     }
@@ -3370,6 +3406,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     if ((sectionResult.rowCount ?? 0) === 0) {
       return res.status(404).json({ success: false, error: 'Section not found' });
     }
+
     const priorContent: string | null = sectionResult.rows[0].content ?? null;
 
     const { consumeDraftCandidate } = await import(

@@ -82,6 +82,34 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260604_shadow_review.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
+
+  // ── The canonical submission core ───────────────────────────────────────────
+  // Creates submissions / submission_regions / ectd_sequences / submission_leaves
+  // — the region-agnostic core `server/routes/submissions.ts` serves and
+  // `submission-service.ts` reads through Drizzle.
+  //
+  // It reached NO durable applier. Nothing in this repository referenced the
+  // file except an audit document: it is not in this list, carries no `_gcc_`
+  // infix, and `shared/schema/submissions.ts` is re-exported from
+  // shared/schema.ts but these tables are not in the drizzle journal either, so
+  // only install-fresh's root-tree overlay created them — fresh databases only.
+  // Any database provisioned before 2026-06-04 and kept current with
+  // deploy-migrate has never had them.
+  //
+  // That is the MDX UAT's item A2: GET /api/submissions returned 500 while
+  // GET /api/510k/estar/submissions returned 200. Not two services disagreeing
+  // — two STORES, one of which was never created, so `listSubmissions`' first
+  // statement raised 42P01. The device eSTAR path has its own tables (see
+  // 20260730_estar_submission.sql below, which IS in this list) and was
+  // unaffected.
+  //
+  // Placed after the audit/program block and before everything else that runs:
+  // its only prerequisites are organizations and users (drizzle-push base
+  // tables), and later entries reference submissions rather than the reverse.
+  // The file is CREATE TABLE IF NOT EXISTS throughout, so it is a no-op on the
+  // fresh installs that already have it.
+  'migrations/20260604_submission_core_canonical.sql',
+
   'migrations/20260603_ai_capability_governance.sql',
   'migrations/20260603_pv_operational.sql',
   'migrations/20260603_commitments.sql',

@@ -124,6 +124,12 @@ export function serverError(
   log: ScopedLogger,
   where: string,
   err: unknown,
+  /* Route-scoped facts to log alongside the failure — the ids that make one
+     log line answer "which record?" without a second lookup (e.g.
+     `{ programId }`). Log-only: nothing here reaches the response, so it is
+     safe to put internal identifiers in it. Optional so the 272 existing call
+     sites are unchanged. */
+  extra?: Record<string, unknown>,
 ): Response {
   const detail = err instanceof Error ? err.message : 'Operation failed';
   /* Set by the requestId middleware (server/middleware/enterprise-security.ts)
@@ -134,6 +140,7 @@ export function serverError(
   const correlationId = typeof header === 'string' && header ? header : null;
 
   log.error(`${where} failed`, {
+    ...extra,
     err: detail,
     correlationId,
     code: (err as { code?: string })?.code ?? null,

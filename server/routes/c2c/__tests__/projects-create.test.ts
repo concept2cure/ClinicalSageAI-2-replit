@@ -511,3 +511,76 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     expect(res.body.message.length).toBeGreaterThan(20);
   });
 });
+
+/**
+ * MDX UAT 2026-08-18, item A1 — the create failure must be diagnosable.
+ *
+ * The UAT captured three reference ids from three failed creates
+ * (3b46779335ffb1ec…, 54492778b381db05…, 39eeaa435dc6b42a…) and none of them
+ * could be looked up, because the catch ran
+ *
+ *   console.error('[c2c/projects] POST /', err);
+ *   return res.status(500).json({ error: 'INTERNAL_ERROR' });
+ *
+ * — no correlation id in the log line, and no message or reference in the body.
+ * The UI therefore rendered its generic status fallback ("The server could not
+ * complete this request") and invited the user to quote a reference that
+ * pointed at nothing in the logs. Fixing the underlying exception needs the
+ * exception; this is what makes the NEXT one recoverable in one lookup.
+ *
+ * The id asserted here is the one `auditLog` (middleware/enterprise-security.ts)
+ * sets and echoes as `X-Request-Id` — the same value the user reads off the
+ * error banner.
+ */
+describe('POST /api/c2c/projects — a 500 is diagnosable from the reference the user sees', () => {
+  const REF = '3b46779335ffb1ec4187935db4df7570';
+
+  /** The app with the request-id middleware the real server mounts. */
+  function appWithRequestId(org: number, userId: number) {
+    const app = express();
+    app.use(express.json());
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      res.setHeader('X-Request-Id', REF);
+      (req as unknown as { organizationId: number }).organizationId = org;
+      (req as unknown as { userId: number }).userId = userId;
+      next();
+    });
+    app.use('/api/c2c/projects', projectsRouter);
+    return app;
+  }
+
+  it('echoes the reference id in the body and says what failed', async () => {
+    // A non-42P01 failure — the class the UAT hit, which falls through the
+    // PENDING_STORE branch to the generic catch.
+    query
+      .mockResolvedValueOnce({ rows: [] })                                  // BEGIN
+      .mockRejectedValueOnce(
+        Object.assign(new Error('null value in column "code" violates not-null constraint'), {
+          code: '23502',
+        }),
+      );
+
+    const res = await request(appWithRequestId(7, 3)).post('/api/c2c/projects').send(validBody);
+
+    expect(res.status).toBe(500);
+    expect(res.body.correlationId).toBe(REF);
+    // Names the operation, so the banner is not the bare status fallback.
+    expect(res.body.message).toMatch(/creating the project/);
+    // …and still discloses nothing internal: no column, constraint, SQL or code.
+    const body = JSON.stringify(res.body);
+    expect(body).not.toMatch(/not-null|constraint|23502|column/i);
+  });
+
+  it('rolls the transaction back and releases the client on that failure', async () => {
+    // The diagnosability change must not have altered the failure semantics:
+    // a failed create leaves no half-written program behind.
+    query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockRejectedValueOnce(Object.assign(new Error('boom'), { code: '23502' }));
+
+    await request(appWithRequestId(7, 3)).post('/api/c2c/projects').send(validBody);
+
+    expect(sqlCalls()).toContain('ROLLBACK');
+    expect(release).toHaveBeenCalled();
+  });
+});

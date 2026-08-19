@@ -295,11 +295,26 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const [signReq, setSignReq] = useState<{ t: TaskItem; status: string; progress: number } | null>(null);
 
   const modules = useMemo(() => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))], [tasks]);
-  const list = tasks.filter(t =>
-    (proj === 'all' || t.project === proj) &&
-    (!mine || (myId !== '' && t.assignee === myId)) &&
-    (mod === 'all' || t.moduleType === mod) &&
-    t.status !== 'cancelled'
+  /* Memoized because its IDENTITY is load-bearing, not for speed.
+     `list` seeds `stats`, `stats` and `list` seed `anaContext`, and
+     `anaContext` is the dependency of `usePublishSurfaceContext`. As a bare
+     `tasks.filter(...)` it was a new array every render, so every one of those
+     memos recomputed, the publish effect re-ran, `setSurfaceContext` emitted,
+     the shell's `useSyncExternalStore` re-rendered the shell, and the board
+     re-rendered — which built the next new array. That is the "Maximum update
+     depth exceeded" the error boundary caught: the loop had no fixed point
+     because each turn manufactured the input for the next.
+     Same class as the `NO_ROWS` defect in dataConnect.tsx — an unstable
+     reference feeding an effect — and it is why `useLiveRows` returns one
+     frozen empty array instead of a fresh literal. */
+  const list = useMemo(
+    () => tasks.filter(t =>
+      (proj === 'all' || t.project === proj) &&
+      (!mine || (myId !== '' && t.assignee === myId)) &&
+      (mod === 'all' || t.moduleType === mod) &&
+      t.status !== 'cancelled'
+    ),
+    [tasks, proj, mine, myId, mod],
   );
   const byCol = (id: string) => list.filter(t => t.status === id);
   const byId = (id: string) => tasks.find(t => t.taskId === id);
