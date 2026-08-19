@@ -308,6 +308,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv,.md"
           style={{ display: 'none' }}
           onChange={(e) => void uploadFiles(e.target.files)}
+          /* Labelled even though it is visually hidden and driven by the button
+             beside it: WCAG 3.3.2 applies to the control, not to whether it is
+             painted, and assistive technology can still reach a file input that
+             a script focuses. */
+          aria-label="Choose documents to upload to the Vault"
           data-testid="vault-upload-input"
         />
         <button

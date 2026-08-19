@@ -842,7 +842,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         throw new Error('unauthenticated');
       }
       if (!res.ok) {
-        fireToast('Couldn’t save the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error');
+        /* Prefer the server's SENTENCE over its CODE. `error` here is a machine
+           token (DOCUMENT_FROZEN, …) and rendering it put an internal enum into
+           user-facing copy — the same defect `extractApiError` in
+           lib/queryClient.ts was written to end. A frozen document now reads as
+           the explanation the server sent rather than as an enum. */
+        const why =
+          (typeof (json as any)?.message === 'string' && (json as any).message) ||
+          (typeof (json as any)?.error === 'string' && !/^[A-Z0-9_]+$/.test((json as any).error)
+            ? (json as any).error
+            : null) ||
+          `HTTP ${res.status}`;
+        fireToast('Couldn’t save the section — ' + why + ' Nothing was persisted.', 'error');
         throw new Error('save failed');
       }
       const adopted = (json as { section?: AuthSection })?.section;

@@ -400,15 +400,23 @@ router.use('/sections/:sectionId', async (req: Request, res: Response, next: any
          "this content is signed; create a new version" — and the author who
          typed a paragraph into a frozen section was told the wrong one.
 
-         Reading the lock first turns that into a 409 naming the seal. It is
-         the same query `canEditSection` runs, through the canonical helper, so
-         the two cannot drift; `canEditSection` keeps its own lock check as the
-         fail-closed backstop this middleware is documented to be. */
+         Reading the lock first names the seal in the payload. It is the same
+         query `canEditSection` runs, through the canonical helper, so the two
+         cannot drift; `canEditSection` keeps its own lock check as the
+         fail-closed backstop this middleware is documented to be.
+
+         The STATUS stays 403. A sealed record is arguably a 409, and the
+         contract test that pins this says in its own words that "the record
+         itself is what matters, not the status code" — but 403 is the answer
+         this endpoint has always given, and changing a status is a change to
+         every client that branches on it, which is not this fix's to make. The
+         distinction the UI needs travels in `error` and `message`, which
+         nothing was reading before because nothing was sent. */
       const tenantId = authedOrgId(req);
       if (tenantId != null && typeof req.params.sectionId === 'string') {
         const lock = await checkSectionWritable(pool, req.params.sectionId, tenantId);
         if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
-          return res.status(409).json({
+          return res.status(403).json({
             error: 'DOCUMENT_FROZEN',
             message: lock.reason,
           });
