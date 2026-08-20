@@ -1223,6 +1223,26 @@ jobs:
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+          # This job has no AI provider, and since /readyz gained its `ana`
+          # dependency (startup/ana-readiness-state.ts) that is no longer a
+          # silent condition: a process where AnA cannot answer refuses to
+          # report ready, which is the entire point of that gate. This job hit
+          # it and sat at 503 for the full 300s budget on its first run after
+          # the change.
+          #
+          # The honest fix is to declare the posture rather than weaken the
+          # gate. Deterministic mode is the documented opt-in for exactly this:
+          # AnA serves fixed responses, readiness passes, and /readyz reports
+          # `anaState: "deterministic"` — never "ready" — so nobody can mistake
+          # this environment for one with a live model.
+          #
+          # A throwaway ANTHROPIC_API_KEY would also turn the probe green and
+          # would be WORSE: it would claim an enabled provider that does not
+          # exist, which is the kind of green this whole gate exists to prevent.
+          #
+          # This job proves the build boots against a real database with RLS on
+          # as a non-superuser. It is not an AI test and must not need a key.
+          AI_GATEWAY_DETERMINISTIC: 'true'
 
       - name: Tear down PostgreSQL
         if: always()
