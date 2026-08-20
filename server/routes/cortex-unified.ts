@@ -845,6 +845,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             { role: 'user', content: message },
             { role: 'assistant', content: fullContent },
           ],
+          projectId: numericProjectId ?? null,
         }).catch((err: any) =>
           logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
         );
@@ -930,6 +931,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           { role: 'user', content: message },
           { role: 'assistant', content: assistantMessage },
         ],
+        projectId: numericProjectId ?? null,
       }).catch((err: any) =>
         logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`)
       );

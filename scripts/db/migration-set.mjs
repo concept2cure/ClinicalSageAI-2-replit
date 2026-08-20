@@ -1303,6 +1303,38 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260222_audit_events_immutability.sql',
   'db/migrations/20260617_audit_logs_immutability.sql',
 
+  // ── AnA's own memory: the tables her selfhood writes to (added 2026-08-20) ──
+  // All three sat in the root migrations/ tree on NO durable apply path: not
+  // journaled, not `_gcc_`, not in this set — so install-fresh's overlay was the
+  // only thing that ever created them, i.e. fresh installs only. On every
+  // database maintained by deploy-migrate:
+  //   * ana_relational_profiles (20260612) did not exist. Both halves of
+  //     relational-profile-service swallow the resulting 42P01, so AnA's
+  //     per-user/per-project relational memory — the RELATIONAL CONTEXT block
+  //     her personality core promises — was silently dead, along with the
+  //     external_intelligence_findings/runs tables the nightly sweep writes.
+  //   * conversation_working_memory.embedding (20260602) did not exist, so
+  //     ENABLE_SEMANTIC_WORKING_MEMORY could never actually embed (the writer
+  //     probes the column and quietly falls back to recency-only).
+  //   * 20260820 is new with this change: project attribution on thread-keyed
+  //     working memory, which is what makes the live AnA chat path's rows
+  //     eligible for nightly consolidation into project_memory_entries at all.
+  //     It also owns the CREATE TABLE IF NOT EXISTS for conversation_working_
+  //     memory (a push-surface table no journal file creates), so it runs
+  //     FIRST — 20260602's ALTER needs the table to exist on a set-only
+  //     database. 20260602 stays pgvector-dependent (vector(1536) column):
+  //     PGlite harnesses must name it alongside the C-37 trio; real-cluster
+  //     coverage is verify-migration-set.mjs, same as those.
+  // Ordered before the tenant-isolation sweeps so ana_relational_profiles and
+  // conversation_working_memory get tenant policies from the same run that
+  // creates them. The external-intel tables are global by design (no
+  // organization_id) and are skipped by the sweep. All three files are
+  // IF NOT EXISTS-idempotent and safe on databases where install-fresh
+  // already applied them.
+  'migrations/20260820_working_memory_project_id.sql',
+  'migrations/20260602_working_memory_embeddings.sql',
+  'migrations/20260612_ana_relational_external_intel.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

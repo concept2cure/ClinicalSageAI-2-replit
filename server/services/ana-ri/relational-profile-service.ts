@@ -20,7 +20,12 @@
  *
  * Both halves are defensive: a missing table (42P01) or any other error
  * degrades to "no overlay" / "no reflection" — the chat turn is never
- * blocked or failed by this layer.
+ * blocked or failed by this layer. Degrading is fail-soft; being QUIET about
+ * it is not. A missing ana_relational_profiles table means AnA's relational
+ * memory is structurally dead on this database (the exact state every
+ * deploy-migrate-maintained environment was in before the 20260612 migration
+ * joined C2C_MIGRATION_FILES), so 42P01 warns once per process, naming the
+ * migration, instead of being the one error class this module never mentions.
  *
  * @module server/services/ana-ri/relational-profile-service
  */
@@ -36,6 +41,21 @@ import type {
 import { createScopedLogger } from '../../utils/logger.js';
 
 const logger = createScopedLogger('ana-relational');
+
+let warnedMissingTable = false;
+/** One-time loud warning for the one failure that means this layer is dead. */
+function warnIfMissingTable(err: unknown, half: 'read' | 'write'): boolean {
+  if ((err as { code?: string })?.code !== '42P01') return false;
+  if (!warnedMissingTable) {
+    warnedMissingTable = true;
+    logger.warn(
+      `ana_relational_profiles does not exist — AnA's relational memory (${half} path hit it ` +
+        'first) is dead on this database. Apply migrations/20260612_ana_relational_external_intel.sql ' +
+        '(in C2C_MIGRATION_FILES; npm run db:apply-c2c or a deploy-migrate run applies it).'
+    );
+  }
+  return true;
+}
 
 /** Reflect every Nth turn even without an emotional/corrective signal. */
 const REFLECT_EVERY_N = parseInt(process.env.ANA_RELATIONAL_REFLECT_EVERY_N ?? '4', 10);
@@ -127,7 +147,7 @@ export async function loadRelationalOverlay(input: {
       interactionCount: (user?.interaction_count ?? 0) + (project?.interaction_count ?? 0),
     });
   } catch (err: any) {
-    if (err?.code !== '42P01') {
+    if (!warnIfMissingTable(err, 'read')) {
       logger.warn(`relational overlay load failed: ${err?.message}`);
     }
     return '';
@@ -382,7 +402,7 @@ export async function reflectAfterTurn(input: {
       });
     }
   } catch (err: any) {
-    if (err?.code !== '42P01') {
+    if (!warnIfMissingTable(err, 'write')) {
       logger.warn(`post-turn reflection failed: ${err?.message}`);
     }
   }

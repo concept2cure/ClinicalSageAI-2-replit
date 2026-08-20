@@ -212,6 +212,9 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
       'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
       'db/migrations/20260306_precedent_engine.sql',
       'db/migrations/20260208_phase6_6a_risk_rollups.sql', // reads the first file's tables
+      // adds a vector(1536) column to conversation_working_memory; the rest of
+      // that table ships pgvector-free in 20260820, which IS applied here
+      'migrations/20260602_working_memory_embeddings.sql',
     ]);
     const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START)).filter(
       (rel: string) => !PGVECTOR_DEPENDENT.has(rel),
