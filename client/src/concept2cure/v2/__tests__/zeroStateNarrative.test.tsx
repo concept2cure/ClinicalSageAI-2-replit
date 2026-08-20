@@ -166,3 +166,79 @@ describe('NDA cockpit over a FAILED read', () => {
     expect(document.querySelector('.al-lead .al-btn')).toBeNull();
   });
 });
+
+/**
+ * The IND Lifecycle surface — the lane's DEFAULT surface — held the same defect
+ * in latent form: `indlReadiness` derived `ready: blockers.length === 0` and
+ * `overallPercentage: totalItems === 0 ? 100 : …`, which is literally
+ * "empty set ⇒ 100% READY TO FILE". Reachable the moment the checklist
+ * assembler returns empty forms/sections arrays (which it documents it does
+ * when nothing is authored yet). Pinned here at both altitudes: the derivation
+ * and the rendered surface.
+ */
+describe('indlReadiness — an empty checklist is not a fileable one', () => {
+  it('derives not-assessed, not clearance, from zero items', async () => {
+    const { indlReadiness } = await import('../fixtures/ind-lifecycle-data');
+    const r = indlReadiness([], []);
+    expect(r.assessed).toBe(false);
+    expect(r.ready).toBe(false);
+    // The old branch returned 100 here.
+    expect(r.overallPercentage).toBe(0);
+  });
+
+  it('is still clearance-capable when items exist and all pass', async () => {
+    const { indlReadiness } = await import('../fixtures/ind-lifecycle-data');
+    const r = indlReadiness(
+      [{ code: '1.1', title: 'Forms', status: 'approved', required: true } as never],
+      [{ id: '1571', name: 'FDA 1571', done: true } as never],
+    );
+    expect(r.assessed).toBe(true);
+    expect(r.blockers.length).toBe(0);
+    expect(r.ready).toBe(true);
+  });
+});
+
+describe('IND Lifecycle over an empty checklist', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { apiRequest } = await import('@/lib/queryClient');
+    (apiRequest as unknown as ReturnType<typeof vi.fn>).mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: [
+          {
+            code: 'IND-000000',
+            drugName: 'TST-1',
+            productName: null,
+            indication: null,
+            sponsorName: null,
+            submissionType: null,
+            targetReceiptDate: null,
+            forms: [],
+            sections: [],
+          },
+        ],
+      }),
+    }));
+  });
+
+  it('says nothing has been assessed, never READY TO FILE', async () => {
+    const { IndLifecycle } = await import('../surfaces/IndLifecycle');
+    render(<IndLifecycle {...({ surface: { id: 'ind-lifecycle', label: 'IND Lifecycle' } } as any)} />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/nothing has been assessed/i).length).toBeGreaterThan(0);
+    });
+
+    const body = document.body.textContent ?? '';
+    expect(body).not.toContain('READY TO FILE');
+    expect(/no blockers\./i.test(body)).toBe(false);
+    for (const phrase of CLEARANCE_LANGUAGE) {
+      expect(phrase.test(body), `zero state must not say: ${phrase}`).toBe(false);
+    }
+    // The verdict chip states the truth of the empty set.
+    expect(body).toContain('NOT ASSESSED');
+    // And 100% appears nowhere — the old derivation put it in the headline.
+    expect(body).not.toContain('100%');
+  });
+});

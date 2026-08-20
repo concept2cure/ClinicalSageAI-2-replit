@@ -735,7 +735,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
 
       <AnswerLead
         tone={
-          R.ready ? 'good' : R.blockers.length > 4 ? 'urgent' : 'calm'
+          !R.assessed ? 'calm' : R.ready ? 'good' : R.blockers.length > 4 ? 'urgent' : 'calm'
         }
         eyebrow={
           'Is the ' +
@@ -743,7 +743,12 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           ' IND ready to file — and what stands between you and submission'
         }
         headline={
-          R.ready ? (
+          !R.assessed ? (
+            <>
+              Nothing has been assessed for this IND yet — the checklist holds
+              no required sections or Module 1 forms to evaluate.
+            </>
+          ) : R.ready ? (
             <>
               The {drug} IND is <b>ready to file</b> -- every
               required section is approved and all three Module 1 forms are
@@ -761,7 +766,13 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           )
         }
         body={
-          R.ready ? (
+          !R.assessed ? (
+            <>
+              Readiness is computed from the org's IND checklist. Until it
+              carries section and form state, no statement about blockers —
+              present or absent — can be made.
+            </>
+          ) : R.ready ? (
             clearDate ? (
               <>
                 Once you file, the 30-day safe-to-proceed clock runs to{' '}
@@ -792,13 +803,23 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </>
           )
         }
-        reassure="None of these are FDA findings — they are the checklist I hold so nothing slips before you submit."
+        reassure={
+          R.assessed
+            ? 'None of these are FDA findings — they are the checklist I hold so nothing slips before you submit.'
+            : undefined
+        }
         action={{
-          label: R.ready
-            ? 'Assemble the submission sequence'
-            : 'Resolve the top blocker',
+          label: !R.assessed
+            ? 'Ask AnA how to populate the checklist'
+            : R.ready
+              ? 'Assemble the submission sequence'
+              : 'Resolve the top blocker',
           onClick: () => {
-            if (R.ready) {
+            if (!R.assessed) {
+              ask(
+                'The ' + drug + ' IND checklist is empty — how do I populate its sections and Module 1 forms?',
+              );
+            } else if (R.ready) {
               onNav && onNav('submission-center');
             } else if (R.blockers[0]) {
               ask(
@@ -825,7 +846,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 <span
                   className={'indl-verdict ' + (R.ready ? 'ok' : 'no')}
                 >
-                  {R.ready ? 'READY TO FILE' : 'NOT YET FILEABLE'}
+                  {!R.assessed
+                    ? 'NOT ASSESSED'
+                    : R.ready
+                      ? 'READY TO FILE'
+                      : 'NOT YET FILEABLE'}
                 </span>
                 <button
                   className="btn ghost sm"
@@ -943,14 +968,27 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               <h3>
                 3 — Blockers to filing{' '}
                 <span className="indl-h-x">
-                  -- {R.blockers.length} -- ready = zero blockers
+                  -- {R.blockers.length} -- ready = assessed with zero blockers
                 </span>
               </h3>
               {R.blockers.length === 0 ? (
                 <p className="indl-clean">
-                  {I.check} No blockers. Every required section is approved
-                  and all Module 1 forms are complete — the package is
-                  fileable.
+                  {/* "No blockers" is a finding, and a finding needs an
+                      assessment behind it — over an empty checklist the honest
+                      sentence is that nothing was evaluated (BP-W0-3). */}
+                  {R.assessed ? (
+                    <>
+                      {I.check} No blockers. Every required section is approved
+                      and all Module 1 forms are complete — the package is
+                      fileable.
+                    </>
+                  ) : (
+                    <>
+                      Nothing has been assessed — the checklist holds no
+                      sections or forms to evaluate, so no blocker statement
+                      can be made.
+                    </>
+                  )}
                 </p>
               ) : (
                 <div className="indl-blockers">

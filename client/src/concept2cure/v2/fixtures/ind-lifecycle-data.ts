@@ -69,6 +69,10 @@ export interface IndlBlocker {
 
 export interface IndlReadinessReport {
   filingType: string;
+  /** False when the checklist held nothing to evaluate — an empty input set is
+      "nothing assessed", never clearance (BP-W0-3). `ready` is only ever true
+      when `assessed` is. */
+  assessed: boolean;
   ready: boolean;
   overallPercentage: number;
   moduleProgress: IndlModuleProgress[];
@@ -272,10 +276,15 @@ export function indlReadiness(
 
   const totalItems = sections.length + forms.length;
   const doneItems = completed + completedForms.length;
+  // Zero items means zero evidence: nothing was evaluated, so nothing can be
+  // "ready" and nothing is 100% done. The old `totalItems === 0 ? 100` branch
+  // was literally "empty set ⇒ clearance" — the exact BP-W0-3 defect class.
+  const assessed = totalItems > 0;
   return {
     filingType: 'initial',
-    ready: blockers.length === 0,
-    overallPercentage: totalItems === 0 ? 100 : Math.round((doneItems / totalItems) * 100),
+    assessed,
+    ready: assessed && blockers.length === 0,
+    overallPercentage: assessed ? Math.round((doneItems / totalItems) * 100) : 0,
     moduleProgress,
     requiredSections: { total: sections.length, completed, incomplete },
     forms: { required: forms.map((f) => f.id), completed: completedForms, missing: missingForms },
