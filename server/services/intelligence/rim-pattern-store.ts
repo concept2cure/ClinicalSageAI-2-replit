@@ -27,7 +27,7 @@
  * @module server/services/intelligence/rim-pattern-store
  */
 
-import { persistPatterns, loadPersistedPatterns } from './rim-pattern-persistence.js';
+import { persistPattern, loadPersistedPatterns } from './rim-pattern-persistence.js';
 
 /**
  * The class of regulatory signal a pattern aggregates. Mirrors the signal/pattern
@@ -101,9 +101,9 @@ export interface GetPatternsQuery {
  * sync `getPatterns` that fires hydration and reads the map in the same tick
  * returns `[]` on the first call of every process even when the database
  * holds patterns — dormancy with extra machinery — and a `recordPattern`
- * that upserts before hydration both undercounts (a repeat observation seeds
- * a fresh pattern) and, because persistence writes the full in-memory set,
- * overwrites everything an earlier process learned.
+ * that upserts before hydration undercounts: a repeat of a persisted
+ * observation would seed a fresh occurrences=1 pattern instead of
+ * strengthening the one an earlier process learned.
  */
 export interface RimPatternStore {
   /**
@@ -151,10 +151,11 @@ export function rimPatternId(
 /**
  * In-memory {@link RimPatternStore} backed by database persistence
  * (rim-pattern-persistence.ts): the map is a per-process cache hydrated once
- * per org from the durable row, and every write persists the org's full set
- * back. Both public operations await hydration first — see the interface
- * docstring for why a sync read/unhydrated write here is not a smaller bug
- * but the whole subsystem's dormancy.
+ * per org from rim_learned_patterns, and every write persists the touched
+ * pattern (plus its append-only observation event) back. Both public
+ * operations await hydration first — see the interface docstring for why a
+ * sync read/unhydrated write here is not a smaller bug but the whole
+ * subsystem's dormancy.
  */
 export class InMemoryRimPatternStore implements RimPatternStore {
   private readonly patterns = new Map<string, RimPattern>();
@@ -231,8 +232,8 @@ export class InMemoryRimPatternStore implements RimPatternStore {
       };
       this.patterns.set(id, updated);
 
-      // Fire-and-forget persistence of the org's full pattern set.
-      this.persistOrg(orgId);
+      // Fire-and-forget persistence of the touched pattern (+ its observation event).
+      void persistPattern(updated).catch(() => {});
 
       return updated;
     }
@@ -250,22 +251,10 @@ export class InMemoryRimPatternStore implements RimPatternStore {
     };
     this.patterns.set(id, created);
 
-    // Fire-and-forget persistence of the org's full pattern set.
-    this.persistOrg(orgId);
+    // Fire-and-forget persistence of the touched pattern (+ its observation event).
+    void persistPattern(created).catch(() => {});
 
     return created;
-  }
-
-  /**
-   * Fire-and-forget: persist all patterns for an org. Callers have already
-   * hydrated (recordPattern awaits ensureLoaded), so the full-set write is a
-   * superset of what persistence held.
-   */
-  private persistOrg(orgId: number): void {
-    const orgPatterns = this.snapshotOrg(orgId);
-    Promise.resolve()
-      .then(() => persistPatterns(String(orgId), orgPatterns))
-      .catch(() => {});
   }
 
   async getPatterns(query: GetPatternsQuery): Promise<RimPattern[]> {

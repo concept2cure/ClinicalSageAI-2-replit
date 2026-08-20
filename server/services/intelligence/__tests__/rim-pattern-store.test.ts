@@ -21,13 +21,19 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// In-memory persistence fake, per-org, reset per test.
-const persisted = new Map<string, unknown[]>();
+// In-memory persistence fake mirroring the real per-pattern contract: one
+// entry per pattern id, upserted — reset per test.
+const persisted = new Map<string, Map<string, unknown>>();
 vi.mock('../rim-pattern-persistence', () => ({
-  persistPatterns: vi.fn(async (orgId: string, patterns: unknown[]) => {
-    persisted.set(orgId, JSON.parse(JSON.stringify(patterns)));
+  persistPattern: vi.fn(async (pattern: { orgId: number; id: string }) => {
+    const key = String(pattern.orgId);
+    const orgMap = persisted.get(key) ?? new Map<string, unknown>();
+    orgMap.set(pattern.id, JSON.parse(JSON.stringify(pattern)));
+    persisted.set(key, orgMap);
   }),
-  loadPersistedPatterns: vi.fn(async (orgId: string) => persisted.get(orgId) ?? []),
+  loadPersistedPatterns: vi.fn(async (orgId: string) =>
+    Array.from(persisted.get(orgId)?.values() ?? [])
+  ),
 }));
 
 import {
@@ -208,7 +214,7 @@ describe('hydration — persisted judgment survives a process restart', () => {
       observation: 'Persisted across restarts', observedAt: '2026-01-01T00:00:00.000Z',
     });
     await flush();
-    expect(persisted.get(String(ORG_A))).toHaveLength(1);
+    expect(persisted.get(String(ORG_A))?.size).toBe(1);
 
     // "A fresh process": brand-new store, FIRST call. The pre-fix store fired
     // hydration and read the map in the same tick, so this returned [] — the
@@ -237,7 +243,7 @@ describe('hydration — persisted judgment survives a process restart', () => {
     });
     await flush();
 
-    const stored = (persisted.get(String(ORG_A)) ?? []) as RimPattern[];
+    const stored = Array.from(persisted.get(String(ORG_A))?.values() ?? []) as RimPattern[];
     expect(stored.map(p => p.observation).sort()).toEqual([
       'History worth keeping',
       'New observation',

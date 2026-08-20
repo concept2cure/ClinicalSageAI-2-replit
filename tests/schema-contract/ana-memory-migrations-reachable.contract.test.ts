@@ -36,13 +36,14 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const PROJECT_ATTRIBUTION = 'migrations/20260820_working_memory_project_id.sql';
 const EMBEDDINGS = 'migrations/20260602_working_memory_embeddings.sql';
 const RELATIONAL = 'migrations/20260612_ana_relational_external_intel.sql';
+const RIM_PATTERNS = 'migrations/20260820b_rim_learned_patterns.sql';
 const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
 
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 
 describe('AnA memory migrations are on the durable apply path', () => {
-  it('all three are in C2C_MIGRATION_FILES', () => {
-    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL]) {
+  it('all four are in C2C_MIGRATION_FILES', () => {
+    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL, RIM_PATTERNS]) {
       expect(C2C_MIGRATION_FILES, `${rel} must be durably applied`).toContain(rel);
     }
   });
@@ -57,13 +58,13 @@ describe('AnA memory migrations are on the durable apply path', () => {
     expect(alterAt).toBeGreaterThan(createAt);
   });
 
-  it('all three run before the tenant-isolation sweep, which must stay last', () => {
+  it('all four run before the tenant-isolation sweep, which must stay last', () => {
     // The sweep only policies tables that exist when it runs. Created after it,
-    // ana_relational_profiles and conversation_working_memory would be readable
-    // across tenants under RLS_ENFORCE=on.
+    // ana_relational_profiles, conversation_working_memory and the RIM pattern
+    // tables would be readable across tenants under RLS_ENFORCE=on.
     const sweepAt = C2C_MIGRATION_FILES.indexOf(SWEEP);
     expect(C2C_MIGRATION_FILES[C2C_MIGRATION_FILES.length - 1]).toBe(SWEEP);
-    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL]) {
+    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL, RIM_PATTERNS]) {
       expect(C2C_MIGRATION_FILES.indexOf(rel)).toBeLessThan(sweepAt);
     }
   });
@@ -90,7 +91,7 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     // Applied TWICE: a deploy re-runs the whole set every time, so a
     // non-idempotent file breaks the SECOND deploy, not the first.
     for (const pass of [1, 2]) {
-      for (const rel of [PROJECT_ATTRIBUTION, RELATIONAL]) {
+      for (const rel of [PROJECT_ATTRIBUTION, RELATIONAL, RIM_PATTERNS]) {
         try {
           await pg.exec(readMig(rel));
         } catch (err) {
@@ -141,5 +142,20 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
       );
       expect(rows[0].n, table).toBe(1);
     }
+  });
+
+  it("the RIM judgment tables exist — aggregate patterns plus their append-only trail", async () => {
+    for (const table of ['rim_learned_patterns', 'rim_pattern_observations']) {
+      const { rows } = await pg.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_name = $1`,
+        [table]
+      );
+      expect(rows[0].n, table).toBe(1);
+    }
+    // The upsert target the persistence module's ON CONFLICT clause depends on.
+    const idx = await pg.query<{ indexname: string }>(
+      `SELECT indexname FROM pg_indexes WHERE tablename = 'rim_learned_patterns'`
+    );
+    expect(idx.rows.map(r => r.indexname)).toContain('idx_rim_learned_patterns_key');
   });
 });

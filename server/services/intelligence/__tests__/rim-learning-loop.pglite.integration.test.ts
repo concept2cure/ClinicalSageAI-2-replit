@@ -25,6 +25,11 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 let pg: PGlite;
 
@@ -64,42 +69,31 @@ vi.mock('../rim-integration', () => ({
 let nextOrg = 700;
 async function seedOrg(): Promise<number> {
   const org = ++nextOrg;
-  await pg.query(
-    `INSERT INTO project_intelligence_profiles (project_id, organization_id) VALUES ($1, $2)`,
-    [org * 10, org]
-  );
+  await pg.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [org, `org-${org}`]);
   return org;
 }
 
+// The FK target plus the legacy-blob table the loader can import from; the
+// judgment layer's own tables come from the REAL migration file below.
 const DDL = `
-CREATE TABLE project_intelligence_profiles (
-  id serial PRIMARY KEY,
-  project_id integer NOT NULL,
-  organization_id integer NOT NULL
-);
+CREATE TABLE organizations (id integer PRIMARY KEY, name text);
 CREATE TABLE project_memory_entries (
   id serial PRIMARY KEY,
   project_profile_id integer NOT NULL,
   project_id integer NOT NULL,
   organization_id integer NOT NULL,
   category text NOT NULL,
-  subcategory text,
   title text NOT NULL,
   content text NOT NULL,
-  confidence_score real DEFAULT 0.8,
-  importance_level text DEFAULT 'medium',
-  is_verified_by_user boolean DEFAULT false,
   status text DEFAULT 'active',
-  extracted_by text DEFAULT 'ai',
   created_at timestamp DEFAULT now() NOT NULL,
   updated_at timestamp DEFAULT now() NOT NULL
 );
 `;
 
 async function persistedRows(orgId: number) {
-  const r = await pg.query<{ content: string }>(
-    `SELECT content FROM project_memory_entries
-      WHERE organization_id = $1 AND category = 'rim_learned_pattern'`,
+  const r = await pg.query<Record<string, unknown>>(
+    `SELECT * FROM rim_learned_patterns WHERE organization_id = $1 ORDER BY id`,
     [orgId]
   );
   return r.rows;
@@ -116,6 +110,12 @@ async function freshProcess() {
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(DDL);
+  const migration = fs.readFileSync(
+    path.join(REPO_ROOT, 'migrations/20260820b_rim_learned_patterns.sql'),
+    'utf8'
+  );
+  await pg.exec(migration);
+  await pg.exec(migration); // idempotent — a deploy re-runs the whole set
 });
 
 afterAll(async () => {
@@ -192,9 +192,17 @@ describe('the write link is alive — observation becomes durable judgment', () 
 
     const [pattern] = await getPatterns({ orgId: org });
     expect(pattern.confidence).toBe(CONFIDENCE_SEED + CONFIDENCE_STEP);
-    // One row per org in the durable store, updated in place — not one per write.
+    // One AGGREGATE row per pattern, upserted — while the append-only
+    // observation trail keeps one row per event.
     await vi.waitFor(async () => {
-      expect(await persistedRows(org)).toHaveLength(1);
+      const aggregates = await persistedRows(org);
+      expect(aggregates).toHaveLength(1);
+      expect(aggregates[0].occurrences).toBe(2);
+      const trail = await pg.query(
+        `SELECT id FROM rim_pattern_observations WHERE organization_id = $1`,
+        [org]
+      );
+      expect(trail.rows).toHaveLength(2);
     });
   });
 

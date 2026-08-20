@@ -1335,6 +1335,15 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260602_working_memory_embeddings.sql',
   'migrations/20260612_ana_relational_external_intel.sql',
 
+  // ── RIM learned patterns get real tables (added 2026-08-20, ledger L70→) ──
+  // Graduates the learning loop's persistence from a JSON blob in
+  // project_memory_entries (the documented stopgap) to per-pattern rows with an
+  // append-only observation trail — the shape a Part 11 reviewer can actually
+  // inspect. The loader lazily imports any blob the stopgap wrote, so nothing
+  // learned in the interim is lost. Ordered before the sweep so both tables are
+  // policied in the deploy that creates them.
+  'migrations/20260820b_rim_learned_patterns.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

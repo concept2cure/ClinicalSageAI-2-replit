@@ -1,23 +1,32 @@
 /**
- * RIM Pattern Persistence — verifies the DATABASE-backed durable storage for
- * learned RIM patterns, against in-process PGlite.
+ * RIM Pattern Persistence — verifies the judgment layer's OWN tables, against
+ * in-process PGlite, using the REAL migration DDL
+ * (migrations/20260820b_rim_learned_patterns.sql) so the schema under test is
+ * the schema a deploy creates.
  *
- * This module replaced a JSON-file store under `data/rim-patterns/` (gitignored,
- * per-container disk — judgment lost with every container). Coverage mirrors
- * what the file-based suite pinned, restated for the durable substrate:
- *   - round-trip (persist then load)
- *   - re-persist REPLACES the org's set, in ONE row updated in place
- *   - close-together persists do not race update-else-insert into duplicate rows
+ * Coverage:
+ *   - round-trip: persistPattern → loadPersistedPatterns
+ *   - a strengthened pattern UPDATES its one row (upsert on org + pattern_key)
+ *   - every persist appends ONE observation row — the append-only audit trail
+ *   - close-together persists serialize (no duplicate aggregate rows)
+ *   - org isolation on read
  *   - an org with nothing stored loads []
- *   - unreadable stored content loads [] (never throws)
  *   - a write failure never throws into the caller
- *   - an org without an intelligence profile is skipped with one warning
- *   - loaded patterns claiming another org are dropped (tenant hygiene)
+ *   - a missing table warns once and degrades (no throw, no loss of the write path)
+ *   - the stopgap JSON blob (project_memory_entries, category
+ *     'rim_learned_pattern') is lazily IMPORTED into the real tables, so the
+ *     interim window's learning graduates with the schema
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { RimPattern } from '../rim-pattern-store';
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const MIGRATION = path.join(REPO_ROOT, 'migrations/20260820b_rim_learned_patterns.sql');
 
 let pg: PGlite;
 let failNextQuery = false;
@@ -39,15 +48,12 @@ vi.mock('../../../db', () => ({
   db: {},
 }));
 
-import { persistPatterns, loadPersistedPatterns } from '../rim-pattern-persistence';
+import { persistPattern, loadPersistedPatterns } from '../rim-pattern-persistence';
 
 let nextOrg = 900;
 async function seedOrg(): Promise<number> {
   const org = ++nextOrg;
-  await pg.query(
-    `INSERT INTO project_intelligence_profiles (project_id, organization_id) VALUES ($1, $2)`,
-    [org * 10, org]
-  );
+  await pg.query(`INSERT INTO organizations (id, name) VALUES ($1, $2)`, [org, `org-${org}`]);
   return org;
 }
 
@@ -66,10 +72,17 @@ function makePattern(orgId: number, overrides: Partial<RimPattern> = {}): RimPat
   };
 }
 
-async function storedRows(orgId: number) {
-  const r = await pg.query<{ content: string }>(
-    `SELECT content FROM project_memory_entries
-      WHERE organization_id = $1 AND category = 'rim_learned_pattern'`,
+async function aggregateRows(orgId: number) {
+  const r = await pg.query<Record<string, unknown>>(
+    `SELECT * FROM rim_learned_patterns WHERE organization_id = $1 ORDER BY id`,
+    [orgId]
+  );
+  return r.rows;
+}
+
+async function observationRows(orgId: number) {
+  const r = await pg.query<Record<string, unknown>>(
+    `SELECT * FROM rim_pattern_observations WHERE organization_id = $1 ORDER BY id`,
     [orgId]
   );
   return r.rows;
@@ -78,11 +91,7 @@ async function storedRows(orgId: number) {
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(`
-    CREATE TABLE project_intelligence_profiles (
-      id serial PRIMARY KEY,
-      project_id integer NOT NULL,
-      organization_id integer NOT NULL
-    );
+    CREATE TABLE organizations (id integer PRIMARY KEY, name text);
     CREATE TABLE project_memory_entries (
       id serial PRIMARY KEY,
       project_profile_id integer NOT NULL,
@@ -91,121 +100,110 @@ beforeAll(async () => {
       category text NOT NULL,
       title text NOT NULL,
       content text NOT NULL,
-      confidence_score real DEFAULT 0.8,
-      importance_level text DEFAULT 'medium',
       status text DEFAULT 'active',
-      extracted_by text DEFAULT 'ai',
       created_at timestamp DEFAULT now() NOT NULL,
       updated_at timestamp DEFAULT now() NOT NULL
     );
   `);
+  const migration = fs.readFileSync(MIGRATION, 'utf8');
+  await pg.exec(migration);
+  await pg.exec(migration); // a deploy re-runs the whole set — must be idempotent
 });
 
 afterAll(async () => {
   await pg.close();
 });
 
-describe('persistPatterns + loadPersistedPatterns round-trip', () => {
-  it('persists patterns to the database and reads them back', async () => {
+describe('persistPattern + loadPersistedPatterns round-trip', () => {
+  it('persists a pattern and reads it back', async () => {
     const org = await seedOrg();
-    const patterns = [
-      makePattern(org),
-      makePattern(org, {
-        id: `${org}::csr::risk_signal::elevated liver enzymes`,
-        signalType: 'risk_signal',
-        observation: 'Elevated liver enzymes',
-      }),
-    ];
+    await persistPattern(makePattern(org));
 
-    await persistPatterns(String(org), patterns);
-
-    const loaded = await loadPersistedPatterns(String(org));
-    expect(loaded).toHaveLength(2);
-    expect(loaded.map(p => p.observation).sort()).toEqual([
-      'Elevated liver enzymes',
-      'Missing primary endpoint',
-    ]);
-  });
-
-  it('re-persist REPLACES the set, in one row updated in place', async () => {
-    const org = await seedOrg();
-    await persistPatterns(String(org), [makePattern(org)]);
-    await persistPatterns(String(org), [
-      makePattern(org, { occurrences: 4, confidence: 65 }),
-    ]);
-
-    expect(await storedRows(org)).toHaveLength(1);
     const loaded = await loadPersistedPatterns(String(org));
     expect(loaded).toHaveLength(1);
-    expect(loaded[0].occurrences).toBe(4);
-    expect(loaded[0].confidence).toBe(65);
+    expect(loaded[0]).toMatchObject({
+      orgId: org,
+      domain: 'csr',
+      signalType: 'deficiency',
+      observation: 'Missing primary endpoint',
+      confidence: 60,
+      occurrences: 3,
+    });
   });
 
-  it('close-together persists serialize instead of racing into duplicate rows', async () => {
+  it('a strengthened pattern UPDATES its one aggregate row, and each persist appends one observation', async () => {
     const org = await seedOrg();
-    // Both start before either finishes — the update-else-insert race window.
+    await persistPattern(makePattern(org, { occurrences: 1, confidence: 50 }));
+    await persistPattern(
+      makePattern(org, { occurrences: 2, confidence: 55, lastSeen: '2025-07-01T00:00:00.000Z' })
+    );
+
+    const aggregates = await aggregateRows(org);
+    expect(aggregates).toHaveLength(1);
+    expect(aggregates[0].occurrences).toBe(2);
+    expect(Number(aggregates[0].confidence)).toBe(55);
+
+    // The audit trail keeps BOTH events — nothing updates or deletes here.
+    const observations = await observationRows(org);
+    expect(observations).toHaveLength(2);
+  });
+
+  it('close-together persists serialize instead of racing', async () => {
+    const org = await seedOrg();
     await Promise.all([
-      persistPatterns(String(org), [makePattern(org)]),
-      persistPatterns(String(org), [makePattern(org, { occurrences: 5 })]),
+      persistPattern(makePattern(org, { occurrences: 1 })),
+      persistPattern(makePattern(org, { occurrences: 2 })),
     ]);
 
-    expect(await storedRows(org)).toHaveLength(1);
-    const loaded = await loadPersistedPatterns(String(org));
-    expect(loaded[0].occurrences).toBe(5);
+    const aggregates = await aggregateRows(org);
+    expect(aggregates).toHaveLength(1);
+    expect(aggregates[0].occurrences).toBe(2);
+  });
+
+  it('reads are org-isolated', async () => {
+    const orgA = await seedOrg();
+    const orgB = await seedOrg();
+    await persistPattern(makePattern(orgA, { observation: 'A only' , id: `${orgA}::csr::deficiency::a only`}));
+    await persistPattern(makePattern(orgB, { observation: 'B only', id: `${orgB}::csr::deficiency::b only` }));
+
+    expect((await loadPersistedPatterns(String(orgA))).map(p => p.observation)).toEqual(['A only']);
+    expect((await loadPersistedPatterns(String(orgB))).map(p => p.observation)).toEqual(['B only']);
   });
 });
 
 describe('graceful degradation', () => {
-  it('returns [] for an org with nothing stored', async () => {
+  it('returns [] for an org with nothing stored (and no legacy blob)', async () => {
     const org = await seedOrg();
-    expect(await loadPersistedPatterns(String(org))).toEqual([]);
-  });
-
-  it('returns [] when the stored content has no pattern array', async () => {
-    const org = await seedOrg();
-    await pg.query(
-      `INSERT INTO project_memory_entries
-         (project_profile_id, project_id, organization_id, category, title, content)
-       VALUES (1, $1, $2, 'rim_learned_pattern', 'RIM learned patterns', $3)`,
-      [org * 10, org, JSON.stringify({ version: 1, patterns: 'not-an-array' })]
-    );
-    expect(await loadPersistedPatterns(String(org))).toEqual([]);
-  });
-
-  it('returns [] when the stored content is invalid JSON', async () => {
-    const org = await seedOrg();
-    await pg.query(
-      `INSERT INTO project_memory_entries
-         (project_profile_id, project_id, organization_id, category, title, content)
-       VALUES (1, $1, $2, 'rim_learned_pattern', 'RIM learned patterns', 'not json {')`,
-      [org * 10, org]
-    );
     expect(await loadPersistedPatterns(String(org))).toEqual([]);
   });
 
   it('a write failure never throws into the caller', async () => {
     const org = await seedOrg();
     failNextQuery = true;
-    await expect(persistPatterns(String(org), [makePattern(org)])).resolves.toBeUndefined();
+    await expect(persistPattern(makePattern(org))).resolves.toBeUndefined();
   });
+});
 
-  it('skips an org with no intelligence profile (nothing to anchor the row)', async () => {
-    const org = 999999; // never seeded
-    await persistPatterns(String(org), [makePattern(org)]);
-    expect(await storedRows(org)).toHaveLength(0);
-  });
-
-  it('drops loaded patterns claiming another org — tenant hygiene', async () => {
+describe('the stopgap blob graduates with the schema', () => {
+  it('lazily imports the project_memory_entries JSON blob when the real table is empty', async () => {
     const org = await seedOrg();
-    const foreign = makePattern(12345);
+    const blobPatterns = [
+      makePattern(org, { id: `${org}::ectd::deficiency::interim learning`, observation: 'Interim learning' }),
+      makePattern(12345, { observation: 'Foreign org — must be dropped' }),
+    ];
     await pg.query(
       `INSERT INTO project_memory_entries
          (project_profile_id, project_id, organization_id, category, title, content)
        VALUES (1, $1, $2, 'rim_learned_pattern', 'RIM learned patterns', $3)`,
-      [org * 10, org, JSON.stringify({ version: 1, patterns: [makePattern(org), foreign] })]
+      [org * 10, org, JSON.stringify({ version: 1, patterns: blobPatterns })]
     );
+
     const loaded = await loadPersistedPatterns(String(org));
     expect(loaded).toHaveLength(1);
-    expect(loaded[0].orgId).toBe(org);
+    expect(loaded[0].observation).toBe('Interim learning');
+
+    // Imported INTO the real tables — the next load never touches the blob.
+    expect(await aggregateRows(org)).toHaveLength(1);
+    expect(await observationRows(org)).toHaveLength(1);
   });
 });
