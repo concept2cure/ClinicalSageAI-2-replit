@@ -30,8 +30,17 @@
  * `ArrayBuffer`, so `byteOffset` and `byteLength` are load-bearing — passing
  * `data.buffer` alone would send the whole pool, including other buffers'
  * bytes.
+ *
+ * The return type is INFERRED on purpose, and this is the one place in the
+ * file where that matters. Writing it out as `Uint8Array<ArrayBuffer>` only
+ * compiles from TypeScript 5.7 — before that `Uint8Array` is not generic —
+ * while writing it as a bare `Uint8Array` resolves to
+ * `Uint8Array<ArrayBufferLike>` under newer lib versions, which is exactly the
+ * type that is NOT a `BlobPart` and would reintroduce the problem this helper
+ * exists to solve. Inference gives the right answer on both: plain
+ * `Uint8Array` on 5.6, `Uint8Array<ArrayBuffer>` on 7. Do not annotate it.
  */
-export function toBinaryBody(data: Buffer | Uint8Array): Uint8Array<ArrayBuffer> {
+export function toBinaryBody(data: Buffer | Uint8Array) {
   const { buffer, byteOffset, byteLength } = data;
   if (buffer instanceof ArrayBuffer) {
     return new Uint8Array(buffer, byteOffset, byteLength);
