@@ -242,7 +242,12 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      than showing a fabricated program. */
   const kicker = (
     <div className="surface-kicker">
-      {I.rocket} IND Lifecycle -- 21 CFR 312 -- /api/ind-checklist
+      {/* The endpoint this reads from used to be printed here. A route in a
+          client-facing eyebrow tells a regulatory user nothing and tells an
+          outside reader the shape of the API — the information-disclosure class
+          in the UAT report's BP-07, of which this was the last live instance.
+          The regulation is the useful half; the route is documented above. */}
+      {I.rocket} IND Lifecycle -- 21 CFR 312
     </div>
   );
   if (loading) {

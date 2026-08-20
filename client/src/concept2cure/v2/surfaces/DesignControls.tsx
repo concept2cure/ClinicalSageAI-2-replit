@@ -184,7 +184,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     <div className="dc" style={{ maxWidth: 1200 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/design-controls {isLive ? <> {I.dot} live</> : ''}</div>
+          <div className="sp-eyebrow">Specialist {I.dot} device {isLive ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Design controls {I.dot} DHF</h1>
           <p className="sp-state">21 CFR 820.30 design history file -- inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>

@@ -110,7 +110,7 @@ export function ReportGovernance(_props: SurfaceViewProps) {
   return (
     <div className="cm-body">
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Governed reports</span><span className="s">{reports.length} · /api/intelligent-reports</span></div>
+        <div className="pj-card-h"><span className="t">Governed reports</span><span className="s">{reports.length} governed</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {state === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.scroll} title="Loading governed reports…" /></div>
             : state === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load governed reports" hint="The governed report register didn’t respond. Sign in to your tenant and retry." /></div>

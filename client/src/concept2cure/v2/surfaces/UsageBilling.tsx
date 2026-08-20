@@ -564,7 +564,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           <div className="pj-card-h">
             <span className="t">Rate limits by tier</span>
             <span className="s">
-              RATE_LIMITS - billing-dashboard.ts
+              Per plan tier
             </span>
           </div>
           <div className="pj-card-b" style={{ padding: 0 }}>

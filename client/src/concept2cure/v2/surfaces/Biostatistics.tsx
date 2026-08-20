@@ -595,7 +595,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     <div className="bs">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist -- clinical -- /api/ana-biostats {live ? '-- live' : ''}</div>
+          <div className="sp-eyebrow">Specialist -- clinical {live ? '-- live' : ''}</div>
           <h1 className="sp-title">Biostatistics</h1>
           <p className="sp-state">Describe the study once -- AnA computes the design deterministically (ICH E9(R1)) and writes the governed statistical document you actually need to file.</p>
         </div>

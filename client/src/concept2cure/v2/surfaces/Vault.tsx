@@ -275,7 +275,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     <div className="vd-wrap">
       <div className="vd-top">
         <div>
-          <div className="sp-eyebrow">Documents {I.dot} /api/c2c/project-vault</div>
+          <div className="sp-eyebrow">Documents {I.dot} project vault</div>
           <h1 className="vd-title">Vault (DMS)</h1>
           <div className="vd-sub">
             <span className="vd-sub-x">

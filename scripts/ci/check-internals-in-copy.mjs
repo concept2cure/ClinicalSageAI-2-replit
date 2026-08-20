@@ -71,8 +71,51 @@ const INTERNALS = [
 
 /** Copy-bearing JSX attributes: `hint="…"` / `title={'…'}`. */
 const ATTR = /\b(hint|title|subtitle|placeholder|label|note|caption|message|desc|description)\s*=\s*\{?\s*["'`]([^"'`]{0,400})["'`]/g;
-/** JSX text between tags, excluding expressions. */
-const TEXT = />([^<>{}\n]{3,400})</g;
+/**
+ * JSX text runs.
+ *
+ * The original rule was `/>([^<>{}\n]{3,400})</` — copy had to sit between `>`
+ * and `<` on ONE line with no JSX expression anywhere between. Measured against
+ * the four shapes real copy takes, it caught one:
+ *
+ *   `<p>text</p>`                        caught
+ *   `<p>{I.icon} text</p>`               missed — text follows an expression
+ *   `<p>\n  text\n</p>`                  missed — the run spans lines
+ *   `<div>\n  {I.icon} text\n</div>`     missed — both
+ *
+ * Multi-line JSX is how nearly all copy in this codebase is formatted, and
+ * `{I.icon} label` is the dominant kicker idiom, so the gate reported zero
+ * findings while a live `/api/ind-checklist` sat in an IND Lifecycle eyebrow
+ * (UAT report BP-07). A gate that has only ever been seen to pass has not been
+ * tested.
+ *
+ * This run spans lines and tolerates embedded `{…}` expressions, which
+ * {@link jsxProse} then strips before the INTERNALS patterns are applied.
+ *
+ * Two things went wrong on the way to this rule, both worth leaving written
+ * down. Anchoring on `[>}]…[<{]` matched plain TypeScript, because a `}`
+ * ending one function and a `{` opening the next captured everything between.
+ * And `((?:[^<>]|\{[^{}]*\})*?)` — an alternation under a lazy quantifier —
+ * backtracks catastrophically and hung the gate on large files. A CI gate that
+ * hangs is worse than one that misses. What survives is a single bounded
+ * character class, linear to scan, filtered to prose below.
+ */
+const TEXT = />([^<>]{3,600})</g;
+
+/**
+ * The human-readable residue of a JSX text run, or '' if it is not copy.
+ *
+ * Strips embedded expressions, then rejects anything carrying the punctuation
+ * of code rather than prose. Without this the rule reads statements as
+ * sentences; with it, `{I.rocket} IND Lifecycle -- /api/ind-checklist` reduces
+ * to the sentence a user actually sees.
+ */
+function jsxProse(run) {
+  const text = run.replace(/\{[^{}]*\}/g, ' ').replace(/\s+/g, ' ').trim();
+  if (text.length < 3) return '';
+  if (/[;=()]|=>|\breturn\b|\bconst\b|\bimport\b/.test(text)) return '';
+  return text;
+}
 
 function sourceFiles() {
   const out = execSync("git ls-files 'client/src/**/*.tsx' 'client/src/**/*.ts'", {
@@ -102,11 +145,11 @@ function findings() {
     const code = stripComments(raw);
     const lineOf = (idx) => code.slice(0, idx).split('\n').length;
 
-    const scan = (re, group) => {
+    const scan = (re, group, refine) => {
       re.lastIndex = 0;
       let m;
       while ((m = re.exec(code)) !== null) {
-        const value = m[group];
+        const value = refine ? refine(m[group] ?? '') : m[group];
         if (!value) continue;
         for (const { re: bad, what } of INTERNALS) {
           if (!bad.test(value)) continue;
@@ -116,7 +159,8 @@ function findings() {
       }
     };
     scan(ATTR, 2);
-    scan(TEXT, 1);
+    // JSX text only exists in .tsx; scanning .ts with this rule reads code.
+    if (file.endsWith('.tsx')) scan(TEXT, 1, jsxProse);
   }
   return hits;
 }

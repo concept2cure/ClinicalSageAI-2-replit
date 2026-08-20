@@ -544,7 +544,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">POST /api/coauthor/documents/{activeDoc ? activeDoc.id : '…'}/validate -- ICH M4 eCTD rules {live ? '-- live' : ''}</div></div>
+                <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">ICH M4 eCTD structural rules {live ? '-- live' : ''}</div></div>
                 <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{busy === 'validate' ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
               </div>
               {!activeDoc ? (
@@ -584,7 +584,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">GET /api/coauthor/documents/{activeDoc ? activeDoc.id : '…'}/compliance {live ? '-- live' : ''}</div></div>
+                <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">Checked against ICH M4 {live ? '-- live' : ''}</div></div>
                 <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{busy === 'compliance' ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
               </div>
               {!activeDoc ? (

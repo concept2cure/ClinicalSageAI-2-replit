@@ -2289,7 +2289,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     </div>
                     <span className="ac-val-st ok">
-                      {I.check} Live -- /api/admin/audit
+                      {I.check} Live
                     </span>
                   </div>
                   <div className="ac-val-row">
@@ -2311,7 +2311,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     </div>
                     <span className="ac-val-st ok">
-                      {I.check} Live -- /api/esignature
+                      {I.check} Live
                     </span>
                   </div>
                   <div className="ac-val-row">

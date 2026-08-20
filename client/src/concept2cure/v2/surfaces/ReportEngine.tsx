@@ -423,7 +423,7 @@ function AnalyticsDashboard() {
     <div className="pj-card" style={{ marginTop: 14 }}>
       <div className="pj-card-h">
         <span className="t">CSR intelligence library</span>
-        <span className="s">/api/analytics/dashboard{hasReports ? ` -- ${totalReports} reports` : ''}</span>
+        <span className="s">{hasReports ? `${totalReports} reports` : 'No reports yet'}</span>
       </div>
       <div className="pj-card-b">
         {loading ? (
