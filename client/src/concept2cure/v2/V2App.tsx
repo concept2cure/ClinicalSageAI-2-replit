@@ -25,7 +25,7 @@ import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
 import { getJwtOrgId } from '@/utils/authToken';
-import { useLive } from './dataConnect';
+import { useLiveData } from './dataConnect';
 import { welcomeFor } from './onboardingWelcome';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
@@ -191,12 +191,14 @@ export function V2App() {
      would otherwise be greeted with biotech prompts, and a user switching
      tenants would inherit the previous tenant's stored segment. */
   const jwtOrgId = getJwtOrgId();
-  const orgLive = useLive<{ organization?: { clientType?: string } } | null>(
+  /* useLiveData rather than useLive: this read never wanted a fixture (it
+     passed null and treated .sample as "did it fail"), and the fixture-backed
+     helper is being retired — see ledger L68. */
+  const orgLive = useLiveData<{ organization?: { clientType?: string } }>(
     jwtOrgId ? `/api/organizations/${encodeURIComponent(jwtOrgId)}` : null,
-    null,
     [jwtOrgId]
   );
-  const tenantClientType = orgLive.sample ? null : orgLive.data?.organization?.clientType ?? null;
+  const tenantClientType = orgLive.data?.organization?.clientType ?? null;
   const nav = React.useCallback(
     (id: string) => {
       setLocation(locationForSurface(id));
