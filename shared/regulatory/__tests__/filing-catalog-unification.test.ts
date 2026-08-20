@@ -118,3 +118,17 @@ describe('nothing the retired mirrors offered was lost', () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe('BP-W1-4 — every module assignment is traceable to a named authority', () => {
+  it('no active entry carries a ctdModule without a moduleAuthority', () => {
+    // Module assignment decides backbone placement and whether the sequence
+    // validates. An unsourced assignment cannot be checked, only re-guessed —
+    // so an assignment without a named specification (or an explicit audit
+    // flag awaiting the SME) is a defect, not a default. This is the gate
+    // that keeps the next entry from landing untraced.
+    const untraced = GLOBAL_REGISTRY.filter(
+      (e) => e.active && e.ctdModule && !(e.moduleAuthority && e.moduleAuthority.trim().length > 0),
+    ).map((e) => `${e.id} (${e.ctdModule})`);
+    expect(untraced).toEqual([]);
+  });
+});
