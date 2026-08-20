@@ -55,6 +55,8 @@ import type { JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TableKit } from '@tiptap/extension-table';
+import Superscript from '@tiptap/extension-superscript';
+import Subscript from '@tiptap/extension-subscript';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
@@ -275,6 +277,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           ...(collabRuntime ? { undoRedo: false } : {}),
         }),
         TableKit.configure({ table: { resizable: false } }),
+        // CTD text is dense with cm², t½, CO₂ — these were declared in
+        // package.json and imported nowhere, so sup/sub in stored content
+        // flattened to plain text (BP-W1-1).
+        Superscript,
+        Subscript,
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
@@ -297,6 +304,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         return { mode: 'rich' as const, html: plainTextToHtml(stored), verdict: null };
       }
       const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
+      // The fidelity gate below compares TEXT, so markup that carries no text
+      // — an <img>, most of a <figure> — passes the gate, is dropped by the
+      // parse, and is silently rewritten out of the record on the next save.
+      // The schema has no image node yet (image support needs a governed
+      // storage decision), so content holding one is edited in source mode,
+      // where the raw string round-trips byte-for-byte.
+      if (/<(img|figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
+        return { mode: 'source' as const, html: null, verdict: null };
+      }
       try {
         const json = generateJSON(html, extensions);
         const verdict = assessFidelity(stored, jsonDocText(json));
@@ -655,6 +671,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             <RB title="Underline" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
+            <RB title="Superscript" active={editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+              <span>
+                x<sup>2</sup>
+              </span>
+            </RB>
+            <RB title="Subscript" active={editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+              <span>
+                x<sub>2</sub>
+              </span>
+            </RB>
             <span className="rse-sep" />
             <RB title="Bullet list" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
               {'☰'}
@@ -662,6 +688,57 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             <RB title="Numbered list" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
               1.
             </RB>
+            <span className="rse-sep" />
+            {/* A CTD dossier is a tabular document — Module 3 most of all. The
+                editor could round-trip and export tables before it could make
+                one; this is the making (BP-W1-1). */}
+            {!editor?.isActive('table') ? (
+              <RB
+                title="Insert table (3 columns × 3 rows, header row)"
+                onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+              >
+                {'⊞'} Table
+              </RB>
+            ) : (
+              <>
+                <RB title="Add row below" onClick={() => editor?.chain().focus().addRowAfter().run()}>
+                  +Row
+                </RB>
+                <RB title="Add column right" onClick={() => editor?.chain().focus().addColumnAfter().run()}>
+                  +Col
+                </RB>
+                <RB title="Delete row" onClick={() => editor?.chain().focus().deleteRow().run()}>
+                  −Row
+                </RB>
+                <RB title="Delete column" onClick={() => editor?.chain().focus().deleteColumn().run()}>
+                  −Col
+                </RB>
+                <RB title="Toggle header row" onClick={() => editor?.chain().focus().toggleHeaderRow().run()}>
+                  Hdr
+                </RB>
+                <RB title="Delete table" onClick={() => editor?.chain().focus().deleteTable().run()}>
+                  {'⊟'}
+                </RB>
+              </>
+            )}
+            <select
+              className="rse-sel"
+              value=""
+              aria-label="Insert symbol"
+              title="Insert a symbol"
+              onChange={(e) => {
+                const ch = e.target.value;
+                if (ch && editor) editor.chain().focus().insertContent(ch).run();
+                e.target.value = '';
+              }}
+            >
+              <option value="">Ω…</option>
+              {['±', '°', 'µ', '≤', '≥', '×', '≈', '½', 'α', 'β', 'γ', 'Δ'].map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch}
+                </option>
+              ))}
+            </select>
             <span className="rse-sep" />
             <RB title="Undo" onClick={() => editor?.chain().focus().undo().run()}>
               {'↩'}
