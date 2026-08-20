@@ -357,7 +357,7 @@
     "express-rate-limit": "8.5.1",
     "express-session": "^1.18.1",
     "file-saver": "2.0.5",
-    "firebase": "12.11.0",
+    "firebase": "12.17.1",
     "framer-motion": "^11.18.2",
     "fuse.js": "^7.3.0",
     "googleapis": "172.0.0",
