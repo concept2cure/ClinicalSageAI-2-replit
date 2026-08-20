@@ -1344,6 +1344,17 @@ export const C2C_MIGRATION_FILES = [
   // policied in the deploy that creates them.
   'migrations/20260820b_rim_learned_patterns.sql',
 
+  // ── AnA outcome log + capability registry (added 2026-08-20, ledger L77) ──
+  // ana_outcome_log is READ by session bootstrap ("AnA's past lessons") and
+  // now WRITTEN by the feedback interceptor — and the whole 0013 family sat on
+  // no durable apply path (fresh-install overlay only), so on deploy-migrated
+  // databases the reader queried a missing table and the writer would have
+  // too. Fully IF NOT EXISTS-idempotent; its trailing DO block is guarded on
+  // project_intelligence_profiles actually existing, so it is safe on a
+  // set-only database where that push-surface table never appears. Ordered
+  // before the sweep so the org-scoped tables get tenant policies.
+  'migrations/0013_ana_intelligence_system.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

@@ -60,6 +60,16 @@ vi.mock('../rim-integration', () => ({
   integrateSignal: integration.integrateSignal,
 }));
 
+// The outcome log's own persistence is drizzle-backed and covered by its
+// module; here it records invocations so the suite can assert the honest
+// mapping from user feedback to outcome.
+const capabilityRegistry = vi.hoisted(() => ({
+  logOutcome: vi.fn(async (_input: Record<string, unknown>) => {}),
+}));
+vi.mock('../../ana-capability-registry', () => ({
+  logOutcome: capabilityRegistry.logOutcome,
+}));
+
 /**
  * Every test uses its OWN org ids (seeded via seedOrg) rather than truncating
  * shared state between tests: the write path is deliberately fire-and-forget,
@@ -125,6 +135,7 @@ afterAll(async () => {
 beforeEach(() => {
   integration.integratePatternScan.mockClear();
   integration.integrateSignal.mockClear();
+  capabilityRegistry.logOutcome.mockClear();
 });
 
 describe('the write link is alive — observation becomes durable judgment', () => {
@@ -234,6 +245,41 @@ describe('the write link is alive — observation becomes durable judgment', () 
     expect(pattern.signalType).toBe('rejection');
     expect(pattern.domain).toBe('authoring_feedback');
     expect(pattern.observation).toBe('AnA output rejected in section 2.7.3');
+  });
+
+  it('every feedback verdict lands in the outcome log with the honest mapping', async () => {
+    // ana_outcome_log was read by session bootstrap ("AnA's past lessons") and
+    // written by NOTHING — logOutcome had zero callers. The mapping restates
+    // the user's own action; a lesson is written only for rejected/regenerated
+    // and states what happened and where, never an invented why.
+    const org = await seedOrg();
+    const { interceptFeedback } = await freshProcess();
+
+    const send = (feedbackType: 'accepted' | 'edited' | 'rejected') =>
+      interceptFeedback({
+        organizationId: org,
+        projectId: org * 10,
+        userId: 42,
+        sectionCode: '2.7.3',
+        feedbackType,
+      });
+
+    send('accepted');
+    send('edited');
+    send('rejected');
+
+    await vi.waitFor(() => {
+      expect(capabilityRegistry.logOutcome).toHaveBeenCalledTimes(3);
+    });
+    const calls = capabilityRegistry.logOutcome.mock.calls.map(c => c[0]);
+    expect(calls.map(c => c.outcome)).toEqual(['success', 'partial', 'failure']);
+    expect(calls.every(c => c.capabilityKey === 'authoring-output')).toBe(true);
+    // Lessons only where there is one: the acceptance and the edit carry none.
+    expect(calls[0].lessonsLearned).toBeUndefined();
+    expect(calls[1].lessonsLearned).toBeUndefined();
+    expect(calls[2].lessonsLearned).toBe(
+      'Output was rejected by the user in section 2.7.3 — the draft did not meet their needs.'
+    );
   });
 });
 

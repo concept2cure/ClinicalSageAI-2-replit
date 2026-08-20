@@ -37,13 +37,14 @@ const PROJECT_ATTRIBUTION = 'migrations/20260820_working_memory_project_id.sql';
 const EMBEDDINGS = 'migrations/20260602_working_memory_embeddings.sql';
 const RELATIONAL = 'migrations/20260612_ana_relational_external_intel.sql';
 const RIM_PATTERNS = 'migrations/20260820b_rim_learned_patterns.sql';
+const OUTCOME_LOG = 'migrations/0013_ana_intelligence_system.sql';
 const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
 
 const readMig = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 
 describe('AnA memory migrations are on the durable apply path', () => {
-  it('all four are in C2C_MIGRATION_FILES', () => {
-    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL, RIM_PATTERNS]) {
+  it('all five are in C2C_MIGRATION_FILES', () => {
+    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL, RIM_PATTERNS, OUTCOME_LOG]) {
       expect(C2C_MIGRATION_FILES, `${rel} must be durably applied`).toContain(rel);
     }
   });
@@ -58,13 +59,14 @@ describe('AnA memory migrations are on the durable apply path', () => {
     expect(alterAt).toBeGreaterThan(createAt);
   });
 
-  it('all four run before the tenant-isolation sweep, which must stay last', () => {
+  it('all five run before the tenant-isolation sweep, which must stay last', () => {
     // The sweep only policies tables that exist when it runs. Created after it,
-    // ana_relational_profiles, conversation_working_memory and the RIM pattern
-    // tables would be readable across tenants under RLS_ENFORCE=on.
+    // ana_relational_profiles, conversation_working_memory, the RIM pattern
+    // tables and the outcome log would be readable across tenants under
+    // RLS_ENFORCE=on.
     const sweepAt = C2C_MIGRATION_FILES.indexOf(SWEEP);
     expect(C2C_MIGRATION_FILES[C2C_MIGRATION_FILES.length - 1]).toBe(SWEEP);
-    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL, RIM_PATTERNS]) {
+    for (const rel of [PROJECT_ATTRIBUTION, EMBEDDINGS, RELATIONAL, RIM_PATTERNS, OUTCOME_LOG]) {
       expect(C2C_MIGRATION_FILES.indexOf(rel)).toBeLessThan(sweepAt);
     }
   });
@@ -91,7 +93,7 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
     // Applied TWICE: a deploy re-runs the whole set every time, so a
     // non-idempotent file breaks the SECOND deploy, not the first.
     for (const pass of [1, 2]) {
-      for (const rel of [PROJECT_ATTRIBUTION, RELATIONAL, RIM_PATTERNS]) {
+      for (const rel of [PROJECT_ATTRIBUTION, RELATIONAL, RIM_PATTERNS, OUTCOME_LOG]) {
         try {
           await pg.exec(readMig(rel));
         } catch (err) {
@@ -157,5 +159,24 @@ describe('the pgvector-free pair applies cleanly, twice, and yields the promised
       `SELECT indexname FROM pg_indexes WHERE tablename = 'rim_learned_patterns'`
     );
     expect(idx.rows.map(r => r.indexname)).toContain('idx_rim_learned_patterns_key');
+  });
+
+  it("ana_outcome_log exists — the table session bootstrap reads for AnA's past lessons", async () => {
+    const { rows } = await pg.query<{ column_name: string }>(
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'ana_outcome_log'`
+    );
+    const cols = rows.map(r => r.column_name);
+    for (const col of ['organization_id', 'capability_key', 'outcome', 'lessons_learned', 'section_code']) {
+      expect(cols, `ana_outcome_log.${col}`).toContain(col);
+    }
+    // The 0013 file's trailing DO block ALTERs project_intelligence_profiles,
+    // a push-surface table this fixture (like a set-only database) does not
+    // have. The file applying twice above proves the table-existence guard
+    // holds; this pins that no phantom table appeared either.
+    const phantom = await pg.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM information_schema.tables
+        WHERE table_name = 'project_intelligence_profiles'`
+    );
+    expect(phantom.rows[0].n).toBe(0);
   });
 });

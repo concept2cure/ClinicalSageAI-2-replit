@@ -24,6 +24,15 @@ import {
   type RimSignalType,
 } from './rim-pattern-store.js';
 
+/**
+ * Memoized dynamic import (dynamic to keep the drizzle graph out of this
+ * module's load path; memoized so concurrent fire-and-forget callers share ONE
+ * in-flight import instead of racing the module registry).
+ */
+let capabilityRegistryModule: Promise<typeof import('../ana-capability-registry.js')> | null = null;
+const getCapabilityRegistry = () =>
+  (capabilityRegistryModule ??= import('../ana-capability-registry.js'));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // 0. LEARNED-PATTERN INTERCEPTOR (Lane E — RIM learning loop)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -402,6 +411,47 @@ export function interceptFeedback(input: FeedbackInterceptInput): void {
         observation: `AnA output ${feedbackType} in section ${sectionCode ?? 'unspecified'}`,
       });
     }
+
+    // Outcome log: the same verdict, recorded where session bootstrap reads
+    // "AnA's past lessons" and the capability registry keeps aggregate
+    // counters. This was the table read by bootstrap and written by NOTHING —
+    // logOutcome() had zero callers. Everything recorded is factual: the
+    // outcome mapping restates the user's own action, and a lesson is written
+    // only for a rejection/regeneration, stating what happened and where —
+    // never an invented diagnosis of why. capabilityKey is deliberately the
+    // generic 'authoring-output': feedback does not know which capability
+    // produced the artifact, and guessing one would corrupt that capability's
+    // success counters.
+    void (async () => {
+      try {
+        const { logOutcome } = await getCapabilityRegistry();
+        await logOutcome({
+          organizationId,
+          projectId,
+          userId,
+          capabilityKey: 'authoring-output',
+          actionType: 'user_feedback',
+          outcome:
+            feedbackType === 'accepted'
+              ? 'success'
+              : feedbackType === 'edited'
+                ? 'partial'
+                : 'failure',
+          userFeedback: feedbackType,
+          editDelta: typeof editDelta === 'number' ? String(editDelta) : undefined,
+          sectionCode,
+          lessonsLearned:
+            feedbackType === 'rejected' || feedbackType === 'regenerated'
+              ? `Output was ${feedbackType} by the user in section ${sectionCode ?? 'unspecified'} — the draft did not meet their needs.`
+              : undefined,
+        });
+      } catch (outcomeErr) {
+        console.warn(
+          '[RIM] Feedback → outcome log failed (non-blocking):',
+          outcomeErr instanceof Error ? outcomeErr.message : outcomeErr,
+        );
+      }
+    })();
 
     // Close the learning loop: tag the N most recent signals for this artifact
     // with a validation verdict so future RIM runs can weight signals by their
