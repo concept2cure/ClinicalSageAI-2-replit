@@ -22,6 +22,7 @@ import {
   transitionSequence,
   listLeaves,
   upsertLeaf,
+  removeLeaf,
   SubmissionError,
 } from '../services/submission-service/submission-service';
 import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/pathway-engines';
@@ -898,6 +899,25 @@ router.put('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
     res.json(await upsertLeaf({ sequenceId: seqId, ...parsed.data }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// Remove a misplaced leaf (draft-stage sequences only; soft delete, audited).
+// Before this, a wrong placement could only be corrected in place — never
+// removed (BP-W1-6 find F05).
+router.delete('/sequences/:seqId/leaves/:leafId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  const leafId = idParam(req.params.leafId);
+  if (seqId === null || leafId === null) {
+    return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence or leaf id.' } });
+  }
+  try {
+    await removeLeaf(leafId, seqId, ctx);
+    res.status(204).end();
   } catch (err) {
     fail(res, err);
   }

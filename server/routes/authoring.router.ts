@@ -3733,9 +3733,13 @@ router.get('/stats', async (req: Request, res: Response) => {
       `
       SELECT
         COUNT(DISTINCT d.id) as total_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'draft' THEN d.id END) as draft_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'review' THEN d.id END) as review_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'approved' THEN d.id END) as approved_documents,
+        -- The store holds MIXED-case statuses: create writes 'draft', the
+        -- workflow writes 'IN_REVIEW'/'APPROVED', freeze writes 'FROZEN'. The
+        -- old literals ('draft'/'review'/'approved') matched only the first,
+        -- so every counter past draft sat at 0 forever (BP-W0-7 defect class).
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'DRAFT' THEN d.id END) as draft_documents,
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'IN_REVIEW' THEN d.id END) as review_documents,
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'APPROVED' THEN d.id END) as approved_documents,
         COUNT(DISTINCT s.id) as total_sections,
         COUNT(DISTINCT c.id) as total_comments,
         COUNT(DISTINCT CASE WHEN c.status = 'open' THEN c.id END) as open_comments,
@@ -3873,8 +3877,10 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
 
     const doc = docResult.rows[0];
 
-    // Check if already frozen
-    if (doc.status === 'FROZEN' || doc.status === 'APPROVED') {
+    // Check if already frozen. Case-insensitive on purpose: the store holds
+    // mixed-case statuses, and an idempotency guard that only recognises one
+    // casing lets the same document be frozen twice.
+    if (['FROZEN', 'APPROVED'].includes(String(doc.status ?? '').toUpperCase())) {
       return res.status(400).json({ error: 'Document is already frozen' });
     }
 
@@ -5383,10 +5389,13 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(fileContent);
   } catch (error) {
+    // The raw error goes to the LOG only. This body feeds the client's export
+    // toast verbatim, and a library/DB message here was the one remaining path
+    // for exception text to reach the UI (BP-W0-5).
     console.error('Export error:', error);
     res.status(500).json({
       error: 'Export failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'The export could not be rendered. No file was produced; the document is unchanged.',
     });
   }
 });
