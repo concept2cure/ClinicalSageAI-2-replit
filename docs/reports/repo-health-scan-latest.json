@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T00:08:57.825Z",
+  "generatedAt": "2026-08-20T05:37:20.405Z",
   "git": {
-    "sha": "6a33988efa3c0b640c66a4ac43ed2eb40fe411e7",
+    "sha": "01f325b8e5c2fc2f16eb617b2558dc5364067677",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2220,7 +2220,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126702
+        "bytes": 126719
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2236,7 +2236,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 115151
+        "bytes": 115207
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
