@@ -225,6 +225,38 @@ describe('BiopharmaSpecialty — a failed read is never narrated as an empty one
 
   const headline = () => document.querySelector('.al-h')?.textContent ?? '';
 
+  /**
+   * Wait for the lead to LEAVE the loading state.
+   *
+   * `waitFor(() => expect(headline()).not.toBe(''))` was not that, and the
+   * difference is a real flake rather than a nicety. UnresolvedLead renders a
+   * headline in BOTH unresolved states — "Reading the {subject}…" while in
+   * flight, "The {subject} could not be read." once it fails — so a
+   * non-empty-headline predicate is satisfied on the FIRST render, while the
+   * reads are still pending, and the assertion then runs against the loading
+   * sentence.
+   *
+   * It passed locally and failed in CI on `Lifecycle does not claim "no
+   * post-approval records"`, reporting exactly that:
+   *
+   *   expected 'Reading the post-approval records on …' to contain 'could not be read'
+   *
+   * Lifecycle lost the race first because its lead waits on THREE reads
+   * (supplements, CMC changes, renewals) and may only speak once all three
+   * have answered, so its loading window is the widest. Orphan carried the
+   * same weak predicate and had simply not lost yet.
+   *
+   * Waiting on "not loading" rather than on the asserted text keeps the
+   * assertions below non-vacuous: this settles the state, they check what it
+   * says.
+   */
+  const settled = () =>
+    waitFor(() => {
+      const h = headline();
+      expect(h).not.toBe('');
+      expect(h, 'lead is still loading — the read has not answered yet').not.toContain('Reading the');
+    });
+
   it('Pediatric does not claim "no plans on file" when the plan read failed', async () => {
     render(<Pediatric {...props()} />);
     await screen.findByText("Couldn't load pediatric plans");
@@ -234,14 +266,14 @@ describe('BiopharmaSpecialty — a failed read is never narrated as an empty one
 
   it('Orphan does not claim "no designations on file" when the read failed', async () => {
     render(<Orphan {...props()} />);
-    await waitFor(() => expect(headline()).not.toBe(''));
+    await settled();
     expect(headline()).toContain('could not be read');
     expect(headline()).not.toContain('No orphan or rare-disease designations are on file');
   });
 
   it('Lifecycle does not claim "no post-approval records" when the reads failed', async () => {
     render(<Lifecycle {...props()} />);
-    await waitFor(() => expect(headline()).not.toBe(''));
+    await settled();
     expect(headline()).toContain('could not be read');
     expect(headline()).not.toContain('No post-approval records are on file');
   });
