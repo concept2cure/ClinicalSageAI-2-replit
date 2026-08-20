@@ -144,6 +144,9 @@ describe('POST /:projectIdent/validate — program idents get the unlinked-store
     expect(payload.valid).toBe(false);
     expect(payload.results[0]).toMatchObject({ rule: 'SECTION_STORE_UNLINKED', severity: 'error' });
     expect(payload).toMatchObject({ projectId: null, programId: UUID });
+    // The finding explains the unlinked store without naming a schema object —
+    // table names must never reach a response body (BP-W0-5).
+    expect(JSON.stringify(payload)).not.toContain('project_sections');
   });
 });
 
