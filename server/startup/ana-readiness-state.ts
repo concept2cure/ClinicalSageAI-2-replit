@@ -146,7 +146,7 @@ export function logAnaReadinessBanner(): void {
   const detail = getAnaReadinessDetail();
 
   if (state === 'ready') {
-    console.log(`✅ AnA is live — ${detail}`);
+    console.info(`✅ AnA is live — ${detail}`);
     return;
   }
 

@@ -150,14 +150,14 @@ describe('logAnaReadinessBanner', () => {
   it('stays quiet on the happy path', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     setAnaReadiness('ready', 'AnA has 1 provider(s): anthropic');
 
     logAnaReadinessBanner();
 
     expect(errSpy).not.toHaveBeenCalled();
     expect(warnSpy).not.toHaveBeenCalled();
-    expect(logSpy).toHaveBeenCalledOnce();
+    expect(infoSpy).toHaveBeenCalledOnce();
   });
 });
 
