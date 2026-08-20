@@ -152,6 +152,64 @@ describe('AIGateway', () => {
       expect(response.requestId).toBeDefined();
     });
 
+    /**
+     * A streaming caller passes `stream: true` with an `onStream` callback and
+     * renders ONLY what that callback delivers. Deterministic mode used to
+     * return the content and never invoke it, so POST /api/ana-ri/stream
+     * emitted run_started, three status events, orchestration, done and
+     * post_done — and not one `text` event.
+     *
+     * Observed on a live server before the fix, not theorised: `done` carried
+     * `outputTokens: 71` and `turn_status: "completed"` while the client
+     * received no words at all. The transport declared success having
+     * delivered nothing, useAnaChat rendered an empty assistant bubble with no
+     * error, and AnA answered with silence. It is also the posture CI's
+     * production boot smoke runs in, where /readyz reports
+     * `anaState: "deterministic"` and passes readiness.
+     */
+    it('delivers the content through onStream when the caller is streaming', async () => {
+      const chunks: string[] = [];
+
+      const response = await gateway.route(
+        buildTestRequest({
+          taskType: 'chat',
+          stream: true,
+          onStream: (chunk: string) => { chunks.push(chunk); },
+        }),
+      );
+
+      // The regression: this was 0, while `response.content` was populated and
+      // usage reported a non-zero output-token count.
+      expect(chunks.length).toBeGreaterThan(0);
+      expect(chunks.join('')).toBe(response.content);
+      expect(response.usage.outputTokens).toBeGreaterThan(0);
+    });
+
+    it('does not invoke onStream for a non-streaming caller', async () => {
+      const onStream = vi.fn();
+
+      await gateway.route(buildTestRequest({ taskType: 'chat', onStream }));
+
+      // No `stream: true`, so the caller is collecting the whole response and
+      // must not also receive it as deltas.
+      expect(onStream).not.toHaveBeenCalled();
+    });
+
+    it('still returns a response when the caller\'s stream sink throws', async () => {
+      // A client that disconnected mid-turn leaves a sink that throws. That
+      // must not convert a fixture response into a failed request.
+      const response = await gateway.route(
+        buildTestRequest({
+          taskType: 'chat',
+          stream: true,
+          onStream: () => { throw new Error('sink closed'); },
+        }),
+      );
+
+      expect(response.content).toMatch(/demo|deterministic/i);
+      expect(response.deterministic).toBe(true);
+    });
+
     it('should return different responses for different task types', async () => {
       const chatResponse = await gateway.route(buildTestRequest({ taskType: 'chat' }));
       const docResponse = await gateway.route(buildTestRequest({ taskType: 'document_analysis' }));

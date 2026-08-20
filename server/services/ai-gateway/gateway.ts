@@ -1775,12 +1775,45 @@ export class AIGateway {
   // Deterministic Mode
   // ─────────────────────────────────────────────────────────────────────────
 
+  /**
+   * Deterministic-mode response.
+   *
+   * A streaming caller passes `stream: true` with an `onStream` callback and
+   * renders ONLY what that callback delivers. This path used to return the
+   * content and never invoke it, so in deterministic mode
+   * POST /api/ana-ri/stream emitted `run_started`, three `status` events,
+   * `orchestration`, `done` and `post_done` — and not one `text` event.
+   *
+   * The failure was silent in the worst way: `done` reported
+   * `outputTokens: 71` and `turn_status: "completed"`, so the transport
+   * declared success while delivering nothing, and useAnaChat rendered an
+   * empty assistant bubble with no error. AnA answered with silence. That is
+   * also the posture CI's production boot smoke runs in, where /readyz
+   * reports `anaState: "deterministic"` and passes readiness — a green probe
+   * over a chat surface that produces no words.
+   *
+   * Honouring the callback here fixes it for every streaming caller at once
+   * rather than per-route. The content is delivered as a single chunk: it is
+   * a fixed string with no generation latency to simulate, and splitting it
+   * would invent a progressive arrival that nothing here is actually doing.
+   */
   private buildDeterministicResponse(
     request: GatewayRequest,
     requestId: string,
     startTime: number
   ): GatewayResponse {
     const content = DETERMINISTIC_RESPONSES[request.taskType] || DETERMINISTIC_RESPONSES.general;
+    if (request.stream && typeof request.onStream === 'function' && content) {
+      try {
+        request.onStream(content);
+      } catch (err) {
+        // A caller whose sink has already closed must not turn a fixture
+        // response into a thrown request.
+        log.warn('[ai-gateway] deterministic onStream sink threw', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
     return {
       content,
       provider: 'anthropic',
