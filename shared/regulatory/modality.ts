@@ -241,3 +241,77 @@ export function frameSummary(modality: Modality): string {
   const pathway = lead ? ` · ${lead.pathway} (${lead.feeProgram})` : '';
   return `${f.center}${pathway} · ${f.cmcCore[0]}`;
 }
+
+// ─── Modality-driven CMC section model (BP-W2-2) ──────────────────────────────
+
+export interface CmcSectionRequirement {
+  /** CTD location the requirement lives at, where one is established. */
+  section: string;
+  title: string;
+  /** Why THIS modality needs it — the sentence a reviewer would write. */
+  rationale: string;
+}
+
+/** Module 3 sections every drug product carries regardless of modality. */
+const CMC_BASE: CmcSectionRequirement[] = [
+  { section: '3.2.S', title: 'Drug substance', rationale: 'Manufacture, characterisation, control and stability of the active substance.' },
+  { section: '3.2.P', title: 'Drug product', rationale: 'Composition, manufacture, control and stability of the finished product.' },
+  { section: '3.2.P.8', title: 'Stability', rationale: 'ICH Q1A/Q1E stability programme across conditions and timepoints.' },
+];
+
+const BIOLOGIC_CORE: CmcSectionRequirement[] = [
+  { section: '3.2.S.2.3', title: 'Cell banks / control of materials', rationale: 'Master and working cell bank characterisation (ICH Q5B/Q5D).' },
+  { section: '3.2.S.4', title: 'Potency / bioassay', rationale: 'A biologic is defined by its activity — potency and lot release under 21 CFR 610.' },
+  { section: '3.2.S.2.6', title: 'Comparability (ICH Q5E)', rationale: 'Every process change is judged by comparability, not identity.' },
+  { section: '3.2.S.3.2', title: 'Impurities — HCP and aggregates', rationale: 'Host-cell protein and aggregate control drive immunogenicity risk.' },
+];
+
+const MODALITY_CMC_EXTRA: Record<Modality, CmcSectionRequirement[]> = {
+  small_molecule: [
+    { section: '3.2.S.3.2', title: 'Impurities (ICH Q3A/Q3B, ICH M7)', rationale: 'Organic, inorganic and mutagenic impurity qualification.' },
+    { section: '3.2.S.1.3', title: 'Polymorphism', rationale: 'Solid-state form controls bioavailability and stability.' },
+    { section: '3.2.P.2', title: 'Dissolution', rationale: 'Dissolution links the formulation to in-vivo performance.' },
+  ],
+  peptide: [
+    { section: '3.2.S.3.2', title: 'Peptide-related impurities', rationale: 'Sequence variants and truncations require class-specific qualification.' },
+  ],
+  protein: BIOLOGIC_CORE,
+  mab: BIOLOGIC_CORE,
+  adc: [
+    ...BIOLOGIC_CORE,
+    { section: '3.2.S (payload–linker)', title: 'Payload–linker chemistry', rationale: 'The conjugate carries small-molecule impurity chemistry (ICH Q3A/Q3B) alongside the antibody.' },
+    { section: '3.2.S.4', title: 'Drug–antibody ratio', rationale: 'DAR distribution is a defining quality attribute of a conjugate.' },
+  ],
+  oligonucleotide: [
+    { section: '3.2.S.3.2', title: 'Oligonucleotide impurity classes', rationale: 'Sequence- and process-related impurities (ICH Q3A-adjacent).' },
+  ],
+  vaccine: [
+    ...BIOLOGIC_CORE,
+    { section: '3.2.P (adjuvant)', title: 'Adjuvant control', rationale: 'Adjuvanted presentations control the adjuvant as a drug-product component.' },
+  ],
+  cell_therapy: [
+    ...BIOLOGIC_CORE,
+    { section: '3.2.S.2.1', title: 'Donor eligibility / starting material', rationale: 'Cellular starting material carries donor and sourcing controls (21 CFR 1271).' },
+  ],
+  gene_therapy: [
+    ...BIOLOGIC_CORE,
+    { section: '3.2.S.2', title: 'Vector characterisation', rationale: 'Vector identity, infectious titre and replication-competence control.' },
+  ],
+  biosimilar: [
+    ...BIOLOGIC_CORE,
+    { section: '3.2.R', title: 'Analytical similarity', rationale: 'The 351(k) case is the similarity exercise against the reference product.' },
+  ],
+  combination: [
+    { section: 'Per constituent', title: 'Constituent-part CMC', rationale: 'Each constituent part carries the CMC model of its own modality (21 CFR Part 3).' },
+  ],
+};
+
+/**
+ * The Module 3 section model a program of this modality carries: the common
+ * base plus the modality-specific requirements. This is the derivation the
+ * work order says the modality field exists to power — a lane cannot
+ * differentiate biotech from pharma CMC without it.
+ */
+export function cmcSectionModelFor(modality: Modality): CmcSectionRequirement[] {
+  return [...CMC_BASE, ...MODALITY_CMC_EXTRA[modality]];
+}
