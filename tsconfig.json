@@ -1,27 +1,52 @@
 {
+  // ── TypeScript 7 compatibility ──────────────────────────────────────────
+  //
+  // Dependabot bumped typescript 5.6.3 -> 7.0.2 on 2026-08-13 (1b3c154). TS 7
+  // REMOVED `baseUrl` and `moduleResolution: node10`, both of which this file
+  // used, so from that commit `tsc --noEmit -p tsconfig.json` failed on the
+  // CONFIG and typechecked ZERO FILES. It still printed "error TS" lines, so
+  // the CI gate read it as an ordinary 5-error regression rather than a dead
+  // typechecker, and the remedy the gate printed — write-baseline — would have
+  // pinned the baseline at 5 and made the dead gate green permanently.
+  //
+  // Nothing was typechecked for a week. Restoring the config surfaced 13 real
+  // errors the bump had introduced, all invisible until now.
+  //
+  // `lib` — NOT `target` — moves to ES2022. package.json requires node >= 20,
+  // and under the ES2020 lib `Array.prototype.at` was reported missing on code
+  // that runs fine everywhere this ships. `target` deliberately stays ES2020:
+  // raising it to ES2022 flips `useDefineForClassFields` to true, which changes
+  // class-field semantics ([[Define]] rather than [[Set]]) across ~2,500 files.
+  // Repairing a typecheck config must not smuggle in a runtime behaviour change,
+  // and `lib` alone fixes the diagnostics without touching emit.
+  // ────────────────────────────────────────────────────────────────────────
   "compilerOptions": {
     "strict": true,
     "noImplicitAny": true,
     "target": "ES2020",
     "module": "esnext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node", "react", "react-dom", "jest"],
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "declaration": false,
     "outDir": "dist",
-    "baseUrl": ".",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "typeRoots": ["./node_modules/@types", "./server/types"],
     "paths": {
-      "@/*": ["client/src/*"],
-      "@assets/*": ["attached_assets/*"],
-      "@shared/*": ["shared/*"]
+      "@/*": ["./client/src/*"],
+      "@assets/*": ["./attached_assets/*"],
+      "@shared/*": ["./shared/*"],
+      // `baseUrl: "."` used to make every repo-root-relative specifier
+      // resolve, which is how ~33 files came to import "shared/schema"
+      // bare. TypeScript 7 removed baseUrl, so that resolution has to be
+      // stated explicitly instead of falling out of a global setting.
+      "shared/*": ["./shared/*"]
     }
   },
   "include": ["client/src/**/*", "server/**/*", "shared/**/*", "agents/**/*"],

@@ -1,3 +1,5 @@
+import { toBinaryBody } from '../../utils/binary-body.js';
+
 export interface TikaExtractionResult {
   text: string;
   metadata: Record<string, string | string[]>;
@@ -38,7 +40,7 @@ export async function extractWithTika(file: {
       'X-Tika-OCRLanguage': process.env.TIKA_OCR_LANGUAGE || 'eng',
       'X-Tika-Filename': file.filename,
     },
-    body: file.buffer,
+    body: toBinaryBody(file.buffer),
   }).then(async r => {
     if (!r.ok) throw new Error(`Tika /meta failed (${r.status})`);
     return (await r.json()) as Record<string, string | string[]>;
@@ -51,7 +53,7 @@ export async function extractWithTika(file: {
       'Accept': 'text/plain',
       'X-Tika-Filename': file.filename,
     },
-    body: file.buffer,
+    body: toBinaryBody(file.buffer),
   }).then(async r => {
     if (!r.ok) throw new Error(`Tika /tika failed (${r.status})`);
     return r.text();
