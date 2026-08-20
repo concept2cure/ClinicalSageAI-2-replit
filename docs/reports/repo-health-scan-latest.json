@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T06:30:11.200Z",
+  "generatedAt": "2026-08-20T06:58:17.615Z",
   "git": {
-    "sha": "eb188eeb0d69d9f791978eb16ed467aa7115f52f",
+    "sha": "043e71417b040daae9fc7afb461cdb761d5b45ab",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2148,7 +2148,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 841220
+        "bytes": 841652
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2286,7 +2286,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19957
+        "lines": 19963
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2622,7 +2622,7 @@
       },
       {
         "file": "server/routes/cortex-unified.ts",
-        "lines": 1531
+        "lines": 1533
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
