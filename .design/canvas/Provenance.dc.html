@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #c96442; text-decoration: none; }
+    a:hover { color: #431407; }
+    .fig { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1240px; box-sizing: border-box; background: #faf9f5; color: #141413; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 64px 72px 72px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #dad9d4; padding-bottom: 20px;">
+    <div style="font-family: 'Lora', Georgia, serif; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8880;">Open question · ledger L44</div>
+    <div class="fig" style="font-size: 12px; color: #8a8880;">68 surfaces await this decision</div>
+  </div>
+
+  <h1 style="font-family: 'Lora', Georgia, serif; font-size: 46px; line-height: 1.1; font-weight: 500; margin: 40px 0 0; letter-spacing: -0.02em; max-width: 24ch;">Where does a screen admit it is showing a stand-in?</h1>
+
+  <p style="font-size: 16px; line-height: 1.7; color: #3d3d3a; margin: 22px 0 0; max-width: 78ch;"><span class="fig" style="font-size: 15px;">useLive</span> already knows. It returns <span class="fig" style="font-size: 15px;">sample: true</span> on any failure — network, 401, non-OK — so every surface holds the verdict. Seventy-two ask for it; four render it. The component exists and the rule is written into the module that enforces it. What is undecided is <strong style="font-weight: 600;">where the mark belongs</strong>, and that decision has to survive being applied sixty-eight times.</p>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 44px;">
+    <sc-for list="{{directions}}" as="d" hint-placeholder-count="3">
+      <div style="display: flex; flex-direction: column; gap: 0; border: 1px solid #dad9d4; border-radius: 12px; overflow: hidden; background: #ffffff;">
+
+        <div style="padding: 20px 22px 16px; border-bottom: 1px solid #ebeae4;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <div class="fig" style="font-size: 12px; color: #d97757;">{{d.key}}</div>
+            <div style="font-size: 16px; font-weight: 600; letter-spacing: -0.01em;">{{d.name}}</div>
+          </div>
+          <div style="font-size: 13px; color: #6b6963; margin-top: 5px; line-height: 1.45;">{{d.axis}}</div>
+        </div>
+
+        <div style="background: #f5f4ee; padding: 22px 20px; min-height: 186px; display: flex; align-items: center; justify-content: center;">
+          <div style="width: 100%; background: #faf9f5; border: 1px solid #dad9d4; border-radius: 8px; overflow: hidden;">
+
+            <sc-if value="{{d.band}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; align-items: center; gap: 8px; background: #f8e9d0; border-bottom: 1px solid #e8d3ad; padding: 8px 12px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#955d22" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg>
+                <div style="font-size: 11px; color: #955d22; font-weight: 500;">Sample data — the live read failed</div>
+              </div>
+            </sc-if>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #ebeae4;">
+              <div style="font-size: 12px; font-weight: 600; color: #141413;">Stability register</div>
+              <sc-if value="{{d.pill}}" hint-placeholder-val="{{true}}">
+                <div style="display: inline-flex; align-items: center; gap: 5px; background: #f8e9d0; border: 1px solid #e8d3ad; border-radius: 9999px; padding: 2px 8px;">
+                  <div style="width: 5px; height: 5px; border-radius: 9999px; background: #955d22;"></div>
+                  <div style="font-size: 10px; color: #955d22; font-weight: 500;">Sample</div>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-for list="{{d.rows}}" as="r" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f2f1ec;">
+                <div style="font-size: 11px; color: #3d3d3a;">{{r.label}}</div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <sc-if value="{{r.marked}}" hint-placeholder-val="{{true}}">
+                    <div style="width: 4px; height: 4px; border-radius: 9999px; background: #955d22;"></div>
+                  </sc-if>
+                  <div class="fig" style="font-size: 11px; color: {{r.tint}};">{{r.value}}</div>
+                </div>
+              </div>
+            </sc-for>
+
+          </div>
+        </div>
+
+        <div style="padding: 18px 22px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: #5e6d49; font-weight: 600;">Why</div>
+            <div style="font-size: 13.5px; line-height: 1.55; color: #3d3d3a; margin-top: 5px;">{{d.why}}</div>
+          </div>
+          <div>
+            <div style="font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: #955d22; font-weight: 600;">Costs you</div>
+            <div style="font-size: 13.5px; line-height: 1.55; color: #3d3d3a; margin-top: 5px;">{{d.cost}}</div>
+          </div>
+        </div>
+
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top: 40px; border-left: 2px solid #d97757; padding: 4px 0 4px 22px;">
+    <p style="font-family: 'Lora', Georgia, serif; font-size: 18px; line-height: 1.6; color: #141413; margin: 0 0 10px; max-width: 74ch;">If it were mine to call: <strong style="font-weight: 600;">B, with A kept for the mixed case.</strong></p>
+    <p style="font-size: 15px; line-height: 1.65; color: #3d3d3a; margin: 0; max-width: 78ch;">Twenty-nine of the thirty-four fixture-backed surfaces are mixed — real reads with fixture regions beside them — so a single header band would over-claim on most of them and a pill alone under-claims on the five that are wholly sample. The band answers “can I trust this screen”; the pill answers “which part”. One decision, applied sixty-eight times, has to answer both.</p>
+    <p style="font-size: 14px; line-height: 1.6; color: #6b6963; margin: 14px 0 0; max-width: 78ch;">One thing to settle first, because it is upstream of all three: <span class="fig" style="font-size: 13.5px;">useLive</span> collapses <em>fixture by design</em> and <em>the read failed</em> into one flag. A dated regulatory taxonomy and a failed tenant read are not the same claim and should not wear the same mark. That belongs in the layer, not in sixty-eight surfaces' reading of it.</p>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1240,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const LIVE = '#3d3d3a', SAMPLE = '#955d22';
+    return {
+      directions: [
+        {
+          key: 'A', name: 'The pill', axis: 'Per region · what exists today',
+          band: false, pill: true,
+          rows: [
+            { label: '25 °C / 60 % RH', value: '12 lots', tint: LIVE, marked: false },
+            { label: '40 °C / 75 % RH', value: '8 lots',  tint: LIVE, marked: false },
+            { label: 'Photostability',  value: '3 lots',  tint: LIVE, marked: false },
+          ],
+          why: 'Already built, already shipped on four surfaces. Adoption is a one-line change per surface and nothing new has to be designed.',
+          cost: 'It sits beside a heading, not beside a number. On a dense register a reader takes in the figures and never travels back up to the pill.',
+        },
+        {
+          key: 'B', name: 'The header band', axis: 'Per surface · unmissable once',
+          band: true, pill: false,
+          rows: [
+            { label: '25 °C / 60 % RH', value: '12 lots', tint: SAMPLE, marked: false },
+            { label: '40 °C / 75 % RH', value: '8 lots',  tint: SAMPLE, marked: false },
+            { label: 'Photostability',  value: '3 lots',  tint: SAMPLE, marked: false },
+          ],
+          why: 'Cannot be skimmed past, and it can carry the reason — a failed read is different news from a seeded demo. It reads as a state of the screen, which is what it is.',
+          cost: 'Vertical space on every affected surface, and it over-claims on a mixed screen where only one card is a stand-in.',
+        },
+        {
+          key: 'C', name: 'The value mark', axis: 'Per figure · precise, dense',
+          band: false, pill: false,
+          rows: [
+            { label: '25 °C / 60 % RH', value: '12 lots', tint: SAMPLE, marked: true },
+            { label: '40 °C / 75 % RH', value: '8 lots',  tint: LIVE,   marked: false },
+            { label: 'Photostability',  value: '3 lots',  tint: SAMPLE, marked: true },
+          ],
+          why: 'The only one that is honest on a mixed surface: the mark travels with the figure it qualifies, so a reader learns which number to distrust rather than which screen.',
+          cost: 'Needs per-field provenance the read layer does not expose yet, and a 4px dot is close to invisible — it fails the colour-never-alone rule without a text affordance beside it.',
+        },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

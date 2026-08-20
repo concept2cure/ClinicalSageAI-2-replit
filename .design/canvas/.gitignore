@@ -1,0 +1,4 @@
+# The seeded canvas is a build output — ~2 MiB of editor code plus the state
+# block. It is regenerated from the .dc.html sources and canvas.json on every
+# change, so the sources are what belong in git.
+concept2cure-surface-review.html
