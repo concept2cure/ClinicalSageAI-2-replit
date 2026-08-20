@@ -444,6 +444,27 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
     } catch (err: any) {
       console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
     }
+    // Without Redis the Bull queue never came up, and with it went the 7 AM
+    // proactive digest — the platform's ONLY unprompted surface. That used to
+    // be one debug-adjacent warn and then silence (mounting is not readiness,
+    // L66). Say what it means, and start the plain-interval heartbeat so the
+    // digest still reaches users.
+    try {
+      if (!scheduledJobs.value.isSchedulerQueueActive?.()) {
+        console.warn(
+          '⚠️ Redis is not configured: every Bull-scheduled job is off, including the proactive ' +
+            "digest — AnA's only unprompted surface. Starting the digest heartbeat fallback " +
+            '(plain interval, weekdays from 07:00 UTC) so users are still reached.'
+        );
+        const heartbeat = await import('../services/digest/digest-heartbeat.js');
+        const started = heartbeat.startDigestHeartbeat();
+        if (started) {
+          console.log('✅ Proactive digest heartbeat started (Redis-free fallback)');
+        }
+      }
+    } catch (err: any) {
+      console.warn('⚠️ Digest heartbeat fallback failed to start (non-blocking):', err?.message);
+    }
   } else {
     console.warn('⚠️ Automation engine failed to load:', scheduledJobs.reason);
   }

@@ -247,6 +247,17 @@ let schedulerQueue: Queue.Queue<ScheduledJobConfig> | null = null;
 let initialized = false;
 
 /**
+ * Whether the Bull scheduler queue actually came up. False on a Redis-less
+ * deploy — the state in which every schedule this module owns (including the
+ * 7 AM proactive digest, the platform's only unprompted surface) silently
+ * never fires. The digest heartbeat (services/digest/digest-heartbeat.ts)
+ * consults this at boot to decide whether it must stand in.
+ */
+export function isSchedulerQueueActive(): boolean {
+  return schedulerQueue !== null;
+}
+
+/**
  * Initialize the scheduled jobs queue.
  * Call once at server startup.
  */

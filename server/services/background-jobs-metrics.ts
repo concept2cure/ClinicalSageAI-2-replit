@@ -34,6 +34,7 @@ export const BACKGROUND_JOB = {
   SCHEDULED_JOBS: 'scheduled-jobs',
   SUBMISSION_CHAT_SWEEP: 'submission-chat-sweep',
   SENTINEL_SCAN: 'sentinel-scan',
+  PROACTIVE_DIGEST_HEARTBEAT: 'proactive-digest-heartbeat',
 } as const;
 
 export type BackgroundJobName = string;
