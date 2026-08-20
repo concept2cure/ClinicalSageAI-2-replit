@@ -571,7 +571,7 @@ registerToolHandler('recall_rim_patterns', async (input, ctx) => {
 
   try {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const patterns = getPatterns({ orgId: ctx.organizationId, domain });
+    const patterns = await getPatterns({ orgId: ctx.organizationId, domain });
     return JSON.stringify({
       source: 'RIM Pattern Store',
       pedigree: 'deterministic_query',
@@ -612,7 +612,7 @@ registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string,
     const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
     const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
 
-    const patterns = getPatterns({ orgId, domain })
+    const patterns = (await getPatterns({ orgId, domain }))
       .filter((p) => p.confidence >= minConfidence && p.occurrences >= minOccurrences)
       .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence);
 
@@ -638,7 +638,7 @@ registerToolHandler('summarize_rim_intelligence', async (_input: Record<string, 
       throw new Error('summarize_rim_intelligence requires tenant context (organizationId).');
     }
 
-    const patterns = getPatterns({ orgId });
+    const patterns = await getPatterns({ orgId });
     if (patterns.length === 0) {
       return {
         source: 'RIM Pattern Store',
