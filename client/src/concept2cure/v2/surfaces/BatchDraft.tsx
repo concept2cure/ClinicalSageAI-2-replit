@@ -640,7 +640,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const lead = phase === 'pick'
     ? {
         h: todo.length
-          ? 'You have ' + todo.length + ' sections still to draft. I can draft ' + (selList.length || 'several') + ' of them at once -- each comes back as its own card you Accept, edit, or discard.'
+          ? 'You have ' + todo.length + ' sections still to draft. I can draft ' + (selList.length || 'several') + ' of them at once — each comes back as its own card you Accept, edit, or discard.'
           : 'Every section in this build already has a draft. Pick any to redraft and I will run them in parallel.',
         b: 'Parallel drafting takes about as long as the slowest section, not the sum. Nothing is written to the dossier until you accept a card'
           + (canLive
@@ -650,7 +650,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     : phase === 'drafting'
     ? {
         h: 'Drafting ' + selList.length + ' sections in parallel' + (modules.length ? ' across ' + modules.join(' + ') : '') + '...',
-        b: doneCount + ' done {I.dot} ' + draftingCount + ' drafting. Cards fill as each section lands -- review and accept them independently.',
+        b: doneCount + ' done {I.dot} ' + draftingCount + ' drafting. Cards fill as each section lands — review and accept them independently.',
       }
     : {
         h: doneCount + ' drafts are ready to review' + (acceptedCount ? ' · ' + acceptedCount + ' accepted' : '') + '.',

@@ -658,7 +658,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         <span><b>Also create a task</b>{C2C.team[to] ? <> and assign it to {C2C.team[to].n}</> : <>, unassigned</>}</span>
       </button>
       <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread is not yet wired here -- the message is not persisted, and real-time delivery is not yet enabled.
+        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread is not yet wired here — the message is not persisted, and real-time delivery is not yet enabled.
       </div>
       <div className="cl-foot">
         
@@ -738,7 +738,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
             </button>
             <button className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
               <span className="ico">{I.messageSquare}</span>
-              <span><b>Collaborate</b><em>Message -- @mention -- route</em></span>
+              <span><b>Collaborate</b><em>Message -- @mention — route</em></span>
             </button>
             <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
               <span className="ico">{I.layoutPanels || I.grid}</span>
@@ -788,7 +788,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
               taskId. The discuss action is still session-only and keeps saying so. */}
           {toast.type === 'task' && toast.t
             ? <span className="cl-toast-t">Saved to the org board -- <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
-            : <span className="cl-toast-t">Captured in this session -- not saved to the org board yet.</span>}
+            : <span className="cl-toast-t">Captured in this session — not saved to the org board yet.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>
       )}

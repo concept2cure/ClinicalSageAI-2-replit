@@ -311,7 +311,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
   const SITE_FORM: C2CFormConfig = {
-    eyebrow: 'Clinical ops -- activate site',
+    eyebrow: 'Clinical ops — activate site',
     title: 'Activate a study site',
     governed: 'Sites are governed records. This adds the site to the board for review — it does not yet write to the governed store or enroll it into risk-based monitoring.',
     submitLabel: 'Add site',
@@ -324,7 +324,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   };
 
   const DEV_FORM: C2CFormConfig = {
-    eyebrow: 'Clinical ops -- log deviation',
+    eyebrow: 'Clinical ops — log deviation',
     title: 'Log a protocol deviation',
     governed: 'Deviations are governed records. This adds the deviation to the board for review — it does not yet open a CAPA workflow or write a Part 11 audit entry.',
     submitLabel: 'Add deviation',
@@ -343,7 +343,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
 
   return (
     <BpComposer
-      eyebrow="Clinical development -- operations"
+      eyebrow="Clinical development — operations"
       title="Clinical operations"
       state={
         liveSites.loading && sites.length === 0
@@ -354,7 +354,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
           ? <>No site-risk scores yet — run the risk-based-monitoring engine or add sites to populate the board.</>
           : enhanced.length
           ? <><b>{enhanced.length}</b> of <b>{sites.length}</b> study sites are enhanced-tier and need on-site monitoring{worst.name ? <> -- {worst.name} leads at composite <b>{worst.composite ?? '—'}</b></> : null}. Central monitoring holds the rest.</>
-          : <>All <b>{sites.length}</b> sites are at standard or reduced monitoring -- no enhanced visits required.</>
+          : <>All <b>{sites.length}</b> sites are at standard or reduced monitoring — no enhanced visits required.</>
       }
       starters={[
         'Which sites are behind enrollment and why?',
@@ -376,7 +376,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
     >
       <div className="sp-sec">
         <SpCard
-          title="Site-risk assessment -- RBM"
+          title="Site-risk assessment — RBM"
           meta="site-risk-engine composite"
           foot={
             <SpAsk
@@ -404,7 +404,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
           ) : (
             <>
               <p className="co-assess-lead">
-                {enhanced.length} of {sites.length} sites are <b>enhanced-tier</b> and need on-site monitoring; central monitoring holds the remaining {sites.length - enhanced.length} at standard or reduced. Composite scores are the governed site-risk-engine output -- AnA ranks and explains them, it doesn't recompute them here.
+                {enhanced.length} of {sites.length} sites are <b>enhanced-tier</b> and need on-site monitoring; central monitoring holds the remaining {sites.length - enhanced.length} at standard or reduced. Composite scores are the governed site-risk-engine output — AnA ranks and explains them, it doesn't recompute them here.
               </p>
               <div className="sp-list">
                 {enhanced.map((s, i) => (
@@ -418,7 +418,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
                   </div>
                 ))}
               </div>
-              <div className="co-reco">{I.shieldCheck} Recommendation -- schedule enhanced monitoring visits for these {enhanced.length} sites; maintain central monitoring elsewhere. Scheduling a monitoring visit is a governed action that will carry a Part 11 audit entry once wired to the clinical-operations service.</div>
+              <div className="co-reco">{I.shieldCheck} Recommendation — schedule enhanced monitoring visits for these {enhanced.length} sites; maintain central monitoring elsewhere. Scheduling a monitoring visit is a governed action that will carry a Part 11 audit entry once wired to the clinical-operations service.</div>
             </>
           )}
         </SpCard>
@@ -461,7 +461,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
 
       <div className="sp-2col">
         <SpCard
-          title="Study sites -- monitoring tier"
+          title="Study sites — monitoring tier"
           meta={sites.length + ' sites'}
           action={<AddBtn onClick={() => setSiteForm(true)} label="Add site" />}
           foot={<SpAsk onAsk={ask} cmd="Open the central-monitoring view across all sites." label="Central monitoring" />}
@@ -554,7 +554,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
               country: v.country,
               composite: null,
               tier: v.tier,
-              driver: 'New site -- composite pending first RBM cycle',
+              driver: 'New site — composite pending first RBM cycle',
             });
             setSiteForm(false);
             fireToast('Site added to the board -- ' + v.n + ' (' + v.country + ')');

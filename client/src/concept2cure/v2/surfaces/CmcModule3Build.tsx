@@ -437,7 +437,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
           <div className="pj-card">
             <div className="pj-card-h">
               <span className="t">§3.2 build state</span>
-              <span className="s">{sections.length} subsections -- source coverage, completeness and approval</span>
+              <span className="s">{sections.length} subsections — source coverage, completeness and approval</span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {sections.length === 0 ? (
@@ -638,7 +638,7 @@ function Head({ ask, actions }: { ask: (text: string) => void; actions?: React.R
     <>
       <div className="cm-head">
         <div>
-          <div className="cm-kicker">CMC -- Module 3 operating system</div>
+          <div className="cm-kicker">CMC — Module 3 operating system</div>
           <h1 className="cm-title">Module 3 build</h1>
           <div className="cm-meta">Compile CTD §3.2 from your CMC data, resolve what blocks it, and clear the export gate</div>
         </div>

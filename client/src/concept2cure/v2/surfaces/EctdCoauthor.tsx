@@ -521,7 +521,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
                     body={<>Run eCTD structural validation and ICH M4 compliance against the live backbone as you write — both are computed on the server from this document and its sections.</>}
                     reassure="I keep each check traced to the persisted document and re-run eCTD structure and ICH M4 as it changes."
                     action={{ label: 'Run eCTD validation', onClick: runValidate }}
-                    secondary="Or keep drafting -- the artifact reflects the saved document."
+                    secondary="Or keep drafting — the artifact reflects the saved document."
                   />
                   <h1 className="ec-doc-h1">{activeDoc.title}</h1>
                   <div className="ec-doc-num">&sect;{activeDoc.moduleNumber || '—'}{activeDoc.moduleName ? ' -- ' + activeDoc.moduleName : ''}</div>

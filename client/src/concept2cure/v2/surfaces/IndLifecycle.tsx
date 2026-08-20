@@ -247,7 +247,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           outside reader the shape of the API — the information-disclosure class
           in the UAT report's BP-07, of which this was the last live instance.
           The regulation is the useful half; the route is documented above. */}
-      {I.rocket} IND Lifecycle -- 21 CFR 312
+      {I.rocket} IND Lifecycle — 21 CFR 312
     </div>
   );
   if (loading) {
@@ -740,7 +740,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         eyebrow={
           'Is the ' +
           drug +
-          ' IND ready to file -- and what stands between you and submission'
+          ' IND ready to file — and what stands between you and submission'
         }
         headline={
           R.ready ? (
@@ -792,7 +792,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </>
           )
         }
-        reassure="None of these are FDA findings -- they are the checklist I hold so nothing slips before you submit."
+        reassure="None of these are FDA findings — they are the checklist I hold so nothing slips before you submit."
         action={{
           label: R.ready
             ? 'Assemble the submission sequence'
@@ -843,11 +843,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="cm-doc-body indl-doc-body">
               <div className="indl-cover">
-                <h2>IND Filing Readiness -- 21 CFR 312.23</h2>
+                <h2>IND Filing Readiness — 21 CFR 312.23</h2>
                 <div className="indl-cover-meta">
                   {prog.productName && <span>{prog.productName}</span>}
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
-                  <span>Initial IND -- eCTD v4.0 (FDA)</span>
+                  <span>Initial IND — eCTD v4.0 (FDA)</span>
                   <span>
                     Assessed{' '}
                     {new Date().toLocaleDateString([], {
@@ -870,7 +870,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               </div>
 
-              <h3>1 -- Module progress</h3>
+              <h3>1 — Module progress</h3>
               {R.moduleProgress.length === 0 && (
                 <div className="scaf-note" style={{ margin: '4px 0 10px' }}>
                   No eCTD sections have been placed into this submission's filing yet.
@@ -902,7 +902,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               </div>
 
               <h3>
-                2 -- Module 1 forms{' '}
+                2 — Module 1 forms{' '}
                 <span className="indl-h-x">
                   -- 21 CFR 312.23(a)(1)
                 </span>
@@ -934,14 +934,14 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               </div>
 
               <h3>
-                2a -- Build &amp; render the FDA form PDFs{' '}
+                2a — Build &amp; render the FDA form PDFs{' '}
                 <span className="indl-h-x">-- real form engine</span>
               </h3>
               <IndFormsPanel note={setFormsNote} />
               <C2CToast msg={formsNote} />
 
               <h3>
-                3 -- Blockers to filing{' '}
+                3 — Blockers to filing{' '}
                 <span className="indl-h-x">
                   -- {R.blockers.length} -- ready = zero blockers
                 </span>
@@ -949,7 +949,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               {R.blockers.length === 0 ? (
                 <p className="indl-clean">
                   {I.check} No blockers. Every required section is approved
-                  and all Module 1 forms are complete -- the package is
+                  and all Module 1 forms are complete — the package is
                   fileable.
                 </p>
               ) : (

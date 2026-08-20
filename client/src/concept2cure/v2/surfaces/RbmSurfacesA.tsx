@@ -153,7 +153,7 @@ export function RbmOverview({ board, onTab, onReload }: SubProps) {
   const kriUneval = S.kris.notEvaluated ?? 0;
   const qtlUneval = S.qtls.notEvaluated ?? 0;
   const tiles = [
-    { k: 'Overall risk', v: null as string | null, chip: <RbmChip vocab="band" value={S.overallRisk ?? 'unknown'} />, sub: 'rbm-engine -- L x I banding', nav: 'ract' },
+    { k: 'Overall risk', v: null as string | null, chip: <RbmChip vocab="band" value={S.overallRisk ?? 'unknown'} />, sub: 'rbm-engine — L x I banding', nav: 'ract' },
     { k: 'Critical CtQ factors', v: String(S.riskItems.critical), chip: null, sub: `${S.riskItems.open} of ${S.riskItems.total} open`, nav: 'ract' },
     { k: 'KRIs red / amber', v: `${S.kris.red} / ${S.kris.amber}`, chip: null, sub: `${S.kris.total} indicators -- ${kriUneval} not evaluated`, nav: 'kris', warn: S.kris.red > 0 || kriUneval > 0 },
     { k: 'QTLs breached', v: String(S.qtls.breached), chip: null, sub: `${S.qtls.approaching} approaching -- ${qtlUneval} not evaluated`, nav: 'qtls', err: S.qtls.breached > 0 },
@@ -175,7 +175,7 @@ export function RbmOverview({ board, onTab, onReload }: SubProps) {
           </button>
         ))}
       </div>
-      <div className="rbm-sec-h"><h2>Needs attention now</h2><span className="rbm-sec-sub">buildAttentionFeed -- ordered by severity -- as of {S.asOf}</span></div>
+      <div className="rbm-sec-h"><h2>Needs attention now</h2><span className="rbm-sec-sub">buildAttentionFeed — ordered by severity — as of {S.asOf}</span></div>
       <div className="rbm-att">
         {board.attention.map((a, i) => (
           <button key={i} className="rbm-att-row" data-sev={a.sev} onClick={() => onTab?.(a.nav)}>
@@ -221,7 +221,7 @@ export function RbmReport({ board, onAsk }: SubProps) {
           <ul>{s.items.map((it, j) => <li key={j}>{it}</li>)}</ul>
         </div>
       ))}
-      <div className="rbm-note">{I.info}This report renders the same buildRiskReview output AnA returns from generate_rbm_report -- the on-screen and in-chat answers are identical by construction. It is generated live from the current data; it is not yet a versioned, filed review record.</div>
+      <div className="rbm-note">{I.info}This report renders the same buildRiskReview output AnA returns from generate_rbm_report — the on-screen and in-chat answers are identical by construction. It is generated live from the current data; it is not yet a versioned, filed review record.</div>
     </div>
   );
 }
@@ -348,7 +348,7 @@ export function RbmRact({ board, onReload }: SubProps) {
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
             <b>{asmt.framework}</b>
-            <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft -- approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
+            <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft — approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
             {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} -- {asmt.approval.when} -- &quot;{asmt.approval.reason}&quot;</span> : null}
           </div>
           {history.length > 1 && (
@@ -498,7 +498,7 @@ export function RbmKris({ board, onReload }: SubProps) {
         />
       )}
       <div className="rbm-bar">
-        <span className="rbm-bar-info">{kris.length} indicators -- seed from the TransCelerate library or define study-specific KRIs</span>
+        <span className="rbm-bar-info">{kris.length} indicators — seed from the TransCelerate library or define study-specific KRIs</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New KRI</button>
       </div>
       <div className="rbm-kri-grid">{kris.map(k => (
@@ -528,7 +528,7 @@ export function RbmKris({ board, onReload }: SubProps) {
           onCancel={() => { setEntryFor(null); mut.clearError(); }} onSubmit={v => addReading(entryFor, v.value)} />
       ); })()}
       {cfg && <RbmFormModal title={cfg.mode === 'edit' ? 'Configure KRI' : 'New key risk indicator'}
-        intro="Define what the indicator measures, its source and direction, and the amber/red limits. Status is computed from these server-side -- never entered directly. Leave a threshold blank and the indicator stays 'not evaluated' against it."
+        intro="Define what the indicator measures, its source and direction, and the amber/red limits. Status is computed from these server-side — never entered directly. Leave a threshold blank and the indicator stays 'not evaluated' against it."
         fields={cfgFields}
         initial={cfg.kri ? {
           name: cfg.kri.name, metric: cfg.kri.metric ?? '', source: cfg.kri.source, unit: cfg.kri.unit ?? '',
@@ -604,7 +604,7 @@ export function RbmQtls({ board, onReload }: SubProps) {
         />
       )}
       <div className="rbm-bar">
-        <span className="rbm-bar-info">{qtls.length} tolerance limits -- study-level -- secondary limit is the RBQM early warning</span>
+        <span className="rbm-bar-info">{qtls.length} tolerance limits — study-level — secondary limit is the RBQM early warning</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New QTL</button>
       </div>
       <div className="rbm-card">

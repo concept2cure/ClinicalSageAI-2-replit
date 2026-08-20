@@ -99,18 +99,18 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         b: (
           <>
             If an inspector asks &quot;how did this document come to say what it says?&quot;, this is
-            the answer -- traceable back to the locked source evidence, with the electronic signature
+            the answer — traceable back to the locked source evidence, with the electronic signature
             manifestation attached. The chain is cryptographically verified.
           </>
         ),
-        re: 'Nothing here was reconstructed after the fact -- each record was written when the action happened and cannot be altered without breaking the chain.',
+        re: 'Nothing here was reconstructed after the fact — each record was written when the action happened and cannot be altered without breaking the chain.',
       }
     : pendingSig
       ? {
           tone: 'calm' as const,
           h: (
             <>
-              The trail is clean and complete -- it just needs the final signature.{' '}
+              The trail is clean and complete — it just needs the final signature.{' '}
               {md.totalDecisions} decision{md.totalDecisions === 1 ? '' : 's'} recorded, the last
               is <b>approved, pending electronic signature</b>.
             </>
@@ -121,13 +121,13 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
               (§11.50) closes the loop and locks the record. I can route it to the signer.
             </>
           ),
-          re: 'The revision that reviewer requested is captured in the trail too -- better the reviewer sees you addressed it than wonders if you did.',
+          re: 'The revision that reviewer requested is captured in the trail too — better the reviewer sees you addressed it than wonders if you did.',
         }
       : {
           tone: 'calm' as const,
           h: (
             <>
-              This artifact is still moving through review -- the decision trail is <b>open</b> at
+              This artifact is still moving through review — the decision trail is <b>open</b> at
               &quot;{dlActionLabel(lastNode.action)}&quot;.
             </>
           ),
@@ -138,7 +138,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
               decisions will extend this same immutable chain.
             </>
           ),
-          re: "Nothing is lost while it's in flight -- the trail captures every handoff, including the delegation, so accountability is never ambiguous.",
+          re: "Nothing is lost while it's in flight — the trail captures every handoff, including the delegation, so accountability is never ambiguous.",
         };
 
   // exportOne — REAL, awaited export. Streams the immutable lineage from
@@ -246,7 +246,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         </div>
         <h1 className="dl-title">Decision lineage &amp; provenance</h1>
         <div className="dl-sub">
-          The immutable, Part-11 hash-chained trail behind every governed artifact -- who decided
+          The immutable, Part-11 hash-chained trail behind every governed artifact — who decided
           what, when, on what evidence.
         </div>
       </div>
@@ -319,7 +319,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
           <div className="dl-chain-hd">
             <span className="dl-chain-t">Decision trail</span>
             <span className="dl-chain-s">
-              {nodes.length} records -- read top to bottom
+              {nodes.length} records — read top to bottom
             </span>
           </div>
           <div className="dl-chain">
@@ -459,7 +459,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                 </div>
                 <p className="dl-verify-b">
                   {(chain.entriesVerified || 0).toLocaleString()} audit entries cryptographically
-                  verified -- tamper-evident. Any alteration to a past record breaks the chain and
+                  verified — tamper-evident. Any alteration to a past record breaks the chain and
                   is detected.
                 </p>
                 <div className="dl-verify-meta">
@@ -580,7 +580,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       )}
 
       <p className="dl-foot">
-        Lineage is sourced from the tamper-proof audit log -- records are written when the action
+        Lineage is sourced from the tamper-proof audit log — records are written when the action
         occurs and hash-chained per FDA 21 CFR Part 11 §11.10(e). The trail and its chain
         verification above are read live from this project's governed records.
       </p>

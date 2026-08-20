@@ -389,7 +389,7 @@ export function CmMethodLibrary() {
       title="Analytical method library"
       meta={(rows) => {
         const validated = rows.filter((r) => String(r.status || '').toLowerCase() === 'validated').length;
-        return `organization-wide -- ICH Q2 -- ${validated}/${rows.length} validated`;
+        return `organization-wide — ICH Q2 -- ${validated}/${rows.length} validated`;
       }}
       icon={I.clipboardList}
       loadingTitle="Loading analytical methods…"
@@ -571,7 +571,7 @@ export function CmChangeRegister() {
       title="Change-control register"
       meta={(rows) => {
         const open = rows.filter((r) => !CLOSED.includes(String(r.status || '').toLowerCase())).length;
-        return `organization-wide -- ${open} open -- ICH Q12`;
+        return `organization-wide -- ${open} open — ICH Q12`;
       }}
       icon={I.gitBranch}
       loadingTitle="Loading change-control records…"
@@ -741,7 +741,7 @@ export function CmProcessValidation() {
       title="Process validation"
       meta={(rows) => {
         const done = rows.filter((r) => cmcStatusTone(r.status) === 'ok').length;
-        return `${rows.length} ${rows.length === 1 ? 'process' : 'processes'} -- ${done} complete -- 3-stage lifecycle`;
+        return `${rows.length} ${rows.length === 1 ? 'process' : 'processes'} -- ${done} complete — 3-stage lifecycle`;
       }}
       icon={I.workflow}
       loadingTitle="Loading process validation…"

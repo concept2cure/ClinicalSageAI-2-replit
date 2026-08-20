@@ -297,14 +297,14 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
   const hazardFormConfig: C2CFormConfig = {
     eyebrow: 'ISO 14971 / risk item', title: 'New hazard',
-    sub: 'Adds a hazard -- hazardous situation -- harm row and computes initial risk (severity x probability).',
+    sub: 'Adds a hazard — hazardous situation — harm row and computes initial risk (severity x probability).',
     governed: 'Initial risk is the severity x probability product per ISO 14971. When the backend is connected the hazard is written to the governed risk file and audit-logged.',
     submitLabel: 'Add hazard',
     fields: [
       { key: 'hazard', label: 'Hazard', type: 'text', placeholder: 'e.g. Inaccurate glucose reading', required: true },
       { key: 'situation', label: 'Hazardous situation', type: 'text', placeholder: 'The circumstance that exposes the user to the hazard' },
       { key: 'harm', label: 'Harm', type: 'text', placeholder: 'e.g. Mis-dosing of insulin', required: true },
-      { key: 'seq', label: 'Sequence of events', type: 'text', placeholder: 'Cause -- situation -- harm' },
+      { key: 'seq', label: 'Sequence of events', type: 'text', placeholder: 'Cause — situation — harm' },
       { key: 'sev', label: 'Severity', type: 'select', options: SEV_LABELS.map((s, i) => ({ value: s, label: s + ' (' + (i + 1) + ')' })), required: true },
       { key: 'prob', label: 'Probability', type: 'select', options: PROB_LABELS.map((p, i) => ({ value: p, label: p + ' (' + (i + 1) + ')' })), required: true },
       { key: 'strategy', label: 'Control strategy', type: 'select', options: EN.strategy.map(s => ({ value: s[0], label: s[1] })) },
@@ -315,7 +315,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const ctrlFormConfig: C2CFormConfig = {
     eyebrow: 'Risk control / ' + (row?.id ?? ''), title: 'Add risk control',
     sub: 'Mitigation applied to ' + (row?.hazard ?? '') + '.',
-    governed: 'Controls follow the ISO 14971 hierarchy: inherent safety -- protective measure -- information for safety.',
+    governed: 'Controls follow the ISO 14971 hierarchy: inherent safety — protective measure — information for safety.',
     submitLabel: 'Add control',
     fields: [
       { key: 'desc', label: 'Control description', type: 'text', placeholder: 'e.g. Dual-sensor cross-check rejects disagreeing readings', required: true },

@@ -329,9 +329,9 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
 
   const FORM: C2CFormConfig = {
-    eyebrow: 'Nonclinical -- new study',
+    eyebrow: 'Nonclinical — new study',
     title: 'Add a GLP study',
-    governed: 'Study records are governed -- the report is classified, SEND is queued, and an audit entry is written.',
+    governed: 'Study records are governed — the report is classified, SEND is queued, and an audit entry is written.',
     submitLabel: 'Add study',
     fields: [
       { key: 'id', label: 'Study ID', type: 'text', placeholder: 'e.g. TX-703', required: true, half: true },
@@ -365,7 +365,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <BpComposer
-      eyebrow="Nonclinical -- CTD Module 4"
+      eyebrow="Nonclinical — CTD Module 4"
       title="Nonclinical & Module 4"
       state={
         summary ? (
@@ -394,7 +394,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       ]}
       primary={<button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add study</button>}
       queue={[
-        { ico: 'shieldAlert', title: 'SEND LB dataset -- Reject', sub: 'Pinnacle21 rule SD0063 -- blocks Module 5 crosswalk', tone: 'err', action: 'Fix', cmd: 'Fix the SEND LB dataset reject (rule SD0063) and re-validate the package' },
+        { ico: 'shieldAlert', title: 'SEND LB dataset — Reject', sub: 'Pinnacle21 rule SD0063 — blocks Module 5 crosswalk', tone: 'err', action: 'Fix', cmd: 'Fix the SEND LB dataset reject (rule SD0063) and re-validate the package' },
         { ico: 'fileText', title: '§2.6.6 toxicology written summary drafting', sub: 'Carcinogenicity subsection held for CARC-701', tone: 'warn', action: 'Continue', cmd: 'Continue drafting the §2.6.6 toxicology written summary from the locked study reports' },
         { ico: 'clock', title: 'CARC-701 terminal necropsy pending', sub: 'Gates the 2.6.6 carcinogenicity subsection', tone: 'info', action: 'Status', cmd: 'Status of CARC-701 and its impact on the 2.6.6 carcinogenicity subsection' },
       ]}
@@ -478,7 +478,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
             )}
           </SummaryBody>
           <div className="sp-foot">
-            <button className="sp-ask" onClick={() => ask('Run SEND conformance -- map units to controlled terminology and re-validate the package.')}>
+            <button className="sp-ask" onClick={() => ask('Run SEND conformance — map units to controlled terminology and re-validate the package.')}>
               {I.sparkles} Run SEND conformance
             </button>
           </div>
@@ -507,7 +507,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="sp-sec">
-        <SpCard title="CTD Module 2.6 summary builder" meta="2.6.1 -- 2.6.7">
+        <SpCard title="CTD Module 2.6 summary builder" meta="2.6.1 — 2.6.7">
           <SummaryBody state={summaryState} emptyTitle="No Module 2.6 summary data yet">
             {(sum) => (
               <div className="sp-list">

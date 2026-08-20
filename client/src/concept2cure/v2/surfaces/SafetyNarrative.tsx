@@ -95,8 +95,8 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
         ? `${soonest.id} is due in ${soonest.dueDays} days -- ${soonest.clock}`
         : `${cases.length} case narratives in progress -- ${serious} serious`,
       body: urgent
-        ? `The clock that matters right now is ${soonest.id}${sel.studyId ? ` (${sel.studyId})` : ''}. Its narrative is drafted from the case facts below -- complete any missing fields, QC it, and it's ready to file. You have time; work the most urgent one first.`
-        : 'Each SAE narrative here is written deterministically from the structured case -- the same facts, the same ICH E3 section 16 convention, every time. Nothing is invented. Pick a case, complete what\'s missing, and hand it off.',
+        ? `The clock that matters right now is ${soonest.id}${sel.studyId ? ` (${sel.studyId})` : ''}. Its narrative is drafted from the case facts below — complete any missing fields, QC it, and it's ready to file. You have time; work the most urgent one first.`
+        : 'Each SAE narrative here is written deterministically from the structured case — the same facts, the same ICH E3 section 16 convention, every time. Nothing is invented. Pick a case, complete what\'s missing, and hand it off.',
       next: urgent
         ? `Finish ${soonest.id} and send it for medical review`
         : `Complete ${sel.id} and attach it to the safety dossier`,
@@ -129,7 +129,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       <C2CToast msg={toast} position="top" />
 
       <div className="sn-head">
-        <div className="sn-eyebrow">Safety narrative / PV -- ICH E3 section 16 -- E2B</div>
+        <div className="sn-eyebrow">Safety narrative / PV — ICH E3 section 16 — E2B</div>
         <h1 className="sn-title">SAE case narrative writer</h1>
       </div>
 
@@ -316,7 +316,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             ) : (
               <div>
-                <div className="sn-qc-t">Complete -- all E3 section 16 elements present</div>
+                <div className="sn-qc-t">Complete — all E3 section 16 elements present</div>
                 <div className="sn-qc-d">This narrative is ready for medical review and E2B(R3) transmission.</div>
               </div>
             )}

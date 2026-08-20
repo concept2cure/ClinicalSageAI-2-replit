@@ -129,9 +129,9 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
       .then((r) => {
         if (r.error) {
           setAtoms(list => list.map(a => (a.id === id ? { ...a, is_verified_by_user: false, verified_at: undefined } : a)));
-          fire('Could not verify -- the change was not saved.', 'error');
+          fire('Could not verify — the change was not saved.', 'error');
         } else {
-          fire('Verified -- AnA will weight this memory more.');
+          fire('Verified — AnA will weight this memory more.');
         }
       });
   };
@@ -180,7 +180,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
             <div className="amem-lead-badge">{I.sparkles}</div>
             <div className="amem-lead-body">
               <div className="amem-lead-eyebrow">AnA · cross-session memory</div>
-              <div className="amem-lead-head">We've worked together across {prof?.interaction_count || 0} conversations -- here's what I'm carrying into the next one.</div>
+              <div className="amem-lead-head">We've worked together across {prof?.interaction_count || 0} conversations — here's what I'm carrying into the next one.</div>
               <div className="amem-lead-sub">
                 I keep the read {tone.detail === 'exhaustive' ? 'thorough' : tone.detail || 'concise'}, tone {tone.formality || 'standard'}, and I lead with the answer because that's how you like to work. I'm holding {active.length} active {active.length === 1 ? 'memory' : 'memories'} about your programs
                 {unverified > 0 ? <>, {unverified} still waiting for your confirmation</> : null}. Correct anything that's off and I'll update.
@@ -223,7 +223,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
               ) : profState.error ? (
                 <div className="amem-note">{Ico.info || I.dot} AnA's relational notes couldn't be loaded right now.</div>
               ) : (
-                <div className="amem-note">{Ico.info || I.dot} AnA hasn't formed relational notes yet -- as you work together she'll record how you like to work and own any mistakes she makes.</div>
+                <div className="amem-note">{Ico.info || I.dot} AnA hasn't formed relational notes yet — as you work together she'll record how you like to work and own any mistakes she makes.</div>
               )}
               <div className="amem-note">{Ico.info || I.dot} AnA writes these notes to <code>ana_relational_profiles</code> after each turn and reads them back into her context every conversation. Shown here read-only.</div>
             </div>
@@ -232,7 +232,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
             <div className="amem-col">
               <div className="amem-sec">{Ico.database || Ico.layers || I.dot} What I remember about your programs <span className="amem-sec-x">-- client_memory_entries · verify what's right</span></div>
               {active.length === 0 ? (
-                <div className="amem-empty">No active memories yet -- AnA records durable facts about your programs here as you work.</div>
+                <div className="amem-empty">No active memories yet — AnA records durable facts about your programs here as you work.</div>
               ) : (
                 <>
                   <div className="amem-filters">

@@ -134,7 +134,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
           <h1 className="sp-title">Plans &amp; licensing</h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by
-            organization archetype -- with seat bundle discounts and annual
+            organization archetype — with seat bundle discounts and annual
             savings. Billing runs on Stripe Checkout + Customer Portal.
           </p>
         </div>
@@ -405,7 +405,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <div className="lic-usage-main">
           <b>Usage-based, capped, auditable</b>
           <span>
-            Every plan meters real usage -- session and weekly windows,
+            Every plan meters real usage — session and weekly windows,
             per-engine buckets, overage caps you set yourself, and credits with
             auto-reload. Changing a cap is a governed action: admin role,
             reason-for-change, audit entry.

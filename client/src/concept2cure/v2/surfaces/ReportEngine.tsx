@@ -134,7 +134,7 @@ function genStatisticalInsights(a: ParsedProtocol): string {
 }
 
 function genIndReadiness(_a: ParsedProtocol): string {
-  let s = `# IND Readiness Assessment\n\n*Qualitative regulatory guidance -- no numeric readiness score is emitted (the codebase returns null until a real scorer is wired).*\n\n`;
+  let s = `# IND Readiness Assessment\n\n*Qualitative regulatory guidance — no numeric readiness score is emitted (the codebase returns null until a real scorer is wired).*\n\n`;
   s += `## Strengths\n\n- Well-defined primary and secondary endpoints\n- Clear inclusion/exclusion criteria\n- Appropriate statistical analysis plan\n- Adequate safety monitoring provisions\n\n`;
   s += `## Improvement Areas\n\n- Additional details needed on concomitant medication management (FDA 21 CFR 312.23(a)(6))\n- Consider adding interim analysis points (ICH E9, Section 4.5)\n- Strengthen data management plan section (ICH E6(R2), Section 5.5)\n- Expand on randomization implementation details (EMA Guideline on multiplicity issues)\n\n`;
   s += `## Regulatory Guidance\n\n- Aligns with FDA guidance for Phase 2 trials in this indication\n- Consistent with ICH E6(R2) requirements for Good Clinical Practice\n- Meets basic requirements for EMA Scientific Advice submissions\n- May require additional ethnic considerations for PMDA submission\n\n`;
@@ -325,9 +325,9 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
     <div className="ra">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist -- evidence</div>
+          <div className="sp-eyebrow">Specialist — evidence</div>
           <h1 className="sp-title">Reporting &amp; analytics</h1>
-          <p className="sp-state">Drop in a protocol and AnA analyses it against the CSR intelligence library -- then writes the design recommendations, statistical insights and IND-readiness memo you can act on.</p>
+          <p className="sp-state">Drop in a protocol and AnA analyses it against the CSR intelligence library — then writes the design recommendations, statistical insights and IND-readiness memo you can act on.</p>
         </div>
       </div>
 
@@ -336,8 +336,8 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
           tone="calm"
           eyebrow={'Your analysis of ' + (a.title || 'the protocol').slice(0, 48) + ' is ready'}
           headline={<>I read the {a.phase && a.phase !== 'Unknown' ? <>Phase {a.phase} </> : null}{a.indication && a.indication !== 'Unspecified' ? <>{a.indication.toLowerCase()} </> : null}protocol and drafted your <b>{docDef?.label}</b> -- {a.risk_factors.length ? <><b>{a.risk_factors.length} design {a.risk_factors.length === 1 ? 'risk' : 'risks'}</b> to address</> : <>the design looks sound on the parameters I could read</>}.</>}
-          body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below -- power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text -- add it and the power analysis will fill in.</>}</>}
-          reassure="Everything is drafted as a real document, not a chart -- read it, adjust, and send it to the editor."
+          body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below — power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text — add it and the power analysis will fill in.</>}</>}
+          reassure="Everything is drafted as a real document, not a chart — read it, adjust, and send it to the editor."
           action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Re-analyze', onClick: analyze } }}
           secondary="Or switch documents and re-run below."
         />
@@ -346,7 +346,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
           tone="calm"
           eyebrow="What do you want to understand about your protocol"
           headline={<>Paste a protocol and I will tell you where it is strong, where it is risky, and what the statistics say.</>}
-          body="You will get three written deliverables -- design recommendations vs. similar studies, statistical insights (power, dropout, modelling), and an IND-readiness read -- not just numbers on a chart."
+          body="You will get three written deliverables — design recommendations vs. similar studies, statistical insights (power, dropout, modelling), and an IND-readiness read — not just numbers on a chart."
           reassure="I only report what the data supports; I will not invent a score the model cannot stand behind."
           action={{ label: 'Analyze the protocol', onClick: analyze }}
           secondary="Edit the protocol text below first if you like."
@@ -357,7 +357,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         <div className="pj-card ra-input">
           <div className="pj-card-h"><span className="t">Protocol</span><span className="s">paste or edit</span></div>
           <div className="pj-card-b">
-            <textarea className="ra-ta" aria-label="Protocol synopsis" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis -- title, indication, phase, sample size, duration, primary endpoint..." />
+            <textarea className="ra-ta" aria-label="Protocol synopsis" value={text} onChange={e => setText(e.target.value)} placeholder="Paste your protocol synopsis — title, indication, phase, sample size, duration, primary endpoint..." />
             <div className="ra-actions">
               <button className="sp-primary" onClick={analyze} disabled={busy}>{I.sparkles} {busy ? 'Analyzing...' : 'Analyze protocol'}</button>
               {analysis && (
@@ -380,7 +380,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
         <div className="bs-doc ra-doc">
           {analysis ? (<>
             <div className="bs-doc-bar">
-              <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{analysis.source === 'live' ? '/api/analytics' : 'Ported generator -- offline'} -- draft</span></div>
+              <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{analysis.source === 'live' ? '/api/analytics' : 'Ported generator — offline'} -- draft</span></div>
               <div className="bs-doc-bar-a">
                 <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ' for this protocol')}>{I.sparkles} Refine</button>
                 <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
@@ -433,7 +433,7 @@ function AnalyticsDashboard() {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load the CSR library"
-            hint="These aggregates are your organization's CSR reports. The analytics service returned an error or no organization scope -- sign in with an organization and retry."
+            hint="These aggregates are your organization's CSR reports. The analytics service returned an error or no organization scope — sign in with an organization and retry."
           />
         ) : !hasReports ? (
           <EmptyState
@@ -446,7 +446,7 @@ function AnalyticsDashboard() {
             <div className="ra-kpis">
               <div className="ra-kpi"><div className="ra-kpi-v">{totalReports}</div><div className="ra-kpi-l">CSR reports</div></div>
               <div className="ra-kpi"><div className="ra-kpi-v">{data?.uniqueIndications ?? 0}</div><div className="ra-kpi-l">Indications</div></div>
-              <div className="ra-kpi"><div className="ra-kpi-v">{data?.recentAdditions ?? 0}</div><div className="ra-kpi-l">Added -- 30d</div></div>
+              <div className="ra-kpi"><div className="ra-kpi-v">{data?.recentAdditions ?? 0}</div><div className="ra-kpi-l">Added — 30d</div></div>
               <div className="ra-kpi"><div className="ra-kpi-v">{Math.round((data?.averageCompletionRate || 0) * 100)}%</div><div className="ra-kpi-l">Avg completion</div></div>
             </div>
             <div className="ra-charts">

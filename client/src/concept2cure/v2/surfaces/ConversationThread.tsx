@@ -93,7 +93,7 @@ function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProp
                 <button className="ct-prop-accept" onClick={onApply}>{I.check} Accept and write to section {turn.proposal.section}</button>
                 <button className="ct-prop-refine" onClick={onRefine}>{I.penLine} Refine</button>
                 <button className="ct-prop-discard">Discard</button>
-                <span className="ct-prop-gov">{I.lock} Governed -- immutable version + audit entry on persist</span>
+                <span className="ct-prop-gov">{I.lock} Governed — immutable version + audit entry on persist</span>
               </div>
             ) : (
               <div className="ct-prop-applied">
@@ -285,9 +285,9 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
         <span className="ct-art-panel-t">{I.layers} Artifacts <span className="ct-art-panel-n">{artifacts.length}</span></span>
         <button className="ct-art-panel-x" onClick={() => setCollapsed(true)} title="Collapse">{I.chevronRight || I.right}</button>
       </div>
-      <div className="ct-art-panel-sub">Governed outputs -- AnA builds, you approve and e-sign</div>
+      <div className="ct-art-panel-sub">Governed outputs — AnA builds, you approve and e-sign</div>
       <div className="ct-art-list">
-        {artifacts.length === 0 && <div className="ct-art-empty">Artifacts AnA generates in this conversation appear here -- classification reports, predicate analyses, eSTAR sections -- each versioned, traceable, and exportable.</div>}
+        {artifacts.length === 0 && <div className="ct-art-empty">Artifacts AnA generates in this conversation appear here — classification reports, predicate analyses, eSTAR sections — each versioned, traceable, and exportable.</div>}
         {artifacts.map(a => (
           <ArtifactCard key={a.id} art={a} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)}
             onNav={onNav} onAdvance={() => onAdvance(a.id)} onDownload={() => onAdvance(a.id, true)} />
@@ -386,7 +386,7 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
                 <div className="ct-empty">
                   <div className="ct-empty-mk">{'✻'}</div>
                   <h2>Talk to AnA</h2>
-                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer -- every turn is saved to your governed conversation store.</p>
+                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
                     {['File a 510(k) for our glucose monitoring patch', 'Is the section 2.5.4 efficacy claim defensible?', 'What blocks the Module 3 freeze?'].map((q, i) => (
                       <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
@@ -396,7 +396,7 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
               )}
               {turns.map((t, i) => t.role === 'user'
                 ? (<div key={i} className="ct-turn ct-user"><div className="ct-user-b">{t.text}</div></div>)
-                : (<AnaTurn key={i} turn={t} onApply={() => undefined} onRefine={() => { void anaChat.send('Refine that -- keep it tighter and more declarative.'); }} onNav={onNav} onViewArtifact={() => undefined} />)
+                : (<AnaTurn key={i} turn={t} onApply={() => undefined} onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }} onNav={onNav} onViewArtifact={() => undefined} />)
               )}
               {busy && (
                 <div className="ct-turn ct-ana"><div className="ct-ana-av">{'✻'}</div><div className="ct-ana-body"><div className="ct-typing"><span /><span /><span /></div></div></div>
@@ -407,12 +407,12 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
           <div className="ct-composer-wrap">
             <div className="ct-composer">
               <button className="ct-comp-attach" title="Attach a document for AnA to use">{I.paperclip}</button>
-              <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA -- ask, or request a draft..." value={draft}
+              <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA — ask, or request a draft..." value={draft}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
               <button className="ct-comp-send" aria-label="Send message to AnA" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
             </div>
-            <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
+            <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
 

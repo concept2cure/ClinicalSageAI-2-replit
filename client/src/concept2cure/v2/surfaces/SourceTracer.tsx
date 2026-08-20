@@ -249,7 +249,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
               <span className="s">{sec.sources.length} recorded</span>
             </div>
             <div className="pj-card-b">
-              <div className="pj-seclbl">Drafted from <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>/ recorded citation -- content identity at cite time -- standing today</span></div>
+              <div className="pj-seclbl">Drafted from <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>/ recorded citation — content identity at cite time — standing today</span></div>
               <div className="st-sents">
                 {sec.sources.map(s => {
                   const lab = stateLabel(s);

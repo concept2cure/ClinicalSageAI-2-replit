@@ -505,7 +505,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
         </div>
       )}
       <div className="ac-port-gap" style={{ margin: '2px 0 6px', padding: '8px 12px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-300)', background: 'var(--bg-050)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization -- average readiness, worst risk, and attention-ranked members.</span>
+        {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization — average readiness, worst risk, and attention-ranked members.</span>
       </div>
 
       {/* Role lens -- jobs across client types */}
@@ -685,7 +685,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
             <div className="ac-gate-top">
               <div>
                 <div className="ac-gate-crumb">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
-                <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH -- one verdict, audited to Part 11</div>
+                <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH — one verdict, audited to Part 11</div>
               </div>
               <button className="ac-gate-x" onClick={() => setGateOpen(false)}>{I.close}</button>
             </div>

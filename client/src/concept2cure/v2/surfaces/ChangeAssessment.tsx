@@ -135,7 +135,7 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="reg-eyebrow">Platform {I.dot} lifecycle</div>
           <h1 className="reg-title">Change assessment</h1>
-          <p className="reg-sub">Every design, labeling or manufacturing change runs the FDA "When to Submit a 510(k) for a Change" (2017) and EU MDR significant-change (MDCG 2020-3) determinations -- resolving to a new submission or a document-to-file.</p>
+          <p className="reg-sub">Every design, labeling or manufacturing change runs the FDA "When to Submit a 510(k) for a Change" (2017) and EU MDR significant-change (MDCG 2020-3) determinations — resolving to a new submission or a document-to-file.</p>
         </div>
         {onAsk && <button className="reg-ask" onClick={() => onAsk('Assess a new device change for 510(k) / MDR significant-change impact')}>{I.sparkles} Assess a change</button>}
       </div>
@@ -192,8 +192,8 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
                 data as the jurisdictions KPI above, which counts `c.fda`/`c.eu`
                 only where they are present. */}
             <div className="chg-decisions">
-              {item.fda && <ChangeDecision title="FDA -- 21 CFR 807 / 2017 guidance" flag="US" dec={item.fda} />}
-              {item.eu && <ChangeDecision title="EU MDR -- MDCG 2020-3" flag="EU" dec={item.eu} />}
+              {item.fda && <ChangeDecision title="FDA — 21 CFR 807 / 2017 guidance" flag="US" dec={item.fda} />}
+              {item.eu && <ChangeDecision title="EU MDR — MDCG 2020-3" flag="EU" dec={item.eu} />}
             </div>
 
             <div className="chg-doc">

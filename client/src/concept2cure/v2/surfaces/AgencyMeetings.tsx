@@ -163,7 +163,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     eyebrow: 'Agency interaction · new request',
     title: 'Request an agency meeting',
     governed:
-      'A meeting request is a governed interaction -- the request and its briefing-book plan are recorded with an audit entry.',
+      'A meeting request is a governed interaction — the request and its briefing-book plan are recorded with an audit entry.',
     submitLabel: 'Create request',
     fields: [
       {
@@ -267,7 +267,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
           <div className="reg-eyebrow">Platform · agency interactions</div>
           <h1 className="reg-title">Meetings &amp; briefing books</h1>
           <p className="reg-sub">
-            The regulator interactions that gate a program -- Pre-IND, INTERACT,
+            The regulator interactions that gate a program — Pre-IND, INTERACT,
             Type A/B/C/D, EOP2, pre-NDA/BLA, device Q-Sub, EMA Scientific
             Advice. Each is built around a briefing book and resolves to minutes
             and commitments that flow into the dossier.
@@ -441,7 +441,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
               <div className="mtg-empty-t">No briefing book yet</div>
               <div className="mtg-empty-d">
                 {m.status === 'requested'
-                  ? 'Meeting requested -- draft the briefing book now so it is ready when the Agency grants.'
+                  ? 'Meeting requested — draft the briefing book now so it is ready when the Agency grants.'
                   : 'Start the briefing book for this interaction.'}
               </div>
               {onAsk && (

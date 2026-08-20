@@ -131,7 +131,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const firstGap = inputs.find(i => !i.outputs || !i.outputs.length) || inputs.find(i => i.ver !== 'pass') || inputs.find(i => i.val !== 'pass');
 
   const FORM: C2CFormConfig = {
-    eyebrow: 'DHF -- 820.30(c)',
+    eyebrow: 'DHF — 820.30(c)',
     title: 'New design input',
     sub: 'A design input is a requirement the device must meet. It enters the traceability matrix untraced until an output, verification and validation are linked.',
     governed: 'Design inputs are controlled records; adding one is audit-logged per 21 CFR 820.30.',
@@ -160,7 +160,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       const row = (await res.json())?.data as DcInput | undefined;
       if (!row || !row.id) throw new Error('malformed response');
       setInputs(is => is.map(i => (i.id === tempId ? { ...row, _new: true } : i)));
-      fire('Design input ' + row.id + ' added -- untraced');
+      fire('Design input ' + row.id + ' added — untraced');
     } catch (e) {
       setInputs(is => is.filter(i => i.id !== tempId));
       fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
@@ -186,7 +186,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {isLive ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Design controls {I.dot} DHF</h1>
-          <p className="sp-state">21 CFR 820.30 design history file -- inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
+          <p className="sp-state">21 CFR 820.30 design history file — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} New design input</button>
       </div>
@@ -223,7 +223,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
               ? <><b>{trace.total - trace.fullyTraced}</b> of {trace.total} design inputs {trace.total - trace.fullyTraced === 1 ? 'is' : 'are'} not yet fully traced to output, verification and validation.</>
               : <>Every design input traces cleanly to output {'->'} verification {'->'} validation. The DHF is audit-ready on traceability.</>}
             body={<>Design-control completeness is <b>{elPct}%</b> across the {assessable.length} 820.30 elements this store can evidence{untracked > 0 && <> ({untracked} more not tracked here)</>}; traceability (820.30(j)) is <b>{trace.pct}%</b>. {trace.noVal > 0 && <>{trace.noVal} input{trace.noVal === 1 ? '' : 's'} still lack{trace.noVal === 1 ? 's' : ''} passing validation.</>}</>}
-            reassure="I'll draft the missing V&V protocols, link each to the input it covers, and flag any orphan output before the review -- you sign off."
+            reassure="I'll draft the missing V&V protocols, link each to the input it covers, and flag any orphan output before the review — you sign off."
             action={firstGap
               ? { label: 'Close the ' + firstGap.id + ' gap', onClick: () => ask('What is missing to fully trace ' + firstGap.id + ' (' + firstGap.req + ')?') }
               : { label: 'Draft the design review minutes', onClick: () => ask('Draft the design review minutes confirming full traceability') }}

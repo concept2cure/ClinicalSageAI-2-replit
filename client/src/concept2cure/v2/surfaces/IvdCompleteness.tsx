@@ -122,7 +122,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
     <div className="ivd">
       <div className="ivd-head">
         <div className="ivd-eyebrow">
-          <span className="ivd-kicker">IVDR technical file -- performance evaluation</span>
+          <span className="ivd-kicker">IVDR technical file — performance evaluation</span>
         </div>
         <h1 className="ivd-title">{data?.program || 'IVD program'}</h1>
         <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} -- technical-file completeness</div>
@@ -135,7 +135,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the IVDR completeness board"
-          hint="The IVDR completeness read-model didn't respond. It's computed from this organization's IVDR records -- Annex VIII classifications, analytical and clinical performance studies, the Performance Evaluation Report and the GSPR checklist. Sign in and retry, or check the IVD read-model is provisioned."
+          hint="The IVDR completeness read-model didn't respond. It's computed from this organization's IVDR records — Annex VIII classifications, analytical and clinical performance studies, the Performance Evaluation Report and the GSPR checklist. Sign in and retry, or check the IVD read-model is provisioned."
         />
       ) : allItems.length === 0 ? (
         <EmptyState
@@ -149,7 +149,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
             <div className="ivd-lead-ic">{I.sparkles}</div>
             <div>
               <p className="ivd-lead-h">Your IVDR technical file is {overall}% complete. {blocker}</p>
-              <p className="ivd-lead-b">These are IVDR requirements -- General Safety &amp; Performance (Annex I), the Performance Evaluation Report (Annex XIII), analytical and clinical performance, scientific validity and post-market follow-up -- not the 510(k)/device checklist. {done.length} of {allItems.length} evidenced -- {inflight.length} in progress -- {missing.length} not started{flags.length ? ' -- ' + flags.length + ' open flag' + (flags.length === 1 ? '' : 's') : ''}.</p>
+              <p className="ivd-lead-b">These are IVDR requirements — General Safety &amp; Performance (Annex I), the Performance Evaluation Report (Annex XIII), analytical and clinical performance, scientific validity and post-market follow-up — not the 510(k)/device checklist. {done.length} of {allItems.length} evidenced -- {inflight.length} in progress -- {missing.length} not started{flags.length ? ' -- ' + flags.length + ' open flag' + (flags.length === 1 ? '' : 's') : ''}.</p>
             </div>
           </div>
 
@@ -202,7 +202,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
             })}
           </div>
 
-          <p className="ivd-foot">Completeness is computed live from this organization's IVDR records -- Annex VIII classifications, analytical and clinical performance studies, the latest Performance Evaluation Report, and the GSPR checklist. Requirements with no recorded evidence show as not started; no owner, version or evidence flag is shown unless it is stored.</p>
+          <p className="ivd-foot">Completeness is computed live from this organization's IVDR records — Annex VIII classifications, analytical and clinical performance studies, the latest Performance Evaluation Report, and the GSPR checklist. Requirements with no recorded evidence show as not started; no owner, version or evidence flag is shown unless it is stored.</p>
         </>
       )}
     </div>
