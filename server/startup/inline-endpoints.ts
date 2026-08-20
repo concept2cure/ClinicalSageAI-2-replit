@@ -3,6 +3,7 @@
  *
  * Extracted from server/index.ts. Preserves:
  *  - /healthz, /readyz, /api/health (fast-path, mounted before security middleware)
+ *    (/readyz covers database, schema, AnA's AI provider, Redis and the worker tier)
  *  - /api/health/full (HealthCheckService)
  *  - /api/metrics (Prometheus text format)
  *  - /api/ai-gateway/health (provider health summary)
@@ -20,6 +21,11 @@ import {
   getSchemaReadinessDetail,
   isSchemaReadinessServing,
 } from './readiness-state';
+import {
+  getAnaReadiness,
+  getAnaReadinessDetail,
+  isAnaReadinessServing,
+} from './ana-readiness-state';
 
 const logger = createScopedLogger('inline-endpoints');
 
@@ -87,6 +93,19 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
     const schema = getSchemaReadiness();
     deps.schema = isSchemaReadinessServing(schema) ? 'ok' : 'down';
 
+    // AnA — always required, and required for the same reason the database is:
+    // without her this process cannot do the thing it exists to do. The boot
+    // invariant (lib/startup-invariants.ts → checkAnaProvider) records the
+    // verdict; this reads it.
+    //
+    // This check FAILS CLOSED, including on 'unknown'. Before it existed, a
+    // process with no AI provider configured reported ready: true and then
+    // returned 503 GATEWAY_UNAVAILABLE on every single AnA turn, which is
+    // exactly how a tester came to find the platform up and AnA completely
+    // dead. See ana-readiness-state.ts for the full incident.
+    const ana = getAnaReadiness();
+    deps.ana = isAnaReadinessServing(ana) ? 'ok' : 'down';
+
     // Redis + Bull action-queue worker tier. Only required when Redis is
     // configured; otherwise the platform runs on in-memory fallbacks, so we
     // skip (treat as healthy) rather than fail readiness.
@@ -124,12 +143,18 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
     // reads until it is already an outage.
     const schemaDetail = getSchemaReadinessDetail();
 
+    // Same rule for AnA, for the same reason: 'deterministic' serves traffic
+    // but is NOT a live model, and an operator who cannot see that distinction
+    // on the success path will read fixtures as a working product.
+    const anaDetail = getAnaReadinessDetail();
+
     if (failed.length > 0) {
       const body: Record<string, unknown> = {
         ready: false,
         failed,
         dependencies: deps,
         schemaState: schema,
+        anaState: ana,
       };
       if (deps.schema === 'down') {
         body.schemaDetail =
@@ -138,11 +163,24 @@ export function mountFastPathHealthEndpoints(app: Express, pool: Pool): void {
             ? 'schema was never verified — no boot-time verdict was recorded'
             : 'schema verification did not complete');
       }
+      if (deps.ana === 'down') {
+        body.anaDetail =
+          anaDetail ||
+          (ana === 'unknown'
+            ? 'AnA readiness was never verified — no boot-time verdict was recorded'
+            : 'AnA has no usable AI provider');
+      }
       return res.status(503).json(body);
     }
 
-    const body: Record<string, unknown> = { ready: true, dependencies: deps, schemaState: schema };
+    const body: Record<string, unknown> = {
+      ready: true,
+      dependencies: deps,
+      schemaState: schema,
+      anaState: ana,
+    };
     if (schema === 'degraded' && schemaDetail) body.schemaDetail = schemaDetail;
+    if (ana === 'deterministic' && anaDetail) body.anaDetail = anaDetail;
     return res.json(body);
   });
   app.get('/api/health', (_req: Request, res: Response) => {

@@ -10,6 +10,7 @@
  *   3. documents.artifact_id column exists (bridge convergence)
  *   4. concept2cure_artifacts table exists (canonical identity)
  *   5. Redis connectivity (token revocation primary)
+ *   6. AnA has an AI provider (the platform's core capability can actually answer)
  *
  * @module server/lib/startup-invariants
  */
@@ -101,6 +102,31 @@ async function checkRedis(invariants: InvariantResult[]): Promise<void> {
 }
 
 /**
+ * AnA can actually answer.
+ *
+ * This is `critical` and not `warning` on purpose. Every other invariant here
+ * degrades a supporting subsystem; this one decides whether the product does
+ * anything at all. A platform whose regulatory copilot returns 503 on every
+ * turn is not running in degraded mode — it is down, and it should say so
+ * with the same weight as an unreachable database.
+ *
+ * The verdict is recorded in ana-readiness-state so /readyz reads the same
+ * answer this panel reports; see that module for the incident it came from.
+ */
+async function checkAnaProvider(invariants: InvariantResult[]): Promise<void> {
+  const { evaluateAnaReadiness, getAnaReadinessDetail, isAnaReadinessServing } = await import(
+    '../startup/ana-readiness-state.js'
+  );
+  const state = await evaluateAnaReadiness();
+  invariants.push({
+    name: 'ana_ai_provider',
+    passed: isAnaReadinessServing(state),
+    severity: 'critical',
+    message: `AnA readiness: ${state} — ${getAnaReadinessDetail()}`,
+  });
+}
+
+/**
  * Run all startup invariant checks. Call during server bootstrap.
  * Never throws — returns a structured report.
  */
@@ -122,6 +148,7 @@ export async function runStartupInvariants(): Promise<StartupInvariantReport> {
       checkArtifactIdColumn(invariants),
       checkArtifactsTable(invariants),
       checkRedis(invariants),
+      checkAnaProvider(invariants),
     ])
   );
 

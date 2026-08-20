@@ -150,6 +150,16 @@ if [ -f .env ]; then
     err ".env exists but has no ALLOW_DEV_AUTH. The sign-in card's 'Demo access'"
     err "button will 404 without it. Add:  ALLOW_DEV_AUTH=1"
   fi
+  # AnA is the product. Without a provider key the AI gateway initializes with
+  # zero providers and every chat turn returns 503 GATEWAY_UNAVAILABLE — the
+  # platform boots green and its core feature is dead. Setup used to leave this
+  # out silently, which is exactly how a tester came to find AnA not working at
+  # all. The server now refuses readiness for it too (startup/ana-readiness-state.ts).
+  if ! grep -qE '^(ANTHROPIC_API_KEY|OPENAI_API_KEY|KIMI_API_KEY|MOONSHOT_API_KEY)=.+' .env; then
+    err ".env exists but has no AI provider key. AnA cannot answer without one:"
+    err "every chat turn returns 503 and /readyz reports NOT READY. Add:"
+    err "  ANTHROPIC_API_KEY=sk-ant-..."
+  fi
 else
   log "Writing dev .env"
   cat > .env <<ENV
@@ -181,6 +191,23 @@ RLS_ENFORCE=off
 # environment whose only usable sign-in path was silently disabled, so the
 # button did nothing and no session could be established to look at the product.
 ALLOW_DEV_AUTH=1
+
+# ── AnA's AI provider — SET THIS OR AnA DOES NOT WORK ───────────────────────
+#
+# This is the one value setup cannot generate for you, and the one the product
+# is useless without. With no provider key the AI gateway initializes with zero
+# providers, POST /api/ana-ri/stream returns 503 GATEWAY_UNAVAILABLE on every
+# turn, and the chat panel renders "AnA is unreachable" for every question.
+#
+# It is written here as an empty placeholder rather than omitted, because
+# omitting it is what previously produced a fully provisioned local environment
+# whose headline feature was dead on arrival with nothing saying so. The server
+# now says so loudly — a boot banner plus a red /readyz — but the fix is here:
+#
+#   ANTHROPIC_API_KEY=sk-ant-...
+#
+# OPENAI_API_KEY or KIMI_API_KEY work as alternatives; any one is enough.
+ANTHROPIC_API_KEY=
 ENV
 fi
 
