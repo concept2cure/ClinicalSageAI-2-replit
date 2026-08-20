@@ -1244,6 +1244,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       memory: streamMemoryDiag
         ? {
             layerOutcomes: streamMemoryDiag.layerOutcomes,
+            workingMemoryMode: streamMemoryDiag.workingMemoryMode,
             semanticSearchMs: streamMemoryDiag.semanticSearchMs,
           }
         : undefined,
@@ -1257,6 +1258,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       memory: streamMemoryDiag
         ? {
             layerOutcomes: streamMemoryDiag.layerOutcomes,
+            workingMemoryMode: streamMemoryDiag.workingMemoryMode,
             semanticSearchMs: streamMemoryDiag.semanticSearchMs,
           }
         : undefined,
