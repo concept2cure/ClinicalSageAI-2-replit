@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-19T16:57:58.210Z",
+  "generatedAt": "2026-08-20T00:08:57.825Z",
   "git": {
-    "sha": "3747da3bbe0d8e5ed8d72fa0f185973ec5269446",
+    "sha": "6a33988efa3c0b640c66a4ac43ed2eb40fe411e7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2236,7 +2236,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 115190
+        "bytes": 115151
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
