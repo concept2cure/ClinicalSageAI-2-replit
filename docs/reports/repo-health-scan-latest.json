@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T20:44:11.902Z",
+  "generatedAt": "2026-08-20T22:00:45.708Z",
   "git": {
-    "sha": "0787fdb1a1f472bcf8f162c40f66e36f0123f0fc",
+    "sha": "61a9b4a77a18afb25d1e176966be1830d303bedd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2397,16 +2397,16 @@
         "lines": 2379
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2348
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2340
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2315
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
