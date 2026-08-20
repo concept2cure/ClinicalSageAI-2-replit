@@ -233,12 +233,12 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
     setInserting(true);
     try {
       const html = engineResultToHtml({
-        title: `${calc.label} — engine result`,
+        title: `${calc.title} — engine result`,
         rows: rows.map(([k, v]) => [k, v] as [string, unknown]),
         provenance,
       });
       const outcome = await saveToAuthoring({
-        title: `${calc.label} — engine result`,
+        title: `${calc.title} — engine result`,
         module: 'M5',
         code: `biostat.${calc.id}`,
         content: html,
