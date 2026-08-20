@@ -1355,6 +1355,19 @@ export const C2C_MIGRATION_FILES = [
   // before the sweep so the org-scoped tables get tenant policies.
   'migrations/0013_ana_intelligence_system.sql',
 
+  // ── The v2 module-catalog seed joins the durable path (found via BP-W1-5) ──
+  // db/migrations/20260810_reconcile_module_catalog.sql seeds/reconciles the
+  // v2 Apps catalog (available_modules) — including the maa-cockpit row the
+  // update below edits — and sat on NO apply path: not in this set, not in
+  // install-fresh's overlay, not gcc-named. Merged ≠ applied, the exact drift
+  // this list exists to close. Idempotent (ON CONFLICT (module_id) DO UPDATE).
+  'db/migrations/20260810_reconcile_module_catalog.sql',
+
+  // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
+  // Name + description only (adds Swissmedic to the modeled-agency list); no
+  // entitlement change. Idempotent UPDATE keyed on module_id.
+  'migrations/20260820c_catalog_maa_module1_regional.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

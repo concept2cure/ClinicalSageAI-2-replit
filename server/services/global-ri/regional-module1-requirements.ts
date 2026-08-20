@@ -9,20 +9,21 @@
  * which regional administrative documents are missing before submission.
  *
  * Markets: FDA (US), EMA (EU centralised), PMDA (JP), HEALTH_CANADA (CA),
- * MHRA (UK), TGA (AU), NMPA (CN). The component lists capture the major
- * mandatory administrative pieces; sponsor SOPs/agency checklists remain the
- * authority for edge cases (this is a readiness aid, honest-by-construction).
+ * MHRA (UK), TGA (AU), SWISSMEDIC (CH), NMPA (CN). The component lists capture
+ * the major mandatory administrative pieces; sponsor SOPs/agency checklists
+ * remain the authority for edge cases (this is a readiness aid,
+ * honest-by-construction).
  *
  * Pure / deterministic — no DB, no IO.
  *
  * Reference: FDA eCTD US regional + 21 CFR 314.50; EU NtA Vol 2B Module 1 +
  * Reg (EC) 726/2004; PMDA eCTD JP M1; Health Canada CTD Module 1; MHRA UK
- * regional; TGA AU regional; NMPA M4 (2019 No. 17).
+ * regional; TGA AU regional; Swissmedic CH eCTD M1; NMPA M4 (2019 No. 17).
  *
  * @module server/services/global-ri/regional-module1-requirements
  */
 
-export type RegulatoryMarket = 'FDA' | 'EMA' | 'PMDA' | 'HEALTH_CANADA' | 'MHRA' | 'TGA' | 'NMPA';
+export type RegulatoryMarket = 'FDA' | 'EMA' | 'PMDA' | 'HEALTH_CANADA' | 'MHRA' | 'TGA' | 'SWISSMEDIC' | 'NMPA';
 
 export interface Module1Component {
   /** Stable component code (e.g. 'us_356h'). */
@@ -76,6 +77,12 @@ export const REGIONAL_MODULE1_REQUIREMENTS: Record<RegulatoryMarket, Module1Comp
     { code: 'au_product_information', label: 'Australian Product Information (PI)', section: 'm1.3.1' },
     { code: 'au_cmi', label: 'Consumer Medicines Information (CMI)', section: 'm1.3.2' },
     { code: 'au_labels', label: 'Draft Australian labels', section: 'm1.3.3' },
+  ],
+  SWISSMEDIC: [
+    { code: 'ch_cover_letter', label: 'Cover letter', section: 'm1.0' },
+    { code: 'ch_application_form', label: 'Application form (Swissmedic Gesuchsformular)', section: 'm1.2' },
+    { code: 'ch_product_information', label: 'Product information — Fachinformation, Patienteninformation and labelling (DE/FR/IT)', section: 'm1.3' },
+    { code: 'ch_gmp', label: 'GMP evidence / establishment licence', section: 'm1.6' },
   ],
   NMPA: [
     { code: 'cn_application_form', label: 'Application form (申请表)', section: 'm1.2' },

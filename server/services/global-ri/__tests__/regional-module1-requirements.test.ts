@@ -11,7 +11,7 @@ import {
   type RegulatoryMarket,
 } from '../regional-module1-requirements';
 
-const ALL_MARKETS: RegulatoryMarket[] = ['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'MHRA', 'TGA', 'NMPA'];
+const ALL_MARKETS: RegulatoryMarket[] = ['FDA', 'EMA', 'PMDA', 'HEALTH_CANADA', 'MHRA', 'TGA', 'SWISSMEDIC', 'NMPA'];
 
 /** All required component codes for a market. */
 const allCodes = (m: RegulatoryMarket) => REGIONAL_MODULE1_REQUIREMENTS[m].map((c) => c.code);

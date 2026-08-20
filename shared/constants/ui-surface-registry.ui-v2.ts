@@ -340,7 +340,10 @@ export const UI_V2_SURFACES: UiSurface[] = [
   },
   {
     id: 'maa-cockpit',
-    label: 'MAA / non-US Module 1',
+    // BP-W1-5: was 'MAA / non-US Module 1'. Module 1 is regional by definition —
+    // "non-US Module 1" is not one thing — and the surface itself is already a
+    // per-agency checklist, so the name now says so.
+    label: 'MAA Module 1 (Regional)',
     navTier: 'project',
     layoutMode: 'maa-cockpit',
     group: 'submission',
@@ -352,7 +355,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Non-US marketing-application administrative module (eCTD Module 1) — region-accurate required-component checklist for EMA/PMDA/MHRA/TGA/HC/NMPA over the global-RI regional-module1-requirements engine.',
+    notes: 'Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.',
   },
   {
     id: 'device-workstream',
