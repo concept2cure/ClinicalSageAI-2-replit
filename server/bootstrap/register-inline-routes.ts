@@ -1158,8 +1158,18 @@ export function registerInlineSubmissionWorkflowRoutes({
   // nothing was populating). requireTenantContext authenticates, establishes the
   // AsyncLocalStorage tenant scope so those queries are permitted, and populates
   // req.user/req.tenantContext the handlers already read.
-  app.use('/api/mdx', requireTenantContext, mdxAnaDraftsRoutes);
-  app.use('/api/mdx', requireTenantContext, mdxVaultRoutes);
+  // The gate is bound to the two URL sub-trees these routers own, NOT to the
+  // shared /api/mdx prefix. `app.use('/api/mdx', requireTenantContext, router)`
+  // reads as "gate this router" and is not that: path-mounted middleware runs
+  // for every request matching the prefix, so it gated all 20+ routers stacked
+  // here. `/api/mdx/notifications/unread-count` — mounted below with no auth by
+  // design — answered 401 whenever tenant context was unresolved, which is the
+  // 500-then-401 alternation in the UAT report's BP-02. Proven with a real
+  // Express app before and after; see ledger L61.
+  app.use('/api/mdx/ana-drafts', requireTenantContext);
+  app.use('/api/mdx/vault', requireTenantContext);
+  app.use('/api/mdx', mdxAnaDraftsRoutes);
+  app.use('/api/mdx', mdxVaultRoutes);
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
