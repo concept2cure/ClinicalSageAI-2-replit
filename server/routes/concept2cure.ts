@@ -683,7 +683,7 @@ const SubmissionTypeEnum = z
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
 // Registry-driven instruction builder replaces hardcoded templates.
-// Works for ALL 158+ application types in the Global Document Registry.
+// Works for every application type in the Global Document Registry.
 import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
 
 function generateDefaultCustomInstructions(

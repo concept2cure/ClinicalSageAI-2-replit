@@ -37,8 +37,10 @@ describe('Filing Taxonomy — segment/category axis', () => {
     }
   });
 
-  it('defines all 18 categories, each bound to a segment', () => {
-    expect(FILING_CATEGORY_METADATA).toHaveLength(18);
+  it('defines all 21 categories, each bound to a segment', () => {
+    // 18 from the taxonomy reference + 3 absorbed with the BP-W1-2 catalog
+    // unification: device_clinical, ivd_market_auth_intl, regulatory_intelligence.
+    expect(FILING_CATEGORY_METADATA).toHaveLength(21);
     for (const c of FILING_CATEGORY_METADATA) {
       expect(SEGMENTS).toContain(c.segment);
       expect(c.title).toBeTruthy();
@@ -46,11 +48,11 @@ describe('Filing Taxonomy — segment/category axis', () => {
     }
   });
 
-  it('distributes 5/5/5/3 categories across the segments (document structure)', () => {
+  it('distributes 5/6/6/4 categories across the segments (document structure)', () => {
     expect(getCategoriesForSegment('pharma_biotech')).toHaveLength(5);
-    expect(getCategoriesForSegment('medical_devices')).toHaveLength(5);
-    expect(getCategoriesForSegment('diagnostics_ivd')).toHaveLength(5);
-    expect(getCategoriesForSegment('cross_cutting')).toHaveLength(3);
+    expect(getCategoriesForSegment('medical_devices')).toHaveLength(6);
+    expect(getCategoriesForSegment('diagnostics_ivd')).toHaveLength(6);
+    expect(getCategoriesForSegment('cross_cutting')).toHaveLength(4);
   });
 
   it('classifies ALL active filings on the segment axis', () => {

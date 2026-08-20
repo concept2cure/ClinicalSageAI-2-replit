@@ -129,7 +129,12 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   if (id.includes('pma')) return 'pma';
   if (id === 'cer' || pw === 'cer') return 'cer';
   if (pw === 'ide' || id === 'ide') return 'ide';
-  if (id.includes('jnda') || id.includes('jp_')) return 'jnda';
+  // 'jnda' is the JP MARKETING application only. The old `id.includes('jp_')`
+  // shortcut held while the registry's JP rows were named pmda_*/ctn_jp; the
+  // unified catalog's ids are lowercase canonical (jp_shonin, jp_ctn, …), so a
+  // prefix match would file a Japanese device approval as a J-NDA. The
+  // pathwayKey carries the intent now.
+  if (id.includes('jnda') || pw === 'jnda') return 'jnda';
   if (id.includes('bla') || pw === 'bla') return 'bla';
   if (id.includes('maa') || pw === 'maa') return 'maa';
   if (id.includes('anda') || pw === 'anda') return 'anda';
