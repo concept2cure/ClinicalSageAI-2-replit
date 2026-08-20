@@ -410,3 +410,75 @@ describe('the request-body helpers', () => {
     expect(body).toMatchObject({ targetN: 300 });
   });
 });
+
+describe('BP-W2-4 — a computed result files into a governed section, stamp intact', () => {
+  const FULL_HASH = 'a'.repeat(64);
+
+  it('Insert into document writes the tabulated result plus the FULL provenance hash', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/biostat/assurance') {
+        return ok({
+          assurance: 0.771146,
+          powerAtPriorMean: 0.872528,
+          provenance: {
+            engine: 'c2c-stats', engineVersion: '1.0.0', method: 'assurance-two-sample-means',
+            seed: 12345, inputsSha256: FULL_HASH, reproducible: true,
+          },
+        });
+      }
+      // The authoring routes answer with a top-level envelope, not {data}.
+      if (url === '/api/authoring/docs') {
+        return { ok: true, status: 200, json: async () => ({ document: { id: 'doc-1' } }) } as Response;
+      }
+      if (url === '/api/authoring/sections') {
+        return { ok: true, status: 200, json: async () => ({ section: { id: 'sec-1' } }) } as Response;
+      }
+      return ok({});
+    });
+
+    render(<BiostatWorkbench {...props()} />);
+    fill(/Prior mean effect/, '0.4');
+    fill(/^Prior SD/, '0.15');
+    fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Insert into document/ }));
+
+    await waitFor(() => {
+      const sec = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
+      expect(sec, 'no section write happened').toBeTruthy();
+      const content: string = sec![2].content;
+      // A real table — the export parser turns exactly this markup into
+      // w:tbl — carrying the numbers the user saw…
+      expect(content).toContain('<table>');
+      expect(content).toContain('0.771146');
+      // …and the stamp with the FULL hash, not the 12-char display truncation.
+      expect(content).toContain(`inputs ${FULL_HASH}`);
+      expect(content).toContain('reproducible');
+    });
+  });
+
+  it('a failed filing is toasted and nothing pretends to have saved', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/biostat/assurance') {
+        return ok({ assurance: 0.7, provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', method: 'assurance', seed: 1, inputsSha256: FULL_HASH, reproducible: true } });
+      }
+      if (url === '/api/authoring/docs') {
+        return { ok: false, status: 503, json: async () => ({ error: 'PENDING_STORE' }) } as any;
+      }
+      return ok({});
+    });
+
+    render(<BiostatWorkbench {...props()} />);
+    fill(/Prior mean effect/, '0.4');
+    fill(/^Prior SD/, '0.15');
+    fill(/^n per arm/, '120');
+    fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Insert into document/ }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Couldn’t create the document/)).toBeTruthy();
+    });
+    // No section write was attempted after the document create failed.
+    expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections')).toBeFalsy();
+  });
+});

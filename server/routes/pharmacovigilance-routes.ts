@@ -507,7 +507,19 @@ export default function createPharmacovigilanceRoutes(): Router {
         return res.status(400).json({ success: false, error: 'pairs[] (each { drug, event, counts:{a,b,c,d} }) is required' });
       }
       const screen = runSignalScreen(pairs);
-      return res.json({ success: true, data: screen });
+      // BP-W2-4: the biostat engines already stamp their responses; the PV
+      // screen did not, so its numbers could not be filed with a
+      // reproducibility claim. The stamp wraps the ROUTE response — the
+      // computation itself is untouched (it is pure and seedless, hence
+      // seed 0).
+      const { buildProvenance } = await import('../services/stats/computation-provenance');
+      const provenance = buildProvenance({
+        method: 'signal-disproportionality-screen',
+        seed: 0,
+        inputs: { pairs },
+        note: 'Deterministic — disproportionality statistics use no randomness.',
+      });
+      return res.json({ success: true, data: { ...screen, provenance } });
     } catch (error) {
       logger.error('signal screen error', { err: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Failed to run signal screen' });
