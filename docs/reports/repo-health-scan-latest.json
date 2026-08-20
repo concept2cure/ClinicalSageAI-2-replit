@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T07:16:03.816Z",
+  "generatedAt": "2026-08-20T07:23:04.995Z",
   "git": {
-    "sha": "c9515e0687bca7b8c5baa2a1184b6a6a04bf998c",
+    "sha": "d9ea1dac67078bccad7f85dc443a4088b44c64d9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2486,7 +2486,7 @@
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1900
+        "lines": 1917
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
