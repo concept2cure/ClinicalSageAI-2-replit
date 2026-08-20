@@ -341,6 +341,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       _externalIntelBlock: prefetchedStreamContext.externalIntelBlock,
       _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
       _sessionBriefingBlock: prefetchedStreamContext.sessionBriefingBlock,
+      _contradictionWatchBlock: prefetchedStreamContext.contradictionWatchBlock,
     });
     streamOrchestrationMs = Date.now() - streamPhaseStart;
 

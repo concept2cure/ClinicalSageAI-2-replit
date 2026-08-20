@@ -52,28 +52,35 @@ export function shouldEmbedWorkingMemory(flagOn: boolean, embeddingColumnPresent
 }
 
 /**
- * One-time probe: has the 20260602 migration added
- * conversation_working_memory.embedding? Cached `true` permanently once seen
- * (columns are never dropped), and re-probed while absent so enabling the
- * feature on a running server picks up a freshly-applied migration without a
- * restart. Runs only on the (infrequent) working-memory write path.
+ * One-time probe: has a migration added the given optional column to
+ * conversation_working_memory? (`embedding` — 20260602, `project_id` —
+ * 20260820.) Cached `true` permanently once seen (columns are never dropped),
+ * and re-probed while absent so applying the migration on a running server is
+ * picked up without a restart. Runs only on the (infrequent) working-memory
+ * write path.
  */
-let embeddingColumnConfirmed = false;
-async function embeddingColumnExists(): Promise<boolean> {
-  if (embeddingColumnConfirmed) return true;
+const confirmedColumns = new Set<string>();
+async function workingMemoryColumnExists(column: 'embedding' | 'project_id'): Promise<boolean> {
+  if (confirmedColumns.has(column)) return true;
   try {
     const { rows } = await pool.query(
       `SELECT 1 FROM information_schema.columns
-        WHERE table_name = 'conversation_working_memory' AND column_name = 'embedding' LIMIT 1`
+        WHERE table_name = 'conversation_working_memory' AND column_name = $1 LIMIT 1`,
+      [column]
     );
-    embeddingColumnConfirmed = rows.length > 0;
-    return embeddingColumnConfirmed;
+    if (rows.length > 0) confirmedColumns.add(column);
+    return rows.length > 0;
   } catch {
     return false;
   }
 }
 
+async function embeddingColumnExists(): Promise<boolean> {
+  return workingMemoryColumnExists('embedding');
+}
+
 let warnedMissingEmbeddingColumn = false;
+let warnedMissingProjectIdColumn = false;
 
 /**
  * Embed a working-memory summary to a pgvector literal, best-effort. Returns
@@ -161,6 +168,7 @@ async function insertWorkingMemoryRow(params: {
   summary: string;
   structured: WorkingMemory['structured'];
   messageCountAtGeneration: number;
+  projectId?: number | null;
 }): Promise<void> {
   const cols = [
     'conversation_id',
@@ -178,6 +186,30 @@ async function insertWorkingMemoryRow(params: {
     JSON.stringify(params.structured),
     params.messageCountAtGeneration,
   ];
+
+  // Project attribution (20260820 migration) makes thread-keyed rows eligible
+  // for nightly consolidation into project_memory_entries. Same posture as the
+  // embedding column below: when the column is missing, write WITHOUT it rather
+  // than lose the row, and warn once — an unattributed row is exactly as
+  // consolidatable as before the migration (not at all), so nothing regresses.
+  const projectId =
+    typeof params.projectId === 'number' && Number.isFinite(params.projectId) && params.projectId > 0
+      ? params.projectId
+      : null;
+  if (projectId !== null) {
+    if (await workingMemoryColumnExists('project_id')) {
+      cols.push('project_id');
+      values.push(projectId);
+    } else if (!warnedMissingProjectIdColumn) {
+      warnedMissingProjectIdColumn = true;
+      logger.warn(
+        'conversation_working_memory.project_id is missing — apply the ' +
+          '20260820_working_memory_project_id migration. Writing working memory without project ' +
+          'attribution for now; these rows cannot be consolidated into project memory until the ' +
+          'column exists.'
+      );
+    }
+  }
 
   // Semantic recall requires BOTH the flag and the embedding column (20260602
   // migration). When the flag is on but the column is absent, insert WITHOUT
@@ -445,7 +477,8 @@ export async function storeWorkingMemoryForThread(
   organizationId: number,
   summary: string,
   structured: WorkingMemory['structured'],
-  messageCountAtGeneration: number
+  messageCountAtGeneration: number,
+  projectId?: number | null
 ): Promise<void> {
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return;
   try {
@@ -456,6 +489,7 @@ export async function storeWorkingMemoryForThread(
       summary,
       structured,
       messageCountAtGeneration,
+      projectId: projectId ?? null,
     });
   } catch (error) {
     logger.warn(
@@ -479,8 +513,15 @@ export async function summarizeAndStoreWorkingMemoryForThread(params: {
   threadId: string;
   organizationId: number;
   messages: Array<{ role: string; content: string }>;
+  /**
+   * Project the thread belongs to, when the calling surface knows it. Recorded
+   * on the row so the nightly consolidation job can promote this thread's
+   * memory into project_memory_entries; omitted → the row is excluded from
+   * promotion (never guessed after the fact).
+   */
+  projectId?: number | null;
 }): Promise<void> {
-  const { threadId, organizationId, messages } = params;
+  const { threadId, organizationId, messages, projectId } = params;
   if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return;
   if (!Array.isArray(messages) || messages.length === 0) return;
 
@@ -556,6 +597,7 @@ export async function summarizeAndStoreWorkingMemoryForThread(params: {
       formattedSummary,
       structured,
       messages.length,
+      projectId ?? null,
     );
   } catch (error) {
     logger.warn(

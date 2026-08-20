@@ -347,6 +347,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         threadId,
         organizationId: Number(orgId),
         messages: writebackMessages,
+        // Recorded so the nightly consolidation job can promote this thread's
+        // memory into project_memory_entries; null when the stream had no
+        // project scope.
+        projectId: streamProjectId ? Number(streamProjectId) || null : null,
       });
     }
 

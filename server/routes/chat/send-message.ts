@@ -1140,6 +1140,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         threadId,
         organizationId: numericOrgId,
         messages: writebackMessages,
+        projectId: normalizedProjectId
+          ? parseInt(String(normalizedProjectId), 10) || null
+          : null,
       });
     }
 

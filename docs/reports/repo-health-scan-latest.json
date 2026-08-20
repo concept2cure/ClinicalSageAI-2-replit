@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T05:54:56.893Z",
+  "generatedAt": "2026-08-20T07:23:04.995Z",
   "git": {
-    "sha": "fef5132d0f467d721fae90a993328ff54f599633",
+    "sha": "d9ea1dac67078bccad7f85dc443a4088b44c64d9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2144,11 +2144,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 969043
+        "bytes": 969063
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 841220
+        "bytes": 841652
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2286,7 +2286,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19957
+        "lines": 19963
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2370,7 +2370,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2581
+        "lines": 2582
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
@@ -2486,7 +2486,7 @@
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1900
+        "lines": 1917
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
@@ -2622,7 +2622,7 @@
       },
       {
         "file": "server/routes/cortex-unified.ts",
-        "lines": 1531
+        "lines": 1533
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",

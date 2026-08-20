@@ -67,7 +67,9 @@ export function interceptLearnedPattern(input: LearnedPatternInterceptInput): vo
       return;
     }
 
-    recordPattern({ orgId: organizationId, domain, signalType, observation, confidence, observedAt });
+    // recordPattern is async (it hydrates persisted state before upserting) and
+    // never rejects — fire-and-forget keeps this off the primary pipeline.
+    void recordPattern({ orgId: organizationId, domain, signalType, observation, confidence, observedAt });
   } catch (err) {
     console.warn('[RIM] Learned-pattern interceptor failed (non-blocking):', err instanceof Error ? err.message : err);
   }
@@ -224,6 +226,8 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
     });
 
     // Capture individual critical compliance errors
+    const learnedDomain =
+      (input.submissionType ?? input.documentType ?? 'compliance').trim() || 'compliance';
     for (const issue of issues.filter(i => i.type === 'error')) {
       integrateSignal(ctx, {
         type: 'compliance_scan',
@@ -240,6 +244,19 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
           message: issue.message,
           issueType: issue.type,
         },
+      });
+
+      // The durable half of the learning loop: the signal above is volatile
+      // (in-memory, lost on restart); this records the aggregated, tenant-scoped
+      // pattern that recall_rim_patterns later surfaces. The observation is
+      // keyed on the RULE, not the message — messages embed document-specific
+      // fragments, and an identity that varies per document never aggregates,
+      // which is a pattern store full of single-occurrence noise.
+      interceptLearnedPattern({
+        organizationId,
+        domain: learnedDomain,
+        signalType: 'deficiency',
+        observation: `Compliance rule ${issue.rule} violated`,
       });
     }
   } catch (err) {
@@ -370,6 +387,21 @@ export function interceptFeedback(input: FeedbackInterceptInput): void {
         editDelta,
       },
     });
+
+    // Durable learning: a rejection or regeneration is the user telling AnA
+    // her output missed — the strongest ground-truth signal this layer gets.
+    // Aggregated per section (not per artifact — per-artifact identity never
+    // repeats, so it could never strengthen into a pattern) so repeated
+    // rejections in the same section become a rising-confidence pattern the
+    // read path can warn her with before she drafts there again.
+    if (feedbackType === 'rejected' || feedbackType === 'regenerated') {
+      interceptLearnedPattern({
+        organizationId,
+        domain: 'authoring_feedback',
+        signalType: 'rejection',
+        observation: `AnA output ${feedbackType} in section ${sectionCode ?? 'unspecified'}`,
+      });
+    }
 
     // Close the learning loop: tag the N most recent signals for this artifact
     // with a validation verdict so future RIM runs can weight signals by their

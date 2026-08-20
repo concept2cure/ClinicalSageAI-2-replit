@@ -38,6 +38,10 @@ import { buildSurfaceContextBlock } from './surface-context-block.js';
 import { loadRelationalOverlay } from './relational-profile-service.js';
 import { buildExternalIntelBlock } from '../external-intelligence/index.js';
 import { getDeadlineRadar, buildDeadlineRadarBlock } from '../ana/deadline-radar.js';
+import {
+  getOpenContradictionsForOrg,
+  buildContradictionWatchBlock,
+} from '../ana/contradiction-watch.js';
 import { getSessionBriefing } from '../ana/session-briefing.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -73,6 +77,15 @@ export interface PrefetchedRouteIntelligenceContext {
   deadlineRadarBlock: string;
   /** Session-start situational briefing block ('' except on the first turn). */
   sessionBriefingBlock: string;
+  /**
+   * Open contradiction-engine findings block ('' when none). Unlike the
+   * briefing/deadline pair this does NOT alternate by turn: an unresolved
+   * finding that blocks promotion is live on every turn until someone
+   * resolves it, and until this field existed the block had a builder, a
+   * docstring promising the chat context, and no caller — findings that
+   * blocked promotion were invisible in chat.
+   */
+  contradictionWatchBlock: string;
 }
 
 // ─── Authoring context builder ───────────────────────────────────────────────
@@ -202,7 +215,8 @@ export async function prefetchRouteIntelligenceContext(params: {
 
   // Independent of the project gate below: the relational overlay needs only
   // org + user, and the external-intel block is global (and process-cached).
-  const [relationalResult, externalIntelResult, deadlineResult] = await Promise.allSettled([
+  const [relationalResult, externalIntelResult, deadlineResult, contradictionResult] =
+    await Promise.allSettled([
     loadRelationalOverlay({
       organizationId: organizationId ?? null,
       userId: userId ?? null,
@@ -228,6 +242,19 @@ export async function prefetchRouteIntelligenceContext(params: {
           { kind: 'none' as const, block: '' }
         )
       : Promise.resolve({ kind: 'none' as const, block: '' }),
+    // Open contradiction findings — org-scoped, fail-soft, and deliberately NOT
+    // part of the briefing/deadline alternation above: a finding that blocks
+    // promotion is live on EVERY turn until resolved. The builder returns ''
+    // when nothing is open, so quiet orgs pay one capped query and no tokens.
+    organizationId && Number.isFinite(organizationId)
+      ? withTimeout<string>(
+          getOpenContradictionsForOrg(organizationId).then(items =>
+            buildContradictionWatchBlock(items)
+          ),
+          PROACTIVE_PREFETCH_TIMEOUT_MS,
+          ''
+        )
+      : Promise.resolve(''),
   ]);
   const relationalOverlay =
     relationalResult.status === 'fulfilled' ? relationalResult.value : '';
@@ -239,6 +266,8 @@ export async function prefetchRouteIntelligenceContext(params: {
       : { kind: 'none' as const, block: '' };
   const deadlineRadarBlock = proactive.kind === 'deadline' ? proactive.block : '';
   const sessionBriefingBlock = proactive.kind === 'briefing' ? proactive.block : '';
+  const contradictionWatchBlock =
+    contradictionResult.status === 'fulfilled' ? contradictionResult.value : '';
 
   if (
     projectIdNumber &&
@@ -311,6 +340,7 @@ export async function prefetchRouteIntelligenceContext(params: {
     externalIntelBlock,
     deadlineRadarBlock,
     sessionBriefingBlock,
+    contradictionWatchBlock,
   };
 }
 
@@ -412,6 +442,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     _externalIntelBlock: prefetchedContext.externalIntelBlock,
     _deadlineRadarBlock: prefetchedContext.deadlineRadarBlock,
     _sessionBriefingBlock: prefetchedContext.sessionBriefingBlock,
+    _contradictionWatchBlock: prefetchedContext.contradictionWatchBlock,
   };
   const orchestration = orchestrate(orchestratorInput);
 
