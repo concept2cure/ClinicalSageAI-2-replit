@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T05:37:20.405Z",
+  "generatedAt": "2026-08-20T05:54:56.893Z",
   "git": {
-    "sha": "01f325b8e5c2fc2f16eb617b2558dc5364067677",
+    "sha": "fef5132d0f467d721fae90a993328ff54f599633",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2558,7 +2558,7 @@
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1751
+        "lines": 1756
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
