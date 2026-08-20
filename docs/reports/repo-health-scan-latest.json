@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T05:54:56.893Z",
+  "generatedAt": "2026-08-20T06:30:11.200Z",
   "git": {
-    "sha": "fef5132d0f467d721fae90a993328ff54f599633",
+    "sha": "eb188eeb0d69d9f791978eb16ed467aa7115f52f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2370,7 +2370,7 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2581
+        "lines": 2582
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",

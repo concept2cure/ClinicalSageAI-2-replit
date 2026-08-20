@@ -49,6 +49,7 @@ import { extractWithGrobid, looksScholarlyDocument } from '../services/literatur
 import { indexGovernedDocument } from '../services/search/opensearchClient';
 import { searchConnectedRepositories } from '../services/integrations/connector-search.js';
 
+import { toBinaryBody } from '../utils/binary-body.js';
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
@@ -730,7 +731,7 @@ router.post('/upload', upload.array('files'), async (req: Request, res: Response
     const form = new FormData();
     form.append('project_id', projectId);
     for (const f of files) {
-      form.append('files', new Blob([f.buffer], { type: f.mimetype }), f.originalname);
+      form.append('files', new Blob([toBinaryBody(f.buffer)], { type: f.mimetype }), f.originalname);
     }
 
     const url = new URL('/knowledge/ingest-files', shadowUrl());
