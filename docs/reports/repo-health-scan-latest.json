@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T19:44:39.270Z",
+  "generatedAt": "2026-08-20T20:20:37.553Z",
   "git": {
-    "sha": "d64fc6b49227e4fc63ef58a21fcd814f83db05f0",
+    "sha": "91e0e5478d25d5ee5c88efc2bba7351e37c5acf8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2215,6 +2215,10 @@
         "bytes": 132966
       },
       {
+        "file": "shared/regulatory/global-document-registry.ts",
+        "bytes": 129044
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
       },
@@ -2225,10 +2229,6 @@
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 120988
-      },
-      {
-        "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 119046
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
