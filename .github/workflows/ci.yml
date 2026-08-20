@@ -461,10 +461,29 @@ jobs:
             docs/reports/orphan-endpoints-latest.md
           retention-days: 14
 
+      # ── The verification steps below run even when a guardrail above failed ──
+      #
+      # These three are the only steps in this job that read the TypeScript
+      # source, and until now they were steps 71-73 of 73. GitHub skips every
+      # remaining step once one fails, so ANY of the ~70 guardrails above
+      # silently disabled all three — and a skipped step is not red, it is
+      # simply absent from the summary.
+      #
+      # Observed, not theorised: on b3b2005 the tenant-isolation guardrail
+      # (step 29) failed, so ESLint and the typecheck gate never ran. The
+      # typecheck restoration that had just landed was invisible in CI, and
+      # every downstream job (`needs: lint`) skipped with it.
+      #
+      # `!cancelled()` — not `always()` — so a deliberately cancelled run still
+      # stops. The job still fails if a guardrail failed; these simply also
+      # report, so a green typecheck can never again be indistinguishable from
+      # one that was never executed.
       - name: Run ESLint
+        if: '!cancelled()'
         run: npm run lint
 
       - name: Run TypeScript check (no regression vs baseline)
+        if: '!cancelled()'
         # The .typecheck-baseline.json count has been ratcheted down to 0
         # (from ~2,598 when the server/routes/auth.ts parse error was fixed
         # and the pre-existing debt became visible), so this gate now fails
@@ -475,6 +494,7 @@ jobs:
         run: npm run ci:typecheck:no-regression
 
       - name: Run beta-slice TypeScript check
+        if: '!cancelled()'
         run: npm run beta:typecheck
 
   test:

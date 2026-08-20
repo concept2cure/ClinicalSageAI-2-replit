@@ -339,6 +339,10 @@ async function consolidateMemoryInner(
     }
     const placeholders = values.map((_, i) => `$${i + 1}`).concat('NOW()').join(', ');
 
+    // tenant-isolation-safe: the row IS org-scoped — `cols` starts
+    // project_profile_id, project_id, organization_id and `values` binds
+    // memory.organization_id; the scanner cannot see it because the column
+    // list is interpolated rather than written literally.
     await client.query(
       `INSERT INTO project_memory_entries (${cols.join(', ')}, created_at)
        VALUES (${placeholders})`,
