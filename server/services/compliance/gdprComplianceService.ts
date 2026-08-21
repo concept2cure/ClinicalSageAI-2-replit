@@ -162,103 +162,65 @@ export interface DataBreach {
 // Table-creation helpers (idempotent)
 // ---------------------------------------------------------------------------
 
-const ENSURE_TABLES_SQL = `
-  CREATE TABLE IF NOT EXISTS gdpr_processing_activities (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    purpose TEXT NOT NULL,
-    lawful_basis TEXT NOT NULL,
-    data_categories JSONB NOT NULL DEFAULT '[]',
-    data_subject_categories JSONB NOT NULL DEFAULT '[]',
-    recipients JSONB NOT NULL DEFAULT '[]',
-    third_country_transfers JSONB NOT NULL DEFAULT '[]',
-    retention_period TEXT NOT NULL,
-    technical_measures JSONB NOT NULL DEFAULT '[]',
-    organizational_measures JSONB NOT NULL DEFAULT '[]',
-    dpia_conducted BOOLEAN NOT NULL DEFAULT FALSE,
-    dpa_contact_info TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    organization_id TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS gdpr_dpias (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    processing_activity_id UUID NOT NULL REFERENCES gdpr_processing_activities(id),
-    description TEXT NOT NULL,
-    necessity_assessment TEXT NOT NULL,
-    risk_assessment JSONB NOT NULL,
-    dpo_opinion TEXT,
-    supervisory_authority_consulted BOOLEAN NOT NULL DEFAULT FALSE,
-    status TEXT NOT NULL DEFAULT 'draft',
-    approved_by TEXT,
-    approved_at TIMESTAMPTZ,
-    organization_id TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS gdpr_consent_records (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    data_subject_id TEXT NOT NULL,
-    purpose TEXT NOT NULL,
-    consent_given BOOLEAN NOT NULL,
-    consent_method TEXT NOT NULL,
-    consent_timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    withdrawal_timestamp TIMESTAMPTZ,
-    lawful_basis TEXT NOT NULL,
-    organization_id TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS gdpr_data_subject_requests (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    data_subject_id TEXT NOT NULL,
-    request_type TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'received',
-    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    response_deadline TIMESTAMPTZ NOT NULL,
-    completed_at TIMESTAMPTZ,
-    response_details TEXT,
-    organization_id TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS gdpr_transfer_assessments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    source_region TEXT NOT NULL,
-    destination_region TEXT NOT NULL,
-    transfer_mechanism TEXT NOT NULL,
-    legal_basis TEXT NOT NULL,
-    risk_level TEXT NOT NULL,
-    tia_completed BOOLEAN NOT NULL DEFAULT FALSE,
-    supplementary_measures JSONB NOT NULL DEFAULT '[]',
-    organization_id TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS gdpr_data_breaches (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    description TEXT NOT NULL,
-    data_affected TEXT NOT NULL,
-    subjects_affected INTEGER NOT NULL DEFAULT 0,
-    detected_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    reported_to_authority_at TIMESTAMPTZ,
-    reported_to_subjects_at TIMESTAMPTZ,
-    severity TEXT NOT NULL DEFAULT 'medium',
-    within_notification_window BOOLEAN NOT NULL DEFAULT TRUE,
-    remediation_steps JSONB NOT NULL DEFAULT '[]',
-    organization_id TEXT NOT NULL
-  );
-`;
+/**
+ * The six tables this service reads and writes. Owned by
+ * db/migrations/20260317_global_regulatory_compliance.sql — which creates
+ * exactly this set — NOT by this module.
+ */
+const GDPR_TABLES = [
+  'gdpr_processing_activities',
+  'gdpr_dpias',
+  'gdpr_consent_records',
+  'gdpr_data_subject_requests',
+  'gdpr_transfer_assessments',
+  'gdpr_data_breaches',
+] as const;
 
 /**
- * Ensures all GDPR-related tables exist. Called lazily before each
- * database operation so the service is safe to import at module level
- * without requiring migrations to have run first.
+ * Assert the GDPR tables are present. Verifies; it does not provision.
+ *
+ * ── Why this no longer runs DDL ─────────────────────────────────────────────
+ * It used to execute `CREATE TABLE IF NOT EXISTS` for all six tables before
+ * every operation, "so the service is safe to import without requiring
+ * migrations to have run first". Under the production runtime role that is not
+ * safe — it is fatal. PostgreSQL checks CREATE on the schema BEFORE the
+ * IF NOT EXISTS short-circuit, so the statement is refused even when the table
+ * already exists:
+ *
+ *   app_service=> CREATE TABLE IF NOT EXISTS gdpr_data_subject_requests (id uuid);
+ *   ERROR:  permission denied for schema public
+ *
+ * Verified against a provisioned database as the non-superuser app_service role
+ * (has_schema_privilege(current_user,'public','CREATE') = false). And the old
+ * helper re-raised, so all fourteen exported functions — every one of which
+ * awaits it first — would have thrown on their first call in production.
+ *
+ * The DDL was redundant as well as fatal:
+ * db/migrations/20260317_global_regulatory_compliance.sql creates exactly these
+ * six tables, and they are present on a provisioned schema.
+ *
+ * The check is cached after the first success: this runs before every
+ * operation, and a per-call round trip to the catalog for a fact that cannot
+ * change within a process is waste.
  */
+let tablesVerified = false;
+
 async function ensureTables(): Promise<void> {
-  try {
-    await pool.query(ENSURE_TABLES_SQL);
-  } catch (error) {
-    logger.error('Failed to ensure tables', { err: error instanceof Error ? error.message : String(error) });
-    throw error;
+  if (tablesVerified) return;
+  const { rows } = await pool.query(
+    `SELECT t.name FROM unnest($1::text[]) AS t(name)
+      WHERE to_regclass('public.' || t.name) IS NULL`,
+    [GDPR_TABLES as unknown as string[]],
+  );
+  if (rows.length > 0) {
+    const missing = rows.map((r: { name: string }) => r.name).join(', ');
+    throw new Error(
+      `GDPR compliance tables missing: ${missing}. They are created by ` +
+        'db/migrations/20260317_global_regulatory_compliance.sql; apply the ' +
+        'migration set (npm run db:migrate:deploy).',
+    );
   }
+  tablesVerified = true;
 }
 
 // ---------------------------------------------------------------------------
