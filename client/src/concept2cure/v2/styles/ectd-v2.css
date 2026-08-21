@@ -29,7 +29,7 @@
   .ec-topbtn{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:7px; border:1px solid transparent; background:transparent; font-size:12px; font-weight:500; color:var(--text-300); cursor:pointer; transition:background var(--dur), color var(--dur); }
   .ec-topbtn:hover{ background:var(--bg-100); color:var(--text-100); }
   .ec-topbtn svg{ width:15px; height:15px; }
-  .ec-topbtn.primary{ background:var(--accent-100); border-color:var(--accent-100); color:#fff; }
+  .ec-topbtn.primary{ background:var(--accent-strong); border-color:var(--accent-100); color:var(--accent-on-strong); }
   .ec-topbtn.primary:hover{ background:var(--accent-200); color:#fff; }
 
   /* eCTD tree */

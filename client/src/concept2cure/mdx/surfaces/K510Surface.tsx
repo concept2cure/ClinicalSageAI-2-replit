@@ -280,7 +280,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 <div className="s">
                   {selected.size} of {sourcePredicates.length} selected · ranked by similarity · check 2+ for side-by-side
                   {predicates.rows === null && !predicates.error && (
-                    <span style={{ marginLeft: 6, color: 'var(--text-400)' }}>· loading…</span>
+                    <span style={{ marginLeft: 6, color: 'var(--text-300)' }}>· loading…</span>
                   )}
                 </div>
               </div>
