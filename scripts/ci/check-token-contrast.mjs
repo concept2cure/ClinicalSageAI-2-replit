@@ -136,12 +136,17 @@ const SUBTLE_MAX = 2.5;
 const EXCEPTIONS = [
   { theme: 'light', fg: 'accent-main-100', bg: 'bg-000', min: 2.96,
     why: 'the brand orange itself; changing it is a design decision, not a lint fix' },
-  { theme: 'light', fg: 'text-400', bg: 'bg-000', min: 3.37,
-    why: 'muted-text ramp used in 59 files; passes AA for large text only' },
+  { theme: 'light', fg: 'text-400', bg: 'bg-000', min: 4.50,
+    why: 'muted-text ramp. Was 3.37 and excused as "passes AA for large text '
+      + 'only" — measurement killed that premise: of 1,756 failing elements, '
+      + 'ONE (0.1%) was large text, while this token alone caused 1,202 (68.5%). '
+      + 'Now #75736d, 4.50:1, an AA pass on bg-000. It stays an exception '
+      + 'because bg-100/bg-200 still fall short (4.13 / 3.84) — see '
+      + '`npm run visual-qa:contrast-why`' },
   { theme: 'light', fg: 'text-500', bg: 'bg-000', min: 2.11,
     why: 'faintest ramp step, 22 files; verify each use is disabled/decorative' },
-  { theme: 'dark', fg: 'text-400', bg: 'bg-000', min: 4.27,
-    why: 'same ramp, dark side' },
+  { theme: 'dark', fg: 'text-400', bg: 'bg-000', min: 4.50,
+    why: 'same ramp, dark side; #8e8c84, raised from 4.27 to an AA pass' },
   { theme: 'dark', fg: 'text-500', bg: 'bg-000', min: 2.76,
     why: 'same ramp, dark side' },
 

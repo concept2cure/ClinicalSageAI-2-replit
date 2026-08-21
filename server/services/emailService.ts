@@ -95,7 +95,7 @@ function buildResetEmailHtml(resetUrl: string): string {
         <!-- Footer -->
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
-            <p style="margin:0 0 8px;color:#8a8880;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+            <p style="margin:0 0 8px;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
               &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
             </p>
             <p style="margin:0;font-size:10px;">
@@ -180,14 +180,14 @@ function buildOtpEmailHtml(code: string): string {
               </td></tr>
             </table>
             <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
-            <p style="margin:0;color:#8a8880;font-size:12px;line-height:1.5;">
+            <p style="margin:0;color:#75736d;font-size:12px;line-height:1.5;">
               If you didn't try to sign in, someone may have entered your email by mistake. You can safely ignore this email.
             </p>
           </td>
         </tr>
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
-            <p style="margin:0;color:#8a8880;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+            <p style="margin:0;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
               &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
             </p>
           </td>
@@ -239,14 +239,14 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
               </td></tr>
             </table>
             <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
-            <p style="margin:0;color:#8a8880;font-size:12px;line-height:1.5;">
+            <p style="margin:0;color:#75736d;font-size:12px;line-height:1.5;">
               For questions, contact support@concept2cure.com.
             </p>
           </td>
         </tr>
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
-            <p style="margin:0 0 8px;color:#8a8880;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+            <p style="margin:0 0 8px;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
               &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
             </p>
             <p style="margin:0;font-size:10px;">
@@ -402,12 +402,12 @@ export async function sendInvitationEmail(
                 </a>
               </td></tr>
             </table>
-            <p style="margin:0;color:#8a8880;font-size:12px;">This invitation expires in 21 days.</p>
+            <p style="margin:0;color:#75736d;font-size:12px;">This invitation expires in 21 days.</p>
           </td>
         </tr>
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
-            <p style="margin:0;color:#8a8880;font-size:11px;">&copy; ${new Date().getFullYear()} Concept2Cure, Inc.</p>
+            <p style="margin:0;color:#75736d;font-size:11px;">&copy; ${new Date().getFullYear()} Concept2Cure, Inc.</p>
           </td>
         </tr>
       </table>
@@ -467,14 +467,14 @@ function buildReportDeliveryEmailHtml(payload: {
                 : ''
             }
             <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
-            <p style="margin:0;color:#8a8880;font-size:12px;line-height:1.5;">
+            <p style="margin:0;color:#75736d;font-size:12px;line-height:1.5;">
               This delivery event is auditable and may be used to improve correspondence intelligence, deficiency pattern detection, and future response guidance.
             </p>
           </td>
         </tr>
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
-            <p style="margin:0;color:#8a8880;font-size:11px;">
+            <p style="margin:0;color:#75736d;font-size:11px;">
               &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
             </p>
           </td>
