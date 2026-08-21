@@ -229,6 +229,7 @@
     "visual-qa:a11y": "node scripts/visual-qa/check-a11y-semantics.mjs",
     "visual-qa:contrast": "node scripts/visual-qa/check-contrast.mjs",
     "visual-qa:overflow": "node scripts/visual-qa/check-overflow.mjs",
+    "visual-qa:live": "node scripts/visual-qa/check-live-overflow.mjs",
     "visual-qa:contrast-why": "node scripts/visual-qa/contrast-breakdown.mjs",
     "ci:canonicalizers": "node scripts/ci/check-canonicalizers.mjs",
     "ci:canonicalizers:write-baseline": "node scripts/ci/check-canonicalizers.mjs --write-baseline",
