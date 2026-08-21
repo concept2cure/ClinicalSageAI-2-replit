@@ -18,13 +18,33 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. PREVENT UPDATE on audit_events
 -- ─────────────────────────────────────────────────────────────────────────────
+-- ── The RAISE that never raised (fixed 2026-08-21) ───────────────────────────
+-- Each guard below was written as
+--     RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: … are append-only'
+--     USING ERRCODE = …, MESSAGE = 'IMMUTABILITY_VIOLATION', DETAIL = …
+-- which PostgreSQL rejects: the message is given twice, once as the RAISE
+-- literal and once as USING MESSAGE. The trigger therefore aborted with
+--     ERROR: RAISE option already specified: MESSAGE   (SQLSTATE 42601)
+-- instead of the P0A0x IMMUTABILITY_VIOLATION it declares. The operation was
+-- still blocked, so the audit trail was never actually at risk — but the error
+-- code and message were both wrong, so every caller that matches on
+-- /IMMUTABILITY_VIOLATION/ (server/routes/audit-trail-routes.ts,
+-- server/startup/middleware.ts, and the esig/orchestrator contract tests) would
+-- have failed to recognise it. A guard whose failure path has never been
+-- executed is a guard nobody has tested; this one had not been.
+--
+-- The redundant `MESSAGE =` option is removed, keeping the RAISE literal as the
+-- message — the form the repo's other immutability triggers already use
+-- (20260730_esign_audit_db_level_immutability.sql,
+-- 20260730_orchestrator_run_ledger_hardening.sql). The literal is the more
+-- informative of the two, and it still matches /IMMUTABILITY_VIOLATION/.
+
 CREATE OR REPLACE FUNCTION enforce_audit_events_no_update()
 RETURNS TRIGGER AS $$
 BEGIN
   RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_events are append-only'
   USING
     ERRCODE = 'P0A01',
-    MESSAGE = 'IMMUTABILITY_VIOLATION',
     DETAIL  = 'UPDATE is not permitted on audit_events. '
               'Attempted to update row id=' || OLD.id || '. '
               '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
@@ -49,7 +69,6 @@ BEGIN
   RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_events are append-only'
   USING
     ERRCODE = 'P0A02',
-    MESSAGE = 'IMMUTABILITY_VIOLATION',
     DETAIL  = 'DELETE is not permitted on audit_events. '
               'Attempted to delete row id=' || OLD.id || '. '
               '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
@@ -74,7 +93,6 @@ BEGIN
   RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: audit_events are append-only'
   USING
     ERRCODE = 'P0A03',
-    MESSAGE = 'IMMUTABILITY_VIOLATION',
     DETAIL  = 'TRUNCATE is not permitted on audit_events. '
               '21 CFR Part 11 §11.10(e) requires immutable audit trails.',
     HINT    = 'This is a regulatory compliance control. Archive via partitioning instead of truncating.';

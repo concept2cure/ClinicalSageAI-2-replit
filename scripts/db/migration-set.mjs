@@ -849,6 +849,17 @@ export const C2C_MIGRATION_FILES = [
   // backfill leaves none behind). MUST precede the tenant-isolation sweep so the
   // new integer-org tables come under RLS.
   'migrations/20260729_unified_documents_provision.sql',
+  // The same trio's remaining three tables — module_documents,
+  // document_audit_logs, document_attachments — for the same reason. They are
+  // defined only in shared/schema/unified_workflow.ts, so push does not create
+  // them on a fresh install and no other raw file creates them at all. They were
+  // simply absent everywhere, which is why 0004_workflow_performance_indexes.sql
+  // (needs document_audit_logs) and 0007_tenant_isolation_fixes.sql (needs
+  // module_documents) were carried as expected install-time skips. Sorted 'b' so
+  // it follows _provision, whose unified_documents every table here references,
+  // and still precedes the tenant sweep — module_documents is integer-org-keyed
+  // and must come under RLS.
+  'migrations/20260729b_unified_workflow_companion_tables.sql',
   'migrations/20260730_workflow_doc_versions_org_id.sql',
   'migrations/20260731_workflow_doc_versions_org_not_null.sql',
 
