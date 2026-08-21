@@ -249,10 +249,15 @@ export interface Approval {
   refs?: CorrespondenceRef[];
 }
 
+/**
+ * The sample content a pathway's sub-tabs may fall back to in explicit sample
+ * mode. Correspondence only, deliberately: the `audit` and `approvals` bundles
+ * were a synthesized Part 11 hash-chain and a set of fabricated signed
+ * approvals, and they are gone (see data/pathwayTabs.ts). Their absence from
+ * this type is the enforcement — `sample={fixtures.audit}` no longer compiles.
+ */
 export interface PathwayTabsBundle {
-  audit: AuditEvent[];
   correspondence: Correspondence[];
-  approvals: Approval[];
   corrLabel: string;
 }
 

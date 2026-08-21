@@ -79,7 +79,7 @@ export interface UseEngineeringResult {
   refresh: () => void;
 }
 
-const IDLE = 'Select a program to load its engineering record.';
+const IDLE = 'The engineering record is held per program.';
 
 export function useEngineering(programId: string | null): UseEngineeringResult {
   const url = programId

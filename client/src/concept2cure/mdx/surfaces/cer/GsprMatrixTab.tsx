@@ -75,11 +75,11 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
         `${coverage.unmapped} unmapped · ${coverage.nonConformantCount} non-conformant · ` +
         (coverage.passesGate ? 'gate passes' : 'gate blocked')
       : liveAvailable
-        ? `${rows!.length} requirements in the ${regulation} catalog · coverage report unavailable${programId ? '' : ' — select a program'}`
+        ? `${rows!.length} requirements in the ${regulation} catalog · coverage report unavailable${programId ? '' : ' — coverage is reported per program'}`
         : error
           ? `GSPR backend unavailable — ${error}`
           : rows !== null
-            ? `The ${regulation} GSPR catalog is empty — seed the gspr_requirements table to enable this matrix`
+            ? `The ${regulation} GSPR catalog has not been loaded for this workspace`
             : 'Loading…';
 
   const visibleGroups = React.useMemo(() => {
