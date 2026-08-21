@@ -147,6 +147,8 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
        and records 'Response timed out' in `warnings`; with nothing carrying it
        across, a truncated answer read as a finished one. */
     warnings: m.warnings,
+    /* Dropped here like the rest: captured by the hook, rendered nowhere. */
+    interjections: m.interjections,
     /* Everything the turn reported about how it was answered. This used to be
        dropped here — useAnaChat captured the tools, rounds, lens and drafts,
        and the rail rendered a single line of body text — so AnA could run
@@ -449,6 +451,16 @@ export function V2App() {
           // Scopes composer uploads to the active project, so extracted text
           // lands in that project's memory — the same id useAnaChat uses.
           projectId={readShellProjectId()}
+          /* Mid-run control, finally reachable. The hook has exposed these
+             since run control shipped and the rail wired none of them, so a
+             human could watch AnA work a question the wrong way and had no way
+             to say so until she finished. */
+          streaming={anaChat.isStreaming}
+          runStatus={anaChat.runStatus}
+          onPause={() => void anaChat.pause()}
+          onResume={() => void anaChat.resume()}
+          onStop={() => anaChat.stop()}
+          onSteer={(m) => void anaChat.interject(m)}
         />
       )}
       <CmdK

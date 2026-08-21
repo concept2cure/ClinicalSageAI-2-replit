@@ -1476,6 +1476,33 @@
 }
 .c2c-v2 .ana-msg-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 
+/* Mid-run control — pause, steer, stop, while she is still working.
+   --text-300 not --text-400 for every text rule here (11-12px is small text,
+   SC 1.4.3 wants 4.5:1). The stop action is not tinted with --warning: stopping
+   is a deliberate choice, not a failure, and spending the alarm colour on it
+   would leave nothing louder for a real one. */
+.c2c-v2 .ana-runctl{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 8px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-100);}
+.c2c-v2 .ana-runctl-state{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);white-space:nowrap;}
+.c2c-v2 .ana-runctl-dot{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
+.c2c-v2 .ana-runctl-dot.is-paused{color:var(--text-300);animation:none;}
+.c2c-v2 .ana-runctl-dot svg{font-size:12px;}
+.c2c-v2 .ana-runctl-steer{display:flex;align-items:center;gap:6px;flex:1 1 180px;min-width:0;}
+.c2c-v2 .ana-runctl-input{flex:1 1 auto;min-width:0;font:inherit;font-size:12px;color:var(--text-100);background:var(--bg-000);border:1px solid var(--border-control);border-radius:var(--radius-sm);padding:5px 8px;}
+.c2c-v2 .ana-runctl-input::placeholder{color:var(--text-300);}
+.c2c-v2 .ana-runctl-input:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-runctl-actions{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.c2c-v2 .ana-runctl-btn,.c2c-v2 .ana-runctl-go{font:inherit;font-size:11.5px;color:var(--text-300);background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;white-space:nowrap;transition:color 200ms ease-out,border-color 200ms ease-out;}
+.c2c-v2 .ana-runctl-btn:hover,.c2c-v2 .ana-runctl-go:hover:not(:disabled){color:var(--text-100);border-color:var(--text-300);}
+.c2c-v2 .ana-runctl-go:disabled{opacity:.55;cursor:default;}
+.c2c-v2 .ana-runctl-btn:focus-visible,.c2c-v2 .ana-runctl-go:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+
+/* A steer the human sent and AnA took, shown under the answer it shaped. */
+.c2c-v2 .ana-steers{display:flex;flex-direction:column;gap:4px;margin-top:6px;}
+.c2c-v2 .ana-steer{display:flex;align-items:flex-start;gap:6px;font-size:11.5px;line-height:1.5;color:var(--text-300);}
+.c2c-v2 .ana-steer-ic{display:inline-flex;flex:none;margin-top:1px;color:var(--text-300);}
+.c2c-v2 .ana-steer-ic svg{font-size:12px;}
+.c2c-v2 .ana-steer-k{color:var(--text-100);font-weight:500;}
+
 /* A caveat about the answer above it — a degraded-mode signal, or a turn cut
    short. --warning carries meaning here, so it is never the ONLY carrier: the
    triangle glyph and the sentence both say so (colour-never-alone). */

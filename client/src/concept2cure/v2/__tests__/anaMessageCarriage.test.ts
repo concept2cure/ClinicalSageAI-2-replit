@@ -59,6 +59,14 @@ describe('adaptChatMessage — the turn reaches the rail intact', () => {
     expect(a.phase).toBe('Reading the results…');
   });
 
+  it('carries the steers AnA accepted', () => {
+    // Run control is reachable from the rail now; a steer the adapter drops is
+    // one the user cannot tell was taken, and the server has already written it
+    // into the decision lineage.
+    expect(adaptChatMessage({ ...turn, interjections: ['focus on EU MDR'] } as any).interjections)
+      .toEqual(['focus on EU MDR']);
+  });
+
   it('carries the governed action state', () => {
     const out = adaptChatMessage(turn);
 
