@@ -4,7 +4,7 @@
  * composer pattern. Self-contained: one surface, one composer, one
  * collapsible gateway dashboard. */
 
-const { useState, useRef } = React;
+var { useState, useRef } = React;
 
 const Icon = ({ d, size = 14 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"

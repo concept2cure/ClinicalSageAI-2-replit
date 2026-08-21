@@ -1,0 +1,223 @@
+name: Neon Provisioning Proof
+
+# Proves the from-scratch provisioning chain against a REAL Neon database on the
+# DIRECT host, which is the one environment the local `pgvector/pgvector` service
+# in ci.yml cannot stand in for.
+#
+# WHY IT IS SEPARATE FROM ci.yml. Neon-specific behaviour is what is under test:
+# the direct endpoint (drizzle.config.ts refuses a `*.pooler.*` admin URL because
+# DDL through the pooler is not session-stable), certificate verification on a
+# managed host (scripts/db/connection.mjs verifies rather than disabling), and
+# whether the admin role Neon hands out can actually CREATE ROLE for the
+# app_service split. None of that is exercised by a local Postgres.
+#
+# WHY IT DOES NOT RUN PER-PR. Each run creates and deletes a Neon branch. On
+# every pull request that is real quota for a property that changes rarely, so it
+# runs weekly and on demand. Run it by hand before any release that touches
+# scripts/db/ or migrations/.
+#
+# WHY A MISSING SECRET FAILS RATHER THAN SKIPS. A skipped job reports green, and
+# "Neon provisioning passes" would then be a claim nobody checked — the exact
+# failure mode scripts/db/install-fresh.mjs exists to prevent, one level up. A
+# fork PR cannot reach this workflow (no pull_request trigger), so the graceful
+# skip that c2c-agent.yml needs does not apply here.
+
+on:
+  schedule:
+    - cron: '0 4 * * 1' # Weekly, Monday 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # One Neon branch at a time; a second run would fight over the cluster-global
+  # roles that test:db provisions and drops.
+  group: neon-provisioning
+  cancel-in-progress: false
+
+jobs:
+  neon-provisioning:
+    name: Neon direct-host provisioning
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Resolve and require Neon credentials
+        id: creds
+        run: |
+          # The repo stores the project id BOTH ways: c2c-agent.yml reads
+          # secrets.NEON_PROJECT_ID, neon-preview-db.yml reads
+          # vars.NEON_PROJECT_ID. Accept either rather than pick a side and fail
+          # on whichever the repo actually has configured.
+          PROJECT_ID="${{ secrets.NEON_PROJECT_ID }}"
+          [ -n "$PROJECT_ID" ] || PROJECT_ID="${{ vars.NEON_PROJECT_ID }}"
+
+          missing=""
+          [ -n "${{ secrets.NEON_API_KEY }}" ] || missing="$missing NEON_API_KEY"
+          [ -n "$PROJECT_ID" ]                 || missing="$missing NEON_PROJECT_ID(secret or variable)"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing Neon credential(s):$missing — this job proves Neon provisioning and must not report green without a Neon to prove it against."
+            exit 1
+          fi
+          echo "project_id=$PROJECT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create an ephemeral Neon branch
+        id: neon
+        uses: neondatabase/create-branch-action@537d2f10d84e9de7cd2c2260ea176b5e4a8192d8 # v4
+        with:
+          project_id: ${{ steps.creds.outputs.project_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch_name: provisioning-proof-${{ github.run_id }}
+          # Empty is fine: the action then branches from the project default.
+          # Whatever the parent is, nothing here writes to its database — the
+          # next step creates a separate, blank one inside the branch.
+          parent: ${{ secrets.NEON_PROD_BRANCH }}
+
+      - name: Derive a BLANK database on the DIRECT host
+        id: target
+        env:
+          BRANCH_URL: ${{ steps.neon.outputs.db_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BRANCH_URL" ]; then
+            echo "::error::create-branch-action returned no db_url"; exit 1
+          fi
+
+          # The criterion is DIRECT-host provisioning. db_url is the direct
+          # endpoint and db_url_with_pooler is the pooled one; assert it rather
+          # than trust it, because a pooled URL would silently change what this
+          # job proves (and drizzle.config.ts would refuse it anyway).
+          case "$BRANCH_URL" in
+            *.pooler.*) echo "::error::db_url is a POOLER host; this job must use the direct endpoint"; exit 1 ;;
+          esac
+
+          # A Neon branch is a copy-on-write clone of its parent, so its database
+          # is NOT blank. Provisioning from scratch needs an empty one, so make
+          # one inside the branch. The branch is deleted at the end regardless.
+          SCRATCH="c2c_provisioning_proof_${{ github.run_id }}"
+          psql "$BRANCH_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$SCRATCH\""
+
+          # Swap the path, keep the host, user and query string exactly as Neon
+          # gave them (sslmode=require included — connection.mjs verifies the
+          # certificate for any non-local URL).
+          TARGET=$(BRANCH_URL="$BRANCH_URL" SCRATCH="$SCRATCH" node -e '
+            const u = new URL(process.env.BRANCH_URL);
+            u.pathname = "/" + process.env.SCRATCH;
+            console.log(u.toString());
+          ')
+          echo "::add-mask::$TARGET"
+          echo "url=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "host: $(echo "$BRANCH_URL" | sed -E 's#.*@([^/]+)/.*#\1#')"
+          echo "database: $SCRATCH"
+
+      - name: Assert the target really is blank
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: |
+          COUNT=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          echo "public tables before provisioning: $COUNT"
+          [ "$COUNT" = "0" ] || { echo "::error::Target is not a blank database ($COUNT tables)"; exit 1; }
+
+      - name: Mint an app_service password for this run
+        run: |
+          # Generated per run: setting it is what makes install-fresh provision
+          # the non-superuser runtime role and assert its posture in step 8.
+          # Without it the role split — the whole point of validating on a
+          # managed host, where the admin role is a superuser — is not exercised.
+          PW=$(openssl rand -hex 24)
+          # GITHUB_ENV values are NOT masked automatically; mask before exporting.
+          echo "::add-mask::$PW"
+          echo "APP_SERVICE_DB_PASSWORD=$PW" >> "$GITHUB_ENV"
+
+      - name: Deploy migration must REFUSE an unprovisioned database
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: |
+          set +e
+          node scripts/db/deploy-migrate.mjs
+          CODE=$?
+          set -e
+          echo "exit code: $CODE (expected 3)"
+          [ "$CODE" = "3" ] || { echo "::error::Expected exit 3 on a blank DB, got $CODE"; exit 1; }
+
+      - name: Provision from scratch
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: node scripts/db/install-fresh.mjs
+
+      - name: Provisioning is idempotent
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: node scripts/db/install-fresh.mjs
+
+      - name: Deploy migration, twice
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: |
+          node scripts/db/deploy-migrate.mjs
+          node scripts/db/deploy-migrate.mjs
+
+      - name: Ordered C2C migration set, twice
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+          APPLY_C2C_MIGRATIONS: 'true'
+        run: |
+          node scripts/db/apply-c2c-migrations.mjs
+          node scripts/db/apply-c2c-migrations.mjs
+
+      - name: Post-deploy invariants
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: node scripts/db/deploy-smoke-assert.mjs
+
+      - name: Readiness audit
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: node scripts/db/readiness-audit.mjs
+
+      - name: Every table the server queries exists
+        env:
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: npm run ci:tables-live-schema
+
+      - name: Tenant isolation under the non-superuser role
+        env:
+          NODE_ENV: test
+          RLS_ENFORCE: 'on'
+          DATABASE_URL: ${{ steps.target.outputs.url }}
+          TEST_DATABASE_URL: ${{ steps.target.outputs.url }}
+        run: npm run test:db
+
+      - name: Delete the Neon branch
+        # always(), so a failure above still returns the branch. Neon branches
+        # are billed and quota-limited; leaking one per failed run is how a
+        # project runs out of them. Same pinned action neon-preview-db.yml uses
+        # for its PR cleanup.
+        if: always()
+        continue-on-error: true
+        uses: neondatabase/delete-branch-action@4468d825d5a88ef4012f1705a82f02ec3072f776 # v3
+        with:
+          project_id: ${{ steps.creds.outputs.project_id }}
+          branch: provisioning-proof-${{ github.run_id }}
+          api_key: ${{ secrets.NEON_API_KEY }}

@@ -23,6 +23,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
+import { EmptyState } from '../../v2/dataConnect';
 import {
   ENG_DHF,
   ENG_ECRS,
@@ -264,20 +265,19 @@ export function EngineeringSurface({
           </span>
         </div>
         {blockers.length === 0 ? (
-          <div className="data-gate data-gate-dense" role="status">
-            <div className="data-gate-inner">
-              <span className="data-gate-icon" aria-hidden>
-                {I.checkCircle}
-              </span>
-              <div className="data-gate-copy">
-                <span className="data-gate-title">Nothing is blocking your documents</span>
-                <span className="data-gate-detail">
-                  No draft or blocked DHF sections, unverified risks, open change requests
-                  or non-conformances were found.
-                </span>
-              </div>
-            </div>
-          </div>
+          /* The last hand-rolled copy of the empty state `<DataGate>` used to
+             draw — it reproduced the gate's `data-gate-inner` / `-copy` /
+             `-title` / `-detail` markup by hand, and was the only thing still
+             holding that CSS alive after the gate converged onto
+             `<EmptyState>`. No `action`: this panel is empty because nothing is
+             wrong, and there is nothing for the user to fix. That is the one
+             case the contract's part 3 does not apply to. */
+          <EmptyState
+            icon={I.checkCircle}
+            title="Nothing is blocking your documents"
+            hint="No draft or blocked DHF sections, unverified risks, open change requests or non-conformances were found."
+            testId="eng-no-blockers"
+          />
         ) : (
           <div className="eng-blockers-feed">
             {blockers.slice(0, 8).map((b, i) => (
@@ -437,6 +437,7 @@ export function EngineeringSurface({
                   sample={ENG_RISKS}
                   dense
                   emptyHint="Add hazards to this program's ISO 14971 risk file to populate the matrix."
+              regulation="Serves the ISO 14971 risk management file"
                 >
                   {() => (
                     <div className="eng-risks">

@@ -55,7 +55,7 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
   const deviceName = (profile?.productName ?? profile?.name ?? '').trim();
 
   const summary = !programId
-    ? 'Select a program to load its post-market documentation'
+    ? 'Post-market documentation is held per program'
     : loading
       ? 'Loading post-market documentation status…'
       : error

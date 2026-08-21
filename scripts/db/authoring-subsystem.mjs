@@ -196,7 +196,7 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
 // session vars tenant_isolation_policy consults, applied to the PARENT document's
 // tenant_id. Kept as one constant so the doc-scoped and tenant policies converge.
 const PARENT_TENANT_MATCH = `(d.tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR d.tenant_id = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT)`;
+        OR d.tenant_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT)`;
 
 export const AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES = [
   {
@@ -264,13 +264,13 @@ function tenantPolicySql(table) {
       USING (
         NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
         OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR tenant_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+        OR tenant_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
       )
       WITH CHECK (
         NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
         OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR tenant_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+        OR tenant_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
       );
   `;

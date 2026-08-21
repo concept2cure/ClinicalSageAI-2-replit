@@ -297,7 +297,7 @@ export function GeneratorTab({
                     title={
                       program
                         ? `Export the CER as ${format.toUpperCase()} — assembled from your authored sections`
-                        : 'Select a program first'
+                        : `Export is available once a program is open`
                     }
                     onClick={() => void onExport(format)}
                   >

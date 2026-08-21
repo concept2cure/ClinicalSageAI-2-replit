@@ -31,8 +31,11 @@ import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import { getAction, getSegment, resolveSegmentId } from './registryModel';
+import { getAction, getSegment, resolveSegmentId,
+  effortForMode,
+} from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
+import { OPEN_PROGRAM_EVENT, OPEN_PROGRAM_SURFACE } from './programAction';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
 // cross-surface primitives: .sp*/.pj-card/.cm-pushbar in journey, and
@@ -147,6 +150,13 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
        and records 'Response timed out' in `warnings`; with nothing carrying it
        across, a truncated answer read as a finished one. */
     warnings: m.warnings,
+    /* Dropped here like the rest: captured by the hook, rendered nowhere. */
+    interjections: m.interjections,
+    /* The evidence verdict. Captured since the grounding pipeline shipped and
+       dropped here like the rest. */
+    evidence: m.evidence,
+    /* Built by E14, panelled by E14, carried by nobody until now. */
+    crlPremortem: m.crlPremortem,
     /* Everything the turn reported about how it was answered. This used to be
        dropped here — useAnaChat captured the tools, rounds, lens and drafts,
        and the rail rendered a single line of body text — so AnA could run
@@ -223,6 +233,15 @@ export function V2App() {
     screenName: activeId,
     projectId: readShellProjectId(),
     moduleContext: anaModuleContext,
+    /* The composer's mode picker, finally connected.
+       `prefs.anaMode` was stored and rendered beside the send button — "Ask ·
+       Maximum" — and never reached the request. `effort_level` decides how many
+       agentic rounds AnA gets (fast 4, balanced 6+2, thorough 10+4), her output
+       budget and her model tier, and the server defaults to `balanced` when it
+       is absent. So Deep research quietly bought 8 rounds instead of 14, and
+       Quick ask cost twice what it promised. Only Standard was right, and only
+       by coincidence. */
+    effortLevel: effortForMode(prefs.anaMode),
   });
   const { user } = useAuth();
   /* The onboarding welcome must reflect the TENANT's real client type
@@ -277,6 +296,25 @@ export function V2App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [prefs.anaOpen, ownsConversation]);
+
+  /* "Choose or create a program", from anywhere.
+
+     Almost every panel in the product is scoped to a program, so an empty one
+     usually has a single cure: open a program, or create the first. Surfaces
+     that hold `nav` call it directly (`openProgramAction(nav)`); this listener
+     serves the ones that cannot. `<DataGate>` renders the empty state for all
+     33 MDX panels and is a leaf with no `nav` and nothing to thread one
+     through — without this, its CTA would have no destination and the lane
+     would keep shipping the instruction-with-no-button the contract retires.
+
+     Same idiom as `c2c:open-collab`, and the destination is single-sourced
+     from ./programAction.ts so a panel and the shell cannot disagree about
+     where the action goes. */
+  React.useEffect(() => {
+    const onOpenProgram = () => nav(OPEN_PROGRAM_SURFACE);
+    window.addEventListener(OPEN_PROGRAM_EVENT, onOpenProgram);
+    return () => window.removeEventListener(OPEN_PROGRAM_EVENT, onOpenProgram);
+  }, [nav]);
 
   const surface: UiSurface | undefined = activeId === 'home' ? undefined : getSurface(activeId);
   const ctxSurface: UiSurface =
@@ -449,6 +487,16 @@ export function V2App() {
           // Scopes composer uploads to the active project, so extracted text
           // lands in that project's memory — the same id useAnaChat uses.
           projectId={readShellProjectId()}
+          /* Mid-run control, finally reachable. The hook has exposed these
+             since run control shipped and the rail wired none of them, so a
+             human could watch AnA work a question the wrong way and had no way
+             to say so until she finished. */
+          streaming={anaChat.isStreaming}
+          runStatus={anaChat.runStatus}
+          onPause={() => void anaChat.pause()}
+          onResume={() => void anaChat.resume()}
+          onStop={() => anaChat.stop()}
+          onSteer={(m) => void anaChat.interject(m)}
         />
       )}
       <CmdK

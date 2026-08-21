@@ -16,6 +16,7 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 import {
   PV_CAPA_STAGES,
   PV_PMS_PLAN,
@@ -26,7 +27,7 @@ import { usePostmarket } from '../hooks/usePostmarket';
 import { useTriageQueue } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
 import { readyRows } from '../lib/dataState';
-import { useSampleRows } from '../lib/useSampleRows';
+import { useSampleRows, useShowingSample } from '../lib/useSampleRows';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 import type { Program } from '../data/programs';
 
@@ -70,6 +71,12 @@ export function PostmarketSurface({
      sample only in explicit sample mode, honest empty otherwise. */
   const documents = useSampleRows<KitDocument>(null, PV_DOCUMENTS as unknown as readonly KitDocument[]);
   const frameworks = useSampleRows<KitDocFramework>(null, PV_DOC_FRAMEWORKS as unknown as readonly KitDocFramework[]);
+  /* The gate above was right and the marking was missing: these rows carry
+     `esigState: 'signed'` with a named signer and a date (data/postmarket-docs.ts),
+     so on the one screen where an example row is least acceptable the user was
+     given no way to tell. The live argument is `null` because no feed exists
+     yet, which makes this permanently either sample-or-empty. */
+  const documentsAreSample = useShowingSample(null);
 
   /* Critical or under-review signals not yet wrapped in a doc. */
   const triageQueue = React.useMemo(
@@ -187,6 +194,10 @@ export function PostmarketSurface({
         </div>
       </div>
 
+      <SampleDataBanner
+        show={documentsAreSample}
+        label="regulatory submissions in flight"
+      />
       <DocumentsPanel
         title="Regulatory submissions in flight"
         subtitle="Tap any row to open in the MDR / CAPA / FSCA editor · sparkle to draft the narrative with AnA"

@@ -15,17 +15,63 @@ describe('readPiiEnforcement', () => {
   });
 });
 
+/**
+ * The gate is ON by default as of 2026-08-13 — it must be turned OFF
+ * explicitly. The old contract was the inverse (opt-IN via exactly "1"/"true"),
+ * so these expectations invert deliberately rather than by accident.
+ */
 describe('isGroundednessEnforced', () => {
-  it('is true only for the exact "1"/"true" opt-in values', () => {
-    expect(isGroundednessEnforced({} as NodeJS.ProcessEnv)).toBe(false);
+  it('is enforced unless explicitly disabled', () => {
+    expect(isGroundednessEnforced({} as NodeJS.ProcessEnv)).toBe(true);
+    expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: '' } as NodeJS.ProcessEnv)).toBe(true);
     expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: '1' } as NodeJS.ProcessEnv)).toBe(true);
     expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: 'true' } as NodeJS.ProcessEnv)).toBe(true);
-    expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: 'yes' } as NodeJS.ProcessEnv)).toBe(false);
+    // An unrecognized value must not silently DISABLE a safety gate.
+    expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: 'yes' } as NodeJS.ProcessEnv)).toBe(true);
+    expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: '0' } as NodeJS.ProcessEnv)).toBe(false);
+    expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: 'false' } as NodeJS.ProcessEnv)).toBe(false);
+    expect(isGroundednessEnforced({ AI_GROUNDEDNESS_ENFORCE: 'off' } as NodeJS.ProcessEnv)).toBe(false);
+  });
+
+  /**
+   * ai-governance-posture.ts deliberately DUPLICATES
+   * groundedness.ts::groundednessEnforcedByDefault() rather than importing it,
+   * so the posture check stays a pure env-injectable function. Duplication
+   * drifts, and a drift here is not cosmetic — this module is what TELLS the
+   * operator what the posture is, so a stale mirror reports "off" on a
+   * deployment that is enforcing. Pin them to the same table.
+   */
+  it('agrees with groundedness.ts on every input — the two must not drift', async () => {
+    const { groundednessEnforcedByDefault } = await import(
+      '../../services/ai-governance/groundedness'
+    );
+    const saved = process.env.AI_GROUNDEDNESS_ENFORCE;
+    try {
+      for (const v of [undefined, '', '1', 'true', 'TRUE', 'yes', '0', 'false', 'off', 'OFF']) {
+        if (v === undefined) delete process.env.AI_GROUNDEDNESS_ENFORCE;
+        else process.env.AI_GROUNDEDNESS_ENFORCE = v;
+        const viaEnvArg = isGroundednessEnforced(
+          (v === undefined ? {} : { AI_GROUNDEDNESS_ENFORCE: v }) as NodeJS.ProcessEnv,
+        );
+        expect(groundednessEnforcedByDefault(), `disagreement on ${JSON.stringify(v)}`).toBe(
+          viaEnvArg,
+        );
+      }
+    } finally {
+      if (saved === undefined) delete process.env.AI_GROUNDEDNESS_ENFORCE;
+      else process.env.AI_GROUNDEDNESS_ENFORCE = saved;
+    }
   });
 });
 
 describe('assertAiGovernancePostureForProduction', () => {
-  const PROD_PERMISSIVE = { NODE_ENV: 'production' } as NodeJS.ProcessEnv; // both gates default-permissive
+  // Groundedness now defaults ON, so making BOTH gates permissive requires
+  // turning it off explicitly. Leaving this as bare { NODE_ENV: 'production' }
+  // would have quietly become a one-permissive-gate fixture.
+  const PROD_PERMISSIVE = {
+    NODE_ENV: 'production',
+    AI_GROUNDEDNESS_ENFORCE: '0',
+  } as NodeJS.ProcessEnv;
   const PROD_STRICT = {
     NODE_ENV: 'production',
     AI_PII_ENFORCEMENT: 'block',
@@ -38,7 +84,7 @@ describe('assertAiGovernancePostureForProduction', () => {
       { NODE_ENV: 'development' } as NodeJS.ProcessEnv,
       logger,
     );
-    expect(posture).toEqual({ piiEnforcement: 'audit', groundednessEnforced: false });
+    expect(posture).toEqual({ piiEnforcement: 'audit', groundednessEnforced: true });
     expect(logger.warn).not.toHaveBeenCalled();
   });
 
@@ -60,7 +106,7 @@ describe('assertAiGovernancePostureForProduction', () => {
   it('names only the permissive gate when the other is strict', () => {
     const logger = { warn: vi.fn() };
     assertAiGovernancePostureForProduction(
-      { NODE_ENV: 'production', AI_PII_ENFORCEMENT: 'block' } as NodeJS.ProcessEnv,
+      { NODE_ENV: 'production', AI_PII_ENFORCEMENT: 'block', AI_GROUNDEDNESS_ENFORCE: '0' } as NodeJS.ProcessEnv,
       logger,
     );
     const msg = logger.warn.mock.calls[0][0] as string;
@@ -75,7 +121,7 @@ describe('assertAiGovernancePostureForProduction', () => {
     // The advisory returns the resolved posture; enforcement is unchanged.
     const posture = assertAiGovernancePostureForProduction(PROD_PERMISSIVE, { warn: vi.fn() });
     expect(posture.piiEnforcement).toBe('audit');
-    expect(posture.groundednessEnforced).toBe(false);
+    expect(posture.groundednessEnforced).toBe(false); // PROD_PERMISSIVE turns it off explicitly
   });
 
   it('fails closed only when the operator opts in via AI_GOVERNANCE_REQUIRE_ENFORCE=true', () => {

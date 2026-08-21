@@ -108,9 +108,6 @@
     "document_approvals": [
       "server/services/unifiedTaskService.ts"
     ],
-    "document_audit_logs": [
-      "server/services/workflow/decision-lineage-view-assembler.ts"
-    ],
     "ectd_v4.submissions": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
     ],
@@ -235,9 +232,6 @@
     ],
     "regulatory_status": [
       "server/sage-plus-service.ts"
-    ],
-    "regulatory_twin_simulations": [
-      "server/routes/regulatory-digital-twin.ts"
     ],
     "risk_management_files": [
       "server/services/design-risk/design-risk.service.ts"

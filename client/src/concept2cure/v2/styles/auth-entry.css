@@ -120,5 +120,5 @@
 .c2c-v2 .cp-card-t{font-size:14px;font-weight:600;letter-spacing:-.01em;}
 .c2c-v2 .cp-card-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-400);}
 .c2c-v2 .cp-cols{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;}
-.c2c-v2 .cp-note{font-size:11.5px;color:var(--text-400);line-height:1.5;margin-top:14px;padding:12px 14px;border:1px solid var(--border);border-left:3px solid var(--accent-100);border-radius:var(--radius-md);background:var(--bg-050);}
+.c2c-v2 .cp-note{font-size:11.5px;color:var(--text-300);line-height:1.5;margin-top:14px;padding:12px 14px;border:1px solid var(--border);border-left:3px solid var(--accent-100);border-radius:var(--radius-md);background:var(--bg-050);}
 @media (max-width:820px){ .c2c-v2 .cp-grid{grid-template-columns:1fr;} .c2c-v2 .cp-cols{grid-template-columns:1fr;} }

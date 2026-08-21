@@ -14,6 +14,7 @@
 import * as React from 'react';
 import { I } from '../../icons';
 import { AUDIT_KIND_META, PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
+import { useVaultUpload } from '../../../v2/useVaultUpload';
 import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
@@ -699,14 +700,22 @@ export interface DossierDrawerProps {
    * editor says so rather than claiming a save.
    */
   documentId?: string | null;
+  /**
+   * The regulatory program this dossier belongs to. Required for attachments:
+   * every vault document is filed against a program, so without it the
+   * Attachments tab can accept a file but has nowhere to put it.
+   */
+  programId?: string | null;
   onClose: () => void;
   onOpenEditor?: OpenEditor;
 }
 
-export function DossierDrawer({ open, target, pathway, documentId = null, onClose, onOpenEditor }: DossierDrawerProps) {
+export function DossierDrawer({ open, target, pathway, documentId = null, programId = null, onClose, onOpenEditor }: DossierDrawerProps) {
   const safeTarget: SectionTarget = target || { id: '', label: '' };
   const [tab, setTab] = React.useState<'document' | 'attachments' | 'activity'>('document');
   const sectionSave = useSectionSave(documentId);
+  /* Attachments are real uploads now — see onAttach below. */
+  const attachUpload = useVaultUpload(programId);
 
   const { body, meta, attachments, folder } = useSection(pathway, safeTarget.id, safeTarget.label);
 
@@ -729,13 +738,36 @@ export function DossierDrawer({ open, target, pathway, documentId = null, onClos
     void sectionSave.save(String(safeTarget.id), next);
   };
 
-  const onAttach = (files: FileList) => {
+  /* THE ATTACHMENT PATH, and what it used to be.
+   *
+   * This read `f.name` and `f.size` off each File and passed them to
+   * `DossierStore.attachFile`, which wrote them into an in-memory Map. The
+   * BYTES WERE NEVER TOUCHED. A reviewer attaching the interference study a
+   * notified body had asked for saw it listed with their name and a timestamp,
+   * and nothing had left the browser — gone on reload, absent from the
+   * submission, and no way to tell from the screen.
+   *
+   * `attachFile` then pushed a `kind: 'attach'` event into the same array the
+   * Part 11 activity feed renders, so the dossier also showed an audit entry
+   * for the transfer that did not happen, attributed to a hardcoded
+   * 'Reg Lead'. That push is gone (see ../../store/dossierStore.ts); the real
+   * entry comes from the server, which writes it in the same transaction as
+   * the document.
+   *
+   * The file now goes to POST /api/vault/ingest, which hashes it, stores it and
+   * records who filed it. The local list is updated only for files the server
+   * actually accepted. */
+  const onAttach = async (files: FileList) => {
     if (!files || !files.length) return;
-    Array.from(files).forEach((f) => {
-      DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
-        name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
-      }, { who: 'You', role: 'Reg Lead' });
-    });
+    const outcome = await attachUpload.upload(files);
+    const accepted = new Set(outcome.succeeded);
+    Array.from(files)
+      .filter((f) => accepted.has(f.name))
+      .forEach((f) => {
+        DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
+          name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
+        }, { who: 'You', role: 'Reg Lead' });
+      });
   };
 
   const labelByPathway = pathway === 'k510' ? '510(k) dossier' : pathway === 'pma' ? 'PMA dossier' : pathway === 'ivd' ? 'IVD dossier' : 'CER dossier';
@@ -1017,8 +1049,13 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   // Live backend data (audit / correspondence / approvals); fixtures only in
   // explicit sample mode, honest empty states otherwise.
   const data = usePathwayTabsData(pathway, programId);
-  // Fixtures handed to DataGate's `sample` prop — rendered solely when the
-  // user has switched sample mode on, and always under the standing banner.
+  /* Sample content handed to DataGate's `sample` prop — rendered solely when
+     the user has switched sample mode on, and always under the standing banner.
+     CORRESPONDENCE ONLY. The audit and approvals bundles were a synthesized
+     Part 11 hash-chain and a set of fabricated signed approvals; they are
+     deleted, and `PathwayTabsBundle` no longer declares the fields, so a
+     `sample={fixtures.audit}` here is now a compile error rather than a
+     judgement call. Those two panes render live rows or an honest empty. */
   const fixtures = PATHWAY_TABS_DATA[pathway];
   // Async-seed the dossier store (Files tree + drawer) from the real backend.
   const dossier = useDossierHydration(pathway, programId);
@@ -1055,8 +1092,8 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.audit}
             label="audit events"
             onRetry={data.refresh.audit}
-            sample={fixtures.audit}
             emptyHint="Part 11 events are recorded here as sections are edited, reviewed, and signed."
+            regulation="Serves the 21 CFR Part 11 audit trail"
           >
             {(events) => <AuditTrailPane pathway={pathway} events={events} onOpenSection={openSection} />}
           </DataGate>
@@ -1079,8 +1116,8 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.approvals}
             label="approvals"
             onRetry={data.refresh.approvals}
-            sample={fixtures.approvals}
             emptyHint="Approval requests appear here when a section or submission is routed for e-signature."
+            regulation="Serves the 21 CFR 11.50 signature manifestation record"
           >
             {(approvals) => <ApprovalsPane approvals={approvals} onOpenSection={openSection} />}
           </DataGate>
@@ -1107,6 +1144,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
         target={drawerTarget}
         pathway={pathway}
         documentId={dossier.documentId}
+        programId={programId}
         onClose={() => setDrawerTarget(null)}
         onOpenEditor={onOpenEditor}
       />

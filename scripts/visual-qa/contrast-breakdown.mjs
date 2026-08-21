@@ -46,7 +46,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchChromium } from './playwright.mjs';
 import { builtStylesheets, styleTags } from './built-css.mjs';
-import { contrastRatio, parseRgbString, over } from '../lib/wcag.mjs';
+import { contrastRatio, parseRgbString, over, decorativeText } from '../lib/wcag.mjs';
 
 const TAG = '[visual-qa:contrast-why]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -70,7 +70,7 @@ const MEASURE = () => {
   const out = [];
   document.querySelectorAll('.c2c-v2 *').forEach((el) => {
     if (!(el instanceof HTMLElement)) return;
-    const own = Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim());
+    const own = Array.from(el.childNodes).filter((n) => n.nodeType === 3).map((n) => n.textContent.trim()).join(' ').trim();
     if (!own) return;
     const r = el.getBoundingClientRect();
     if (r.width <= 0 || r.height <= 0) return;
@@ -83,7 +83,7 @@ const MEASURE = () => {
       if (!bgEl) break;
       bg = getComputedStyle(bgEl).backgroundColor;
     }
-    out.push({ fg: cs.color, bg: bg || 'rgb(255, 255, 255)', size: parseFloat(cs.fontSize), weight: cs.fontWeight });
+    out.push({ fg: cs.color, bg: bg || 'rgb(255, 255, 255)', size: parseFloat(cs.fontSize), weight: cs.fontWeight, text: own });
   });
   return out;
 };
@@ -94,7 +94,7 @@ const p = await ctx.newPage();
 
 const pairs = new Map();
 const byFg = new Map();
-let total = 0, unmeasurable = 0, fails = 0, largeFails = 0;
+let total = 0, unmeasurable = 0, fails = 0, largeFails = 0, decorative = 0;
 
 for (const file of files) {
   await p.setContent(page(fs.readFileSync(path.join(MARKUP, file), 'utf8')), { waitUntil: 'load' });
@@ -108,6 +108,12 @@ for (const file of files) {
     const large = r.size >= 24 || (r.size >= 18.66 && Number(r.weight) >= 700);
     const need = large ? 3 : 4.5;
     if (ratio + 0.01 >= need) continue;
+    // Same SC 1.4.3 exemption the gate applies, from the same definition.
+    // Without it this tool counted lone separator glyphs — which are the
+    // lightest text on any surface — and reported them against whichever token
+    // happened to colour them, sending the reader to fix a token with no
+    // failures. It disagreed with `visual-qa:contrast` by about thirty.
+    if (decorativeText(r.text)) { decorative++; continue; }
     fails++;
     if (r.size >= 18.66) largeFails++;
     const key = `${r.fg} on ${r.bg} @${r.size}px`;
@@ -120,7 +126,7 @@ for (const file of files) {
 await ctx.close();
 await browser.close();
 
-console.log(`${TAG} ${files.length} fragments · ${total} text elements · ${unmeasurable} unmeasurable · ${fails} below AA`);
+console.log(`${TAG} ${files.length} fragments · ${total} text elements · ${unmeasurable} unmeasurable · ${decorative} decorative (SC 1.4.3) · ${fails} below AA`);
 
 console.log(`\n${TAG} worst pairs:`);
 const top = [...pairs.entries()].sort((a, b) => b[1].n - a[1].n).slice(0, 12);

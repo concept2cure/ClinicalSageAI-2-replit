@@ -28,6 +28,8 @@ import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -83,6 +85,23 @@ export interface AnaMessage {
    * without going looking for it.
    */
   warnings?: string[];
+  /**
+   * Steers the human sent mid-run that AnA accepted, in order. `useAnaChat`
+   * has recorded these since run control shipped and nothing rendered them:
+   * a steer you cannot see afterwards is one you cannot tell was taken.
+   */
+  interjections?: string[];
+  /**
+   * The server's evidence verdict for this answer. Emitted as `grounding_strip`
+   * and stored by `useAnaChat` since that pipeline shipped; nothing rendered it.
+   */
+  evidence?: AnaGroundingEvidence;
+  /**
+   * The CRL/RTF pre-mortem decision artifact, when the turn assembled one.
+   * `CrlPremortemPanel` has existed, and been tested, since E14 with ZERO mount
+   * sites — a board-ready artifact the product could not show anyone.
+   */
+  crlPremortem?: CrlPremortemArtifact;
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -422,6 +441,12 @@ export function AnaRail({
   onDismissWelcome,
   onNav,
   projectId = null,
+  runStatus = null,
+  streaming = false,
+  onPause,
+  onResume,
+  onStop,
+  onSteer,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -436,6 +461,20 @@ export function AnaRail({
    *  a conversation or dismissed it — the rail only renders it when present. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /**
+   * Mid-run control. The server has supported pause / resume / cancel /
+   * interject at the agentic loop's round boundaries since run control
+   * shipped, and `useAnaChat` exposes all four — the rail offered none of
+   * them, so a human watching AnA work a question the wrong way could only
+   * wait for her to finish. Absent handlers simply hide the affordance.
+   */
+  runStatus?: 'running' | 'paused' | 'cancelled' | null;
+  streaming?: boolean;
+  onPause?: () => void;
+  onResume?: () => void;
+  onStop?: () => void;
+  /** Splices a steer into the next round. Capped server-side at 2000 chars. */
+  onSteer?: (message: string) => void;
   /** Lets a welcome starter open a real surface (e.g. the upload flow). */
   onNav?: (id: string) => void;
   /** Scopes chat uploads so extracted text lands in that project's memory.
@@ -443,6 +482,10 @@ export function AnaRail({
   projectId?: string | number | null;
 }) {
   const [draft, setDraft] = React.useState('');
+  /* The steer field is separate from `draft` on purpose: a steer joins the
+     RUNNING turn, a draft starts the next one, and sharing one buffer would
+     make it ambiguous which a half-typed sentence was about to do. */
+  const [steer, setSteer] = React.useState('');
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
@@ -709,6 +752,33 @@ export function AnaRail({
                   Nothing rendered these, so a turn cut off mid-answer showed
                   its truncated text with no sign it was truncated: an
                   incomplete result presented as a complete one. */}
+              {/* The pre-mortem artifact, when this turn assembled one. No
+                  `onExport` is passed: the rail has no DOCX route for it, and
+                  the panel now disables that action and says where export lives
+                  rather than offering a button that does nothing. */}
+              {m.role === 'ana' && m.crlPremortem && (
+                <div className="ana-premortem">
+                  <CrlPremortemPanel artifact={m.crlPremortem} />
+                </div>
+              )}
+              {/* How well-grounded the answer is. Above the caveats and the
+                  work record on purpose: those say what went wrong and how she
+                  got here, this says how far the answer can be trusted, which
+                  is read first. */}
+              {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
+              {/* Steers AnA accepted for this turn. Shown because a steer you
+                  cannot see afterwards is one you cannot tell was taken — and
+                  the server has already written it into the decision lineage. */}
+              {m.role === 'ana' && Array.isArray(m.interjections) && m.interjections.length > 0 && (
+                <div className="ana-steers">
+                  {m.interjections.map((t, si) => (
+                    <div key={si} className="ana-steer">
+                      <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
+                      <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {m.role === 'ana' && Array.isArray(m.warnings) && m.warnings.length > 0 && (
                 <div className="ana-msg-warnings" role="note">
                   {m.warnings.map((w, wi) => (
@@ -792,6 +862,72 @@ export function AnaRail({
                   {a.label}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+        {/* Mid-run control.
+            Every action here lands at a ROUND BOUNDARY, not instantly — the
+            loop checks between rounds — so the copy says "after this step"
+            rather than implying the tool in flight stops dead. Steering is the
+            reason this exists: a reviewer watching AnA work a question the
+            wrong way could previously only wait for her to finish, while the
+            server has spliced steers into the next round, and recorded them in
+            the decision lineage, all along. */}
+        {streaming && (onPause || onStop || onSteer) && (
+          <div className="ana-runctl" role="group" aria-label="Control this run">
+            <span className="ana-runctl-state">
+              <span
+                className={runStatus === 'paused' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+                aria-hidden="true"
+              >
+                {runStatus === 'paused' ? I.pause : I.dot}
+              </span>
+              {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
+            </span>
+
+            {onSteer && (
+              <form
+                className="ana-runctl-steer"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const v = steer.trim();
+                  if (!v) return;
+                  onSteer(v);
+                  setSteer('');
+                }}
+              >
+                <input
+                  type="text"
+                  className="ana-runctl-input"
+                  value={steer}
+                  maxLength={2000}
+                  onChange={(e) => setSteer(e.target.value)}
+                  placeholder="Steer this run…"
+                  aria-label="Steer this run"
+                />
+                <button type="submit" className="ana-runctl-go" disabled={!steer.trim()}>
+                  Steer
+                </button>
+              </form>
+            )}
+
+            <div className="ana-runctl-actions">
+              {runStatus === 'paused'
+                ? onResume && (
+                    <button type="button" className="ana-runctl-btn" onClick={onResume}>
+                      Resume
+                    </button>
+                  )
+                : onPause && (
+                    <button type="button" className="ana-runctl-btn" onClick={onPause}>
+                      Pause
+                    </button>
+                  )}
+              {onStop && (
+                <button type="button" className="ana-runctl-btn is-stop" onClick={onStop}>
+                  Stop
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -121,6 +121,26 @@ export function parseRgbString(c) {
 }
 
 /**
+ * Is this string incidental or purely decorative text, exempt from SC 1.4.3?
+ *
+ * A lone separator glyph between metadata items — the `·` in "v2.0 · 88% · L.
+ * Tran" — conveys nothing a screen reader reads out, and counting them inflates
+ * a failure rate with characters no user needs to perceive.
+ *
+ * It lives here because two instruments were measuring the same product and
+ * disagreeing by thirty: `check-contrast.mjs` excluded these, and
+ * `contrast-breakdown.mjs` — the tool whose entire purpose is deciding what to
+ * fix — did not, so it attributed a block of failures to a token that had none.
+ * Two copies of a judgement call is two places for it to drift, and this one
+ * had already drifted before the second copy existed.
+ *
+ * @param {string} text an element's own trimmed text
+ */
+export function decorativeText(text) {
+  return /^[·•|/\\\-–—,:;()\[\]]{1,2}$/.test(text);
+}
+
+/**
  * This module's functions as source text, for injection into a browser page.
  *
  * Playwright serialises an evaluated function, so it cannot reference a Node
@@ -139,6 +159,7 @@ export function browserSource() {
     const contrastRatio = ${contrastRatio.toString()};
     const over = ${over.toString()};
     const parseRgbString = ${parseRgbString.toString()};
-    window.__wcag = { relativeLuminance, contrastRatio, over, parseRgbString };
+    const decorativeText = ${decorativeText.toString()};
+    window.__wcag = { relativeLuminance, contrastRatio, over, parseRgbString, decorativeText };
   })();`;
 }

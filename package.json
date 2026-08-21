@@ -76,6 +76,9 @@
     "ci:insert-columns-declared": "node scripts/ci/check-insert-columns-declared.mjs",
     "ci:insert-columns-declared:selftest": "node scripts/ci/check-insert-columns-declared.selftest.mjs",
     "ci:insert-columns-declared:write-baseline": "node scripts/ci/check-insert-columns-declared.mjs --write-baseline",
+    "ci:model-migration-agreement": "node scripts/ci/check-model-migration-agreement.mjs",
+    "ci:model-migration-agreement:list": "node scripts/ci/check-model-migration-agreement.mjs --list",
+    "ci:model-migration-agreement:write-baseline": "node scripts/ci/check-model-migration-agreement.mjs --write-baseline",
     "ci:duplicate-table-ddl": "node scripts/ci/check-duplicate-table-ddl.mjs",
     "ci:duplicate-table-ddl:strict": "node scripts/ci/check-duplicate-table-ddl.mjs --strict",
     "ci:duplicate-table-ddl:write-baseline": "node scripts/ci/check-duplicate-table-ddl.mjs --write-baseline",
@@ -106,6 +109,8 @@
     "ci:journey-migration-reachability": "node scripts/ci/check-journey-migration-reachability.mjs",
     "ci:migration-reachability": "node scripts/ci/check-migration-reachability.mjs",
     "ci:tables-live-schema": "node scripts/ci/check-tables-against-live-schema.mjs --strict-no-regression",
+    "ci:purge-coverage": "node scripts/ci/check-purge-coverage.mjs",
+    "ci:purge-coverage:write-baseline": "node scripts/ci/check-purge-coverage.mjs --write-baseline",
     "ci:migration-reachability:write-baseline": "node scripts/ci/check-migration-reachability.mjs --write-baseline",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
@@ -239,7 +244,14 @@
     "ci:orm-reachability:write-baseline": "node scripts/ci/check-orm-table-reachability.mjs --write-baseline",
     "ci:internals-in-copy": "node scripts/ci/check-internals-in-copy.mjs",
     "ci:internals-in-copy:list": "node scripts/ci/check-internals-in-copy.mjs --list",
-    "ci:internals-in-copy:write-baseline": "node scripts/ci/check-internals-in-copy.mjs --write-baseline"
+    "ci:internals-in-copy:write-baseline": "node scripts/ci/check-internals-in-copy.mjs --write-baseline",
+    "ci:empty-state-honesty": "node scripts/ci/check-empty-state-honesty.mjs",
+    "ci:empty-state-honesty:list": "node scripts/ci/check-empty-state-honesty.mjs --list",
+    "ci:empty-state-honesty:self-test": "node scripts/ci/check-empty-state-honesty.mjs --self-test",
+    "ci:empty-state-honesty:write-baseline": "node scripts/ci/check-empty-state-honesty.mjs --write-baseline",
+    "ci:dead-audit-catch": "node scripts/ci/check-dead-audit-catch.mjs",
+    "ci:dead-audit-catch:list": "node scripts/ci/check-dead-audit-catch.mjs --list",
+    "ci:dead-audit-catch:write-baseline": "node scripts/ci/check-dead-audit-catch.mjs --write-baseline"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

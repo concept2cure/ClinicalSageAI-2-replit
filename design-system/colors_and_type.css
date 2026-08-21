@@ -82,7 +82,33 @@
 
   --accent-main-000:         #faf0ec;
   --accent-main-100:         #d97757;   /* "Claude orange" — THE brand color */
-  --accent-main-200:         #c96442;   /* pressed / hover-darker */
+  /* Darkened 2026-08-21, the same hue-preserving lift the status colours took
+     on 2026-08-13 and the AnA blue took above. --accent-200 is not the brand
+     hue — it is the accent's TEXT weight, and 427 of its 551 uses are `color:`.
+     At #c96442 it measured 3.70:1 on bg-000 and 3.48:1 on --accent-000, which
+     made it the single largest remaining accessibility defect in the product:
+     371 failures, 75% of what was left.
+     The identity above is untouched. The brand is what you SEE — the rail
+     indicator, borders, progress fills, focus rings — and #d97757 still is it.
+     This is the value for what you READ. Ratios: bg-000 / bg-050 / bg-100 /
+     accent-000, so it clears every light surface rather than only the three it
+     happens to land on today. */
+  --accent-main-200:         #ad5132;   /* 4.98 / 4.76 / 4.52 / 4.69 */
+
+  /* The accent as a FILL that carries a label — primary buttons, active
+     segments, the current stage dot.
+     This is a third role and it needed its own token, because the other two
+     cannot do it. --accent-100 with white is 3.12:1. --accent-200 cannot serve
+     either: it inverts by theme (darker in light, LIGHTER in dark, for text on
+     the page), and a filled control needs a dark ground in light and a light
+     ground in dark — the opposite relationship. Using it as a fill puts white
+     on #e8916f in dark mode: 2.41:1.
+     So the fill flips by theme and the label flips with it. Both are stated
+     rather than derived, and all four combinations are measured: label on fill
+     against 4.5:1 (SC 1.4.3), fill against the page at 3:1 (SC 1.4.11, so the
+     control's own boundary is discernible). */
+  --accent-strong:           #ad5132;   /* label 5.25:1 · on page 4.98:1 */
+  --accent-on-strong:        #ffffff;
   --accent-main-900:         #431407;
 
   --accent-pro-000:          #ece9f7;
@@ -133,8 +159,14 @@
   --accent-glow:             rgba(217, 119, 87, 0.15);
 
   /* AnA assistant persona (muted blue, distinct from Claude orange) */
-  --ai:                      #6a9bcc;
-  --ai-hover:                #5585b3;
+  /* Darkened 2026-08-21 on the same grounds, and by the same method, as the
+     status colours below: hue-preserving minimum lift until the tone clears
+     4.5:1 as TEXT on the page and on its own badge fill. It was 2.35:1 on
+     --ai-muted — the worst pairing in the palette, and the one the 2026-08-13
+     pass missed because --info aliases it rather than declaring its own value.
+     Ratios: bg-000 / bg-100 / own muted fill. */
+  --ai:                      #366a9e;   /* 5.37 / 4.87 / 4.55 */
+  --ai-hover:                #2c5883;
   --ai-muted:                #dce8f3;
   --ai-glow:                 rgba(106, 155, 204, 0.10);
 
@@ -309,7 +341,16 @@
 
   --accent-main-000:         rgba(217, 119, 87, 0.12);
   --accent-main-100:         #d97757;
-  --accent-main-200:         #e8916f;   /* lighter in dark for legibility */
+  --accent-main-200:         #e8916f;   /* lighter in dark for legibility — 6.29:1 on bg-000 */
+
+  /* The filled-accent pair, inverted for dark. A #ad5132 ground would carry a
+     white label fine (5.25:1) but sits at 2.89:1 against the dark page, so the
+     control's own edge falls below SC 1.4.11's 3:1 and the button stops
+     reading as a button. Dark takes the light ground and the dark label
+     instead, which is the relationship dark mode already uses everywhere
+     else. */
+  --accent-strong:           #e8916f;   /* label 7.65:1 · on page 6.29:1 */
+  --accent-on-strong:        #141413;
 
   --canvas-elevated:         #30302e;
   --border-subtle:           #30302e;
@@ -347,6 +388,16 @@
   --warning-muted:           #4a3a1e;   /* badge 4.55:1 */
   --error:                   #ef7d7d;   /* 5.70 / 4.97 */
   --error-muted:             #4a2424;   /* badge 5.03:1 */
+
+  /* The AnA blue was the seventh tone that pass missed, for the same reason:
+     never declared for dark, so the light values cascaded onto the dark page.
+     The base needs no lift here — #6a9bcc measures 5.17 on bg-000 and 4.51 on
+     bg-100 — but it has to be declared, or the light-side darkening above
+     cascades in and takes it to 1.9:1. The fill does need darkening: --ai on a
+     near-white #dce8f3 badge is 2.35:1 on a dark page, which is the exact
+     failure the note above describes for the other six. */
+  --ai:                      #6a9bcc;   /* 5.17 / 4.51 */
+  --ai-muted:                #24313f;   /* badge 4.51:1 */
 }
 
 /* ═══════════════════════════════════════════════════════════

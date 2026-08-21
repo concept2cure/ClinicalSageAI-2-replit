@@ -59,6 +59,28 @@ describe('adaptChatMessage — the turn reaches the rail intact', () => {
     expect(a.phase).toBe('Reading the results…');
   });
 
+  it('carries the steers AnA accepted', () => {
+    // Run control is reachable from the rail now; a steer the adapter drops is
+    // one the user cannot tell was taken, and the server has already written it
+    // into the decision lineage.
+    expect(adaptChatMessage({ ...turn, interjections: ['focus on EU MDR'] } as any).interjections)
+      .toEqual(['focus on EU MDR']);
+  });
+
+  it('carries the evidence verdict', () => {
+    // The grounding rows can only render what the adapter hands over, and this
+    // field was captured for the whole life of the pipeline without one.
+    const ev = { validated: true, sourceCount: 6, groundedClaims: 11, weakClaims: 2, missingSupport: 0 };
+    expect(adaptChatMessage({ ...turn, evidence: ev } as any).evidence).toEqual(ev);
+  });
+
+  it('carries the pre-mortem artifact', () => {
+    // The panel is mounted now; an adapter that drops this makes it unreachable
+    // again, which is the state it shipped in for its whole life.
+    const art = { title: 'CRL/RTF pre-mortem', status: 'estimated' } as any;
+    expect(adaptChatMessage({ ...turn, crlPremortem: art } as any).crlPremortem).toEqual(art);
+  });
+
   it('carries the governed action state', () => {
     const out = adaptChatMessage(turn);
 

@@ -436,6 +436,7 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
               label="CLIA categorizations"
               onRetry={clia.refresh}
               emptyHint="Categorize this test's CLIA complexity to plan a waiver strategy."
+              regulation="Serves the CLIA complexity categorization"
             >
               {(rows) => (
                 <table className="tbl">

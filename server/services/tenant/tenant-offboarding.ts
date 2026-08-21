@@ -451,4 +451,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'document_chunks',
   'regulatory_programs',
   'file_uploads',
+  // Digital-twin simulations. Customer content: each row stores the tenant's
+  // submission_profile — submission type, therapeutic area, target agencies.
+  // It only became tenant-owned in db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql;
+  // before that the table had no organization_id at all, so a purge could not
+  // have reached it even in principle. A leaf (its only FK is to organizations,
+  // which a purge updates rather than deletes), so its position here is free.
+  'regulatory_twin_simulations',
 ]);

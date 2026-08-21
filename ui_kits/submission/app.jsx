@@ -2,7 +2,7 @@
 /* Submission Gateway — App composer. Reuses MDX chassis shell via the
    biopharma Rail/TopBar pattern; this kit ships a thin standalone shell
    so it runs on its own and proves the surface. */
-const { useState } = React;
+var { useState } = React;
 const I = window.SG_I;
 const USER = window.SG_USER;
 

@@ -1744,13 +1744,33 @@ identity/column models — no additive migration can express the difference):
 |---|---|---|
 | `ivdr_classifications` | schema.ts: `ivdr_class`, `companion_diagnostic`, … (ivd-completeness-routes) | 001_create_ivdr_tables: `classification CHAR(1)`, `is_cdx`, `rule_trace`, … (ivdr-routes — mounted) |
 | `risk_management_files` / `risk_items` / `risk_controls` | schema.ts: program-scoped integer-scored model (rbm risk-report, mdx-rbm) | 20260609_design_risk: RMF-anchored uuid model with `rmf_id` (design-risk.service — mounted) |
-| `unified_documents` | — (12 live server files query it; push does NOT create it) | only creator is `_consolidated/20250108_…`, which ALSO redefines `users`/`tenants` with TEXT keys — porting it would introduce rival core-identity definitions and a TEXT tenant column |
+| ~~`unified_documents`~~ | — | ~~only creator is `_consolidated/20250108_…`~~ — **RESOLVED**, see below |
 
 Interim disposition: install-fresh now carries an explicit per-file
 CLASSIFIED_OVERLAY_SKIPS map (each entry names its tracked resolution;
-anything unlisted still fails the install loudly). The five classified files
-are 0004/0007 (unified_documents), 0008 (superseded by the port),
-001_create_ivdr_tables and 20260609_design_risk.
+anything unlisted still fails the install loudly). Two files remain classified:
+0008 (superseded by the port) and 20260609_design_risk.
+
+**`unified_documents` — RESOLVED (2026-08-21).** It was never an
+irreconcilable shape collision; it was an absent creator. The family is now
+provisioned from the canonical Drizzle shape, in the root overlay, with no
+users/tenants redefinition and therefore no rival core-identity model:
+
+- `20260729_unified_documents_provision.sql` — `unified_documents`,
+  `workflow_document_versions`;
+- `20260729b_unified_workflow_companion_tables.sql` — `module_documents`,
+  `document_audit_logs`, `document_attachments`, the last three tables in the
+  family with no creator on any path (they were also the three entries in
+  `scripts/ci/orm-table-reachability-baseline.json` for
+  `shared/schema/unified_workflow.ts`, now ratcheted out).
+
+Both are on `C2C_MIGRATION_FILES`, so existing databases get them too.
+`0004_workflow_performance_indexes.sql` (needed `document_audit_logs`) and
+`0007_tenant_isolation_fixes.sql` (needed `module_documents`) consequently apply
+for real and are off the classified list; 0007 was additionally made idempotent,
+because it hard-failed on every re-run once 0021 had policied
+`unified_documents`. `_consolidated/20250108_…` stays unused — its TEXT-keyed
+`users`/`tenants` are still the reason not to port it.
 
 ### Required decisions
 
@@ -1759,10 +1779,13 @@ are 0004/0007 (unified_documents), 0008 (superseded by the port),
    tables and putting creators on the durable path restores them without
    touching the drizzle-side features) — or reconcile the models. Owner:
    whoever owns the IVD/design-controls roadmap.
-2. unified_documents: decide the ingestion subsystem's identity model
-   (TEXT-keyed tenants/users vs the integer core) — the same umbrella
-   decision as C-27's authoring TEXT-vs-UUID. Until then, 12 server files
-   query a table that exists on no fresh database.
+2. ~~unified_documents~~ — no longer blocking. The table and its whole family
+   now exist on every fresh and existing database (see the RESOLVED note
+   above), so no server file queries a missing relation. What remains is the
+   narrower, non-urgent question of whether the ingestion subsystem's
+   TEXT-keyed `users`/`tenants` model in `_consolidated/20250108_…` should ever
+   be reconciled with the integer core — the same umbrella decision as C-27's
+   authoring TEXT-vs-UUID. Nothing ships broken while it is open.
 
 ---
 

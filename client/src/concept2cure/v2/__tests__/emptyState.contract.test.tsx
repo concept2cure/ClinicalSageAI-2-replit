@@ -27,7 +27,7 @@ import path from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EmptyState } from '../dataConnect';
-import { openProgramAction } from '../surfaces/cmcShared';
+import { OPEN_PROGRAM_EVENT, openProgramAction } from '../programAction';
 
 describe('EmptyState — the four-part contract', () => {
   it('renders all four parts, and the action fires', () => {
@@ -73,21 +73,40 @@ describe('EmptyState — the four-part contract', () => {
     expect(onAct).not.toHaveBeenCalled();
   });
 
-  it('openProgramAction is real navigation, or honestly absent', () => {
+  it('openProgramAction navigates when it holds nav, and reaches the shell when it does not', () => {
     const nav = vi.fn();
     const action = openProgramAction(nav);
-    expect(action?.label).toBe('Choose or create a program');
-    action?.onAct();
+    expect(action.label).toBe('Choose or create a program');
+    action.onAct();
     expect(nav).toHaveBeenCalledWith('mission-control');
-    /* No nav threaded → no CTA, rather than a dead button. */
-    expect(openProgramAction(undefined)).toBeUndefined();
+
+    /* No nav threaded → the event channel, NOT `undefined`.
+     *
+     * This function used to live in `surfaces/cmcShared` and return `undefined`
+     * here, which was right while a `nav` prop was the only way to navigate: a
+     * button that could not move you is the passive instruction in a costume.
+     * It stopped being right when the MDX lane came into scope. There the empty
+     * state is rendered by `<DataGate>` — a leaf with no `nav` and nothing to
+     * thread one through — so EVERY one of its 33 panels took the absent branch
+     * and kept shipping "Select a program to load this panel." with nothing to
+     * click. `V2App` listens for this event and navigates to the same place. */
+    const heard = vi.fn();
+    window.addEventListener(OPEN_PROGRAM_EVENT, heard);
+    try {
+      openProgramAction().onAct();
+      expect(heard).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(OPEN_PROGRAM_EVENT, heard);
+    }
   });
 });
 
 describe('the passive instruction is retired from the converted surfaces', () => {
   const surfacesDir = path.resolve(__dirname, '..', 'surfaces');
-  /* The three biopharma call sites the wave converted. mdx (device-wave)
-     surfaces are out of this wave's scope and deliberately not asserted. */
+  /* The three biopharma call sites the first wave converted. The MDX lane is
+     asserted separately, in mdx/components/__tests__/dataGateContract.test.tsx —
+     it reaches the contract through `<DataGate>` rather than per-surface, so a
+     source scan of `surfaces/` would not see it. */
   const CONVERTED = ['CmcModule3Build.tsx', 'CmcQuality.tsx', 'CmcModule.tsx'];
 
   for (const file of CONVERTED) {

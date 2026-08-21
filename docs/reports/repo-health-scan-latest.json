@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-21T01:51:13.808Z",
+  "generatedAt": "2026-08-21T22:37:09.909Z",
   "git": {
-    "sha": "a8350bbe36dfad04753c845f48570e1bab1f8494",
+    "sha": "e0f4b3fabdbe52cd17d01b597cdeff1009ce0cbd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2164,7 +2164,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 242992
+        "bytes": 253129
       },
       {
         "file": "server/statistics-service.ts",
@@ -2224,7 +2224,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126719
+        "bytes": 126752
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2310,7 +2310,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6183
+        "lines": 6380
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2393,12 +2393,12 @@
         "lines": 2419
       },
       {
-        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
-        "lines": 2379
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2391
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2348
+        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
+        "lines": 2379
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2497,6 +2497,10 @@
         "lines": 1917
       },
       {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1894
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
       },
@@ -2523,10 +2527,6 @@
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
-      },
-      {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1843
       },
       {
         "file": "server/services/vaccine/vaccine-knowledge.ts",
