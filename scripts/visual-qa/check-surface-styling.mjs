@@ -144,39 +144,77 @@ fs.mkdirSync(SHOTS, { recursive: true });
 const browser = await launchChromium({ args: ['--no-sandbox', '--allow-file-access-from-files'] });
 const ctx = await browser.newContext({ viewport: VIEWPORT });
 
-/*
- * Prove the harness before trusting a word it says.
+/**
+ * One probe per stylesheet this run can load, each asserting a declaration that
+ * exists in that sheet and nowhere else.
  *
- * The first version of this script reported all 24 surfaces unstyled because it
- * could not load any CSS at all. A checker that cannot distinguish "everything
- * is broken" from "I am broken" is worse than no checker, so it now demonstrates
- * on a known-styled element that the cascade is reaching the page, and refuses
- * to report anything if it is not.
+ * Prove the harness before trusting a word it says. The first version of this
+ * script reported all 24 surfaces unstyled because it could not load any CSS at
+ * all, and a checker that cannot distinguish "everything is broken" from "I am
+ * broken" is worse than no checker.
+ *
+ * The self-check that followed had the same shape of fault it was written to
+ * catch. It probed `.rc-ana` for `display:flex`, on the stated belief that
+ * "V2App's bundle carries it". V2App's bundle does not: `insights-v2.css` is
+ * imported by `Insights.tsx`, which Vite splits into its own lazily-loaded
+ * chunk, so the rule ships in `Insights-*.css` and the probe asked two loaded
+ * sheets about a third. It computed to `block`, the check exited 2 before
+ * measuring a single surface, and because `npm run visual-qa` chains on `&&`,
+ * the a11y, contrast and overflow steps behind it never ran either.
+ *
+ * A self-check for the wrong sheet fails exactly like a broken cascade, so the
+ * failure it was designed to make legible is the one it made unreadable. One
+ * probe per sheet is what distinguishes them: a missing sheet now names itself.
  */
+const PROBES = [
+  // Tailwind utility — only the entry bundle carries these.
+  { css: ENTRY_CSS, label: 'index (tokens + Tailwind)',
+    markup: '<div class="pointer-events-none"></div>', sel: '.pointer-events-none',
+    prop: 'pointerEvents', want: 'none' },
+  // The shell grid. `.c2c-v2.shell` is the wrapper `page()` builds, and its
+  // columns resolve through --rail/--ana, so this covers the tokens too.
+  { css: V2_CSS, label: 'V2App (shell + v2 surfaces)',
+    markup: '', sel: '.c2c-v2.shell',
+    prop: 'gridTemplateColumns', want: '264px', startsWith: true },
+  { css: MDX_CSS, label: 'MdxSurfaceHost',
+    markup: '<div class="mdx-shell"><div class="page-inner"></div></div>', sel: '.page-inner',
+    prop: 'maxWidth', want: '1280px' },
+  { css: PDEV_CSS, label: 'PdevRoute',
+    markup: '<div class="pdev-shell"></div>', sel: '.pdev-shell',
+    prop: 'display', want: 'grid' },
+];
+
 {
-  const probe = await ctx.newPage();
-  await probe.setContent(
-    page('<div class="rc-ana"><span class="rc-ana-mark">*</span></div>', [ENTRY_CSS, V2_CSS]),
-    { waitUntil: 'load' },
-  );
-  const ok = await probe.evaluate(() => {
-    const sheets = document.styleSheets.length;
-    let rules = 0;
-    try { for (const s of document.styleSheets) rules += s.cssRules.length; } catch { rules = -1; }
-    // `.rc-ana` is `display:flex` in insights-v2.css, which V2App's bundle carries.
-    const display = getComputedStyle(document.querySelector('.rc-ana')).display;
-    return { sheets, rules, display };
-  });
-  await probe.close();
-  if (ok.rules <= 0 || ok.display !== 'flex') {
+  const failed = [];
+  let total = 0;
+  for (const pr of PROBES) {
+    const probe = await ctx.newPage();
+    await probe.setContent(page(pr.markup, [pr.css]), { waitUntil: 'load' });
+    const got = await probe.evaluate(({ sel, prop }) => {
+      let rules = 0;
+      try { for (const s of document.styleSheets) rules += s.cssRules.length; } catch { rules = -1; }
+      const el = document.querySelector(sel);
+      return { rules, value: el ? getComputedStyle(el)[prop] : '(element not found)' };
+    }, { sel: pr.sel, prop: pr.prop });
+    await probe.close();
+    total += Math.max(got.rules, 0);
+    const ok = got.rules > 0 &&
+      (pr.startsWith ? String(got.value).startsWith(pr.want) : got.value === pr.want);
+    if (!ok) failed.push({ ...pr, ...got });
+  }
+
+  if (failed.length > 0) {
     console.error(`${TAG} SELF-CHECK FAILED — the harness is not applying CSS, so its verdict would be meaningless.`);
-    console.error(`${TAG}   stylesheets=${ok.sheets} rules=${ok.rules} .rc-ana display=${ok.display} (expected flex)`);
-    console.error(`${TAG} Fix the harness before reading anything below. Did the built CSS move, or did`);
-    console.error(`${TAG} .rc-ana stop being display:flex? Either way this is a harness bug, not a surface bug.`);
+    for (const f of failed) {
+      console.error(`${TAG}   ${f.label}: ${f.sel} ${f.prop}=${f.value} (expected ${f.startsWith ? f.want + '…' : f.want}), rules=${f.rules}`);
+    }
+    console.error(`${TAG} Fix the harness before reading anything below. Each line names one bundle:`);
+    console.error(`${TAG} either that sheet moved or stopped being built, or the rule it is probed by`);
+    console.error(`${TAG} changed. This is a harness bug, not a surface bug.`);
     await browser.close();
     process.exit(2);
   }
-  console.log(`${TAG} self-check OK — ${ok.rules} rules applied, .rc-ana computes to ${ok.display}.`);
+  console.log(`${TAG} self-check OK — ${PROBES.length} bundles applying CSS, ${total} rules in total.`);
 }
 
 const failures = [];

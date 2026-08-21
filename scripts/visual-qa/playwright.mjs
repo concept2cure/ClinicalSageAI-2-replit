@@ -62,8 +62,7 @@ export async function loadChromium() {
     if (!fs.existsSync(explicit)) {
       throw new Error(`PLAYWRIGHT_CORE points at a path that does not exist: ${explicit}`);
     }
-    const mod = await import(pathToFileURL(explicit).href);
-    return mod.chromium;
+    return chromiumOf(await import(pathToFileURL(explicit).href));
   }
 
   const require = createRequire(import.meta.url);
@@ -74,11 +73,32 @@ export async function loadChromium() {
     } catch {
       continue; // not installed here — try the next candidate
     }
-    const mod = await import(pathToFileURL(entry).href);
-    if (mod.chromium) return mod.chromium;
+    const chromium = chromiumOf(await import(pathToFileURL(entry).href));
+    if (chromium) return chromium;
   }
 
   throw new Error(HELP);
+}
+
+/**
+ * Pull `chromium` off a Playwright module, from either place interop can put it.
+ *
+ * `playwright-core`'s entry point is CommonJS, so importing it from ESM hands
+ * back whatever `cjs-module-lexer` could statically prove — and on the current
+ * release that analysis does not reach `chromium`. The named export is
+ * `undefined` while `mod.default.chromium` is the real launcher.
+ *
+ * Reading only `mod.chromium` therefore made `npm i --no-save playwright-core`
+ * — this file's own documented instruction, printed in its own error message —
+ * resolve the package, find nothing on it, fall through the loop, and report
+ * "Playwright is not installed". Following the fix advice reproduced the fault
+ * verbatim, which reads as a broken environment rather than a broken loader.
+ *
+ * @param {Record<string, unknown>} mod
+ * @returns {import('playwright-core').BrowserType | undefined}
+ */
+function chromiumOf(mod) {
+  return mod?.chromium ?? mod?.default?.chromium;
 }
 
 /**
