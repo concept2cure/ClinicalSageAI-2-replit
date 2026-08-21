@@ -18,6 +18,7 @@
 
 import * as React from 'react';
 import { I } from './icons';
+import { registerRowMinWidth } from './registerGrid';
 import {
   SOP_TEMPLATES,
   FIXTURE_DOCS,
@@ -46,6 +47,9 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
 ];
 
 const GRID = '110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px';
+/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
+   resolves to 0px and the row's last columns are clipped away. */
+const ROW_MIN = registerRowMinWidth(GRID);
 
 function Kpi({
   label,
@@ -214,7 +218,7 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
         </div>
 
         <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID }}>
+          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
             <div>Number</div>
             <div>Title</div>
             <div>Type</div>
@@ -227,7 +231,7 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
           {visible.map((d) => {
             const overdue = isReviewOverdue(d.nextReviewDate);
             return (
-              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID }} data-status={d.status}>
+              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status}>
                 <button
                   className="qms-cell qms-num mono"
                   onClick={() =>
