@@ -1721,7 +1721,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       .where(eq(c2cSubmissionPackages.id, pkg.id));
 
     // Audit: medium-risk governed transition (no reauth). Written in its own
-    // transaction via the shared ledger primitive.
+    // transaction via the shared ledger primitive. The flag carries the outcome
+    // out to the response — see the catch below.
+    let ledgerWriteFailed = false;
     try {
       const client = await pool.connect();
       try {
@@ -1744,8 +1746,20 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         client.release();
       }
     } catch (ledgerErr) {
-      // The bundle is persisted; an audit-write failure must not lose the
-      // descriptor. Log and continue (mirrors the transmit route's fallback).
+      /* The bundle is persisted and must not be lost over an audit outage —
+         that part was right. What was wrong is that the caller was never told:
+         the catch logged to the server console and the handler then returned
+         `success: true` with a descriptor indistinguishable from a fully
+         audited assembly.
+
+         recordGovernedAction writes the sha256-chained audit_logs row AND the
+         c2c_ana_actions row. Losing both means an eCTD bundle exists for a
+         regulatory submission with no governance record of who assembled it or
+         why — and a tenant who cannot evidence an assembly cannot defend it.
+
+         The transmit route was fixed the same way and for the same reason: the
+         artefact is real, so it is still returned; the gap travels with it. */
+      ledgerWriteFailed = true;
       console.error(
         '[submission-ops] assemble-ledger-write-failed',
         ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
@@ -1754,6 +1768,13 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
 
     return res.json({
       success: true,
+      ...(ledgerWriteFailed
+        ? {
+            ledgerWriteFailed: true,
+            ledgerWarning:
+              'The bundle was assembled, but its governed-action ledger entry could not be written. Record this assembly manually and raise it with your administrator before relying on the audit trail.',
+          }
+        : {}),
       data: {
         packageId: pkg.packageId,
         bundle: {
