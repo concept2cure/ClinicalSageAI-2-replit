@@ -65,6 +65,7 @@ DECLARE
   skipped_drift INT := 0;
   forced_count  INT := 0;
   healed_count  INT := 0;
+  repointed_count INT := 0;
   remaining_pol INT := 0;
   -- Tables that carry a tenant column but must NOT be policied — the canonical
   -- RLS allowlist. This list MUST equal server/db/rlsAllowlist.ts → RLS_ALLOWLIST
@@ -90,7 +91,10 @@ DECLARE
   ];
 BEGIN
   FOR rec IN
-    SELECT DISTINCT c.table_schema, c.table_name, c.column_name, c.data_type
+    -- DISTINCT ON, so a table with more than one tenant column yields exactly
+    -- one row — the highest-precedence column (see the ORDER BY below).
+    SELECT DISTINCT ON (c.table_schema, c.table_name)
+           c.table_schema, c.table_name, c.column_name, c.data_type
     FROM information_schema.columns c
     WHERE c.table_schema = 'public'
       AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
@@ -110,7 +114,22 @@ BEGIN
           AND p.tablename = c.table_name
           AND p.policyname = 'tenant_isolation_policy'
       )
-    ORDER BY c.table_schema, c.table_name, c.column_name
+    -- Precedence, not alphabetical order: on a table with more than one tenant
+    -- column, organization_id / org_id is the NOT NULL key writers stamp and
+    -- tenant_id is a nullable adapter column. Attaching the policy to the
+    -- adapter makes every read return zero rows and every INSERT fail. Same
+    -- order as migrations/0021_enable_rls_everywhere.sql, server/db/rlsEnforcement.ts
+    -- and scripts/db/rls-coverage-check.sql. (The execution-time re-check below
+    -- already made "first row wins"; this makes the winner the right one.)
+    ORDER BY
+      c.table_schema,
+      c.table_name,
+      CASE c.column_name
+        WHEN 'organization_id' THEN 1
+        WHEN 'org_id'          THEN 2
+        WHEN 'tenant_id'       THEN 3
+        ELSE 4
+      END
   LOOP
     IF rec.table_name = ANY (allowlist) THEN
       CONTINUE;
@@ -162,6 +181,87 @@ BEGIN
            rec.column_name, rec.column_name, rec.column_name, rec.column_name);
 
     applied_count := applied_count + 1;
+  END LOOP;
+
+  -- Self-heal pass: REPOINT a tenant_isolation_policy attached to the WRONG
+  -- tenant column.
+  --
+  -- The loop above only ever ADDS a policy where none exists, so it cannot
+  -- correct a policy an earlier run attached to the wrong column — and
+  -- migrations/0021_enable_rls_everywhere.sql used to do exactly that. It
+  -- yielded a table once per matching tenant column and dropped/recreated the
+  -- policy on each pass, so on the six tables carrying BOTH organization_id (or
+  -- org_id) and tenant_id, the alphabetically-last column won and the policy
+  -- ended up on `tenant_id` — a NULLABLE adapter column added by
+  -- db/migrations/20260401_cmc_convergence_os.sql that no writer stamps.
+  --
+  -- The consequence is not a leak, it is a dead surface: `NULL = <tenant>` is
+  -- NULL, so under RLS_ENFORCE=on no row passes USING and no row passes WITH
+  -- CHECK. Reads return nothing, writes fail with "new row violates row-level
+  -- security policy". Every coverage gate stayed green throughout, because a
+  -- policy WAS attached.
+  --
+  -- 0021 is fixed at the source, but it is ledger-guarded and will not re-run on
+  -- a database that already has it. This pass is how those databases converge.
+  -- It touches ONLY our own generated policy name, and only when the table has a
+  -- HIGHER-precedence tenant column than the one the policy references — so a
+  -- hand-tuned or parent-scoped policy (different name) is never touched, and a
+  -- table whose only tenant column is tenant_id is left exactly as it is.
+  FOR rec IN
+    SELECT preferred.table_schema, preferred.table_name, preferred.column_name, preferred.data_type
+    FROM (
+      SELECT DISTINCT ON (c.table_schema, c.table_name)
+        c.table_schema, c.table_name, c.column_name, c.data_type
+      FROM information_schema.columns c
+      WHERE c.table_schema = 'public'
+        AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
+        AND EXISTS (
+          SELECT 1 FROM information_schema.tables t
+          WHERE t.table_schema = c.table_schema
+            AND t.table_name = c.table_name
+            AND t.table_type = 'BASE TABLE'
+        )
+      ORDER BY c.table_schema, c.table_name,
+        CASE c.column_name
+          WHEN 'organization_id' THEN 1
+          WHEN 'org_id'          THEN 2
+          WHEN 'tenant_id'       THEN 3
+          ELSE 4
+        END
+    ) preferred
+    JOIN pg_policies p
+      ON p.schemaname = preferred.table_schema
+     AND p.tablename  = preferred.table_name
+     AND p.policyname = 'tenant_isolation_policy'
+    WHERE preferred.table_name <> ALL (allowlist)
+      AND preferred.data_type IN ('integer', 'bigint', 'smallint')
+      -- The deparsed policy renders the predicate as `(<column> = (NULLIF(…))::integer)`.
+      -- If the preferred column does not appear that way, the policy is on another one.
+      AND strpos(COALESCE(p.qual, ''), '(' || preferred.column_name || ' = ') = 0
+  LOOP
+    EXECUTE format('DROP POLICY tenant_isolation_policy ON %I.%I', rec.table_schema, rec.table_name);
+    EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', rec.table_schema, rec.table_name);
+    EXECUTE format('ALTER TABLE %I.%I FORCE ROW LEVEL SECURITY', rec.table_schema, rec.table_name);
+    EXECUTE format($pol$
+      CREATE POLICY tenant_isolation_policy ON %I.%I
+        FOR ALL
+        USING (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+          OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+        )
+        WITH CHECK (
+          NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
+          OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+          OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
+        )
+    $pol$, rec.table_schema, rec.table_name,
+           rec.column_name, rec.column_name, rec.column_name, rec.column_name);
+    repointed_count := repointed_count + 1;
+    RAISE NOTICE '[rls-sweep] REPOINTED %.% — tenant_isolation_policy now keys on %, the tenant column writers actually stamp',
+      rec.table_schema, rec.table_name, rec.column_name;
   END LOOP;
 
   -- Self-heal pass (ledger C-44): REMOVE tenant_isolation_policy from any
@@ -234,6 +334,6 @@ BEGIN
       rec.schema_name, rec.table_name;
   END LOOP;
 
-  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % forced retroactively; % healed off allowlisted tables; % skipped for non-integer tenant key',
-    applied_count, forced_count, healed_count, skipped_drift;
+  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % repointed to the correct tenant column; % forced retroactively; % healed off allowlisted tables; % skipped for non-integer tenant key',
+    applied_count, repointed_count, forced_count, healed_count, skipped_drift;
 END $$;
