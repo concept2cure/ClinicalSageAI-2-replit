@@ -89,7 +89,7 @@
 /* metrics */
 .c2c-v2 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
 .c2c-v2 .metric{border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 16px;background:var(--bg-050);}
-.c2c-v2 .metric-l{font-size:11px;color:var(--text-400);font-weight:500;}
+.c2c-v2 .metric-l{font-size:11px;color:var(--text-300);font-weight:500;}
 .c2c-v2 .metric-n{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:4px;}
 .c2c-v2 .metric[data-tone="err"] .metric-n{color:var(--error);}
 .c2c-v2 .metric[data-tone="ok"] .metric-n{color:var(--success);}

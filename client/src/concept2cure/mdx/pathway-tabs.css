@@ -34,7 +34,7 @@
 .mdx-shell .pwt-count {
   display: inline-block; padding: 0 6px; min-width: 18px; text-align: center;
   border-radius: 99px; font-size: 10px; font-weight: 500;
-  background: var(--bg-200); color: var(--text-400);
+  background: var(--bg-200); color: var(--text-200);
   font-variant-numeric: tabular-nums;
   margin-left: 6px;
 }

@@ -111,7 +111,7 @@
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 .mdx-shell .health-card:hover { border-color: var(--border-strong); background: var(--bg-100); }
-.mdx-shell .health-label { font-size: 11px; color: var(--text-400); font-weight: 500; }
+.mdx-shell .health-label { font-size: 11px; color: var(--text-300); font-weight: 500; }
 .mdx-shell .health-metric {
   font-family: var(--font-serif); font-size: 28px;
   font-weight: 400; color: var(--text-100); line-height: 1;
@@ -209,7 +209,7 @@
 }
 .mdx-shell .chip:hover { border-color: var(--border-strong); color: var(--text-100); }
 .mdx-shell .chip[data-on="true"] { background: var(--bg-100); color: var(--text-100); border-color: var(--border-strong); }
-.mdx-shell .chip .count { color: var(--text-400); font-variant-numeric: tabular-nums; }
+.mdx-shell .chip .count { color: var(--text-300); font-variant-numeric: tabular-nums; }
 .mdx-shell .chip[data-on="true"] .count { color: var(--text-300); }
 
 .mdx-shell .view-spacer { flex: 1; }
@@ -220,7 +220,7 @@
 .mdx-shell .view-toggle button {
   display: flex; align-items: center; gap: 4px;
   height: 26px; padding: 0 10px; font-size: 11px;
-  color: var(--text-400);
+  color: var(--text-300);
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .mdx-shell .view-toggle button + button { border-left: 1px solid var(--border); }
@@ -364,10 +364,10 @@
 .mdx-shell .stage-node.complete .stage-dot { background: var(--success); color: var(--text-000); border-color: var(--bg-050); }
 .mdx-shell .stage-node.active .stage-dot   { background: var(--accent-100); color: var(--text-000); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--accent-000); }
 .mdx-shell .stage-node.blocked .stage-dot  { background: var(--warning); color: var(--text-000); border-color: var(--bg-050); box-shadow: 0 0 0 3px var(--warning-muted); }
-.mdx-shell .stage-node.idle .stage-dot     { background: var(--bg-200); color: var(--text-400); }
+.mdx-shell .stage-node.idle .stage-dot     { background: var(--bg-200); color: var(--text-200); }
 .mdx-shell .stage-node.active { font-weight: 500; }
 .mdx-shell .stage-label { font-size: 11px; color: var(--text-200); line-height: 1.3; max-width: 100px; }
-.mdx-shell .stage-meta { font-size: 10px; color: var(--text-400); max-width: 120px; line-height: 1.3; }
+.mdx-shell .stage-meta { font-size: 10px; color: var(--text-300); max-width: 120px; line-height: 1.3; }
 
 /* ════════════════════════════════════════════════════════════
    Two-column layout inside 510(k)/PMA/CER
@@ -385,7 +385,7 @@
   padding: 12px 16px; border-bottom: 1px solid var(--border);
 }
 .mdx-shell .panel-hdr .t { font-size: 13px; font-weight: 600; color: var(--text-100); }
-.mdx-shell .panel-hdr .s { font-size: 11px; color: var(--text-400); }
+.mdx-shell .panel-hdr .s { font-size: 11px; color: var(--text-300); }
 .mdx-shell .panel-hdr .actions { display: flex; gap: 4px; }
 .mdx-shell .panel-hdr .actions .tb-btn { color: var(--text-400); }
 .mdx-shell .panel-body { padding: 0; }
@@ -400,7 +400,7 @@
 }
 .mdx-shell .tbl thead th {
   background: var(--bg-100); padding: 8px 12px;
-  font-weight: 500; color: var(--text-400); text-align: left;
+  font-weight: 500; color: var(--text-300); text-align: left;
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border); white-space: nowrap;
 }
@@ -439,7 +439,7 @@
 .mdx-shell .status-pill.reviewed  { background: var(--bg-200); color: var(--text-300); }
 .mdx-shell .status-pill.rejected  { background: var(--bg-100); color: var(--text-400); text-decoration: line-through; }
 .mdx-shell .status-pill.complete  { background: var(--success-muted); color: var(--success); }
-.mdx-shell .status-pill.draft     { background: var(--bg-200); color: var(--text-300); }
+.mdx-shell .status-pill.draft     { background: var(--bg-200); color: var(--text-200); }
 .mdx-shell .status-pill.review    { background: var(--warning-muted); color: var(--warning); }
 .mdx-shell .status-pill.active    { background: var(--ai-muted); color: var(--ai); }
 .mdx-shell .status-pill.na        { background: var(--bg-100); color: var(--text-500); }
@@ -475,7 +475,7 @@
 }
 .mdx-shell .se-row:last-child { border-bottom: 0; }
 .mdx-shell .se-row.header {
-  background: var(--bg-100); color: var(--text-400);
+  background: var(--bg-100); color: var(--text-300);
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;
   padding: 8px 16px;
 }
@@ -535,7 +535,7 @@
 .mdx-shell .phase.active   .phase-label    { color: var(--accent-200); font-weight: 500; }
 .mdx-shell .phase.active   .phase-bar-fill { background: var(--accent-100); }
 .mdx-shell .phase.blocked  .phase-bar-fill { background: var(--warning); }
-.mdx-shell .phase.idle     .phase-label    { color: var(--text-400); }
+.mdx-shell .phase.idle     .phase-label    { color: var(--text-300); }
 .mdx-shell .phase.idle     .phase-bar-fill { background: var(--bg-300); }
 .mdx-shell .phase-label {
   font-size: 10px; color: var(--text-300); line-height: 1.3;
@@ -545,7 +545,7 @@
   height: 4px; background: var(--bg-200); border-radius: 99px; overflow: hidden;
 }
 .mdx-shell .phase-bar-fill { height: 100%; background: var(--success); }
-.mdx-shell .phase-pct { font-size: 10px; color: var(--text-400); font-variant-numeric: tabular-nums; }
+.mdx-shell .phase-pct { font-size: 10px; color: var(--text-300); font-variant-numeric: tabular-nums; }
 
 /* ════════════════════════════════════════════════════════════
    Predicate table — checkbox column for multi-select
@@ -626,7 +626,7 @@
 .mdx-shell .pma-mod-hdr { display: flex; align-items: center; justify-content: space-between; }
 .mdx-shell .pma-mod-label { font-size: 13px; font-weight: 600; color: var(--text-100); }
 .mdx-shell .pma-mod-desc { font-size: 11px; color: var(--text-300); line-height: 1.5; }
-.mdx-shell .pma-mod-foot { font-size: 10px; color: var(--text-400); display: flex; justify-content: space-between; }
+.mdx-shell .pma-mod-foot { font-size: 10px; color: var(--text-300); display: flex; justify-content: space-between; }
 
 /* ════════════════════════════════════════════════════════════
    CER Generator
@@ -1454,15 +1454,15 @@
 .mdx-shell .metric-card[data-tone="ok"]   { background: var(--success-muted); border-color: color-mix(in oklab, var(--success) 20%, transparent); }
 .mdx-shell .metric-label {
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400); margin-bottom: 8px;
+  text-transform: uppercase; color: var(--text-200); margin-bottom: 8px;
 }
 .mdx-shell .metric-val {
   font-family: var(--font-serif);
   font-size: 28px; font-weight: 500; color: var(--text-100);
   font-variant-numeric: tabular-nums; line-height: 1;
 }
-.mdx-shell .metric-val .unit { font-size: 13px; color: var(--text-400); margin-left: 4px; font-family: var(--font-sans); font-weight: 400; }
-.mdx-shell .metric-meta { font-size: 11px; color: var(--text-300); margin-top: 8px; line-height: 1.4; }
+.mdx-shell .metric-val .unit { font-size: 13px; color: var(--text-200); margin-left: 4px; font-family: var(--font-sans); font-weight: 400; }
+.mdx-shell .metric-meta { font-size: 11px; color: var(--text-200); margin-top: 8px; line-height: 1.4; }
 
 /* ── Section (reused) ─────────────────────────────────────────── */
 .mdx-shell .section { padding: 24px 32px 4px; }
@@ -1506,7 +1506,7 @@
   font-size: 12px;
 }
 .mdx-shell .ctable-head {
-  background: var(--bg-050); color: var(--text-400);
+  background: var(--bg-050); color: var(--text-300);
   font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
   text-transform: uppercase; border-bottom: 1px solid var(--border);
 }
@@ -1840,7 +1840,7 @@
 }
 .mdx-shell .vault-rail-lbl {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--text-400); font-weight: 600; padding: 4px 8px 6px;
+  color: var(--text-300); font-weight: 600; padding: 4px 8px 6px;
 }
 .mdx-shell .vault-grid .vault-main { min-width: 0; }
 .mdx-shell .vault-grid .vault-drawer { position: sticky; top: 16px; }
@@ -1881,7 +1881,7 @@
 .mdx-shell .vault-tree-row .ico { color: var(--text-400); display: inline-flex; }
 .mdx-shell .vault-tree-row .ico svg { width: 14px; height: 14px; }
 .mdx-shell .vault-tree-row .lbl { flex: 1; }
-.mdx-shell .vault-tree-row .n { font-size: 10px; color: var(--text-400); font-variant-numeric: tabular-nums; }
+.mdx-shell .vault-tree-row .n { font-size: 10px; color: var(--text-300); font-variant-numeric: tabular-nums; }
 .mdx-shell .vault-tree-row.small { padding-left: 16px; }
 
 .mdx-shell .vault-main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
@@ -1929,7 +1929,7 @@
 .mdx-shell .drawer-head { margin-bottom: 16px; }
 .mdx-shell .drawer-eyebrow {
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400);
+  text-transform: uppercase; color: var(--text-300);
   margin-bottom: 6px;
 }
 .mdx-shell .drawer-title {
@@ -1951,7 +1951,7 @@
 
 .mdx-shell .drawer-section-lbl {
   font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--text-400);
+  text-transform: uppercase; color: var(--text-300);
   margin: 14px 0 8px; padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
@@ -1976,7 +1976,7 @@
   display: flex; gap: 10px; padding: 6px 0;
   font-size: 11px; color: var(--text-300);
 }
-.mdx-shell .audit-row .mono { color: var(--text-400); font-size: 10px; }
+.mdx-shell .audit-row .mono { color: var(--text-300); font-size: 10px; }
 
 /* ═════════════════════════════════════════════════════════════
    VALIDATION
@@ -2715,7 +2715,7 @@
 .mdx-shell .data-gate-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .mdx-shell .data-gate-title { font-size: 13px; font-weight: 500; color: var(--text-200); }
 .mdx-shell .data-gate-error .data-gate-title { color: var(--text-100); }
-.mdx-shell .data-gate-detail { font-size: 11px; color: var(--text-400); line-height: 1.5; }
+.mdx-shell .data-gate-detail { font-size: 11px; color: var(--text-300); line-height: 1.5; }
 .mdx-shell .data-gate-mono {
   font-family: var(--font-mono, ui-monospace, monospace);
   word-break: break-word;

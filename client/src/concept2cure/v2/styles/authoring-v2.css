@@ -21,7 +21,7 @@
   .ed-tree{border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;background:var(--bg-050);}
   .ed-tree-h{padding:14px 16px;border-bottom:1px solid var(--border);}
   .ed-tree-t{font-size:12px;font-weight:600;}
-  .ed-tree-m{font-size:10px;color:var(--text-400);margin-top:3px;}
+  .ed-tree-m{font-size:10px;color:var(--text-300);margin-top:3px;}
 
   /* ── Outline basis band ──
      What the section tree below was built FROM. Inline rather than a tooltip:

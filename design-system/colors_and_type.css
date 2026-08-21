@@ -133,8 +133,14 @@
   --accent-glow:             rgba(217, 119, 87, 0.15);
 
   /* AnA assistant persona (muted blue, distinct from Claude orange) */
-  --ai:                      #6a9bcc;
-  --ai-hover:                #5585b3;
+  /* Darkened 2026-08-21 on the same grounds, and by the same method, as the
+     status colours below: hue-preserving minimum lift until the tone clears
+     4.5:1 as TEXT on the page and on its own badge fill. It was 2.35:1 on
+     --ai-muted — the worst pairing in the palette, and the one the 2026-08-13
+     pass missed because --info aliases it rather than declaring its own value.
+     Ratios: bg-000 / bg-100 / own muted fill. */
+  --ai:                      #366a9e;   /* 5.37 / 4.87 / 4.55 */
+  --ai-hover:                #2c5883;
   --ai-muted:                #dce8f3;
   --ai-glow:                 rgba(106, 155, 204, 0.10);
 
@@ -347,6 +353,16 @@
   --warning-muted:           #4a3a1e;   /* badge 4.55:1 */
   --error:                   #ef7d7d;   /* 5.70 / 4.97 */
   --error-muted:             #4a2424;   /* badge 5.03:1 */
+
+  /* The AnA blue was the seventh tone that pass missed, for the same reason:
+     never declared for dark, so the light values cascaded onto the dark page.
+     The base needs no lift here — #6a9bcc measures 5.17 on bg-000 and 4.51 on
+     bg-100 — but it has to be declared, or the light-side darkening above
+     cascades in and takes it to 1.9:1. The fill does need darkening: --ai on a
+     near-white #dce8f3 badge is 2.35:1 on a dark page, which is the exact
+     failure the note above describes for the other six. */
+  --ai:                      #6a9bcc;   /* 5.17 / 4.51 */
+  --ai-muted:                #24313f;   /* badge 4.51:1 */
 }
 
 /* ═══════════════════════════════════════════════════════════

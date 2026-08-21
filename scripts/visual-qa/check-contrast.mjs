@@ -114,7 +114,7 @@ const MEASURE = () => {
     // reader would read out, and counting them inflates the failure rate with
     // characters no user needs to perceive. Recorded separately rather than
     // silently dropped, so the exclusion is auditable.
-    const decorative = /^[·•|/\\\-–—,:;()\[\]]{1,2}$/.test(own);
+    const decorative = window.__wcag.decorativeText(own);
 
     out.push({
       decorative,
