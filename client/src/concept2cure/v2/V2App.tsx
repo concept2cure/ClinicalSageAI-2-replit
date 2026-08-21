@@ -124,7 +124,14 @@ function loadPrefs(): Prefs {
    governed command blocked on a Part 11 e-signature) are carried through so the
    rail renders ANA's genuine action results and the real sign-off prompt —
    never a fabricated result card. */
-function adaptChatMessage(m: AnaChatMessage): AnaMessage {
+/* Exported for its own test. Every field below is CARRIAGE — a thing the turn
+   reported that the rail can only render if this function hands it over — and
+   carriage is exactly what has been missing each time: the tool calls, the
+   rounds and the lens were all captured and dropped here, and so were the
+   answer's warnings. Deleting a line from this function breaks nothing that
+   renders, which is why it needs a test of its own rather than relying on the
+   component suites, all of which pass their props in directly. */
+export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
   if (m.role === 'user') return { role: 'user', body: m.text };
   return {
     role: 'ana',
@@ -136,6 +143,10 @@ function adaptChatMessage(m: AnaChatMessage): AnaMessage {
     sample: false,
     executedActions: m.executedActions,
     pendingSignoffs: m.pendingSignoffs,
+    /* Dropped here until now. On a timeout `useAnaChat` keeps the partial text
+       and records 'Response timed out' in `warnings`; with nothing carrying it
+       across, a truncated answer read as a finished one. */
+    warnings: m.warnings,
     /* Everything the turn reported about how it was answered. This used to be
        dropped here — useAnaChat captured the tools, rounds, lens and drafts,
        and the rail rendered a single line of body text — so AnA could run

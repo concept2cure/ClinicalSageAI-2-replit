@@ -75,6 +75,14 @@ export interface AnaMessage {
    * see that module for why the rail used to show none of it.
    */
   activity?: AnaActivityProps;
+  /**
+   * Caveats about THIS answer — a degraded-mode signal from the server, or a
+   * timeout that cut the turn short. Deliberately not part of `activity`: the
+   * work record is about how the answer was reached and lives behind a
+   * disclosure, whereas a caveat qualifies the answer itself and has to be read
+   * without going looking for it.
+   */
+  warnings?: string[];
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -694,6 +702,23 @@ export function AnaRail({
                 </div>
               )}
               <div className="bd">{m.body}</div>
+              {/* Caveats sit directly under the answer they qualify, above the
+                  work record and never inside it. `useAnaChat` records a
+                  server degraded-mode signal, and a timeout, on the message —
+                  and on timeout it KEEPS whatever text had already streamed.
+                  Nothing rendered these, so a turn cut off mid-answer showed
+                  its truncated text with no sign it was truncated: an
+                  incomplete result presented as a complete one. */}
+              {m.role === 'ana' && Array.isArray(m.warnings) && m.warnings.length > 0 && (
+                <div className="ana-msg-warnings" role="note">
+                  {m.warnings.map((w, wi) => (
+                    <div key={wi} className="ana-msg-warning">
+                      <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
               {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
                 <div className="ana-msg-actions">

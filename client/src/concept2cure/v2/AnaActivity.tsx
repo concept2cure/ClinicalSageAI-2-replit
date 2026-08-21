@@ -74,6 +74,36 @@ export interface AnaActivityProps {
   draftTitle?: string;
 }
 
+/**
+ * How much of a still-streaming thought to show. Long enough to be a real
+ * sentence, short enough that it never competes with the answer arriving
+ * beneath it.
+ */
+const THOUGHT_TAIL = 180;
+
+/**
+ * The most recent thing she has actually said to herself.
+ *
+ * Her extended reasoning streams token by token, and the whole of it is the
+ * wrong thing to put above a streaming answer — it is long, and it grows. So
+ * while the turn is in flight only the newest stretch is shown, and the full
+ * text is there once the record is opened.
+ *
+ * It is her TEXT, truncated — never a summary of it. A paraphrase would be this
+ * component inventing a thought she did not have, which is the same defect as
+ * inventing a step she did not run. The leading ellipsis marks the cut so a
+ * fragment is never read as a complete sentence.
+ */
+function latestThought(thinking: string): string {
+  const lines = thinking.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const last = lines[lines.length - 1] ?? '';
+  if (last.length <= THOUGHT_TAIL) return last;
+  const cut = last.slice(last.length - THOUGHT_TAIL);
+  // Start at a word boundary; a half-word reads as a rendering bug.
+  const space = cut.indexOf(' ');
+  return `…${space > 0 ? cut.slice(space + 1) : cut}`;
+}
+
 function glyph(status: AnaToolCall['status']): React.ReactElement {
   if (status === 'success') return I.check;
   if (status === 'error') return I.alertTriangle;
@@ -194,6 +224,32 @@ export function AnaActivity({
               {lens && LENS_PHRASE[lens] ? `Reading this as ${LENS_PHRASE[lens]}` : 'Reading this question'}
               {documentType ? ` · ${documentType}` : ''}
             </div>
+          )}
+
+          {/* Her reasoning. While the turn is in flight this is the newest
+              stretch of it, live; once the record is opened after the fact it
+              is the whole thing, in a bounded scroll so a long deliberation
+              cannot push the answer off the screen. Both are her own words. */}
+          {thinking && (
+            streaming ? (
+              <div className="ana-activity-think is-live">{latestThought(thinking)}</div>
+            ) : (
+              /* tabIndex + a name, because this one SCROLLS. A container with
+                 `overflow-y:auto` and no tab stop is unreachable by keyboard —
+                 a sighted mouse user gets the whole deliberation and a
+                 keyboard-only user gets the first 240px of it, with no way to
+                 know more exists (WCAG 2.1.1). The live variant above does not
+                 scroll, so giving it a tab stop would only add an empty stop
+                 to the order. */
+              <div
+                className="ana-activity-think"
+                tabIndex={0}
+                role="region"
+                aria-label="AnA's reasoning"
+              >
+                {thinking}
+              </div>
+            )
           )}
 
           {rounds.map(({ round, calls: cs }) => (

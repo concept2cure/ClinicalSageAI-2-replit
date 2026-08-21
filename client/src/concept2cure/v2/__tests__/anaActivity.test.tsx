@@ -153,6 +153,66 @@ describe('AnaActivity — the work is visible while it happens', () => {
     expect(body.getByText(/Drafted Clinical Overview 2\.5/)).toBeTruthy();
   });
 
+  it('shows the newest stretch of her reasoning while she is still thinking', () => {
+    const { container } = render(
+      <AnaActivity
+        streaming
+        thinking={'Considering the endpoint.\nThe non-inferiority margin is the thing that decides this.'}
+      />,
+    );
+
+    const think = container.querySelector('.ana-activity-think');
+    // The regression: reasoning was streamed, accumulated, handed to this
+    // component and rendered nowhere. Asserted as presence FIRST, so removing
+    // the block fails with "expected null to be truthy" rather than an
+    // assertion-shape error that reads like a broken test.
+    expect(think).toBeTruthy();
+    expect(think!.textContent).toContain('non-inferiority margin');
+    expect(think?.classList.contains('is-live')).toBe(true);
+  });
+
+  it('shows her reasoning verbatim, never a summary of it', () => {
+    // A paraphrase would be this component inventing a thought she did not
+    // have — the same defect as inventing a step she did not run.
+    const thought = 'Two arms at 1:1 gives 348 per arm, which the site count will not support.';
+    const { container } = render(<AnaActivity thinking={thought} />);
+
+    // act(), so the state update is flushed before the assertion reads the DOM.
+    act(() => { (container.querySelector('.ana-activity-toggle') as HTMLButtonElement).click(); });
+    expect(container.querySelector('.ana-activity-think')?.textContent).toBe(thought);
+  });
+
+  it('lets a keyboard reach the reasoning it has to scroll to read', () => {
+    // The block is capped at 240px and scrolls. Without a tab stop a sighted
+    // mouse user gets the whole deliberation and a keyboard-only user gets the
+    // top of it with no way to know more exists.
+    const { container } = render(<AnaActivity thinking={'a\n'.repeat(400)} />);
+    act(() => { (container.querySelector('.ana-activity-toggle') as HTMLButtonElement).click(); });
+
+    const think = container.querySelector('.ana-activity-think');
+    expect(think?.getAttribute('tabindex')).toBe('0');
+    // A tab stop with a role and no name is an unlabelled landmark.
+    expect(think?.getAttribute('aria-label')).toBeTruthy();
+  });
+
+  it('does not add an empty tab stop for the live thought, which does not scroll', () => {
+    const { container } = render(<AnaActivity streaming thinking="still weighing it" />);
+
+    expect(container.querySelector('.ana-activity-think')?.getAttribute('tabindex')).toBeNull();
+  });
+
+  it('cuts a long live thought at a word boundary and marks the cut', () => {
+    const long = `${'deliberating '.repeat(40)}the margin decides it.`;
+    const { container } = render(<AnaActivity streaming thinking={long} />);
+
+    const shown = container.querySelector('.ana-activity-think')?.textContent ?? '';
+    expect(shown.startsWith('…')).toBe(true);
+    // A half-word reads as a rendering bug, so the cut lands between words.
+    expect(shown.slice(1).startsWith('deliberating')).toBe(true);
+    expect(shown).toContain('the margin decides it.');
+    expect(shown.length).toBeLessThanOrEqual(182);
+  });
+
   it('is open while streaming and collapsed once the answer has landed', () => {
     const { rerender, container } = render(<AnaActivity streaming toolCalls={[call()]} />);
     // In flight: no toggle, the record is simply open — that is the point.
