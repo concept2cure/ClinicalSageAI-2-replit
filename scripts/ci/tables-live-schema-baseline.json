@@ -233,9 +233,6 @@
     "regulatory_status": [
       "server/sage-plus-service.ts"
     ],
-    "regulatory_twin_simulations": [
-      "server/routes/regulatory-digital-twin.ts"
-    ],
     "risk_management_files": [
       "server/services/design-risk/design-risk.service.ts"
     ],

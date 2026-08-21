@@ -28,6 +28,7 @@ import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -89,6 +90,11 @@ export interface AnaMessage {
    * a steer you cannot see afterwards is one you cannot tell was taken.
    */
   interjections?: string[];
+  /**
+   * The server's evidence verdict for this answer. Emitted as `grounding_strip`
+   * and stored by `useAnaChat` since that pipeline shipped; nothing rendered it.
+   */
+  evidence?: AnaGroundingEvidence;
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -739,6 +745,11 @@ export function AnaRail({
                   Nothing rendered these, so a turn cut off mid-answer showed
                   its truncated text with no sign it was truncated: an
                   incomplete result presented as a complete one. */}
+              {/* How well-grounded the answer is. Above the caveats and the
+                  work record on purpose: those say what went wrong and how she
+                  got here, this says how far the answer can be trusted, which
+                  is read first. */}
+              {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
               {/* Steers AnA accepted for this turn. Shown because a steer you
                   cannot see afterwards is one you cannot tell was taken — and
                   the server has already written it into the decision lineage. */}

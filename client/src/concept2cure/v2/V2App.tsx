@@ -149,6 +149,9 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
     warnings: m.warnings,
     /* Dropped here like the rest: captured by the hook, rendered nowhere. */
     interjections: m.interjections,
+    /* The evidence verdict. Captured since the grounding pipeline shipped and
+       dropped here like the rest. */
+    evidence: m.evidence,
     /* Everything the turn reported about how it was answered. This used to be
        dropped here — useAnaChat captured the tools, rounds, lens and drafts,
        and the rail rendered a single line of body text — so AnA could run

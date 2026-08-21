@@ -366,6 +366,18 @@ export interface GatewayResponse {
    */
   resolvedModel?: string;
 
+  /**
+   * The sampling seed ACTUALLY TRANSMITTED to the provider, or undefined when
+   * none was — which is the case for every Anthropic call, since that API has
+   * no seed parameter.
+   *
+   * Deliberately not `request.seed`. Recording a seed the provider never
+   * received is the same defect as recording a temperature a reasoning-only
+   * model rejects: a provenance row that reads as reproducible while naming a
+   * parameter that had no effect. Only the transmitting paths set this.
+   */
+  effectiveSeed?: number;
+
   /** Token usage and cost */
   usage: GatewayUsage;
 
@@ -525,7 +537,11 @@ export interface AuditLogEntry {
   // ── Reproducibility (which params + prompt produced this output) ──────────
   /** Sampling temperature used for the request. */
   temperature?: number;
-  /** Sampling seed, when supplied. */
+  /**
+   * Sampling seed as TRANSMITTED. NULL means no seed reached the provider —
+   * true for every Anthropic call — rather than "the caller did not ask for
+   * one". See GatewayResponse.effectiveSeed.
+   */
   seed?: number;
   /** SHA-256 of the canonicalized prompt messages (role:content joined). */
   promptHash?: string;

@@ -8,7 +8,10 @@
  *     'audit' — PHI/PII is detected and recorded but NOT blocked, so it can still
  *     reach a provider without a zero-data-retention guarantee.
  *   - AI_GROUNDEDNESS_ENFORCE (server/services/ai-governance/groundedness.ts) is
- *     off by default — low-citation AI content is scored but not blocked on accept.
+ *     ON by default as of 2026-08-13 — low-citation AI content is blocked on
+ *     accept unless a human acknowledges it. It stays listed here because it
+ *     can still be turned OFF per deployment, and an off gate in production is
+ *     what this module exists to surface.
  *
  * Running production with either gate permissive is a valid rollout state, but —
  * exactly like the RLS enforcement and audit-trail postures
@@ -36,10 +39,22 @@ export function readPiiEnforcement(env: NodeJS.ProcessEnv = process.env): PiiEnf
   return raw === 'off' || raw === 'block' ? raw : 'audit';
 }
 
-/** Groundedness gate default, resolved as in groundedness.ts `groundednessEnforcedByDefault()`. */
+/**
+ * Groundedness gate default, resolved EXACTLY as in groundedness.ts
+ * `groundednessEnforcedByDefault()` — ON unless explicitly disabled.
+ *
+ * This mirror must track that function. It is duplicated (not imported) so the
+ * posture check stays a pure, env-injectable function, which means the two can
+ * drift — and a drift here is not cosmetic: this is the module that TELLS the
+ * operator what the posture is. Left at the old `v === '1'` logic it would have
+ * reported "AI_GROUNDEDNESS_ENFORCE is off" on a deployment where the gate was
+ * enforcing, which is the precise failure this codebase keeps producing.
+ * ai-governance-posture.test.ts pins the two to the same table.
+ */
 export function isGroundednessEnforced(env: NodeJS.ProcessEnv = process.env): boolean {
   const v = env.AI_GROUNDEDNESS_ENFORCE;
-  return v === '1' || v === 'true';
+  if (v === undefined || v === '') return true;
+  return !(v === '0' || v.toLowerCase() === 'false' || v.toLowerCase() === 'off');
 }
 
 export interface AiGovernancePostureLogger {
