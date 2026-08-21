@@ -76,21 +76,30 @@ const FIXTURES = path.join(ROOT, 'tests/fixtures/empty-state-honesty');
  * selected BY an empty collection.
  */
 const CLEARANCE = [
-  /\bno\b[^.<>{}]{0,40}\bblockers?\b/i,
-  /\bno\b[^.<>{}]{0,30}\b(?:findings?|issues?|risks?|gaps?)\b[^.<>{}]{0,20}\b(?:left|remain|outstanding)\b/i,
+  // A negation crossed with a finding-noun. This replaces four hand-written
+  // sentences that each missed the same claim said a different way: an
+  // adversarial pass found "No issues found", "No risks identified", "No gaps
+  // detected" and "No contradictions detected" all sailing past, because the
+  // old rule demanded a trailing left|remain|outstanding.
+  /\b(?:no|none|zero|nothing)\b[^.<>{}]{0,40}\b(?:blockers?|findings?|issues?|risks?|gaps?|deviations?|contradictions?|deficiencies|discrepanc\w+|signals?|warnings?|errors?|gaps?)\b/i,
+  /\bnothing\s+(?:is\s+)?(?:blocking|outstanding|pending|open|overdue|alarming|to\s+\w+)\b/i,
+  /\bno\s+(?:action|remediations?|pushback|critical\s+issues?)\b[^.<>{}]{0,20}(?:needed|required|surfaced|found)?/i,
   /\byou'?re close\b/i,
-  /\bis fileable\b|\bready to file\b/i,
+  /\bis fileable\b|\bready to file\b|\bfiling-ready\b/i,
   /\bbuilding steadily\b/i,
   /\bon top of (?:this|your)\b/i,
-  /\byou (?:are|'re) on track\b/i,
+  // The space belongs INSIDE the alternation. `you (?:are|'re)` requires
+  // "you " then "'re", so it matched "you are on track" and NOT the
+  // contraction — which is how the phrase is actually written. The gate's only
+  // live finding survived on the accident that that one string was spelled out
+  // in full; three characters would have silenced it.
+  /\byou(?:\s+are|'re)\s+on track\b/i,
   /\bin good standing\b/i,
-  /\bnothing is (?:overdue|alarming)\b/i,
-  /\bnothing (?:is )?(?:crosses|crossed) the threshold\b/i,
   /\bdoing its job\b/i,
   /\bare secured\b|\bin hand\b/i,
   /\bnot in scope\b/i,
   /\ball clear\b|\byou'?re all set\b/i,
-  /\bnothing (?:to worry|needs your attention)\b/i,
+  /\ball\s+\w+\s+(?:are\s+)?(?:current|up to date|complete|clear|signed|verified|approved)\b/i,
   /\bsurveillance is\b[^.<>{}]{0,24}\bworking\b/i,
 ];
 
@@ -99,19 +108,83 @@ const CLEARANCE = [
  * selects. `whenEmpty: 'consequent'` means the `? A` side fires when empty.
  */
 const EMPTINESS = [
-  { re: /!\s*([A-Za-z_$][\w$.]*)\s*(?:\.length|\?\.length)\s*$/, whenEmpty: 'consequent' },
-  { re: /([A-Za-z_$][\w$.]*)\s*(?:\.length|\?\.length)\s*===?\s*0\s*$/, whenEmpty: 'consequent' },
-  { re: /([A-Za-z_$][\w$.]*)\s*(?:\.length|\?\.length)\s*>\s*0\s*$/, whenEmpty: 'alternate' },
-  { re: /([A-Za-z_$][\w$.]*)\s*(?:\.length|\?\.length)\s*!==?\s*0\s*$/, whenEmpty: 'alternate' },
-  // Bare truthiness: `items.length ? A : B` and `items.length && top ? A : B`.
-  { re: /([A-Za-z_$][\w$.]*)\s*(?:\.length|\?\.length)\s*(?:&&\s*[\w$.]+\s*)?$/, whenEmpty: 'alternate' },
+  { re: /!\s*([A-Za-z_$][\w$.?]*)\s*(?:\.length|\?\.length)\s*$/, whenEmpty: 'consequent' },
+  { re: /\)?\s*(?:\.length|\?\.length)\s*(?:\?\?\s*0\s*\)?)?\s*===?\s*0\s*$/, whenEmpty: 'consequent' },
+  { re: /\)?\s*(?:\.length|\?\.length)\s*>\s*0\s*$/, whenEmpty: 'alternate' },
+  { re: /\)?\s*(?:\.length|\?\.length)\s*!==?\s*0\s*$/, whenEmpty: 'alternate' },
+  // `x.size === 0`, `Object.keys(x).length === 0` and `count === 0` name the
+  // same emptiness without the identifier-adjacent `.length` the first rules
+  // require.
+  { re: /\.size\s*===?\s*0\s*$/, whenEmpty: 'consequent' },
+  { re: /\b(\w*(?:Count|Total))\s*===?\s*0\s*$/, whenEmpty: 'consequent' },
+  { re: /\b(\w*(?:Count|Total))\s*>\s*0\s*$/, whenEmpty: 'alternate' },
+  // A named emptiness boolean — `nothingOnFile`, `deviceEmpty`, `isEmpty` — is
+  // this codebase's REPAIRED idiom, so keying only on `.length` meant coverage
+  // SHRANK as the code improved.
+  { re: /\b(\w*(?:[Ee]mpty|[Nn]othingOnFile|NoData|noData))\s*$/, whenEmpty: 'consequent' },
+  { re: /!\s*([A-Za-z_$][\w$.?]*)\s*$/, whenEmpty: 'consequent' },
+  // Bare truthiness: `items.length ? A : B`, `items.length && top ? A : B`.
+  { re: /\)?\s*(?:\.length|\?\.length)\s*(?:&&\s*[\w$.]+\s*)?$/, whenEmpty: 'alternate' },
 ];
+
+/**
+ * Copy that DENIES an assessment rather than reporting its result.
+ *
+ * The broadened vocabulary immediately flagged the repair. NdaCockpit's honest
+ * not-assessed branch reads
+ *
+ *   "There is no NDA/BLA submission in scope, so no module readiness, no
+ *    Module 1 worklist and no Refuse-to-File finding exists to report."
+ *
+ * which contains "no … finding" and is the exact sentence this whole rule
+ * exists to produce. The distinction is not the noun — both say "no findings" —
+ * it is the CLAIM: a clearance claim asserts absence as a verdict, the honest
+ * one asserts absence of an assessment and names what is missing.
+ *
+ * So a branch that says so is not a finding, whatever nouns it uses. This is
+ * the semantic the gate is actually enforcing, and stating it here is more
+ * honest than tuning the noun list until the repair stops matching.
+ */
+const HONEST_DISCLAIMER =
+  new RegExp(
+    [
+      // Explicit denials of assessment.
+      'nothing has been assessed',
+      'has not been (?:run|assessed|recorded|screened|evaluated|authored)',
+      'have not been (?:run|assessed|recorded|screened|authored)',
+      'exists? to report',
+      'has nothing to report',
+      'is unknown',
+      'standing is (?:unknown|untracked)',
+      'rather than clear',
+      'untracked',
+      'not a clean',
+      'no\\s+\\w+\\s+has been (?:run|recorded|logged)',
+      'never been',
+      'no .{0,40}assessment has been',
+      'present or absent',
+      'could not be verified',
+      'nothing was invented',
+      'nothing is inferred',
+      // "No X YET" is the not-yet-populated idiom, not a verdict. This is the
+      // single biggest discriminator: an honest empty state says the thing has
+      // not happened, a clearance claim says it happened and found nothing.
+      'no[^.<>{}]{0,60}\\byet\\b',
+      'not (?:yet )?(?:been )?(?:connected|populated|configured)',
+      // …and it names what would populate it.
+      'appears? here once',
+      'appear here (?:once|when)',
+      'populate',
+      '(?:record|run|add|connect|create|open)[^.<>{}]{0,30}\\bfirst\\b',
+    ].join('|'),
+    'i',
+  );
 
 /**
  * A nested ternary condition naming positive evidence that an assessment ran.
  * When the clearance copy sits behind one of these, the branch is honest.
  */
-const EVIDENCE_GUARD = /\b(?:assessed|assessmentRan|hasRun|wasRun|evaluated|reviewed|screened|checked|analysed|analyzed|completed|isLive|loaded)\b[^?]{0,60}\?/;
+const EVIDENCE_GUARD = /(?:mayReassure\s*\(|assessmentState\s*\(|===\s*'assessed-clear'|\b(?:assessed|assessmentRan|hasRun|wasRun|evaluated|screened)\b\s*(?:\)|&&|\|\||\?))/;
 
 /** Split `A : B` at the `:` that belongs to THIS ternary. */
 function splitBranches(src, qIndex) {
@@ -143,6 +216,10 @@ function prose(branch) {
   return branch
     .replace(/\{[^{}]*\}/g, ' ')
     .replace(/<[^<>]*>/g, ' ')
+    // Typographic apostrophes and their entities. Without this, "You’re close"
+    // and "You&rsquo;re close" match nothing, so a routine microcopy pass
+    // normalising punctuation would silently disable a third of the patterns.
+    .replace(/&rsquo;|&apos;|&#39;|[\u2018\u2019]/g, "'")
     .replace(/&mdash;|&nbsp;|&amp;/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -152,7 +229,7 @@ function stripComments(text) {
   return text
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
     .split('\n')
-    .map((l) => l.replace(/\/\/.*$/, ''))
+    .map((l) => l.replace(/(^|[^:'"`])\/\/.*$/, '$1'))
     .join('\n');
 }
 
@@ -186,6 +263,11 @@ function scanSource(code, label) {
        flags the correct pattern is one people learn to ignore. */
     if (EVIDENCE_GUARD.test(emptyBranch)) continue;
 
+    // Says outright that nothing was assessed — the correct pattern, not the
+    // defect. Checked on the rendered prose so JSX tags between the words do
+    // not hide it.
+    if (HONEST_DISCLAIMER.test(prose(emptyBranch))) continue;
+
     const text = prose(emptyBranch);
     if (text.length < 8) continue;
 
@@ -207,7 +289,7 @@ function scanFile(rel) {
 }
 
 function sourceFiles() {
-  return execSync("git ls-files 'client/src/**/*.tsx'", {
+  return execSync("git ls-files 'client/src/**/*.tsx' 'client/src/*.tsx' 'client/src/**/*.ts' 'client/src/**/*.jsx'", {
     cwd: ROOT,
     encoding: 'utf8',
     maxBuffer: 32 * 1024 * 1024,

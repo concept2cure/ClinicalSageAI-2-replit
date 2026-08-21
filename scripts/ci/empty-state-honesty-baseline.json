@@ -1,5 +1,10 @@
 {
   "files": [
+    "client/src/concept2cure/components/ana/CrlPremortemPanel.tsx",
+    "client/src/concept2cure/mdx/surfaces/EngineeringSurface.tsx",
+    "client/src/concept2cure/pdev/surfaces/Contradictions.tsx",
+    "client/src/concept2cure/v2/surfaces/Orchestration.tsx",
+    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
     "client/src/concept2cure/v2/surfaces/TaskBoard.tsx"
   ]
 }
