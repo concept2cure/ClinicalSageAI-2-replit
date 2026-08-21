@@ -45,40 +45,21 @@ const SIMULATION_DISCLOSURE = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DB Table Initialization
+// DB Table Initialization — REMOVED
+//
+// regulatory_twin_simulations used to be created here by a CREATE TABLE IF NOT
+// EXISTS issued at module load, inside a try/catch that logged a warning and
+// carried on. That made the table exist only on a database whose app process had
+// booted, never on one built by provisioning alone, so
+// ci:tables-live-schema correctly reported the queries below as reading a table
+// nothing creates. Runtime DDL also runs as the application role, which under the
+// app_service split has no CREATE right, and it runs after the routes are already
+// mounted.
+//
+// The identical DDL now lives in migrations/20260821_regulatory_twin_simulations.sql
+// and is on C2C_MIGRATION_FILES, so deploy-migrate creates the table before the
+// services roll. One creator, not two.
 // ═══════════════════════════════════════════════════════════════════════════════
-
-async function ensureSimulationsTable(): Promise<void> {
-  try {
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS regulatory_twin_simulations (
-        id TEXT PRIMARY KEY,
-        submission_type TEXT NOT NULL,
-        therapeutic_area TEXT NOT NULL,
-        agencies TEXT[] DEFAULT ARRAY['FDA'],
-        submission_profile JSONB,
-        results JSONB NOT NULL DEFAULT '{}'::jsonb,
-        summary JSONB,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS idx_reg_twin_sim_created
-        ON regulatory_twin_simulations (created_at DESC)
-    `);
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS idx_reg_twin_sim_type
-        ON regulatory_twin_simulations (submission_type)
-    `);
-    console.log('[DigitalTwin] regulatory_twin_simulations table ready');
-  } catch (err) {
-    console.warn('[DigitalTwin] Table init warning:', (err as Error).message);
-  }
-}
-
-// Initialize table on module load
-ensureSimulationsTable();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types & Interfaces

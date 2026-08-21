@@ -338,21 +338,48 @@ export const LICENSE_UNLICENSED: string[] = ['labeling', 'risk', 'pdev'];
 export const isLicensed = (id: string) => !LICENSE_UNLICENSED.includes(id);
 
 /** AnA modes (intent → engine label, resolved server-side; no vendor names on screen) */
-export const ANA_MODES = [
-  { id: 'standard', label: 'Standard', model: 'Balanced', desc: 'Chat, reasoning, quick answers' },
+/**
+ * The modes the composer offers, each carrying the effort it actually buys.
+ *
+ * `effort` is not decoration. It is sent as `effort_level` and decides how many
+ * agentic rounds AnA gets — `fast` 4, `balanced` 6+2, `thorough` 10+4 — plus her
+ * output budget and model tier. Before it existed the picker was inert: the mode
+ * was stored, shown next to the send button as "Ask · Maximum", and never
+ * reached the request, so a reviewer choosing Deep research for a regulatory
+ * question silently got the server default instead of the 14 rounds the label
+ * promised — and Quick ask cost more than it claimed rather than less.
+ *
+ * Keep every entry's `effort` set: a mode without one falls back to the
+ * server default, which is the defect this field exists to end.
+ */
+export const ANA_MODES: Array<{
+  id: string;
+  label: string;
+  model: string;
+  desc: string;
+  effort: 'fast' | 'balanced' | 'thorough';
+}> = [
+  { id: 'standard', label: 'Standard', model: 'Balanced', desc: 'Chat, reasoning, quick answers', effort: 'balanced' },
   {
     id: 'deep-research',
     label: 'Deep research',
     model: 'Maximum',
     desc: 'Drafting, multi-step analysis, long-form',
+    effort: 'thorough',
   },
   {
     id: 'quick-ask',
     label: 'Quick ask',
     model: 'Instant',
     desc: 'Autocomplete, inline, classification',
+    effort: 'fast',
   },
 ];
+
+/** The effort a mode id buys, or null when the id is unknown. */
+export function effortForMode(modeId: string): 'fast' | 'balanced' | 'thorough' | null {
+  return ANA_MODES.find((m) => m.id === modeId)?.effort ?? null;
+}
 /** Governed AI actions (POST /api/ai-actions/execute); governed:true requires the §11.50 e-sign gate */
 export const AI_ACTIONS = [
   {

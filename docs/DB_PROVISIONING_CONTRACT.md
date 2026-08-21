@@ -172,6 +172,35 @@ Fixed by re-running the canonical
 same file that already runs last on the deploy path, for the same reason.
 Reusing it keeps one sweep, one policy shape, one allowlist.
 
+### Runtime DDL: `regulatory_twin_simulations`
+
+`server/routes/regulatory-digital-twin.ts` created its own table at module load
+— `CREATE TABLE IF NOT EXISTS` inside a try/catch that logged a warning and
+carried on. The table therefore existed only on a database whose application
+process had booted, never on one built by provisioning alone, and
+`ci:tables-live-schema` flagged the route's own queries as reading a table
+nothing creates. (The route's `/health` handler ends
+`catch { /* table may not exist yet */ }`, which is what code written around an
+unreliable table looks like.)
+
+Runtime DDL is a bad fit here for three separate reasons: it runs as the
+application role, which under the `app_service` split has no `CREATE` right; it
+runs after the routes are already mounted; and its failure is swallowed. The
+identical DDL is now `migrations/20260821_regulatory_twin_simulations.sql` on
+`C2C_MIGRATION_FILES`, and the runtime DDL is deleted in the same change — one
+creator, not two.
+
+**Recorded, not fixed:** the table has no tenant column, and the route lists
+from it with no tenant predicate —
+`SELECT … FROM regulatory_twin_simulations ORDER BY created_at DESC LIMIT 100` —
+so one tenant's stored `submission_profile` is visible to every tenant. That is
+a route-level exposure, and closing it means adding `organization_id` *and*
+threading org scope through the route's reads and writes. Adding the column
+alone would be actively worse: the sweep would then policy a column no writer
+stamps, and `NULL = <tenant>` matches nothing — the dead surface described
+above. So it is left for the route's owner, with the lines named here and in the
+migration header.
+
 ### The policy-on-the-wrong-column defect this found
 
 `migrations/0021_enable_rls_everywhere.sql` yielded a table **once per matching
@@ -203,18 +232,126 @@ Fixed in two places, because they answer different databases:
   precedence — `organization_id` > `org_id` > `tenant_id`, the order
   `server/db/rlsEnforcement.ts` and `rls-coverage-check.sql` already use. Fresh
   installs are correct at the source.
-- `db/migrations/20260801_tenant_isolation_sweep.sql` gained a **repoint pass**.
+- `db/migrations/20260801_tenant_isolation_sweep.sql` gained a **rebuild pass**.
   0021 is ledger-guarded and will not re-run on a database that already has it,
   so the sweep is how existing databases converge. It touches only the generated
-  `tenant_isolation_policy` name, and only when the table has a higher-precedence
-  tenant column than the one the policy references — a hand-tuned or
-  parent-scoped policy is never touched, and a table whose only tenant column is
-  `tenant_id` is left exactly as it is.
+  `tenant_isolation_policy` name, on public tables whose preferred tenant column
+  is an integer — a hand-tuned or parent-scoped policy is never touched, and a
+  table whose only tenant column is `tenant_id` is left exactly as it is.
 
 Verified: the sweep repointed 4 tables on an already-provisioned database, a
 second run repointed 0, and
 `tests/db/provisioned-tenant-tables-rls.dbtest.ts` went from 2 failures to 11
 passes.
+
+### The cast that turned every tenant query into a 500
+
+The canonical policy carried this disjunct, on all ~800 tenant tables:
+
+```sql
+OR <col> = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT
+```
+
+`app.current_org_id` holds the org **UUID**.
+`server/middleware/establishRequestTenantScope.ts` sets `app.current_tenant_id`
+to the integer org id and `app.current_org_id` to the uuid, and every non-public
+policy compares that GUC as `::uuid`. Casting it to `INT` is a category error,
+and PostgreSQL does not guarantee OR short-circuiting — so for any row the
+earlier disjuncts do not satisfy, the cast **is** evaluated:
+
+```
+ERROR:  invalid input syntax for type integer: "d0211565-c7f2-402f-ad10-e4211e683857"
+```
+
+That is every read and every write of every integer tenant-keyed table, on any
+connection carrying a real request scope, **in every RLS mode** — the
+shadow-mode bypass is just another disjunct and does not stop the cast being
+evaluated.
+
+Two things hid it, and both are worth naming:
+
+1. the application still connects as the owner, a superuser for whom RLS is
+   inert, so the policy is never evaluated at all; and
+2. every test that sets these GUCs — including
+   `tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` — sets
+   `app.current_org_id` to `''`, the one value that avoids the cast.
+
+So the defect was invisible precisely under the conditions the role split
+removes. Under `app_service`, which production requires, the app cannot read a
+single tenant table.
+
+Fixed by **extracting** an integer instead of casting whatever is there:
+
+```sql
+OR <col> = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT
+```
+
+NULL for a uuid (the disjunct is simply not satisfied), the integer when there
+genuinely is one. The disjunct is fixed, not deleted: narrowing an RLS policy is
+a security change, and this is only meant to stop it crashing. 44 occurrences
+across 23 files — every place the policy text is written, including
+`tests/db/harness.ts`, whose copy is diffed against the migration by
+`rls-tenant-isolation.dbtest.ts`.
+
+The sweep's rebuild pass also heals it on existing databases: a policy whose
+qual lacks the `^[0-9]+$` marker is on the old shape. Verified — 750 policies
+rebuilt on a provisioned database, 0 on the next run; a fresh install emits the
+fixed shape for all 631 from 0021 directly; the middleware GUC shape reads its
+own tenant's row, still returns nothing for another tenant's, still returns
+nothing unscoped, and an actual integer in `app.current_org_id` still resolves.
+`tests/db/provisioned-tenant-tables-rls.dbtest.ts` now scopes its connections
+the way the middleware does — restoring the broken policy fails 6 of its cases.
+
+#### What the rebuild pass must not touch
+
+The first version of that pass matched on the policy NAME alone, and that was
+wrong. `db/migrations/20260813_knowledge_graph_tenant_keys.sql` installs a
+policy also called `tenant_isolation_policy`, on the knowledge-graph tables,
+whose body is deliberately **stricter** — a bare
+`organization_id = current_setting('app.current_tenant_id')`, with no
+shadow-mode bypass and no super-admin escape, because the point of that
+migration is that unattributed rows are served to nobody and an unscoped
+connection sees nothing. Rebuilding it to the canonical text silently weakened
+isolation on those three tables.
+
+`tests/db/knowledge-graph-tenant-isolation.dbtest.ts` failed all six of its
+isolation cases and caught it. The pass now additionally requires the canonical
+template's own shadow-mode marker (`app.rls_enforce`) to be present in the qual,
+so it can only ever repair policies it or 0021 wrote. Verified: the strict kg
+policies survive the sweep untouched (`0 rebuilt`) and the suite is back to 7/7.
+
+That is the whole argument for the rule this repo already has — a gate that has
+only ever been seen to pass has not been tested. This one was made to fail, on
+the case it exists to catch, before it was believed.
+
+### UUID-native tenant schemas — reviewed, one latent risk
+
+The non-public schemas key on a uuid and carry the context-less-safe policy:
+
+```sql
+(org_id = COALESCE(NULLIF(current_setting('app.current_org_id', true), '')::uuid, org_id))
+OR (org_id IS NULL)
+```
+
+Executed against `core.programs` as `app_service` with two real tenants:
+
+| `app.current_org_id` | Result |
+|---|---|
+| tenant A's uuid | only A's row |
+| tenant B's uuid | only B's row |
+| unset / `''` | both rows — the documented cross-tenant background-job path |
+| an integer | `ERROR: invalid input syntax for type uuid` |
+| any non-uuid | same error |
+
+Isolation is correct. The last two rows are the exact mirror image of the
+integer-side defect above, and they are **latent, not live**: all ten writers of
+`app.current_org_id` in the repo set a uuid or `''`
+(`establishRequestTenantScope`, `withTenantConnection`, `lazyRequestDbClient`,
+`poolInstrumentation`, `advancedRAGPipeline`, `stability.router`). Nothing is
+broken today, so this is left as a recorded risk rather than another sweep over
+the uuid policies. The remedy, if a caller ever sets a non-uuid, is the same
+shape as the fix above — extract rather than cast:
+`substring(current_setting('app.current_org_id', true) from '^[0-9a-fA-F-]{36}$')::uuid`.
 
 ---
 
@@ -308,8 +445,11 @@ npm run build
 
 ### Results on the run that produced this document
 
-Local PostgreSQL 16.13 + pgvector 0.6.0, database `concept2cure-ri` built from
-blank:
+Local PostgreSQL 16.13 + pgvector 0.6.0. The final row of each measurement is
+from one uninterrupted chain on a database built from blank —
+`install-fresh` → `deploy-migrate` → `apply-c2c-migrations` →
+`deploy-smoke-assert` → `readiness-audit` → `ci:tables-live-schema` →
+`test:db` ×2:
 
 | Step | Result |
 |---|---|
@@ -319,7 +459,8 @@ blank:
 | `deploy-migrate` | exit 0 · authoring 19/19 · tenant-parentage FKs 6/6 · policies 19/19 |
 | `readiness-audit` | exit 0 · 0 FAIL (13/17, remainder are pre-existing WARNs) |
 | `deploy-smoke-assert` | exit 0 · every invariant holds |
-| `npm run test:db` | 10 files, 95 tests, all passing under `RLS_ENFORCE=on` — twice in a row against the same database |
+| `ci:tables-live-schema` | exit 0 · no new references to absent tables (83 baselined) |
+| `npm run test:db` | 10 files, 96 tests, all passing under `RLS_ENFORCE=on` — twice in a row against the same database |
 | `npm run build` | exit 0 |
 
 CI gates re-run clean: `ci:migration-reachability`, `ci:duplicate-table-ddl`,

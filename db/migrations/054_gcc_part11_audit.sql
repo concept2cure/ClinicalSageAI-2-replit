@@ -340,6 +340,25 @@ $$;
 -- =============================================================================
 
 -- Generic audit trigger function
+-- ── The audit trigger that made its own tables un-writable (fixed 2026-08-21) ──
+-- v_entity_name was built with static field references —
+--     COALESCE(NEW.title, NEW.application_number, NEW.email, NEW.org_name, NEW.id::TEXT)
+-- — and PL/pgSQL resolves a record field reference at RUNTIME, before COALESCE
+-- ever runs. A row type without a `title` column does not yield NULL; it raises
+--     ERROR: record "new" has no field "title"
+-- so the trigger aborted the statement that fired it. Every one of the six
+-- tables this trigger is attached to is missing at least one of those four
+-- columns, which meant identity.organizations, identity.users and the four
+-- ectd_v4 submission tables rejected every INSERT, UPDATE and DELETE on any
+-- provisioned database. The governed-content step reported "43/43 applied" the
+-- whole time, because applying the file and the file working are different
+-- facts.
+--
+-- The row is already serialised into v_new_json / v_old_json one line above, and
+-- `jsonb ->> 'missing_key'` is NULL rather than an error — so the lookup goes
+-- through the JSON the function already has. Same precedence, same fallback to
+-- the id, no per-table column contract.
+
 CREATE OR REPLACE FUNCTION audit.audit_trigger_func()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -359,10 +378,10 @@ BEGIN
         v_new_json := to_jsonb(NEW);
         v_entity_id := NEW.id;
         v_entity_name := COALESCE(
-            NEW.title,
-            NEW.application_number,
-            NEW.email,
-            NEW.org_name,
+            v_new_json ->> 'title',
+            v_new_json ->> 'application_number',
+            v_new_json ->> 'email',
+            v_new_json ->> 'org_name',
             NEW.id::TEXT
         );
     ELSIF TG_OP = 'UPDATE' THEN
@@ -371,10 +390,10 @@ BEGIN
         v_new_json := to_jsonb(NEW);
         v_entity_id := NEW.id;
         v_entity_name := COALESCE(
-            NEW.title,
-            NEW.application_number,
-            NEW.email,
-            NEW.org_name,
+            v_new_json ->> 'title',
+            v_new_json ->> 'application_number',
+            v_new_json ->> 'email',
+            v_new_json ->> 'org_name',
             NEW.id::TEXT
         );
         
@@ -395,10 +414,10 @@ BEGIN
         v_old_json := to_jsonb(OLD);
         v_entity_id := OLD.id;
         v_entity_name := COALESCE(
-            OLD.title,
-            OLD.application_number,
-            OLD.email,
-            OLD.org_name,
+            v_old_json ->> 'title',
+            v_old_json ->> 'application_number',
+            v_old_json ->> 'email',
+            v_old_json ->> 'org_name',
             OLD.id::TEXT
         );
     END IF;

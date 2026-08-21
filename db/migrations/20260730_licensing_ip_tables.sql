@@ -104,7 +104,7 @@ BEGIN
         CREATE POLICY tenant_isolation_policy ON %I USING (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR organization_id = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT
+          OR organization_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         )$pol$, t);
     END IF;

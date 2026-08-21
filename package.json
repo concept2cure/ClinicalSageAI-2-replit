@@ -106,6 +106,8 @@
     "ci:journey-migration-reachability": "node scripts/ci/check-journey-migration-reachability.mjs",
     "ci:migration-reachability": "node scripts/ci/check-migration-reachability.mjs",
     "ci:tables-live-schema": "node scripts/ci/check-tables-against-live-schema.mjs --strict-no-regression",
+    "ci:purge-coverage": "node scripts/ci/check-purge-coverage.mjs",
+    "ci:purge-coverage:write-baseline": "node scripts/ci/check-purge-coverage.mjs --write-baseline",
     "ci:migration-reachability:write-baseline": "node scripts/ci/check-migration-reachability.mjs --write-baseline",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",

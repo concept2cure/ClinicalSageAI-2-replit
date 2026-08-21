@@ -71,7 +71,21 @@ async function asTenant<T>(orgId: number | null, fn: (c: PoolClient) => Promise<
     await client.query('RESET ALL');
     await client.query("SELECT set_config('app.rls_enforce', 'on', false)");
     if (orgId !== null) {
+      // BOTH variables, exactly as server/middleware/establishRequestTenantScope.ts
+      // sets them: the integer org id in app.current_tenant_id, the org UUID in
+      // app.current_org_id.
+      //
+      // Setting the UUID is load-bearing, not incidental. Every other suite that
+      // touches these GUCs sets app.current_org_id to '' — and '' is the one
+      // value that hid a defect where the integer policy cast that UUID to INT,
+      // so any real request scope killed every query on every tenant table with
+      // `invalid input syntax for type integer`. A test that scopes a connection
+      // differently from the middleware is not testing the middleware's scope.
       await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [String(orgId)]);
+      await client.query(
+        "SELECT set_config('app.current_org_id', COALESCE((SELECT uuid::text FROM organizations WHERE id = $1), ''), false)",
+        [String(orgId)],
+      );
     }
     return await fn(client);
   } finally {
@@ -214,6 +228,59 @@ describe('provisioned tenant tables under the non-superuser runtime role', () =>
     });
     expect(seen.map(r => r.study_title)).toEqual([`${TAG}-study-A`]);
     expect(seen.every(r => r.organization_id === ORG_A)).toBe(true);
+  });
+
+  /**
+   * The regression guard for the cast that made every tenant query throw.
+   *
+   * The policy carried `… OR <col> = NULLIF(current_setting('app.current_org_id',
+   * TRUE), '')::INT`, and that GUC holds the org UUID. PostgreSQL does not
+   * guarantee OR short-circuiting, so the cast was evaluated for any row the
+   * earlier disjuncts did not satisfy and the query died with
+   * `invalid input syntax for type integer`. Every read and every write, on any
+   * connection carrying a real request scope, in every RLS mode.
+   *
+   * The read above already exercises it (asTenant now sets the UUID the way the
+   * middleware does), but this pins the property directly, so a regression says
+   * "the org-id disjunct throws" rather than "a read returned nothing".
+   */
+  it('a UUID in app.current_org_id does not blow up the integer tenant predicate', async () => {
+    const qual = (
+      await owner.query(
+        `SELECT qual FROM pg_policies
+          WHERE schemaname = 'public' AND tablename = 'stability_studies'
+            AND policyname = 'tenant_isolation_policy'`,
+      )
+    ).rows[0]?.qual as string;
+    // The fixed form EXTRACTS an integer; the broken form casts unconditionally.
+    expect(qual).toContain('^[0-9]+$');
+
+    // And executed, not just inspected: a scoped read must return the tenant's
+    // row rather than raising 22P02.
+    const count = await asTenant(ORG_A, async c => {
+      const { rows } = await c.query(
+        'SELECT count(*)::int AS n FROM public.stability_studies WHERE notes = $1',
+        [TAG],
+      );
+      return rows[0].n as number;
+    });
+    expect(count).toBeGreaterThan(0);
+
+    // The disjunct is fixed, not removed: an actual integer still resolves.
+    const client = await runtime.connect();
+    try {
+      await client.query('RESET ALL');
+      await client.query("SELECT set_config('app.rls_enforce', 'on', false)");
+      await client.query("SELECT set_config('app.current_org_id', $1, false)", [String(ORG_A)]);
+      const { rows } = await client.query(
+        'SELECT count(*)::int AS n FROM public.stability_studies WHERE notes = $1',
+        [TAG],
+      );
+      expect(rows[0].n).toBeGreaterThan(0);
+    } finally {
+      await client.query('RESET ALL').catch(() => {});
+      client.release();
+    }
   });
 
   it('a cross-tenant read of a known row returns nothing', async () => {

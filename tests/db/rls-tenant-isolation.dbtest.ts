@@ -211,7 +211,7 @@ describe('the harness policy matches the migration it stands in for', () => {
     for (const clause of [
       "NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'",
       "%I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT",
-      "%I = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT",
+      "%I = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT",
       "current_setting('app.current_user_role', TRUE) = 'app_super_admin'",
     ]) {
       expect(harnessPolicy).toContain(clause);

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-21T20:53:50.064Z",
+  "generatedAt": "2026-08-21T21:36:02.185Z",
   "git": {
-    "sha": "3adacb9500cfac4896f97c0e5bf1412eaf44eb64",
+    "sha": "522673afe3cf20e5c3dc65ff9dfe1c5ca1c4cefe",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2164,7 +2164,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 244889
+        "bytes": 253129
       },
       {
         "file": "server/statistics-service.ts",
@@ -2224,7 +2224,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126719
+        "bytes": 126752
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2310,7 +2310,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6221
+        "lines": 6380
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2525,10 +2525,6 @@
         "lines": 1849
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1843
-      },
-      {
         "file": "server/services/vaccine/vaccine-knowledge.ts",
         "lines": 1836
       },
@@ -2539,6 +2535,10 @@
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
         "lines": 1828
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1824
       },
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
