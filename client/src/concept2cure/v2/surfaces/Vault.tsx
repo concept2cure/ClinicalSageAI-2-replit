@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { useVaultUpload } from '../useVaultUpload';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   vaultStatus,
@@ -164,64 +165,23 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      Nothing is faked here — the row appears in the tree because the server
      wrote it, and a refusal is reported as a refusal. */
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadNote, setUploadNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /* Moved to ../useVaultUpload and shared with the MDX Document vault, which
+     had no upload control at all (its button opened a chat prompt). Copying
+     these forty lines into that surface would have produced a second copy of a
+     governed write path — the SHA-256, the audit row and the tenant check all
+     live behind this one endpoint, and two callers drifting is how a lane ends
+     up filing documents differently from the lane beside it. Behaviour here is
+     unchanged: sequential uploads, per-file outcomes, a refusal reported as a
+     refusal, and a refresh only when the server actually stored something. */
+  const { uploading, note: uploadNote, upload } = useVaultUpload(
+    projectId ? String(projectId) : null,
+  );
 
   const uploadFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    if (!projectId) return;
-    setUploading(true);
-    setUploadNote(null);
-    const done: string[] = [];
-    const failed: string[] = [];
-    try {
-      for (const file of Array.from(files)) {
-        const form = new FormData();
-        form.append('file', file);
-        form.append('programId', String(projectId));
-        /* The ingest schema requires a code, a title and a type. The filename
-           is the only thing the user has actually told us here, so it supplies
-           the first two verbatim and the type is recorded as OTHER rather than
-           guessed from the extension — a document filed as a CSR because it was
-           named like one is a classification this surface has no basis to make.
-           Both are editable on the document once it lands. */
-        form.append('documentCode', file.name);
-        form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
-        form.append('documentType', 'OTHER');
-
-        const res = await fetch('/api/vault/ingest', {
-          method: 'POST',
-          body: form,
-          credentials: 'include',
-        });
-        if (res.ok) done.push(file.name);
-        else {
-          const body = await res.json().catch(() => null);
-          const why = (body && (body.message || body.error)) || `HTTP ${res.status}`;
-          failed.push(`${file.name} (${String(why)})`);
-        }
-      }
-      if (failed.length === 0) {
-        setUploadNote({ tone: 'ok', text: `Uploaded ${done.length} document${done.length === 1 ? '' : 's'} to the Vault.` });
-      } else {
-        setUploadNote({
-          tone: 'error',
-          text:
-            (done.length ? `Uploaded ${done.length}. ` : '') +
-            `Not uploaded: ${failed.join('; ')}. Nothing partial was filed for those.`,
-        });
-      }
-      // Re-read the tree so what is shown is what the server stored.
-      if (done.length) setVaultEpoch((n) => n + 1);
-    } catch (e) {
-      setUploadNote({
-        tone: 'error',
-        text: `Upload failed — ${e instanceof Error ? e.message : String(e)}. Nothing was filed.`,
-      });
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    const outcome = await upload(files);
+    // Re-read the tree so what is shown is what the server stored.
+    if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
