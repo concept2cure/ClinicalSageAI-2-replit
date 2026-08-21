@@ -1597,15 +1597,13 @@
 .mdx-shell .docs-row[data-status="locked"] .docs-rail { background: var(--text-200); width: 6px; }
 .mdx-shell .docs-row[data-blocker="true"]  .docs-rail { background: var(--error); width: 6px; }
 
-/* --text-300 where the kit says --text-400, on .docs-meta (and everything that
-   inherits from it), .docs-last, .docs-dhf and .docs-esig-na.
-   The kit's grey is #8a8880 and this row's background is --canvas-elevated,
-   #ffffff. That is 3.55:1 at 11px, against the 4.5:1 AA asks of text this size,
-   measured on all 14 rows of the Vault. --text-300 is 5.49:1 on the same white
-   and 4.98:1 on the --bg-050 of the action column.
-   Porting the value verbatim would have been introducing failures, not
-   preserving them: until this section existed the text inherited the surface
-   colour and passed. A port is not required to carry a defect across.
+/* The kit's --text-400 stands everywhere it lands on the row's white
+   --canvas-elevated: at #75736d that is 4.74:1 at 11px, clear of the 4.5:1 AA
+   asks of text this size. It was #8a8880 and 3.55:1 when this section was
+   written, which is why .docs-meta, .docs-last and .docs-dhf briefly read
+   --text-300; the token moved and the deviation went with it.
+   .docs-esig-na keeps --text-300, because it is the one of these on --bg-100
+   rather than white, where --text-400 is 4.08:1 and still short.
    .docs-open and .docs-action-chip keep --text-400 — they are icons, judged
    against the 3:1 non-text rule, not this one. */
 .mdx-shell .docs-body { flex: 1; min-width: 0; padding: 12px 16px; }
@@ -1625,14 +1623,14 @@
 .mdx-shell .docs-fw-14971 { background: #f6e9cf; color: #7e5510; }
 .mdx-shell .docs-fw-62304 { background: #ece9f7; color: #544698; }
 .mdx-shell .docs-fw-cyber { background: #f3d6d2; color: #7c1f1f; }
-.mdx-shell .docs-dhf { color: var(--text-300); }
+.mdx-shell .docs-dhf { color: var(--text-400); }
 .mdx-shell .docs-title {
   font-size: 14px; font-weight: 600; color: var(--text-100); line-height: 1.4;
   margin-bottom: 6px;
 }
 .mdx-shell .docs-meta {
   display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-  font-size: 11px; color: var(--text-300);
+  font-size: 11px; color: var(--text-400);
 }
 .mdx-shell .docs-ver { color: var(--text-300); font-weight: 600; }
 .mdx-shell .docs-progress {
@@ -1658,7 +1656,7 @@
   border-radius: 999px;
   color: var(--text-300); font-family: var(--font-mono); font-size: 10px;
 }
-.mdx-shell .docs-last { color: var(--text-300); margin-left: 4px; }
+.mdx-shell .docs-last { color: var(--text-400); margin-left: 4px; }
 .mdx-shell .docs-esig {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 1px 6px; border-radius: 999px;
