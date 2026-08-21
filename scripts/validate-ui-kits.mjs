@@ -34,8 +34,14 @@ if (!fs.existsSync(KITS_DIR)) {
   process.exit(strict ? 1 : 0);
 }
 
+// A leading underscore marks a directory that is NOT a kit — `_shared` holds
+// rail.jsx, the navigation rail six kits <script src>-include. It has no
+// index.html because it is not a page, and reporting that as "NO index.html"
+// was one of this gate's ten issues: a permanent failure for a file that is
+// correct as it is. A gate that cannot be satisfied stops being read.
 const kits = fs
   .readdirSync(KITS_DIR)
+  .filter((d) => !d.startsWith('_'))
   .filter((d) => fs.statSync(path.join(KITS_DIR, d)).isDirectory());
 
 let totalIssues = 0;
@@ -87,24 +93,44 @@ for (const kit of kits) {
   //    "Identifier 'X' has already been declared" and the kit renders nothing.
   //    (Found in the authoring + intelligence kits; fixed by using `var`.) Use
   //    `var` for top-level React-hook destructures shared across a kit's scripts.
-  const hookCounts = new Map();
+  //    The rule counts EVERY declaration form, not just `const`, because the
+  //    hazard is not "two consts" — it is one lexical binding meeting any other
+  //    declaration of the same name:
+  //
+  //      var  + var    legal, redeclaration is allowed
+  //      var  + const  SyntaxError
+  //      const+ const  SyntaxError
+  //      const+ let    SyntaxError
+  //
+  //    Counting only `const` missed the mixed case. That is not hypothetical:
+  //    after the six colliding kits were converted to `var`, `_shared/rail.jsx`
+  //    was reverted to `const` as a test and this gate stayed green — one const
+  //    among vars still throws at load and breaks all six kits that include the
+  //    rail. So a collision is now: the same bound name declared more than once
+  //    across a kit's scripts, with at least one of those declarations lexical.
+  const hookDecls = new Map(); // bound name -> { count, lexical }
   for (const f of scripts) {
     const src = fs.readFileSync(f, 'utf8');
     for (const line of src.split('\n')) {
-      const cm = line.match(/^\s*const\s*\{([^}]*)\}\s*=\s*React\s*;?\s*$/);
+      const cm = line.match(/^\s*(const|let|var)\s*\{([^}]*)\}\s*=\s*React\s*;?\s*$/);
       if (!cm) continue;
-      for (let part of cm[1].split(',')) {
+      const lexical = cm[1] !== 'var';
+      for (let part of cm[2].split(',')) {
         // The collision is on the BOUND name: for `useState: useStateExt` the
         // binding is `useStateExt`, so aliasing avoids the clash (as home does).
         const bound = (part.includes(':') ? part.split(':')[1] : part).trim();
-        if (bound) hookCounts.set(bound, (hookCounts.get(bound) || 0) + 1);
+        if (!bound) continue;
+        const prev = hookDecls.get(bound) || { count: 0, lexical: false };
+        hookDecls.set(bound, { count: prev.count + 1, lexical: prev.lexical || lexical });
       }
     }
   }
-  const collisions = [...hookCounts.entries()].filter(([, n]) => n > 1).map(([k]) => k);
+  const collisions = [...hookDecls.entries()]
+    .filter(([, d]) => d.count > 1 && d.lexical)
+    .map(([k]) => k);
   if (collisions.length > 0) {
     issues.push(
-      `shared-scope collision: ${collisions.join(', ')} declared via \`const {..} = React\` in multiple scripts (use \`var\`)`
+      `shared-scope collision: ${collisions.join(', ')} declared more than once across this kit's scripts with at least one \`const\`/\`let\` (use \`var\` for top-level React-hook destructures)`
     );
   }
 

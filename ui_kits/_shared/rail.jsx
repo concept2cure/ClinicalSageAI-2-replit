@@ -7,7 +7,7 @@
  * rail and its items never drift between surfaces. Collapse state
  * persists in localStorage('c2c.railCollapsed'), shared across surfaces. */
 
-const { useState } = React;
+var { useState } = React;
 
 const RailIcon = ({ d }) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
