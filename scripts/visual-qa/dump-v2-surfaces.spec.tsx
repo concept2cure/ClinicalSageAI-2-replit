@@ -53,7 +53,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+/* PARTIAL mock, not a replacement.
+   This replaced the module with a single export, and worked only while every
+   surface captured cleanly. The moment a read fails, `ErrorState` renders and
+   reaches for `redactInternals` — absent from the stand-in, so the component
+   threw, React unmounted the tree, and the capture saw an empty container and
+   reported "the surface THREW". Five surfaces failed that way, and the surface
+   was never the thing that was broken.
+   `zeroStateNarrative.test.tsx` hit exactly this and fixed it the same way; the
+   knowledge was already in the repo and this file had the older form. A
+   stand-in kept in step by hand drifts, and it drifts silently on precisely the
+   error paths that are hardest to test. */
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
 
 import { bodyFor } from './api-fixtures.mjs';
 import { AuthProvider } from '../../client/src/services/portal/authService';
