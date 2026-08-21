@@ -100,3 +100,25 @@ control that cannot be reached by keyboard at all — is **invisible** to every
 check here. Keyboard operability and focus order are not covered by anything in
 this directory. A green run means "every control has a name", not "the product is
 accessible".
+
+## Does anything spill sideways out of its box?
+
+`npm run visual-qa:overflow` measures every captured fragment at the width its
+component is actually given and fails on an element wider than its own box.
+
+It exists because a fix to AnA's work record set `flex-basis:100%` plus an 18px
+`margin-left` — 100% PLUS 18px — and shipped. 2,153 tests passed, every CSS gate
+passed, CI went green. jsdom parses the cascade but does not lay it out, so
+`getByText` answers the same whether an element fits or overflows, and the
+design gates read stylesheets as text and cannot know what `100%` resolves to.
+
+The width is the whole point. That defect *was* looked at before it shipped —
+at 460px, where it fits. It only appears at the 356px the rail really gets
+(`--ana: 380px` less 12px of `.ana-body` padding a side). So each capture
+declares its own width in `_viewports.json`, and fragments without one are
+measured at the desktop viewport the surface captures assume.
+
+Findings are ratcheted in `overflow-baseline.json`: pre-existing overflows are
+recorded so the count can fall and never silently rise, and anything new is
+printed by name. Screen-reader-only regions are excluded by rule — the standard
+clip technique gives them a 1px box on purpose.
