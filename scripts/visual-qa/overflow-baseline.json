@@ -1,4 +1,11 @@
 {
-  "count": 0,
-  "known": []
+  "count": 13,
+  "known": [
+    "mdx__device-validation.html div.ctable-head",
+    "mdx__device-vault.html div.docs-panel",
+    "v2__coverage.html div.cv-note",
+    "v2__document-authoring.html div.ed-crumbs",
+    "v2__quality.html div",
+    "v2__quality.html div.qms-row"
+  ]
 }

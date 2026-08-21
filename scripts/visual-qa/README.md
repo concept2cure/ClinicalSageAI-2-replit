@@ -49,12 +49,17 @@ the product never serves. `check-overflow.mjs` shipped without the wrapper and
 its first two findings were artifacts of exactly that.
 
 **The stylesheets.** The build emits twenty CSS chunks, not four. Each check
-used to name `index-*`, `V2App-*` and one of `MdxSurfaceHost-*` / `PdevRoute-*`
-and load nothing else; fourteen of the remaining sixteen style classes that
+named `index-*`, `V2App-*` and one of `MdxSurfaceHost-*` / `PdevRoute-*` and
+loaded nothing else; fourteen of the remaining sixteen style 239 classes that
 appear in the captured markup. `built-css.mjs` is now the single place that
 answers "which stylesheets" — every check imports it, and it loads all of them.
 The trade-off is stated there: all-chunks is a superset of what one route
 serves, which is the opposite error from a missing sheet and a visible one.
+
+That two of the three checks had grown their own `sheetsFor()` is the other
+half of the story. Two copies of a judgement call is two places for it to
+drift; three is how the third one gets written without anyone noticing the
+first two were incomplete.
 
 `check-surface-styling.mjs` is the check that caught this, by refusing to run:
 its self-check asserts `.rc-ana` computes to `display:flex`, `.rc-ana` moved
@@ -150,10 +155,15 @@ at 460px, where it fits. It only appears at the 356px the rail really gets
 declares its own width in `_viewports.json`, and fragments without one are
 measured at the desktop viewport the surface captures assume.
 
+The width is also why the default is **796px, not 1440**. A surface never gets
+the viewport: the shell is `grid-template-columns: var(--rail) 1fr var(--ana)`,
+so 264px goes to nav and 380px to the AnA rail. Measuring at 1440 grants 644px
+of room that does not exist.
+
 Findings are ratcheted in `overflow-baseline.json`: pre-existing overflows are
 recorded so the count can fall and never silently rise, and anything new is
-printed by name. **The baseline is currently zero**, which is the state worth
-defending — the ratchet exists so it can only be raised deliberately.
+printed by name. What is in it now is real and open — see ledger L97, and note
+that a baseline entry means "known", not "acceptable".
 
 Three exclusions, each by rule:
 

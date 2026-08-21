@@ -64,16 +64,31 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const MARKUP = path.join(REPO, '.visual-qa/markup');
 const BASELINE = path.join(REPO, 'scripts/visual-qa/overflow-baseline.json');
 
-/** Width used for fragments whose capture declared none (the surface captures). */
-const DESKTOP = 1440;
+/**
+ * Width used for fragments whose capture declared none — the surface captures.
+ *
+ * NOT the 1440px viewport: a surface never gets the viewport. The shell is
+ * `grid-template-columns: var(--rail) 1fr var(--ana)` — 264px of nav and 380px
+ * of AnA rail — so at a 1440 window the middle column a surface actually
+ * receives is 796px. Measuring at 1440 would let a surface pass on 644px of
+ * room it does not have, which is the same mistake, in the same direction, as
+ * inspecting the AnA rail at 460px when it renders at 356.
+ */
+const DESKTOP = 1440 - 264 - 380;
 /** Sub-pixel rounding: a 0.5px difference is layout noise, not a defect. */
 const TOLERANCE = 1;
 
 const WRITE = process.argv.includes('--write-baseline');
 
-// Every built stylesheet, in load order — see built-css.mjs. A layout measured
-// against a partial cascade is the same failure as one measured at a width the
-// component never gets, and this file already knows what that costs.
+// Every built stylesheet, in load order — see built-css.mjs.
+//
+// This file first loaded ENTRY and V2 only, which silently omitted the MDX
+// sheet for `mdx__` fragments: a fix applied to `.mdx-shell .cer-tabbar` moved
+// the numbers not at all, which reads exactly like a fix that does not work.
+// The narrower repair — a local `sheetsFor()` copied from check-contrast.mjs —
+// still missed sixteen further chunks, fourteen of which style classes present
+// in the captured markup. One shared module answers it for every check instead,
+// and there is no second copy of the judgement to drift.
 const SHEETS = builtStylesheets(TAG, { soft: true });
 const STYLES = styleTags(SHEETS);
 
@@ -82,8 +97,20 @@ const pageFor = (markup) =>
   // The measured box is the fragment's own width and nothing wider, so a
   // fragment cannot be rescued by a viewport it will never have.
   `<style>html,body{margin:0;padding:0}#box{overflow:hidden}</style>` +
-  // `.c2c-v2` on the box itself: the width lands on the same element that
-  // scopes the cascade, so neither can be true without the other.
+  // `c2c-v2` for scope, on the box itself so the width lands on the same
+  // element that scopes the cascade — and deliberately NOT `shell`.
+  //
+  // Two wrong wrappers came before this one, and each produced a confident
+  // number. A bare `<div id="box">` applies no product CSS at all — every rule
+  // is scoped `.c2c-v2 …` and the surface captures do not carry that class
+  // themselves — so 124 fragments were measured essentially unstyled and the
+  // two "overflows" it found were artifacts. Adding `shell` to match
+  // check-contrast.mjs then swung it the other way: `.c2c-v2.shell` is
+  // `grid-template-columns: var(--rail) 1fr var(--ana)`, so a surface fragment
+  // landed in the 264px LEFT RAIL column and 525 elements "overflowed" a box
+  // the product never puts them in. Contrast can wrap in `shell` harmlessly —
+  // colour does not depend on width. Overflow is the one check for which the
+  // container is the measurement.
   `</head><body><div id="box" class="c2c-v2">${markup}</div></body></html>`;
 
 /**
@@ -121,13 +148,15 @@ const MEASURE = (tolerance) => {
   const candidates = all.filter((el) => {
     if (srOnly(el)) return false;
     if (!overflows(el)) return false;
-    // Only `visible` overflow escapes the box. `auto`/`scroll` scroll on
-    // purpose; `hidden`/`clip` cut the content off at the edge — which is
-    // exactly what `white-space:nowrap; overflow:hidden; text-overflow:
-    // ellipsis` is FOR, and that idiom always measures wider than its box.
-    // Reporting it means reporting every truncated label in the product as a
-    // layout defect, and a tool that flags correct markup teaches people to
-    // ignore it, which is the more expensive failure.
+    // Anything but `visible` means the author is containing it on purpose,
+    // and only `visible` can push an ancestor sideways. `auto`/`scroll` scroll
+    // deliberately; `hidden`/`clip` are how truncation is built —
+    // `white-space:nowrap; overflow:hidden; text-overflow:ellipsis` has
+    // scrollWidth > clientWidth BY DESIGN, that being what makes the ellipsis
+    // appear. An earlier rule here skipped only auto and scroll and reported
+    // 27 "overflows" that were ellipsis elements doing their job. A tool that
+    // flags correct markup teaches people to ignore it, and then it protects
+    // nothing.
     return getComputedStyle(el).overflowX === 'visible';
   });
   if (candidates.length === 0) return [];
