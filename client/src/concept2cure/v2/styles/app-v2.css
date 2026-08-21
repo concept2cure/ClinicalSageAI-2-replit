@@ -1476,6 +1476,10 @@
 }
 .c2c-v2 .ana-msg-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 
+/* The panel brings its own CSS module; this only gives it room in the
+   rail's rhythm. */
+.c2c-v2 .ana-premortem{margin-top:8px;}
+
 /* How well-grounded the answer is.
    Deliberately the work record's vocabulary — same left rule, same 11.5px
    rows, same --text-300 — so it reads as one more thing AnA reports about her

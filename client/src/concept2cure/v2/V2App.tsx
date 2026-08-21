@@ -152,6 +152,8 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
     /* The evidence verdict. Captured since the grounding pipeline shipped and
        dropped here like the rest. */
     evidence: m.evidence,
+    /* Built by E14, panelled by E14, carried by nobody until now. */
+    crlPremortem: m.crlPremortem,
     /* Everything the turn reported about how it was answered. This used to be
        dropped here — useAnaChat captured the tools, rounds, lens and drafts,
        and the rail rendered a single line of body text — so AnA could run

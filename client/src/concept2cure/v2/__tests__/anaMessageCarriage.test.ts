@@ -74,6 +74,13 @@ describe('adaptChatMessage — the turn reaches the rail intact', () => {
     expect(adaptChatMessage({ ...turn, evidence: ev } as any).evidence).toEqual(ev);
   });
 
+  it('carries the pre-mortem artifact', () => {
+    // The panel is mounted now; an adapter that drops this makes it unreachable
+    // again, which is the state it shipped in for its whole life.
+    const art = { title: 'CRL/RTF pre-mortem', status: 'estimated' } as any;
+    expect(adaptChatMessage({ ...turn, crlPremortem: art } as any).crlPremortem).toEqual(art);
+  });
+
   it('carries the governed action state', () => {
     const out = adaptChatMessage(turn);
 
