@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-20T22:00:45.708Z",
+  "generatedAt": "2026-08-21T01:07:45.076Z",
   "git": {
-    "sha": "61a9b4a77a18afb25d1e176966be1830d303bedd",
+    "sha": "9b014b1304a567aa8f63efab0fda2829781f3b28",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 37,
-    "largeFilesByLines": 86
+    "largeFilesByLines": 87
   },
   "findings": {
     "duplicateBasenames": [
@@ -2635,6 +2635,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1516
+      },
+      {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 1505
       }
     ]
   },
@@ -2662,7 +2666,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 2,
-      "largeByLines": 4
+      "largeByLines": 5
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
