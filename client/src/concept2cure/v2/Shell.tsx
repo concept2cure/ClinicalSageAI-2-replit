@@ -27,6 +27,7 @@ import {
 import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
+import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -68,6 +69,12 @@ export interface AnaMessage {
   executedActions?: AnaChatAction[];
   /** Governed commands ANA proposed that are blocked on a Part 11 e-signature. */
   pendingSignoffs?: PendingSignoff[];
+  /**
+   * What ANA is doing / did this turn — the live work record rendered by
+   * {@link AnaActivity}. Every field is something the turn genuinely reported;
+   * see that module for why the rail used to show none of it.
+   */
+  activity?: AnaActivityProps;
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -680,6 +687,7 @@ export function AnaRail({
                 </div>
               )}
               <div className="bd">{m.body}</div>
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
               {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
                 <div className="ana-msg-actions">
                   {m.actions.map((id) => {

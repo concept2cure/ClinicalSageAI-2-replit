@@ -128,11 +128,40 @@ function adaptChatMessage(m: AnaChatMessage): AnaMessage {
   if (m.role === 'user') return { role: 'user', body: m.text };
   return {
     role: 'ana',
-    body: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
+    // The body no longer has to carry the waiting state on its own. While a
+    // turn streams, AnaActivity below shows the actual work; the body falls
+    // back to the phase only until the first token lands, and to nothing at
+    // all when the activity record can speak for itself.
+    body: m.text || (m.streaming && !hasReportableWork(m) ? m.statusPhase || 'Thinking…' : ''),
     sample: false,
     executedActions: m.executedActions,
     pendingSignoffs: m.pendingSignoffs,
+    /* Everything the turn reported about how it was answered. This used to be
+       dropped here — useAnaChat captured the tools, rounds, lens and drafts,
+       and the rail rendered a single line of body text — so AnA could run
+       three deterministic engines across two rounds and the person waiting saw
+       the word "Thinking…". */
+    activity: {
+      streaming: m.streaming,
+      phase: m.statusPhase,
+      lens: m.detectedLens,
+      documentType: m.detectedDocumentType,
+      toolCalls: m.toolCalls,
+      thinking: m.thinking,
+      draftTitle: m.generatedDraft?.title,
+    },
   };
+}
+
+/** True when the activity record has something real to show for this turn. */
+function hasReportableWork(m: AnaChatMessage): boolean {
+  return Boolean(
+    (m.toolCalls && m.toolCalls.length > 0) ||
+      m.detectedLens ||
+      m.detectedDocumentType ||
+      m.thinking ||
+      m.generatedDraft?.title,
+  );
 }
 
 /* The shell's grounding for ANA: the project currently in context (set on the
