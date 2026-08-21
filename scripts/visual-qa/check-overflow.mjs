@@ -47,8 +47,17 @@ const MARKUP = path.join(REPO, '.visual-qa/markup');
 const ASSETS = path.join(REPO, 'dist/public/assets');
 const BASELINE = path.join(REPO, 'scripts/visual-qa/overflow-baseline.json');
 
-/** Width used for fragments whose capture declared none (the surface captures). */
-const DESKTOP = 1440;
+/**
+ * Width used for fragments whose capture declared none — the surface captures.
+ *
+ * NOT the 1440px viewport: a surface never gets the viewport. The shell is
+ * `grid-template-columns: var(--rail) 1fr var(--ana)` — 264px of nav and 380px
+ * of AnA rail — so at a 1440 window the middle column a surface actually
+ * receives is 796px. Measuring at 1440 would let a surface pass on 644px of
+ * room it does not have, which is the same mistake, in the same direction, as
+ * inspecting the AnA rail at 460px when it renders at 356.
+ */
+const DESKTOP = 1440 - 264 - 380;
 /** Sub-pixel rounding: a 0.5px difference is layout noise, not a defect. */
 const TOLERANCE = 1;
 
@@ -69,7 +78,20 @@ const pageFor = (markup) =>
   // The measured box is the fragment's own width and nothing wider, so a
   // fragment cannot be rescued by a viewport it will never have.
   `<style>html,body{margin:0;padding:0}#box{overflow:hidden}</style>` +
-  `</head><body><div id="box">${markup}</div></body></html>`;
+  // `c2c-v2` for scope, and deliberately NOT `shell`.
+  //
+  // Two wrong wrappers came before this one, and each produced a confident
+  // number. A bare `<div id="box">` applies no product CSS at all — every rule
+  // is scoped `.c2c-v2 …` and the surface captures do not carry that class
+  // themselves — so 124 fragments were measured essentially unstyled and the
+  // two "overflows" it found were artifacts. Adding `shell` to match
+  // check-contrast.mjs then swung it the other way: `.c2c-v2.shell` is
+  // `grid-template-columns: var(--rail) 1fr var(--ana)`, so a surface fragment
+  // landed in the 264px LEFT RAIL column and 525 elements "overflowed" a box
+  // the product never puts them in. Contrast can wrap in `shell` harmlessly —
+  // colour does not depend on width. Overflow is the one check for which the
+  // container is the measurement.
+  `</head><body><div class="c2c-v2" id="box">${markup}</div></body></html>`;
 
 /**
  * Runs in the browser. An element overflows when its content is wider than its
@@ -92,8 +114,14 @@ const MEASURE = (tolerance) => {
     if (srOnly(el)) return;
     if (el.scrollWidth > el.clientWidth + tolerance) {
       const cs = getComputedStyle(el);
-      // An element that scrolls on purpose is not overflowing its box.
-      if (cs.overflowX === 'auto' || cs.overflowX === 'scroll') return;
+      /* Anything but `visible` means the author is containing it on purpose,
+         and only `visible` can push an ancestor sideways.
+         `auto`/`scroll` scroll deliberately; `hidden`/`clip` are how truncation
+         is built — `white-space:nowrap; overflow:hidden; text-overflow:ellipsis`
+         has scrollWidth > clientWidth BY DESIGN, that being what makes the
+         ellipsis appear. An earlier rule here skipped only auto and scroll and
+         reported 27 "overflows" that were ellipsis elements doing their job. */
+      if (cs.overflowX !== 'visible') return;
       const cls = String(el.getAttribute('class') || '').trim().split(/\s+/).slice(0, 3).join('.');
       out.push({
         selector: `${el.tagName.toLowerCase()}${cls ? '.' + cls : ''}`,
