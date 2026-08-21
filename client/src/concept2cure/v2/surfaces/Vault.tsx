@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -264,6 +266,58 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     : folderDocs;
   const sel =
     allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
+
+  /* What AnA can see of this screen.
+     Until now she knew the user was on "vault" and nothing else — not which
+     folder was open, which document was selected, or that a search was
+     narrowing the list — so "what is blocking this?" had to be answered by the
+     user restating their own screen.
+
+     A FAILED read publishes the failure, never counts. `allDocs` is [] both
+     when the vault is genuinely empty and when the read threw, and a summary
+     saying "0 documents" over an outage would make AnA confidently wrong about
+     a customer's repository. Loading says loading for the same reason. */
+  const anaContext = useMemo(() => {
+    if (vaultState.loading) {
+      return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
+    }
+    if (vaultState.error) {
+      return {
+        summary:
+          'The document vault could not be read, so this screen is showing no documents because of a failure, not because there are none.',
+        availableActions: ['Retry the vault read'],
+      };
+    }
+    const shown = results.length;
+    return {
+      summary:
+        `Document vault: ${allDocs.length} document(s) in the tree` +
+        (folder ? `, folder "${folder.label}" open` : '') +
+        (searching ? `, filtered to ${shown} by the search "${q.trim()}"` : '') +
+        (sel ? `, "${sel.title}" selected` : ''),
+      facts: {
+        totalDocuments: allDocs.length,
+        shownInList: shown,
+        searchQuery: searching ? q.trim() : null,
+        openFolder: folder ? { id: folder.id, code: folder.code, label: folder.label } : null,
+        selected: sel
+          ? {
+              id: sel.id, number: sel.num, title: sel.title, type: sel.type,
+              status: sel.status, version: sel.ver, owner: sel.owner,
+              updated: sel.updated, percentComplete: sel.pct,
+              blocker: sel.blocker ?? false, flag: sel.flag ?? null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Open a document to see its detail, version and status',
+        'Search the vault by title, number, type or preview text',
+        'Browse a folder in the document tree',
+        'Upload a file into the vault (multipart ingest, virus-scanned, one row per file)',
+      ],
+    };
+  }, [vaultState.loading, vaultState.error, allDocs, results.length, folder, searching, q, sel]);
+  usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
 

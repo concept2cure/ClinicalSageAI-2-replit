@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
@@ -78,6 +80,56 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   const sel = cases.find((c) => c.id === selId) || cases[0];
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
   const nMissing = result ? result.missingFields.length : 0;
+
+  /* What AnA can see of this screen.
+     She knew the user was on "safety-narrative" and not which SAE case was
+     open, how close its expedited-reporting clock was, or which ICH E3 §16
+     fields were still missing — so the questions this surface exists to
+     provoke ("is this filable?") could only be answered by the user retyping
+     their own screen.
+
+     A failed read publishes the failure. `live.rows` is empty both when the
+     pharmacovigilance queue is genuinely clear and when the read threw, and
+     "0 cases" over an outage would tell a safety reviewer their queue is empty
+     when it is unknown — the one thing this surface must never do. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The SAE case queue is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The SAE case queue could not be read, so this screen shows no cases because of a failure, not because the queue is clear.',
+        availableActions: ['Retry the case-queue read'],
+      };
+    }
+    const serious = cases.filter((c) => (c.event?.seriousnessCriteria || []).length).length;
+    const soonest = cases.slice().sort((a, b) => a.dueDays - b.dueDays)[0] ?? null;
+    return {
+      summary:
+        `Safety narratives: ${cases.length} SAE case(s), ${serious} meeting a seriousness criterion` +
+        (soonest ? `; soonest reporting clock ${soonest.id} due in ${soonest.dueDays} day(s)` : '') +
+        (sel ? `; case ${sel.id} open with ${nMissing} required field(s) still missing` : ''),
+      facts: {
+        caseCount: cases.length,
+        seriousCount: serious,
+        soonestDue: soonest ? { id: soonest.id, dueDays: soonest.dueDays, clock: soonest.clock } : null,
+        selected: sel
+          ? {
+              id: sel.id, studyId: sel.studyId ?? null, dueDays: sel.dueDays, clock: sel.clock,
+              seriousnessCriteria: sel.event?.seriousnessCriteria ?? [],
+              missingRequiredFields: result ? result.missingFields : [],
+            }
+          : null,
+      },
+      availableActions: [
+        'Open an SAE case to see its narrative and its reporting clock',
+        'Complete a missing ICH E3 §16 field on the selected case (drafting only — there is no case-write endpoint, so edits are not persisted)',
+        'QC the composed narrative before handing it off',
+      ],
+    };
+  }, [live.loading, live.error, cases, sel, result, nMissing]);
+  usePublishSurfaceContext('safety-narrative', anaContext);
 
   /* Answer-first lead -- context-aware to the real queue and clocks.
      `event` is typed required on SaeCase but is a joined sub-record on the wire:
