@@ -16,9 +16,31 @@
 --     -- Tenant match — accepts either session var name. Required because
 --     -- the existing middleware sets BOTH app.current_tenant_id (integer
 --     -- org id) and app.current_org_id (uuid). Tenant tables key on the
---     -- integer, so we cast both to int and OR them.
+--     -- integer.
+--     --
+--     -- ── The org-id clause used to make every tenant query throw ──────────
+--     -- It was written `NULLIF(current_setting('app.current_org_id', TRUE), '')::INT`,
+--     -- casting the org UUID to INT. PostgreSQL does not guarantee OR
+--     -- short-circuiting, so for any row the earlier disjuncts do not satisfy,
+--     -- that cast IS evaluated and the query dies with
+--     --     ERROR: invalid input syntax for type integer: "d0211565-…"
+--     -- — every read and every write of every integer tenant-keyed table, on
+--     -- any connection carrying a real request scope, in EVERY RLS mode (the
+--     -- shadow bypass above is just another disjunct; it does not stop the cast
+--     -- being evaluated). It stayed invisible because the app still connects as
+--     -- the owner, a superuser for whom RLS is inert, and because every test
+--     -- that sets these GUCs sets app.current_org_id to '' — the one value that
+--     -- avoids it. It surfaces the moment the runtime uses the non-superuser
+--     -- app_service role, which production requires.
+--     --
+--     -- `substring(… from '^[0-9]+$')` EXTRACTS an integer instead of casting
+--     -- whatever is there: NULL for a uuid (so the disjunct is simply not
+--     -- satisfied), the integer when there genuinely is one. Nothing that
+--     -- worked before stops working; the clause is fixed, not removed, because
+--     -- narrowing an RLS policy is a security change and this is only meant to
+--     -- stop it crashing.
 --     OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
---     OR organization_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+--     OR organization_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
 --
 --     -- Super-admin escape hatch. Set on the connection by tooling that
 --     -- legitimately spans tenants (admin dashboards, billing reports,
@@ -169,13 +191,13 @@ BEGIN
           USING (
             NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
             OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-            OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+            OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
             OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
           )
           WITH CHECK (
             NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
             OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-            OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+            OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
             OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
           )
       $f$,

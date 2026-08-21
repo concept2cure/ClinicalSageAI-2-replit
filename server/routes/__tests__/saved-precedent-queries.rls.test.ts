@@ -172,13 +172,13 @@ describe('Defense-in-depth: the 0021 RLS policy filters on the request-scoped co
         USING (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR organization_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR organization_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         )
         WITH CHECK (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR organization_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR organization_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         );
     `);

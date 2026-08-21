@@ -848,6 +848,15 @@ export const C2C_MIGRATION_FILES = [
   // SET NOT NULL no-ops once set, and every row has a NOT-NULL FK parent so the
   // backfill leaves none behind). MUST precede the tenant-isolation sweep so the
   // new integer-org tables come under RLS.
+  // ── regulatory_twin_simulations (runtime DDL → durable path) ────────────────
+  // Was created by CREATE TABLE IF NOT EXISTS at module load inside
+  // server/routes/regulatory-digital-twin.ts, inside a try/catch that warned and
+  // continued — so it existed only where the app had booted, never on a
+  // provisioning-only database, and ci:tables-live-schema flagged the route's
+  // queries as reading a table nothing creates. The runtime DDL is removed in the
+  // same change; this list is now its only creator.
+  'migrations/20260821_regulatory_twin_simulations.sql',
+
   'migrations/20260729_unified_documents_provision.sql',
   // The same trio's remaining three tables — module_documents,
   // document_audit_logs, document_attachments — for the same reason. They are

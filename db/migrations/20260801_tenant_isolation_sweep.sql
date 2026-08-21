@@ -65,7 +65,7 @@ DECLARE
   skipped_drift INT := 0;
   forced_count  INT := 0;
   healed_count  INT := 0;
-  repointed_count INT := 0;
+  rebuilt_count INT := 0;
   remaining_pol INT := 0;
   -- Tables that carry a tenant column but must NOT be policied — the canonical
   -- RLS allowlist. This list MUST equal server/db/rlsAllowlist.ts → RLS_ALLOWLIST
@@ -168,13 +168,13 @@ BEGIN
         USING (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         )
         WITH CHECK (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         )
     $pol$, rec.table_schema, rec.table_name,
@@ -183,8 +183,40 @@ BEGIN
     applied_count := applied_count + 1;
   END LOOP;
 
-  -- Self-heal pass: REPOINT a tenant_isolation_policy attached to the WRONG
-  -- tenant column.
+  -- Self-heal pass: REBUILD a tenant_isolation_policy that is not the canonical
+  -- shape — wrong tenant column, or the org-id cast that made it throw.
+  --
+  -- ── Defect 2: the cast that turned every tenant read into a 500 ────────────
+  -- The canonical policy carried this disjunct:
+  --
+  --     OR <col> = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT
+  --
+  -- `app.current_org_id` holds the org UUID. server/middleware/establishRequestTenantScope.ts
+  -- sets `app.current_tenant_id` to the integer org id and `app.current_org_id`
+  -- to the uuid, and every non-public policy compares that GUC as ::uuid. Casting
+  -- it to INT is a category error, and PostgreSQL does not guarantee OR
+  -- short-circuiting, so for any row the earlier disjuncts do not satisfy the
+  -- cast IS evaluated and the whole query dies with
+  --
+  --     ERROR: invalid input syntax for type integer: "d0211565-…"
+  --
+  -- That is every read and every write of every integer tenant-keyed public
+  -- table, for any connection carrying a real request scope — in EVERY RLS mode,
+  -- because the shadow-mode bypass is just another disjunct and does not stop
+  -- the cast being evaluated. It never showed up because the application still
+  -- connects as the owner (a superuser, for whom RLS is inert) and because every
+  -- test that sets these GUCs sets `app.current_org_id` to '' — the one value
+  -- that avoids it. Under the app_service role split this work order requires,
+  -- the app cannot read a single tenant table.
+  --
+  -- Fixed by extracting an integer instead of casting whatever is there:
+  -- `substring(current_setting(...) from '^[0-9]+$')::INT` yields NULL for a
+  -- uuid (so the disjunct is simply not satisfied) and still resolves an actual
+  -- integer, so no caller that worked before stops working. The disjunct is left
+  -- in place rather than deleted: narrowing an RLS policy is a security change,
+  -- and this is only meant to stop it crashing.
+  --
+  -- ── Defect 1: the wrong tenant column ─────────────────────────────────────
   --
   -- The loop above only ever ADDS a policy where none exists, so it cannot
   -- correct a policy an earlier run attached to the wrong column — and
@@ -201,12 +233,35 @@ BEGIN
   -- security policy". Every coverage gate stayed green throughout, because a
   -- policy WAS attached.
   --
-  -- 0021 is fixed at the source, but it is ledger-guarded and will not re-run on
-  -- a database that already has it. This pass is how those databases converge.
-  -- It touches ONLY our own generated policy name, and only when the table has a
-  -- HIGHER-precedence tenant column than the one the policy references — so a
-  -- hand-tuned or parent-scoped policy (different name) is never touched, and a
-  -- table whose only tenant column is tenant_id is left exactly as it is.
+  -- 0021 is fixed at the source for both defects, but it is ledger-guarded and
+  -- will not re-run on a database that already has it. This pass is how those
+  -- databases converge. It touches ONLY our own generated policy name, on public
+  -- tables whose preferred tenant column is an integer — so the uuid-keyed
+  -- non-public policies, and any hand-tuned or parent-scoped policy under a
+  -- different name, are never rewritten.
+  --
+  -- A policy is rebuilt only when it WAS generated from the canonical template,
+  -- identified by the shadow-mode clause `app.rls_enforce IS DISTINCT FROM 'on'`
+  -- that only this template emits — and then when EITHER
+  --   (a) it does not reference the table's highest-precedence tenant column, or
+  --   (b) its qual lacks the '^[0-9]+$' marker, which only the fixed org-id
+  --       extraction produces — so its absence means the old, throwing cast.
+  -- Both rebuild to the same canonical text below, so the pass converges in one
+  -- run and does nothing on the next.
+  --
+  -- THE TEMPLATE MARKER IS LOAD-BEARING, not belt-and-braces. The sweep's
+  -- original comment assumed a subsystem's own policy would carry a different
+  -- NAME, and one does not: db/migrations/20260813_knowledge_graph_tenant_keys.sql
+  -- installs a policy CALLED tenant_isolation_policy on the knowledge-graph
+  -- tables whose body is deliberately STRICTER — a bare
+  -- `organization_id = current_setting('app.current_tenant_id')`, with no
+  -- shadow-mode bypass and no super-admin escape, because the point of that
+  -- migration is that unattributed rows are served to nobody and an unscoped
+  -- connection sees nothing. Rebuilding on name alone replaced it with the
+  -- canonical, permissive-in-shadow-mode text and silently weakened isolation on
+  -- those tables. tests/db/knowledge-graph-tenant-isolation.dbtest.ts caught it.
+  -- Matching on the template's own marker means this pass can only ever repair
+  -- policies it (or 0021) wrote.
   FOR rec IN
     SELECT preferred.table_schema, preferred.table_name, preferred.column_name, preferred.data_type
     FROM (
@@ -237,7 +292,15 @@ BEGIN
       AND preferred.data_type IN ('integer', 'bigint', 'smallint')
       -- The deparsed policy renders the predicate as `(<column> = (NULLIF(…))::integer)`.
       -- If the preferred column does not appear that way, the policy is on another one.
-      AND strpos(COALESCE(p.qual, ''), '(' || preferred.column_name || ' = ') = 0
+      -- Only policies generated from the canonical template. A same-named
+      -- policy with a different body belongs to whoever wrote it.
+      AND strpos(COALESCE(p.qual, ''), 'app.rls_enforce') > 0
+      AND (
+        -- (a) attached to the wrong tenant column
+        strpos(COALESCE(p.qual, ''), '(' || preferred.column_name || ' = ') = 0
+        -- (b) built before the org-id cast was made safe
+        OR strpos(COALESCE(p.qual, ''), '^[0-9]+$') = 0
+      )
   LOOP
     EXECUTE format('DROP POLICY tenant_isolation_policy ON %I.%I', rec.table_schema, rec.table_name);
     EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', rec.table_schema, rec.table_name);
@@ -248,19 +311,19 @@ BEGIN
         USING (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         )
         WITH CHECK (
           NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
           OR %I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-          OR %I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+          OR %I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
           OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
         )
     $pol$, rec.table_schema, rec.table_name,
            rec.column_name, rec.column_name, rec.column_name, rec.column_name);
-    repointed_count := repointed_count + 1;
-    RAISE NOTICE '[rls-sweep] REPOINTED %.% — tenant_isolation_policy now keys on %, the tenant column writers actually stamp',
+    rebuilt_count := rebuilt_count + 1;
+    RAISE NOTICE '[rls-sweep] REBUILT %.% — tenant_isolation_policy now keys on % and extracts app.current_org_id safely',
       rec.table_schema, rec.table_name, rec.column_name;
   END LOOP;
 
@@ -334,6 +397,6 @@ BEGIN
       rec.schema_name, rec.table_name;
   END LOOP;
 
-  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % repointed to the correct tenant column; % forced retroactively; % healed off allowlisted tables; % skipped for non-integer tenant key',
-    applied_count, repointed_count, forced_count, healed_count, skipped_drift;
+  RAISE NOTICE '[rls-sweep] tenant_isolation_policy applied to % newly-provisioned table(s); % rebuilt to the canonical shape; % forced retroactively; % healed off allowlisted tables; % skipped for non-integer tenant key',
+    applied_count, rebuilt_count, forced_count, healed_count, skipped_drift;
 END $$;
