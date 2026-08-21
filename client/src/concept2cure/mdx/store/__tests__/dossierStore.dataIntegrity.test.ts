@@ -110,8 +110,16 @@ describe('live audit events attribute only what the client can actually observe'
     );
     const events = DossierStore.activityForSection('k510', 11);
     expect(events.some((e) => e.kind === 'attach')).toBe(false);
-    /* The attachment is still listed — the tab updates without a round trip. */
-    expect(DossierStore.listDir('k510', 11, 'Performance testing')).toBeDefined();
+    /* The attachment is still listed — the tab updates without a round trip.
+       This read used to be `listDir('k510', 11, 'Performance testing')`, which
+       was wrong twice over: `listDir` takes ONE argument, a path prefix, so
+       this did not typecheck; and `.toBeDefined()` on a function that always
+       returns an array cannot fail, so it asserted nothing the comment above
+       it claims. The store's own reader takes the three parts and returns what
+       the tab renders. */
+    expect(
+      DossierStore.readSectionAttachments('k510', 11, 'Performance testing').map((a) => a.name),
+    ).toContain('mard-by-age-band.pdf');
   });
 
   it('holds for every live event the store can emit, not only the two probed above', () => {
