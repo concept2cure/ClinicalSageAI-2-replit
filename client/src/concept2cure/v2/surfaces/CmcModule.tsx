@@ -57,8 +57,8 @@ import {
   cmcWriteError,
   cmcWriteFailed,
   cmcWriteThrew,
-  openProgramAction,
 } from './cmcShared';
+import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';

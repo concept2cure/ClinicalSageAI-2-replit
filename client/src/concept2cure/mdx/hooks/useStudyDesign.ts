@@ -55,7 +55,7 @@ export function useStudyDesign(programId: string | null): UseStudyDesignResult {
 
   return {
     designs: toDataState(data?.designs ?? null, loading, error, {
-      idleReason: 'Select a project or a study to see its protocol and study design.',
+      idleReason: 'The protocol and study design are held per program or study.',
     }),
     loading,
     error,

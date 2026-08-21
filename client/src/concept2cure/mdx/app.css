@@ -2684,52 +2684,32 @@
    Every surface panel renders exactly one of: loading, idle,
    error, empty, or real data. Fixtures appear only in explicit
    sample mode, always under the standing banner below.
+
+   The gate no longer draws a panel. Its four non-ready branches
+   render `<EmptyState>` / `<ErrorState>` (v2/dataConnect), which
+   ARE the visual treatment — and which carry the four-part
+   empty-state contract this lane had no way to reach while it
+   drew its own. `.mdx-shell` is a descendant of `.c2c-v2 .shell`
+   (MdxSurfaceHost renders inside the one shell), so those rules
+   apply here.
+
+   What was deleted, and why it cannot come back quietly:
+     .data-gate-inner / -copy / -icon / -icon-pulse / -title /
+     -detail / -btn   → the parallel empty state itself
+     .data-gate-mono   → styled a raw server string AS CODE, which
+                         is how `relation "…" does not exist` came
+                         to read as intended output (W0-4)
+     .data-gate-error  → an error tone the shared ErrorState owns
+
+   `.data-gate` survives as a layout hook only: no border, no
+   background, nothing that would nest a second dashed box around
+   the panel's own. `.data-gate-sample` below is unaffected — the
+   standing sample banner is this lane's, not the shared panel's.
    ════════════════════════════════════════════════════════════ */
-.mdx-shell .data-gate {
-  display: flex; align-items: center; justify-content: center;
-  padding: 40px 24px;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-050);
-}
-.mdx-shell .data-gate-dense { padding: 20px 16px; }
-
-.mdx-shell .data-gate-inner {
-  display: flex; align-items: flex-start; gap: 12px;
-  max-width: 420px;
-}
-.mdx-shell .data-gate-icon {
-  color: var(--text-400); flex-shrink: 0;
-  width: 16px; height: 16px; margin-top: 1px;
-}
-.mdx-shell .data-gate-error .data-gate-icon { color: var(--error); }
-
-/* Motion is limited to the 200ms ease-out house rule; the loading
-   pulse is the one exception, and it respects reduced-motion. */
-.mdx-shell .data-gate-icon-pulse { animation: data-gate-pulse 1.4s ease-in-out infinite; }
-@keyframes data-gate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-@media (prefers-reduced-motion: reduce) {
-  .mdx-shell .data-gate-icon-pulse { animation: none; }
-}
-
-.mdx-shell .data-gate-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.mdx-shell .data-gate-title { font-size: 13px; font-weight: 500; color: var(--text-200); }
-.mdx-shell .data-gate-error .data-gate-title { color: var(--text-100); }
-.mdx-shell .data-gate-detail { font-size: 11px; color: var(--text-300); line-height: 1.5; }
-.mdx-shell .data-gate-mono {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  word-break: break-word;
-}
-
-.mdx-shell .data-gate-btn {
-  align-self: flex-start; margin-top: 4px;
-  padding: 5px 10px; font-size: 11px; font-weight: 500;
-  color: var(--text-200);
-  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
-  background: var(--bg-000);
-  transition: background var(--dur) ease-out, color var(--dur) ease-out;
-}
-.mdx-shell .data-gate-btn:hover { background: var(--bg-200); color: var(--text-100); }
+.mdx-shell .data-gate { display: block; }
+/* `dense` tightens the panel it wraps rather than a box of its own. */
+.mdx-shell .data-gate-dense .c2c-empty-state,
+.mdx-shell .data-gate-dense .c2c-error-state { padding: 18px 16px; }
 
 /* Standing sample-data marker. Not dismissible by design — it must
    remain visible for exactly as long as the example content does. */
@@ -2741,7 +2721,12 @@
   border: 1px solid var(--warning, var(--border));
   border-radius: var(--radius-md);
 }
-.mdx-shell .data-gate-sample .data-gate-icon { color: var(--warning, var(--text-400)); }
+/* Sized here rather than inherited: the shared `.data-gate-icon` base rule went
+   with the parallel empty state, and the banner is its only remaining user. */
+.mdx-shell .data-gate-sample .data-gate-icon {
+  color: var(--warning, var(--text-400)); flex-shrink: 0;
+  width: 16px; height: 16px; margin-top: 1px;
+}
 .mdx-shell .data-gate-sample-tag { color: var(--text-100); font-weight: 600; }
 
 /* E-signature rejection — the server's own reason, shown verbatim.

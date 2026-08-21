@@ -23,8 +23,6 @@
 
 import * as React from 'react';
 import { K510_ESTAR } from '../data/k510';
-import { PATHWAY_TABS_DATA } from '../data/pathwayTabs';
-import { isSampleMode } from '../lib/sampleMode';
 import type {
   AuditEvent,
   DossierAttachment,
@@ -372,15 +370,14 @@ function liveEventsForPathway(_pathway: PathwayId): AuditEvent[] {
   return [...liveAuditEvents];
 }
 
-function activityForSection(pathway: PathwayId, sectionId: string | number): AuditEvent[] {
-  /* The kit's seed audit slice — a *synthesized* hash-chain — merges in only
-     under explicit sample mode. A live dossier's Activity tab must never show
-     fictional Part 11 events alongside (or instead of) real in-store edits. */
-  const seed = isSampleMode()
-    ? PATHWAY_TABS_DATA[pathway as keyof typeof PATHWAY_TABS_DATA]?.audit || []
-    : [];
-  const all = [...liveAuditEvents, ...seed];
-  return all.filter((e) => e.target_id === sectionId);
+function activityForSection(_pathway: PathwayId, sectionId: string | number): AuditEvent[] {
+  /* Real in-store edits only.
+     This used to merge the kit's seed audit slice — a *synthesized* hash-chain —
+     under explicit sample mode, so a live dossier's Activity tab could show
+     fictional Part 11 events interleaved with real ones, in timestamp order and
+     visually identical. The seed is deleted (data/pathwayTabs.ts); there is
+     nothing left to merge and no branch that could merge it. */
+  return liveAuditEvents.filter((e) => e.target_id === sectionId);
 }
 
 /* ─────────────── Helpers ─────────────── */

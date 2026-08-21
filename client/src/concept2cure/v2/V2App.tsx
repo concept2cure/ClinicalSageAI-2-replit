@@ -35,6 +35,7 @@ import { getAction, getSegment, resolveSegmentId,
   effortForMode,
 } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
+import { OPEN_PROGRAM_EVENT, OPEN_PROGRAM_SURFACE } from './programAction';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
 // cross-surface primitives: .sp*/.pj-card/.cm-pushbar in journey, and
@@ -295,6 +296,25 @@ export function V2App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [prefs.anaOpen, ownsConversation]);
+
+  /* "Choose or create a program", from anywhere.
+
+     Almost every panel in the product is scoped to a program, so an empty one
+     usually has a single cure: open a program, or create the first. Surfaces
+     that hold `nav` call it directly (`openProgramAction(nav)`); this listener
+     serves the ones that cannot. `<DataGate>` renders the empty state for all
+     33 MDX panels and is a leaf with no `nav` and nothing to thread one
+     through — without this, its CTA would have no destination and the lane
+     would keep shipping the instruction-with-no-button the contract retires.
+
+     Same idiom as `c2c:open-collab`, and the destination is single-sourced
+     from ./programAction.ts so a panel and the shell cannot disagree about
+     where the action goes. */
+  React.useEffect(() => {
+    const onOpenProgram = () => nav(OPEN_PROGRAM_SURFACE);
+    window.addEventListener(OPEN_PROGRAM_EVENT, onOpenProgram);
+    return () => window.removeEventListener(OPEN_PROGRAM_EVENT, onOpenProgram);
+  }, [nav]);
 
   const surface: UiSurface | undefined = activeId === 'home' ? undefined : getSurface(activeId);
   const ctxSurface: UiSurface =

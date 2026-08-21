@@ -227,7 +227,29 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       log,
       surface: 'submission-gateway',
     });
-    return created(res, outcome.result);
+    /* The governed-action ledger write is the record that this transmission
+       happened and who authorised it. executeGovernedTransmit already knows
+       when that write failed — it sets `ledgerWriteFailed` and logs
+       `transmit-ledger-write-failed-after-successful-transmit` — and the AnA
+       command handler propagates it. This HTTP route destructured only
+       `.result` and dropped the flag, so bytes could reach FDA ESG or the EMA
+       gateway with NO ledger row and the caller would receive an ordinary 201.
+
+       A real regulatory submission the tenant cannot evidence is not a
+       submission they can defend, and the one thing worse than the missing row
+       is not being told about it. The transmittal itself is real and is still
+       returned — this reports the gap alongside it rather than failing a
+       transmission that genuinely left the platform. */
+    return created(res, {
+      ...outcome.result,
+      ...(outcome.ledgerWriteFailed
+        ? {
+            ledgerWriteFailed: true,
+            ledgerWarning:
+              'The transmission completed, but its governed-action ledger entry could not be written. Record this transmittal manually and raise it with your administrator before relying on the audit trail.',
+          }
+        : {}),
+    });
   } catch (err: unknown) {
     // Honest pre-transmit refusals: nothing left the platform, so there is no
     // transmittal, no acknowledgement and no agency identifier to report.
