@@ -110,8 +110,17 @@ describe('live audit events attribute only what the client can actually observe'
     );
     const events = DossierStore.activityForSection('k510', 11);
     expect(events.some((e) => e.kind === 'attach')).toBe(false);
-    /* The attachment is still listed — the tab updates without a round trip. */
-    expect(DossierStore.listDir('k510', 11, 'Performance testing')).toBeDefined();
+    /* The attachment is still listed — the tab updates without a round trip.
+       This called `listDir('k510', 11, 'Performance testing')`, which does not
+       typecheck: listDir takes ONE argument, a path prefix. It also asserted
+       `toBeDefined()` on a function that always returns an array, so even had
+       it compiled it could never fail. Now it asserts what the comment above it
+       says: the file is there, by name. */
+    expect(
+      DossierStore.readSectionAttachments('k510', 11, 'Performance testing').some(
+        (a) => a.name === 'mard-by-age-band.pdf',
+      ),
+    ).toBe(true);
   });
 
   it('holds for every live event the store can emit, not only the two probed above', () => {
