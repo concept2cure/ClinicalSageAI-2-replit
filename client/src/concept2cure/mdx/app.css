@@ -453,7 +453,11 @@
    SE Matrix
    ════════════════════════════════════════════════════════════ */
 .mdx-shell .se-row {
-  display: grid; grid-template-columns: 180px 1fr 32px 1fr;
+  /* The verdict column holds one 16px glyph per row, but its own header says
+     "Verdict" — 47px at 10px uppercase with 0.05em tracking. At 32px the
+     header label ran out of the column and over the predicate beside it. A
+     column that cannot show its own heading is under-specified. */
+  display: grid; grid-template-columns: 180px 1fr 56px 1fr;
   gap: 12px; padding: 10px 16px; align-items: start;
   border-bottom: 1px solid var(--border); font-size: 12px;
 }
@@ -721,7 +725,7 @@
 }
 .mdx-shell .switch[data-on="true"] { background: var(--accent-100); }
 .mdx-shell .switch[data-on="true"]::after { transform: translateX(14px); }
-.mdx-shell .seg { display: flex; gap: 2px; }
+.mdx-shell .seg { display: flex; flex-wrap: wrap; gap: 2px; }
 .mdx-shell .seg-btn {
   padding: 4px 10px; font-size: 11px; border-radius: var(--radius-sm);
   color: var(--text-300); background: var(--bg-100);
@@ -1446,8 +1450,12 @@
 
 /* ── Section (reused) ─────────────────────────────────────────── */
 .mdx-shell .section { padding: 24px 32px 4px; }
+/* Wrapping, because this header is not always in a full-width page. In the
+   vault's three-column grid the middle column is 656px, and the title, the
+   sub-line and an eight-chip `.seg` filter came to 667 inside 592 — the filter
+   row hung over the drawer beside it. Wrapping is a no-op wherever it fits. */
 .mdx-shell .section-head {
-  display: flex; align-items: baseline; gap: 12px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;
   margin-bottom: 14px;
 }
 .mdx-shell .section-head h2 {
