@@ -5809,10 +5809,33 @@ router.post('/users/pin', async (req: Request, res: Response) => {
   try {
     const { pin, old_pin } = req.body;
     const tenantId = getTenantId(req);
-    const email = req.headers['x-user-email'] || req.body.email;
 
-    if (!email || !pin) {
-      return res.status(400).json({ error: 'Email and PIN are required' });
+    /* SECURITY (21 CFR Part 11 §11.200 / §11.10(d)) — the PIN is the credential
+       that gates EVERY electronic signature in this router. Two holes were open
+       on the endpoint that manages it.
+
+       IDENTITY came from `req.headers['x-user-email'] || req.body.email`. The
+       router's middleware clears any client-supplied x-user-email and re-derives
+       it from the JWT, so the header is safe — but only when the token carries
+       an email claim. Without one it fell through to `req.body.email`, which the
+       caller controls, so a request could set ANOTHER user's signing PIN. This
+       is the same fallback that was closed at export (see the comment there);
+       the PIN endpoint was missed, and it is the worst place to miss it.
+
+       OLD-PIN verification was conditional — `if (old_pin)`. An existing PIN
+       could therefore be overwritten by simply omitting the field. Possession of
+       a session became possession of the signing credential, which is precisely
+       what §11.200(a)(1) requires two distinct components to prevent.
+
+       No caller anywhere sets another user's PIN (grep: the endpoint has no
+       client callers at all), so scoping it to the authenticated actor breaks
+       nothing and closes both. */
+    const email = getActorEmail(req);
+    if (!email) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    if (!pin) {
+      return res.status(400).json({ error: 'PIN is required' });
     }
 
     // Check if PIN exists
@@ -5821,13 +5844,14 @@ router.post('/users/pin', async (req: Request, res: Response) => {
       [email, tenantId]
     );
 
-    if (((existing.rowCount ?? 0) > 0)) {
-      // Verify old PIN if updating
-      if (old_pin) {
-        const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
-        if (!valid) {
-          return res.status(401).json({ error: 'Invalid old PIN' });
-        }
+    const isUpdate = (existing.rowCount ?? 0) > 0;
+    if (isUpdate) {
+      if (!old_pin) {
+        return res.status(400).json({ error: 'Current PIN is required to change it' });
+      }
+      const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid old PIN' });
       }
     }
 
@@ -5848,6 +5872,20 @@ router.post('/users/pin', async (req: Request, res: Response) => {
         [pinHash, email, tenantId]
       );
     }
+
+    /* A change to the signing credential is itself a governed event: §11.10(e)
+       wants the record of who did what and when, and this endpoint wrote none.
+       The PIN never appears in the trail — only that it was set or rotated. */
+    await createAuditTrail(
+      req,
+      undefined,
+      null,
+      isUpdate ? 'SIGNING_PIN_ROTATED' : 'SIGNING_PIN_CREATED',
+      null,
+      null,
+      isUpdate ? 'Signing PIN rotated by its owner' : 'Signing PIN created',
+      { email },
+    );
 
     res.json({ success: true, message: 'PIN set successfully' });
   } catch (error) {
