@@ -25,6 +25,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../db.js';
+import { parseIntegerProjectId } from '../lib/project-id.js';
 
 const router = Router();
 
@@ -64,10 +65,13 @@ function rollupSectionStatus(counts: {
 
 router.get('/:projectId', async (req: Request, res: Response) => {
   const projectIdRaw = req.params.projectId;
-  const projectId = parseInt(String(projectIdRaw).replace(/^proj_/, ''), 10);
-  if (!Number.isFinite(projectId)) {
+  // Fail closed on a non-integer id. parseInt('7abb…') would have returned 7 —
+  // a valid but WRONG projects.id in the same org (ADR-0011). A regulatory_programs
+  // UUID must 400 here, never resolve to a prefix-truncated integer.
+  const projectId = parseIntegerProjectId(projectIdRaw);
+  if (projectId === null) {
     return res.status(400).json({
-      error: 'projectId must be numeric',
+      error: 'projectId must be an integer project id',
       code: 'INVALID_PROJECT_ID',
     });
   }

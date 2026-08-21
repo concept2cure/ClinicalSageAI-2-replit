@@ -130,6 +130,38 @@ a seeded spill from a seeded decoration. The false-positive
 half matters more — a tool that flags correct markup teaches people to ignore it,
 and then it protects nothing.
 
+## The fragment gate is blind to containers — so there is a second one
+
+`npm run visual-qa:live` drives the **running app** and runs the same rule over
+the real shell. It needs a server (`npm run dev`) with `ALLOW_DEV_AUTH=1`,
+because it authenticates through `/api/auth/dev-login`.
+
+It exists because the register fix in ledger L97 measured exactly right in a
+fragment — table 738 wide, content 1036, `overflow-x:auto` — and was wrong in
+the app. A flex item's automatic minimum size is its min-content width, so the
+row's explicit `min-width` propagated up: `.qms-shell` refused to shrink below
+1,094 inside the 796px pane, `.page` grew a horizontal scrollbar, and the whole
+quality page scrolled sideways instead of the table. The fragment gate reported
+clean throughout and was not wrong — it was answering a different question. A
+fragment has no ancestors, which is what makes it cheap and what makes it blind.
+
+**The rule is shared, not copied.** `overflow-rule.mjs` holds the judgement
+calls — what clips cannot spill, out-of-flow decoration is not a defect — and
+both checks inject it into the page. Same argument as `a11y-rules.mjs`: two
+copies of a judgement call is two places for it to drift.
+
+**The trap it self-checks for.** The stored shell defaults are
+`railCollapsed:true, anaOpen:false`, which hand a surface **1,352px** instead of
+796. The first live run was done that way, reported every surface clean, and was
+worthless. So the check sets `c2c-v2-prefs` before navigating and then *asserts
+the pane width* before reporting anything — wrong width, exit 2, no findings
+printed. A check that can quietly measure the roomy case will eventually be run
+that way.
+
+It also refuses to write a baseline from a partial sweep, and names any surface
+it could not drive. Chromium dies on long sweeps, and a dead browser must not
+read as a clean product.
+
 ## Known blind spot
 
 React event handlers do not survive serialization, so a `<div onClick>` — a
