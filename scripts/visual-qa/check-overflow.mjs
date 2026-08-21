@@ -71,10 +71,27 @@ function asset(prefix) {
 
 const ENTRY = asset('index-');
 const V2 = asset('V2App-');
+const MDX = asset('MdxSurfaceHost-');
+const PDEV = asset('PdevRoute-');
 
-const pageFor = (markup) =>
+/**
+ * The stylesheets a fragment is really served, by capture prefix — the same
+ * split `check-contrast.mjs` makes.
+ *
+ * Loading only ENTRY and V2 silently omitted the MDX sheet for `mdx__`
+ * fragments, so every `.mdx-shell …` rule was absent from the measurement. That
+ * is not a small gap: a fix applied to `.mdx-shell .cer-tabbar` produced no
+ * change in the numbers at all, which reads exactly like a fix that does not
+ * work.
+ */
+const sheetsFor = (name) =>
+  name.startsWith('mdx__') ? [ENTRY, V2, MDX]
+    : name.startsWith('pdev__') ? [ENTRY, V2, PDEV]
+      : [ENTRY, V2];
+
+const pageFor = (markup, sheets) =>
   `<!doctype html><html><head><meta charset="utf-8">` +
-  `<style>${ENTRY}</style><style>${V2}</style>` +
+  sheets.map((c) => `<style>${c}</style>`).join('') +
   // The measured box is the fragment's own width and nothing wider, so a
   // fragment cannot be rescued by a viewport it will never have.
   `<style>html,body{margin:0;padding:0}#box{overflow:hidden}</style>` +
@@ -157,7 +174,7 @@ for (const file of files) {
   const width = viewports[file] ?? DESKTOP;
   const ctx = await browser.newContext({ viewport: { width: Math.max(width, 320), height: 900 } });
   const p = await ctx.newPage();
-  await p.setContent(pageFor(fs.readFileSync(path.join(MARKUP, file), 'utf8')), { waitUntil: 'load' });
+  await p.setContent(pageFor(fs.readFileSync(path.join(MARKUP, file), 'utf8'), sheetsFor(file)), { waitUntil: 'load' });
   await p.evaluate((w) => { document.getElementById('box').style.width = `${w}px`; }, width);
   // Open every disclosure: a record nobody expanded hides most of its rows.
   for (const t of await p.locator('[aria-expanded="false"]').all()) {

@@ -2698,6 +2698,20 @@
   margin: 4px 0 16px;
   padding: 0;
   background: transparent;
+  /* The bar contains its own overflow instead of widening the page.
+     Six tabs at their natural width measure 863px; the pane they sit in is
+     732px (a 796px surface column less page-inner's 32px sides), so without
+     this the extra 131px pushed .page-inner to 895px and the whole CER surface
+     scrolled sideways. Contained here, every tab keeps its label and its
+     sub-line — those name the article each tab answers to, which is what
+     separates Equivalence (61(5)) from PMS/PMCF (83 · Annex XIV B) — and
+     nothing below the bar moves.
+     overflow-y is explicit: with only overflow-x set, the y axis computes to
+     auto and .pwt-btn's `margin-bottom:-1px` (which lays the active indicator
+     over the bar's own border) can raise a stray vertical scrollbar. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 .mdx-shell .cer-tabbar .pwt-btn.active { border-bottom-color: var(--text-100); }
 
