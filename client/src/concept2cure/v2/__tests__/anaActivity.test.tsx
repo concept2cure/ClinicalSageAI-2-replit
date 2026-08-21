@@ -79,7 +79,7 @@ describe('AnaActivity — the work is visible while it happens', () => {
   it('states how the question was read', () => {
     render(<AnaActivity streaming lens="risk" toolCalls={[call()]} />);
 
-    expect(screen.getByText(/weighing the risk/)).toBeTruthy();
+    expect(screen.getByText(/Reading this as a risk question/)).toBeTruthy();
   });
 
   it('reports the deliverable it produced, without needing to be expanded', () => {
@@ -87,7 +87,7 @@ describe('AnaActivity — the work is visible while it happens', () => {
     // disclosure; outcomes have to be visible on the collapsed line.
     render(<AnaActivity toolCalls={[call()]} draftTitle="Clinical Overview 2.5" />);
 
-    expect(screen.getByRole('button').textContent).toContain('drafted Clinical Overview 2.5');
+    expect(screen.getByRole('button').textContent).toContain('Drafted Clinical Overview 2.5');
   });
 
   it('names the deliverable as a step too once the record is open', () => {
@@ -107,7 +107,7 @@ describe('AnaActivity — the work is visible while it happens', () => {
     expect(toggle).toBeTruthy();
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
     expect(screen.queryByText('Sample size — biostatistics engine')).toBeNull();
-    expect(toggle?.textContent).toContain('1 check run');
+    expect(toggle?.textContent).toContain('1 step completed');
   });
 });
 
@@ -139,6 +139,29 @@ describe('AnaActivity — it never claims work that did not happen', () => {
     expect(toggle.textContent).toContain('1 failed');
   });
 
+  it('reports a failed step in the words the server wrote, not the raw payload', () => {
+    // The server composes a sentence naming the step and the consequence.
+    // `result` is the uncapped tool payload and must never reach the rail —
+    // internal identifiers in customer copy is a defect this repo has had.
+    render(
+      <AnaActivity
+        streaming
+        toolCalls={[
+          call({
+            status: 'error',
+            label: 'Literature search',
+            message: "AnA couldn't finish searching the literature. She'll continue with what she has.",
+            result: '{"error":"ECONNREFUSED","host":"internal-svc.cluster.local:8080"}',
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getByText(/She'll continue with what she has/)).toBeTruthy();
+    expect(document.body.textContent).not.toContain('ECONNREFUSED');
+    expect(document.body.textContent).not.toContain('internal-svc');
+  });
+
   it('counts only settled steps as run, never the one still in flight', () => {
     render(
       <AnaActivity
@@ -146,6 +169,6 @@ describe('AnaActivity — it never claims work that did not happen', () => {
       />,
     );
 
-    expect(screen.getByRole('button').textContent).toContain('1 check run');
+    expect(screen.getByRole('button').textContent).toContain('1 step completed');
   });
 });

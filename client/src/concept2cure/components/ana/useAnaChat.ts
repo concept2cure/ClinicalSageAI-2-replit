@@ -72,6 +72,14 @@ export interface AnaToolCall {
   input?: unknown;
   /** The tool's returned result, capped client-side — for the audit disclosure. */
   result?: string;
+  /**
+   * The server's own human-readable note for a step that did not succeed, e.g.
+   * "AnA couldn't finish searching the literature. She'll continue with what
+   * she has." Written server-side (stream.ts) precisely so the UI never has to
+   * render a raw tool payload at a user: `result` is the uncapped truth for the
+   * audit disclosure, this is the sentence.
+   */
+  message?: string;
 }
 
 /** Client-side cap on the tool result kept for the inspect disclosure (state size). */
@@ -1282,10 +1290,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           ? `${rawResult.slice(0, TOOL_RESULT_VIEW_CAP)}\n… (truncated)`
                           : rawResult
                         : undefined;
+                      const humanNote =
+                        typeof event.message === 'string' && event.message.trim()
+                          ? event.message.trim()
+                          : undefined;
                       calls[realIdx] = {
                         ...calls[realIdx],
                         status: failed ? 'error' : 'success',
                         ...(cappedResult !== undefined ? { result: cappedResult } : {}),
+                        ...(humanNote !== undefined ? { message: humanNote } : {}),
                       };
                       next = { ...next, toolCalls: calls };
                     }

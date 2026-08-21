@@ -40,12 +40,20 @@ import { I } from './icons';
 import type { AnaToolCall } from '../components/ana/useAnaChat';
 
 /** How AnA read the question. Rendered as her opening decision, not a label. */
+/**
+ * Noun phrases, deliberately. These complete "Reading this as …", and the
+ * first draft used verb phrases that either broke the sentence ("Reading this
+ * as auditing it", "…as comparing") or claimed a deliberation that did not
+ * happen: a lens is assigned by a classifier, so "thinking strategically" and
+ * "weighing the risk" describe an act nothing performed. Naming the CATEGORY
+ * of question is both true and how a colleague would say it.
+ */
 const LENS_PHRASE: Record<string, string> = {
-  audit: 'auditing it',
-  improve: 'looking for what to strengthen',
-  risk: 'weighing the risk',
-  strategy: 'thinking strategically',
-  compare: 'comparing',
+  audit: 'an audit',
+  improve: 'a request to strengthen the argument',
+  risk: 'a risk question',
+  strategy: 'a strategy question',
+  compare: 'a comparison',
 };
 
 export interface AnaActivityProps {
@@ -125,11 +133,14 @@ export function AnaActivity({
   // for.
   const summary = (() => {
     const parts: string[] = [];
-    if (ran > 0) parts.push(`${ran} ${ran === 1 ? 'check' : 'checks'} run`);
+    // "checks" was wrong: a sample-size calculation and a document draft are
+    // both steps here and neither is a check. `step` also matches the per-row
+    // class name, so summary and detail share one vocabulary.
+    if (ran > 0) parts.push(`${ran} ${ran === 1 ? 'step' : 'steps'} completed`);
     if (failed > 0) parts.push(`${failed} failed`);
-    if (draftTitle) parts.push(`drafted ${draftTitle}`);
+    if (draftTitle) parts.push(`Drafted ${draftTitle}`);
     if (thinking) parts.push('reasoning');
-    return parts.length > 0 ? parts.join(' · ') : 'How this was answered';
+    return parts.length > 0 ? parts.join(' · ') : 'How this was read';
   })();
 
   return (
@@ -159,7 +170,7 @@ export function AnaActivity({
 
           {hasDecision && (
             <div className="ana-activity-read">
-              {lens && LENS_PHRASE[lens] ? `Reading this as ${LENS_PHRASE[lens]}` : 'Reading this'}
+              {lens && LENS_PHRASE[lens] ? `Reading this as ${LENS_PHRASE[lens]}` : 'Reading this question'}
               {documentType ? ` · ${documentType}` : ''}
             </div>
           )}
@@ -181,7 +192,16 @@ export function AnaActivity({
                 >
                   <span className="ana-activity-glyph" aria-hidden="true">{glyph(c.status)}</span>
                   <span className="ana-activity-label">{c.label || c.name}</span>
-                  {c.status === 'error' && <span className="ana-activity-note">didn’t complete</span>}
+                  {c.status === 'error' && (
+                    /* The server writes a sentence for this — "AnA couldn't
+                       finish searching the literature. She'll continue with
+                       what she has." — which names the step and the
+                       consequence. `c.result` is deliberately NOT used here:
+                       it is the raw tool payload, and putting that in front of
+                       a customer is the internals-in-copy defect this repo has
+                       already had once. */
+                    <span className="ana-activity-note">{c.message || 'did not complete'}</span>
+                  )}
                 </div>
               ))}
             </div>
