@@ -76,8 +76,35 @@ DECLARE
   skipped_allowlist INT := 0;
   skipped_drift INT := 0;
 BEGIN
+  -- ── ONE tenant column per table, chosen by precedence ───────────────────
+  --
+  -- This SELECT used to yield a table ONCE PER MATCHING COLUMN, and the loop
+  -- below does DROP POLICY IF EXISTS + CREATE POLICY on each pass. So on a
+  -- table carrying more than one tenant column the LAST one alphabetically
+  -- silently overwrote the earlier policy — `tenant_id` beat `organization_id`
+  -- every time.
+  --
+  -- Six tables have that shape, and on all six `organization_id`/`org_id` is
+  -- the NOT NULL column every writer stamps while `tenant_id` is a NULLABLE
+  -- adapter column added by db/migrations/20260401_cmc_convergence_os.sql:
+  --
+  --   stability_studies, cmc_batch_records, cmc_comparability_assessments,
+  --   cmc_documents, multi_agency_validation_sessions, c2c_bla_assessments
+  --
+  -- Policing the adapter column does not leak — it fails the other way, and
+  -- worse than it sounds. Under RLS_ENFORCE=on the predicate compares a column
+  -- that is NULL on every row, so `NULL = <tenant>` is NULL, no row passes:
+  -- every read returns zero rows and every INSERT is refused with "new row
+  -- violates row-level security policy". The CMC stability surface is simply
+  -- dead in production, and nothing said so, because a policy COUNT and a
+  -- coverage check both see a policed table and report it green.
+  --
+  -- DISTINCT ON with an explicit precedence fixes it: organization_id, then
+  -- org_id, then tenant_id — the same order server/db/rlsEnforcement.ts and
+  -- scripts/db/rls-coverage-check.sql already read them in. One row per table
+  -- also means the drop/recreate below runs once, not once per column.
   FOR rec IN
-    SELECT
+    SELECT DISTINCT ON (c.table_schema, c.table_name)
       c.table_schema,
       c.table_name,
       c.column_name,
@@ -96,7 +123,15 @@ BEGIN
           AND t.table_name = c.table_name
           AND t.table_type = 'BASE TABLE'
       )
-    ORDER BY c.table_schema, c.table_name, c.column_name
+    ORDER BY
+      c.table_schema,
+      c.table_name,
+      CASE c.column_name
+        WHEN 'organization_id' THEN 1
+        WHEN 'org_id'          THEN 2
+        WHEN 'tenant_id'       THEN 3
+        ELSE 4
+      END
   LOOP
     -- Skip allowlist
     IF rec.table_name = ANY (allowlist) THEN

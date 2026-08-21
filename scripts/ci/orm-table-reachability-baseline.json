@@ -8,9 +8,6 @@
     "shared/schema/qc-schemas.ts::qc_microbiological_tests",
     "shared/schema/qc-schemas.ts::qc_oos_investigations",
     "shared/schema/qc-schemas.ts::qc_reference_standards",
-    "shared/schema/qc-schemas.ts::qc_specifications",
-    "shared/schema/unified_workflow.ts::document_attachments",
-    "shared/schema/unified_workflow.ts::document_audit_logs",
-    "shared/schema/unified_workflow.ts::module_documents"
+    "shared/schema/qc-schemas.ts::qc_specifications"
   ]
 }
