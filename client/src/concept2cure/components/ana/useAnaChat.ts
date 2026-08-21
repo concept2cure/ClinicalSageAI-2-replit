@@ -401,7 +401,8 @@ export interface AnaChatMessage {
   thinking?: string;
   /**
    * Steering interjections the human accepted mid-run for this turn (from
-   * `interjected` events). Shown as small "you steered AnA" notes.
+   * `interjected` events). CAPTURED, NOT RENDERED — no surface reads it. (This
+   * claimed "Shown as small 'you steered AnA' notes"; see ledger L88.)
    */
   interjections?: string[];
   /**
@@ -432,9 +433,9 @@ export interface AnaChatMessage {
   /** Timestamp (ms) when this turn was kicked off. Used for relative time chips. */
   sentAt?: number;
   /**
-   * Editor-openable draft produced by a document-generating tool this turn
-   * (e.g. generate_statistical_document). The UI offers an "Open in editor"
-   * affordance that routes this content to the governed document editor.
+   * Draft produced by a document-generating tool this turn. The rail reads
+   * `title` only; nothing routes `content` anywhere, so this is NOT
+   * editor-openable despite what it used to claim. See ledger L88.
    */
   generatedDraft?: {
     title: string;
