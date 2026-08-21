@@ -1017,8 +1017,13 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
   // Live backend data (audit / correspondence / approvals); fixtures only in
   // explicit sample mode, honest empty states otherwise.
   const data = usePathwayTabsData(pathway, programId);
-  // Fixtures handed to DataGate's `sample` prop — rendered solely when the
-  // user has switched sample mode on, and always under the standing banner.
+  /* Sample content handed to DataGate's `sample` prop — rendered solely when
+     the user has switched sample mode on, and always under the standing banner.
+     CORRESPONDENCE ONLY. The audit and approvals bundles were a synthesized
+     Part 11 hash-chain and a set of fabricated signed approvals; they are
+     deleted, and `PathwayTabsBundle` no longer declares the fields, so a
+     `sample={fixtures.audit}` here is now a compile error rather than a
+     judgement call. Those two panes render live rows or an honest empty. */
   const fixtures = PATHWAY_TABS_DATA[pathway];
   // Async-seed the dossier store (Files tree + drawer) from the real backend.
   const dossier = useDossierHydration(pathway, programId);
@@ -1055,8 +1060,8 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.audit}
             label="audit events"
             onRetry={data.refresh.audit}
-            sample={fixtures.audit}
             emptyHint="Part 11 events are recorded here as sections are edited, reviewed, and signed."
+            regulation="Serves the 21 CFR Part 11 audit trail"
           >
             {(events) => <AuditTrailPane pathway={pathway} events={events} onOpenSection={openSection} />}
           </DataGate>
@@ -1079,8 +1084,8 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.approvals}
             label="approvals"
             onRetry={data.refresh.approvals}
-            sample={fixtures.approvals}
             emptyHint="Approval requests appear here when a section or submission is routed for e-signature."
+            regulation="Serves the 21 CFR 11.50 signature manifestation record"
           >
             {(approvals) => <ApprovalsPane approvals={approvals} onOpenSection={openSection} />}
           </DataGate>

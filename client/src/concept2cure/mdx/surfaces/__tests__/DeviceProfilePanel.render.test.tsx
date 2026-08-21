@@ -42,7 +42,10 @@ describe('DeviceProfilePanel — honest states', () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
     render(<DeviceProfilePanel ident={null} />);
-    expect(screen.getByText('Select a program to load its device profile')).toBeTruthy();
+    /* W0-5: the panel states why it is empty rather than instructing.
+       The behaviour under test — an honest summary, a disabled Edit, no
+       fetch — is unchanged. */
+    expect(screen.getByText('The device profile is held per program')).toBeTruthy();
     expect((screen.getByText('Edit') as HTMLButtonElement).disabled).toBe(true);
     expect(fetchSpy).not.toHaveBeenCalled();
   });

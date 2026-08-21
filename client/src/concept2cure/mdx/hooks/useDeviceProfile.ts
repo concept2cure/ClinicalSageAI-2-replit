@@ -241,7 +241,7 @@ export async function lookupRecognizedStandards(
     return {
       productCode: null,
       available: false,
-      unavailableReason: 'Select a program or enter a product code first',
+      unavailableReason: 'Available once a program is open, or a product code is entered',
       datasetLoaded: false,
       standards: [],
       matched: 0,

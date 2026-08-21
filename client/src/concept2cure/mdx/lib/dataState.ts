@@ -68,7 +68,12 @@ export type DataState<T> =
  * @param loading  True while the fetch is in flight.
  * @param error    Error message, or null.
  * @param opts.idleReason Human-readable reason shown in the idle state,
- *                        e.g. "Select a program to see its risk file".
+ *                        States WHY the panel is empty, never what to do
+ *                        about it — the fix is a real control the empty state
+ *                        renders (`<DataGate>` → `<EmptyState action>`), and
+ *                        prose that instructs instead is the passive
+ *                        instruction W0-5 retires. e.g. "The risk file is
+ *                        held per program.".
  */
 export function toDataState<T>(
   data: T | null | undefined,

@@ -707,7 +707,20 @@ export function EmptyState({
       aria-busy={busy || undefined}
       data-testid={testId}
     >
-      {icon && <span className="c2c-empty-ic" aria-hidden="true">{icon}</span>}
+      {/* `busy` used to set `aria-busy` and nothing else, so a panel standing in
+          for content that is still loading looked identical to one standing in
+          for content that does not exist — announced as busy to a screen reader
+          and silent about it to everyone else. The pulse is on the icon rather
+          than a separate spinner so the panel does not swap components under
+          the user as it moves loading → empty → loading. */}
+      {icon && (
+        <span
+          className={`c2c-empty-ic${busy ? ' c2c-empty-ic-busy' : ''}`}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+      )}
       <div className="c2c-empty-t">{title}</div>
       {hint && <div className="c2c-empty-h">{hint}</div>}
       {action && (

@@ -157,7 +157,7 @@ export function useSoftware(programId: string | null): UseSoftwareResult {
   return {
     items: toDataState(items, list.loading, listFailed),
     summary: toDataState(summary, sum.loading, sumFailed, {
-      idleReason: 'Select a project to see its IEC 62304 deliverable completeness.',
+      idleReason: 'IEC 62304 deliverable completeness is scored per program.',
     }),
     loading: list.loading || sum.loading,
     error: listFailed ?? sumFailed,

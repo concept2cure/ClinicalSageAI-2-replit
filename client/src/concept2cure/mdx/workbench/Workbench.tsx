@@ -32,7 +32,8 @@ import {
   workNotOnTheBoard,
 } from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
-import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { useSampleRows, useSampleValue, useShowingSample } from '../lib/useSampleRows';
+import { SampleDataBanner } from '../components/SampleDataBanner';
 
 /**
  * Column widths for the validation-rules table, shared by its head and its rows
@@ -409,6 +410,12 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
      the empty state below is intentional. */
   const live = useSubmissions();
   const sourceSubmissions = useSampleRows(live.submissions, SUBMISSIONS);
+  /* Gated correctly and marked nowhere. The fixture rows carry `cover: 'signed'`,
+     `esig: true` and a log line reading "Cover letter e-signed (AUD-9104)" — an
+     invented Part 11 audit id — and they drive the transmission gate rendered
+     below. Sample mode is the only way to reach them, and the user is now told
+     when they have. */
+  const submissionsAreSample = useShowingSample(live.submissions);
 
   /* Default selection re-syncs to the first row of the live list when it
      arrives — avoids clicking onto a stale fixture id. */
@@ -470,6 +477,12 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
           </button>
         </div>
       </div>
+
+      <SampleDataBanner
+        show={submissionsAreSample}
+        loading={live.loading}
+        label="submission packages"
+      />
 
       <section className="section">
         <div className="section-head">
