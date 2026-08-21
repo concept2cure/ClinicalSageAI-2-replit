@@ -24,7 +24,8 @@
 --
 -- This is the integer-side defect from migrations/0021_enable_rls_everywhere.sql
 -- in the other direction, and it was invisible for the same reason: the
--- application connects as the owner, a superuser for whom RLS is inert.
+-- policy is only ever evaluated for a connection that is neither a superuser
+-- nor the table's owner — so nothing exercises it until the split role is in use.
 --
 -- ── The fix ──────────────────────────────────────────────────────────────────
 -- identity.current_org_id() now EXTRACTS a uuid instead of casting whatever is

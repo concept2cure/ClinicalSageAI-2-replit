@@ -203,11 +203,12 @@ BEGIN
   -- That is every read and every write of every integer tenant-keyed public
   -- table, for any connection carrying a real request scope — in EVERY RLS mode,
   -- because the shadow-mode bypass is just another disjunct and does not stop
-  -- the cast being evaluated. It never showed up because the application still
-  -- connects as the owner (a superuser, for whom RLS is inert) and because every
-  -- test that sets these GUCs sets `app.current_org_id` to '' — the one value
-  -- that avoids it. Under the app_service role split this work order requires,
-  -- the app cannot read a single tenant table.
+  -- the cast being evaluated. It never showed up because RLS only filters for a
+  -- connection that is neither a superuser nor the table's owner, so nothing
+  -- exercises the policy until the split role is in use — and because every test
+  -- that sets these GUCs sets `app.current_org_id` to '' — the one value that
+  -- avoids it. It surfaces the moment a runtime connects as app_service, which
+  -- production requires: no tenant table is readable at all.
   --
   -- Fixed by extracting an integer instead of casting whatever is there:
   -- `substring(current_setting(...) from '^[0-9]+$')::INT` yields NULL for a

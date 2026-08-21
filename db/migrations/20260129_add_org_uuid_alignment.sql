@@ -25,8 +25,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS organizations_uuid_idx ON organizations (uuid)
 -- so on the 19 non-public policies that inline the cast WITHOUT a NULLIF, every
 -- read on those scopes died. It is the same defect as the integer-side cast
 -- documented in migrations/0021_enable_rls_everywhere.sql, in the other
--- direction, and it was equally invisible: the app connects as the owner, for
--- whom RLS is inert.
+-- direction, and equally invisible: RLS is inert for an owner or superuser
+-- connection, so nothing evaluates the policy until the split role is in use.
 --
 -- `substring(… from '<uuid pattern>')` EXTRACTS a uuid instead of casting
 -- whatever is there — NULL for '' and for anything that is not a uuid, the uuid
