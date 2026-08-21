@@ -67,6 +67,13 @@ describe('adaptChatMessage — the turn reaches the rail intact', () => {
       .toEqual(['focus on EU MDR']);
   });
 
+  it('carries the evidence verdict', () => {
+    // The grounding rows can only render what the adapter hands over, and this
+    // field was captured for the whole life of the pipeline without one.
+    const ev = { validated: true, sourceCount: 6, groundedClaims: 11, weakClaims: 2, missingSupport: 0 };
+    expect(adaptChatMessage({ ...turn, evidence: ev } as any).evidence).toEqual(ev);
+  });
+
   it('carries the governed action state', () => {
     const out = adaptChatMessage(turn);
 
