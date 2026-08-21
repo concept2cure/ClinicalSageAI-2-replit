@@ -58,6 +58,7 @@ import { fileURLToPath } from 'node:url';
 import { launchChromium } from './playwright.mjs';
 import { assertCaptureIsFresh } from './capture-freshness.mjs';
 import { builtStylesheets, styleTags } from './built-css.mjs';
+import { browserSource } from './overflow-rule.mjs';
 
 const TAG = '[visual-qa:overflow]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -114,83 +115,13 @@ const pageFor = (markup) =>
   `</head><body><div id="box" class="c2c-v2">${markup}</div></body></html>`;
 
 /**
- * Runs in the browser. An element overflows when its own IN-FLOW content is
- * wider than its box.
- *
- * Two exclusions, both by rule rather than by accident:
- *
- * SR-only regions — the standard clip technique gives them a 1px box on
- * purpose, so text wider than that is the technique working.
- *
- * Out-of-flow decoration — an absolutely positioned box is placed by
- * coordinates, and putting one in the element's own margin is ordinary CSS.
- * `.ae-pstage` is the case in hand: a `::after` arrow at `right:-17px` sitting
- * in the card's own 22px right margin, which made all six pipeline cards
- * measure 156 against a 139px box while nothing anywhere moved a pixel. So
- * every candidate is measured a second time with out-of-flow boxes taken away,
- * and only what still overflows is a finding. That is the difference between a
- * check people act on and one they learn to silence.
+ * The measurement itself lives in `overflow-rule.mjs`, shared with the live
+ * check so one judgement call has one definition. It is handed to the page as
+ * source below, because Playwright serialises an evaluated function and a
+ * serialised function cannot close over an import.
  */
-const MEASURE = (tolerance) => {
-  const srOnly = (el) => {
-    const cs = getComputedStyle(el);
-    return (
-      (el.clientWidth <= 1 && el.clientHeight <= 1) ||
-      cs.clip === 'rect(0px, 0px, 0px, 0px)' ||
-      cs.clipPath === 'inset(50%)'
-    );
-  };
-  const overflows = (el) => el.scrollWidth > el.clientWidth + tolerance;
-  const outOfFlow = (cs) => cs.position === 'absolute' || cs.position === 'fixed';
+const MEASURE = (tolerance) => window.__measureOverflow(tolerance, '#box');
 
-  const all = [...document.querySelectorAll('#box *')].filter((el) => el instanceof HTMLElement);
-
-  const candidates = all.filter((el) => {
-    if (srOnly(el)) return false;
-    if (!overflows(el)) return false;
-    // Anything but `visible` means the author is containing it on purpose,
-    // and only `visible` can push an ancestor sideways. `auto`/`scroll` scroll
-    // deliberately; `hidden`/`clip` are how truncation is built —
-    // `white-space:nowrap; overflow:hidden; text-overflow:ellipsis` has
-    // scrollWidth > clientWidth BY DESIGN, that being what makes the ellipsis
-    // appear. An earlier rule here skipped only auto and scroll and reported
-    // 27 "overflows" that were ellipsis elements doing their job. A tool that
-    // flags correct markup teaches people to ignore it, and then it protects
-    // nothing.
-    return getComputedStyle(el).overflowX === 'visible';
-  });
-  if (candidates.length === 0) return [];
-
-  // Take the out-of-flow boxes away and ask again. A candidate is never itself
-  // hidden — an absolutely positioned element that overflows its OWN box is a
-  // finding like any other.
-  const keep = new Set(candidates);
-  const style = document.createElement('style');
-  style.textContent =
-    '[data-vqa-drop-before]::before{content:none!important}' +
-    '[data-vqa-drop-after]::after{content:none!important}';
-  document.head.appendChild(style);
-  for (const el of all) {
-    if (!keep.has(el) && outOfFlow(getComputedStyle(el))) {
-      el.style.display = 'none';
-      continue;
-    }
-    for (const [pseudo, attr] of [['::before', 'data-vqa-drop-before'], ['::after', 'data-vqa-drop-after']]) {
-      const pcs = getComputedStyle(el, pseudo);
-      if (pcs.content !== 'none' && outOfFlow(pcs)) el.setAttribute(attr, '');
-    }
-  }
-
-  return candidates.filter(overflows).map((el) => {
-    const cls = String(el.getAttribute('class') || '').trim().split(/\s+/).slice(0, 3).join('.');
-    return {
-      id: el.id || null,
-      selector: `${el.tagName.toLowerCase()}${cls ? '.' + cls : ''}`,
-      scrollWidth: el.scrollWidth,
-      clientWidth: el.clientWidth,
-    };
-  });
-};
 
 const files = fs.existsSync(MARKUP)
   ? fs.readdirSync(MARKUP).filter((f) => f.endsWith('.html')).sort()
@@ -252,6 +183,7 @@ const SEEDED = [
 // check reported on until now — indistinguishable, in its output, from clean.
 {
   const ctx = await browser.newContext({ viewport: { width: 400, height: 200 } });
+  await ctx.addInitScript({ content: browserSource() });
   const p = await ctx.newPage();
   await p.setContent(pageFor(CASCADE_PROBE.markup), { waitUntil: 'load' });
   const got = await p.evaluate(() => {
@@ -275,6 +207,7 @@ const SEEDED = [
 // seeded decoration alone.
 {
   const ctx = await browser.newContext({ viewport: { width: 800, height: 400 } });
+  await ctx.addInitScript({ content: browserSource() });
   const p = await ctx.newPage();
   await p.setContent(pageFor(SEEDED.map((c) => c.markup).join('')), { waitUntil: 'load' });
   const hits = new Set((await p.evaluate(MEASURE, TOLERANCE)).map((h) => h.id));
@@ -300,6 +233,7 @@ const findings = [];
 for (const file of files) {
   const width = viewports[file] ?? DESKTOP;
   const ctx = await browser.newContext({ viewport: { width: Math.max(width, 320), height: 900 } });
+  await ctx.addInitScript({ content: browserSource() });
   const p = await ctx.newPage();
   await p.setContent(pageFor(fs.readFileSync(path.join(MARKUP, file), 'utf8')), { waitUntil: 'load' });
   await p.evaluate((w) => { document.getElementById('box').style.width = `${w}px`; }, width);
