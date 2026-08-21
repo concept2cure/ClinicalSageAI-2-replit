@@ -1,51 +1,77 @@
 /**
- * Shared column geometry for the QMS register tables.
+ * How wide a register row has to be before its columns stop lying.
  *
- * ── Why a computed minimum, and not `min-width: max-content` ─────────────────
- * The registers are eight columns, seven of them a fixed pixel width. They add
- * up to more than the 738px a surface column gets, so the table has to scroll —
- * see `.qms-table` in app.css for why scrolling beats the `overflow: hidden`
- * that used to clip two columns off the end.
+ * ── The defect this exists for ───────────────────────────────────────────────
+ * `SopRegister` and `ChangeControl` both lay a row out as a grid of seven fixed
+ * tracks and one flexible one — the document title. The fixed tracks and gaps
+ * come to 848px. A v2 surface is not given the 1440px window: the shell spends
+ * 264px on nav and 380px on the AnA rail, so the column is 796px and the row's
+ * content box is 738.
  *
- * Making it scroll is the easy half. The rows also have to agree on where the
- * columns are. `min-width: max-content` on each row does not do that: every row
- * resolves its own max-content, so a row with a long title lays its Type chip
- * out further right than the row above it, and a register whose columns are not
- * columns is worse than one that scrolls.
+ * 848 does not fit in 738, so `minmax(0, 1fr)` did what it was asked and
+ * resolved the title track to **0px**. Every row rendered without its title,
+ * and `.qms-table`'s `overflow: hidden` — there for the border radius — clipped
+ * the two rightmost columns off the end. A register that shows neither the name
+ * of the document nor its next review date is not a register.
  *
- * So each row gets the SAME explicit floor, derived here from the same template
- * string that sizes the tracks. One source of truth: change a track width and
- * the floor follows, rather than drifting from a number typed once in a
- * stylesheet.
+ * The answer is the one the layout gate recommends: contain it. The table
+ * scrolls, the row carries a minimum so every row is the same width and the
+ * columns line up, and the title keeps a floor it can actually be read in.
+ *
+ * Which columns a governed register should shed on a narrow pane is a design
+ * question and is deliberately NOT answered here. This only stops the table
+ * from answering it by deleting the title.
+ *
+ * The minimum is derived from the grid string rather than written next to it,
+ * because a hand-kept second number is a number that goes stale the first time
+ * a column is resized.
  *
  * @module concept2cure/quality/registerGrid
  */
 
-/** `gap` in `.qms-thead, .qms-row`. */
-const GAP = 10;
-/** Left + right of `padding: 9px 14px` on the same rule. */
-const PADDING = 28;
+/** `.qms-thead, .qms-row { gap }` in app.css. */
+export const REGISTER_GAP = 10;
+/** `.qms-thead, .qms-row { padding: 9px 14px }` in app.css — the horizontal half. */
+export const REGISTER_PAD_X = 14;
+/** What a title column needs to be worth having. */
+export const TITLE_FLOOR = 160;
+
+const FIXED_PX = /^(\d+(?:\.\d+)?)px$/;
+
+/** Split a track list on its top-level spaces, so `minmax(0, 1fr)` stays whole. */
+function tracksOf(grid: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of grid) {
+    if (ch === '(') depth += 1;
+    else if (ch === ')') depth -= 1;
+    if (ch === ' ' && depth === 0) {
+      if (cur) out.push(cur);
+      cur = '';
+      continue;
+    }
+    cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
 
 /**
- * The narrowest width at which a row still shows every column at its floor.
+ * The smallest width at which every track in `grid` gets what it asked for and
+ * each flexible track still gets `titleFloor`.
  *
- * Reads the floor of each track: a bare `<n>px` is its own floor, and
- * `minmax(<n>px, …)` contributes `<n>`. A track with no pixel floor
- * contributes 0, which is correct — it is a track that has agreed to vanish.
- *
- * @param grid a `grid-template-columns` value
- * @returns width in px, including the row's gaps and horizontal padding
+ * @param grid the same string passed to `gridTemplateColumns`
+ * @param titleFloor per-flexible-track minimum
  */
-export function rowMinWidth(grid: string): number {
-  // Split on spaces that are not inside a function's parentheses, so
-  // `minmax(0, 1fr)` stays one track rather than becoming two.
-  const tracks = grid.trim().split(/\s+(?![^()]*\))/);
-  const floors = tracks.map((t) => {
-    const minmax = /^minmax\(\s*([\d.]+)px/.exec(t);
-    if (minmax) return Number.parseFloat(minmax[1]);
-    const fixed = /^([\d.]+)px$/.exec(t);
-    return fixed ? Number.parseFloat(fixed[1]) : 0;
-  });
-  const total = floors.reduce((a, b) => a + b, 0);
-  return total + GAP * Math.max(floors.length - 1, 0) + PADDING;
+export function registerRowMinWidth(grid: string, titleFloor: number = TITLE_FLOOR): number {
+  const tracks = tracksOf(grid);
+  let fixed = 0;
+  let flexible = 0;
+  for (const t of tracks) {
+    const m = FIXED_PX.exec(t);
+    if (m) fixed += Number(m[1]);
+    else flexible += 1;
+  }
+  return fixed + flexible * titleFloor + Math.max(tracks.length - 1, 0) * REGISTER_GAP + REGISTER_PAD_X * 2;
 }

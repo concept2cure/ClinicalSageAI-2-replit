@@ -162,8 +162,9 @@ of room that does not exist.
 
 Findings are ratcheted in `overflow-baseline.json`: pre-existing overflows are
 recorded so the count can fall and never silently rise, and anything new is
-printed by name. What is in it now is real and open — see ledger L97, and note
-that a baseline entry means "known", not "acceptable".
+printed by name. What is in it now is real and open — see ledger L99, and note
+that a baseline entry means "known", not "acceptable". A baseline that only
+ever holds steady is a baseline nobody reads; this one went 30 → 2.
 
 Three exclusions, each by rule:
 

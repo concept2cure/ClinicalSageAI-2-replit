@@ -180,11 +180,11 @@
 .c2c-v2 .cv-card-id{ font-size:11px; color:var(--text-400); font-family:var(--font-mono,ui-monospace,monospace); margin-top:-4px; }
 .c2c-v2 .cv-eps{ display:flex; flex-wrap:wrap; gap:5px; }
 .c2c-v2 .cv-ep{ font-size:10.5px; font-family:var(--font-mono,ui-monospace,monospace); color:var(--text-300); background:var(--bg-050); border:1px solid var(--border); border-radius:5px; padding:2px 6px; }
-/* These notes carry file paths and route names — `server/routes/sourceLinks.ts`,
-   `/api/citations/verify` — and a path has no space to break at. One of them
-   measured 331px in a 327px card and laid its tail over the card border.
-   `anywhere` breaks the token rather than the layout. */
-.c2c-v2 .cv-note{ font-size:12px; color:var(--text-400); line-height:1.45; overflow-wrap:anywhere; }
+/* These notes quote identifiers — `sourceLinks.ts:`, table and column names —
+   and an identifier is one unbreakable word. In the 327px note column of a
+   `.cv-card` one of them ran 4px past the edge with wrapping otherwise
+   working normally. `break-word` only breaks a word that would not fit. */
+.c2c-v2 .cv-note{ font-size:12px; color:var(--text-400); line-height:1.45; overflow-wrap:break-word; }
 .c2c-v2 .cv-card-foot{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:2px; padding-top:9px; border-top:1px solid var(--border); }
 .c2c-v2 .cv-flags{ display:flex; flex-wrap:wrap; gap:8px; }
 .c2c-v2 .cv-flag{ display:inline-flex; align-items:center; gap:3px; font-size:10.5px; color:var(--text-400); }

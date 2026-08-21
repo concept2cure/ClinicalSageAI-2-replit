@@ -21,8 +21,8 @@
  */
 
 import * as React from 'react';
-import { rowMinWidth } from './registerGrid';
 import { I } from './icons';
+import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
   FIXTURE_CHANGES,
@@ -48,13 +48,10 @@ export interface ChangeControlProps {
   onAsk: (q: string) => void;
 }
 
-/* The title track has a floor now. `minmax(0, 1fr)` let it take whatever the
-   seven fixed columns left over, and in a 738px surface column that is nothing:
-   it computed to 0px and the titles vanished. The register scrolls instead —
-   see `.qms-table` in app.css. */
-const GRID = '112px minmax(180px, 1fr) 118px 80px 128px 104px 62px 120px';
-/** Same floor on every row, so the columns line up while the table scrolls. */
-const ROW_MIN = rowMinWidth(GRID);
+const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
+/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
+   resolves to 0px and the row's last columns are clipped away. */
+const ROW_MIN = registerRowMinWidth(GRID);
 
 function Kpi({
   label, val, sub, tone,

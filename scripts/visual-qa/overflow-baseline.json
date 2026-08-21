@@ -1,4 +1,7 @@
 {
-  "count": 0,
-  "known": []
+  "count": 2,
+  "known": [
+    "mdx__device-validation.html div.ctable-head",
+    "mdx__device-vault.html div.docs-panel"
+  ]
 }
