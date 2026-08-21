@@ -334,6 +334,54 @@ describe('governed mutation paths stay auditable under the runtime role', () => 
     expect(rows[0].can_update).toBe(false);
     expect(rows[0].can_delete).toBe(false);
   });
+
+  /**
+   * public.audit_logs is append-only at the DATABASE level
+   * (db/migrations/20260617_audit_logs_immutability.sql), which is the guarantee
+   * that survives a compromised app process — grants alone do not, because the
+   * owner connection migrations run as holds every privilege.
+   *
+   * Executed, not read: the guard was written as
+   * `RAISE EXCEPTION '…' USING …, MESSAGE = '…'`, which PostgreSQL rejects for
+   * specifying the message twice, so it aborted with
+   * "RAISE option already specified: MESSAGE" (42601) instead of the
+   * IMMUTABILITY_VIOLATION / P0A0x it declares. The write was still blocked, so
+   * nothing leaked — but every caller matching on /IMMUTABILITY_VIOLATION/ would
+   * have missed it, and no test had ever run the failure path. This runs it.
+   */
+  it('audit_logs refuses UPDATE and DELETE with the IMMUTABILITY_VIOLATION it declares', async () => {
+    const probe = `${TAG}-audit-probe`;
+    await owner.query(
+      `INSERT INTO public.audit_logs (action, tenant_id, table_name, record_id)
+       VALUES ($1, $2, 'stability_studies', $3)`,
+      [probe, ORG_A, probe],
+    );
+
+    await expect(
+      owner.query('UPDATE public.audit_logs SET action = $1 WHERE action = $2', ['tampered', probe]),
+    ).rejects.toMatchObject({ code: 'P0A01', message: expect.stringContaining('IMMUTABILITY_VIOLATION') });
+
+    await expect(
+      owner.query('DELETE FROM public.audit_logs WHERE action = $1', [probe]),
+    ).rejects.toMatchObject({ code: 'P0A02', message: expect.stringContaining('IMMUTABILITY_VIOLATION') });
+
+    // The one authorized escape: the retention/archival path opts in per
+    // transaction. Asserted so the guard is shown to be a gate, not a wall —
+    // a wall would take the archival service down with it.
+    const client = await owner.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+      const removed = await client.query('DELETE FROM public.audit_logs WHERE action = $1', [probe]);
+      await client.query('COMMIT');
+      expect(removed.rowCount).toBe(1);
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
+  });
 });
 
 describe('production boot posture, evaluated against this database', () => {

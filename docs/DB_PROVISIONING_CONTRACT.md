@@ -241,12 +241,46 @@ tables** rather than a scratch table:
 - cross-tenant INSERT is refused by `WITH CHECK`;
 - cross-tenant UPDATE and DELETE affect zero rows, and the row is unchanged;
 - an unscoped connection sees nothing;
+- the policy keys on `organization_id`, not the nullable `tenant_id` adapter;
 - audit tables are append-only for the role (SELECT/INSERT yes, UPDATE/DELETE no);
+- `audit_logs` refuses UPDATE and DELETE with `IMMUTABILITY_VIOLATION` /
+  `P0A01` / `P0A02`, and the authorized archival bypass still deletes;
 - `assessRlsCatalogPosture` rejects the superuser/owner connection and raises no
   role-related failure for `app_service`.
 
 Run it with `npm run test:db` against an `install-fresh` + `deploy-migrate`
 database. The suite fails — it does not skip — when the tables are absent.
+
+### The audit guard that never raised what it declared
+
+`db/migrations/20260617_audit_logs_immutability.sql` and
+`db/migrations/20260222_audit_events_immutability.sql` both wrote their guard as
+
+```sql
+RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: … are append-only'
+USING ERRCODE = 'P0A02', MESSAGE = 'IMMUTABILITY_VIOLATION', DETAIL = …
+```
+
+PostgreSQL rejects that — the message is given twice — so all six triggers
+aborted with `ERROR: RAISE option already specified: MESSAGE` (SQLSTATE 42601)
+instead of the `P0A0x` `IMMUTABILITY_VIOLATION` they declare. The write was
+still blocked, so no audit history was ever at risk; but the error code and
+message were both wrong, and every caller that matches on
+`/IMMUTABILITY_VIOLATION/` (`server/routes/audit-trail-routes.ts`,
+`server/startup/middleware.ts`, the esig and orchestrator contract tests) would
+have failed to recognise it. Nothing had ever executed the failure path.
+
+Fixed by removing the redundant `MESSAGE =` option, keeping the RAISE literal as
+the message — the form the repo's other immutability triggers already use.
+Verified by running the path: UPDATE → `P0A01`, DELETE → `P0A02`, both carrying
+the full DETAIL and HINT, and `SET LOCAL app.audit_archive_bypass = 'on'` still
+lets the retention service delete.
+
+One consequence worth naming: `tests/db/c2c-project-persistence.dbtest.ts` tore
+down its probe rows with a bare `DELETE FROM audit_logs`, which only ever
+succeeded because the first run had nothing to delete and later runs died on the
+malformed RAISE rather than on the guard. It now opts into the same authorized
+archival path, so `npm run test:db` is re-runnable against one database.
 
 ---
 
@@ -285,14 +319,15 @@ blank:
 | `deploy-migrate` | exit 0 · authoring 19/19 · tenant-parentage FKs 6/6 · policies 19/19 |
 | `readiness-audit` | exit 0 · 0 FAIL (13/17, remainder are pre-existing WARNs) |
 | `deploy-smoke-assert` | exit 0 · every invariant holds |
-| `npm run test:db` | 10 files, 94 tests, all passing under `RLS_ENFORCE=on` |
+| `npm run test:db` | 10 files, 95 tests, all passing under `RLS_ENFORCE=on` — twice in a row against the same database |
 | `npm run build` | exit 0 |
 
 CI gates re-run clean: `ci:migration-reachability`, `ci:duplicate-table-ddl`,
 `ci:migration-prefix-collisions`, `ci:rls-allowlist-sync`, `ci:db-test-isolation`,
 `ci:unbacked-tables`, `ci:tenant-column-types`, `ci:orm-reachability`,
 `ci:tables-live-schema`, `ci:baseline-justifications`, `test:ops-audits` (53
-tests), `test:security` (279 tests).
+tests), `test:security` (279 tests), `tests/schema-contract` (58 files, 718
+tests).
 
 `install-fresh` is idempotent; re-running it against a provisioned database is
 supported and expected. Note that `drizzle-kit push` introspects the entire
