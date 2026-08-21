@@ -1213,8 +1213,17 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   prev.map(m =>
                     m.id === assistantId
                       ? {
+                          // The phase is NOT cleared here any more. It was,
+                          // because the rail rendered `m.statusPhase` as its one
+                          // body line, so a phase and a tool row competed for
+                          // the same slot and the row had to win. The work
+                          // record renders them as different things — the phase
+                          // is what this ROUND is doing, the rows are the steps
+                          // inside it — so clearing it now just blanks the only
+                          // live signal for the length of the loop. Text and
+                          // thinking still clear it: once she is answering, the
+                          // answer is the status.
                           ...m,
-                          statusPhase: undefined,
                           toolCalls: [
                             ...(m.toolCalls || []),
                             {

@@ -545,7 +545,14 @@ export function AnaRail({
           </button>
         </div>
       </div>
-      <div className="ana-body" aria-live="polite">
+      {/* NOT aria-live. It was, and that made the entire growing transcript a
+          live region: every streamed token, every new tool row and round
+          heading was a mutation inside it, so a screen-reader user got the
+          whole subtree re-read instead of a status message — and any narrow
+          region nested inside was undefined behaviour on top. Status is
+          announced by the narrow, always-mounted regions that own it:
+          AnaActivity for what AnA is doing, and the upload region below. */}
+      <div className="ana-body">
         {welcome && (
           <div className="ana-welcome">
             <div className="ana-welcome-greet">

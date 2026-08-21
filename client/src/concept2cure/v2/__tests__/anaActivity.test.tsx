@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 
 import { AnaActivity } from '../AnaActivity';
 import type { AnaToolCall } from '../../components/ana/useAnaChat';
@@ -34,7 +34,7 @@ const call = (over: Partial<AnaToolCall> = {}): AnaToolCall => ({
 
 describe('AnaActivity — the work is visible while it happens', () => {
   it('names each tool AnA actually ran, under its real label', () => {
-    render(
+    const { container } = render(
       <AnaActivity
         streaming
         phase="Generating response…"
@@ -45,20 +45,73 @@ describe('AnaActivity — the work is visible while it happens', () => {
       />,
     );
 
+    // Scoped to the visible record on purpose. The phase also appears in the
+    // screen-reader live region, and that duplication is the design — sighted
+    // users read the rows, AT hears the one narrow region. A document-wide
+    // query would make the a11y affordance look like a rendering bug.
+    const body = within(container.querySelector('.ana-activity-body') as HTMLElement);
+
     // The regression: these were captured and rendered nowhere.
-    expect(screen.getByText('Sample size — biostatistics engine')).toBeTruthy();
-    expect(screen.getByText('Dossier consistency sweep')).toBeTruthy();
-    expect(screen.getByText('Generating response…')).toBeTruthy();
+    expect(body.getByText('Sample size — biostatistics engine')).toBeTruthy();
+    expect(body.getByText('Dossier consistency sweep')).toBeTruthy();
+    expect(body.getByText('Generating response…')).toBeTruthy();
   });
 
-  it('announces the live phase politely rather than assertively', () => {
-    // An assertive region would interrupt the answer as it streams in, which
-    // is the one thing a screen-reader user is actually trying to hear.
+  it('announces status through exactly one polite region', () => {
+    // One. The visible phase row must NOT also be live: the rail transcript
+    // used to be a live region too, and nested live regions are undefined
+    // across assistive tech.
     const { container } = render(<AnaActivity streaming phase="Loading project memory…" />);
 
+    const live = container.querySelectorAll('[aria-live]');
+    expect(live.length).toBe(1);
+    expect(live[0].getAttribute('aria-live')).toBe('polite');
+    expect(live[0].textContent).toContain('Loading project memory…');
+    // Assertive would interrupt the answer as it streams, which is the thing a
+    // screen-reader user is actually trying to hear.
+    expect(container.querySelector('[aria-live="assertive"]')).toBeNull();
+  });
+
+  it('keeps the live region mounted when there is nothing to say', () => {
+    // A region that appears in the same paint as its first text is the
+    // documented case screen readers fail to announce, so it exists from the
+    // start and only its contents change.
+    const { container } = render(<AnaActivity streaming phase="" toolCalls={[call()]} />);
+
     const live = container.querySelector('[aria-live]');
-    expect(live?.getAttribute('aria-live')).toBe('polite');
-    expect(live?.textContent).toContain('Loading project memory…');
+    expect(live).toBeTruthy();
+    expect(live?.textContent).toBe('');
+  });
+
+  it('speaks the outcomes, not just the phase', () => {
+    // Failures and deliverables are status changes. The rows are not in a live
+    // region, so if these were not routed here they would never be announced.
+    const { container } = render(
+      <AnaActivity
+        toolCalls={[call({ status: 'error', message: 'AnA could not finish the search.' })]}
+        draftTitle="Clinical Overview 2.5"
+      />,
+    );
+
+    const spoken = container.querySelector('[aria-live]')?.textContent ?? '';
+    expect(spoken).toContain('1 step did not complete');
+    expect(spoken).toContain('Drafted Clinical Overview 2.5');
+  });
+
+  it('points the disclosure at the region it controls', () => {
+    const { container } = render(<AnaActivity toolCalls={[call()]} />);
+
+    const toggle = container.querySelector('.ana-activity-toggle') as HTMLButtonElement;
+    const controls = toggle?.getAttribute('aria-controls');
+    expect(controls).toBeTruthy();
+
+    // getElementById, not querySelector('#…'): React.useId() emits colons, which
+    // are CSS combinator syntax, and jsdom exposes no global CSS.escape to quote
+    // them with. The id lookup takes the string literally, which is what an AT
+    // resolving aria-controls does anyway.
+    act(() => { toggle.click(); });
+    expect(document.getElementById(controls!)).toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('separates the rounds so going back for more reads as exactly that', () => {
@@ -91,9 +144,13 @@ describe('AnaActivity — the work is visible while it happens', () => {
   });
 
   it('names the deliverable as a step too once the record is open', () => {
-    render(<AnaActivity streaming toolCalls={[call()]} draftTitle="Clinical Overview 2.5" />);
+    const { container } = render(
+      <AnaActivity streaming toolCalls={[call()]} draftTitle="Clinical Overview 2.5" />,
+    );
 
-    expect(screen.getByText(/Drafted Clinical Overview 2\.5/)).toBeTruthy();
+    // Again scoped: the draft is spoken in the live region AND shown as a row.
+    const body = within(container.querySelector('.ana-activity-body') as HTMLElement);
+    expect(body.getByText(/Drafted Clinical Overview 2\.5/)).toBeTruthy();
   });
 
   it('is open while streaming and collapsed once the answer has landed', () => {

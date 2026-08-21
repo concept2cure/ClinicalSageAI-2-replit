@@ -874,6 +874,34 @@ router.post('/stream', async (req: Request, res: Response) => {
       // Execute one round: announce the step, stream tool_use/result events, run
       // the handler, log telemetry, and surface any generated document draft.
       const executeTools = async (calls: ToolCall[], round: number): Promise<ToolResultEntry[]> => {
+        /* Say what she is actually doing right now.
+         *
+         * The last status before this point is `generating`, and the client
+         * clears the phase outright on the first `tool_use`. So the tool loop
+         * ran with NO live line at all: settled rows, nothing saying she was
+         * still going. That clearing was correct when the rail rendered the
+         * phase as its single line — a phase and a tool row competed for the
+         * same slot. The work record renders them as different things (the
+         * round, and the steps within it), so they now coexist and the round
+         * gets to speak.
+         *
+         * Both numbers are read off the real round: `calls.length` is what the
+         * model actually asked for this pass, and `round` is the real
+         * agentic-loop round, so a second pass says so rather than looking like
+         * a slow first one. The step LABELS are deliberately not repeated —
+         * they are already the rows directly beneath this line. */
+        const stepCount = calls.length;
+        const stepWord = stepCount === 1 ? 'step' : 'steps';
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'status',
+            phase: 'running_tools',
+            message:
+              round === 1
+                ? `Running ${stepCount} ${stepWord}…`
+                : `Round ${round} — running ${stepCount} more ${stepWord}…`,
+          })}\n\n`
+        );
         res.write(
           `data: ${JSON.stringify({ type: 'step', round, tools: calls.map(c => c.name), plan: describeToolPlan(calls) })}\n\n`
         );
@@ -1053,6 +1081,23 @@ router.post('/stream', async (req: Request, res: Response) => {
         for (const b of budgeted) toolEvidenceCorpus.push(b.content);
         // Failure guidance for the next model turn (cleared after use).
         pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+        /* The round is done and the loop is about to hand these results back to
+         * the model. That is a genuinely different activity from running the
+         * tools, and it is the moment AnA decides whether she has enough or
+         * goes back for more — so it gets its own line rather than leaving the
+         * previous "Running N steps…" standing over work that has finished.
+         *
+         * This is also the longest silent window in a turn: the model may take
+         * many seconds to compose from a full round of results, and until this
+         * existed the user watched settled rows with no sign anything was still
+         * happening. */
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'status',
+            phase: 'reading_results',
+            message: 'Reading the results…',
+          })}\n\n`
+        );
         return budgeted;
       };
 

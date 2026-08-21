@@ -36,6 +36,7 @@
 
 import React from 'react';
 
+import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaToolCall } from '../components/ana/useAnaChat';
 
@@ -117,6 +118,7 @@ export function AnaActivity({
   // renders nothing for a turn that did no reportable work, and a hook after
   // that branch would run on some turns and not others.
   const [open, setOpen] = React.useState(false);
+  const bodyId = React.useId();
 
   // A settled turn that did nothing worth reporting adds nothing. Say nothing.
   const hasDecision = Boolean(lens && LENS_PHRASE[lens]) || Boolean(documentType);
@@ -143,13 +145,32 @@ export function AnaActivity({
     return parts.length > 0 ? parts.join(' · ') : 'How this was read';
   })();
 
+  /* The spoken version of this record.
+   *
+   * Sighted users read the rows; this is the one narrow region a screen reader
+   * is told about. It carries the phase plus the OUTCOMES — a step that failed,
+   * a deliverable produced — because those are status changes a user needs and
+   * would otherwise never hear: the rows themselves are not in a live region.
+   *
+   * It is always mounted and only its text changes. A live region that appears
+   * in the same paint as its first content is the documented case AT misses. */
+  const spoken = [
+    streaming && phase ? phase : null,
+    failed > 0 ? `${failed} ${failed === 1 ? 'step' : 'steps'} did not complete` : null,
+    draftTitle ? `Drafted ${draftTitle}` : null,
+  ]
+    .filter(Boolean)
+    .join('. ');
+
   return (
     <div className="ana-activity" data-streaming={streaming ? 'true' : 'false'}>
+      <span aria-live="polite" style={SR_ONLY_STYLE}>{spoken}</span>
       {!streaming && (
         <button
           type="button"
           className="ana-activity-toggle"
           aria-expanded={expanded}
+          aria-controls={bodyId}
           onClick={() => setOpen(o => !o)}
         >
           {open ? I.chevDown : I.chevRight}
@@ -158,11 +179,11 @@ export function AnaActivity({
       )}
 
       {expanded && (
-        <div className="ana-activity-body">
+        <div className="ana-activity-body" id={bodyId}>
           {/* The live phase. `polite` so a screen-reader user hears progress
               without it interrupting the answer as it arrives. */}
           {streaming && phase && (
-            <div className="ana-activity-phase" aria-live="polite">
+            <div className="ana-activity-phase">
               <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
               {phase}
             </div>
