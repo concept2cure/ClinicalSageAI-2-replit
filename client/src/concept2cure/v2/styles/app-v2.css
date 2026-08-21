@@ -1524,7 +1524,11 @@
 /* A step still in flight is dimmer than a settled one, but it is still text
    a user has to read: --text-300, not the --text-400 the glyph may use. */
 .c2c-v2 .ana-activity-step.is-running{color:var(--text-300);}
-.c2c-v2 .ana-activity-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;margin-left:18px;}
+/* padding + border-box, NOT margin: `flex-basis:100%` plus an 18px MARGIN is
+   100% + 18px, which overflowed the 380px rail horizontally — measured at
+   true rail width, where the step row came out 361px inside a 343px box.
+   With border-box the indent sits inside the basis. */
+.c2c-v2 .ana-activity-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;box-sizing:border-box;padding-left:18px;}
 /* Her reasoning. Bounded height rather than unbounded: a long deliberation
    must not push the answer off the screen, and a scroll says "there is more"
    more honestly than a truncation would. */
