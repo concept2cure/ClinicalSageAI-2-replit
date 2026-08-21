@@ -1541,6 +1541,168 @@
 .mdx-shell .pill-err.small { font-size: 9px; padding: 1px 5px; }
 
 /* ═════════════════════════════════════════════════════════════
+   DOCUMENTS PANEL (shared across surfaces)
+
+   <DocumentsPanel> has been shipping with no CSS at all.
+
+   Its own docblock says "CSS lives in client/src/concept2cure/mdx/app.css
+   (DOCUMENTS PANEL section)". There was no such section. The port brought the
+   JSX across from design-system/ui_kits/mdx and left the stylesheet behind, so
+   every one of its 24 classes — .docs-row, .docs-rail, .docs-head, .docs-meta,
+   .docs-progress, .docs-esig, the lot — matched nothing in any bundle. Five
+   surfaces render it: Vault, Engineering, UDI, Post-market and Analytics. On
+   each the document list is the main content, and on each it laid out as bare
+   stacked divs.
+
+   Nothing caught it because nothing was looking for it. The styling gate asks
+   whether a SURFACE receives the cascade, and these surfaces do — page,
+   sections, metrics and tables are all styled — so a wholly unstyled component
+   inside a styled surface is exactly the shape that check cannot see. It
+   surfaced from the other end: .docs-panel at 156 > 148 in the overflow
+   baseline, which is what an unstyled panel does when its rows have no box.
+
+   Ported verbatim rather than adapted. Every token the kit uses —
+   --canvas-elevated, --border-100, --border-200, --error-text, --radius-md —
+   already resolves under .mdx-shell, measured in a browser against the built
+   bundles, so there was nothing to translate but the scope prefix. One
+   exception, marked at the rule it applies to.
+   ═════════════════════════════════════════════════════════════ */
+
+.mdx-shell .docs-panel { display: flex; flex-direction: column; gap: 8px; }
+.mdx-shell .docs-row {
+  display: flex; gap: 0;
+  text-align: left;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border-100);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--dur) var(--ease);
+}
+/* The kit hovers on `box-shadow: var(--shadow-xs)`, which in this cascade is
+   `0 1px 0 hsl(0 0% 0% / 0)` — a shadow at alpha 0, so no hover feedback at all
+   on a row whose whole purpose is to be clicked. These two lines are this
+   sheet's own .task-card:hover, the nearest equivalent affordance in it. */
+.mdx-shell .docs-row:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 4px 12px color-mix(in oklab, var(--black) 6%, transparent);
+}
+.mdx-shell .docs-rail { width: 4px; flex-shrink: 0; background: var(--border-200); }
+.mdx-shell .docs-row[data-status="ready"]  .docs-rail { background: var(--success); width: 4px; }
+.mdx-shell .docs-row[data-status="review"] .docs-rail { background: var(--warning); width: 5px; }
+.mdx-shell .docs-row[data-status="draft"]  .docs-rail { background: var(--text-400); width: 4px; }
+.mdx-shell .docs-row[data-status="locked"] .docs-rail { background: var(--text-200); width: 6px; }
+.mdx-shell .docs-row[data-blocker="true"]  .docs-rail { background: var(--error); width: 6px; }
+
+/* --text-300 where the kit says --text-400, on .docs-meta (and everything that
+   inherits from it), .docs-last, .docs-dhf and .docs-esig-na.
+   The kit's grey is #8a8880 and this row's background is --canvas-elevated,
+   #ffffff. That is 3.55:1 at 11px, against the 4.5:1 AA asks of text this size,
+   measured on all 14 rows of the Vault. --text-300 is 5.49:1 on the same white
+   and 4.98:1 on the --bg-050 of the action column.
+   Porting the value verbatim would have been introducing failures, not
+   preserving them: until this section existed the text inherited the surface
+   colour and passed. A port is not required to carry a defect across.
+   .docs-open and .docs-action-chip keep --text-400 — they are icons, judged
+   against the 3:1 non-text rule, not this one. */
+.mdx-shell .docs-body { flex: 1; min-width: 0; padding: 12px 16px; }
+.mdx-shell .docs-head {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  margin-bottom: 4px;
+}
+.mdx-shell .docs-type {
+  font-size: 11px; color: var(--text-300); text-transform: uppercase;
+  letter-spacing: 0.04em; font-weight: 600;
+}
+.mdx-shell .docs-framework {
+  padding: 1px 6px; border-radius: 4px; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+}
+.mdx-shell .docs-fw-820   { background: #e2e8f5; color: #355270; }
+.mdx-shell .docs-fw-14971 { background: #f6e9cf; color: #7e5510; }
+.mdx-shell .docs-fw-62304 { background: #ece9f7; color: #544698; }
+.mdx-shell .docs-fw-cyber { background: #f3d6d2; color: #7c1f1f; }
+.mdx-shell .docs-dhf { color: var(--text-300); }
+.mdx-shell .docs-title {
+  font-size: 14px; font-weight: 600; color: var(--text-100); line-height: 1.4;
+  margin-bottom: 6px;
+}
+.mdx-shell .docs-meta {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  font-size: 11px; color: var(--text-300);
+}
+.mdx-shell .docs-ver { color: var(--text-300); font-weight: 600; }
+.mdx-shell .docs-progress {
+  flex-basis: 80px; flex-shrink: 0;
+  height: 4px; background: var(--bg-100); border-radius: 999px; overflow: hidden;
+  margin: 0 4px;
+}
+.mdx-shell .docs-progress-fill {
+  display: block; height: 100%;
+  background: var(--accent-100); opacity: 0.6;
+  border-radius: 999px;
+  transition: width var(--dur) var(--ease);
+}
+.mdx-shell .docs-row[data-blocker="true"] .docs-progress-fill { background: var(--error); }
+.mdx-shell .docs-pct { color: var(--text-300); font-weight: 600; }
+.mdx-shell .docs-owner {
+  padding: 1px 6px; background: var(--bg-100); border-radius: 999px;
+  color: var(--text-200); font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+}
+.mdx-shell .docs-reviewers { display: inline-flex; gap: 2px; }
+.mdx-shell .docs-reviewer {
+  padding: 1px 6px; background: var(--bg-050); border: 1px solid var(--border-100);
+  border-radius: 999px;
+  color: var(--text-300); font-family: var(--font-mono); font-size: 10px;
+}
+.mdx-shell .docs-last { color: var(--text-300); margin-left: 4px; }
+.mdx-shell .docs-esig {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 6px; border-radius: 999px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+  margin-left: auto;
+}
+.mdx-shell .docs-esig svg { width: 11px; height: 11px; }
+.mdx-shell .docs-esig-signed  { background: #ecf1e4; color: #4d6235; }
+.mdx-shell .docs-esig-pending { background: #f6e9cf; color: #7e5510; }
+.mdx-shell .docs-esig-na      { background: var(--bg-100); color: var(--text-300); }
+.mdx-shell .docs-blocker-note {
+  display: flex; gap: 6px; align-items: center;
+  margin-top: 8px; padding: 6px 10px;
+  background: #fbeae6;
+  border-radius: var(--radius-md);
+  font-size: 11px; color: var(--error-text);
+}
+.mdx-shell .docs-blocker-note .ico svg { width: 12px; height: 12px; color: var(--error); }
+.mdx-shell .docs-flags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.mdx-shell .docs-flag {
+  padding: 1px 6px; background: var(--bg-100); border-radius: 4px;
+  font-size: 10px; color: var(--text-300);
+}
+.mdx-shell .docs-actions {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 14px;
+  border-left: 1px solid var(--border-100);
+  background: var(--bg-050);
+}
+.mdx-shell .docs-action-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 999px;
+  color: var(--text-400);
+  transition: all var(--dur) var(--ease);
+  cursor: pointer;
+}
+.mdx-shell .docs-action-chip:hover { background: var(--accent-000); color: var(--accent-200); }
+.mdx-shell .docs-action-chip svg { width: 14px; height: 14px; }
+.mdx-shell .docs-open { color: var(--text-400); }
+.mdx-shell .docs-open svg { width: 14px; height: 14px; }
+.mdx-shell .docs-row:hover .docs-open { color: var(--accent-100); }
+
+.mdx-shell .docs-panel-compact .docs-row { font-size: 12px; }
+.mdx-shell .docs-panel-compact .docs-title { font-size: 13px; margin-bottom: 4px; }
+.mdx-shell .docs-panel-compact .docs-body { padding: 8px 12px; }
+
+
+/* ═════════════════════════════════════════════════════════════
    TASKS — Kanban board
    ═════════════════════════════════════════════════════════════ */
 /* Five statuses were being laid into four hard-coded tracks, so "Done" wrapped

@@ -7,7 +7,9 @@
  * their own document list).
  *
  * Port of design-system/ui_kits/mdx/documents-panel.jsx. CSS lives in
- * client/src/concept2cure/mdx/app.css (DOCUMENTS PANEL section).
+ * client/src/concept2cure/mdx/app.css (DOCUMENTS PANEL section) — which, until
+ * that section was written, it did not: this line named a destination the port
+ * never reached, and every class below matched nothing in any bundle.
  */
 
 import * as React from 'react';
