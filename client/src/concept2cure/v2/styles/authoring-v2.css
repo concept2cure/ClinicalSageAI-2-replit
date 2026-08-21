@@ -81,14 +81,26 @@
      no longer shrink or wrap: their order and position are fixed, and a
      genuinely narrow viewport scrolls them instead of rearranging them. */
   .ed-doc-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
-  .ed-crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-400);flex:1 1 auto;min-width:0;white-space:nowrap;}
+  /* `min-width:0` alone let the crumbs shrink past shrinking, all the way to a
+     clientWidth of 0: the actions row took all 540px of the header and the
+     breadcrumb — module, separator, document name — rendered at zero width and
+     overflowed it, present in the DOM and invisible on screen. The floor is the
+     fix that the note above intended; the note already says the module and the
+     section code must stay legible, and nothing was enforcing it. */
+  .ed-crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-400);flex:1 1 auto;min-width:7rem;white-space:nowrap;}
   /* The document title is the long part; the module and the section code are
      short and must stay legible, so only the title yields. */
   .ed-crumbs .doc-title{overflow:hidden;text-overflow:ellipsis;min-width:0;}
   .ed-crumbs .sep-first{flex-shrink:0;}
   .ed-crumbs .here{color:var(--text-100);font-weight:500;flex-shrink:0;}
   .ed-crumbs .sep{color:var(--text-500);flex-shrink:0;}
-  .ed-doc-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;flex-wrap:nowrap;max-width:100%;overflow-x:auto;}
+  /* `flex-shrink` is 1, not 0. The row declares `overflow-x:auto` so that a
+     narrow header scrolls it rather than rearranging it — but an item that
+     never shrinks never reaches its own scroll, so that declaration could not
+     fire and the crumbs absorbed the entire squeeze instead. Shrinking here is
+     what the no-rearrange rule needs to hold: order and wrapping stay fixed,
+     and the overflow the row was already asking for takes up the difference. */
+  .ed-doc-actions{display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0;flex-wrap:nowrap;max-width:100%;overflow-x:auto;}
   .ed-doc-scroll{flex:1;overflow-y:auto;}
   .ed-doc-inner{max-width:760px;margin:0 auto;padding:36px 44px 80px;}
   .ed-mast{padding-bottom:20px;margin-bottom:22px;border-bottom:1px solid var(--border);}

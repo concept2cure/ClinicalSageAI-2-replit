@@ -34,6 +34,20 @@ import {
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
+/**
+ * Column widths for the validation-rules table, shared by its head and its rows
+ * so the two cannot drift.
+ *
+ * Every column but Sev and Since is fractional. The fixed widths they replace —
+ * 88/110/110/140 plus a bare `1fr` — summed to 608px of tracks and gaps inside
+ * the 590px this table is given on a 748px surface, which left `1fr` pinned at
+ * the min-content width of the word "Message" and still overflowed. Fractions
+ * divide the room that exists instead of asserting room that does not, and
+ * `minmax(0, …)` is what lets them go below their content rather than refusing.
+ */
+const VALIDATION_COLS =
+  '76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
 // ─────────────────────────────────────────────────────────────────────────────
@@ -346,7 +360,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
         <div className="ctable">
           <div
             className="ctable-head"
-            style={{ gridTemplateColumns: '88px 110px 110px 140px 1fr 100px' }}
+            style={{ gridTemplateColumns: VALIDATION_COLS }}
           >
             <div>Sev</div>
             <div>Rule</div>
@@ -359,7 +373,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
             <div
               key={r.id + r.prog}
               className="ctable-row"
-              style={{ gridTemplateColumns: '88px 110px 110px 140px 1fr 100px' }}
+              style={{ gridTemplateColumns: VALIDATION_COLS }}
             >
               <div>
                 <span className={`sev-pill ${r.severity}`}>

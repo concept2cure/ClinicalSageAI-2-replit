@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -178,13 +178,19 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
       {tab === 'pyramid' && (
         <div>
           <div className="ae-pipe">
-            {AE_PIPE.map((s) => (
-              <div key={s.k} className="ae-pstage" data-k={s.k}>
-                <div className="ae-pstage-n">{s.n}</div>
-                <div className="ae-pstage-ic">{I[s.ic] || I.grid}</div>
-                <div className="ae-pstage-t">{s.t}</div>
-                <div className="ae-pstage-d">{s.d}</div>
-              </div>
+            {AE_PIPE.map((s, i) => (
+              <Fragment key={s.k}>
+                {/* The arrow is a real item in the row, not a pseudo-element
+                    hanging in the card's margin. See `.ae-parrow` in
+                    journey-v2.css for why that distinction is load-bearing. */}
+                {i > 0 && <span className="ae-parrow" aria-hidden="true">→</span>}
+                <div className="ae-pstage" data-k={s.k}>
+                  <div className="ae-pstage-n">{s.n}</div>
+                  <div className="ae-pstage-ic">{I[s.ic] || I.grid}</div>
+                  <div className="ae-pstage-t">{s.t}</div>
+                  <div className="ae-pstage-d">{s.d}</div>
+                </div>
+              </Fragment>
             ))}
           </div>
           <div className="scaf-note" style={{ marginTop: 16, maxWidth: 820 }}>

@@ -336,9 +336,21 @@
   gap: 8px; position: relative; text-align: center;
   padding: 0 6px;
 }
-/* connector line */
+/* Connector line, drawn as two half-segments that meet on the cell boundary.
+   A single `left:50%; width:100%` run from this dot to the next one is 150% of
+   the node, so every node but the last reported scrollWidth 153 against a
+   clientWidth of 102 — twelve of the overflow gate's baselined findings, six on
+   510(k) and six on diagnostics.
+   The strip is `repeat(7, 1fr)` with no gap, so a segment ending at this cell's
+   right edge and one starting at the next cell's left edge are contiguous: same
+   line, same endpoints, drawn inside the boxes that own it. Both sit at z-index
+   0 so the dot's opaque fill covers the part that passes under it. */
 .mdx-shell .stage-node:not(:last-child)::after {
-  content: ''; position: absolute; top: 14px; left: 50%; width: 100%;
+  content: ''; position: absolute; top: 14px; left: 50%; right: 0;
+  height: 1px; background: var(--border-strong); z-index: 0;
+}
+.mdx-shell .stage-node:not(:first-child)::before {
+  content: ''; position: absolute; top: 14px; left: 0; right: 50%;
   height: 1px; background: var(--border-strong); z-index: 0;
 }
 .mdx-shell .stage-dot {
@@ -452,8 +464,12 @@
 /* ════════════════════════════════════════════════════════════
    SE Matrix
    ════════════════════════════════════════════════════════════ */
+/* The verdict track is 56px, not the 32px the icon alone needs, because the
+   column header is the word "Verdict" — 47px at this size — and a 32px cell put
+   it 15px into the predicate column beside it. A column narrower than its own
+   label is not a narrow column, it is an unreadable one. */
 .mdx-shell .se-row {
-  display: grid; grid-template-columns: 180px 1fr 32px 1fr;
+  display: grid; grid-template-columns: 180px 1fr 56px 1fr;
   gap: 12px; padding: 10px 16px; align-items: start;
   border-bottom: 1px solid var(--border); font-size: 12px;
 }
@@ -466,7 +482,7 @@
 .mdx-shell .se-attr { font-weight: 500; color: var(--text-200); padding-top: 2px; }
 .mdx-shell .se-val { color: var(--text-200); line-height: 1.5; }
 .mdx-shell .se-verdict {
-  width: 24px; height: 24px; border-radius: 50%;
+  width: 24px; height: 24px; border-radius: 50%; justify-self: center;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; margin: 0 auto;
 }
@@ -721,7 +737,11 @@
 }
 .mdx-shell .switch[data-on="true"] { background: var(--accent-100); }
 .mdx-shell .switch[data-on="true"]::after { transform: translateX(14px); }
-.mdx-shell .seg { display: flex; gap: 2px; }
+/* Wraps because it must: the Vault's framework filter is six buttons and 543px
+   of them, and a `nowrap` row of unshrinkable text in a 510px column pushes the
+   whole surface sideways. Wrapping only engages where the row does not fit, so
+   every seg that fits today is unchanged. */
+.mdx-shell .seg { display: flex; flex-wrap: wrap; gap: 2px; }
 .mdx-shell .seg-btn {
   padding: 4px 10px; font-size: 11px; border-radius: var(--radius-sm);
   color: var(--text-300); background: var(--bg-100);
@@ -1447,7 +1467,7 @@
 /* ── Section (reused) ─────────────────────────────────────────── */
 .mdx-shell .section { padding: 24px 32px 4px; }
 .mdx-shell .section-head {
-  display: flex; align-items: baseline; gap: 12px;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;
   margin-bottom: 14px;
 }
 .mdx-shell .section-head h2 {
@@ -1470,6 +1490,11 @@
   border: 1px solid var(--border); border-radius: var(--radius-md);
   background: var(--bg-000); overflow: hidden; margin: 0 32px 20px;
 }
+/* `.section` already pads 32px a side, so a `.ctable` inside one was inset 64px
+   while the heading above it sat at 32 — visibly out of line, and 64px of the
+   width its columns needed. The margin exists for a `.ctable` placed directly
+   on a surface; inside a section the section owns the inset. */
+.mdx-shell .section > .ctable { margin-inline: 0; }
 .mdx-shell .ctable-head,
 .mdx-shell .ctable-row {
   display: grid; gap: 12px;
@@ -1518,9 +1543,23 @@
 /* ═════════════════════════════════════════════════════════════
    TASKS — Kanban board
    ═════════════════════════════════════════════════════════════ */
+/* Five statuses were being laid into four hard-coded tracks, so "Done" wrapped
+   silently onto a second row underneath "To do" — a board whose last column is
+   not on the board. `grid-auto-flow: column` takes the track count from
+   TASKS_COLUMNS instead of restating it here, which is also what stops the two
+   from drifting apart again.
+   Four 260px tracks plus gaps and padding wanted 1108px in the 748px a surface
+   gets, and the spill carried all the way out to .page-inner at 1132 > 796 —
+   the whole Tasks surface scrolled sideways rather than the board. A board
+   scrolls horizontally; that is the convention and it is what `overflow-x`
+   restores. overflow-y is pinned explicitly because setting only the x axis
+   computes y to `auto`, and the 100vh min-height would then raise a second,
+   vertical scrollbar over a board whose columns already scroll themselves. */
 .mdx-shell .kanban {
-  display: grid; grid-template-columns: repeat(4, minmax(260px, 1fr));
+  display: grid; grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
   gap: 12px; padding: 20px 32px 32px;
+  overflow-x: auto; overflow-y: hidden;
   min-height: calc(100vh - 280px);
 }
 .mdx-shell .kanban-col {
@@ -1603,12 +1642,30 @@
 
 /* Phase 5 full-surface layout (kit surfaces.css merged; kit tokens
    --canvas-elevated/--border-100/--radius-md adapted to this sheet). */
+/* Rail, documents, preview — as a wrapping flex row, not a three-track grid.
+   The grid version reserved 220px and 320px for the outer two and left the
+   document list whatever remained. In the 748px a surface actually gets that
+   remainder is 172px, and the list needs about 700, so the overflow gate found
+   six findings stacked in one chain: .page-inner 941 > 796, .vault-grid
+   917 > 748, .vault-main and its section 699 > 212, .section-head 667 > 148.
+   The whole Vault scrolled sideways and the preview drawer sat on top of the
+   file names.
+   Its `@media (max-width: 1280px)` fallback could not help, and could never
+   have: a media query reads the WINDOW. At the 1440px window this layout is
+   designed for, the query does not match while the column is 748px wide — the
+   narrow case is precisely where the narrow rule is switched off. Wrapping is
+   driven by the space the row is really in, so it needs no width to be named.
+   The basis widths are the old track widths, so nothing moves where it fits;
+   below roughly 950px the drawer drops to its own line instead of squeezing
+   the list to a column too narrow to read. */
 .mdx-shell .vault-grid {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  display: flex; flex-wrap: wrap;
   gap: 18px;
-  align-items: start;
+  align-items: flex-start;
 }
+.mdx-shell .vault-grid > .vault-rail { flex: 0 0 220px; }
+.mdx-shell .vault-grid > .vault-main { flex: 1 1 420px; }
+.mdx-shell .vault-grid > .vault-drawer { flex: 1 1 320px; max-width: 320px; }
 .mdx-shell .vault-rail {
   background: var(--bg-050);
   border: 1px solid var(--border);
@@ -1623,9 +1680,9 @@
 }
 .mdx-shell .vault-grid .vault-main { min-width: 0; }
 .mdx-shell .vault-grid .vault-drawer { position: sticky; top: 16px; }
-@media (max-width: 1280px) {
-  .mdx-shell .vault-grid { grid-template-columns: 200px minmax(0, 1fr) 300px; }
-}
+/* The `@media (max-width: 1280px)` narrowing that used to sit here is gone with
+   the tracks it re-declared. It measured the window, and the Vault's problem is
+   the width of a column inside the window. */
 
 /* Legacy workbench-tab layout (drawer/tree row styles below are shared
    by the Phase 5 surface). */
