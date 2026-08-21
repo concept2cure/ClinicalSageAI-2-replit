@@ -22,6 +22,22 @@
  * capture declares in `_viewports.json`, and a fragment with no declared width
  * is measured at the desktop viewport the surface captures assume.
  *
+ * ── Why the cascade matters as much as the width ─────────────────────────────
+ * Every `.c2c-v2 …` rule needs that class on an ancestor, and the surface
+ * captures write `container.innerHTML` — the surface WITHOUT the shell element
+ * that carries it. Measured bare, the whole v2 stylesheet is inert: `.pe-f`
+ * stops being a column flex container, `box-sizing:border-box` stops applying,
+ * and what gets measured is unstyled markup the product never renders. The
+ * three sibling checks all wrap for this reason; `check-surface-styling.mjs`
+ * says so in as many words. This one did not, so its findings were artifacts
+ * and its silence was not evidence.
+ *
+ * `.c2c-v2` alone, not `.c2c-v2.shell`: the shell is
+ * `display:grid; grid-template-columns:var(--rail) 1fr var(--ana)`, which would
+ * lay a surface fragment out in the 60px nav rail. That is the wrapper
+ * `dump-ana-rail.spec.tsx` already embeds in its own captures, which is why the
+ * rail measurements were real while the surface ones were not.
+ *
  * ── Ratchet, not a cliff ─────────────────────────────────────────────────────
  * Run over captured surfaces this will find pre-existing overflows that are not
  * this change's to fix. The baseline records what was already true; the check
@@ -40,11 +56,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchChromium } from './playwright.mjs';
+import { assertCaptureIsFresh } from './capture-freshness.mjs';
+import { builtStylesheets, styleTags } from './built-css.mjs';
 
 const TAG = '[visual-qa:overflow]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MARKUP = path.join(REPO, '.visual-qa/markup');
-const ASSETS = path.join(REPO, 'dist/public/assets');
 const BASELINE = path.join(REPO, 'scripts/visual-qa/overflow-baseline.json');
 
 /**
@@ -63,39 +80,25 @@ const TOLERANCE = 1;
 
 const WRITE = process.argv.includes('--write-baseline');
 
-function asset(prefix) {
-  if (!fs.existsSync(ASSETS)) return '';
-  const f = fs.readdirSync(ASSETS).find((n) => n.startsWith(prefix) && n.endsWith('.css'));
-  return f ? fs.readFileSync(path.join(ASSETS, f), 'utf8') : '';
-}
+// Every built stylesheet, in load order — see built-css.mjs.
+//
+// This file first loaded ENTRY and V2 only, which silently omitted the MDX
+// sheet for `mdx__` fragments: a fix applied to `.mdx-shell .cer-tabbar` moved
+// the numbers not at all, which reads exactly like a fix that does not work.
+// The narrower repair — a local `sheetsFor()` copied from check-contrast.mjs —
+// still missed sixteen further chunks, fourteen of which style classes present
+// in the captured markup. One shared module answers it for every check instead,
+// and there is no second copy of the judgement to drift.
+const SHEETS = builtStylesheets(TAG, { soft: true });
+const STYLES = styleTags(SHEETS);
 
-const ENTRY = asset('index-');
-const V2 = asset('V2App-');
-const MDX = asset('MdxSurfaceHost-');
-const PDEV = asset('PdevRoute-');
-
-/**
- * The stylesheets a fragment is really served, by capture prefix — the same
- * split `check-contrast.mjs` makes.
- *
- * Loading only ENTRY and V2 silently omitted the MDX sheet for `mdx__`
- * fragments, so every `.mdx-shell …` rule was absent from the measurement. That
- * is not a small gap: a fix applied to `.mdx-shell .cer-tabbar` produced no
- * change in the numbers at all, which reads exactly like a fix that does not
- * work.
- */
-const sheetsFor = (name) =>
-  name.startsWith('mdx__') ? [ENTRY, V2, MDX]
-    : name.startsWith('pdev__') ? [ENTRY, V2, PDEV]
-      : [ENTRY, V2];
-
-const pageFor = (markup, sheets) =>
-  `<!doctype html><html><head><meta charset="utf-8">` +
-  sheets.map((c) => `<style>${c}</style>`).join('') +
+const pageFor = (markup) =>
+  `<!doctype html><html><head><meta charset="utf-8">${STYLES}` +
   // The measured box is the fragment's own width and nothing wider, so a
   // fragment cannot be rescued by a viewport it will never have.
   `<style>html,body{margin:0;padding:0}#box{overflow:hidden}</style>` +
-  // `c2c-v2` for scope, and deliberately NOT `shell`.
+  // `c2c-v2` for scope, on the box itself so the width lands on the same
+  // element that scopes the cascade — and deliberately NOT `shell`.
   //
   // Two wrong wrappers came before this one, and each produced a confident
   // number. A bare `<div id="box">` applies no product CSS at all — every rule
@@ -108,16 +111,27 @@ const pageFor = (markup, sheets) =>
   // the product never puts them in. Contrast can wrap in `shell` harmlessly —
   // colour does not depend on width. Overflow is the one check for which the
   // container is the measurement.
-  `</head><body><div class="c2c-v2" id="box">${markup}</div></body></html>`;
+  `</head><body><div id="box" class="c2c-v2">${markup}</div></body></html>`;
 
 /**
- * Runs in the browser. An element overflows when its content is wider than its
- * own box. SR-only regions are excluded by rule, not by accident: the standard
- * clip technique gives them a 1px box on purpose, so text wider than that is
- * the technique working rather than a layout failure.
+ * Runs in the browser. An element overflows when its own IN-FLOW content is
+ * wider than its box.
+ *
+ * Two exclusions, both by rule rather than by accident:
+ *
+ * SR-only regions — the standard clip technique gives them a 1px box on
+ * purpose, so text wider than that is the technique working.
+ *
+ * Out-of-flow decoration — an absolutely positioned box is placed by
+ * coordinates, and putting one in the element's own margin is ordinary CSS.
+ * `.ae-pstage` is the case in hand: a `::after` arrow at `right:-17px` sitting
+ * in the card's own 22px right margin, which made all six pipeline cards
+ * measure 156 against a 139px box while nothing anywhere moved a pixel. So
+ * every candidate is measured a second time with out-of-flow boxes taken away,
+ * and only what still overflows is a finding. That is the difference between a
+ * check people act on and one they learn to silence.
  */
 const MEASURE = (tolerance) => {
-  const out = [];
   const srOnly = (el) => {
     const cs = getComputedStyle(el);
     return (
@@ -126,28 +140,56 @@ const MEASURE = (tolerance) => {
       cs.clipPath === 'inset(50%)'
     );
   };
-  document.querySelectorAll('#box *').forEach((el) => {
-    if (!(el instanceof HTMLElement)) return;
-    if (srOnly(el)) return;
-    if (el.scrollWidth > el.clientWidth + tolerance) {
-      const cs = getComputedStyle(el);
-      /* Anything but `visible` means the author is containing it on purpose,
-         and only `visible` can push an ancestor sideways.
-         `auto`/`scroll` scroll deliberately; `hidden`/`clip` are how truncation
-         is built — `white-space:nowrap; overflow:hidden; text-overflow:ellipsis`
-         has scrollWidth > clientWidth BY DESIGN, that being what makes the
-         ellipsis appear. An earlier rule here skipped only auto and scroll and
-         reported 27 "overflows" that were ellipsis elements doing their job. */
-      if (cs.overflowX !== 'visible') return;
-      const cls = String(el.getAttribute('class') || '').trim().split(/\s+/).slice(0, 3).join('.');
-      out.push({
-        selector: `${el.tagName.toLowerCase()}${cls ? '.' + cls : ''}`,
-        scrollWidth: el.scrollWidth,
-        clientWidth: el.clientWidth,
-      });
-    }
+  const overflows = (el) => el.scrollWidth > el.clientWidth + tolerance;
+  const outOfFlow = (cs) => cs.position === 'absolute' || cs.position === 'fixed';
+
+  const all = [...document.querySelectorAll('#box *')].filter((el) => el instanceof HTMLElement);
+
+  const candidates = all.filter((el) => {
+    if (srOnly(el)) return false;
+    if (!overflows(el)) return false;
+    // Anything but `visible` means the author is containing it on purpose,
+    // and only `visible` can push an ancestor sideways. `auto`/`scroll` scroll
+    // deliberately; `hidden`/`clip` are how truncation is built —
+    // `white-space:nowrap; overflow:hidden; text-overflow:ellipsis` has
+    // scrollWidth > clientWidth BY DESIGN, that being what makes the ellipsis
+    // appear. An earlier rule here skipped only auto and scroll and reported
+    // 27 "overflows" that were ellipsis elements doing their job. A tool that
+    // flags correct markup teaches people to ignore it, and then it protects
+    // nothing.
+    return getComputedStyle(el).overflowX === 'visible';
   });
-  return out;
+  if (candidates.length === 0) return [];
+
+  // Take the out-of-flow boxes away and ask again. A candidate is never itself
+  // hidden — an absolutely positioned element that overflows its OWN box is a
+  // finding like any other.
+  const keep = new Set(candidates);
+  const style = document.createElement('style');
+  style.textContent =
+    '[data-vqa-drop-before]::before{content:none!important}' +
+    '[data-vqa-drop-after]::after{content:none!important}';
+  document.head.appendChild(style);
+  for (const el of all) {
+    if (!keep.has(el) && outOfFlow(getComputedStyle(el))) {
+      el.style.display = 'none';
+      continue;
+    }
+    for (const [pseudo, attr] of [['::before', 'data-vqa-drop-before'], ['::after', 'data-vqa-drop-after']]) {
+      const pcs = getComputedStyle(el, pseudo);
+      if (pcs.content !== 'none' && outOfFlow(pcs)) el.setAttribute(attr, '');
+    }
+  }
+
+  return candidates.filter(overflows).map((el) => {
+    const cls = String(el.getAttribute('class') || '').trim().split(/\s+/).slice(0, 3).join('.');
+    return {
+      id: el.id || null,
+      selector: `${el.tagName.toLowerCase()}${cls ? '.' + cls : ''}`,
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    };
+  });
 };
 
 const files = fs.existsSync(MARKUP)
@@ -157,7 +199,7 @@ if (files.length === 0) {
   console.error(`${TAG} no captured markup in .visual-qa/markup — run \`npm run visual-qa:capture\` first.`);
   process.exit(1);
 }
-if (!ENTRY && !V2) {
+if (SHEETS.length === 0) {
   console.error(`${TAG} no built CSS in dist/public/assets — run \`npm run build\` first.`);
   console.error(`${TAG} Measuring against source CSS instead would test a cascade the product never serves.`);
   process.exit(1);
@@ -167,14 +209,99 @@ const viewports = fs.existsSync(path.join(MARKUP, '_viewports.json'))
   ? JSON.parse(fs.readFileSync(path.join(MARKUP, '_viewports.json'), 'utf8'))
   : {};
 
+assertCaptureIsFresh(TAG, MARKUP, REPO);
+
 const browser = await launchChromium();
+
+/**
+ * A `.c2c-v2`-scoped rule with a value no global reset supplies, asserted on
+ * markup this check builds itself. The first version of this probe asked for
+ * `box-sizing:border-box` and passed with the wrapper deliberately removed —
+ * the entry sheet's global reset already sets it, so the probe measured
+ * nothing. A self-check that cannot fail is worse than none: it signs off.
+ *
+ * `.c2c-v2 button{text-align:left;cursor:pointer}` is a base-sheet reset over
+ * the UA's `center`/`default`, so both halves are wrong together only if the
+ * scoped cascade is genuinely absent. It is deliberately not a surface class:
+ * if it is ever renamed this fails loudly, which is the right direction.
+ */
+const CASCADE_PROBE = { markup: '<button id="cascade-probe">probe</button>', textAlign: 'left', cursor: 'pointer' };
+
+/**
+ * Two seeded fragments, one of each kind. `sc-spill` is the shape of the defect
+ * this check was written for — in-flow content wider than the box it is given.
+ * `sc-decoration` is the shape of `.ae-pstage` — an absolutely positioned
+ * `::after` in the element's own right margin, which is correct CSS.
+ *
+ * The false-positive half is the one that matters. A check that reports correct
+ * markup gets its baseline raised until it reports nothing at all.
+ */
+const SEEDED = [
+  { id: 'sc-spill', found: true, markup: '<div id="sc-spill" style="width:120px"><div style="width:200px">spill</div></div>' },
+  {
+    id: 'sc-decoration',
+    found: false,
+    markup:
+      '<style>#sc-decoration::after{content:"→";position:absolute;right:-17px;top:0}</style>' +
+      '<div id="sc-decoration" style="width:120px;position:relative;margin-right:22px">deco</div>',
+  },
+];
+
+// Prove the cascade before trusting a single measurement. Measured without the
+// wrapper the whole v2 stylesheet is inert, and unstyled markup is what this
+// check reported on until now — indistinguishable, in its output, from clean.
+{
+  const ctx = await browser.newContext({ viewport: { width: 400, height: 200 } });
+  const p = await ctx.newPage();
+  await p.setContent(pageFor(CASCADE_PROBE.markup), { waitUntil: 'load' });
+  const got = await p.evaluate(() => {
+    const cs = getComputedStyle(document.getElementById('cascade-probe'));
+    return { textAlign: cs.textAlign, cursor: cs.cursor };
+  });
+  await ctx.close();
+  if (got.textAlign !== CASCADE_PROBE.textAlign || got.cursor !== CASCADE_PROBE.cursor) {
+    console.error(`${TAG} SELF-CHECK FAILED — a button inside .c2c-v2 computes`);
+    console.error(`${TAG}   text-align:${got.textAlign} (want ${CASCADE_PROBE.textAlign}), cursor:${got.cursor} (want ${CASCADE_PROBE.cursor}).`);
+    console.error(`${TAG} The v2 stylesheet is not reaching the measured markup, so every`);
+    console.error(`${TAG} number below would describe unstyled markup the product never renders.`);
+    console.error(`${TAG} Rebuild (\`npm run build\`) or fix the wrapper before reading anything.`);
+    await browser.close();
+    process.exit(2);
+  }
+  console.log(`${TAG} self-check OK — the .c2c-v2 cascade reaches the measured box.`);
+}
+
+// Prove the measurement itself: it must find the seeded spill AND leave the
+// seeded decoration alone.
+{
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 400 } });
+  const p = await ctx.newPage();
+  await p.setContent(pageFor(SEEDED.map((c) => c.markup).join('')), { waitUntil: 'load' });
+  const hits = new Set((await p.evaluate(MEASURE, TOLERANCE)).map((h) => h.id));
+  await ctx.close();
+  const wrong = SEEDED.filter((c) => hits.has(c.id) !== c.found);
+  if (wrong.length > 0) {
+    for (const c of wrong) {
+      console.error(
+        `${TAG} SELF-CHECK FAILED — ${c.id} was ${hits.has(c.id) ? 'reported' : 'missed'}, ` +
+          `and it must be ${c.found ? 'reported' : 'left alone'}.`,
+      );
+    }
+    console.error(`${TAG} The measurement does not separate a real spill from correct CSS.`);
+    console.error(`${TAG} Nothing below can be trusted in either direction.`);
+    await browser.close();
+    process.exit(2);
+  }
+  console.log(`${TAG} self-check OK — seeded spill found, seeded decoration left alone.`);
+}
+
 const findings = [];
 
 for (const file of files) {
   const width = viewports[file] ?? DESKTOP;
   const ctx = await browser.newContext({ viewport: { width: Math.max(width, 320), height: 900 } });
   const p = await ctx.newPage();
-  await p.setContent(pageFor(fs.readFileSync(path.join(MARKUP, file), 'utf8'), sheetsFor(file)), { waitUntil: 'load' });
+  await p.setContent(pageFor(fs.readFileSync(path.join(MARKUP, file), 'utf8')), { waitUntil: 'load' });
   await p.evaluate((w) => { document.getElementById('box').style.width = `${w}px`; }, width);
   // Open every disclosure: a record nobody expanded hides most of its rows.
   for (const t of await p.locator('[aria-expanded="false"]').all()) {

@@ -168,19 +168,10 @@
 
 /* Pipeline: raw data → final draft */
 .c2c-v2 .ae-pipe{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:6px;margin-bottom:8px;}
-.c2c-v2 .ae-pstage{flex:1;min-width:130px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px 14px;position:relative;}
-/* The arrow between stages is its own flex item, 22px wide, and used to be an
-   `::after` on the card positioned at `right:-17px` — inside the card's own
-   22px `margin-right`.
-   A margin is outside the border box, and scrollWidth measures the padding box,
-   so a glyph parked in the gutter overflows its card by definition: six of the
-   overflow gate's baselined findings were this one decoration, 145 against a
-   clientWidth of 128, once per non-final stage.
-   Nothing can put it back inside the card — the card is a bordered, filled
-   surface and the gutter is deliberately outside it — so the gutter became a
-   real item instead. `aria-hidden` because it is punctuation for the eye: the
-   reading order already runs left to right through the stages. */
-.c2c-v2 .ae-parrow{flex:0 0 22px;align-self:center;text-align:center;color:var(--text-400);font-size:15px;line-height:1;}
+.c2c-v2 .ae-pstage{flex:1;min-width:130px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px 14px;position:relative;margin-right:22px;}
+.c2c-v2 .ae-pstage:last-child{margin-right:0;}
+.c2c-v2 .ae-pstage::after{content:'→';position:absolute;right:-17px;top:50%;transform:translateY(-50%);color:var(--text-400);font-size:15px;}
+.c2c-v2 .ae-pstage:last-child::after{display:none;}
 .c2c-v2 .ae-pstage[data-k="validate"]{border-color:var(--success);background:var(--success-muted);}
 .c2c-v2 .ae-pstage[data-k="draft"]{border-color:var(--accent-100);background:var(--accent-000);}
 .c2c-v2 .ae-pstage-n{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);}

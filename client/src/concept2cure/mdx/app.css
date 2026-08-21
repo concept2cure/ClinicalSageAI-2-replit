@@ -464,11 +464,11 @@
 /* ════════════════════════════════════════════════════════════
    SE Matrix
    ════════════════════════════════════════════════════════════ */
-/* The verdict track is 56px, not the 32px the icon alone needs, because the
-   column header is the word "Verdict" — 47px at this size — and a 32px cell put
-   it 15px into the predicate column beside it. A column narrower than its own
-   label is not a narrow column, it is an unreadable one. */
 .mdx-shell .se-row {
+  /* The verdict column holds one 16px glyph per row, but its own header says
+     "Verdict" — 47px at 10px uppercase with 0.05em tracking. At 32px the
+     header label ran out of the column and over the predicate beside it. A
+     column that cannot show its own heading is under-specified. */
   display: grid; grid-template-columns: 180px 1fr 56px 1fr;
   gap: 12px; padding: 10px 16px; align-items: start;
   border-bottom: 1px solid var(--border); font-size: 12px;
@@ -1466,6 +1466,10 @@
 
 /* ── Section (reused) ─────────────────────────────────────────── */
 .mdx-shell .section { padding: 24px 32px 4px; }
+/* Wrapping, because this header is not always in a full-width page. In the
+   vault's three-column grid the middle column is 656px, and the title, the
+   sub-line and an eight-chip `.seg` filter came to 667 inside 592 — the filter
+   row hung over the drawer beside it. Wrapping is a no-op wherever it fits. */
 .mdx-shell .section-head {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;
   margin-bottom: 14px;
@@ -1705,18 +1709,18 @@
 /* ═════════════════════════════════════════════════════════════
    TASKS — Kanban board
    ═════════════════════════════════════════════════════════════ */
-/* Five statuses were being laid into four hard-coded tracks, so "Done" wrapped
-   silently onto a second row underneath "To do" — a board whose last column is
-   not on the board. `grid-auto-flow: column` takes the track count from
-   TASKS_COLUMNS instead of restating it here, which is also what stops the two
-   from drifting apart again.
-   Four 260px tracks plus gaps and padding wanted 1108px in the 748px a surface
-   gets, and the spill carried all the way out to .page-inner at 1132 > 796 —
-   the whole Tasks surface scrolled sideways rather than the board. A board
-   scrolls horizontally; that is the convention and it is what `overflow-x`
-   restores. overflow-y is pinned explicitly because setting only the x axis
-   computes y to `auto`, and the 100vh min-height would then raise a second,
-   vertical scrollbar over a board whose columns already scroll themselves. */
+/* A board scrolls sideways; it does not compress. Four 260px minimums plus
+   gaps need 1,108px and the surface column is 748 — without this the columns
+   ran out over the AnA rail, carrying the spill out to .page-inner at
+   1132 > 796. `overflow-y:hidden` is explicit because setting only the x axis
+   computes y to auto, and the cards' shadows would then raise a stray vertical
+   scrollbar over a board whose columns already scroll themselves.
+
+   The track count is `grid-auto-flow: column` rather than `repeat(4, …)`
+   because there are five statuses in TASKS_COLUMNS and there were four tracks:
+   "Done" wrapped silently onto a second row underneath "To do", a board whose
+   last column is not on the board. Taking the count from the data is also what
+   stops the two drifting apart again. */
 .mdx-shell .kanban {
   display: grid; grid-auto-flow: column;
   grid-auto-columns: minmax(240px, 1fr);
