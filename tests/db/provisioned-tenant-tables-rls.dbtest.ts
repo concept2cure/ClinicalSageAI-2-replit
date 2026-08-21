@@ -366,6 +366,69 @@ describe('provisioned tenant tables under the non-superuser runtime role', () =>
   });
 });
 
+describe('uuid-native tenant schemas', () => {
+  /**
+   * The mirror image of the integer-side cast, and it was live rather than
+   * latent.
+   *
+   * The non-public schemas key on a uuid and inlined
+   * `current_setting('app.current_org_id', true)::uuid`. That GUC is set to the
+   * EMPTY STRING on the scopes the app uses most — systemSessionVars() (the
+   * cross-tenant super-admin scope), tenantSessionVars() whenever `orgUuid` is
+   * null, and the reset paths in lazyRequestDbClient, withTenantConnection and
+   * poolInstrumentation. `''::uuid` raises rather than yielding NULL, so every
+   * read on those scopes died with `invalid input syntax for type uuid: ""`.
+   *
+   * Every policy now calls identity.current_org_id(), which extracts a uuid
+   * instead of casting one. This asserts the property on the live catalog and by
+   * execution.
+   */
+  it('no policy casts app.current_org_id straight to uuid any more', async () => {
+    // The GUARDED form still names the GUC and still ends in ::uuid — what
+    // separates it is the extraction pattern, whose '[0-9a-fA-F]{8}' marker
+    // nothing else produces. Matching on the GUC alone would flag every fixed
+    // policy, which is the assertion passing for the wrong reason in reverse.
+    const { rows } = await owner.query(
+      `SELECT schemaname || '.' || tablename || ' [' || policyname || ']' AS rel
+         FROM pg_policies
+        WHERE (
+               COALESCE(qual, '')       LIKE '%current_setting(''app.current_org_id''%::uuid%'
+            OR COALESCE(with_check, '') LIKE '%current_setting(''app.current_org_id''%::uuid%'
+          )
+          AND COALESCE(qual, '')       NOT LIKE '%[0-9a-fA-F]{8}%'
+          AND COALESCE(with_check, '') NOT LIKE '%[0-9a-fA-F]{8}%'
+        ORDER BY 1`,
+    );
+    expect(rows.map(r => r.rel)).toEqual([]);
+  });
+
+  it('identity.current_org_id() returns NULL for the empty string instead of raising', async () => {
+    const client = await owner.connect();
+    try {
+      await client.query('RESET ALL');
+      // Exactly what systemSessionVars() writes.
+      await client.query("SELECT set_config('app.current_org_id', '', false)");
+      const { rows } = await client.query('SELECT identity.current_org_id() AS org');
+      expect(rows[0].org).toBeNull();
+
+      // …and for anything else that is not a uuid, rather than erroring.
+      await client.query("SELECT set_config('app.current_org_id', 'not-a-uuid', false)");
+      const garbage = await client.query('SELECT identity.current_org_id() AS org');
+      expect(garbage.rows[0].org).toBeNull();
+
+      // A real uuid still resolves.
+      await client.query(
+        "SELECT set_config('app.current_org_id', '11111111-1111-1111-1111-111111111111', false)",
+      );
+      const real = await client.query('SELECT identity.current_org_id() AS org');
+      expect(real.rows[0].org).toBe('11111111-1111-1111-1111-111111111111');
+    } finally {
+      await client.query('RESET ALL').catch(() => {});
+      client.release();
+    }
+  });
+});
+
 describe('governed mutation paths stay auditable under the runtime role', () => {
   /**
    * The Part 11 audit trail is only tamper-EVIDENT if the process that writes it

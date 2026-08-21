@@ -166,7 +166,7 @@ DECLARE
     v_org_filter UUID;
 BEGIN
     -- Set org filter
-    v_org_filter := COALESCE(p_org_id, current_setting('app.current_org_id', true)::UUID);
+    v_org_filter := COALESCE(p_org_id, identity.current_org_id());
 
     RETURN QUERY
     WITH vector_search AS (
