@@ -1505,10 +1505,18 @@
 .c2c-v2 .ana-activity-toggle svg{font-size:12px;}
 .c2c-v2 .ana-activity-body{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-left:9px;border-left:1px solid var(--border);}
 .c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ana-activity-read{font-size:11px;color:var(--text-300);font-style:italic;}
+/* Indented to the same text column as the phase and the step rows, which begin
+   after a 12px glyph and a 6px gap. Flush left, it read as a PARENT of the
+   line above it rather than a sibling. */
+.c2c-v2 .ana-activity-read{font-size:11px;color:var(--text-300);font-style:italic;margin-left:18px;}
 .c2c-v2 .ana-activity-round{display:flex;flex-direction:column;gap:3px;}
 .c2c-v2 .ana-activity-round-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:5px;}
-.c2c-v2 .ana-activity-step{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
+/* wrap + a full-width note: the failure sentence is a SIBLING of the label in
+   the same flex row, so without this the two compete for width and a label as
+   short as "Literature search" gets squeezed into a two-line column beside a
+   wide message. Seen in a browser, not in a test — the assertions only ever
+   asked whether the text was present. */
+.c2c-v2 .ana-activity-step{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11.5px;color:var(--text-300);}
 .c2c-v2 .ana-activity-step .ana-activity-glyph{display:inline-flex;color:var(--text-400);}
 .c2c-v2 .ana-activity-step .ana-activity-glyph svg{font-size:12px;}
 .c2c-v2 .ana-activity-step.is-success .ana-activity-glyph{color:var(--success);}
@@ -1516,7 +1524,7 @@
 /* A step still in flight is dimmer than a settled one, but it is still text
    a user has to read: --text-300, not the --text-400 the glyph may use. */
 .c2c-v2 .ana-activity-step.is-running{color:var(--text-300);}
-.c2c-v2 .ana-activity-note{color:var(--warning);font-size:10.5px;}
+.c2c-v2 .ana-activity-note{color:var(--warning);font-size:10.5px;flex:1 0 100%;margin-left:18px;}
 /* Her reasoning. Bounded height rather than unbounded: a long deliberation
    must not push the answer off the screen, and a scroll says "there is more"
    more honestly than a truncation would. */
