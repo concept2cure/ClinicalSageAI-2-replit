@@ -17,6 +17,7 @@
  */
 
 import * as React from 'react';
+import { rowMinWidth } from './registerGrid';
 import { I } from './icons';
 import {
   SOP_TEMPLATES,
@@ -45,7 +46,13 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'draft', label: 'Draft' },
 ];
 
-const GRID = '110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px';
+/* The title track has a floor now. `minmax(0, 1fr)` let it take whatever the
+   seven fixed columns left over, and in a 738px surface column that is nothing:
+   it computed to 0px and the titles vanished. The register scrolls instead —
+   see `.qms-table` in app.css. */
+const GRID = '110px minmax(180px, 1fr) 130px 64px 108px 100px 116px 150px';
+/** Same floor on every row, so the columns line up while the table scrolls. */
+const ROW_MIN = rowMinWidth(GRID);
 
 function Kpi({
   label,
@@ -214,7 +221,7 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
         </div>
 
         <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID }}>
+          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
             <div>Number</div>
             <div>Title</div>
             <div>Type</div>
@@ -227,7 +234,7 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
           {visible.map((d) => {
             const overdue = isReviewOverdue(d.nextReviewDate);
             return (
-              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID }} data-status={d.status}>
+              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status}>
                 <button
                   className="qms-cell qms-num mono"
                   onClick={() =>

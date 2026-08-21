@@ -21,6 +21,7 @@
  */
 
 import * as React from 'react';
+import { rowMinWidth } from './registerGrid';
 import { I } from './icons';
 import { ChangeFlow } from './ChangeFlow';
 import {
@@ -47,7 +48,13 @@ export interface ChangeControlProps {
   onAsk: (q: string) => void;
 }
 
-const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
+/* The title track has a floor now. `minmax(0, 1fr)` let it take whatever the
+   seven fixed columns left over, and in a 738px surface column that is nothing:
+   it computed to 0px and the titles vanished. The register scrolls instead —
+   see `.qms-table` in app.css. */
+const GRID = '112px minmax(180px, 1fr) 118px 80px 128px 104px 62px 120px';
+/** Same floor on every row, so the columns line up while the table scrolls. */
+const ROW_MIN = rowMinWidth(GRID);
 
 function Kpi({
   label, val, sub, tone,
@@ -169,7 +176,7 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
         </div>
 
         <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID }}>
+          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
             <div>Number</div>
             <div>Title</div>
             <div>Type</div>
@@ -186,7 +193,7 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
             const linkCount = c.links?.length ?? 0;
             return (
               <React.Fragment key={c.id}>
-                <div className="qms-row" style={{ gridTemplateColumns: GRID }} data-status={c.status}>
+                <div className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={c.status}>
                   <button
                     className="qms-cell qms-num mono"
                     onClick={() => setOpenId(open ? null : c.id)}
