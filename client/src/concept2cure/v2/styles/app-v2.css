@@ -1951,7 +1951,7 @@
    rail on seven surfaces. A prose block with a fixed max-width that renders
    content-derived strings has to be able to break them.
    (Whether an assistant's greeting should quote a raw API path at a user at
-   all is a copy question, and a separate one — see ledger L110.) */
+   all is a copy question, and a separate one — see ledger L111.) */
 .c2c-v2 .ana-greet-s{font-size:12px;color:var(--text-400);line-height:1.5;max-width:240px;overflow-wrap:break-word;}
 
 /* ════════ HAQ Manager (haq-manager.jsx) ════════ */

@@ -31,6 +31,7 @@
 import * as React from 'react';
 
 import type { SurfaceViewProps } from '../v2/surfaceViews';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
 import {
   clearEditorTarget,
   setEditorTarget,
@@ -251,10 +252,30 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
       // are assigned rather than returned early, so they go through the same
       // wrapper as everything else — an early return here would escape the
       // scope root and render the status text unstyled.
+      /* THE RAW SERVER STRING IS GONE FROM THE LANE'S ENTRY SURFACE.
+         This read `{liveProgramsResult.error}` — interpolated verbatim into the
+         alert. `useFetchJson` sets that field to `HTTP ${status} ${path}` or to
+         a caught exception's message, so the highest-traffic failure in the MDX
+         lane rendered an API route, or a driver error, at a regulatory
+         director. That is an information-disclosure finding in a regulated
+         product, not a cosmetic one, and it is the exact class W0-4 closed
+         everywhere else. `<ErrorState>` runs every message through the
+         internals filter, so the guarantee holds here by construction rather
+         than by remembering.
+
+         It also had no way out. The hook has exposed `refresh` all along and
+         nothing called it, so a transient failure on the portfolio left the
+         user with a dead screen and no control — UI standards §8. */
       surface = liveProgramsResult.loading ? (
-        <div role="status">Loading device programs…</div>
+        <EmptyState busy title="Loading device programs" testId="mdx-programs-loading" />
       ) : liveProgramsResult.error ? (
-        <div role="alert">Device program data is unavailable. {liveProgramsResult.error}</div>
+        <ErrorState
+          variant="panel"
+          title="Couldn't load your device programs"
+          message={liveProgramsResult.error}
+          retry={liveProgramsResult.refresh}
+          testId="mdx-programs-error"
+        />
       ) : (
         <Overview programs={programs} onOpenProgram={openProgram} onAskAna={onAsk} />
       );

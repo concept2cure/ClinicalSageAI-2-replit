@@ -111,11 +111,12 @@ describe('live audit events attribute only what the client can actually observe'
     const events = DossierStore.activityForSection('k510', 11);
     expect(events.some((e) => e.kind === 'attach')).toBe(false);
     /* The attachment is still listed — the tab updates without a round trip.
-       `listDir` takes one path; this called it with the old
-       (pathway, section, label) signature and did not compile. And
-       `toBeDefined()` on a function that returns an array asserts nothing, so
-       it would have passed over an empty list — the exact outcome the comment
-       above says must not happen. Ask the question the comment asks. */
+       This read used to be `listDir('k510', 11, 'Performance testing')`, which
+       was wrong twice over: `listDir` takes ONE argument, a path prefix, so
+       this did not typecheck; and `.toBeDefined()` on a function that always
+       returns an array cannot fail, so it asserted nothing the comment above
+       it claims. The store's own reader takes the three parts and returns what
+       the tab renders. */
     expect(
       DossierStore.readSectionAttachments('k510', 11, 'Performance testing').map((a) => a.name),
     ).toContain('mard-by-age-band.pdf');

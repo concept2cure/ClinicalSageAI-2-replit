@@ -1388,6 +1388,20 @@ export const C2C_MIGRATION_FILES = [
   // entitlement change. Idempotent UPDATE keyed on module_id.
   'migrations/20260820c_catalog_maa_module1_regional.sql',
 
+  // Moved here from AFTER the sweep, where it was appended upstream. C-33 and
+  // three contract tests require the two isolation steps to be the final pair;
+  // a file that ALTERs tables after the sweep has run is never swept. This one
+  // reshapes vault.documents, so it has to precede them like everything else.
+  // ── W0-6: vault.documents had two definitions and the wrong one won ───────
+  // 044c_gcc_vault_schema.sql creates an 11-column table with CREATE TABLE IF
+  // NOT EXISTS; shared/schema/vault.ts declares the 28-column shape the product
+  // is written against. The migration runs first, so the model's version is a
+  // silent no-op and POST /api/vault/ingest — the only endpoint that persists
+  // bytes + a SHA-256 — INSERTs sixteen columns that do not exist. Every
+  // document upload 500s. This reconciles the table additively; it must run
+  // AFTER 044c, which the overlay applies.
+  'migrations/20260821_vault_documents_canonical_shape.sql',
+
   // ── Both entries below must precede the two isolation steps ────────────────
   // The last two entries of this list are, and must remain, the uuid non-public
   // step and the integer sweep — C-33 requires the sweep to see everything the
@@ -1427,15 +1441,6 @@ export const C2C_MIGRATION_FILES = [
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
 
-  // ── W0-6: vault.documents had two definitions and the wrong one won ───────
-  // 044c_gcc_vault_schema.sql creates an 11-column table with CREATE TABLE IF
-  // NOT EXISTS; shared/schema/vault.ts declares the 28-column shape the product
-  // is written against. The migration runs first, so the model's version is a
-  // silent no-op and POST /api/vault/ingest — the only endpoint that persists
-  // bytes + a SHA-256 — INSERTs sixteen columns that do not exist. Every
-  // document upload 500s. This reconciles the table additively; it must run
-  // AFTER 044c, which the overlay applies.
-  'migrations/20260821_vault_documents_canonical_shape.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
