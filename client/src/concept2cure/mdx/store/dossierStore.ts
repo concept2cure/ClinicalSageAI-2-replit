@@ -347,20 +347,20 @@ function attachFile(
   };
   fs.set(path, { kind: 'dir', files: [newFile, ...cur] });
 
-  if (!opts.silent) {
-    liveAuditEvents.push({
-      id:        `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      when:      opts.when || new Date().toISOString(),
-      kind:      'attach',
-      actor:     opts.who || 'You',
-      role:      opts.role || 'Reg Lead',
-      target:    label || `§${sectionId}`,
-      target_id: sectionId,
-      file:      `${file.name} · ${fmtSize(file.size || 0)}`,
-      /* No `ip` — a browser cannot know its source address. See above. */
-      live:      true,
-    });
-  }
+  /* NO client-authored audit event here.
+     This used to push a `kind: 'attach'` row into `liveAuditEvents` — the same
+     array the dossier's Part 11 activity feed renders — with actor 'You' and a
+     hardcoded role of 'Reg Lead', for a file that at the time was never
+     transmitted anywhere. A browser cannot witness a governed event: it does
+     not know the actor's real role, it cannot see its own source address, and
+     it has nothing to chain the entry to. What it produced was an audit line
+     that looked exactly like a real one and recorded something that had not
+     happened.
+     The attachment is a real upload now (PathwayPanes onAttach → POST
+     /api/vault/ingest), and the server writes the audit row in the same
+     transaction as the document. That entry arrives through /api/mdx/audit
+     like every other one. This function keeps the local list current so the
+     tab updates without a round trip; it no longer claims to record history. */
 
   notify(path);
   notify(`audit:${pathway}`);

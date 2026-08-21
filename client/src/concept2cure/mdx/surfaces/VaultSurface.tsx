@@ -31,6 +31,8 @@ import {
 } from '../data/vault';
 import { useVault, useVaultVersions } from '../hooks/useVault';
 import { SampleDataBanner } from '../components/SampleDataBanner';
+import { useVaultUpload } from '../../v2/useVaultUpload';
+import { ErrorState } from '../../v2/dataConnect';
 import type { Program } from '../data/programs';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
@@ -86,6 +88,9 @@ function fileToDoc(f: VaultFile): KitDocument {
 export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfaceProps) {
   const [folder, setFolder] = React.useState('root');
   const [selected, setSelected] = React.useState<string | null>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  /* The shared ingest path, not a second copy of it — see ../../v2/useVaultUpload. */
+  const { uploading, note, clearNote, upload } = useVaultUpload(program?.id ?? null);
 
   /* THE GATE, and why it is `useSampleRows` and not a truthiness check.
    *
@@ -159,18 +164,59 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
           >
             {I.download} Export manifest
           </button>
+          {/* A REAL upload.
+              This button used to call `onAskAna('Upload an artifact to the
+              vault. …')` — it opened a chat prompt describing an upload
+              instead of performing one, on the surface whose own subtitle two
+              lines above promises a SHA-256-chained Part 11 audit trail. There
+              was no file input anywhere in the MDX lane, so a device team could
+              not put a document into their vault at all. The bytes now go to
+              POST /api/vault/ingest, which hashes them, stores them and writes
+              the audit row. */}
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept=".pdf,.docx,.doc,.txt,.rtf,.xlsx,.xls,.csv,.md"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const picked = e.target.files;
+              e.target.value = '';
+              const outcome = await upload(picked);
+              /* Re-read from the server rather than splicing the row in
+                 locally: what the vault shows has to be what the server
+                 actually stored, hash and all. */
+              if (outcome.succeeded.length) live.refresh();
+            }}
+          />
           <button
             className="btn primary small"
-            onClick={() =>
-              onAskAna(
-                'Upload an artifact to the vault. Confirm program, section, document type, version, and e-signature requirement, then file it with hash + audit entry.',
-              )
+            disabled={uploading || !program?.id}
+            title={
+              program?.id
+                ? 'File a document into this program’s vault'
+                : 'Uploading is available once a program is open'
             }
+            onClick={() => fileRef.current?.click()}
           >
-            {I.upload} Upload
+            {I.upload} {uploading ? 'Uploading…' : 'Upload'}
           </button>
         </div>
       </div>
+
+      {/* The outcome of the last upload, success or refusal, in the caller's
+          own words. A failed governed write is never silent. */}
+      {note &&
+        (note.tone === 'error' ? (
+          <ErrorState
+            variant="inline"
+            title="Some documents were not filed"
+            message={note.text}
+            onDismiss={clearNote}
+          />
+        ) : (
+          <div className="banner-ok" role="status">{note.text}</div>
+        ))}
 
       <SampleDataBanner show={usingSample} loading={live.loading} label="vault artifacts" />
 
