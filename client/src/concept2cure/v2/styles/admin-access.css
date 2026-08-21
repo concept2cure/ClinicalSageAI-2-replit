@@ -38,7 +38,7 @@
 }
 .adm-access .btn.small { padding: 6px 11px; font-size: 12px; }
 .adm-access .btn:hover { border-color: var(--border-strong); }
-.adm-access .btn.primary { background: var(--accent-100, var(--text-100)); border-color: transparent; color: var(--bg-000); }
+.adm-access .btn.primary { background: var(--accent-strong); border-color: transparent; color: var(--accent-on-strong); }
 .adm-access .btn.primary:hover { filter: brightness(1.05); }
 .adm-access .btn.ghost { background: transparent; }
 

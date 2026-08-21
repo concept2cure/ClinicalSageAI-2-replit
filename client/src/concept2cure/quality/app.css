@@ -65,7 +65,7 @@
 }
 .qms-btn.ghost { color: var(--text-200); border: 1px solid #e8e6dc; background: var(--background); }
 .qms-btn.ghost:hover { background: var(--bg-100); color: var(--text-100); }
-.qms-btn.primary { background: var(--accent-main-100); color: #fff; }
+.qms-btn.primary { background: var(--accent-strong); color: var(--accent-on-strong); }
 .qms-btn.primary:hover { background: var(--accent-main-200); }
 
 /* ─── KPIs ─────────────────────────────────────────────────────── */
