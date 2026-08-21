@@ -22,6 +22,7 @@
 
 import * as React from 'react';
 import { I } from './icons';
+import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
   FIXTURE_CHANGES,
@@ -48,6 +49,9 @@ export interface ChangeControlProps {
 }
 
 const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
+/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
+   resolves to 0px and the row's last columns are clipped away. */
+const ROW_MIN = registerRowMinWidth(GRID);
 
 function Kpi({
   label, val, sub, tone,
@@ -169,7 +173,7 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
         </div>
 
         <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID }}>
+          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
             <div>Number</div>
             <div>Title</div>
             <div>Type</div>
@@ -186,7 +190,7 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
             const linkCount = c.links?.length ?? 0;
             return (
               <React.Fragment key={c.id}>
-                <div className="qms-row" style={{ gridTemplateColumns: GRID }} data-status={c.status}>
+                <div className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={c.status}>
                   <button
                     className="qms-cell qms-num mono"
                     onClick={() => setOpenId(open ? null : c.id)}
