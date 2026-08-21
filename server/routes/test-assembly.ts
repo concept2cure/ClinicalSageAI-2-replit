@@ -3,6 +3,7 @@ import { AssemblyLine } from '../services/AssemblyLine';
 import logger from '../utils/logger';
 import { generateDocxBuffer, saveGeneratedDocx } from '../services/docxGenerator';
 import { tenantAuthMiddleware } from '../middleware/tenantAuth';
+import { parseIntegerProjectId } from '../lib/project-id.js';
 
 export function testAssemblyRoutes(db: any): Router {
   const router = Router();
@@ -147,8 +148,11 @@ export function testAssemblyRoutes(db: any): Router {
       if (projectId) {
         // attach to project knowledge (lightweight)
         try {
-          const numericId = parseInt((projectId as string).replace('proj_', ''), 10);
-          if (!isNaN(numericId)) {
+          // Fail closed on a non-integer id (ADR-0011): a regulatory_programs UUID
+          // must NOT be prefix-truncated to a valid-but-wrong integer projects.id;
+          // skip the integer-project attach rather than write to the wrong project.
+          const numericId = parseIntegerProjectId(projectId);
+          if (numericId !== null) {
             const safeName = (filename && String(filename)) || `${title}`;
             const pathSaved = await saveGeneratedDocx(buffer, safeName);
 
