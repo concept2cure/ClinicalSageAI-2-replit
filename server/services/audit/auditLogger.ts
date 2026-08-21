@@ -94,28 +94,45 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
   // caller (an audit-trail outage must not break the user action it records).
   // resourceType is required there; fall back to the event category when a
   // resource is not named.
-  try {
-    await auditService.logAction({
+  const canonical = await auditService.logAction({
+    action: `${event.category}.${event.action}`,
+    resourceType: event.resourceType ?? event.category,
+    resourceId: event.resourceId,
+    organizationId: event.organizationId,
+    userId: event.userId,
+    ipAddress: event.ipAddress,
+    userAgent: event.userAgent,
+    details: {
+      ...(event.metadata ?? {}),
+      category: event.category,
+      severity: event.severity,
+      success: event.success,
+      ...(event.previousValue !== undefined ? { previousValue: event.previousValue } : {}),
+      ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
+      ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
+    },
+  });
+
+  /* This was `try { await logAction } catch { logger.error(...) }` — a DOUBLE
+     swallow, and the outer half could never fire, because logAction resolves
+     normally on a persistence failure. So a discarded audit event produced no
+     error line at all, and the caller still received a plausible
+     `audit_<ts>_<rand>` id with no way to tell it apart from a persisted one.
+
+     The check below actually runs. The returned id is deliberately unchanged:
+     25 call sites consume it as a string, and narrowing the contract to
+     `string | null` is a larger decision than this fix. What is fixed is that a
+     lost §11.10(e) record now says so, loudly, with the reason — and the
+     in-memory event carries the outcome so the store is not claiming a
+     durability it does not have. */
+  if (!canonical.persisted) {
+    logger.error('Audit event NOT persisted to the canonical store', {
+      auditEventId: auditEvent.id,
       action: `${event.category}.${event.action}`,
-      resourceType: event.resourceType ?? event.category,
-      resourceId: event.resourceId,
-      organizationId: event.organizationId,
-      userId: event.userId,
-      ipAddress: event.ipAddress,
-      userAgent: event.userAgent,
-      details: {
-        ...(event.metadata ?? {}),
-        category: event.category,
-        severity: event.severity,
-        success: event.success,
-        ...(event.previousValue !== undefined ? { previousValue: event.previousValue } : {}),
-        ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
-        ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
-      },
+      reason: canonical.error,
     });
-  } catch (err) {
-    logger.error('Failed to persist audit event to canonical store', err);
   }
+  (auditEvent as { persisted?: boolean }).persisted = canonical.persisted;
 
   return auditEvent.id;
 }
@@ -195,7 +212,9 @@ export async function queryAuditEvents(filters: {
       toDate: filters.endDate,
       // category is a prefix of the stored `action`, so it can't be pushed into
       // the SQL filter; over-fetch a bounded window and filter in memory.
-      limit: filters.category ? PERSISTENT_QUERY_WINDOW : Math.min(offset + limit, PERSISTENT_QUERY_WINDOW),
+      limit: filters.category
+        ? PERSISTENT_QUERY_WINDOW
+        : Math.min(offset + limit, PERSISTENT_QUERY_WINDOW),
     });
     if (Array.isArray(rows)) {
       results = rows.map(rowToAuditEvent);
@@ -205,16 +224,21 @@ export async function queryAuditEvents(filters: {
       }
     }
   } catch (err) {
-    logger.error('queryAuditEvents: durable store query failed; falling back to in-memory cache', err);
+    logger.error(
+      'queryAuditEvents: durable store query failed; falling back to in-memory cache',
+      err
+    );
   }
 
   // --- Fallback: in-memory cache (DB unavailable) ---
   if (results == null) {
     results = [...auditStore];
-    if (filters.organizationId) results = results.filter(e => e.organizationId === filters.organizationId);
+    if (filters.organizationId)
+      results = results.filter(e => e.organizationId === filters.organizationId);
     if (filters.userId) results = results.filter(e => e.userId === filters.userId);
     if (filters.category) results = results.filter(e => e.category === filters.category);
-    if (filters.resourceType) results = results.filter(e => e.resourceType === filters.resourceType);
+    if (filters.resourceType)
+      results = results.filter(e => e.resourceType === filters.resourceType);
     if (filters.resourceId) results = results.filter(e => e.resourceId === filters.resourceId);
     if (filters.startDate) results = results.filter(e => e.timestamp >= filters.startDate!);
     if (filters.endDate) results = results.filter(e => e.timestamp <= filters.endDate!);

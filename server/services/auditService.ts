@@ -173,6 +173,34 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
 }
 
 // ---------------------------------------------------------------------------
+/**
+ * What actually happened to an audit write.
+ *
+ * `logAction` deliberately does not throw — an audit-trail outage must not
+ * crash the user action it records, which is the right policy for the general
+ * call sites. The DEFECT was that the outcome was also unknowable: it returned
+ * `Promise<void>` and swallowed internally, so a caller could neither await a
+ * guarantee nor catch a failure. Seventeen call sites across sixteen files
+ * wrapped it in `try { await … } catch`, which cannot fire — dead code that
+ * reads as handling and is not.
+ *
+ * Returning the outcome keeps the policy and removes the lie. Callers that
+ * ignore the value behave exactly as before; callers that care can now say
+ * something true about it. Callers that need a GUARANTEE still cannot get one
+ * here by design and must use `writeChainedAuditRow` on their own transaction —
+ * see its note below.
+ */
+export interface AuditWriteResult {
+  /** True when at least one durable store accepted the row. */
+  persisted: boolean;
+  /** The sha256-chained `audit_logs` row. */
+  chained: boolean;
+  /** The tamper-proof hash-chain log. */
+  tamperProof: boolean;
+  /** Why it failed, for the caller's own log line. Never surfaced to a user. */
+  error?: string;
+}
+
 // Chained audit row — transaction-enlistable
 // ---------------------------------------------------------------------------
 
@@ -283,7 +311,7 @@ class AuditService {
     resourceType?: string,
     resourceId?: string | number,
     details?: Record<string, any>
-  ): Promise<void> {
+  ): Promise<AuditWriteResult> {
     const entry: AuditLogEntry =
       typeof entryOrTenantId === 'object'
         ? entryOrTenantId
@@ -311,6 +339,13 @@ class AuditService {
     // values rather than each having to repeat the fallback.
     entry.resourceType = resolvedResourceType;
     entry.resourceId = resolvedResourceId;
+
+    // Outcome trackers. Optimistic, and demoted by whichever section fails —
+    // a store that is not configured at all leaves its flag false without
+    // recording a failure, which is not the same as an error.
+    let chained = true;
+    let tamperProof = true;
+    let failure: string | undefined;
 
     // Always log to structured console for observability
     logger.info(`[AUDIT] ${entry.action} ${entry.resourceType}`, {
@@ -349,7 +384,11 @@ class AuditService {
         }
       }
     } catch (error) {
-      // Non-fatal: audit write failure should not crash the request
+      // Non-fatal by policy — but no longer SILENT: the outcome is returned so
+      // the caller can say something true instead of catching an error that
+      // never arrives.
+      chained = false;
+      failure = error instanceof Error ? error.message : String(error);
       logger.error('Failed to write chained audit_logs row', error);
     }
 
@@ -377,8 +416,17 @@ class AuditService {
         );
       }
     } catch (error) {
+      tamperProof = false;
+      failure = failure ?? (error instanceof Error ? error.message : String(error));
       logger.error('Failed to write tamper-proof audit entry', error);
     }
+
+    return {
+      persisted: chained || tamperProof,
+      chained,
+      tamperProof,
+      ...(failure ? { error: failure } : {}),
+    };
   }
 
   /**
