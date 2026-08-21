@@ -52,7 +52,7 @@ const PUBLISHER = 'usePublishSurfaceContext';
  * Surfaces publishing screen state today. RAISE THIS as surfaces are wired;
  * never lower it to make a build pass — a fall means a surface went silent.
  */
-const BASELINE = 13;
+const BASELINE = 16;
 
 /**
  * Surfaces that legitimately publish nothing, with the reason.
@@ -76,18 +76,64 @@ function surfaceFiles() {
     .sort();
 }
 
+/**
+ * Every surface id the registry actually routes to.
+ *
+ * The publisher keys its context by id and the reader returns NOTHING unless
+ * that key matches the active surface — so an id the registry does not know is
+ * a silent no-op: the surface publishes, the shell reads past it, and AnA is
+ * still looking at a blank screen. Read from the registry rather than listed
+ * here, so a renamed surface cannot leave a stale allowlist behind.
+ */
+function registrySurfaceIds() {
+  const candidates = ['surfaceViews.tsx', 'surfaceViews.ts'];
+  for (const f of candidates) {
+    const full = path.join(repoRoot, 'client/src/concept2cure/v2', f);
+    if (!fs.existsSync(full)) continue;
+    const src = fs.readFileSync(full, 'utf8');
+    const ids = new Set();
+    for (const m of src.matchAll(/^\s*'([a-z0-9-]+)':/gm)) ids.add(m[1]);
+    for (const m of src.matchAll(/^\s*([a-z0-9-]+):\s*\{/gm)) ids.add(m[1]);
+    if (ids.size > 0) return ids;
+  }
+  return null;
+}
+
+const REGISTRY_IDS = registrySurfaceIds();
+
 const publishing = [];
 const unwired = [];
+/** Surfaces that call the publisher with an id the registry does not route. */
+const badIds = [];
 
 for (const file of surfaceFiles()) {
   const name = file.replace(/\.tsx$/, '');
   if (name in NO_CONTEXT_NEEDED) continue;
   const src = fs.readFileSync(path.join(repoRoot, SURFACES_DIR, file), 'utf8');
-  if (src.includes(PUBLISHER)) publishing.push(name);
-  else unwired.push(name);
+
+  /* A CALL with a literal id, not a mention.
+     This was `src.includes(PUBLISHER)`, which counted a file that merely
+     imported the publisher, or called it with a typo'd id, as wired — so the
+     number this gate reports could exceed the number of surfaces AnA can
+     actually see. Every surface wired to date passes a string literal, so
+     requiring one costs nothing and closes both holes. */
+  const calls = [...src.matchAll(/usePublishSurfaceContext\(\s*'([a-z0-9-]+)'/g)].map((m) => m[1]);
+  if (calls.length === 0) {
+    unwired.push(name);
+    continue;
+  }
+  publishing.push(name);
+  if (REGISTRY_IDS) {
+    for (const id of calls) {
+      if (!REGISTRY_IDS.has(id)) badIds.push(`${name} publishes as '${id}', which the registry does not route`);
+    }
+  }
 }
 
 const failures = [];
+for (const b of badIds) {
+  failures.push(`${b} — the shell reads context by surface id, so this publishes into nothing`);
+}
 if (publishing.length < BASELINE) {
   failures.push(
     `adoption fell to ${publishing.length}, below the baseline of ${BASELINE} — ` +

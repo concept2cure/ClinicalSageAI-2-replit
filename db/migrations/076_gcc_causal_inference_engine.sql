@@ -460,27 +460,27 @@ ALTER TABLE cortex.mechanism_library ENABLE ROW LEVEL SECURITY;
 -- Causal graphs: org-scoped + global readable
 DROP POLICY IF EXISTS causal_graphs_isolation ON cortex.causal_graphs;
 CREATE POLICY causal_graphs_isolation ON cortex.causal_graphs
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
 
 -- Causal effects: org-scoped + global readable
 DROP POLICY IF EXISTS causal_effects_isolation ON cortex.causal_effects;
 CREATE POLICY causal_effects_isolation ON cortex.causal_effects
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
 
 -- Counterfactual scenarios: strict org isolation
 DROP POLICY IF EXISTS counterfactual_isolation ON cortex.counterfactual_scenarios;
 CREATE POLICY counterfactual_isolation ON cortex.counterfactual_scenarios
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id));
 
 -- Interventions: strict org isolation
 DROP POLICY IF EXISTS interventions_isolation ON cortex.interventions;
 CREATE POLICY interventions_isolation ON cortex.interventions
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id));
 
 -- Discovery runs: org-scoped + global readable
 DROP POLICY IF EXISTS discovery_runs_isolation ON cortex.causal_discovery_runs;
 CREATE POLICY discovery_runs_isolation ON cortex.causal_discovery_runs
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
 
 -- Mechanism library: global read
 DROP POLICY IF EXISTS mechanism_library_read ON cortex.mechanism_library;

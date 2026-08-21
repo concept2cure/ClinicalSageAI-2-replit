@@ -253,7 +253,7 @@ DECLARE
 BEGIN
     -- Get current context
     v_user_id := NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID;
-    v_org_id := NULLIF(current_setting('app.current_org_id', TRUE), '')::UUID;
+    v_org_id := identity.current_org_id();
     v_session_id := current_setting('app.session_id', TRUE);
     
     -- Try to parse IP address
@@ -512,7 +512,7 @@ DECLARE
 BEGIN
     -- Get current user
     v_user_id := NULLIF(current_setting('app.current_user_id', TRUE), '')::UUID;
-    v_org_id := NULLIF(current_setting('app.current_org_id', TRUE), '')::UUID;
+    v_org_id := identity.current_org_id();
     
     IF v_user_id IS NULL THEN
         RAISE EXCEPTION 'Cannot apply signature: no authenticated user';

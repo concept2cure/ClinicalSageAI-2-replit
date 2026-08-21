@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
+import { assessmentState } from '../assessmentState';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -278,21 +279,54 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const total = findings.length;
   const resolvedN = findings.filter(f => f.reviewState === 'approved_resolution').length;
   const openN = total - resolvedN;
-  const clean = openN === 0;
   const hasFindings = total > 0;
+
+  /* `clean` used to be `openN === 0`, so a program the engine had NEVER SCANNED
+     was indistinguishable from one it had scanned and found nothing wrong. The
+     surface then said "AnA scanned your {progCode} -- no contradictions", and
+     the hero verdict read "Submission gate — CLEAR". On a submission gate that
+     is the most expensive sentence this screen can produce.
+
+     There is no scan-completion record to consult: the board's own contract,
+     documented at the top of this file, is that `checks` is ALWAYS [] because
+     "the engine persists detected contradictions, not the [checks it ran]". So
+     an empty findings array carries no information about whether anything ran.
+
+     What DOES carry it is `hasFindings`. A contradiction that was detected and
+     then resolved is positive evidence the engine ran against this program —
+     which is exactly the `assessmentRan` input assessmentState.ts asks for, and
+     is why clearance is now gated on it rather than on the absence of open
+     items. total === 0 is not-assessed; total > 0 with openN === 0 is genuinely
+     assessed and clear. */
+  const giState = assessmentState({
+    loading: boardState.loading,
+    unreadable: Boolean(boardState.error),
+    scopeExists: Boolean(prog),
+    findingCount: openN,
+    assessmentRan: hasFindings,
+  });
+  const clean = giState === 'assessed-clear';
+  /** Nothing has ever been detected here, so nothing is known. */
+  const neverScanned = giState === 'not-assessed' && Boolean(prog);
   const hasDosage = findings.some(f => f.contradictionType === 'dosage_conflict' && f.reviewState !== 'approved_resolution');
 
   /* Answer-first lead -- computed from the real gate, in AnA's voice, about the FILING. */
   const lead: AnswerLeadProps | null = (() => {
     if (!prog) return null;
+    /* Nothing has ever been detected against this program, and the board keeps
+       no record of what was checked — so the honest answer is that no scan has
+       reported, not that the filing is consistent. */
+    if (neverScanned) return {
+      tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
+      headline: <>No contradiction scan has reported on <b>{progCode}</b>.</>,
+      body: 'The governed record holds no contradiction findings for this filing — neither open nor resolved. That is the absence of a result, not a clean result: consistency across the ' + filingLabel + ' dossier is unknown until a scan runs against it.',
+      action: { label: 'Ask AnA to scan this filing for contradictions', onClick: () => ask('Scan the governed record for this filing and report every cross-reference contradiction you find, or state plainly that you found none.') },
+      secondary: 'Or work the record below.',
+    };
     if (clean) return {
       tone: 'good' as const, eyebrow: 'AnA — path to a clean filing',
-      headline: hasFindings
-        ? <>The <b>{progCode}</b> is clean — every contradiction resolved.</>
-        : <>AnA scanned your <b>{progCode}</b> -- no contradictions.</>,
-      body: hasFindings
-        ? 'Nothing in the governed record contradicts anything else. This filing is ready to promote into the submission sequence.'
-        : 'Every governed cross-reference AnA checks on a ' + filingLabel + ' dossier is consistent — nothing stands between this filing and a clean submission.',
+      headline: <>The <b>{progCode}</b> is clean — every contradiction resolved.</>,
+      body: 'Nothing in the governed record contradicts anything else. This filing is ready to promote into the submission sequence.',
       reassure: 'This is what submission-ready looks like. I\'ll keep watching as new content lands.',
       /* NAVIGATION, and the label now says so. It used to read "Promote to
          submission sequence" on a control that only opens another surface —
@@ -422,13 +456,15 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           <AnswerLead {...lead} />
 
           {/* Submission gate: the hero verdict -- can this filing go? */}
-          <div className={'gi-gate ' + (clean ? 'is-clean' : gate.blocked ? 'is-blocked' : 'is-warn')}>
+          <div className={'gi-gate ' + (clean ? 'is-clean' : neverScanned ? 'is-warn' : gate.blocked ? 'is-blocked' : 'is-warn')}>
             <div className="gi-gate-main">
-              <span className="gi-gate-ico">{clean ? I.shieldCheck : gate.blocked ? I.shieldAlert : I.clock}</span>
+              <span className="gi-gate-ico">{clean ? I.shieldCheck : neverScanned ? I.helpCircle || I.clock : gate.blocked ? I.shieldAlert : I.clock}</span>
               <div>
-                <div className="gi-gate-verdict">{clean ? 'Submission gate — CLEAR' : gate.blocked ? 'Submission gate — BLOCKED' : 'Submission gate — clear, with open items'}</div>
+                <div className="gi-gate-verdict">{clean ? 'Submission gate — CLEAR' : neverScanned ? 'Submission gate — NOT ASSESSED' : gate.blocked ? 'Submission gate — BLOCKED' : 'Submission gate — clear, with open items'}</div>
                 <div className="gi-gate-sub">{clean
                   ? 'No contradictions block promotion. ' + progCode + ' can enter the submission sequence.'
+                  : neverScanned
+                  ? 'No contradiction scan has reported on ' + progCode + '. A gate with nothing behind it is not a pass — run a scan before promoting.'
                   : gate.blocked
                     ? gate.blocking.length + ' unresolved ' + (gate.blocking.length === 1 ? 'contradiction' : 'contradictions') + ' with a "blocks promotion" authority under ' + reg + '. The filing is held until resolved.'
                     : 'Nothing blocks promotion under ' + reg + ', but ' + openN + ' open ' + (openN === 1 ? 'item' : 'items') + ' should be cleared for a perfect filing.'}</div>
@@ -458,7 +494,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
               clean-state panel, not a fabricated checklist. */}
           {!hasFindings && (
             <div className="pj-card gi-checks">
-              <div className="pj-card-h"><span className="t">What AnA checked</span><span className="s">{checks.length > 0 ? checks.length + ' cross-references ' : ''}{I.dot} all consistent</span></div>
+              <div className="pj-card-h"><span className="t">What AnA checked</span><span className="s">{checks.length > 0 ? checks.length + ' cross-references ' + String(I.dot) + ' all consistent' : 'no scan record'}</span></div>
               <div className="pj-card-b">
                 {checks.length > 0 ? (
                   <div className="sp-list">

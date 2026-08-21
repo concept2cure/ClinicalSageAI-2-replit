@@ -389,7 +389,7 @@ CREATE POLICY transfer_mappings_read ON cortex.transfer_mappings
 -- Transfer episodes: org-isolated
 DROP POLICY IF EXISTS transfer_episodes_isolation ON cortex.transfer_episodes;
 CREATE POLICY transfer_episodes_isolation ON cortex.transfer_episodes
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id));
 
 -- Meta-transfer model: global read
 DROP POLICY IF EXISTS meta_transfer_read ON cortex.meta_transfer_model;

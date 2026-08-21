@@ -190,16 +190,40 @@ identical DDL is now `migrations/20260821_regulatory_twin_simulations.sql` on
 `C2C_MIGRATION_FILES`, and the runtime DDL is deleted in the same change — one
 creator, not two.
 
-**Recorded, not fixed:** the table has no tenant column, and the route lists
-from it with no tenant predicate —
+**And it was cross-tenant.** The table had no tenant column and the route
+queried it with no predicate —
 `SELECT … FROM regulatory_twin_simulations ORDER BY created_at DESC LIMIT 100` —
-so one tenant's stored `submission_profile` is visible to every tenant. That is
-a route-level exposure, and closing it means adding `organization_id` *and*
-threading org scope through the route's reads and writes. Adding the column
-alone would be actively worse: the sweep would then policy a column no writer
-stamps, and `NULL = <tenant>` matches nothing — the dead surface described
-above. So it is left for the route's owner, with the lines named here and in the
-migration header.
+so `GET /simulations` returned every tenant's rows, `GET /simulations/:id`
+returned any tenant's row to anyone holding the id, and `GET /health` reported
+how many simulations every other customer had run. The stored
+`submission_profile` carries submission type, therapeutic area and target
+agencies, which on a platform holding unannounced programmes is the
+confidential part.
+
+Closed on both layers, because either alone is insufficient:
+
+- `db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql` adds
+  `organization_id` (FK to `organizations`, indexed) and the canonical sweep
+  policies it. The column is added NULLABLE and tightened to NOT NULL only when
+  no row is left unattributed — on a database where the old runtime DDL ran,
+  those rows have no tenant and nothing to infer one from, so they stay NULL,
+  which the policy treats as matching nobody. Previously visible to everyone,
+  now visible to no one, and no data destroyed; the migration's NOTICE says how
+  many are in that state.
+- `server/routes/regulatory-digital-twin.ts` derives the org from
+  `getSecureOrgId()` (verified JWT, never a client header) and filters every
+  read and stamps every write. A request with no verified organization gets 403
+  and issues no query at all — the pre-fix answer to a tenant-less request was a
+  full-table read, so "no org" has to be a refusal rather than a wider query.
+  `GET /health` now reports the caller's count, or `null` with no org, instead
+  of a platform-wide total.
+
+RLS is the backstop, not the boundary: it only filters for the non-superuser
+role and only under `RLS_ENFORCE=on`. `server/routes/__tests__/regulatory-digital-twin.tenant-scope.test.ts`
+asserts the app-layer predicate directly by inspecting the SQL the router
+issues — asserting on the response body would pass against a handler that read
+every tenant and filtered in JavaScript. Restoring the unscoped query fails 2 of
+its 7 cases.
 
 ### The policy-on-the-wrong-column defect this found
 
@@ -324,19 +348,69 @@ That is the whole argument for the rule this repo already has — a gate that ha
 only ever been seen to pass has not been tested. This one was made to fail, on
 the case it exists to catch, before it was believed.
 
-### UUID-native tenant schemas — reviewed, one latent risk
+### UUID-native tenant schemas — the mirror-image cast, and it was live
 
-The non-public schemas key on a uuid and carry the context-less-safe policy:
+The non-public schemas key on a uuid. Isolation itself is correct — executed
+against `core.programs` as `app_service` with two real tenants, each uuid sees
+only its own row, and an unset GUC sees both (the documented context-less-safe
+path for background jobs that never establish a tenant).
+
+The casts were not. 48 policies read `app.current_org_id` and cast it straight
+to uuid, 19 of them without even a `NULLIF`:
 
 ```sql
-(org_id = COALESCE(NULLIF(current_setting('app.current_org_id', true), '')::uuid, org_id))
-OR (org_id IS NULL)
+organization_id = current_setting('app.current_org_id', true)::uuid
 ```
 
-Executed against `core.programs` as `app_service` with two real tenants:
+`''::uuid` does not yield NULL — it raises. And `''` is exactly what the
+codebase writes on the scopes it uses most: `systemSessionVars()` (the
+cross-tenant super-admin scope), `tenantSessionVars()` whenever `orgUuid` is
+null, and the reset paths in `lazyRequestDbClient`, `withTenantConnection` and
+`poolInstrumentation`. Measured on a provisioned database — reading
+`cortex.knowledge_gaps` as `app_service`:
 
-| `app.current_org_id` | Result |
-|---|---|
+| `app.current_org_id` | Before | After |
+|---|---|---|
+| `''` (system scope) | `ERROR: invalid input syntax for type uuid: ""` | 1 row |
+| unset (raw pool) | 1 row | 1 row |
+| the row's own uuid | 1 row | 1 row |
+| another tenant's uuid | 0 rows | 0 rows |
+| a non-uuid string | error | treated as no context |
+
+So this was **live, not latent** — my first pass called it latent, having tested
+only the `COALESCE(NULLIF(…))` variant on `core.programs` and not the 19 without
+the NULLIF. Same root cause as the integer-side cast, same reason it stayed
+invisible: the app connects as the owner, for whom RLS is inert.
+
+Fixed by routing every read through the one helper that already existed for it,
+`identity.current_org_id()`, and making that helper extract rather than cast:
+
+```sql
+SELECT substring(current_setting('app.current_org_id', TRUE)
+                 from '^[0-9a-fA-F]{8}-…-[0-9a-fA-F]{12}$')::UUID;
+```
+
+That collapses 25 inline copies of the expression down to one, and preserves
+every intended behaviour: a `COALESCE(helper, col)` wrapper still falls through
+to "no tenant context, see everything"; a bare `col = helper` still matches
+nothing; a real uuid still resolves to its tenant. The only change is that `''`
+and other non-uuid values stop raising — a non-uuid is now treated as *no
+context*, which is what the enclosing policy shape already does when the GUC is
+unset, so nothing is widened beyond what that shape already permits.
+
+`db/migrations/20260821_uuid_org_guc_cast_heal.sql` converges existing
+databases. It has to carry the guarded function body as well as repoint the
+policies: the fixed definition lives in the governed-content tree, which
+`deploy-migrate` deliberately does not apply, so repointing policies at a helper
+that still held the unguarded body would just move the raise one call deeper. It
+rewrites surgically — `pg_get_expr` to read each policy's current expressions,
+a string replace of only the cast fragment, `ALTER POLICY` to put them back — so
+policy names, roles and commands are untouched and any unrecognised spelling is
+reported rather than rewritten. Verified: 49 expressions repointed, 0 on the
+second run, 0 inline casts left in the catalog, and a deliberately re-broken
+policy is healed on the next run with isolation intact.
+
+---|---|
 | tenant A's uuid | only A's row |
 | tenant B's uuid | only B's row |
 | unset / `''` | both rows — the documented cross-tenant background-job path |
@@ -502,8 +576,36 @@ DATABASE_URL="$DATABASE_URL_ADMIN" TEST_DATABASE_URL="$DATABASE_URL_ADMIN" \
 chains to a CA outside Node's trust store, supply it with `NODE_EXTRA_CA_CERTS`
 rather than disabling verification.
 
-**Not executed in the session that produced this document** — no Neon
-credentials were available there. Everything above was validated against a local
-PostgreSQL 16 with pgvector 0.6.0. Neon-specific behaviour (direct-host DDL, its
-superuser posture, `CREATE ROLE` permissions on the admin role) remains
-unverified until someone runs the block above.
+### It runs in CI now
+
+`.github/workflows/neon-provisioning.yml` does the above on a schedule (weekly)
+and on demand, so the criterion is executed rather than documented. It creates an
+ephemeral Neon branch with the pinned `neondatabase/create-branch-action` the
+repo already uses, makes a **blank** database inside it (a Neon branch is a
+copy-on-write clone of its parent, so the branch's own database is not empty),
+asserts the endpoint is the direct host rather than the pooler, runs the full
+chain — refuse-on-blank, install-fresh ×2, deploy-migrate ×2, apply-c2c ×2,
+deploy-smoke, readiness-audit, `ci:tables-live-schema`, `test:db` under
+`RLS_ENFORCE=on` — and deletes the branch in an `always()` step.
+
+Two deliberate choices:
+
+- **It does not run per-PR.** Each run costs a Neon branch, for a property that
+  changes rarely. Run it by hand before any release touching `scripts/db/` or
+  `migrations/`.
+- **A missing secret fails the job rather than skipping it.** A skipped job
+  reports green, and "Neon provisioning passes" would then be a claim nobody
+  checked — the same failure `install-fresh` exists to prevent, one level up. The
+  graceful skip in `c2c-agent.yml` exists for fork PRs, which cannot reach this
+  workflow (no `pull_request` trigger).
+
+An `APP_SERVICE_DB_PASSWORD` is generated per run and masked before export, so
+the run exercises the non-superuser role split — the part a managed host, where
+the admin role is a superuser, is uniquely able to falsify.
+
+**Still unverified at the time of writing:** nobody has run it yet. The session
+that produced this document had no Neon credentials, so everything else here was
+measured against a local PostgreSQL 16.13 with pgvector 0.6.0. The first
+scheduled or dispatched run is what turns Neon-specific behaviour — direct-host
+DDL, certificate verification, and whether Neon's admin role can `CREATE ROLE` —
+from expected into observed.

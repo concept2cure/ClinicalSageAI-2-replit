@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-21T21:36:02.185Z",
+  "generatedAt": "2026-08-21T22:37:09.909Z",
   "git": {
-    "sha": "522673afe3cf20e5c3dc65ff9dfe1c5ca1c4cefe",
+    "sha": "e0f4b3fabdbe52cd17d01b597cdeff1009ce0cbd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2497,6 +2497,10 @@
         "lines": 1917
       },
       {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1894
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
       },
@@ -2535,10 +2539,6 @@
       {
         "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
         "lines": 1828
-      },
-      {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1824
       },
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",

@@ -1388,6 +1388,32 @@ export const C2C_MIGRATION_FILES = [
   // entitlement change. Idempotent UPDATE keyed on module_id.
   'migrations/20260820c_catalog_maa_module1_regional.sql',
 
+  // ── Both entries below must precede the two isolation steps ────────────────
+  // The last two entries of this list are, and must remain, the uuid non-public
+  // step and the integer sweep — C-33 requires the sweep to see everything the
+  // set creates, and uuid-tenant-isolation.contract.test.ts pins both into the
+  // final pair. The tenant column added below has to come under the sweep, and
+  // the cast heal has to establish the guarded identity.current_org_id() before
+  // the uuid step creates policies that call it. So they sit immediately before
+  // the pair, never inside it.
+  // ── regulatory_twin_simulations gets a tenant key ───────────────────────────
+  // The table had none, and the route listed from it with no predicate, so every
+  // tenant's stored submission_profile was visible to every tenant. Adds
+  // organization_id (+FK, +index) and tightens it to NOT NULL when no row is left
+  // unattributed. Ordered before the sweep so the new integer tenant column comes
+  // under tenant_isolation_policy in the same run.
+  'db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql',
+
+  // ── uuid org-GUC cast heal (must precede the sweep's own run) ───────────────
+  // Repoints every policy that casts app.current_org_id straight to UUID at the
+  // guarded identity.current_org_id(), and re-asserts that function's guarded
+  // body. Needed on the deploy path specifically: the fixed definitions live in
+  // the governed-content tree, which deploy-migrate does not apply, so an
+  // existing database would keep raising `invalid input syntax for type uuid: ""`
+  // on every super-admin / null-orgUuid scope. Idempotent — it matches nothing
+  // once the inline casts are gone.
+  'db/migrations/20260821_uuid_org_guc_cast_heal.sql',
+
   'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
@@ -1400,6 +1426,16 @@ export const C2C_MIGRATION_FILES = [
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   'db/migrations/20260801_tenant_isolation_sweep.sql',
+
+  // ── W0-6: vault.documents had two definitions and the wrong one won ───────
+  // 044c_gcc_vault_schema.sql creates an 11-column table with CREATE TABLE IF
+  // NOT EXISTS; shared/schema/vault.ts declares the 28-column shape the product
+  // is written against. The migration runs first, so the model's version is a
+  // silent no-op and POST /api/vault/ingest — the only endpoint that persists
+  // bytes + a SHA-256 — INSERTs sixteen columns that do not exist. Every
+  // document upload 500s. This reconciles the table additively; it must run
+  // AFTER 044c, which the overlay applies.
+  'migrations/20260821_vault_documents_canonical_shape.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

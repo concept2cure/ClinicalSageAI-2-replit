@@ -107,7 +107,15 @@ export const vaultDocuments = vault.table(
     supersedesId: uuid('supersedes_id'),
 
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    createdBy: uuid('created_by'),
+    /* INTEGER, not uuid.
+       `users.id` is an integer in this database and `req.user.id` is an
+       integer, so the ingest route passes one straight into this column. As a
+       uuid it could never have held a single real value — it would have raised
+       a type error on the first upload that got past the missing columns, which
+       is to say the first upload that ever worked. Two defects in one table
+       definition, the second hidden behind the first.
+       See migrations/20260821_vault_documents_canonical_shape.sql. */
+    createdBy: integer('created_by'),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
