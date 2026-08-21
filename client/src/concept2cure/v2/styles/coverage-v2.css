@@ -304,7 +304,12 @@
 .c2c-v2 .bs-doc-render ul{ margin:0 0 14px; padding-left:22px; display:flex; flex-direction:column; gap:6px; }
 .c2c-v2 .bs-doc-render li{ font-size:14px; line-height:1.6; color:var(--text-200); }
 .c2c-v2 .bs-doc-render strong{ font-weight:700; color:var(--text-100); }
-.c2c-v2 .bs-doc-render table{ width:100%; border-collapse:collapse; margin:6px 0 18px; font-family:var(--font-sans,system-ui,sans-serif); }
+/* The engine renders these tables from its own output, so their column count
+   is not known here — an assumptions table of Parameter/Value/Source/
+   Sensitivity measured 387 in the 376px document column. A table that
+   cannot fit scrolls in its own box rather than pushing the prose sideways.
+   `display:block` is what makes overflow apply to a table at all. */
+.c2c-v2 .bs-doc-render table{ display:block; overflow-x:auto; max-width:100%; width:100%; border-collapse:collapse; margin:6px 0 18px; font-family:var(--font-sans,system-ui,sans-serif); }
 .c2c-v2 .bs-doc-render th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-400); font-weight:600; padding:7px 10px; border-bottom:1.5px solid var(--border); }
 .c2c-v2 .bs-doc-render td{ font-size:12.5px; color:var(--text-200); padding:7px 10px; border-bottom:1px solid var(--bg-200); }
 .c2c-v2 .bs-doc-render hr{ border:none; border-top:1px solid var(--border); margin:22px 0 12px; }
