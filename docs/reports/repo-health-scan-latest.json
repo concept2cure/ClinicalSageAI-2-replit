@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-21T20:53:50.064Z",
+  "generatedAt": "2026-08-21T21:24:11.825Z",
   "git": {
-    "sha": "3adacb9500cfac4896f97c0e5bf1412eaf44eb64",
+    "sha": "a99da69a5fd14e5d48dc6bb6043d50a376a8ce33",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2164,7 +2164,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 244889
+        "bytes": 253129
       },
       {
         "file": "server/statistics-service.ts",
@@ -2224,7 +2224,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126719
+        "bytes": 126752
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2310,7 +2310,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6221
+        "lines": 6380
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
