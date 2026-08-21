@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-21T01:51:13.808Z",
+  "generatedAt": "2026-08-21T19:50:37.575Z",
   "git": {
-    "sha": "a8350bbe36dfad04753c845f48570e1bab1f8494",
+    "sha": "309f61544cb00bb016f048bff6115b5924e00010",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2393,12 +2393,12 @@
         "lines": 2419
       },
       {
-        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
-        "lines": 2379
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2391
       },
       {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2348
+        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
+        "lines": 2379
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
