@@ -31,7 +31,9 @@ import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import { getAction, getSegment, resolveSegmentId } from './registryModel';
+import { getAction, getSegment, resolveSegmentId,
+  effortForMode,
+} from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
@@ -230,6 +232,15 @@ export function V2App() {
     screenName: activeId,
     projectId: readShellProjectId(),
     moduleContext: anaModuleContext,
+    /* The composer's mode picker, finally connected.
+       `prefs.anaMode` was stored and rendered beside the send button — "Ask ·
+       Maximum" — and never reached the request. `effort_level` decides how many
+       agentic rounds AnA gets (fast 4, balanced 6+2, thorough 10+4), her output
+       budget and her model tier, and the server defaults to `balanced` when it
+       is absent. So Deep research quietly bought 8 rounds instead of 14, and
+       Quick ask cost twice what it promised. Only Standard was right, and only
+       by coincidence. */
+    effortLevel: effortForMode(prefs.anaMode),
   });
   const { user } = useAuth();
   /* The onboarding welcome must reflect the TENANT's real client type
