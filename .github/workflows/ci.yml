@@ -1054,6 +1054,23 @@ jobs:
         # database produced by the real installers exists to ask.
         run: npm run ci:tables-live-schema
 
+      - name: Guardrails — what a tenant purge cannot reach (ratchet)
+        # tenant-offboarding.ts purges via PURGE_CHILD_TABLES — 8 tables — and
+        # UPDATEs the organizations row to 'purged' rather than deleting it, so
+        # nothing cascades from there. Against this freshly provisioned schema,
+        # 666 tables carry organization_id; following every ON DELETE CASCADE
+        # out of those 8 reaches 74. The other 615 still hold the tenant's rows
+        # after an erasure, and only 19 of them are the audit/billing records
+        # the implementation deliberately keeps.
+        #
+        # This does NOT re-implement the purge (that service is owned
+        # elsewhere). It measures the gap so the number is checkable, and
+        # ratchets it: a NEW org-keyed table outside the purge's reach fails the
+        # build. The gap grew to 615 precisely because nothing was watching.
+        # Same job for the same reason as the guard above — this is the one
+        # place in CI with a database the real installers built.
+        run: npm run ci:purge-coverage
+
   # ── Production boot smoke — the shipped build must actually serve ──────────
   #
   # Every other DB-backed job here proves something about the SCHEMA. None of
