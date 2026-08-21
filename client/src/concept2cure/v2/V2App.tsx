@@ -33,6 +33,7 @@ import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
 import { getAction, getSegment, resolveSegmentId } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
+import { OPEN_PROGRAM_EVENT, OPEN_PROGRAM_SURFACE } from './programAction';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
 // cross-surface primitives: .sp*/.pj-card/.cm-pushbar in journey, and
@@ -152,6 +153,8 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
     /* The evidence verdict. Captured since the grounding pipeline shipped and
        dropped here like the rest. */
     evidence: m.evidence,
+    /* Built by E14, panelled by E14, carried by nobody until now. */
+    crlPremortem: m.crlPremortem,
     /* Everything the turn reported about how it was answered. This used to be
        dropped here — useAnaChat captured the tools, rounds, lens and drafts,
        and the rail rendered a single line of body text — so AnA could run
@@ -282,6 +285,25 @@ export function V2App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [prefs.anaOpen, ownsConversation]);
+
+  /* "Choose or create a program", from anywhere.
+
+     Almost every panel in the product is scoped to a program, so an empty one
+     usually has a single cure: open a program, or create the first. Surfaces
+     that hold `nav` call it directly (`openProgramAction(nav)`); this listener
+     serves the ones that cannot. `<DataGate>` renders the empty state for all
+     33 MDX panels and is a leaf with no `nav` and nothing to thread one
+     through — without this, its CTA would have no destination and the lane
+     would keep shipping the instruction-with-no-button the contract retires.
+
+     Same idiom as `c2c:open-collab`, and the destination is single-sourced
+     from ./programAction.ts so a panel and the shell cannot disagree about
+     where the action goes. */
+  React.useEffect(() => {
+    const onOpenProgram = () => nav(OPEN_PROGRAM_SURFACE);
+    window.addEventListener(OPEN_PROGRAM_EVENT, onOpenProgram);
+    return () => window.removeEventListener(OPEN_PROGRAM_EVENT, onOpenProgram);
+  }, [nav]);
 
   const surface: UiSurface | undefined = activeId === 'home' ? undefined : getSurface(activeId);
   const ctxSurface: UiSurface =

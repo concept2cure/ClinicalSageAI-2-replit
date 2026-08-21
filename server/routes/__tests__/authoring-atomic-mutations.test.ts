@@ -35,6 +35,11 @@ const h = vi.hoisted(() => {
     clientRelease,
     connect: vi.fn(async () => client),
     auditLogAction: vi.fn(),
+    // The §11.10(e) chained ledger write that freeze / e-sign / sign now make
+    // on their OWN transaction client. Captured so the assertions below can
+    // check it happened AND that it was enlisted in the transaction rather
+    // than run on the pool.
+    chainedAudit: vi.fn(async (..._a: unknown[]) => {}),
   };
 });
 
@@ -46,6 +51,14 @@ vi.mock('../../db', () => ({
 }));
 vi.mock('../../services/auditService', () => ({
   default: { logAction: (...a: unknown[]) => h.auditLogAction(...a) },
+  writeChainedAuditRow: (...a: unknown[]) => h.chainedAudit(...a),
+}));
+/* §11.10(g): the signing routes now resolve the signer's org role and refuse
+   without signing authority. That control has its own suite
+   (authoring-signing-authority.test.ts); here it must simply PASS so these
+   tests still exercise atomicity, which is what they are about. */
+vi.mock('../../services/part11/resolve-signer-role.js', () => ({
+  resolveSignerOrgRole: vi.fn(async () => 'approver'),
 }));
 // The PATCH save now threads the lineage gate and the filing-commit through the
 // same transaction. Neither is under test here, so stub them out: the gate is a
@@ -208,6 +221,18 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
       expect(idx).toBeGreaterThan(begin);
       expect(idx).toBeLessThan(commit);
     }
+
+    /* §11.10(e) — the CHAINED ledger row is written on the SAME client, so a
+       failure to write it rolls the mutation back with it. Asserting the
+       client identity is the whole point: `writeChainedAuditRow(pool, …)`
+       would still "write an audit row" and would still leave a signature that
+       could outlive its own audit entry. */
+    expect(h.chainedAudit).toHaveBeenCalledTimes(1);
+    // Identity, not shape: the executor handed to the chained write must be the
+    // very client running this transaction.
+    const chainExecutor = h.chainedAudit.mock.calls[0]?.[0] as { query?: unknown };
+    expect(chainExecutor?.query).toBe(h.clientQuery);
+
     expect(h.clientRelease).toHaveBeenCalledTimes(1);
   });
 
@@ -238,6 +263,13 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
       if (/FROM frozen_documents/i.test(sql)) {
         return { rowCount: 0, rows: [] };
       }
+      // §11.70: the signing routes now require the document to exist for this
+      // tenant before a signature is bound to it, so the existence probe has to
+      // answer. Without it the handler correctly 404s and never reaches the
+      // transaction these tests are about.
+      if (/SELECT 1 FROM authoring_documents/i.test(sql)) {
+        return { rowCount: 1, rows: [{ '?column?': 1 }] };
+      }
       return { rowCount: 0, rows: [] };
     });
   });
@@ -264,6 +296,18 @@ describe('POST /docs/:id/sign — signature + workflow approval + audit are atom
       expect(idx).toBeGreaterThan(begin);
       expect(idx).toBeLessThan(commit);
     }
+
+    /* §11.10(e) — the CHAINED ledger row is written on the SAME client, so a
+       failure to write it rolls the mutation back with it. Asserting the
+       client identity is the whole point: `writeChainedAuditRow(pool, …)`
+       would still "write an audit row" and would still leave a signature that
+       could outlive its own audit entry. */
+    expect(h.chainedAudit).toHaveBeenCalledTimes(1);
+    // Identity, not shape: the executor handed to the chained write must be the
+    // very client running this transaction.
+    const chainExecutor = h.chainedAudit.mock.calls[0]?.[0] as { query?: unknown };
+    expect(chainExecutor?.query).toBe(h.clientQuery);
+
     expect(h.clientRelease).toHaveBeenCalledTimes(1);
   });
 

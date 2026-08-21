@@ -217,6 +217,19 @@
   color: var(--text-400);
 }
 
+/* The loading treatment, moved off the MDX lane's private `.data-gate-icon-pulse`
+   when `<DataGate>` converged onto this component. `busy` previously set
+   `aria-busy` and nothing else here, so a panel waiting on a fetch was
+   indistinguishable from one whose record is genuinely empty.
+   `prefers-reduced-motion` removes the animation rather than substituting a
+   faster one: the panel says "Loading …" in text, so the pulse is
+   reinforcement and can simply stop. */
+.c2c-v2 .c2c-empty-state .c2c-empty-ic-busy { animation: c2c-empty-pulse 1.4s ease-in-out infinite; }
+@keyframes c2c-empty-pulse { 0%, 100% { opacity: .7; } 50% { opacity: .28; } }
+@media (prefers-reduced-motion: reduce) {
+  .c2c-v2 .c2c-empty-state .c2c-empty-ic-busy { animation: none; }
+}
+
 /* ErrorState — the ONE surface a failure is reported on.
  *
  * Replaces four parallel implementations: EmptyState's tone-error panel (139
@@ -1475,6 +1488,10 @@
   .c2c-v2 .ana-exec-chip.is-nav{transition:none;}
 }
 .c2c-v2 .ana-msg-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+
+/* The panel brings its own CSS module; this only gives it room in the
+   rail's rhythm. */
+.c2c-v2 .ana-premortem{margin-top:8px;}
 
 /* How well-grounded the answer is.
    Deliberately the work record's vocabulary — same left rule, same 11.5px

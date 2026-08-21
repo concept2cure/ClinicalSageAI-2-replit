@@ -43,21 +43,19 @@ export function cmcProjectUuid(): string | undefined {
   return id && UUID_RE.test(id) ? id : undefined;
 }
 
-/**
- * W0-5: the one action that fixes "no program open" — real navigation to
- * Mission Control, where programs are both opened and created. Defined once so
- * every CMC empty state offers the same words and the same destination.
- * Honestly absent when the host did not thread `nav` (tests render sub-surfaces
- * bare); a CTA that could not navigate would be the passive instruction back
- * in a button costume.
- */
-export function openProgramAction(
-  nav?: (id: string) => void,
-): { label: string; onAct: () => void } | undefined {
-  return nav
-    ? { label: 'Choose or create a program', onAct: () => nav('mission-control') }
-    : undefined;
-}
+/* `openProgramAction` was defined here and is now `../programAction`.
+ *
+ * It was written against the one channel a CMC surface has — its own `nav`
+ * prop — and so returned `undefined` for any caller without one. That branch is
+ * unreachable from a CMC surface and is the ONLY branch reachable from the MDX
+ * lane, where the empty state is rendered by `<DataGate>`: a leaf with no `nav`
+ * and nothing to thread one through. All 33 MDX panels would have taken it, and
+ * the passive instruction the contract retires would have survived in the lane
+ * that reported it. The canonical version reaches the shell by event when it has
+ * no prop, so it is always a real action.
+ *
+ * Deliberately NOT re-exported. Two names for one function is the shape this
+ * file's header objects to, and it is how the second copy got written. */
 
 /* ── Write errors ───────────────────────────────────────────────────────── */
 

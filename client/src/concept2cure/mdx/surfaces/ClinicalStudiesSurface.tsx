@@ -225,6 +225,7 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
           label="clinical studies"
           onRetry={live.refresh}
           emptyHint="Studies appear here once an IDE, feasibility, or post-market clinical follow-up study is created."
+          regulation="Serves the clinical investigation record (21 CFR 812, ISO 14155)"
         >
           {(studies) => (
             <div className="ctable">
@@ -332,6 +333,7 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
             <h2 style={{ fontSize: 14 }}>Sites</h2>
           </div>
           <DataGate state={records.sites} label="study sites" onRetry={records.refresh}
+            regulation="Serves the clinical investigation record (21 CFR 812, ISO 14155)"
             emptyHint="No investigational sites are recorded for this study yet.">
             {(sites) => (
               <div className="ctable">
@@ -361,6 +363,7 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
             <h2 style={{ fontSize: 14 }}>Protocol deviations</h2>
           </div>
           <DataGate state={records.deviations} label="protocol deviations" onRetry={records.refresh}
+            regulation="Serves the clinical investigation record (21 CFR 812, ISO 14155)"
             emptyHint="No protocol deviations are logged for this study yet.">
             {(devs) => (
               <div className="ctable">
@@ -388,6 +391,7 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
             <h2 style={{ fontSize: 14 }}>Adverse events</h2>
           </div>
           <DataGate state={records.aes} label="adverse events" onRetry={records.refresh}
+            regulation="Serves the clinical investigation record (21 CFR 812, ISO 14155)"
             emptyHint="No adverse events are logged for this study yet.">
             {(aes) => (
               <div className="ctable">
@@ -416,6 +420,7 @@ export function ClinicalStudiesSurface({ program = null, onAskAna }: ClinicalStu
             <h2 style={{ fontSize: 14 }}>Endpoints</h2>
           </div>
           <DataGate state={records.endpoints} label="endpoints" onRetry={records.refresh}
+            regulation="Serves the clinical investigation record (21 CFR 812, ISO 14155)"
             emptyHint="No endpoints are recorded for this study yet.">
             {(eps) => (
               <div className="ctable">

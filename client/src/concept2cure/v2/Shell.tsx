@@ -29,6 +29,7 @@ import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -95,6 +96,12 @@ export interface AnaMessage {
    * and stored by `useAnaChat` since that pipeline shipped; nothing rendered it.
    */
   evidence?: AnaGroundingEvidence;
+  /**
+   * The CRL/RTF pre-mortem decision artifact, when the turn assembled one.
+   * `CrlPremortemPanel` has existed, and been tested, since E14 with ZERO mount
+   * sites — a board-ready artifact the product could not show anyone.
+   */
+  crlPremortem?: CrlPremortemArtifact;
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -745,6 +752,15 @@ export function AnaRail({
                   Nothing rendered these, so a turn cut off mid-answer showed
                   its truncated text with no sign it was truncated: an
                   incomplete result presented as a complete one. */}
+              {/* The pre-mortem artifact, when this turn assembled one. No
+                  `onExport` is passed: the rail has no DOCX route for it, and
+                  the panel now disables that action and says where export lives
+                  rather than offering a button that does nothing. */}
+              {m.role === 'ana' && m.crlPremortem && (
+                <div className="ana-premortem">
+                  <CrlPremortemPanel artifact={m.crlPremortem} />
+                </div>
+              )}
               {/* How well-grounded the answer is. Above the caveats and the
                   work record on purpose: those say what went wrong and how she
                   got here, this says how far the answer can be trusted, which
