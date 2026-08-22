@@ -276,8 +276,13 @@
 .c2c-v2 .sp-tag{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-300);background:var(--bg-100);border-radius:4px;padding:2px 7px;flex-shrink:0;white-space:nowrap;}
 .c2c-v2 .sp-tag2{font-size:9.5px;font-weight:600;color:var(--text-400);background:var(--bg-100);border-radius:4px;padding:2px 7px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em;}
 .c2c-v2 .sp-row-b{flex:1;min-width:0;display:flex;flex-direction:column;}
-.c2c-v2 .sp-row-t{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;}
-.c2c-v2 .sp-row-s{font-size:11px;color:var(--text-400);margin-top:1px;}
+/* `.sp-row-b` is `flex:1 1 0%` with `min-width:0`, so when the row's other
+   columns take 242 of its 298px the label is handed 56 and shrinks below its
+   own min-content. Breaking the word is what keeps it inside that box.
+   56px is not a width a label can be read in, and that is a layout question
+   about the row's proportions rather than a wrapping one — ledger L111. */
+.c2c-v2 .sp-row-t{font-size:12.5px;font-weight:500;color:var(--text-100);line-height:1.35;overflow-wrap:break-word;}
+.c2c-v2 .sp-row-s{font-size:11px;color:var(--text-400);margin-top:1px;overflow-wrap:break-word;}
 .c2c-v2 .sp-sev{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:4px;flex-shrink:0;}
 .c2c-v2 .sp-sev[data-s="high"]{background:var(--error-muted);color:#7a1f1f;}
 .c2c-v2 .sp-sev[data-s="med"]{background:var(--warning-muted);color:#7a4a0f;}
