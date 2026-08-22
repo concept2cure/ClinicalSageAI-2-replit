@@ -79,6 +79,19 @@ const INTERNAL_MARKERS: RegExp[] = [
   /\bnode_modules\b/,
   /^\s*at\s+\S+\s+\(/m, // a stack frame
   /\b(?:ECONNREFUSED|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ECONNRESET)\b/,
+  /* A message that BEGINS with a raw transport status.
+     `useFetchJson` builds `HTTP ${status}: ${body.slice(0, 200)}` — so up to
+     two hundred characters of unparsed response body ride along behind it, and
+     that body is whatever the failing layer emitted: a proxy's HTML error page,
+     a stack trace, a database error. The markers above only catch it when the
+     body happens to contain a phrase one of them knows, which makes the
+     guarantee depend on luck. The prefix itself is the reliable signal, and
+     "HTTP 500" carries nothing a user can act on anyway.
+     ANCHORED, deliberately. Several hooks write deliberate copy of the form
+     "the server gave no reason (HTTP 500)" — a real sentence a person wrote,
+     with the status in parentheses at the end. Matching that would delete the
+     message instead of the jargon. */
+  /^\s*HTTP\s+\d{3}\b/,
 ];
 
 function looksInternal(value: string): boolean {

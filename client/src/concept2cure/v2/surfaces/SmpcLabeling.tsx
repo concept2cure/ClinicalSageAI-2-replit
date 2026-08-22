@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -102,6 +104,51 @@ export function SmpcLabeling({ onAsk }: SurfaceViewProps) {
       setBusy(null);
     }
   }
+
+  /* What AnA can see of this screen.
+     She knew the user was on "labeling-smpc" and nothing else — not how
+     complete the QRD set is, which required sections are still outstanding, or
+     whether it is filable — so "are we ready?" could only be answered by the
+     user reading their own screen back to her.
+
+     A failed read publishes the failure. `readiness` is absent both when the
+     governed store is empty and when the read threw, and reporting "0% complete"
+     or "not ready" over an outage would be a filing judgement made from an
+     outage. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'EU SmPC readiness is still loading; nothing on screen is final yet.' };
+    }
+    if (error || !readiness) {
+      return {
+        summary:
+          'EU SmPC readiness could not be read, so this screen reports no completeness figure — that is a failed read, not a finding about the labeling set.',
+        availableActions: ['Retry the SmPC readiness read'],
+      };
+    }
+    return {
+      summary:
+        `EU SmPC (QRD): ${readiness.completenessPct}% complete — ` +
+        `${readiness.finalRequired} of ${readiness.totalRequired} required sections final; ` +
+        (readiness.ready
+          ? 'the set reports as ready'
+          : `${readiness.outstanding.length} section(s) outstanding`),
+      facts: {
+        completenessPct: readiness.completenessPct,
+        finalRequired: readiness.finalRequired,
+        totalRequired: readiness.totalRequired,
+        ready: readiness.ready,
+        outstanding: readiness.outstanding,
+        sectionCount: readiness.sections.length,
+      },
+      availableActions: [
+        'Advance a section through its QRD status (persisted to the governed store)',
+        'Review which required sections are still outstanding',
+        'Check the completeness figure against the QRD template',
+      ],
+    };
+  }, [loading, error, readiness]);
+  usePublishSurfaceContext('labeling-smpc', anaContext);
 
   return (
     <div className="page-inner">

@@ -132,6 +132,7 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   return res.json({ success: true, data });
 };
 import { ai } from '../lib/unified-ai-client';
+import { parseIntegerProjectId } from '../lib/project-id.js';
 import { registerCommunicationCenterRoutes } from './concept2cure-communication-center';
 
 const sendError = (
@@ -260,8 +261,8 @@ function parseProjectParam(projectParam: string | string[] | undefined): number 
   if (typeof raw !== 'string') {
     throw new Error('Invalid project ID');
   }
-  const numericId = Number.parseInt(raw.replace('proj_', ''), 10);
-  if (!Number.isFinite(numericId) || numericId <= 0) {
+  const numericId = parseIntegerProjectId(raw);
+  if (numericId === null) {
     throw new Error('Invalid project ID');
   }
   return numericId;
@@ -1145,8 +1146,8 @@ function getProjectScope(
   const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
   if (typeof raw !== 'string') return null;
   const projectId = raw.replace('proj_', '');
-  const numericId = parseInt(projectId, 10);
-  if (isNaN(numericId)) {
+  const numericId = parseIntegerProjectId(projectId);
+  if (numericId === null) {
     return null;
   }
   return { numericId };
@@ -1694,8 +1695,8 @@ async function getOwnershipDerivationData(
     .orderBy(desc(regulatoryAuditLogs.timestamp))
     .limit(500);
   for (const row of auditRows) {
-    const numeric = Number.parseInt((row.entityId || '').replace('proj_', ''), 10);
-    if (!numeric || Number.isNaN(numeric)) continue;
+    const numeric = parseIntegerProjectId(row.entityId);
+    if (numeric === null) continue;
     const list = activitiesByProject.get(numeric) || [];
     if (list.length >= 50) continue;
     list.push({
@@ -2449,9 +2450,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2561,8 +2562,8 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(projectId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2659,9 +2660,9 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2793,9 +2794,9 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3244,8 +3245,8 @@ router.post('/projects/:id/export', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3296,8 +3297,8 @@ router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3366,8 +3367,8 @@ router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3484,9 +3485,9 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-      if (isNaN(numericProjectId)) {
+      if (numericProjectId === null) {
         return sendError(res, 400, 'Invalid project ID');
       }
 
@@ -3569,9 +3570,9 @@ router.get(
 router.get('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-    if (isNaN(numericProjectId)) {
+    if (numericProjectId === null) {
       return sendError(res, 400, 'Invalid project ID');
     }
 
@@ -3650,9 +3651,9 @@ router.get('/projects/:projectId/linked', async (req: Request, res: Response) =>
 router.post('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-    if (isNaN(numericProjectId)) {
+    if (numericProjectId === null) {
       return sendError(res, 400, 'Invalid project ID');
     }
 
@@ -3671,8 +3672,8 @@ router.post('/projects/:projectId/linked', async (req: Request, res: Response) =
       return sendError(res, 400, 'targetProjectId and kind are required');
     }
 
-    const numericTargetId = parseInt(String(targetProjectId).replace('proj_', ''), 10);
-    if (isNaN(numericTargetId)) {
+    const numericTargetId = parseIntegerProjectId(targetProjectId);
+    if (numericTargetId === null) {
       return sendError(res, 400, 'Invalid targetProjectId');
     }
 
@@ -4082,9 +4083,9 @@ router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4120,9 +4121,9 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4214,9 +4215,9 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4292,8 +4293,8 @@ router.post(
         return sendError(res, 400, 'Project ID is required');
       }
 
-      const numericId = parseInt(projectIdRaw.replace('proj_', ''), 10);
-      if (isNaN(numericId)) {
+      const numericId = parseIntegerProjectId(projectIdRaw);
+      if (numericId === null) {
         return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
       }
 
@@ -6570,10 +6571,10 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
+    if (!hasAccess || numericProjectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
@@ -6782,9 +6783,9 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || Number.isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -6859,9 +6860,9 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || Number.isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -7006,10 +7007,10 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
 router.get('/projects/:projectId/artifacts', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
+    if (!hasAccess || numericProjectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
@@ -7033,10 +7034,10 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 

@@ -27,10 +27,11 @@
 --     -- — every read and every write of every integer tenant-keyed table, on
 --     -- any connection carrying a real request scope, in EVERY RLS mode (the
 --     -- shadow bypass above is just another disjunct; it does not stop the cast
---     -- being evaluated). It stayed invisible because the app still connects as
---     -- the owner, a superuser for whom RLS is inert, and because every test
---     -- that sets these GUCs sets app.current_org_id to '' — the one value that
---     -- avoids it. It surfaces the moment the runtime uses the non-superuser
+--     -- being evaluated). It stayed invisible because RLS only filters for a
+--     -- connection that is neither a superuser nor the table's owner, so nothing
+--     -- evaluates the policy until the split role is in use — and because every
+--     -- test that sets these GUCs sets app.current_org_id to '' — the one value
+--     -- that avoids it. It surfaces the moment the runtime uses the non-superuser
 --     -- app_service role, which production requires.
 --     --
 --     -- `substring(… from '^[0-9]+$')` EXTRACTS an integer instead of casting

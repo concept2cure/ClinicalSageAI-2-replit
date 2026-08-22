@@ -294,15 +294,16 @@ evaluated.
 
 Two things hid it, and both are worth naming:
 
-1. the application still connects as the owner, a superuser for whom RLS is
-   inert, so the policy is never evaluated at all; and
+1. RLS only filters for a connection that is neither a superuser nor the table's
+   owner, so on any deployment not yet serving requests through the split role
+   the policy is never evaluated at all; and
 2. every test that sets these GUCs — including
    `tests/schema-contract/rls-two-tenant-full-schema.contract.test.ts` — sets
    `app.current_org_id` to `''`, the one value that avoids the cast.
 
 So the defect was invisible precisely under the conditions the role split
-removes. Under `app_service`, which production requires, the app cannot read a
-single tenant table.
+removes: the moment a runtime connects as `app_service`, which production
+requires, no tenant table is readable at all.
 
 Fixed by **extracting** an integer instead of casting whatever is there:
 
@@ -379,8 +380,9 @@ null, and the reset paths in `lazyRequestDbClient`, `withTenantConnection` and
 
 So this was **live, not latent** — my first pass called it latent, having tested
 only the `COALESCE(NULLIF(…))` variant on `core.programs` and not the 19 without
-the NULLIF. Same root cause as the integer-side cast, same reason it stayed
-invisible: the app connects as the owner, for whom RLS is inert.
+the NULLIF. Same root cause as the integer-side cast, and invisible for the
+same reason: RLS is inert for an owner or superuser connection, so nothing
+evaluates the policy until the split role is in use.
 
 Fixed by routing every read through the one helper that already existed for it,
 `identity.current_org_id()`, and making that helper extract rather than cast:
@@ -604,8 +606,14 @@ the run exercises the non-superuser role split — the part a managed host, wher
 the admin role is a superuser, is uniquely able to falsify.
 
 **Still unverified at the time of writing:** nobody has run it yet. The session
-that produced this document had no Neon credentials, so everything else here was
-measured against a local PostgreSQL 16.13 with pgvector 0.6.0. The first
-scheduled or dispatched run is what turns Neon-specific behaviour — direct-host
-DDL, certificate verification, and whether Neon's admin role can `CREATE ROLE` —
-from expected into observed.
+that produced this document had no Neon credentials, and the GitHub token it
+used lacked `actions: write`, so it could not dispatch the workflow either.
+Everything else here was measured against a local PostgreSQL 16.13 with pgvector
+0.6.0. The first scheduled or dispatched run is what turns Neon-specific
+behaviour — direct-host DDL, certificate verification, and whether Neon's admin
+role can `CREATE ROLE` — from expected into observed. Expect the first run to
+find something: nothing has ever exercised `install-fresh` against Neon.
+
+Dispatch it from
+<https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/workflows/neon-provisioning.yml>
+("Run workflow"), or `gh workflow run neon-provisioning.yml --ref concept2cure-v2`.
