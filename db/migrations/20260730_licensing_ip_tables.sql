@@ -57,6 +57,13 @@ CREATE TABLE IF NOT EXISTS licenses (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Existing installations may have the older licenses shape. Converge the
+-- column used by the license-routes INSERT and client-workspace lookup before
+-- creating its index.
+ALTER TABLE licenses
+  ADD COLUMN IF NOT EXISTS client_id TEXT;
+
 CREATE INDEX IF NOT EXISTS licenses_org_status_idx ON licenses (organization_id, status);
 CREATE INDEX IF NOT EXISTS licenses_client_idx     ON licenses (client_id);
 

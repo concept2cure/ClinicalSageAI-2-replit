@@ -69,7 +69,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat } from '../../components/ana/useAnaChat';
+import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
@@ -79,10 +79,7 @@ import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
-import {
-  RichSectionEditor,
-  type RichSectionEditorHandle,
-} from '../editor/RichSectionEditor';
+import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
@@ -217,7 +214,11 @@ interface ProjectSource {
 }
 
 /** How each citation state reads to an author. */
-function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn' | 'muted'; hint: string } {
+function sourceStateLabel(s: SectionSource): {
+  text: string;
+  tone: 'ok' | 'warn' | 'muted';
+  hint: string;
+} {
   switch (s.state) {
     case 'current':
       return {
@@ -229,8 +230,7 @@ function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn'
       return {
         text: 'Source changed since cited',
         tone: 'warn',
-        hint:
-          'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
+        hint: 'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
       };
     case 'unresolved':
       return {
@@ -250,7 +250,9 @@ function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn'
 /* ── Helpers ── */
 
 /** GET via apiRequest without throwing — honest {ok,status,body}. */
-async function readJson<T = any>(path: string): Promise<{ ok: boolean; status: number; body: T | null }> {
+async function readJson<T = any>(
+  path: string
+): Promise<{ ok: boolean; status: number; body: T | null }> {
   try {
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
@@ -306,6 +308,195 @@ function AuthoringSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
   );
 }
 
+function AnaActivity({
+  message,
+  onSuggestedAction,
+}: {
+  message: AnaChatMessage;
+  onSuggestedAction: (action: string) => void;
+}) {
+  const toolCalls = message.toolCalls ?? [];
+  const evidence = message.evidence;
+  const groundingSources = message.groundingSources ?? [];
+  const warnings = message.warnings ?? [];
+  const suggestedActions = message.suggestedActions ?? [];
+  const hasMeta =
+    message.detectedLens ||
+    message.effortUsed ||
+    message.fallback ||
+    (!message.streaming && message.latencyMs != null) ||
+    message.stopped;
+
+  if (
+    !hasMeta &&
+    toolCalls.length === 0 &&
+    !evidence &&
+    groundingSources.length === 0 &&
+    warnings.length === 0 &&
+    suggestedActions.length === 0
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="ana-activity" aria-label="AnA activity and evidence">
+      {hasMeta && (
+        <div className="ana-meta" aria-label="AnA response details">
+          {message.detectedLens && (
+            <span className="ana-meta-chip">Lens: {message.detectedLens}</span>
+          )}
+          {message.effortUsed && (
+            <span className="ana-meta-chip">Effort: {message.effortUsed}</span>
+          )}
+          {message.fallback && (
+            <span className="ana-meta-chip ana-meta-chip-warn">Fallback provider</span>
+          )}
+          {!message.streaming && message.latencyMs != null && (
+            <span className="ana-meta-chip">
+              Response: {(message.latencyMs / 1000).toFixed(1)}s
+            </span>
+          )}
+          {message.stopped && (
+            <span className="ana-meta-chip ana-meta-chip-warn">Stopped before completion</span>
+          )}
+        </div>
+      )}
+
+      {toolCalls.length > 0 && (
+        <details className="ana-activity-group" open={message.streaming || undefined}>
+          <summary className="ana-activity-summary">
+            <span>{I.workflow} Work log</span>
+            <span className="ana-activity-count">
+              {toolCalls.length} step{toolCalls.length === 1 ? '' : 's'}
+            </span>
+          </summary>
+          <div className="ana-tool-list" role="list">
+            {toolCalls.map((tool, toolIndex) => {
+              const stateLabel =
+                tool.status === 'running'
+                  ? 'Running'
+                  : tool.status === 'error'
+                  ? 'Failed'
+                  : 'Complete';
+              return (
+                <div
+                  key={`${tool.name}-${toolIndex}`}
+                  className="ana-tool"
+                  data-status={tool.status}
+                  role="listitem"
+                >
+                  <span className="ana-tool-state" aria-hidden="true">
+                    {tool.status === 'error'
+                      ? I.alertTriangle
+                      : tool.status === 'running'
+                      ? I.clock
+                      : I.check}
+                  </span>
+                  <span className="ana-tool-label">{tool.label}</span>
+                  <span className="ana-tool-status">{stateLabel}</span>
+                  {tool.round != null && <span className="ana-tool-round">Round {tool.round}</span>}
+                  {tool.result && (
+                    <details className="ana-tool-result">
+                      <summary>View result</summary>
+                      <pre>{tool.result}</pre>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      )}
+
+      {evidence && (
+        <div
+          className="ana-evidence"
+          data-validated={evidence.validated}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="ana-evidence-head">
+            <span>{evidence.validated ? I.shieldCheck : I.alertTriangle}</span>
+            <strong>{evidence.validated ? 'Evidence grounded' : 'Evidence needs review'}</strong>
+          </div>
+          <div className="ana-evidence-summary">
+            {evidence.sourceCount} source{evidence.sourceCount === 1 ? '' : 's'} ·{' '}
+            {evidence.groundedClaims} grounded claim{evidence.groundedClaims === 1 ? '' : 's'} ·{' '}
+            {evidence.weakClaims} weak
+          </div>
+          {evidence.riskSummary && <div className="ana-evidence-risk">{evidence.riskSummary}</div>}
+          {evidence.flaggedClaims && evidence.flaggedClaims.length > 0 && (
+            <details className="ana-flagged-claims">
+              <summary>
+                {evidence.flaggedClaims.length} flagged claim
+                {evidence.flaggedClaims.length === 1 ? '' : 's'}
+              </summary>
+              <ul>
+                {evidence.flaggedClaims.map((claim, claimIndex) => (
+                  <li key={`${claim.kind}-${claimIndex}`}>
+                    <strong>{claim.kind}</strong>: {claim.text}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
+
+      {groundingSources.length > 0 && (
+        <details className="ana-activity-group">
+          <summary className="ana-activity-summary">
+            <span>{I.link} Context used</span>
+            <span className="ana-activity-count">{groundingSources.length}</span>
+          </summary>
+          <ul className="ana-context-list">
+            {groundingSources.map(source => (
+              <li key={source}>{source}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {warnings.map((warning, warningIndex) => (
+        <div
+          key={`${warning}-${warningIndex}`}
+          className="ana-warning"
+          role="status"
+          aria-live="polite"
+        >
+          {I.alertTriangle}
+          <span>{warning}</span>
+        </div>
+      ))}
+
+      {suggestedActions.length > 0 && (
+        <div className="ana-next-actions">
+          <div className="ana-next-label">Next actions</div>
+          <div className="ana-next-list">
+            {suggestedActions.map(action => (
+              <button
+                key={action}
+                type="button"
+                className="ana-next-action"
+                disabled={message.streaming}
+                title={
+                  message.streaming
+                    ? 'Available after AnA finishes this response'
+                    : `Ask AnA: ${action}`
+                }
+                onClick={() => onSuggestedAction(action)}
+              >
+                {I.arrowRight}
+                <span>{action}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   // `module` is no longer a filter the user drives — the filing outline is. It
   // survives only as the value AuthoringCreateExport needs when creating a new
@@ -336,7 +527,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
 
   // Sections of the active document.
   const [sections, setSections] = useState<AuthSection[]>([]);
-  const [sectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [sectionsState, setSectionsState] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    'idle'
+  );
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   // The canonical editor owns the in-flight buffer; the section row in
@@ -366,7 +559,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null);
 
   // Right rail: AnA, revision history, comments, or the section's sources.
-  const [rail, setRail] = useState<'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null>(null);
+  const [rail, setRail] = useState<
+    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null
+  >(null);
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -407,38 +602,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     clearEditorTarget();
   }, []);
 
-  const activeDoc = docs.find((d) => d.id === activeDocId) ?? null;
-  const activeSection = sections.find((s) => s.id === activeSectionId) ?? null;
-
-  /* ── Is the open document sealed? (21 CFR 11 — MDX UAT item A4) ──
-     The toolbar has always READ this status — `AuthoringFilingBar` renders
-     "Frozen" from exactly these two values — but nothing connected it to the
-     canvas. So a frozen document's section was fully typeable: characters went
-     into the content, the meta line flipped to "unsaved changes", and the
-     author only discovered the document was sealed when Save was refused.
-
-     The server has always refused that write (the `/sections/:sectionId` guard
-     in authoring.router.ts), so no sealed record was ever altered — the defect
-     is that the UI invited an edit it knew could not land, against a document
-     the product tells the user is frozen by an approval signature. Letting
-     someone type a paragraph into a signed record and then discarding it is
-     its own kind of dishonesty, even when the record survives.
-
-     Kept in the same vocabulary as the server and the filing bar: FROZEN, and
-     APPROVED (an approval signature freezes the document). */
-  const docSealed = activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
+  const activeDoc = docs.find(d => d.id === activeDocId) ?? null;
+  const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
+  const docSealed =
+    activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const dirty = activeSection != null && editorDirty && !docSealed;
-
-  /* ── Scroll position is per-document, not per-pane (MDX UAT item A8) ──
-     The scroll offset lives on the pane, which does not remount when the
-     section does, so opening a new section from the tree left the reader
-     partway down a document they had not read the top of — and on a shorter
-     section, past its end entirely, which looks like an empty document rather
-     than a scrolled one. On a regulated surface "looks empty" is the wrong
-     thing for a navigation to produce.
-
-     Keyed on the section id, and on contentEpoch so a revert (which replaces
-     content under the same id) also returns to the top of what it replaced. */
   const docScrollRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const pane = docScrollRef.current;
@@ -471,7 +639,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       activeDoc?.module,
       activeSection?.code,
       activeSection?.title,
-    ],
+    ]
   );
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
@@ -485,7 +653,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       sectionCode: activeSection?.code ?? null,
       sectionTitle: activeSection?.title ?? null,
     }),
-    [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title],
+    [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title]
   );
   const ana = useAnaChat({
     screenName: 'document-authoring',
@@ -493,6 +661,35 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     authoringContext,
     moduleContext,
   });
+  const anaComposerRef = useRef<HTMLTextAreaElement>(null);
+  const anaReturnFocusRef = useRef<HTMLElement | null>(null);
+  const anaWasOpenRef = useRef(false);
+
+  const rememberAnaTrigger = useCallback(() => {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      !active.closest('[aria-label="AnA — document authoring"]')
+    ) {
+      anaReturnFocusRef.current = active;
+    }
+  }, []);
+
+  const openAna = useCallback(
+    (trigger?: HTMLElement | null) => {
+      if (trigger) {
+        anaReturnFocusRef.current = trigger;
+      } else {
+        rememberAnaTrigger();
+      }
+      setRail('ana');
+    },
+    [rememberAnaTrigger]
+  );
+
+  const closeAna = useCallback(() => {
+    setRail(null);
+  }, []);
 
   /* Every ask on this surface goes here. It OPENS the pane first — the whole
      defect was a question with no visible destination, so a silent send would
@@ -501,10 +698,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     (text: string) => {
       const clean = (text ?? '').trim();
       if (!clean) return;
-      setRail('ana');
+      openAna();
       void ana.send(clean);
     },
-    [ana],
+    [ana, openAna]
   );
 
   useEffect(() => {
@@ -512,6 +709,27 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     const el = anaScrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [rail, ana.messages.length, ana.isStreaming]);
+
+  useEffect(() => {
+    if (rail !== 'ana') return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      closeAna();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [closeAna, rail]);
+
+  useEffect(() => {
+    if (rail === 'ana') {
+      anaComposerRef.current?.focus({ preventScroll: true });
+    } else if (anaWasOpenRef.current) {
+      anaReturnFocusRef.current?.focus({ preventScroll: true });
+      anaReturnFocusRef.current = null;
+    }
+    anaWasOpenRef.current = rail === 'ana';
+  }, [rail]);
 
   /* ── Load documents for the current module/status ── */
   const loadDocs = useCallback(async () => {
@@ -530,23 +748,33 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       `/api/authoring/docs?status=${encodeURIComponent(status)}` +
       (programId ? `&programId=${encodeURIComponent(programId)}` : '');
     const { ok, body } = await readJson<{ documents?: AuthDoc[] }>(url);
-    if (!ok || !body) { setDocsState('error'); setDocs([]); return; }
+    if (!ok || !body) {
+      setDocsState('error');
+      setDocs([]);
+      return;
+    }
     const list = Array.isArray(body.documents) ? body.documents : [];
     setDocs(list);
     setDocsState('ready');
     // Keep the active doc if it survives the new filter; else pick the first.
-    setActiveDocId((cur) => (cur && list.some((d) => d.id === cur) ? cur : list[0]?.id ?? null));
+    setActiveDocId(cur => (cur && list.some(d => d.id === cur) ? cur : list[0]?.id ?? null));
   }, [status]);
 
-  useEffect(() => { void loadDocs(); }, [loadDocs]);
+  useEffect(() => {
+    void loadDocs();
+  }, [loadDocs]);
 
   /* ── Load sections when the active document changes ── */
   const loadSections = useCallback(async (docId: string) => {
     setSectionsState('loading');
     const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
-      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`,
+      `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
-    if (!ok || !body) { setSectionsState('error'); setSections([]); return; }
+    if (!ok || !body) {
+      setSectionsState('error');
+      setSections([]);
+      return;
+    }
     const list = Array.isArray(body.sections) ? body.sections : [];
     setSections(list);
     setSectionsState('ready');
@@ -558,16 +786,21 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     // document must not swallow the target.
     const target = targetSectionRef.current;
     const landTarget =
-      target != null && target.docId === docId && list.some((s) => s.id === target.sectionId);
+      target != null && target.docId === docId && list.some(s => s.id === target.sectionId);
     if (target != null && target.docId === docId) targetSectionRef.current = null;
-    setActiveSectionId((cur) => {
+    setActiveSectionId(cur => {
       if (landTarget) return target!.sectionId;
-      return cur && list.some((s) => s.id === cur) ? cur : list[0]?.id ?? null;
+      return cur && list.some(s => s.id === cur) ? cur : list[0]?.id ?? null;
     });
   }, []);
 
   useEffect(() => {
-    if (!activeDocId) { setSections([]); setSectionsState('idle'); setActiveSectionId(null); return; }
+    if (!activeDocId) {
+      setSections([]);
+      setSectionsState('idle');
+      setActiveSectionId(null);
+      return;
+    }
     void loadSections(activeDocId);
   }, [activeDocId, loadSections]);
 
@@ -597,7 +830,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const aliveRef = useRef(true);
   useEffect(() => {
     aliveRef.current = true;
-    return () => { aliveRef.current = false; };
+    return () => {
+      aliveRef.current = false;
+    };
   }, []);
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   useEffect(() => {
@@ -614,7 +849,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       // The tree pane already reports the failed read; this says what it cost.
       setTargetNotice(
         `Couldn’t open ${wanted} — the document list failed to load, so nothing was resolved. ` +
-          'Retry once documents load.',
+          'Retry once documents load.'
       );
       return;
     }
@@ -622,7 +857,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       setTargetNotice(
         `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different program'}, ` +
           'which is not the project this editor is scoped to. Open that project and retry. ' +
-          'Showing the editor’s default view instead.',
+          'Showing the editor’s default view instead.'
       );
       return;
     }
@@ -630,7 +865,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       setTargetNotice(
         `Couldn’t open ${wanted} — this project’s governed dossier is ` +
           `${filing.document.doc_type.toUpperCase()}, not ${family}. ` +
-          'Showing the editor’s default view instead.',
+          'Showing the editor’s default view instead.'
       );
       return;
     }
@@ -640,13 +875,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       // defensively rather than paged.
       for (const d of docs.slice(0, 8)) {
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
-          `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`,
+          `/api/authoring/docs/${encodeURIComponent(d.id)}/sections`
         );
         if (!aliveRef.current) return;
         if (!ok || !body) continue;
         const match = matchEditorTargetSection(
           Array.isArray(body.sections) ? body.sections : [],
-          t,
+          t
         );
         if (match) {
           // Route the selection through loadSections (via targetSectionRef) so
@@ -656,7 +891,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           targetSectionRef.current = { docId: d.id, sectionId: match.id };
           if (d.id === activeDocId) void loadSections(d.id);
           else setActiveDocId(d.id);
-          setTreeScrollNonce((n) => n + 1);
+          setTreeScrollNonce(n => n + 1);
           fireToast(`Opened ${match.code} · ${match.title} — from the ${family} workspace.`);
           return;
         }
@@ -665,7 +900,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       setTargetNotice(
         `Couldn’t find ${wanted} in the ${family} documents in scope ` +
           `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
-          'the section may not be drafted here yet, or may sit under another status.',
+          'the section may not be drafted here yet, or may sit under another status.'
       );
     })();
   }, [
@@ -700,7 +935,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     // author who had saved five times was told her edits were never versioned,
     // and a reviewer was told the section had never changed.
     const { ok, body } = await readJson<{ revisions?: AuthRevision[] }>(
-      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`,
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`
     );
     if (!ok) {
       setRevisionsState('error');
@@ -713,7 +948,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
 
   const loadComments = useCallback(async (docId: string) => {
     const { body } = await readJson<{ comments?: AuthComment[] }>(
-      `/api/authoring/documents/${encodeURIComponent(docId)}/comments`,
+      `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
     setComments(Array.isArray(body?.comments) ? body!.comments! : []);
   }, []);
@@ -726,9 +961,13 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const loadSources = useCallback(async (sectionId: string) => {
     setSourcesState('loading');
     const { ok, body } = await readJson<{ sources?: SectionSource[] }>(
-      `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`,
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`
     );
-    if (!ok || !body) { setSourcesState('error'); setSources([]); return; }
+    if (!ok || !body) {
+      setSourcesState('error');
+      setSources([]);
+      return;
+    }
     setSources(Array.isArray(body.sources) ? body.sources : []);
     setSourcesState('ready');
   }, []);
@@ -740,9 +979,12 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const loadProjectSources = useCallback(async () => {
     const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
     const pid = p?.id == null ? null : String(p.id);
-    if (!pid) { setProjectSources([]); return; }
+    if (!pid) {
+      setProjectSources([]);
+      return;
+    }
     const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
-      `/api/c2c/projects/${encodeURIComponent(pid)}/sources`,
+      `/api/c2c/projects/${encodeURIComponent(pid)}/sources`
     );
     setProjectSources(ok && Array.isArray(body?.sources) ? body!.sources! : []);
   }, []);
@@ -754,13 +996,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const verifyLedger = useCallback(async (sectionId: string) => {
     setLedger('checking');
     const { ok, body } = await readJson<LedgerVerdict & { success?: boolean }>(
-      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history/verify`,
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/history/verify`
     );
-    if (!ok || !body) { setLedger('error'); return; }
+    if (!ok || !body) {
+      setLedger('error');
+      return;
+    }
     setLedger(body);
   }, []);
 
-  useEffect(() => { setLedger(null); }, [activeSectionId]);
+  useEffect(() => {
+    setLedger(null);
+  }, [activeSectionId]);
 
   useEffect(() => {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
@@ -769,128 +1016,181 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       void loadSources(activeSectionId);
       void loadProjectSources();
     }
-  }, [rail, activeSectionId, activeDocId, loadHistory, loadComments, loadSources, loadProjectSources]);
+  }, [
+    rail,
+    activeSectionId,
+    activeDocId,
+    loadHistory,
+    loadComments,
+    loadSources,
+    loadProjectSources,
+  ]);
 
   /* ── Record that this section is drafted from a source ── */
-  const citeSource = useCallback(async (sourceId: number) => {
-    if (!activeSectionId) return;
-    try {
-      const res = await apiRequest('POST', `/api/authoring/sections/${activeSectionId}/cite-source`, {
-        source_id: sourceId,
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        fireToast('Couldn’t record the source — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was saved.', 'error');
-        return;
+  const citeSource = useCallback(
+    async (sourceId: number) => {
+      if (!activeSectionId) return;
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${activeSectionId}/cite-source`,
+          {
+            source_id: sourceId,
+          }
+        );
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t record the source — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              '. Nothing was saved.',
+            'error'
+          );
+          return;
+        }
+        fireToast(
+          (json as any)?.created
+            ? 'Source recorded — this section now cites it, with the source’s current checksum.'
+            : 'Source re-resolved against its current content.'
+        );
+        setPicking(false);
+        void loadSources(activeSectionId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
       }
-      fireToast(
-        (json as any)?.created
-          ? 'Source recorded — this section now cites it, with the source’s current checksum.'
-          : 'Source re-resolved against its current content.',
-      );
-      setPicking(false);
-      void loadSources(activeSectionId);
-    } catch (e) {
-      fireToast('Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
-    }
-  }, [activeSectionId, fireToast, loadSources]);
+    },
+    [activeSectionId, fireToast, loadSources]
+  );
 
   /* ── Stop citing a source ── */
-  const uncite = useCallback(async (sourceId: number) => {
-    if (!activeSectionId) return;
-    const res = await apiRequest('DELETE', `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`);
-    if (!res.ok) {
-      fireToast('Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.', 'error');
-      return;
-    }
-    fireToast('Citation removed.');
-    void loadSources(activeSectionId);
-  }, [activeSectionId, fireToast, loadSources]);
+  const uncite = useCallback(
+    async (sourceId: number) => {
+      if (!activeSectionId) return;
+      const res = await apiRequest(
+        'DELETE',
+        `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
+      );
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.',
+          'error'
+        );
+        return;
+      }
+      fireToast('Citation removed.');
+      void loadSources(activeSectionId);
+    },
+    [activeSectionId, fireToast, loadSources]
+  );
 
   /* ── Re-read the source and record what it says now ──
      The server re-resolves against the stored source; it does not invent a hash.
      A citation whose source is gone, or which is frozen, is refused with a reason. */
-  const reresolve = useCallback(async (citationId: string) => {
-    if (!activeSectionId) return;
-    const res = await apiRequest('POST', `/api/authoring/sections/${activeSectionId}/refresh-token`, {
-      cite_id: citationId,
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) {
-      fireToast((json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.', 'error');
-      return;
-    }
-    fireToast((json as any)?.message ?? 'Source re-read.');
-    void loadSources(activeSectionId);
-  }, [activeSectionId, fireToast, loadSources]);
+  const reresolve = useCallback(
+    async (citationId: string) => {
+      if (!activeSectionId) return;
+      const res = await apiRequest(
+        'POST',
+        `/api/authoring/sections/${activeSectionId}/refresh-token`,
+        {
+          cite_id: citationId,
+        }
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          (json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.',
+          'error'
+        );
+        return;
+      }
+      fireToast((json as any)?.message ?? 'Source re-read.');
+      void loadSources(activeSectionId);
+    },
+    [activeSectionId, fireToast, loadSources]
+  );
 
   /* ── Save the section content (real, awaited, auto-revisioned) ──
      The ONE save path: the canonical editor serializes and calls this; the
      header Save button and Cmd/Ctrl-S route through the editor's own save so
      the footer save-state, the device cache and this governed PATCH cannot
      disagree. Throwing on failure lets the editor report the truth. */
-  const saveSectionContent = useCallback(async (serialized: string) => {
-    if (!activeSection) throw new Error('No section open');
-    setSaving(true);
-    try {
-      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-        content: serialized,
-      });
-      const json = await res.json().catch(() => null);
-      if (res.status === 401) {
-        fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error');
-        throw new Error('unauthenticated');
+  const saveSectionContent = useCallback(
+    async (serialized: string) => {
+      if (!activeSection) throw new Error('No section open');
+      setSaving(true);
+      try {
+        const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+          content: serialized,
+        });
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not saved — your session isn’t authenticated. Sign in and retry.', 'error');
+          throw new Error('unauthenticated');
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t save the section — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              '. Nothing was persisted.',
+            'error'
+          );
+          throw new Error('save failed');
+        }
+        const adopted = (json as { section?: AuthSection })?.section;
+        const persisted = adopted?.content ?? serialized;
+        // Adopt the server row (revision counter, updated_at) into the tree.
+        setSections(ss =>
+          ss.map(s =>
+            s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
+          )
+        );
+        fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
+        // Keep the history rail fresh if it's open.
+        if (rail === 'history') void loadHistory(activeSection.id);
+      } finally {
+        setSaving(false);
       }
-      if (!res.ok) {
-        /* Prefer the server's SENTENCE over its CODE. `error` here is a machine
-           token (DOCUMENT_FROZEN, …) and rendering it put an internal enum into
-           user-facing copy — the same defect `extractApiError` in
-           lib/queryClient.ts was written to end. A frozen document now reads as
-           the explanation the server sent rather than as an enum. */
-        const why =
-          (typeof (json as any)?.message === 'string' && (json as any).message) ||
-          (typeof (json as any)?.error === 'string' && !/^[A-Z0-9_]+$/.test((json as any).error)
-            ? (json as any).error
-            : null) ||
-          `HTTP ${res.status}`;
-        fireToast('Couldn’t save the section — ' + why + ' Nothing was persisted.', 'error');
-        throw new Error('save failed');
-      }
-      const adopted = (json as { section?: AuthSection })?.section;
-      const persisted = adopted?.content ?? serialized;
-      // Adopt the server row (revision counter, updated_at) into the tree.
-      setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s)));
-      fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
-      // Keep the history rail fresh if it's open.
-      if (rail === 'history') void loadHistory(activeSection.id);
-    } finally {
-      setSaving(false);
-    }
-  }, [activeSection, rail, loadHistory, fireToast]);
+    },
+    [activeSection, rail, loadHistory, fireToast]
+  );
 
   /* ── Track changes: the store's own column drives the suggestion engine ──
      The server column is flipped FIRST; the editor enables suggestion capture
      only after the PATCH confirms, so the canvas never claims a mode the
      record does not hold. */
-  const toggleTrackChanges = useCallback(async (on: boolean) => {
-    if (!activeSection) throw new Error('No section open');
-    const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-      track_changes: on,
-    });
-    const json = await res.json().catch(() => null);
-    if (!res.ok) {
-      fireToast('Couldn’t change track changes — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. The mode is unchanged.', 'error');
-      throw new Error('track toggle refused');
-    }
-    setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
-    fireToast(on
-      ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'
-      : 'Track changes off — edits apply directly. Existing suggestions remain until resolved.');
-  }, [activeSection, fireToast]);
+  const toggleTrackChanges = useCallback(
+    async (on: boolean) => {
+      if (!activeSection) throw new Error('No section open');
+      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+        track_changes: on,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t change track changes — ' +
+            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            '. The mode is unchanged.',
+          'error'
+        );
+        throw new Error('track toggle refused');
+      }
+      setSections(ss => ss.map(s => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
+      fireToast(
+        on
+          ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'
+          : 'Track changes off — edits apply directly. Existing suggestions remain until resolved.'
+      );
+    },
+    [activeSection, fireToast]
+  );
 
   /* ── Comment anchoring hand-off (editor → comments rail → editor) ── */
   const requestAnchoredComment = useCallback((anchor: CommentAnchorPayload) => {
-    return new Promise<string | null>((resolve) => {
+    return new Promise<string | null>(resolve => {
       pendingAnchorRef.current?.resolve(null); // supersede any prior request
       pendingAnchorRef.current = { anchor, resolve };
       setPendingAnchor(anchor);
@@ -917,26 +1217,45 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const liveCoedit = isFeatureEnabled('ENABLE_LIVE_COEDITING');
 
   /* ── Revert to a prior revision (server snapshots current first) ── */
-  const revert = useCallback(async (revId: string) => {
-    if (!activeSection) return;
-    try {
-      const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/revert`, { rev_id: revId });
-      const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Not reverted — your session isn’t authenticated.', 'error'); return; }
-      if (!res.ok) { fireToast('Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
-      const adopted = (json as { section?: AuthSection })?.section;
-      const content = adopted?.content ?? '';
-      setSections((ss) => ss.map((s) => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s)));
-      // The server replaced the content out from under the editor — remount
-      // the canvas on the new truth rather than leaving a stale buffer.
-      setContentEpoch((e) => e + 1);
-      setEditorDirty(false);
-      fireToast('Section reverted to the selected revision.');
-      void loadHistory(activeSection.id);
-    } catch (e) {
-      fireToast('Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
-    }
-  }, [activeSection, loadHistory, fireToast]);
+  const revert = useCallback(
+    async (revId: string) => {
+      if (!activeSection) return;
+      try {
+        const res = await apiRequest('POST', `/api/authoring/sections/${activeSection.id}/revert`, {
+          rev_id: revId,
+        });
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not reverted — your session isn’t authenticated.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'error'
+          );
+          return;
+        }
+        const adopted = (json as { section?: AuthSection })?.section;
+        const content = adopted?.content ?? '';
+        setSections(ss =>
+          ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s))
+        );
+        // The server replaced the content out from under the editor — remount
+        // the canvas on the new truth rather than leaving a stale buffer.
+        setContentEpoch(e => e + 1);
+        setEditorDirty(false);
+        fireToast('Section reverted to the selected revision.');
+        void loadHistory(activeSection.id);
+      } catch (e) {
+        fireToast(
+          'Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeSection, loadHistory, fireToast]
+  );
 
   /* ── Add a comment on the active section ──
      When a text-range anchor is pending (the editor's Comment button), it is
@@ -953,8 +1272,17 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         ...(pending ? { anchor: pending.anchor } : {}),
       });
       const json = await res.json().catch(() => null);
-      if (res.status === 401) { fireToast('Comment not posted — your session isn’t authenticated.', 'error'); return; }
-      if (!res.ok) { fireToast('Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error'); return; }
+      if (res.status === 401) {
+        fireToast('Comment not posted — your session isn’t authenticated.', 'error');
+        return;
+      }
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+          'error'
+        );
+        return;
+      }
       setNewComment('');
       const created = (json as { comment?: { id?: string } })?.comment;
       if (pending) {
@@ -967,7 +1295,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       }
       void loadComments(activeDocId);
     } catch (e) {
-      fireToast('Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(
+        'Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
     }
   }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
 
@@ -992,16 +1323,30 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           </div>
           <div className="ed-tree-m">
             {filing.document
-              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${filing.flat.length} sections`
-              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace('_', ' ')}`}
+              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
+                  filing.flat.length
+                } sections`
+              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace(
+                  '_',
+                  ' '
+                )}`}
           </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {/* The Module select is gone. It defaulted every filing type to
                 "M3" and hid the rest of the dossier behind a dropdown; the
                 filing outline below is the navigation now. Status stays — it
                 is a view filter, not a definition of the tree. */}
-            <select className="c2c-input" style={{ height: 28, flex: 1 }} value={status} onChange={(e) => setStatus(e.target.value)}>
-              {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+            <select
+              className="c2c-input"
+              style={{ height: 28, flex: 1 }}
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+            >
+              {STATUSES.map(s => (
+                <option key={s} value={s}>
+                  {s.replace('_', ' ')}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -1029,8 +1374,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             its 71 nested sections and a 510(k) shows A/B/C/D/E. Nodes bind to
             the authored section that holds the text by code. */}
         {filing.tree.length > 0 && (
-          <div className="ed-tree-scroll" style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}>
-            {filing.flat.map((node) => {
+          <div
+            className="ed-tree-scroll"
+            style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}
+          >
+            {filing.flat.map(node => {
               const bound = findSectionForNode(sections, node.key);
               const isActive = bound != null && bound.id === activeSectionId;
               return (
@@ -1052,7 +1400,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                       const m = /^(\d)/.exec(node.key)?.[1];
                       if (m) setModule(`M${m}`);
                     } else {
-                      fireToast(`${node.key} ${node.label} — no draft yet in this document.`, 'error');
+                      fireToast(
+                        `${node.key} ${node.label} — no draft yet in this document.`,
+                        'error'
+                      );
                     }
                   }}
                 >
@@ -1061,7 +1412,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     {node.label}
                   </span>
                   {node.mandatory && !bound && (
-                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }} title="Required by the rule pack">
+                    <span
+                      className="rd-chip tone-idle"
+                      style={{ marginLeft: 'auto' }}
+                      title="Required by the rule pack"
+                    >
                       required
                     </span>
                   )}
@@ -1084,23 +1439,34 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             scaffolder skips them deliberately. */}
         {filing.reason === 'no-governed-document' && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
-            This project has no governed filing document, so there is no section
-            outline to show. Projects created before scaffolding — and program
-            types with no rule pack — fall here.
+            This project has no governed filing document, so there is no section outline to show.
+            Projects created before scaffolding — and program types with no rule pack — fall here.
           </div>
         )}
 
         <div className="ed-tree-scroll">
           {docsState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 16 }}>Loading documents…</div>
+            <div className="scaf-note" style={{ padding: 16 }}>
+              Loading documents…
+            </div>
           ) : docsState === 'error' ? (
-            <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load documents"
-              hint="The document list didn’t respond. Sign in to your tenant and retry." />
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn’t load documents"
+              hint="The document list didn’t respond. Sign in to your tenant and retry."
+            />
           ) : docs.length === 0 ? (
-            <EmptyState icon={I.fileText} title="No documents here"
-              hint={`No ${status.replace('_', ' ')} documents in this project. Switch the status filter above.`} />
+            <EmptyState
+              icon={I.fileText}
+              title="No documents here"
+              hint={`No ${status.replace(
+                '_',
+                ' '
+              )} documents in this project. Switch the status filter above.`}
+            />
           ) : (
-            docs.map((d) => {
+            docs.map(d => {
               const open = d.id === activeDocId;
               return (
                 <div key={d.id} className="ed-vol">
@@ -1112,17 +1478,28 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                   >
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
-                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>{num(d.section_count)}</span>
+                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>
+                      {num(d.section_count)}
+                    </span>
                   </button>
-                  {open && (
-                    sectionsState === 'loading' ? (
-                      <div className="scaf-note" style={{ padding: '6px 12px' }}>Loading sections…</div>
+                  {open &&
+                    (sectionsState === 'loading' ? (
+                      <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                        Loading sections…
+                      </div>
                     ) : sectionsState === 'error' ? (
-                      <div className="scaf-note" style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}>Couldn’t load sections.</div>
+                      <div
+                        className="scaf-note"
+                        style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                      >
+                        Couldn’t load sections.
+                      </div>
                     ) : sections.length === 0 ? (
-                      <div className="scaf-note" style={{ padding: '6px 12px' }}>No sections yet in this document.</div>
+                      <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                        No sections yet in this document.
+                      </div>
                     ) : (
-                      sections.map((s) => (
+                      sections.map(s => (
                         <button
                           key={s.id}
                           className="ed-tree-row"
@@ -1132,11 +1509,16 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                         >
                           <span className="ed-num">{s.code}</span>
                           <span className="ed-lbl">{s.title}</span>
-                          {num(s.comment_count) > 0 && <span className="ed-dot" data-s="review" title={`${num(s.comment_count)} comments`} />}
+                          {num(s.comment_count) > 0 && (
+                            <span
+                              className="ed-dot"
+                              data-s="review"
+                              title={`${num(s.comment_count)} comments`}
+                            />
+                          )}
                         </button>
                       ))
-                    )
-                  )}
+                    ))}
                 </div>
               );
             })
@@ -1150,14 +1532,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           <div className="ed-crumbs">
             <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
             <span className="sep">›</span>
-            {/* Truncates rather than wrapping — see .ed-crumbs in
-                authoring-v2.css. `title` keeps the full name reachable, which
-                matters here because 510(k) and CTD titles carry the regulation
-                they answer to ("… — 510(k) Summary (21 CFR 807.92)"). */}
             <span className="doc-title" title={activeDoc?.title ?? undefined}>
               {activeDoc?.title ?? 'No document'}
             </span>
-            {activeSection && <><span className="sep">›</span><span className="here">{activeSection.code}</span></>}
+            {activeSection && (
+              <>
+                <span className="sep">›</span>
+                <span className="here">{activeSection.code}</span>
+              </>
+            )}
           </div>
           <div className="ed-doc-actions">
             <AuthoringCreateExport
@@ -1165,30 +1548,65 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               docTitle={activeDoc?.title ?? null}
               module={module}
               fireToast={fireToast}
-              onDocCreated={(d) => {
+              onDocCreated={d => {
                 // Adopt the server's document: refetch the tree and open it.
                 void loadDocs().then(() => setActiveDocId(d.id));
               }}
-              onSectionCreated={(s) => {
-                if (activeDocId) void loadSections(activeDocId).then(() => setActiveSectionId(s.id));
+              onSectionCreated={s => {
+                if (activeDocId)
+                  void loadSections(activeDocId).then(() => setActiveSectionId(s.id));
               }}
             />
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'ana' ? null : 'ana')} data-active={rail === 'ana' || undefined}>
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={event => (rail === 'ana' ? closeAna() : openAna(event.currentTarget))}
+              data-active={rail === 'ana' || undefined}
+            >
               {I.sparkles} AnA{ana.messages.length > 0 ? ' ' + ana.messages.length : ''}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'comments' ? null : 'comments')} data-active={rail === 'comments' || undefined}>
-              {I.checkCircle} Comments{activeSection && num(activeSection.comment_count) > 0 ? ' ' + num(activeSection.comment_count) : ''}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'comments' ? null : 'comments')}
+              data-active={rail === 'comments' || undefined}
+            >
+              {I.checkCircle} Comments
+              {activeSection && num(activeSection.comment_count) > 0
+                ? ' ' + num(activeSection.comment_count)
+                : ''}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'history' ? null : 'history')} data-active={rail === 'history' || undefined}>
-              {I.clock} History{activeSection && num(activeSection.revision_count) > 0 ? ' ' + num(activeSection.revision_count) : ''}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'history' ? null : 'history')}
+              data-active={rail === 'history' || undefined}
+            >
+              {I.clock} History
+              {activeSection && num(activeSection.revision_count) > 0
+                ? ' ' + num(activeSection.revision_count)
+                : ''}
             </button>
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'sources' ? null : 'sources')} data-active={rail === 'sources' || undefined}>
-              {I.fileText} Sources{activeSection && num(activeSection.citation_count) > 0 ? ' ' + num(activeSection.citation_count) : ''}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'sources' ? null : 'sources')}
+              data-active={rail === 'sources' || undefined}
+            >
+              {I.fileText} Sources
+              {activeSection && num(activeSection.citation_count) > 0
+                ? ' ' + num(activeSection.citation_count)
+                : ''}
             </button>
             {/* §11.50(b): the signature record was stored, exposed by
                 GET /docs/:docId/signatures, and read by nothing. The only
                 manifestation a signer saw was a toast that fades in 4.2s. */}
-            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'signatures' ? null : 'signatures')} data-active={rail === 'signatures' || undefined}>
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'signatures' ? null : 'signatures')}
+              data-active={rail === 'signatures' || undefined}
+            >
               {I.shieldCheck} Signatures
             </button>
             <button
@@ -1196,31 +1614,39 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
               disabled={!dirty || saving || docSealed}
-              title={docSealed ? 'This document is frozen — its content cannot be edited.' : undefined}
+              title={
+                docSealed ? 'This document is frozen — its content cannot be edited.' : undefined
+              }
             >
               {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
             </button>
-            {/* Drafting into a sealed section produces text with nowhere to go:
-                the accept path is refused by the same server gate as a typed
-                edit. Offering it would be inviting work the record cannot take. */}
             <button
               className="btn ghost"
               style={{ height: 30 }}
               onClick={() => askAna(draftPrompt)}
               disabled={docSealed}
-              title={docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined}
+              title={
+                docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined
+              }
             >
               {I.sparkles} Draft with AnA
             </button>
             {activeDoc && (
-              <AuthoringCollab documentId={activeDoc.id} sectionId={activeSectionId} fireToast={fireToast} />
+              <AuthoringCollab
+                documentId={activeDoc.id}
+                sectionId={activeSectionId}
+                fireToast={fireToast}
+              />
             )}
             {activeDoc && (
               <AuthoringFilingBar
                 docId={activeDoc.id}
                 docTitle={activeDoc.title}
                 docStatus={activeDoc.status}
-                onChanged={() => { void loadDocs(); if (activeDocId) void loadSections(activeDocId); }}
+                onChanged={() => {
+                  void loadDocs();
+                  if (activeDocId) void loadSections(activeDocId);
+                }}
                 fireToast={fireToast}
               />
             )}
@@ -1269,11 +1695,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           <div className="ed-doc-inner">
             {!activeSection ? (
               <div style={{ paddingTop: 48 }}>
-                <EmptyState icon={I.fileText}
+                <EmptyState
+                  icon={I.fileText}
                   title={activeDoc ? 'Select a section to edit' : 'Select a document'}
-                  hint={activeDoc
-                    ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
-                    : 'Choose a document from the tree to open its sections.'} />
+                  hint={
+                    activeDoc
+                      ? 'Choose a section from the tree to open its content in the editor. Every save records an auditable revision.'
+                      : 'Choose a document from the tree to open its sections.'
+                  }
+                />
               </div>
             ) : (
               <>
@@ -1282,24 +1712,38 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                   <h1 className="ed-mast-t">{activeSection.title}</h1>
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
-                    {num(activeSection.revision_count) > 0 ? ` · ${num(activeSection.revision_count)} revisions` : ''}
-                    {num(activeSection.citation_count) > 0 ? ` · ${num(activeSection.citation_count)} citations` : ''}
-                    {dirty ? ' · unsaved changes' : activeSection.updated_at ? ` · saved ${relTime(activeSection.updated_at)}` : ''}
+                    {num(activeSection.revision_count) > 0
+                      ? ` · ${num(activeSection.revision_count)} revisions`
+                      : ''}
+                    {num(activeSection.citation_count) > 0
+                      ? ` · ${num(activeSection.citation_count)} citations`
+                      : ''}
+                    {dirty
+                      ? ' · unsaved changes'
+                      : activeSection.updated_at
+                      ? ` · saved ${relTime(activeSection.updated_at)}`
+                      : ''}
                   </div>
                 </div>
-                {/* An inert editor with no explanation reads as a broken one.
-                    Says which state the document is in and what the way
-                    forward is, in the same words the server's refusal uses. */}
                 {docSealed && (
                   <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>
                     {I.lock}{' '}
                     {String(activeDoc?.status).toUpperCase() === 'APPROVED'
                       ? 'This document has been approved and frozen. Its content is part of the signed record and cannot be edited.'
-                      : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}
-                    {' '}Create a new version to make further changes.
+                      : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}{' '}
+                    Create a new version to make further changes.
                   </div>
                 )}
-                <div style={{ minHeight: 460, border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div
+                  style={{
+                    minHeight: 460,
+                    border: '1px solid var(--c2c-line,#e4e7ec)',
+                    borderRadius: 10,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
                   <RichSectionEditor
                     /* contentEpoch remounts the canvas when the server
                        replaces content out from under it (revert). */
@@ -1311,10 +1755,6 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     autosaveMs={null}
                     showSaveButton={false}
                     onDirtyChange={setEditorDirty}
-                    /* The seal, enforced where the content is actually mutated.
-                       RichSectionEditor threads this into TipTap's `editable`,
-                       so the canvas stops accepting keystrokes rather than
-                       accepting them and losing them at save time. */
                     readOnly={docSealed}
                     placeholder="Write the section content here. Cmd/Ctrl-S saves and records a revision."
                     storageKey={activeSection.id}
@@ -1367,12 +1807,41 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           sign-off here rather than in a rail this screen does not draw. */}
       {rail === 'ana' && (
         <aside className="ed-comments" aria-label="AnA — document authoring">
-          <div className="ed-comments-h">
-            AnA{activeSection ? ` · ${activeSection.code}` : activeDoc ? ` · ${activeDoc.title}` : ''}
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>
+              AnA
+              {activeSection
+                ? ` · ${activeSection.code}`
+                : activeDoc
+                ? ` · ${activeDoc.title}`
+                : ''}
+            </span>
+            <button
+              type="button"
+              className="ed-comments-close"
+              aria-label="Close AnA panel"
+              title="Close AnA panel"
+              onClick={closeAna}
+            >
+              {I.close}
+            </button>
           </div>
           <div
             ref={anaScrollRef}
-            style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 12px', display: 'grid', gap: 12, alignContent: 'start' }}
+            role="log"
+            aria-label="AnA conversation"
+            aria-live="polite"
+            aria-relevant="additions text"
+            aria-busy={ana.isStreaming}
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              padding: '10px 12px',
+              display: 'grid',
+              gap: 12,
+              alignContent: 'start',
+            }}
           >
             {ana.messages.length === 0 ? (
               <EmptyState
@@ -1388,17 +1857,22 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               ana.messages.map((m, i) =>
                 m.role === 'user' ? (
                   <div key={i} className="cmt">
-                    <div className="cmt-meta"><b>You</b></div>
+                    <div className="cmt-meta">
+                      <b>You</b>
+                    </div>
                     <div className="cmt-body">{m.text}</div>
                   </div>
                 ) : (
                   <div key={i} className="cmt">
-                    <div className="cmt-meta"><b>AnA</b></div>
+                    <div className="cmt-meta">
+                      <b>AnA</b>
+                    </div>
                     {/* Until the first token lands the server's status phase
                         stands in — never an invented sentence. */}
                     <div className="cmt-body" style={{ whiteSpace: 'pre-wrap' }}>
                       {m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}
                     </div>
+                    <AnaActivity message={m} onSuggestedAction={askAna} />
                     {/* AI output enters the record ONLY as an attributed
                         in-text suggestion — struck-in green, pending until a
                         human accepts or rejects each edit in the canvas.
@@ -1413,9 +1887,14 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                               name: 'AnA (AI draft)',
                             });
                             if (ok) {
-                              fireToast('Draft inserted as tracked suggestions — review each edit in the canvas, then save.');
+                              fireToast(
+                                'Draft inserted as tracked suggestions — review each edit in the canvas, then save.'
+                              );
                             } else {
-                              fireToast('Couldn’t insert — the canvas is not editable right now.', 'error');
+                              fireToast(
+                                'Couldn’t insert — the canvas is not editable right now.',
+                                'error'
+                              );
                             }
                           }}
                         >
@@ -1426,7 +1905,9 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
                         {m.executedActions.map((a, ai) => (
-                          <span key={ai} className="rd-chip tone-ok" title={a.error || a.label}>{a.label}</span>
+                          <span key={ai} className="rd-chip tone-ok" title={a.error || a.label}>
+                            {a.label}
+                          </span>
                         ))}
                       </div>
                     )}
@@ -1434,16 +1915,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                       <AuthoringSignoffs signoffs={m.pendingSignoffs} />
                     )}
                   </div>
-                ),
+                )
               )
             )}
           </div>
           <div style={{ padding: '10px 12px', borderTop: '1px solid var(--c2c-line,#e4e7ec)' }}>
             <textarea
               className="c2c-input"
+              ref={anaComposerRef}
+              aria-label={activeSection ? `Ask AnA about ${activeSection.code}` : 'Ask AnA'}
               value={anaDraft}
-              onChange={(e) => setAnaDraft(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={e => setAnaDraft(e.target.value)}
+              onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   const t = anaDraft.trim();
@@ -1455,7 +1938,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               placeholder={activeSection ? `Ask about ${activeSection.code}…` : 'Ask AnA…'}
               style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 6 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 8,
+                marginTop: 6,
+              }}
+            >
               <span style={{ fontSize: 11, opacity: 0.7 }}>
                 {I.lock} AnA proposes; you accept and save.
               </span>
@@ -1486,42 +1977,77 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               edit; this control recomputes the whole chain from stored content
               and reports exactly what it found. */}
           {activeSection && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8, padding: '0 2px', fontSize: 11.5 }}>
-              <button className="nda-open" onClick={() => void verifyLedger(activeSection.id)} disabled={ledger === 'checking'}>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'baseline',
+                gap: 8,
+                padding: '0 2px',
+                fontSize: 11.5,
+              }}
+            >
+              <button
+                className="nda-open"
+                onClick={() => void verifyLedger(activeSection.id)}
+                disabled={ledger === 'checking'}
+              >
                 {I.shieldCheck} {ledger === 'checking' ? 'Recomputing ledger…' : 'Verify ledger'}
               </button>
               {ledger === 'error' && (
                 <span style={{ color: 'var(--c2c-err,#b42318)' }}>
-                  Couldn’t recompute the ledger — this is a failed check, not a verdict about the record.
+                  Couldn’t recompute the ledger — this is a failed check, not a verdict about the
+                  record.
                 </span>
               )}
-              {ledger != null && ledger !== 'error' && ledger !== 'checking' && (
-                ledger.intact ? (
+              {ledger != null &&
+                ledger !== 'error' &&
+                ledger !== 'checking' &&
+                (ledger.intact ? (
                   <span className="sp-tone-ok">
-                    Ledger intact — {ledger.chainedCount} chained revision{ledger.chainedCount === 1 ? '' : 's'} recomputed and verified
+                    Ledger intact — {ledger.chainedCount} chained revision
+                    {ledger.chainedCount === 1 ? '' : 's'} recomputed and verified
                     {ledger.preLedgerCount > 0 ? `; ${ledger.preLedgerCount} pre-ledger` : ''}.
                   </span>
                 ) : (
                   <span style={{ color: 'var(--c2c-err,#b42318)', fontWeight: 600 }}>
-                    Ledger BROKEN at {ledger.breaks.length} point{ledger.breaks.length === 1 ? '' : 's'} — {ledger.breaks.map((b) => b.reason).join(', ')}. The history has been altered or forked; treat this section’s record as disputed.
+                    Ledger BROKEN at {ledger.breaks.length} point
+                    {ledger.breaks.length === 1 ? '' : 's'} —{' '}
+                    {ledger.breaks.map(b => b.reason).join(', ')}. The history has been altered or
+                    forked; treat this section’s record as disputed.
                   </span>
-                )
-              )}
+                ))}
             </div>
           )}
           {!activeSection ? (
-            <EmptyState icon={I.clock} title="No section selected" hint="Select a section to see its revision history." />
+            <EmptyState
+              icon={I.clock}
+              title="No section selected"
+              hint="Select a section to see its revision history."
+            />
           ) : revisionsState === 'error' ? (
-            <EmptyState icon={I.alertTriangle} title="Revision history unavailable"
-              hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions." />
+            <EmptyState
+              icon={I.alertTriangle}
+              title="Revision history unavailable"
+              hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions."
+            />
           ) : revisions.length === 0 ? (
-            <EmptyState icon={I.clock} title="No prior revisions"
-              hint="Each save records the new content here under its author, so you can compare and revert." />
+            <EmptyState
+              icon={I.clock}
+              title="No prior revisions"
+              hint="Each save records the new content here under its author, so you can compare and revert."
+            />
           ) : (
             revisions.map((r, i) => (
               <div key={r.id} className="cmt">
                 <div className="cmt-meta">
-                  <span className="cmt-av">{(r.created_by_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
+                  <span className="cmt-av">
+                    {(r.created_by_name ?? '·')
+                      .split(' ')
+                      .map(x => x[0])
+                      .join('')
+                      .slice(0, 2)}
+                  </span>
                   <b>{r.created_by_name ?? r.created_by_email ?? 'Unknown author'}</b>
                   {/* Which write path produced this state — the input's kind,
                       from the ledger, never inferred. */}
@@ -1530,13 +2056,26 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                   )}
                   <span className="cmt-when">· {relTime(r.created_at)}</span>
                   {r.chain_sha256 && (
-                    <span className="cmt-when" style={{ fontFamily: 'var(--font-mono, monospace)' }} title={`Ledger link ${r.chain_sha256}`}>
+                    <span
+                      className="cmt-when"
+                      style={{ fontFamily: 'var(--font-mono, monospace)' }}
+                      title={`Ledger link ${r.chain_sha256}`}
+                    >
                       · {r.chain_sha256.slice(0, 8)}
                     </span>
                   )}
-                  <button className="nda-open" style={{ marginLeft: 'auto' }} onClick={() => revert(r.id)}>{I.rotateCcw} Revert</button>
+                  <button
+                    className="nda-open"
+                    style={{ marginLeft: 'auto' }}
+                    onClick={() => revert(r.id)}
+                  >
+                    {I.rotateCcw} Revert
+                  </button>
                 </div>
-                <div className="cmt-body" style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}>
+                <div
+                  className="cmt-body"
+                  style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}
+                >
                   {(r.content ?? '').slice(0, 400) || <span style={{ opacity: 0.6 }}>(empty)</span>}
                 </div>
                 {/* The word-level redline against the revision before this
@@ -1569,33 +2108,53 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         <aside className="ed-comments">
           <div className="ed-comments-h">Drafted from</div>
           {!activeSection ? (
-            <EmptyState icon={I.fileText} title="No section selected"
-              hint="Select a section to see the sources it is drafted from." />
+            <EmptyState
+              icon={I.fileText}
+              title="No section selected"
+              hint="Select a section to see the sources it is drafted from."
+            />
           ) : sourcesState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 12 }}>Loading this section’s sources…</div>
+            <div className="scaf-note" style={{ padding: 12 }}>
+              Loading this section’s sources…
+            </div>
           ) : sourcesState === 'error' ? (
-            <EmptyState icon={I.alertTriangle} title="Couldn’t load this section’s sources"
-              hint="The read failed, so nothing is shown — this is not the same as the section citing nothing. Sign in and retry, or check the service is reachable." />
+            <EmptyState
+              icon={I.alertTriangle}
+              title="Couldn’t load this section’s sources"
+              hint="The read failed, so nothing is shown — this is not the same as the section citing nothing. Sign in and retry, or check the service is reachable."
+            />
           ) : (
             <>
-              <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+              <div
+                style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+              >
                 {!picking ? (
-                  <button className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={() => setPicking(true)}>
+                  <button
+                    className="btn ghost"
+                    style={{ height: 28, fontSize: 12 }}
+                    onClick={() => setPicking(true)}
+                  >
                     {I.plus} Record a source
                   </button>
                 ) : projectSources.length === 0 ? (
                   <div style={{ fontSize: 12, opacity: 0.8 }}>
                     No project sources available. Add documents to the project’s data room first, or
                     open this document from its project so the data room is in context.
-                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => setPicking(false)}>Close</button>
+                    <button
+                      className="nda-open"
+                      style={{ marginLeft: 8 }}
+                      onClick={() => setPicking(false)}
+                    >
+                      Close
+                    </button>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gap: 4 }}>
                     <span style={{ fontSize: 11.5, opacity: 0.75 }}>
-                      Choose a source from this project’s data room. Its current checksum is recorded
-                      with the citation.
+                      Choose a source from this project’s data room. Its current checksum is
+                      recorded with the citation.
                     </span>
-                    {projectSources.map((ps) => (
+                    {projectSources.map(ps => (
                       <button
                         key={ps.id}
                         className="nda-open"
@@ -1612,31 +2171,54 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                         {ps.extractionStatus !== 'extracted' ? ' — text not readable' : ''}
                       </button>
                     ))}
-                    <button className="nda-open" onClick={() => setPicking(false)}>Cancel</button>
+                    <button className="nda-open" onClick={() => setPicking(false)}>
+                      Cancel
+                    </button>
                   </div>
                 )}
               </div>
 
               {sources.length === 0 ? (
-                <EmptyState icon={I.fileText} title="No sources recorded for this section"
-                  hint="Record the documents this section is written from. Each citation stores the source’s content identity, so if the source later changes this section is flagged rather than quietly left behind." />
+                <EmptyState
+                  icon={I.fileText}
+                  title="No sources recorded for this section"
+                  hint="Record the documents this section is written from. Each citation stores the source’s content identity, so if the source later changes this section is flagged rather than quietly left behind."
+                />
               ) : (
-                sources.map((s) => {
+                sources.map(s => {
                   const st = sourceStateLabel(s);
                   return (
                     <div key={s.citationId} className="cmt">
                       <div className="cmt-meta">
-                        <b style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <b
+                          style={{
+                            minWidth: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {s.source?.title ?? `Source ${s.citationId.slice(0, 8)}`}
                         </b>
                         <span className="cmt-when">· cited {relTime(s.citedAt)}</span>
                       </div>
                       <div className="cmt-body" style={{ display: 'grid', gap: 4 }}>
-                        <span className={st.tone === 'ok' ? 'sp-tone-ok' : st.tone === 'warn' ? 'sp-tone-warn' : undefined}
-                          style={{ fontSize: 12 }} title={st.hint}>
+                        <span
+                          className={
+                            st.tone === 'ok'
+                              ? 'sp-tone-ok'
+                              : st.tone === 'warn'
+                              ? 'sp-tone-warn'
+                              : undefined
+                          }
+                          style={{ fontSize: 12 }}
+                          title={st.hint}
+                        >
                           {st.text}
                         </span>
-                        {s.citationText && <span style={{ fontSize: 12, opacity: 0.85 }}>{s.citationText}</span>}
+                        {s.citationText && (
+                          <span style={{ fontSize: 12, opacity: 0.85 }}>{s.citationText}</span>
+                        )}
                         <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button className="nda-open" onClick={() => void reresolve(s.citationId)}>
                             {I.rotateCcw} Re-read source
@@ -1647,9 +2229,18 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                             </button>
                           )}
                           {s.state === 'changed' && (
-                            <button className="nda-open" onClick={() => askAna(
-                              `The source "${s.source?.title ?? 'this document'}" changed after section ${activeSection.code} was drafted from it. Read the current source and tell me what in this section no longer matches. Do not rewrite it yet.`,
-                            )}>
+                            <button
+                              className="nda-open"
+                              onClick={() =>
+                                askAna(
+                                  `The source "${
+                                    s.source?.title ?? 'this document'
+                                  }" changed after section ${
+                                    activeSection.code
+                                  } was drafted from it. Read the current source and tell me what in this section no longer matches. Do not rewrite it yet.`
+                                )
+                              }
+                            >
                               {I.sparkles} Ask what changed
                             </button>
                           )}
@@ -1668,50 +2259,129 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         <aside className="ed-comments">
           <div className="ed-comments-h">Comments</div>
           {activeSection && (
-            <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+            <div
+              style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+            >
               {/* The range being commented on, handed over by the editor's
                   Comment button. Posting resolves the server id back to the
                   canvas so the highlight mark can be applied and saved. */}
               {pendingAnchor && (
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 6, fontSize: 12 }}>
-                  <span className="rd-chip tone-idle" style={{ flexShrink: 0 }}>Anchoring to</span>
-                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    alignItems: 'baseline',
+                    marginBottom: 6,
+                    fontSize: 12,
+                  }}
+                >
+                  <span className="rd-chip tone-idle" style={{ flexShrink: 0 }}>
+                    Anchoring to
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontStyle: 'italic',
+                    }}
+                  >
                     “{pendingAnchor.quote}”
                   </span>
-                  <button className="nda-open" onClick={cancelAnchoredComment}>Cancel</button>
+                  <button className="nda-open" onClick={cancelAnchoredComment}>
+                    Cancel
+                  </button>
                 </div>
               )}
               <textarea
-                className="c2c-input" value={newComment} onChange={(e) => setNewComment(e.target.value)}
-                placeholder={pendingAnchor ? 'Comment on the selected text…' : `Comment on ${activeSection.code}…`}
+                className="c2c-input"
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                placeholder={
+                  pendingAnchor
+                    ? 'Comment on the selected text…'
+                    : `Comment on ${activeSection.code}…`
+                }
                 style={{ width: '100%', minHeight: 56, resize: 'vertical', fontSize: 13 }}
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                <button className="btn primary" style={{ height: 28 }} onClick={addComment} disabled={!newComment.trim()}>{I.plus} Add comment</button>
+                <button
+                  className="btn primary"
+                  style={{ height: 28 }}
+                  onClick={addComment}
+                  disabled={!newComment.trim()}
+                >
+                  {I.plus} Add comment
+                </button>
               </div>
             </div>
           )}
           {comments.length === 0 ? (
-            <EmptyState icon={I.checkCircle} title="No comments yet" hint="Review comments on this document appear here." />
+            <EmptyState
+              icon={I.checkCircle}
+              title="No comments yet"
+              hint="Review comments on this document appear here."
+            />
           ) : (
-            comments.map((c) => {
+            comments.map(c => {
               const anchor = asTextRangeAnchor(c.anchor);
               return (
-                <div key={c.id} className="cmt" data-active={focusedCommentId === c.id || undefined}
-                  style={focusedCommentId === c.id ? { background: 'color-mix(in srgb, var(--accent-100,#2563eb) 7%, transparent)' } : undefined}>
+                <div
+                  key={c.id}
+                  className="cmt"
+                  data-active={focusedCommentId === c.id || undefined}
+                  style={
+                    focusedCommentId === c.id
+                      ? {
+                          background:
+                            'color-mix(in srgb, var(--accent-100,#2563eb) 7%, transparent)',
+                        }
+                      : undefined
+                  }
+                >
                   <div className="cmt-meta">
-                    <span className="cmt-av">{(c.author_name ?? '·').split(' ').map((x) => x[0]).join('').slice(0, 2)}</span>
+                    <span className="cmt-av">
+                      {(c.author_name ?? '·')
+                        .split(' ')
+                        .map(x => x[0])
+                        .join('')
+                        .slice(0, 2)}
+                    </span>
                     <b>{c.author_name ?? 'Unknown'}</b>
                     {c.section_code && <span className="cmt-role">{c.section_code}</span>}
                     <span className="cmt-when">· {relTime(c.created_at)}</span>
-                    {c.status && c.status !== 'open' && <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>{c.status}</span>}
+                    {c.status && c.status !== 'open' && (
+                      <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>
+                        {c.status}
+                      </span>
+                    )}
                   </div>
                   {/* The quoted range this thread is anchored to, with a jump
                       into the canvas. An anchor whose text no longer exists is
                       reported as exactly that — never silently repointed. */}
                   {anchor && (
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', margin: '2px 0 4px', fontSize: 11.5 }}>
-                      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic', opacity: 0.8 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 6,
+                        alignItems: 'baseline',
+                        margin: '2px 0 4px',
+                        fontSize: 11.5,
+                      }}
+                    >
+                      <span
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontStyle: 'italic',
+                          opacity: 0.8,
+                        }}
+                      >
                         “{anchor.quote}”
                       </span>
                       {c.section_id === activeSectionId && (
@@ -1721,7 +2391,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                             setFocusedCommentId(c.id);
                             const found = editorRef.current?.selectCommentAnchor(c.id);
                             if (!found) {
-                              fireToast('The annotated text no longer exists in the current draft — the comment is kept, its highlight is gone.', 'error');
+                              fireToast(
+                                'The annotated text no longer exists in the current draft — the comment is kept, its highlight is gone.',
+                                'error'
+                              );
                             }
                           }}
                         >

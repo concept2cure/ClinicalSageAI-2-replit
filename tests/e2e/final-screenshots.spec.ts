@@ -11,7 +11,7 @@ async function login(page: Page) {
   await page.goto(`${APP_BASE}/concept2cure/login`);
   const emailInput = page.locator('input#email');
   await expect(emailInput).toBeVisible({ timeout: 15000 });
-  await emailInput.fill('jm.smith@concept2cure.pro');
+  await emailInput.fill('jonmichaelpsmith@gmail.com');
   const continueBtn = page.locator('button').filter({ hasText: 'Continue' });
   await continueBtn.click();
   const passwordInput = page.locator('input#password');

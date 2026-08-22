@@ -92,7 +92,7 @@ describe('seedGaDemoUser — demo password source', () => {
   function insertedUserParams(client: PoolClient): unknown[] {
     const calls = (client.query as unknown as { mock: { calls: unknown[][] } }).mock.calls;
     const insert = calls.find(
-      (c) => typeof c[0] === 'string' && (c[0] as string).includes('INSERT INTO users')
+      c => typeof c[0] === 'string' && (c[0] as string).includes('INSERT INTO users')
     );
     return (insert?.[1] ?? []) as unknown[];
   }
@@ -133,7 +133,7 @@ describe('seedGaDemoUser — demo password source', () => {
     expect(await isKnownFallback(insertedUserParams(client)[2])).toBe(true);
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
     const warning = mockLog.warn.mock.calls[0][0] as string;
-    expect(warning).toContain('jm.smith@concept2cure.pro');
+    expect(warning).toContain('jonmichaelpsmith@gmail.com');
     expect(warning).toContain('PUBLICLY KNOWN');
     expect(warning).toContain('DEMO_USER_PASSWORD');
   });

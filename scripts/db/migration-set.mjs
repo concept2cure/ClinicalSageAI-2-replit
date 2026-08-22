@@ -837,8 +837,10 @@ export const C2C_MIGRATION_FILES = [
   //     by server code at all. It is dead schema, not a live gap; the "missing
   //     regulatory.submissions creator" C-34 recorded here was an artifact of the
   //     guard bug C-35 fixed. Left unwired because nothing needs it.
-  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and wired above; its
-  //     UUID-vs-serial atom-key conflict was the defect, not an ordering gap.
+  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and intentionally
+  //     excluded; its UUID-vs-serial atom-key conflict cannot be replayed
+  //     against the canonical integer atom schema. The reconciliation path
+  //     above owns those tables now.
 
   // ── Performance indexes on hot-path tables (added 2026-08-10) ────────────────
   // Indexes on the 30 most-queried tables targeting organization_id (tenant
@@ -1152,6 +1154,12 @@ export const C2C_MIGRATION_FILES = [
   // lineages / reach no durable applier respectively).
   'migrations/20260814b_literature_screening_decisions.sql',
 
+  // ── GSPR catalog + post-market authoring, MDR/IVDR Annex I ───────────────
+  // The route and Drizzle schema already exist in the application, but this
+  // migration was never on a durable apply path. Keep it before PMCF
+  // enrollment, whose records point to post-market documents by convention.
+  'migrations/20260429_gspr_postmarket.sql',
+
   // ── PMCF enrolment progress, GA ledger L5 (added 2026-08-14) ─────────────
   // pmcf_enrollment_records — the EU MDR Annex XIV Part B §6.2 / MDCG 2020-7
   // execution evidence behind the CER's post-market section. The PMCF PLAN was
@@ -1258,7 +1266,6 @@ export const C2C_MIGRATION_FILES = [
   // table, no column, no data, and existing placeholder rows are left alone
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
-
 
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
@@ -1464,7 +1471,7 @@ export const C2C_MIGRATION_FILES = [
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
-const selfTransacting = (sql) => /^\s*BEGIN\s*;/im.test(sql);
+const selfTransacting = sql => /^\s*BEGIN\s*;/im.test(sql);
 
 /**
  * Apply `files` (repo-relative) against `pool`, one transaction per file.
@@ -1482,7 +1489,7 @@ export async function applyMigrationFiles(
   pool,
   repoRoot,
   files,
-  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {},
+  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {}
 ) {
   const applied = [];
   const failures = [];
