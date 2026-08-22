@@ -437,14 +437,38 @@ export async function persistGovernedActionSignature(
 
   // Signer snapshot (printed name — §11.50). Read on the caller's client so the
   // lookup participates in the same transaction. Fail closed if unresolvable.
-  // tenant-isolation-safe: primary-key lookup of the SIGNER'S OWN row, and `users` carries no organization_id — membership is a separate relation, so there is no org column to filter on in this statement. `params.userId` is the authenticated actor resolved from the request (never caller-supplied), and only name/email/title are read, to render the §11.50 printed name of the person signing. Scoping is enforced by the caller's transaction, which is already org-checked.
+  //
+  // Joined to organization_users so the printed name resolves ONLY for a signer
+  // who is a member of the org this signature is being made in. It used to be a
+  // bare primary-key read of `users`, which was safe as CALLED — both callers
+  // pass the authenticated actor's own id — but safe by convention: nothing
+  // stopped a future caller passing any user id, and §11.50 requires the
+  // printed name OF THE SIGNER. A name resolved across a tenant boundary is a
+  // misattributed signature in a filing an agency reads.
+  //
+  // NOT scoped on `users.default_organization_id`, which is the obvious fix and
+  // the wrong one: it names a preference, not a membership, so a signer
+  // legitimately acting outside their default org would fail to resolve and a
+  // valid signature would be refused. organization_users is the authorization
+  // relation — the same one `server/auth.ts` selects a session's tenant from.
+  //
+  // tenant-isolation-safe: the org predicate is on organization_users.organization_id, bound to params.orgId — the org the caller's transaction is already scoped to. Only name/email/title are read, to render the §11.50 printed name of the person signing.
   const signer = await client.query(
-    `SELECT name, email, title FROM users WHERE id = $1 LIMIT 1`,
-    [params.userId],
+    `SELECT u.name, u.email, u.title
+       FROM users u
+       JOIN organization_users ou
+         ON ou.user_id = u.id
+        AND ou.organization_id = $2
+      WHERE u.id = $1
+      LIMIT 1`,
+    [params.userId, params.orgId],
   );
   if (signer.rows.length === 0) {
+    // Non-membership and non-existence are one refusal on purpose: both mean
+    // this org cannot attribute this signature, and distinguishing them in the
+    // error would disclose whether a user id exists in another tenant.
     throw new Error(
-      `governed ${command}: signer user ${params.userId} not found — cannot attribute signature (§11.100).`,
+      `governed ${command}: signer user ${params.userId} is not a member of org ${params.orgId} — cannot attribute signature (§11.100).`,
     );
   }
   const signerName: string = signer.rows[0].name || signer.rows[0].email;
