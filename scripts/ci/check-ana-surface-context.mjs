@@ -52,7 +52,7 @@ const PUBLISHER = 'usePublishSurfaceContext';
  * Surfaces publishing screen state today. RAISE THIS as surfaces are wired;
  * never lower it to make a build pass — a fall means a surface went silent.
  */
-const BASELINE = 19;
+const BASELINE = 20;
 
 /**
  * Surfaces that legitimately publish nothing, with the reason.
