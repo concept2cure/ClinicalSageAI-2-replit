@@ -214,7 +214,7 @@ type ProactiveBlock = { kind: 'briefing' | 'deadline' | 'none'; block: string };
 type ProjectPrefetchResults = [
   PromiseSettledResult<Awaited<ReturnType<typeof getFeedbackSummary>>>,
   PromiseSettledResult<Awaited<ReturnType<typeof prefetchProjectIntelligence>>>,
-  PromiseSettledResult<Awaited<ReturnType<typeof preloadRIMContext>>>,
+  PromiseSettledResult<Awaited<ReturnType<typeof preloadRIMContext>>>
 ];
 
 export async function prefetchRouteIntelligenceContext(params: {
