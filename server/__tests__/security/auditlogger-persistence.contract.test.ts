@@ -13,10 +13,21 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+/** What the real `auditService.logAction` resolves with (AuditWriteResult). */
+const WROTE = { persisted: true, chained: true, tamperProof: true } as const;
+
 const { logAction } = vi.hoisted(() => ({
   // Typed param so `logAction.mock.calls[0][0]` is the forwarded entry (not an
   // empty-tuple element) — keeps the field-mapping assertions below type-safe.
-  logAction: vi.fn(async (_entry: Record<string, any>) => {}),
+  //
+  // It RESOLVES WITH THE RESULT, because that is what the real one does.
+  // This double used to resolve `undefined`, from before `logAction` reported
+  // its own outcome; the caller reads `canonical.persisted` and every test here
+  // died on `Cannot read properties of undefined`. A stand-in that does not
+  // honour the contract it stands in for tests nothing about the real thing.
+  logAction: vi.fn(async (_entry: Record<string, any>) => ({
+    persisted: true, chained: true, tamperProof: true,
+  })),
 }));
 
 // auditLogger imports auditService via '../auditService'; intercept that module.
@@ -33,7 +44,7 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  logAction.mockImplementation(async () => {});
+  logAction.mockImplementation(async () => ({ ...WROTE }));
 });
 
 describe('Part 11 — auditLogger forwards every event to the persistent store', () => {

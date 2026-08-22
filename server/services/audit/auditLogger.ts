@@ -94,24 +94,42 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
   // caller (an audit-trail outage must not break the user action it records).
   // resourceType is required there; fall back to the event category when a
   // resource is not named.
-  const canonical = await auditService.logAction({
-    action: `${event.category}.${event.action}`,
-    resourceType: event.resourceType ?? event.category,
-    resourceId: event.resourceId,
-    organizationId: event.organizationId,
-    userId: event.userId,
-    ipAddress: event.ipAddress,
-    userAgent: event.userAgent,
-    details: {
-      ...(event.metadata ?? {}),
-      category: event.category,
-      severity: event.severity,
-      success: event.success,
-      ...(event.previousValue !== undefined ? { previousValue: event.previousValue } : {}),
-      ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
-      ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
-    },
-  });
+  /* A REJECTION is an outage too, and the comment above promises the caller is
+     never broken by one. `logAction` is documented to resolve with
+     `persisted: false` on a persistence failure, which is why the old
+     try/catch was removed — but "resolves on a HANDLED failure" is not "never
+     throws", and an unhandled one (a bug in the store, a pool error raised
+     rather than returned) would propagate straight through a governed action
+     that had already happened.
+     Catching it back into the same shape is what keeps the promise without
+     reintroducing the double swallow that was fixed here: there is still
+     exactly ONE place below that reports a lost §11.10(e) record, and both
+     failure modes now reach it with a reason. */
+  const canonical = await auditService
+    .logAction({
+      action: `${event.category}.${event.action}`,
+      resourceType: event.resourceType ?? event.category,
+      resourceId: event.resourceId,
+      organizationId: event.organizationId,
+      userId: event.userId,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
+      details: {
+        ...(event.metadata ?? {}),
+        category: event.category,
+        severity: event.severity,
+        success: event.success,
+        ...(event.previousValue !== undefined ? { previousValue: event.previousValue } : {}),
+        ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
+        ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
+      },
+    })
+    .catch((err: unknown) => ({
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: err instanceof Error ? err.message : String(err),
+    }));
 
   /* This was `try { await logAction } catch { logger.error(...) }` — a DOUBLE
      swallow, and the outer half could never fire, because logAction resolves
