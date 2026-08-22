@@ -11,8 +11,20 @@
  *   - "raise a change request", "train me", and the change-form gallery all
  *     hand a grounded prompt to AnA (no direct mutation).
  *
- * The hooks are mocked to the load state (null) so the surface renders its
- * typed fixtures deterministically, offline.
+ * The hooks are mocked to RESOLVE with the canonical rows, so the surface has
+ * real data to render.
+ *
+ * They used to be mocked to the load state (`changes: null`) and the surface
+ * fell through to `?? FIXTURE_CHANGES`. That made this file a test OF the
+ * ungated fallback — on a GxP change-control register, where the rows assert
+ * `classification: 'major'` and `status: 'approved'`, and where the fallback
+ * fired on an empty tenant, an expired token or a 500 with nothing on screen
+ * saying so. The fallback is gone (it goes through `useSampleRows` now, which
+ * substitutes only under explicit sample mode), so a null hook correctly
+ * renders an empty register and these assertions correctly stopped passing.
+ * Nothing they actually test — the flowchart, the stage filter, the expansion,
+ * the AnA wiring — is about where the rows came from, so the mock supplies
+ * them as live data and every case stands unchanged.
  *
  * Plain DOM assertions (no jest-dom) to match the sibling surface tests.
  */
@@ -20,10 +32,18 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 
-vi.mock('../changeHooks', () => ({
-  useChangeRegister: () => ({ changes: null, loading: false, error: null, refresh: () => {} }),
-  useChangeSummary: () => ({ summary: null, loading: false, error: null }),
-}));
+vi.mock('../changeHooks', async () => {
+  const { FIXTURE_CHANGES, FIXTURE_SUMMARY } = await import('../changeData');
+  return {
+    useChangeRegister: () => ({
+      changes: FIXTURE_CHANGES,
+      loading: false,
+      error: null,
+      refresh: () => {},
+    }),
+    useChangeSummary: () => ({ summary: FIXTURE_SUMMARY, loading: false, error: null }),
+  };
+});
 
 import { ChangeControl } from '../ChangeControl';
 
