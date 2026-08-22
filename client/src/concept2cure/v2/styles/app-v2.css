@@ -230,6 +230,52 @@
   .c2c-v2 .c2c-empty-state .c2c-empty-ic-busy { animation: none; }
 }
 
+/* SampleDataBanner — the standing marker on any panel showing example content.
+ *
+ * ── It had no CSS. None. ─────────────────────────────────────────────────────
+ * `.sample-data-banner`, `.sample-data-icon`, `.sample-data-text` and
+ * `.sample-data-tag` matched zero rules anywhere in client/ or design-system/,
+ * across eleven usages — the device vault, the post-market document register,
+ * the submission pipeline, the IVD panes, the 510(k) predicate table and the
+ * rest. So the component rendered, and it rendered as a bare line of body text:
+ * no border, no tint, no icon sizing, nothing that reads as a warning.
+ *
+ * That matters more than a missing style usually does. This banner is the ENTIRE
+ * mitigation that makes fixture content acceptable — the argument is "sample
+ * data is fine because the user is always told", and the telling was
+ * indistinguishable from the surrounding copy. A reviewer scanning a predicate
+ * table had no visual signal that the rows were examples.
+ *
+ * ── Matched to the MDX gate's own banner ─────────────────────────────────────
+ * `.mdx-shell .data-gate-sample` (mdx/app.css) is the same marker for panels
+ * that go through <DataGate>, and it has been styled all along. These rules
+ * mirror it so the two read identically — a user should not be able to tell
+ * which component drew the warning.
+ *
+ * Scoped to `.c2c-v2` rather than `.mdx-shell`: the banner is used from the
+ * quality lane too (QualityModule → quality/*), which is a v2 surface and never
+ * inside `.mdx-shell`. Every consumer is a descendant of the one shell root.
+ *
+ * Colour is never the only signal: the banner also carries an alert icon, the
+ * literal word "Sample data" in bold, and a sentence saying it is not your
+ * project. --text-300 on --warning-muted keeps the body text legible where the
+ * tint is lightest. */
+.c2c-v2 .sample-data-banner {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; margin-bottom: 12px;
+  font-size: 11px; line-height: 1.5; color: var(--text-300);
+  background: var(--warning-muted, var(--bg-100));
+  border: 1px solid var(--warning, var(--border));
+  border-radius: var(--radius-md, 6px);
+}
+.c2c-v2 .sample-data-icon {
+  color: var(--warning, var(--text-400)); flex-shrink: 0;
+  width: 16px; height: 16px; margin-top: 1px;
+}
+.c2c-v2 .sample-data-icon svg { width: 16px; height: 16px; }
+.c2c-v2 .sample-data-text { min-width: 0; }
+.c2c-v2 .sample-data-tag { color: var(--text-100); font-weight: 600; }
+
 /* ErrorState — the ONE surface a failure is reported on.
  *
  * Replaces four parallel implementations: EmptyState's tone-error panel (139

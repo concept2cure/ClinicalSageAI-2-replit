@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
@@ -195,6 +197,61 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     const avgResidual = (rows.reduce((s, r) => s + prod(r, true), 0) / (total || 1)).toFixed(1);
     return { total, open, accepted, highResidual, avgInitial, avgResidual };
   }, [rows, view]);
+
+  /* What AnA can see of this screen.
+     She knew the user was on "risk" and nothing else — not how many hazards are
+     open, how many carry a high residual score, or which one is selected — so
+     "what still needs mitigation?" required the user to read their own risk
+     file back to her.
+
+     A failed read publishes the failure. `rows` is EMPTY_ROWS both when the
+     governed risk file is genuinely empty and when the read threw, and
+     "0 open risks" over an outage is the most dangerous sentence this surface
+     could produce: it reads as a clean risk file to the person accountable for
+     one. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The risk file is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The risk file could not be read, so this screen shows no hazards because of a failure, not because none are recorded.',
+        availableActions: ['Retry the risk-file read'],
+      };
+    }
+    return {
+      summary:
+        `Risk management (ISO 14971): ${summary.total} hazard(s) — ${summary.open} open or mitigating, ` +
+        `${summary.accepted} accepted, ${summary.highResidual} with a residual score of 15 or more. ` +
+        `Mean score ${summary.avgInitial} initial, ${summary.avgResidual} residual. ` +
+        `Matrix showing ${view} risk` +
+        (row ? `; "${row.id} — ${row.hazard || 'hazard'}" selected` : ''),
+      facts: {
+        totalHazards: summary.total,
+        openOrMitigating: summary.open,
+        accepted: summary.accepted,
+        highResidual: summary.highResidual,
+        meanInitialScore: summary.avgInitial,
+        meanResidualScore: summary.avgResidual,
+        matrixView: view,
+        selected: row
+          ? {
+              id: row.id, hazard: row.hazard, severity: row.sev,
+              probability: row.prob, residualProbability: row.probR ?? null,
+              status: row.status, residualAcceptability: row.res ?? null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Open a hazard to see its severity, probability and controls',
+        'Add a hazard to the governed risk file',
+        'Add a control to the selected hazard',
+        'Switch the matrix between initial and residual risk',
+      ],
+    };
+  }, [live.loading, live.error, summary, view, row]);
+  usePublishSurfaceContext('risk', anaContext);
 
   // addHazard — REAL, awaited write. POSTs to the governed risk file and adopts
   // the SERVER's row via mapRiskItems (real ref_code + numeric dbId, authoritative

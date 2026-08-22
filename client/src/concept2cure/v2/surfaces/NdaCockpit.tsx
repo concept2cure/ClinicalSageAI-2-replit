@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -318,6 +319,61 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     assessmentRan: false,
   });
   const reassuring = mayReassure(filingState, overall);
+
+  /* What AnA can see of this screen.
+     She knew the user was on "nda-cockpit" and nothing else — not the CTD
+     readiness, not how many Module 1 admin items are open, and crucially not
+     whether Refuse-to-File risk has actually been ASSESSED.
+
+     `filingState` is published verbatim rather than re-derived, because this
+     surface already owns the distinction that matters and re-deriving it here
+     would be a second opinion that can drift from the one on screen. Its
+     vocabulary is the point: `not-assessed` is NOT `assessed-clear`, and
+     `unreadable` is neither. The comment above `filingState` records why —
+     no completed-review signal exists for this surface to read, so an empty
+     risk log cannot mean "the day-60 shadow review found nothing", and
+     inferring clearance from `rtf.length === 0` would reinstate the exact
+     defect. AnA must inherit that caution, not launder it into a percentage. */
+  const anaContext = useMemo(() => {
+    if (filingState === 'loading') {
+      return { summary: 'The NDA cockpit is still loading; nothing on screen is being asserted yet.' };
+    }
+    if (filingState === 'unreadable') {
+      return {
+        summary:
+          'The NDA cockpit reads could not complete, so this screen shows no readiness figure and no Refuse-to-File position — that is a failed read, not a clean program.',
+        availableActions: ['Retry the CTD module and RTF reads'],
+      };
+    }
+    const rtfClause =
+      filingState === 'assessed-with-findings'
+        ? `${rtf.length} logged Refuse-to-File risk(s), ${highs.length} high`
+        : 'Refuse-to-File risk is NOT ASSESSED — no completed shadow review is recorded, so an empty risk log is not clearance';
+    return {
+      summary:
+        `NDA cockpit${progName ? ` for ${progName}` : ''}: CTD readiness ${overall}% across ` +
+        `${modules.length} module(s), ${m1open} Module 1 admin item(s) open. ${rtfClause}.`,
+      facts: {
+        program: progName,
+        ctdReadinessPct: overall,
+        moduleCount: modules.length,
+        module1AdminOpen: m1open,
+        /* The surface's own verdict, not a re-derivation. */
+        refuseToFileState: filingState,
+        loggedRtfRisks: rtf.length,
+        highRtfRisks: highs.length,
+        mayReassure: reassuring,
+        openTab: tab,
+      },
+      availableActions: [
+        'Open a CTD module to see its readiness detail',
+        'Log a Refuse-to-File risk',
+        'Add or update a Module 1 administrative document',
+        'Review the BLA assessment set',
+      ],
+    };
+  }, [filingState, progName, overall, modules.length, m1open, rtf.length, highs.length, reassuring, tab]);
+  usePublishSurfaceContext('nda-cockpit', anaContext);
 
   /* The KPI strip speaks from the SAME state the lead does, derived here rather
      than re-tested at each tile, so the two cannot drift apart.

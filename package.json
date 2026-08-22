@@ -79,6 +79,8 @@
     "ci:model-migration-agreement": "node scripts/ci/check-model-migration-agreement.mjs",
     "ci:model-migration-agreement:list": "node scripts/ci/check-model-migration-agreement.mjs --list",
     "ci:model-migration-agreement:write-baseline": "node scripts/ci/check-model-migration-agreement.mjs --write-baseline",
+    "ci:fixture-fallback": "node scripts/ci/check-ungated-fixture-fallback.mjs",
+    "ci:fixture-fallback:list": "node scripts/ci/check-ungated-fixture-fallback.mjs --list",
     "ci:duplicate-table-ddl": "node scripts/ci/check-duplicate-table-ddl.mjs",
     "ci:duplicate-table-ddl:strict": "node scripts/ci/check-duplicate-table-ddl.mjs --strict",
     "ci:duplicate-table-ddl:write-baseline": "node scripts/ci/check-duplicate-table-ddl.mjs --write-baseline",
