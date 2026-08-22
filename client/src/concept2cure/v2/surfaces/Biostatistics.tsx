@@ -587,7 +587,43 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       openingRef.current = false; setOpening(false);
     }
   };
-  const attach = () => { fireToast((docDef?.label || 'Document') + ' attached to dossier'); ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section'); };
+  /**
+   * Ask AnA to attach the document — which is what this control does, and now
+   * what it says.
+   *
+   * It used to fire `'<Label> attached to dossier'` with the default 'ok' tone,
+   * i.e. the green success tick, SYNCHRONOUSLY and BEFORE `ask(...)` was even
+   * called. At the instant that tick painted, not one byte had left the browser.
+   *
+   * And nothing was attached even after it did. `ask()` returns void — it
+   * streams a natural-language sentence into the AnA conversation. The real
+   * path, attachToDossier in
+   * server/services/ana-biostats/workflow-integrator.ts, needs an artifactId and
+   * a dossierSectionId. This control is only reachable once `res && jud &&
+   * docDef`, so the document is GENERATED — but generated is not saved: there is
+   * no artifactId until `openEditor` writes one through saveToAuthoring, and
+   * this surface has no dossier-section picker at all. So there is no success to
+   * report, and no failure path to report one from either.
+   *
+   * `openEditor`, directly above, is this file's own proof of the right pattern:
+   * it awaits the real write and refuses to navigate or announce on anything but
+   * a confirmed `r.ok`. This is the same rule applied to a control whose honest
+   * description is "a request was sent", not "it is done" — so the toast now
+   * follows `ask()` rather than preceding it, and says what AnA still has to do.
+   *
+   * The `!md.trim()` guard mirrors openEditor's and is belt-and-braces for the
+   * same reason its twin is: both controls live in one AnswerLead gated on
+   * `res && jud && docDef`, so it only bites if `docDef.gen()` returns empty.
+   */
+  const attach = () => {
+    const label = docDef?.label || 'Document';
+    if (!md.trim()) {
+      fireToast('Nothing to attach yet — the document has not been generated.', 'error');
+      return;
+    }
+    ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section');
+    fireToast(label + ' — attachment requested. AnA will confirm in the conversation; nothing is attached until it does.');
+  };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
 
@@ -608,7 +644,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
           body={<>Everything below is written, not just calculated — the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
           reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
-          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Attach to dossier', onClick: attach } }}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Ask AnA to attach it to the dossier', onClick: attach } }}
           secondary="Or pick a different document and adjust the design on the left."
         />
       )}
@@ -664,7 +700,16 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         {/* Center: the DOCUMENT -- the deliverable */}
         <div className="bs-doc">
           <div className="bs-doc-bar">
-            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{live ? '/api/ana-biostats' : 'Deterministic engine'} -- v1.0.0 — draft</span></div>
+            <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from, and that never
+                  varies: `md` is always BiostatDocs.gen() over BiostatEngine.compute(),
+                  both defined in this file and ported verbatim from
+                  server/services/ana-biostats/*. `live` is connected() — a global
+                  API-reachability flag that has no bearing on how the document was
+                  produced — so naming the service there stamped a browser-computed
+                  document with a server origin, on the one line a reviewer reads to
+                  find out exactly that. It also printed an API route into customer
+                  UI, which the work order forbids outright. */}
+                Deterministic engine -- v1.0.0 — draft</span></div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
               <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
