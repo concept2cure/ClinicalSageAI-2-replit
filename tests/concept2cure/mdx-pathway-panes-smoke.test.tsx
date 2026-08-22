@@ -118,21 +118,71 @@ describe('MDX pathway panes smoke', () => {
     });
   });
 
-  it('opens the DossierDrawer from the audit pane (sample mode)', () => {
-    // Fixture audit rows render only behind the explicit sample-mode boundary.
+  it('has no audit or approvals FIXTURE to fall back to — the rule, not the render', () => {
+    /* usePathwayTabsData: "Audit and approvals have NO fallback. They used to
+       share one — a synthesized Part 11 hash-chain and a set of fabricated
+       signed approvals — and it is deleted, along with the type fields that
+       carried it."
+
+       This is where that is enforceable. The rendering tests below cannot
+       enforce it: `states.audit` is driven by the live query, so with no
+       backend in this suite the pane is empty whether the rule holds or not.
+       Re-adding an `audit` or `approvals` fixture to PATHWAY_TABS_DATA is the
+       change that would put fabricated rows under a Part 11 heading, and it
+       fails here. */
+    for (const [pathway, data] of Object.entries(PATHWAY_TABS_DATA)) {
+      expect(Object.keys(data).sort(), `${pathway} carries an unexpected fixture bucket`)
+        .toEqual(['corrLabel', 'correspondence']);
+    }
+  });
+
+  it('renders no audit rows and no sample banner when there is no live trail', () => {
+    /* This asserted the opposite: that turning sample mode on populated the
+       audit pane from a fixture, and that the sample banner accompanied it.
+       That fixture is gone. Audit and approvals used to share one — a
+       synthesized Part 11 hash-chain and a set of fabricated signed approvals —
+       and usePathwayTabsData deleted it along with the fields that carried it:
+       "an audit trail's only evidentiary value is that nothing in it was
+       authored for display, so a demonstrable one is not a lesser version of
+       the record, it is the opposite of one."
+
+       So the test now guards the rule rather than the deleted behaviour, and it
+       is worth guarding: sample mode is force-disabled in production, which
+       makes the exposure small, but nothing else asserts that these two buckets
+       refuse to fabricate. A future fixture wired in for a demo would fail
+       here. */
     setSampleMode(true);
     try {
       const { getAllByRole, container } = renderWithClient(
         <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
       );
       fireEvent.click(getAllByRole('tab')[1]); // Audit
-      expect(container.querySelector('.audit-pane')).toBeTruthy();
-      // The standing sample banner must accompany the fixture pane.
-      expect(container.querySelector('.data-gate-sample')).toBeTruthy();
-      const openBtn = container.querySelector('.audit-act.primary');
-      if (openBtn) fireEvent.click(openBtn);
-      // Drawer mounts with the 3-tab layout, or the audit pane is still present — either way no crash.
-      expect(container.querySelector('.dd-drawer, .audit-pane')).toBeTruthy();
+      // `.audit-row` is the row itself, not `.audit-act.primary` — that action
+      // only exists inside an EXPANDED row, so it is absent whether or not rows
+      // rendered and asserting on it would prove nothing.
+      //
+      // What this proves is the honest-empty RENDERING, not the no-fabrication
+      // rule: `states.audit` comes from the live query, so with no backend here
+      // the pane is empty either way. The rule itself is guarded below, on the
+      // fixture data, which is where it can actually be broken.
+      expect(container.querySelectorAll('.audit-row').length).toBe(0);
+      // And no sample banner, because there is no sample content to disclose.
+      expect(container.querySelector('.data-gate-sample')).toBeNull();
+      assertNoReactErrors();
+    } finally {
+      setSampleMode(false);
+    }
+  });
+
+  it('renders no approvals and no sample banner when there is no live feed', () => {
+    setSampleMode(true);
+    try {
+      const { getAllByRole, container } = renderWithClient(
+        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+      );
+      fireEvent.click(getAllByRole('tab')[3]); // Approvals
+      expect(container.querySelector('.ap-card')).toBeNull();
+      expect(container.querySelector('.data-gate-sample')).toBeNull();
       assertNoReactErrors();
     } finally {
       setSampleMode(false);
@@ -353,36 +403,34 @@ describe('pathway panes — operational flows', () => {
     fireEvent.change(inputs[1], { target: { value: 'wrong-password' } });
     fireEvent.click(container.querySelector('.ap-sign-confirm') as HTMLButtonElement);
 
-    await waitFor(() => expect(container.querySelector('.ap-sign-error')).toBeTruthy());
-    expect(container.querySelector('.ap-sign-error')!.textContent).toContain('password verification failed');
+    /* The refusal is rendered by <ErrorState testId="esign-rejected">, not the
+       old `.ap-sign-error` div. That was not a rename: the reason used to be
+       interpolated straight into an alert, making the one string in the product
+       that is DELIBERATELY passed through the only one with no gate on it.
+       ErrorState still shows the server's sentence — the signer must know
+       whether this was a wrong password, missing authority or an MFA challenge
+       — and redacts anything that turns out to be a relation name, route or
+       stack frame. */
+    const rejected = await waitFor(() => {
+      const el = container.querySelector('[data-testid="esign-rejected"]');
+      if (!el) throw new Error('rejection not rendered yet');
+      return el;
+    });
+    expect(rejected.textContent).toContain('password verification failed');
     /* The critical assertion: no signed card on a rejected signature. */
     expect(container.querySelector('.ap-card.signed')).toBeNull();
     assertNoReactErrors();
   });
 
-  it('DossierDrawer opens from the audit pane and switches its three tabs', () => {
-    // The audit pane's rows come from fixtures here, so sample mode is the
-    // supported way to populate it (no live backend in this suite).
-    setSampleMode(true);
-    try {
-      const { getAllByRole, container } = renderWithClient(
-        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-      );
-      fireEvent.click(getAllByRole('tab')[1]); // Audit
-      const open = container.querySelector('.audit-act.primary') as HTMLElement | null;
-      expect(open).toBeTruthy();
-      fireEvent.click(open!);
-      expect(container.querySelector('.dd-drawer')).toBeTruthy();
-      const ddTabs = container.querySelectorAll('.dd-tab');
-      expect(ddTabs.length).toBe(3); // Document · Attachments · Activity
-      fireEvent.click(ddTabs[1] as HTMLElement);
-      fireEvent.click(ddTabs[2] as HTMLElement);
-      fireEvent.click(ddTabs[0] as HTMLElement);
-      assertNoReactErrors();
-    } finally {
-      setSampleMode(false);
-    }
-  });
+  /* REMOVED: 'DossierDrawer opens from the audit pane and switches its three
+     tabs'. Its only way in was an audit row, and audit rows are live-only now
+     (see the sample-mode test above) — the fixture that used to supply them was
+     deleted on purpose. The drawer itself is unchanged and still covered for
+     mounting by 'FilesTreePane preview opens a body section in the drawer';
+     what is NOT covered any more is switching between its three tabs.
+     Reconstructing that needs a live-data harness this suite does not have, and
+     a test that quietly passes when the tree yields nothing would be worse than
+     an honest gap. Recorded here rather than left as a silent hole. */
 
   it('AnaDrafter generates a structured draft from an unstarted item', async () => {
     const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;

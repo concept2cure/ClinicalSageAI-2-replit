@@ -26,12 +26,30 @@ vi.mock('../../server/services/commitments/commitments-service.js', () => ({
   checkOutboundContradictions: mockCheckContradictions,
 }));
 
-// No DB / audit chain in route tests — pool null makes the best-effort audit a no-op.
-vi.mock('../../server/db.js', () => ({ pool: null }));
+// The pool is SWITCHABLE, not permanently null. It was `pool: null` with the
+// note "no DB in route tests — pool null makes the best-effort audit a no-op",
+// and that quietly turned the happy-path test into a degraded-path test: the
+// route reports `auditWriteFailed` when the Part 11 row cannot be written, so
+// with no pool the one test named for success was asserting failure. Now each
+// test says which it is exercising.
+const { poolRef } = vi.hoisted(() => ({ poolRef: { current: null as unknown } }));
+vi.mock('../../server/db.js', () => ({ get pool() { return poolRef.current; } }));
+
+// `computeAuditChainSealed`, not `computeAuditChain` — that is the name the
+// route imports. The old mock provided a function nothing called, and a null
+// pool short-circuited before the real one was ever reached, so the mismatch
+// was invisible.
 vi.mock('../../server/services/audit/chain.js', () => ({
+  computeAuditChainSealed: vi.fn(async () => ({ sha256Chain: 'chain', hmacSeal: 'seal' })),
   computeAuditChain: vi.fn(async () => 'hash'),
   hashPayload: vi.fn(() => 'ph'),
 }));
+
+/** A pool whose client accepts BEGIN/INSERT/COMMIT — the audit row is written. */
+function workingPool() {
+  const client = { query: vi.fn(async () => ({ rows: [] })), release: vi.fn() };
+  return { connect: vi.fn(async () => client) };
+}
 
 import commitmentsRouter from '../../server/routes/c2c/commitments';
 
@@ -110,11 +128,29 @@ describe('PATCH /:id/status', () => {
     await handler('patch', '/:id/status')(req({ params: { id: 'cmt_1' }, body: { status: 'open', reason: 'reviewed by RA lead' } }), res);
     expect(res.status).toHaveBeenCalledWith(404);
   });
-  it('updates status when found', async () => {
+  it('updates status when found, and the Part 11 row is written', async () => {
+    poolRef.current = workingPool();
     mockUpdateStatus.mockResolvedValue({ id: 'cmt_1', status: 'open' });
     const res = createMockResponse();
     await handler('patch', '/:id/status')(req({ params: { id: 'cmt_1' }, body: { status: 'open', reason: 'reviewed by RA lead' } }), res);
+    // No warning: the audit entry exists, so the response says nothing about it.
     expect(res.json).toHaveBeenCalledWith({ success: true, data: { id: 'cmt_1', status: 'open' } });
+  });
+
+  it('surfaces the audit gap when the Part 11 row cannot be written', async () => {
+    // The status change is real and is still returned — it committed before the
+    // audit attempt — but a governed change whose audit entry is missing must
+    // say so, or the operator relies on a trail that has no record of it.
+    poolRef.current = null;
+    mockUpdateStatus.mockResolvedValue({ id: 'cmt_1', status: 'open' });
+    const res = createMockResponse();
+    await handler('patch', '/:id/status')(req({ params: { id: 'cmt_1' }, body: { status: 'open', reason: 'reviewed by RA lead' } }), res);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      data: { id: 'cmt_1', status: 'open' },
+      auditWriteFailed: true,
+      auditWarning: expect.stringMatching(/audit entry could not be written/i),
+    }));
   });
 });
 
