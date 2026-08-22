@@ -52,6 +52,26 @@ import { ensureJournal, recordApplied } from './migration-journal.mjs';
 // The wider problem stands: merged and applied have diverged silently across
 // 358 migrations because the manifest is not authoritative for anything. Making
 // something consume it is a separate change to how schema ships.
+/**
+ * The two tenant-isolation steps, named once.
+ *
+ * Both are POSITIONAL invariants, not just membership ones: the integer sweep
+ * must be the LAST entry so it sees every table the set creates (ledger C-33),
+ * and the uuid non-public step must sit immediately before it so the pair is
+ * the final two. A file appended after either one is never swept, which is a
+ * tenant-keyed table shipping with no policy — silent, and only visible once
+ * somebody reads across tenants.
+ *
+ * They are exported because four separate places used to hardcode these
+ * strings — three contract tests and the list itself — so the invariant had
+ * four copies and no single definition. scripts/ci/check-migration-set-order.mjs
+ * and the contract tests now import them from here, next to the list they
+ * constrain.
+ */
+export const TENANT_ISOLATION_SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+export const UUID_TENANT_ISOLATION_NONPUBLIC =
+  'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql';
+
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
   // Seven migrations that tests/golden-journeys provision and depend on, and
@@ -1428,7 +1448,7 @@ export const C2C_MIGRATION_FILES = [
   // once the inline casts are gone.
   'db/migrations/20260821_uuid_org_guc_cast_heal.sql',
 
-  'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
+  UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and
@@ -1439,7 +1459,7 @@ export const C2C_MIGRATION_FILES = [
   // and deploy-safe: it only ADDS a policy where none exists (never clobbering a
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
-  'db/migrations/20260801_tenant_isolation_sweep.sql',
+  TENANT_ISOLATION_SWEEP,
 
 ];
 

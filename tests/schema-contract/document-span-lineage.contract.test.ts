@@ -24,14 +24,15 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = join(__dirname, '..', '..');
 const MIGRATION = join(REPO_ROOT, 'db/migrations/20260803_document_span_lineage.sql');
 const DRIZZLE = join(REPO_ROOT, 'shared/schema/document-span-lineage.ts');
-const MIGRATION_SET = join(REPO_ROOT, 'scripts/db/migration-set.mjs');
 
 const MIGRATION_PATH = 'db/migrations/20260803_document_span_lineage.sql';
-const SWEEP_PATH = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+// Imported rather than re-typed — see the note in tenant-isolation-sweep.contract.test.ts.
+const SWEEP_PATH = TENANT_ISOLATION_SWEEP;
 
 /**
  * SQL with `--` line comments removed.
@@ -171,18 +172,26 @@ describe('document_span_lineage — the constraints that make a row meaningful',
 });
 
 describe('document_span_lineage — apply-set position', () => {
-  const set = () => readFileSync(MIGRATION_SET, 'utf8');
-
+  /**
+   * Position is read from the LIST, not from byte offsets in its source file.
+   *
+   * This used to `readFileSync` migration-set.mjs and compare `indexOf` of the
+   * two quoted paths. That is a proxy for apply order, and a brittle one: it
+   * breaks the moment an entry stops being a bare string literal — as happened
+   * when the sweep's path became an exported constant so four files could stop
+   * re-typing it — and it would just as happily pass on a path that appears
+   * only inside a comment. The array is the thing that determines apply order,
+   * so the array is what gets measured.
+   */
   it('is registered in the apply set', () => {
     // A migration nothing applies is not a migration; the table would exist
     // only in the Drizzle definition and every query against it would fail.
-    expect(set()).toContain(`'${MIGRATION_PATH}'`);
+    expect(C2C_MIGRATION_FILES).toContain(MIGRATION_PATH);
   });
 
   it('is registered BEFORE the tenant-isolation sweep', () => {
-    const body = set();
-    const mine = body.indexOf(`'${MIGRATION_PATH}'`);
-    const sweep = body.indexOf(`'${SWEEP_PATH}'`);
+    const mine = C2C_MIGRATION_FILES.indexOf(MIGRATION_PATH);
+    const sweep = C2C_MIGRATION_FILES.indexOf(SWEEP_PATH);
     expect(mine, 'this migration is not in the apply set').toBeGreaterThan(-1);
     expect(sweep, 'the tenant-isolation sweep is not in the apply set').toBeGreaterThan(-1);
     expect(

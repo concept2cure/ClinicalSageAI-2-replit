@@ -497,6 +497,45 @@ archival path, so `npm run test:db` is re-runnable against one database.
 
 ---
 
+## 4b. Apply order is checked before every push
+
+`C2C_MIGRATION_FILES` has two positional invariants: the integer tenant sweep
+must be the **last** entry (ledger C-33) and the uuid non-public step must be
+immediately before it (C-46). A file ordered after either one is never swept, so
+a tenant-keyed table ships with **no policy** — silently, because the policy
+count goes *up* when unprotected tables are added.
+
+Three contract tests already pinned this, and it still reached the default
+branch broken: `migrations/20260821_vault_documents_canonical_shape.sql` was
+appended after the sweep and all three were red on origin until someone looked.
+Nothing in `.husky/pre-push` checked ordering, and `tests/schema-contract` takes
+about five minutes, so it is not run before a push. A guard nobody can afford to
+run is not a guard.
+
+`scripts/ci/check-migration-set-order.mjs` does the positional subset in ~55 ms
+— no database, no PGlite, no vitest — and runs in `pre-push` beside the eCTD,
+risk-code and ledger gates. It checks four things: sweep last, uuid step in the
+final pair, every listed file present on disk, no duplicates. Each was made to
+fail on its own case before being believed, and the hook was shown to block the
+exact append that reached origin.
+
+The anchor path used to be hardcoded in four places — three contract tests plus
+the list itself — so the invariant had four copies and no definition. It is now
+exported from `scripts/db/migration-set.mjs` as `TENANT_ISOLATION_SWEEP` /
+`UUID_TENANT_ISOLATION_NONPUBLIC`, used by the list entries themselves, and
+imported by the gate and all four tests. (`scripts/ci/check-rls-allowlist-sync.mjs`
+keeps its own literal: there the path is one row in a table of files to *parse*
+for allowlist arrays, and importing a single entry would leave it inconsistent
+with its siblings.)
+
+One consequence worth naming: `document-span-lineage.contract.test.ts` asserted
+apply order by comparing `indexOf` **byte offsets** of the two quoted paths in
+the source text of `migration-set.mjs`. That proxy broke the moment an entry
+stopped being a bare string literal. It now measures the array, which is what
+determines apply order and what the test always meant.
+
+---
+
 ## 5. Verification commands
 
 ```bash

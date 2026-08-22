@@ -124,6 +124,18 @@ echo "   ✅ Risk code validation passed."
 # ledger-check and read its output after the push had already gone. A check
 # whose result does not decide whether the push happens is a log line, not a
 # gate. This makes it decide.
+echo "   Validating migration apply-order invariants..."
+if ! npm run --silent ci:migration-set-order 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration apply-order check FAILED."
+  echo "   A file ordered after the tenant-isolation sweep is never swept, so a"
+  echo "   tenant-keyed table ships with no RLS policy — silently, because the"
+  echo "   policy COUNT goes up when unprotected tables are added."
+  echo "   Fix C2C_MIGRATION_FILES in scripts/db/migration-set.mjs and re-push."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Migration apply-order passed."
 echo "   Validating ledger integrity (row ids, evidence paths)..."
 if ! node scripts/ops/ledger-check.mjs >/dev/null 2>&1; then
   echo ""
