@@ -220,6 +220,13 @@ models will disagree.
 
 Only after all four are green may the read-side privacy default change.
 
+**Runnable proof:** `scripts/db/project-identity-anchor-proof.sql` (read-only) measures
+all of the above against a real database — anchor coverage, the ambiguous-vs-unmatched
+breakdown (mirroring the anchor migration's exact candidate predicate), the
+`project_members` backfill feasibility (backfillable-clean vs blocked-no-anchored-project
+vs anchored-but-no-lead_user), and the table-vs-`settings.projectSharing`-JSON divergence.
+It moves no data; run it to produce the gate evidence before approving Phase 2.
+
 ---
 
 ## 5. The safe, ship-now win (independent of the migration)
