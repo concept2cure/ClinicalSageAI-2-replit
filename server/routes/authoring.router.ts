@@ -5425,6 +5425,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
         '../export/authoring-section-content.js'
       );
 
+      const exportedAt = new Date().toISOString();
       const children = [];
       children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));
 
@@ -5432,9 +5433,15 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          (which can carry ins/del track-changes marks). It used to be written
          into one paragraph verbatim, so markup rendered literally in a filed
          Word document. It is parsed to typed runs now; an unresolved
-         suggestion exports AS redline (insertion underlined, deletion struck)
-         with an up-front notice — settling it silently either way at export
-         time would fabricate a decision nobody made. */
+         suggestion exports as a REAL Word revision (w:ins / w:del) with an
+         up-front notice — settling it silently either way at export time would
+         fabricate a decision nobody made.
+
+         The revision carries the mark's own author and timestamp. The date
+         passed here is only the fallback for legacy marks written before the
+         editor recorded data-at; those export as "Unattributed", and dating
+         them to the export is the closest honest statement available — we know
+         when we wrote the file, not when someone made the edit. */
       let pendingIns = 0;
       let pendingDel = 0;
       const sectionBlocks = sectionsResult.rows.map((section: any) => {
@@ -5466,7 +5473,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             heading: HeadingLevel.HEADING_1,
           })
         );
-        children.push(...blocksToDocx(docxNs, blocks, exportImages));
+        children.push(...blocksToDocx(docxNs, blocks, exportImages, { revisionDate: exportedAt }));
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads

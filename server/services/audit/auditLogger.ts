@@ -94,7 +94,7 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
   // caller (an audit-trail outage must not break the user action it records).
   // resourceType is required there; fall back to the event category when a
   // resource is not named.
-  let canonical: { persisted?: boolean; error?: string } | undefined;
+  let canonical: AuditWriteResult | undefined;
   try {
     canonical = await auditService.logAction({
       action: `${event.category}.${event.action}`,
@@ -120,7 +120,12 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
        rejects before its own guard runs, still lands here. An audit-trail outage
        must not crash the user action it records, so the throw stops at this
        boundary — and it stops as a KNOWN failure, not a silent one. */
-    canonical = { persisted: false, error: err instanceof Error ? err.message : String(err) };
+    canonical = {
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 
   /* This was `try { await logAction } catch { logger.error(...) }` — a DOUBLE
@@ -159,7 +164,18 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
    * now the fact a caller can actually act on — whether the §11.10(e) record
    * survived. `generateAuditId` still stamps the in-memory cache entry, which is
    * the one thing that id was ever really for. */
-  return canonical;
+  /* Normalised rather than returned raw: a caller must never have to ask
+     whether the absent case means "not written" or "unknown". The guard above
+     already treats an absent result as a lost record; this says the same thing
+     in the type. */
+  return (
+    canonical ?? {
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: 'the canonical store returned no write result',
+    }
+  );
 }
 
 /**
