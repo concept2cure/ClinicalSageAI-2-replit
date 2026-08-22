@@ -52,7 +52,7 @@ const PUBLISHER = 'usePublishSurfaceContext';
  * Surfaces publishing screen state today. RAISE THIS as surfaces are wired;
  * never lower it to make a build pass — a fall means a surface went silent.
  */
-const BASELINE = 20;
+const BASELINE = 21;
 
 /**
  * Surfaces that legitimately publish nothing, with the reason.
@@ -140,7 +140,7 @@ const ID_COVERAGE = idCoverage();
  * Surface IDS publishing today. RAISE as ids are covered; never lower it.
  * Separate from BASELINE because the two count different things — see above.
  */
-const ID_BASELINE = 20;
+const ID_BASELINE = 21;
 
 const publishing = [];
 const unwired = [];
