@@ -101,6 +101,47 @@ function registrySurfaceIds() {
 
 const REGISTRY_IDS = registrySurfaceIds();
 
+/**
+ * Coverage measured in SURFACE IDS, which is the unit that decides whether AnA
+ * can see a screen.
+ *
+ * The file count answers "how many surface FILES call the publisher", and that
+ * is weaker than it reads: one file can serve several registered ids, and the
+ * context store is keyed by ID — the reader returns nothing unless the
+ * published key matches the ACTIVE surface. So a file can be "wired" while
+ * several ids it renders under stay blind, and the file number understates the
+ * gap. It also cuts the other way: `review` counts as unwired because
+ * Review.tsx has no call, while its CHILD ReviewThreads.tsx publishes that id —
+ * the id is covered and the file is not.
+ *
+ * Publishers in test files are ignored: a fixture publishing an id proves
+ * nothing about the product.
+ */
+function idCoverage() {
+  if (!REGISTRY_IDS) return null;
+  const published = new Set();
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(path.join(repoRoot, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) { if (e.name !== '__tests__' && e.name !== 'node_modules') walk(rel); continue; }
+      if (!e.name.endsWith('.tsx') || e.name.includes('.test.')) continue;
+      const src = fs.readFileSync(path.join(repoRoot, rel), 'utf8');
+      for (const m of src.matchAll(/usePublishSurfaceContext\(\s*'([a-z0-9-]+)'/g)) published.add(m[1]);
+    }
+  };
+  walk('client/src/concept2cure');
+  const covered = [...REGISTRY_IDS].filter((id) => published.has(id));
+  return { total: REGISTRY_IDS.size, covered: covered.length, blind: REGISTRY_IDS.size - covered.length };
+}
+
+const ID_COVERAGE = idCoverage();
+
+/**
+ * Surface IDS publishing today. RAISE as ids are covered; never lower it.
+ * Separate from BASELINE because the two count different things — see above.
+ */
+const ID_BASELINE = 20;
+
 const publishing = [];
 const unwired = [];
 /** Surfaces that call the publisher with an id the registry does not route. */
@@ -131,6 +172,12 @@ for (const file of surfaceFiles()) {
 }
 
 const failures = [];
+if (ID_COVERAGE && ID_COVERAGE.covered < ID_BASELINE) {
+  failures.push(
+    `surface-id coverage fell to ${ID_COVERAGE.covered}, below the baseline of ${ID_BASELINE} — ` +
+      'a registered surface id stopped publishing its screen state to AnA',
+  );
+}
 for (const b of badIds) {
   failures.push(`${b} — the shell reads context by surface id, so this publishes into nothing`);
 }
@@ -165,9 +212,11 @@ if (JSON_MODE) {
   console.log(
     `\n[ci:ana-surface-context] OK — ${summary.publishing} surface(s) publish screen state ` +
       `(baseline ${BASELINE}), ${summary.unwired} still to wire, ${summary.exempt} exempt.\n` +
-      (summary.unwired > 0
-        ? `  On those ${summary.unwired}, AnA is asked about a screen she cannot see.\n` +
-          '  Run with --list to see them.\n'
+      (ID_COVERAGE
+        ? `  Surface IDS: ${ID_COVERAGE.covered} of ${ID_COVERAGE.total} publish (baseline ${ID_BASELINE}); ` +
+          `${ID_COVERAGE.blind} are blind — that is the number AnA actually experiences.\n` +
+          '  Ids, not files, are what she sees by: one file can serve several, and a\n' +
+          '  child can publish for a parent that has no call of its own.\n'
         : ''),
   );
 } else {
