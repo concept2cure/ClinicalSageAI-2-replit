@@ -117,6 +117,57 @@ function jsxProse(run) {
   return text;
 }
 
+/**
+ * The blind spot `jsxProse` opened, and the rule that closes it.
+ *
+ * `jsxProse` strips `{...}` before matching, deliberately — without that,
+ * `{I.rocket} IND Lifecycle` reads as code and every icon becomes noise. But a
+ * string literal INSIDE the expression is rendered text too, and stripping the
+ * container took the literal with it. So this sailed through untouched:
+ *
+ *   <span className="bs-doc-prov">
+ *     {live ? '/api/ana-biostats' : 'Deterministic engine'} -- v1.0.0 — draft
+ *   </span>
+ *
+ * — an API route printed onto the provenance line of a statistical document, in
+ * the exact lane this gate exists to police. A second instance sat in
+ * ReportEngine on the same CSS class. Both are fixed; this stops the third.
+ *
+ * Deliberately narrow: only literals inside an expression container that holds
+ * NO call parenthesis. A ternary or member access renders its literals to the
+ * user; `apiRequest('/api/x')` does not, and telling them apart by paren is
+ * exact enough to carry an empty baseline without false positives.
+ */
+const EXPR_IN_TEXT = /\{([^{}()]{0,300})\}/g;
+
+/**
+ * `TEXT`'s 600-character bound exists so the rule cannot hang. It also means a
+ * long comment sitting inside a JSX element hides everything after it: comments
+ * are blanked to SPACES (to keep byte offsets, and therefore line numbers,
+ * correct), and those spaces count toward the bound. Proven, not assumed — the
+ * first version of this rule was tested by reintroducing both routes and caught
+ * NEITHER, because the explanatory comment left beside them pushed the run past
+ * 600.
+ *
+ * A bound is unnecessary here anyway: `[^<>]` is a negated class terminated by a
+ * character it excludes, so the match is deterministic and linear with or
+ * without it. The literal pass uses the unbounded form.
+ */
+const TEXT_ALL = />([^<>]{3,})</g;
+
+function jsxExprLiterals(run) {
+  const out = [];
+  EXPR_IN_TEXT.lastIndex = 0;
+  let m;
+  while ((m = EXPR_IN_TEXT.exec(run)) !== null) {
+    const body = m[1];
+    for (const lit of body.match(/['"`]([^'"`]{3,200})['"`]/g) || []) {
+      out.push(lit.slice(1, -1));
+    }
+  }
+  return out;
+}
+
 function sourceFiles() {
   const out = execSync("git ls-files 'client/src/**/*.tsx' 'client/src/**/*.ts'", {
     cwd: ROOT,
@@ -160,7 +211,21 @@ function findings() {
     };
     scan(ATTR, 2);
     // JSX text only exists in .tsx; scanning .ts with this rule reads code.
-    if (file.endsWith('.tsx')) scan(TEXT, 1, jsxProse);
+    if (file.endsWith('.tsx')) {
+      scan(TEXT, 1, jsxProse);
+      // …and the literals jsxProse throws away with the expression around them.
+      TEXT_ALL.lastIndex = 0;
+      let t;
+      while ((t = TEXT_ALL.exec(code)) !== null) {
+        for (const value of jsxExprLiterals(t[1])) {
+          for (const { re: bad, what } of INTERNALS) {
+            if (!bad.test(value)) continue;
+            hits.push({ file, line: lineOf(t.index), what, text: value.trim().slice(0, 110) });
+            break;
+          }
+        }
+      }
+    }
   }
   return hits;
 }

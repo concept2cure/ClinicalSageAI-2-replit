@@ -9,6 +9,7 @@
 
 import * as React from 'react';
 import { I } from '../../icons';
+import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { AskAnaChip } from '../AskAnaChip';
 import { CER_GSPR } from '../../data/cer';
 import {
@@ -63,7 +64,7 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
   const [regulation, setRegulation] = React.useState<GsprRegulation>(defaultRegulation);
   const [filter, setFilter] = React.useState<Filter>('all');
   const sampleOn = useSampleMode();
-  const { rows, coverage, loading, error } = useCerGspr(programId, regulation);
+  const { rows, coverage, loading, error, refresh } = useCerGspr(programId, regulation);
 
   const liveAvailable = rows !== null && rows.length > 0;
   const usingSample = !liveAvailable && sampleOn;
@@ -303,19 +304,30 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
 
       {!liveAvailable && !usingSample && !loading && (
         <div className="panel">
-          <div
-            role="status"
-            style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
-              No GSPR requirements to show
-            </div>
-            {error
-              ? `The GSPR backend did not respond — ${error}`
-              : `The ${regulation} catalog returned no active requirements. Seed the GSPR catalog, then map each clause to an applicability decision here.`}
-            {' '}
-            <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>{I.alertCircle}</span>
-          </div>
+          {/* A FAILURE AND AN EMPTY CATALOG WERE ONE POLITE PANEL.
+              `role="status"` on a backend failure means a screen reader is told
+              nothing went wrong; `${error}` rode along verbatim; there was no
+              retry although the hook has returned `refresh` since it was
+              written; and the empty branch instructed the reader to "seed the
+              GSPR catalog", which is an operator action no one on this screen
+              can take. Two panels now, each honest about which case it is. */}
+          {error ? (
+            <ErrorState
+              variant="panel"
+              title="Couldn't load the GSPR requirements"
+              retry={refresh}
+              testId="gspr-error"
+            />
+          ) : (
+            <EmptyState
+              icon={I.alertCircle}
+              title="No GSPR requirements to show"
+              hint={`The ${regulation} catalog has not been loaded for this workspace.`}
+              action={{ label: 'Check again', onAct: refresh }}
+              regulation={`Serves the ${regulation} Annex I general safety and performance requirements`}
+              testId="gspr-empty"
+            />
+          )}
         </div>
       )}
     </>

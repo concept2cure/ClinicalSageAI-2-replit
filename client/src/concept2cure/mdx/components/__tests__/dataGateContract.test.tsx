@@ -271,6 +271,10 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
     const CONVERTED = [
       'surfaces/pathway/PathwayPanes.tsx',
       'surfaces/cer/PmsPmcfTab.tsx',
+      'surfaces/cer/GsprMatrixTab.tsx',
+      'surfaces/cer/GeneratorTab.tsx',
+      'surfaces/cer/EquivalenceTab.tsx',
+      'surfaces/EstarFilingPanel.tsx',
       'presub/PreSubManager.tsx',
       'workbench/Workbench.tsx',
       'MdxSurfaceHost.tsx',
@@ -298,6 +302,37 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
       );
     }
     expect(offenders, `hand-rolled failure UI:\n${offenders.join('\n')}`).toEqual([]);
+  });
+
+  it('no MDX surface names a schema object or an endpoint in its copy', () => {
+    /* Guardrail: a reader cannot act on a column name or a route, and both
+       describe the implementation rather than the record. `EquivalenceTab`
+       carried "equivalent_devices via the programs API" as visible panel copy;
+       `GsprMatrixTab` told the reader to "seed the GSPR catalog", an operator
+       action nobody on that screen can take.
+
+       Scoped to JSX text and template literals, not comments — the files
+       document what they removed by naming it, and a check that punished that
+       would push the explanation out of the code. */
+    const offenders: string[] = [];
+    const LEAKY = /\b(?:equivalent_devices|gspr_requirements|regulatory_programs|concept2cure_artifacts|vault\.documents)\b|\bvia the [a-z]+ API\b/;
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === '__tests__') continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { walk(full); continue; }
+        if (!/\.tsx$/.test(entry.name)) continue;
+        code(fs.readFileSync(full, 'utf8')).split('\n').forEach((line, i) => {
+          /* Only where the string can reach a screen: JSX text, or a template
+             literal / quoted string being rendered. Import paths and type
+             annotations are neither. */
+          if (/^\s*import\b/.test(line)) return;
+          if (LEAKY.test(line)) offenders.push(`${path.relative(mdx, full)}:${i + 1} ${line.trim().slice(0, 90)}`);
+        });
+      }
+    };
+    walk(path.join(mdx, 'surfaces'));
+    expect(offenders, `schema object or endpoint in user-facing copy:\n${offenders.join('\n')}`).toEqual([]);
   });
 
   it('the passive instruction is retired from the whole lane', () => {
