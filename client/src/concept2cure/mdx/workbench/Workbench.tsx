@@ -34,6 +34,7 @@ import {
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { useSampleRows, useSampleValue, useShowingSample } from '../lib/useSampleRows';
 import { SampleDataBanner } from '../components/SampleDataBanner';
+import { EmptyState } from '../../v2/dataConnect';
 
 /**
  * Column widths for the validation-rules table, shared by its head and its rows
@@ -417,6 +418,16 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
      when they have. */
   const submissionsAreSample = useShowingSample(live.submissions);
 
+  /* One definition of "start a new submission", used by the header button and
+     by the empty state's CTA. Two copies of this string is how a panel comes to
+     name an action slightly differently from the control that performs it. */
+  const startNewSubmission = React.useCallback(() => {
+    onAskAna(
+      'Start a new submission. Walk me through selecting program, target authority (FDA ESG, notified body, EU MDR), ' +
+        'pathway, package contents and cover letter — and run the gate checks before transmission.',
+    );
+  }, [onAskAna]);
+
   /* Default selection re-syncs to the first row of the live list when it
      arrives — avoids clicking onto a stale fixture id. */
   React.useEffect(() => {
@@ -464,15 +475,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
           >
             {I.filter} {statusFilter === 'all' ? 'Filter' : statusFilter}
           </button>
-          <button
-            className="btn primary small"
-            onClick={() =>
-              onAskAna(
-                'Start a new submission. Walk me through selecting program, target authority (FDA ESG, notified body, EU MDR), ' +
-                  'pathway, package contents and cover letter — and run the gate checks before transmission.',
-              )
-            }
-          >
+          <button className="btn primary small" onClick={startNewSubmission}>
             {I.rocket} New submission
           </button>
         </div>
@@ -515,21 +518,20 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         </div>
         <div className="sub-layout">
           <div className="sub-list">
+            {/* The prose used to say: Use "New submission" above. The button was
+                real and forty lines up, so the empty state named an action and
+                made the user go and find it — the same passive instruction W0-5
+                retired on the DataGate panels, in a hand-rolled panel that the
+                gate never covered. It renders the action now, wired to the same
+                handler as the header button so the two cannot drift. */}
             {live.submissions !== null && live.submissions.length === 0 && (
-              <div
-                style={{
-                  padding: '24px 16px',
-                  textAlign: 'center',
-                  fontSize: 12,
-                  color: 'var(--text-300)',
-                }}
-              >
-                <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
-                  No submissions yet
-                </div>
-                Packages you create appear here. Use "New submission" above to start your first FDA
-                ESG · notified body · EU MDR transmittal.
-              </div>
+              <EmptyState
+                icon={I.rocket}
+                title="No submissions yet"
+                hint="Packages you create appear here — FDA ESG, notified body, or EU MDR transmittals."
+                action={{ label: 'New submission', onAct: startNewSubmission }}
+                testId="workbench-no-submissions"
+              />
             )}
             {visible.map(s => (
               <button

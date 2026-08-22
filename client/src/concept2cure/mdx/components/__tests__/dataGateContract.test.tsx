@@ -257,6 +257,49 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
     expect(store).not.toContain('isSampleMode');
   });
 
+  it('no MDX surface hand-rolls a failure panel any more', () => {
+    /* The gate covers the 33 panels that go through it. These files never did —
+       they drew their own divs — so converging DataGate left them standing, and
+       four of them were the worst cases in the lane: a failure announced as a
+       polite `role="status"`, a raw `error` interpolated into the copy, and an
+       empty state whose only instruction was to go and find a button forty
+       lines up.
+
+       Asserted against source, because the defect is structural: what must not
+       come back is a bare `role="alert"` div or an interpolated error where a
+       shared primitive belongs. */
+    const CONVERTED = [
+      'surfaces/pathway/PathwayPanes.tsx',
+      'surfaces/cer/PmsPmcfTab.tsx',
+      'presub/PreSubManager.tsx',
+      'workbench/Workbench.tsx',
+      'MdxSurfaceHost.tsx',
+    ];
+    const offenders: string[] = [];
+    for (const rel of CONVERTED) {
+      const src = code(read(rel));
+      src.split('\n').forEach((line, i) => {
+        /* A hand-rolled alert, or a server error dropped straight into JSX. */
+        if (/role=["']alert["']/.test(line) && !/ErrorState/.test(src.slice(0, 0))) {
+          offenders.push(`${rel}:${i + 1} bare role="alert"`);
+        }
+        /* JSX TEXT only. `message={x.error}` is a PROP handed to <ErrorState>,
+           which is exactly the right thing to do with a server error and the
+           whole point of the conversion — flagging it would make the check
+           punish the fix. The distinguishing character is the `=` before the
+           brace; a raw interpolation into the element's children has none. */
+        if (/(^|[^=$\w])\{\s*(?:\w+\.)?error\s*\}/.test(line)) {
+          offenders.push(`${rel}:${i + 1} interpolates a raw error into JSX text`);
+        }
+      });
+      /* Each of these files must now reach the shared surfaces. */
+      expect(src, `${rel} no longer imports the shared state primitives`).toMatch(
+        /(EmptyState|ErrorState)/,
+      );
+    }
+    expect(offenders, `hand-rolled failure UI:\n${offenders.join('\n')}`).toEqual([]);
+  });
+
   it('the passive instruction is retired from the whole lane', () => {
     /* Asserted against source across the lane, so reintroducing it anywhere —
        a hook's idleReason, a surface's prose, a disabled control's tooltip —

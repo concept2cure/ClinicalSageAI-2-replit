@@ -15,6 +15,7 @@ import * as React from 'react';
 import { I } from '../../icons';
 import { AUDIT_KIND_META, PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
 import { useVaultUpload } from '../../../v2/useVaultUpload';
+import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
@@ -670,10 +671,23 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
               Cancel
             </button>
           </div>
+          {/* The signer must see WHICH refusal this was — a wrong password, no
+              signing authority and an MFA challenge are materially different
+              problems, and collapsing them to "signing failed" leaves the
+              signer with no idea what to do. So the server's own reason is
+              still shown verbatim; that part was right.
+              What was missing is the filter. This interpolated `esig.error`
+              straight into the alert, so the one string in the product that is
+              DELIBERATELY passed through was also the one with no gate on it.
+              <ErrorState> shows the sentence and redacts anything that turns
+              out to be a relation name, a route or a stack frame. */}
           {esig.error && (
-            <div className="ap-sign-error" role="alert">
-              {I.alertCircle} {esig.error}
-            </div>
+            <ErrorState
+              variant="inline"
+              title="Signature not accepted"
+              message={esig.error}
+              testId="esign-rejected"
+            />
           )}
           <div className="ap-sign-foot">
             21 CFR §11.100(b) · By signing you certify the listed meaning. Your
@@ -1124,10 +1138,49 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
         )}
         {tab === 'files' && (
           <>
-            {dossier.status === 'loading' && <div role="status">Loading dossier files…</div>}
-            {dossier.status === 'unavailable' && <div role="alert">Dossier files are unavailable. Sample evidence has not been substituted.</div>}
-            {dossier.status === 'permission-denied' && <div role="alert">You do not have permission to view this program's dossier files.</div>}
-            {dossier.status === 'empty' && <div role="status">No dossier sections have been created for this program.</div>}
+            {/* Four bare divs, in the same switch as the three DataGates above.
+                They predate the shared primitives and never got converged, so
+                the Files tab announced its states differently from every other
+                pane beside it and — the part that matters — offered no way out
+                of either failure. `unavailable` is the transient one: a fetch
+                that failed is exactly the case a retry exists for, and there
+                was no control because the hook exposed nothing to call. */}
+            {dossier.status === 'loading' && (
+              <EmptyState busy icon={I.database} title="Loading dossier files" testId="dossier-loading" />
+            )}
+            {dossier.status === 'unavailable' && (
+              <ErrorState
+                variant="panel"
+                title="Couldn't load the dossier files"
+                /* Kept verbatim: it is the honest half of the old copy, and on
+                   a governed surface "we did not quietly show you something
+                   else instead" is worth saying. */
+                message="Sample evidence has not been substituted."
+                retry={dossier.refresh}
+                testId="dossier-unavailable"
+              />
+            )}
+            {dossier.status === 'permission-denied' && (
+              /* No retry, deliberately. Re-running the same request under the
+                  same identity cannot grant access, and a control that cannot
+                  work is worse than none — it invites the user to keep pressing
+                  it. The copy names who can fix it instead. */
+              <ErrorState
+                variant="panel"
+                title="You don't have access to this program's dossier files"
+                message="Ask a program administrator to grant you access."
+                testId="dossier-forbidden"
+              />
+            )}
+            {dossier.status === 'empty' && (
+              <EmptyState
+                icon={I.folder}
+                title="No dossier sections yet"
+                hint="Sections appear here once the submission outline is scaffolded for this program."
+                action={{ label: 'Check again', onAct: dossier.refresh }}
+                testId="dossier-empty"
+              />
+            )}
             {(dossier.status === 'live-data' || dossier.status === 'sample') && (
               <FilesTreePane
                 key={`ftp-${pathway}-${dossier.version}`}
