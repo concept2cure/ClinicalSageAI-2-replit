@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-21T23:07:49.101Z",
+  "generatedAt": "2026-08-22T22:22:10.771Z",
   "git": {
-    "sha": "d07f38d2fb1d95d758ab79f97f6f8ee96400f4c1",
+    "sha": "7dbcd9dd5604d01faa0fb150f8666731b51da91c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,8 +17,8 @@
     "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 37,
-    "largeFilesByLines": 86
+    "largeFilesByBytes": 38,
+    "largeFilesByLines": 87
   },
   "findings": {
     "duplicateBasenames": [
@@ -2289,6 +2289,10 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 104021
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 100546
       }
     ],
     "largeFilesByLines": [
@@ -2391,6 +2395,10 @@
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2419
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 2418
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2569,10 +2577,6 @@
         "lines": 1756
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 1745
-      },
-      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
@@ -2617,6 +2621,10 @@
         "lines": 1582
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1578
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
@@ -2644,7 +2652,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
       "largeByBytes": 30,
-      "largeByLines": 72
+      "largeByLines": 73
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2661,7 +2669,7 @@
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
-      "largeByBytes": 2,
+      "largeByBytes": 3,
       "largeByLines": 4
     },
     {
