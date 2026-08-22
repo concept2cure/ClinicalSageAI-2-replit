@@ -42,6 +42,12 @@ import {
   type ChangeState,
 } from './changeData';
 import { useChangeRegister, useChangeSummary } from './changeHooks';
+/* The canonical sample-mode guard and its marker, shared with the MDX lane
+   rather than re-implemented here — one definition of "may a fixture reach the
+   screen", so the two lanes cannot answer it differently. */
+import { useSampleRows, useSampleValue, useShowingSample } from '../mdx/lib/useSampleRows';
+import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
+import { EmptyState } from '../v2/dataConnect';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -74,8 +80,19 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
   const reg = useChangeRegister();
   const sum = useChangeSummary();
 
-  const changes = reg.changes ?? FIXTURE_CHANGES;
-  const summary = sum.summary ?? FIXTURE_SUMMARY;
+  /* `reg.changes ?? FIXTURE_CHANGES` — the raw fallback `useSampleRows` exists
+     to eliminate, on a GxP change-control register. It fired on exactly the
+     occasions a user cannot detect: an empty tenant, an expired token, a 500, a
+     fetch that had not started. `changeData.ts` supplies rows asserting
+     `classification: 'major'` and `status: 'approved'`, so a quality lead could
+     be shown approved major changes that are not theirs, with nothing on screen
+     saying so — this surface renders no banner at all.
+     Sample content now reaches the screen only through the explicit sample-mode
+     boundary (impossible in a production build), and always under the standing
+     marker below. */
+  const changes = useSampleRows(reg.changes, FIXTURE_CHANGES);
+  const summary = useSampleValue(sum.summary, FIXTURE_SUMMARY);
+  const showingSample = useShowingSample(reg.changes);
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const [stage, setStage] = React.useState<ChangeState | 'all'>('all');
@@ -85,6 +102,9 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
 
   return (
     <>
+      {/* The standing marker. This surface had none — the fallback above was
+          silent as well as ungated. */}
+      <SampleDataBanner show={showingSample} loading={reg.loading} label="change records" />
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -124,6 +144,21 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
         </div>
       </div>
 
+      {/* The KPI row is derived entirely from `summary`, so with no summary
+          there is nothing to count. `useSampleValue` returns null rather than a
+          zero-filled shell precisely so this decision has to be made here: a
+          row of zeroes is a claim about the register ("no open changes"), not
+          an absence of information about it. */}
+      {summary === null ? (
+        <div className="qms-kpis">
+          <EmptyState
+            title="Change-log totals are unavailable"
+            hint="The counts appear once the change register loads."
+            regulation="Serves the change-control record (ICH Q10)"
+            testId="change-summary-absent"
+          />
+        </div>
+      ) : (
       <div className="qms-kpis">
         <Kpi label="Open changes" val={String(summary.open)} sub={`${summary.total} in the log`} />
         <Kpi
@@ -144,6 +179,7 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
           tone={summary.overdueImplementation ? 'err' : 'ok'}
         />
       </div>
+      )}
 
       {/* ── Lifecycle flowchart ── */}
       <section className="qms-sec">
