@@ -11,7 +11,7 @@ const { authState, exportSvc, attestationSvc, audit } = vi.hoisted(() => ({
   authState: { user: null as Record<string, any> | null },
   exportSvc: { exportTenantData: vi.fn() },
   attestationSvc: { generateAttestation: vi.fn() },
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+  audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 
 vi.mock('../../middleware/auth', () => ({

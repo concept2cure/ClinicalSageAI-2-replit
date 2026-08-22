@@ -38,7 +38,7 @@ import request from 'supertest';
 const ORG = 91;
 const USER_ID = 7;
 
-const auditMock = vi.hoisted(() => ({ logAction: vi.fn().mockResolvedValue(undefined) }));
+const auditMock = vi.hoisted(() => ({ logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) }));
 
 vi.mock('../../services/auditService', () => ({
   default: auditMock,

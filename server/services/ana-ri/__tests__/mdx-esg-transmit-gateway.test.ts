@@ -40,7 +40,7 @@ const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGove
     storedBundle:  { value: null as unknown },
     httpsRequests: [] as Array<{ options: any; body: Buffer }>,
     mdnResponse:   { statusCode: 200, body: '' },
-    audit:         { logAction: vi.fn().mockResolvedValue(undefined) },
+    audit:         { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
     recordGovernedAction: vi.fn(async (_client: unknown, _params: Record<string, any>) => ({
       actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'deadbeef',
     })),
