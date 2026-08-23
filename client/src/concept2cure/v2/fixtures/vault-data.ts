@@ -47,6 +47,10 @@ export const VAULT_STATUS: Record<string, VaultStatus> = {
   draft: { label: 'Draft', tone: 'warn' },
   not_started: { label: 'Not started', tone: 'idle' },
   rejected: { label: 'Rejected', tone: 'warn' },
+  /* An ingested file is complete AS a file — it has no drafting lifecycle, so
+     neither "Draft" (the unknown-status fallback) nor "Final" (an approval
+     claim) would be true of it. */
+  uploaded: { label: 'Uploaded', tone: 'ok' },
 };
 
 export function vaultStatus(s: string): VaultStatus {

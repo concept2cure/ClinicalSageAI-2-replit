@@ -116,13 +116,14 @@ export async function auditTaskAction(
      client the row commits with the mutation it records; otherwise this opens
      and owns one. */
   if (executor) {
-    try {
-      await recordGovernedAction(executor, row);
-    } catch (err: any) {
-      // Enlisted in the caller's transaction: their rollback is the correct
-      // outcome, so the failure propagates rather than being swallowed here.
-      throw err;
-    }
+    // Enlisted in the caller's transaction: their rollback is the correct
+    // outcome, so a failure here propagates rather than being swallowed — the
+    // deliberate opposite of the owned-transaction branch below, which is
+    // best-effort. Left uncaught rather than caught-and-rethrown: the rethrow
+    // was behaviourally identical and tripped no-useless-catch, and that single
+    // error failed the Lint job, which Test/Build/Integration Tests all declare
+    // `needs: lint` on — so one dead catch block was skipping the suite.
+    await recordGovernedAction(executor, row);
     return;
   }
 

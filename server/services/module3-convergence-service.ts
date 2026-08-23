@@ -13,6 +13,11 @@ import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, tablesToMarkdown, CmcSourceType } from './module3Composer';
+import {
+  resolveCmcArtifactProject,
+  type ArtifactProjectResolution,
+  type ArtifactSpineState,
+} from './cmc/resolve-cmc-artifact-project';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -88,17 +93,34 @@ export function getSectionLabels(): Record<string, string> {
   return { ...SECTION_LABELS };
 }
 
+export interface Module3BuildStatusResult {
+  sections: Module3SectionBuildStatus[];
+  /**
+   * Whether the governed artifact registry was addressable for this project.
+   * 'linked' — artifact facts below are real reads. 'unanchored' /
+   * 'unaddressable' — every artifactId/artifactStatus is null BECAUSE the
+   * registry could not be queried, not because it is empty; `detail` says why.
+   */
+  artifactRegistry: { state: ArtifactSpineState; detail?: string };
+}
+
 /**
- * Returns Module3SectionBuildStatus[] for every subsection defined in MODULE3_SECTION_RULES.
+ * Returns the per-subsection build state for every subsection defined in
+ * MODULE3_SECTION_RULES, plus the artifact-registry addressability verdict.
  *
- * Queries cmc_source_objects, cmc_module3_sections, cmc_contradictions, and
- * concept2cure_artifacts to build a unified build-state view.
+ * Queries cmc_source_objects, cmc_module3_sections, cmc_contradictions
+ * (TEXT project id — the CMC space), and concept2cure_artifacts (integer
+ * projects.id — reached through resolveCmcArtifactProject, never with the
+ * raw TEXT id: a uuid literal against the integer column aborts the whole
+ * statement).
  */
 export async function getModule3BuildStatus(
   orgId: number,
   projectId: string,
-): Promise<Module3SectionBuildStatus[]> {
+): Promise<Module3BuildStatusResult> {
   const pool = getPool();
+
+  const spine = await resolveCmcArtifactProject(orgId, projectId);
 
   // Parallel fetch of all four data sources
   const [sourceRes, sectionRes, contradictionRes, artifactRes] = await Promise.all([
@@ -125,15 +147,17 @@ export async function getModule3BuildStatus(
        WHERE organization_id = $1 AND project_id = $2`,
       [orgId, projectId],
     ),
-    pool.query(
-      `SELECT artifact_id AS "artifactId", ctd_section AS "ctdSection",
-              status, updated_at AS "updatedAt"
-       FROM concept2cure_artifacts
-       WHERE organization_id = $1 AND project_id = $2
-         AND ctd_section IS NOT NULL
-         AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
-      [orgId, projectId],
-    ),
+    spine.state === 'linked'
+      ? pool.query(
+          `SELECT artifact_id AS "artifactId", ctd_section AS "ctdSection",
+                  status, updated_at AS "updatedAt"
+           FROM concept2cure_artifacts
+           WHERE organization_id = $1 AND project_id = $2
+             AND ctd_section IS NOT NULL
+             AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
+          [orgId, spine.artifactProjectId],
+        )
+      : Promise.resolve({ rows: [] as any[] }),
   ]);
 
   // Index helpers
@@ -253,7 +277,11 @@ export async function getModule3BuildStatus(
     };
   });
 
-  return results;
+  return {
+    sections: results,
+    artifactRegistry:
+      spine.state === 'linked' ? { state: 'linked' } : { state: spine.state, detail: spine.detail },
+  };
 }
 
 /**
@@ -270,6 +298,13 @@ export async function classifyAndMapArtifactToSource(
     throw new Error('Classification does not designate this artifact as a Module 3 source');
   }
 
+  // The artifact lives on the integer spine; the CMC source object keeps the
+  // caller's TEXT project id so it joins the rest of the Module 3 OS layer.
+  const spine = await resolveCmcArtifactProject(orgId, projectId);
+  if (spine.state !== 'linked') {
+    throw new Error(`Artifact registry is not addressable for project ${projectId}: ${spine.detail}`);
+  }
+
   const pool = getPool();
   const client = await pool.connect();
 
@@ -282,7 +317,7 @@ export async function classifyAndMapArtifactToSource(
        FROM concept2cure_artifacts
        WHERE organization_id = $1 AND project_id = $2 AND artifact_id = $3
        LIMIT 1`,
-      [orgId, projectId, artifactId],
+      [orgId, spine.artifactProjectId, artifactId],
     );
 
     if (artRes.rows.length === 0) {
@@ -354,10 +389,29 @@ export async function classifyAndMapArtifactToSource(
   }
 }
 
+export type BridgeToArtifactResult =
+  | { bridged: true; artifactId: string; isNew: boolean }
+  | {
+      /**
+       * The registry was not addressable for this project — a real state
+       * (unanchored program, unaddressable id), reported to the caller so a
+       * compile can say exactly which sections have no governed artifact and
+       * why. Never thrown: silence here is how every wizard-created program
+       * lost its artifacts without anyone seeing it.
+       */
+      bridged: false;
+      reason: Exclude<ArtifactProjectResolution['state'], 'linked'>;
+      detail: string;
+    };
+
 /**
  * After a section is compiled, creates or updates a governed artifact in
  * concept2cure_artifacts with the narrative text, correct ctdSection placement,
  * and compile provenance metadata.
+ *
+ * The registry keys projects by integer id; the CMC project id is TEXT and is
+ * translated through resolveCmcArtifactProject. Provenance stays keyed by the
+ * CMC TEXT id — it belongs to the Module 3 OS layer.
  */
 export async function bridgeCompileToArtifact(
   orgId: number,
@@ -370,7 +424,13 @@ export async function bridgeCompileToArtifact(
     missingInputs: string[];
     lineage: Array<{ sourceObjectId: string; sourceHashAtCompile: string }>;
   },
-): Promise<{ artifactId: string; isNew: boolean }> {
+): Promise<BridgeToArtifactResult> {
+  const spine = await resolveCmcArtifactProject(orgId, projectId);
+  if (spine.state !== 'linked') {
+    return { bridged: false, reason: spine.state, detail: spine.detail };
+  }
+  const artifactProjectId = spine.artifactProjectId;
+
   const pool = getPool();
   const client = await pool.connect();
 
@@ -405,7 +465,7 @@ export async function bridgeCompileToArtifact(
        WHERE organization_id = $1 AND project_id = $2 AND ctd_section = $3
        ORDER BY version DESC
        LIMIT 1`,
-      [orgId, projectId, sectionKey],
+      [orgId, artifactProjectId, sectionKey],
     );
 
     let artifactId: string;
@@ -441,7 +501,7 @@ export async function bridgeCompileToArtifact(
                  $5, $6, 1, $7, 'draft', $8::jsonb, 'system')`,
         [
           orgId,
-          projectId,
+          artifactProjectId,
           artifactId,
           `Module 3 — ${sectionLabel}`,
           fullContent,
@@ -473,7 +533,7 @@ export async function bridgeCompileToArtifact(
 
     await client.query('COMMIT');
 
-    return { artifactId, isNew };
+    return { bridged: true, artifactId, isNew };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

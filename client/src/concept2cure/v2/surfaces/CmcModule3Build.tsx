@@ -73,6 +73,34 @@ export interface Module3BuildSummary {
 interface Module3BuildPayload {
   sections?: Module3SectionState[];
   summary?: Module3BuildSummary;
+  /**
+   * Whether the governed artifact registry was addressable for this project.
+   * When it wasn't ('unanchored' | 'unaddressable'), every artifactId in
+   * `sections` is null BECAUSE of that — the server's detail says why, and
+   * this surface must show the distinction rather than render it as "no
+   * artifacts".
+   */
+  artifactRegistry?: { state: 'linked' | 'unanchored' | 'unaddressable'; detail?: string };
+}
+
+/** GET /api/submissions rows (subset the placement picker reads). */
+interface SubmissionRow {
+  id: number;
+  title: string;
+  applicationType: string;
+  status: string;
+}
+
+/** GET /api/submissions/:id/sequences rows (subset). */
+interface SequenceRow {
+  id: number;
+  sequenceNumber: string;
+  status: string; // draft|assembling|validated|frozen|dispatched
+}
+
+interface PlacementOutcome {
+  placements: Array<{ sectionKey: string; leafSectionCode: string; leafId: number; title: string }>;
+  skipped: Array<{ sectionKey: string; reason: string }>;
 }
 
 export interface Module3Readiness {
@@ -204,7 +232,14 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
     run('compile', 'POST', '/api/cmc/module3-os/compile/' + encodeURIComponent(projectId!), {}, (json) => {
       const n = (json as { compiledCount?: number })?.compiledCount ?? 0;
       const bridged = (json as { bridgedArtifacts?: unknown[] })?.bridgedArtifacts?.length ?? 0;
-      return `Compiled ${n} §3.2 ${n === 1 ? 'section' : 'sections'} · ${bridged} placed as governed ${bridged === 1 ? 'artifact' : 'artifacts'}.`;
+      /* A section the server compiled but could NOT place as an artifact is
+         said out loud with the server's reason — "compiled successfully" while
+         zero artifacts land is exactly the silence that hid the spine break. */
+      const skips = (json as { bridgeSkips?: Array<{ detail?: string }> })?.bridgeSkips ?? [];
+      const skipTail = skips.length
+        ? ` ${skips.length} could not be placed as governed ${skips.length === 1 ? 'artifact' : 'artifacts'}: ${skips[0]?.detail ?? 'see the build state'}`
+        : '';
+      return `Compiled ${n} §3.2 ${n === 1 ? 'section' : 'sections'} · ${bridged} placed as governed ${bridged === 1 ? 'artifact' : 'artifacts'}.${skipTail}`;
     });
 
   const buildSection = (s: Module3SectionState) =>
@@ -329,6 +364,19 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
         />
       ) : (
         <>
+          {build.data?.artifactRegistry && build.data.artifactRegistry.state !== 'linked' && (
+            <div className="pj-con" style={{ marginBottom: 16 }} data-testid="m3-registry-unlinked">
+              <span className="ico">{I.alertTriangle}</span>
+              <div>
+                <div className="pj-con-t">Governed artifact registry not linked</div>
+                <div className="pj-con-d">
+                  {build.data.artifactRegistry.detail ||
+                    'The artifact registry could not be addressed for this program, so no governed artifacts are shown — not because there are none.'}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="cm-kpis">
             <Kpi l="Sections" v={summary?.totalSections ?? sections.length} s="CTD §3.2" />
             <Kpi
@@ -383,7 +431,10 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
             </div>
             {readiness.data?.exportReady && (
               <div className="pj-card-b" style={{ paddingTop: 0 }}>
-                <button className="nda-open" onClick={() => nav && nav('ectd-compile')}>{I.fileDown} Open the eCTD assembly</button>
+                <PlaceIntoSubmission projectId={projectId} onPlaced={bump} />
+                <button className="nda-open" style={{ marginTop: 10 }} onClick={() => nav && nav('ectd-compile')}>
+                  {I.fileDown} Open the eCTD assembly
+                </button>
               </div>
             )}
           </div>
@@ -563,6 +614,159 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
   );
 }
 
+/* ── Place into submission ───────────────────────────────────────────────── */
+
+/**
+ * The CMC → IND seam, from this side. POST /place-into-submission snapshots
+ * every approved §3.2 section into the canonical renderable leaf source and
+ * places real submission leaves at the m-prefixed section codes — after
+ * re-running the same final-export gate this surface's "Check export gate"
+ * button reports. The pickers render live org data with honest empty and
+ * error states; frozen/dispatched sequences are excluded WITH the reason
+ * (their leaves are immutable — the server refuses them too); the server's
+ * verdict is shown verbatim either way.
+ */
+function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPlaced: () => void }) {
+  const submissions = useLiveRows<SubmissionRow>('/api/submissions');
+  const [submissionId, setSubmissionId] = React.useState<number | null>(null);
+  const sequences = useLiveRows<SequenceRow>(
+    submissionId != null ? `/api/submissions/${submissionId}/sequences` : null,
+    [submissionId],
+  );
+  const [sequenceId, setSequenceId] = React.useState<number | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [verdict, setVerdict] = React.useState<
+    | { ok: true; outcome: PlacementOutcome }
+    | { ok: false; message: string }
+    | null
+  >(null);
+
+  const lockedSeq = (s: SequenceRow) => s.status === 'frozen' || s.status === 'dispatched';
+
+  const place = async () => {
+    if (busy || submissionId == null || sequenceId == null) return;
+    setBusy(true);
+    setVerdict(null);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/cmc/module3-os/place-into-submission/' + encodeURIComponent(projectId),
+        { submissionId, sequenceId },
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setVerdict({ ok: false, message: cmcWriteError(json, res.status) });
+        return;
+      }
+      const data = (json as { data?: PlacementOutcome })?.data;
+      setVerdict({ ok: true, outcome: { placements: data?.placements ?? [], skipped: data?.skipped ?? [] } });
+      onPlaced();
+    } catch (e) {
+      setVerdict({ ok: false, message: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div data-testid="m3-place-into-submission">
+      <div className="cm-meta" style={{ marginBottom: 6 }}>
+        Place the approved §3.2 sections into an IND sequence — each becomes a real submission leaf the
+        checklist, package manifest and eCTD assembly read.
+      </div>
+      {submissions.loading ? (
+        <div className="cm-meta">Loading submissions…</div>
+      ) : submissions.error ? (
+        <div className="cm-meta">Submissions could not be loaded — {submissions.error}</div>
+      ) : submissions.rows.length === 0 ? (
+        <div className="cm-meta">No submissions exist in this workspace yet — create one in the Submission Center first.</div>
+      ) : (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <select
+            className="c2c-input"
+            aria-label="Target submission"
+            value={submissionId ?? ''}
+            onChange={(e) => {
+              const v = e.target.value ? Number(e.target.value) : null;
+              setSubmissionId(v);
+              setSequenceId(null);
+              setVerdict(null);
+            }}
+          >
+            <option value="">Choose a submission…</option>
+            {submissions.rows.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title} ({s.applicationType.toUpperCase()})
+              </option>
+            ))}
+          </select>
+          {submissionId != null &&
+            (sequences.loading ? (
+              <span className="cm-meta">Loading sequences…</span>
+            ) : sequences.error ? (
+              <span className="cm-meta">Sequences could not be loaded — {sequences.error}</span>
+            ) : sequences.rows.length === 0 ? (
+              <span className="cm-meta">This submission has no sequences yet — create one in the Submission Center.</span>
+            ) : (
+              <select
+                className="c2c-input"
+                aria-label="Target sequence"
+                value={sequenceId ?? ''}
+                onChange={(e) => {
+                  setSequenceId(e.target.value ? Number(e.target.value) : null);
+                  setVerdict(null);
+                }}
+              >
+                <option value="">Choose a sequence…</option>
+                {sequences.rows.map((s) => (
+                  <option key={s.id} value={s.id} disabled={lockedSeq(s)}>
+                    {s.sequenceNumber} · {s.status}
+                    {lockedSeq(s) ? ' — leaves are immutable' : ''}
+                  </option>
+                ))}
+              </select>
+            ))}
+          <button
+            className="reg-cta"
+            onClick={() => void place()}
+            disabled={busy || submissionId == null || sequenceId == null}
+          >
+            {I.fileDown} {busy ? 'Placing…' : 'Place into the submission'}
+          </button>
+        </div>
+      )}
+      {verdict &&
+        (verdict.ok ? (
+          <div className="pj-con cm-gate-verdict is-ok" style={{ marginTop: 10 }}>
+            <span className="ico">{I.shieldCheck}</span>
+            <div>
+              <div className="pj-con-t">
+                {verdict.outcome.placements.length}{' '}
+                {verdict.outcome.placements.length === 1 ? 'section' : 'sections'} placed into the submission
+              </div>
+              <div className="pj-con-d">
+                {verdict.outcome.placements.map((p) => p.leafSectionCode).join(', ') || '—'}
+                {verdict.outcome.skipped.length > 0 && (
+                  <>
+                    {' '}· skipped: {verdict.outcome.skipped.map((s) => `§${s.sectionKey} (${s.reason})`).join('; ')}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="pj-con cm-gate-verdict" style={{ marginTop: 10 }}>
+            <span className="ico">{I.alertTriangle}</span>
+            <div>
+              <div className="pj-con-t">Placement refused</div>
+              <div className="pj-con-d">{verdict.message}</div>
+            </div>
+          </div>
+        ))}
+    </div>
+  );
+}
+
 /* ── Section provenance drawer ───────────────────────────────────────────── */
 
 /**
@@ -631,7 +835,7 @@ function SectionProvenance({
 const SUGGEST = [
   'Which §3.2 sections are blocking my export and why?',
   'Draft the narrative for the section with the lowest completeness',
-  'Explain each open contradiction and what would resolve it',
+  'What still stands between this Module 3 and its IND sequence?',
 ];
 
 function Head({ ask, actions }: { ask: (text: string) => void; actions?: React.ReactNode }) {

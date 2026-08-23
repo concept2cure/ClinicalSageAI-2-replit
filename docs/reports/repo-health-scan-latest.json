@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T18:47:02.299Z",
+  "generatedAt": "2026-08-23T22:21:09.777Z",
   "git": {
-    "sha": "1c15c7d8b36e4aa3ca47b8b2037dced9dfda4f77",
+    "sha": "a5904eb1ec9ddfa5e90520566a3299127037f4b3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,11 +14,11 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 223,
+    "duplicateBasenames": 222,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 87
+    "largeFilesByLines": 88
   },
   "findings": {
     "duplicateBasenames": [
@@ -2076,14 +2076,6 @@
         ]
       },
       {
-        "basename": "templateservice",
-        "count": 2,
-        "paths": [
-          "server/api/cmc/templateService.ts",
-          "server/services/templateService.ts"
-        ]
-      },
-      {
         "basename": "test-assembly.routes.test",
         "count": 2,
         "paths": [
@@ -2160,7 +2152,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 969063
+        "bytes": 969992
       },
       {
         "file": "shared/schema.ts",
@@ -2235,12 +2227,12 @@
         "bytes": 129044
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 127662
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 127933
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126752
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 127662
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2318,7 +2310,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18865
+        "lines": 18877
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2442,7 +2434,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2188
+        "lines": 2209
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2609,6 +2601,10 @@
         "lines": 1650
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1635
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2637,10 +2633,6 @@
         "lines": 1582
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1578
-      },
-      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
@@ -2657,6 +2649,10 @@
         "lines": 1533
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1529
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1516
       }
@@ -2666,7 +2662,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 404,
+      "duplicateGroups": 402,
       "largeByBytes": 30,
       "largeByLines": 73
     },
@@ -2686,7 +2682,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 3,
-      "largeByLines": 4
+      "largeByLines": 5
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

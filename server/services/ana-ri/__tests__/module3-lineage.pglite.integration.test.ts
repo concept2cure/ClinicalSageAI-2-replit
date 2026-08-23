@@ -31,9 +31,13 @@ vi.mock('../../../db', () => ({ getPool: () => h.pool, pool: h.pool, db: {} }));
 // The artifact bridge is post-commit and non-fatal; stub it so the test stays
 // focused on the lineage write.
 vi.mock('../../module3-convergence-service', () => ({
-  bridgeCompileToArtifact: async () => null,
+  bridgeCompileToArtifact: async () => ({
+    bridged: false,
+    reason: 'unaddressable',
+    detail: 'stubbed for lineage test',
+  }),
   classifyAndMapArtifactToSource: async () => null,
-  getModule3BuildStatus: async () => ({}),
+  getModule3BuildStatus: async () => ({ sections: [], artifactRegistry: { state: 'unaddressable' } }),
 }));
 
 import { module3BuildAll, module3BuildSection } from '../module3-command-handlers';
