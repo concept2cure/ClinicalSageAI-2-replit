@@ -97,7 +97,18 @@ router.post('/auto-draft/:projectId', async (req, res) => {
             missingInputs: section.missingInputs,
             lineage: section.lineage,
           });
-          persistedArtifacts.push({ sectionKey: section.sectionKey, ...bridged });
+          if (bridged.bridged) {
+            persistedArtifacts.push({
+              sectionKey: section.sectionKey,
+              artifactId: bridged.artifactId,
+              isNew: bridged.isNew,
+            });
+          } else {
+            persistErrors.push({
+              sectionKey: section.sectionKey,
+              error: `${bridged.reason}: ${bridged.detail}`,
+            });
+          }
         } catch (bridgeErr) {
           persistErrors.push({
             sectionKey: section.sectionKey,
