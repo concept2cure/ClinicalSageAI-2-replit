@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* One payer/HTA position — the read shape of GET /api/market-access, one row per
@@ -76,6 +77,49 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
   /* Code-centric view of the same real rows: the billing codes in play across
      the org's payer positions (a projection, not a second store). */
   const coded = positions.filter((p) => p.code);
+
+  /* What AnA can see of this screen.
+     A FAILED read publishes the failure. `positions` is [] on error as well as
+     when the org has recorded no payer positions, and "0 markets covered" over
+     an outage is a reimbursement claim nobody made — the KPIs above already
+     refuse to render a number in that state, and AnA is told the same thing. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The payer / HTA position store is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The payer / HTA position store could not be read, so this screen is showing no coverage ' +
+          'positions because of a failure, not because none are recorded.',
+        availableActions: ['Retry the market-access read'],
+      };
+    }
+    return {
+      summary:
+        `Market access and reimbursement, "${(tabs.find((t) => t[0] === tab) ?? [])[1] ?? tab}" tab: ` +
+        `${positions.length} payer position(s) across ${programs} program(s) — ${covered} covered, ` +
+        `${inReview} in HTA review, ${coded.length} carrying a billing code.`,
+      facts: {
+        openTab: tab,
+        totalPositions: positions.length,
+        covered,
+        inHtaReview: inReview,
+        programCount: programs,
+        codedPositions: coded.length,
+        positions: positions.slice(0, 12).map((pp) => ({
+          id: pp.id, program: pp.program, market: pp.market, payer: pp.payer,
+          mechanism: pp.mechanism, code: pp.code, status: pp.status,
+          decisionDate: pp.decisionDate, note: pp.note,
+        })),
+      },
+      availableActions: [
+        'Switch between coverage status, value dossier, coding strategy and access strategy',
+        'Read a payer position — its market, mechanism, billing code and decision date',
+      ],
+    };
+  }, [live.loading, live.error, positions, tab, tabs, covered, inReview, programs, coded.length]);
+  usePublishSurfaceContext('market-access', anaContext);
 
   return (
     <div className="reg ma">

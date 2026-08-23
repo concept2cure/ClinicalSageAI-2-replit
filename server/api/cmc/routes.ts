@@ -194,24 +194,49 @@ router.get('/analytical-methods', async (req, res) => {
 /* Timestamp-bearing variants of the generated insert schemas — see the
    `requiredDate` / `optionalDate` note above. Each names exactly the timestamp
    columns its table carries, so a schema change that adds one is a compile-time
-   prompt to decide how it crosses the JSON boundary rather than a silent 500. */
-const analyticalMethodBody = insertAnalyticalMethodSchema.extend({
+   prompt to decide how it crosses the JSON boundary rather than a silent 500.
+
+   organizationId is OMITTED from every request body: the generated insert
+   schemas require it (the column is NOT NULL with no default), but tenancy is
+   the SESSION's fact — each handler stamps `organizationId: orgId` from the
+   authenticated context after parse. Requiring it in the body meant every
+   create from the product's own register surfaces (which rightly never send
+   it) answered 400 "organizationId Required" — and accepting it would have
+   invited a caller-supplied tenant, which is worse. */
+
+/**
+ * Drop the tenant key from a generated insert schema. The RUNTIME omit is
+ * plain zod and correct (proven live: scripts/dev/cmc-staff-simulation.sh);
+ * the TYPE-level mask is the problem — drizzle-zod's generated object types
+ * resolve the omit-mask keys to `never`, so a literal
+ * `.omit({ organizationId: true })` fails to compile. One cast, confined
+ * here. The returned type still names organizationId; every handler stamps
+ * the real one from the session immediately after parse, so nothing reads
+ * the phantom.
+ */
+function withoutTenantKey<S extends z.AnyZodObject>(schema: S): S {
+  return schema.omit({ organizationId: true } as never) as unknown as S;
+}
+
+const analyticalMethodBody = withoutTenantKey(insertAnalyticalMethodSchema).extend({
   validationDate: optionalDate,
 });
-const processValidationBody = insertProcessValidationSchema.extend({
+const processValidationBody = withoutTenantKey(insertProcessValidationSchema).extend({
   approvalDate: optionalDate,
 });
-const stabilityStudyBody = insertStabilityStudySchema.extend({
+const stabilityStudyBody = withoutTenantKey(insertStabilityStudySchema).extend({
   startDate: requiredDate,
   plannedEndDate: optionalDate,
 });
-const qcTestingBody = insertQcTestingSchema.extend({
+const qcTestingBody = withoutTenantKey(insertQcTestingSchema).extend({
   testDate: requiredDate,
   releaseDate: optionalDate,
 });
-const changeControlBody = insertCmcChangeControlSchema.extend({
+const changeControlBody = withoutTenantKey(insertCmcChangeControlSchema).extend({
   implementationDate: optionalDate,
 });
+const drugSubstanceBody = withoutTenantKey(insertDrugSubstanceSchema);
+const drugProductBody = withoutTenantKey(insertDrugProductSchema);
 
 router.post('/analytical-methods', async (req, res) => {
   try {
@@ -573,7 +598,7 @@ router.get('/drug-substances', async (req, res) => {
 router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertDrugSubstanceSchema.parse(req.body);
+    const validatedData = drugSubstanceBody.parse(req.body);
     const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId } as typeof drugSubstances.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
@@ -593,7 +618,7 @@ router.put('/drug-substances/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
-    const validatedData = insertDrugSubstanceSchema.partial().parse(req.body);
+    const validatedData = drugSubstanceBody.partial().parse(req.body);
     const [substance] = await db
       .update(drugSubstances)
       .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
@@ -643,7 +668,7 @@ router.get('/drug-products', async (req, res) => {
 router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertDrugProductSchema.parse(req.body);
+    const validatedData = drugProductBody.parse(req.body);
     const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId } as typeof drugProducts.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
@@ -663,7 +688,7 @@ router.put('/drug-products/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
-    const validatedData = insertDrugProductSchema.partial().parse(req.body);
+    const validatedData = drugProductBody.partial().parse(req.body);
     const [product] = await db
       .update(drugProducts)
       .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })

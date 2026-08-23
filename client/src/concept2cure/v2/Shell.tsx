@@ -28,6 +28,7 @@ import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { stashNavParamsForTarget } from './navParams';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
@@ -111,6 +112,27 @@ export interface AnaMessage {
   crlPremortem?: CrlPremortemArtifact;
 }
 
+/**
+ * Does this viewer hold an organization-administrator role?
+ *
+ * One implementation, because two entry points now consume it. It began inline
+ * in `Rail` — the account menu offers Admin and Licensing only to admins — and
+ * ⌘K needs the same answer: both open {@link NavUnlockPanel} for a locked
+ * destination, and that panel's copy branches on it (an admin is offered the
+ * Apps catalog or workspace setup; a member is told to ask an administrator).
+ * A second copy of this role list would let one customer get two different next
+ * steps for one lock depending on whether they came from the rail or the
+ * palette, which is exactly the inconsistency the panel exists to prevent.
+ *
+ * `String(r)` rather than trusting the declared `string[]`: roles arrive from a
+ * JWT claim, and a numeric or null entry there must not throw inside the shell.
+ */
+function isOrgAdminRole(roles: readonly string[] | undefined): boolean {
+  return (roles ?? []).some((r) =>
+    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
+  );
+}
+
 /* ── Left rail ─────────────────────────────────────────────────────────── */
 export function Rail({
   activeId,
@@ -141,9 +163,7 @@ export function Rail({
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
   const role = user?.roles?.[0] ?? '';
-  const isOrgAdmin = (user?.roles ?? []).some((r) =>
-    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
-  );
+  const isOrgAdmin = isOrgAdminRole(user?.roles);
   const acctGo = (id?: string) => {
     setAcct(false);
     if (id) onNav(id);
@@ -889,7 +909,14 @@ export function AnaRail({
                           key={i}
                           type="button"
                           className="ana-exec-chip is-nav"
-                          onClick={() => onNav(a.targetId as string)}
+                          onClick={() => {
+                            /* The directive's registry-validated params ride
+                               the navParams channel so the destination opens
+                               on the named tab/section; a param-less chip
+                               clears any stale entry instead of inheriting. */
+                            stashNavParamsForTarget(a.targetId as string, a.params);
+                            onNav(a.targetId as string);
+                          }}
                         >
                           {I.arrowRight} {a.label}
                         </button>
@@ -1316,6 +1343,18 @@ interface CmdKItem {
   label: string;
   hint?: string;
   icon?: string;
+  /**
+   * The licence verdict for a `nav` result, carried ONLY when the server
+   * returned a refusal for that destination.
+   *
+   * One optional field rather than a `locked` boolean beside a nullable
+   * verdict, because that pair has an unrepresentable-but-writable state: a row
+   * marked locked with no verdict to explain it — a dead end with no reason and
+   * no next step. Absent here covers all three "render it exactly as before"
+   * cases at once: the fetch has not resolved, the fetch failed, or the catalog
+   * carries no row for the id (navEntitlements.tsx rules 1 and 2).
+   */
+  lock?: NavSurfaceEntitlement;
 }
 
 export function CmdK({
@@ -1334,10 +1373,27 @@ export function CmdK({
   const [q, setQ] = React.useState('');
   const [sel, setSel] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  /* The SAME verdict set the rail reads. The provider is mounted once above the
+     whole shell (V2App), so this is a context read, not a second fetch: two
+     fetches could disagree about whether a destination is locked, and the rail
+     and the palette would then describe one contract two ways. Until it answers
+     — and permanently if it cannot — `verdictFor` returns null for everything
+     and the palette behaves exactly as it did before this gate existed. */
+  const { verdictFor } = useNavEntitlements();
+  const isOrgAdmin = isOrgAdminRole(user?.roles);
+  /** The locked destination the human just activated from the palette. */
+  const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   React.useEffect(() => {
     if (open) {
       setQ('');
       setSel(0);
+      /* Reopening the palette dismisses an explanation left over from an
+         earlier activation. Activating a locked result closes the palette and
+         opens the panel, so the two are never meant to be stacked; without this
+         a ⌘K pressed while the panel is up would put the palette underneath a
+         dialog the human has not answered yet. */
+      setLockedFor(null);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [open]);
@@ -1346,19 +1402,45 @@ export function CmdK({
   const isCmd = q.startsWith('>');
 
   const items = React.useMemo<CmdKItem[]>(() => {
+    /**
+     * Every navigation result is built here, so the palette's two branches —
+     * the empty-query "Jump to" list and a search hit — cannot drift on
+     * entitlement. They did not merely drift before: NEITHER checked, so ⌘K
+     * handed a customer a one-keystroke route into a destination the rail had
+     * greyed out and explained. The rail's gate is only wayfinding, and a
+     * second door past it means the explanation never reaches them.
+     */
+    const navResult = (s: { id: string; label: string; icon?: string }): CmdKItem => {
+      const verdict = verdictFor(s.id);
+      /* `isLocked` is already false for both null cases; the explicit null test
+         is what carries the verdict into the branch for TypeScript, and it
+         makes the "no verdict ⇒ no lock" rule readable at the call site. */
+      const lock = verdict !== null && isLocked(verdict) ? verdict : undefined;
+      return {
+        id: s.id,
+        kind: 'nav',
+        label: s.label,
+        /* The hint column normally carries the destination's domain group. For
+           a locked one it carries the REASON instead: once the row cannot be
+           opened, which domain it belongs to is the less useful of the two
+           facts, and the reason has to be visible without hovering. It is the
+           server's own reason per verdict — never a blanket "upgrade", which
+           would be wrong for a module an admin switched off (nothing to buy)
+           or one outside the workspace's industry mode (no plan fixes it). */
+        hint: lock
+          ? lockShortReason(lock)
+          : NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
+        icon: s.icon,
+        lock,
+      };
+    };
     // NOTE(Phase 3): the kit also searches filings, documents, conversations,
     // pathways, people and templates from its fixture files — those categories
     // join as their surface families port.
     if (!q.trim()) {
       return [
         { id: '_hd_jump', kind: 'header', label: 'Jump to' },
-        ...UI_SURFACES.slice(0, 8).map((s) => ({
-          id: s.id,
-          kind: 'nav',
-          label: s.label,
-          hint: NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
-          icon: s.icon,
-        })),
+        ...UI_SURFACES.slice(0, 8).map(navResult),
         { id: '_hd_actions', kind: 'header', label: 'Quick actions' },
         { id: 'run_validation', kind: 'action', label: 'Run validation', hint: 'Action', icon: 'zap' },
         { id: 'export_document', kind: 'action', label: 'Export document', hint: 'Action · e-sign', icon: 'zap' },
@@ -1393,15 +1475,7 @@ export function CmdK({
     }).slice(0, 25);
     if (navs.length) {
       results.push({ id: '_hd_surfaces', kind: 'header', label: 'Surfaces' });
-      navs.forEach((s) =>
-        results.push({
-          id: s.id,
-          kind: 'nav',
-          label: s.label,
-          hint: NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
-          icon: s.icon,
-        })
-      );
+      navs.forEach((s) => results.push(navResult(s)));
     }
     const acts = AI_ACTIONS.filter((a) => a.label.toLowerCase().includes(term)).slice(0, 3);
     if (acts.length) {
@@ -1427,13 +1501,26 @@ export function CmdK({
       });
     }
     return results;
-  }, [q, term, isCmd]);
+    /* `verdictFor` is memoised by the provider on the payload, so this list
+       rebuilds once — when the verdicts land — and not on every render. */
+  }, [q, term, isCmd, verdictFor]);
 
   const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header'), [items]);
 
   const run = React.useCallback(
     (it?: CmdKItem) => {
       if (!it || it.kind === 'header') return;
+      /* A locked destination never navigates — from here any more than from the
+         rail. Routing there would 403, or worse render an empty surface that
+         reads as "there is nothing here" rather than "your organization has not
+         licensed this". Instead the palette closes and hands over to the one
+         panel that explains the verdict and offers the step that resolves THAT
+         reason, so both entry points give the customer one answer. */
+      if (it.lock) {
+        setLockedFor(it.lock);
+        onClose();
+        return;
+      }
       if (it.kind === 'nav') onNav(it.id);
       else if (it.kind === 'action') onAct(it.id);
       else onAsk(q.trim());
@@ -1463,9 +1550,26 @@ export function CmdK({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, selectable, sel, onClose, run]);
 
-  if (!open) return null;
+  /* Rendered OUTSIDE the `open` branch on purpose. Activating a locked result
+     closes the palette, so a panel mounted inside that branch would unmount in
+     the same commit as the activation that asked for it — the customer would
+     see the palette vanish and nothing take its place, which reads as the
+     product swallowing their keystroke. CmdK itself stays mounted whether or
+     not it is showing (V2App renders it unconditionally), so this is the one
+     place the explanation can outlive the palette. */
+  const unlock = lockedFor ? (
+    <NavUnlockPanel
+      verdict={lockedFor}
+      isOrgAdmin={isOrgAdmin}
+      onClose={() => setLockedFor(null)}
+      onNav={onNav}
+    />
+  ) : null;
+
+  if (!open) return unlock;
   let selIdx = -1;
   return (
+    <>
     <div className="cmdk-bd" onClick={onClose}>
       <div className="cmdk" role="dialog" aria-modal="true" aria-label="Command palette" onClick={(e) => e.stopPropagation()}>
         <div className="cmdk-in">
@@ -1509,11 +1613,31 @@ export function CmdK({
                 key={it.id}
                 type="button"
                 className={`cmdk-item${sel === si ? ' on' : ''}`}
+                /* Locked is a data attribute, never `disabled` — the same
+                   decision the rail made, for the same reason. A disabled row
+                   drops out of the arrow-key cursor and out of `selectable`
+                   here, so the one result a customer most needs an answer about
+                   would be the one result they could not reach or interrogate.
+                   It stays an ordinary row that Enter activates; only its
+                   destination changes. */
+                data-locked={it.lock ? true : undefined}
                 onMouseEnter={() => setSel(si)}
                 onClick={() => run(it)}
+                /* The reason reaches assistive tech through the accessible
+                   NAME, exactly as in the rail: the lock glyph is decorative
+                   and the muted row is never the only channel. Title carries
+                   the same sentence so a hover and a screen reader are never
+                   told two different things about one row. */
+                aria-label={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
+                title={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
               >
                 <span className="ico">{(it.icon && I[it.icon]) || I.arrowRight}</span>
                 <span className="lbl">{it.label}</span>
+                {it.lock && (
+                  <span className="nav-lic" data-lic="off" aria-hidden="true">
+                    {I.lock}
+                  </span>
+                )}
                 <span className="hint">{it.hint ?? ''}</span>
               </button>
             );
@@ -1528,5 +1652,7 @@ export function CmdK({
         </div>
       </div>
     </div>
+    {unlock}
+    </>
   );
 }

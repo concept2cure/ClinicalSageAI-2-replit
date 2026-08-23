@@ -280,60 +280,49 @@ export function StreamingRenderer({
       });
       return () => { try { abortRef.current?.abort(); } catch (_) { /* noop */ } };
     }
-    setLive(false); setErr(null); setSourcesN(null);
-    const dn = ctx?.displayName || 'this filing type';
-    const ag = ctx?.agency || 'FDA'; const ds = ctx?.dossierStandard || 'eCTD';
-    const cm = ctx?.ctdModule || 'Module 2.5'; const rg = ctx?.region || 'US';
-    const sl = sectionLabel || '2.5';
-    const thinkingText: string[] = verb === 'draft'
-      ? [`Analyzing §${sl} requirements for ${dn}…`,
-         `Checking linked evidence sources: CSR-201 §7.1, bridging strategy memo, TPP v3.2.`,
-         `Identifying regulatory framework: ${ag} ${ds}, ${cm}.`,
-         `Cross-referencing precedent from approved analogues in ${rg}.`,
-         `Constructing section with confidence-graded claims and citation grounding.`]
-      : verb === 'review'
-      ? [`Reviewing §${sl} against ${ag} requirements…`, `Checking claim-evidence linkage and citation completeness.`, `Evaluating regulatory language compliance for ${dn}.`]
-      : verb === 'gap'
-      ? [`Comparing §${sl} content against target section requirements for ${dn}…`, `Identifying missing subsections, data tables, and cross-references.`]
-      : [`Loading §${sl} content for revision…`, `Applying edit instructions.`];
-    const contentText = verb === 'draft'
-      ? `<h3>${sl} — Drafted by AnA</h3><p>Based on the linked evidence from CSR-201 and the target product profile, this section presents the integrated clinical overview for ${dn}, structured per ${ag} requirements.</p><p>The confirmed objective response rate of 38.6% <span class="stream-cite">[E1]</span> (95% CI 31.5–46.0) exceeded the pre-specified threshold of 25%, derived from a pooled historical control of 412 patients across five sponsor-independent datasets <span class="stream-cite">[E2]</span>. Median duration of response was 11.4 months (95% CI 9.1–14.8).</p><p>Population-pharmacokinetic analysis characterizes exposure equivalence between the bridging and pivotal formulations, supporting the efficacy read-across per <span class="stream-cite">[E3]</span>.</p>`
-      : verb === 'review'
-      ? `<div class="stream-finding" data-sev="ok"><b>Structure:</b> Section follows ${ag} guidance for ${cm}. All required subsections present.</div><div class="stream-finding" data-sev="warn"><b>Claim grounding:</b> 1 ungrounded claim identified — bridging PK analysis cited as “established” but Module 2.7.2 shows status “in progress.” Recommend safer phrasing.</div><div class="stream-finding" data-sev="ok"><b>Citations:</b> 4/5 claims properly cited to locked source data. 1 citation (CSR-201 §7.1) should be verified against locked dataset.</div><div class="stream-finding" data-sev="err"><b>Regulatory tone:</b> §2.5.4 uses “establishes” which implies completed analysis — ${ag} reviewers may challenge this. Softened phrasing staged as tracked change.</div>`
-      : verb === 'gap'
-      ? `<div class="stream-finding" data-sev="err"><b>Missing:</b> Subgroup analysis by biomarker status (required for ${dn} per ${ag} guidance).</div><div class="stream-finding" data-sev="warn"><b>Incomplete:</b> Benefit-risk conclusions reference safety data but §2.7.4 safety summary not yet drafted — cross-reference will be broken at submission.</div><div class="stream-finding" data-sev="ok"><b>Complete:</b> Efficacy endpoints, study design, disposition data, and primary analysis tables are all present and grounded.</div><div class="stream-finding" data-sev="warn"><b>Recommended:</b> Add a tabular comparison of the subject vs predicate/benchmark to strengthen the regulatory narrative.</div>`
-      : `<p>Content revised per your instructions. 3 tracked changes applied. Changes preserve ${ag} tone requirements for ${dn}.</p>`;
-    const sources: GroundingSource[] = verb === 'draft' ? [
-      { id: 'E1', label: 'CSR-201 §7.1', type: 'locked', location: 'Module 5.3.5', conf: 0.94 },
-      { id: 'E2', label: 'Historical control meta-analysis', type: 'locked', location: 'Module 5.3.5.3', conf: 0.88 },
-      { id: 'E3', label: 'FDA 2023 bridging guidance', type: 'published', location: 'External', conf: 0.92 },
-      { id: 'E4', label: 'TPP v3.2', type: 'draft', location: 'Program files', conf: 0.72 },
-    ] : verb === 'review' ? [
-      { id: 'E1', label: 'CSR-201 locked dataset', type: 'locked', location: 'Module 5.3.5', conf: 0.96 },
-      { id: 'E2', label: 'Module 2.7.2 draft', type: 'draft', location: 'Module 2', conf: 0.58 },
-    ] : verb === 'gap' ? [
-      { id: 'E1', label: ag + ' guidance for ' + dn, type: 'published', location: 'External', conf: 0.90 },
-    ] : [];
-    setPhase('thinking'); setThinkTokens([]); setContentTokens([]); setGroundingSources([]);
-    let tIdx = 0, cIdx = 0;
-    const cChars = contentText.split('');
-    const tTimer = setInterval(() => {
-      if (tIdx < thinkingText.length) { setThinkTokens(prev => [...prev, thinkingText[tIdx]]); tIdx++; }
-      else {
-        clearInterval(tTimer); setPhase('streaming');
-        const cTimer = setInterval(() => {
-          const chunk = cChars.slice(cIdx, cIdx + 8).join('');
-          if (cIdx < cChars.length) { setContentTokens(prev => [...prev, chunk]); cIdx += 8; }
-          else {
-            clearInterval(cTimer); setPhase('done');
-            setUsage({ live: false, sample: true, model: 'Sample', inputTokens: 2847,
-              outputTokens: 1203, latencyMs: 3420, groundingScore: 0.91, evidenceDiscipline: 'locked-only' });
-            setGroundingSources(sources); onComplete?.();
-          }
-        }, 15);
-      }
-    }, 400);
-    return () => { clearInterval(tTimer); };
+    /* ── The simulated fallback is gone ───────────────────────────────────
+       When the live channel is unavailable — which is ALWAYS, because
+       `window.C2C_AUTHORING` is assigned nowhere in this repository, as the
+       comment above `canLive` says — this path used to run a fake draft:
+
+         • it typed out invented CLINICAL RESULTS character by character to
+           look generated — "confirmed objective response rate of 38.6%
+           (95% CI 31.5–46.0)", "pooled historical control of 412 patients
+           across five sponsor-independent datasets", "median duration of
+           response 11.4 months";
+         • it attached invented EVIDENCE with confidence scores — "CSR-201
+           §7.1 · Module 5.3.5 · 94%", "Historical control meta-analysis ·
+           88%" — none of which are documents in this tenant;
+         • the review verb invented specific findings about the user's own
+           section ("1 ungrounded claim identified", "4/5 claims properly
+           cited");
+         • and the result carried an Accept button that writes it into a
+           regulated document.
+
+       A `sample: true` flag on the usage line was the only thing separating
+       that from a real draft. Numbers with confidence intervals and cited
+       sources do not read as a sample to the person about to file them, and
+       CLAUDE.md is explicit: no fixture data in governed paths, fail closed,
+       never fabricate.
+
+       So the surface now refuses. The error branch below already says the
+       right thing — "Drafting unavailable … Nothing was written" — and it
+       names why, rather than performing a draft nobody can trust. */
+    setLive(false);
+    setSourcesN(null);
+    setUsage(null);
+    setGroundingSources([]);
+    setThinkTokens([]);
+    setContentTokens([]);
+    setPhase('error');
+    setErr(
+      !documentId || !sectionKey
+        ? 'Open a document section first — AnA drafts into a section, and none is selected.'
+        : !connected()
+          ? 'The drafting service is not reachable from this environment. Nothing was written.'
+          : 'The drafting service is not configured in this environment, so no draft was produced. Nothing was written.',
+    );
+    return undefined;
   }, [active, verb]);
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [thinkTokens, contentTokens]);
   if (phase === 'idle') return null;
@@ -394,15 +383,16 @@ export function StreamingRenderer({
       {phase === 'done' && usage && (
         <div className="stream-prov">
           <div className="stream-prov-badges">
-            {usage.live ? (<>
-              <span className="stream-badge tone-ok">{I.sparkles} AI-generated</span>
-              {usage.submissionType && <span className="stream-badge" title="Framework-grade tailoring — the draft is written to this submission type">{usage.submissionType}</span>}
-              <span className="stream-badge">{usage.model}</span>
-              {usage.sourcesRetrieved != null && <span className="stream-badge">{usage.sourcesRetrieved} source{usage.sourcesRetrieved === 1 ? '' : 's'}</span>}
-            </>) : (<>
-              <span className="stream-badge tone-warn">Sample draft</span>
-              <span className="stream-badge">not a live model call</span>
-            </>)}
+            {/* The "Sample draft / not a live model call" branch is gone with
+                the simulated path that set it. `usage` is now only ever written
+                by the live stream's onComplete, so a provenance row exists only
+                when a real model produced the content. A badge is a weak place
+                to carry "none of this is real" anyway — it sat under invented
+                clinical numbers and above an Accept button. */}
+            <span className="stream-badge tone-ok">{I.sparkles} AI-generated</span>
+            {usage.submissionType && <span className="stream-badge" title="Framework-grade tailoring — the draft is written to this submission type">{usage.submissionType}</span>}
+            <span className="stream-badge">{usage.model}</span>
+            {usage.sourcesRetrieved != null && <span className="stream-badge">{usage.sourcesRetrieved} source{usage.sourcesRetrieved === 1 ? '' : 's'}</span>}
           </div>
           {acceptable ? (
             <div className="stream-actions">

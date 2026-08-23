@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ── Per-tier rate limits — canonical rate card, verbatim from the server's
@@ -275,6 +276,76 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
   /* Was a dead write to `c2c_open_surface`, a key with no reader — so "View
      all plans" did nothing. The shell's `onNav` is what navigates. */
   const nav = (id: string) => onNav(id);
+
+  /* What AnA can see of this screen.
+     ONE component, TWO routable ids. `billing` and `usage` are separate
+     registry entries rendering this same file, and the shell reads context by
+     EXACT id — so publishing under a single literal would leave whichever id
+     was not chosen blind, with no symptom. Both hooks are therefore called
+     unconditionally (React requires that anyway) and the inactive one publishes
+     null, which clears only if it still owns the slot. The literals stay
+     literal so the CI gate can still see which ids this file claims.
+
+     `surface` is `getSurface(activeId)`, so `surface.id` IS the mounted id.
+
+     Each of the three reads fails independently, and each publishes its own
+     state: a balance or an invoice list invented from a failed read would be a
+     financial claim about the customer's account. */
+  const activeId = surface && surface.id === 'billing' ? 'billing' : 'usage';
+  const anaContext = useMemo(() => {
+    const inv = invoicesState.data;
+    const cr = creditsState.data;
+    return {
+      summary:
+        `Usage and billing, "${tab}" tab. ` +
+        (usageState.loading
+          ? 'The usage snapshot is still loading.'
+          : usageState.error || !snap
+            ? 'The usage snapshot could not be read, so no plan or limit figures are on screen — a failure, not a zero.'
+            : `Plan "${snap.planLabel}"` +
+              (snap.session ? `, session window ${snap.session.pctUsed}% used over ${snap.session.windowHours}h` : '') +
+              `, ${(snap.weekly ?? []).length} weekly cap bucket(s).`) +
+        ' ' +
+        (creditsState.loading
+          ? 'Credits are still loading.'
+          : creditsState.error || !cr || cr.balanceCents == null
+            ? 'The credit balance is unavailable.'
+            : `Credit balance ${(cr.balanceCents / 100).toFixed(2)}.`) +
+        ' ' +
+        (invoicesState.loading
+          ? 'Invoices are still loading.'
+          : invoicesState.error || !inv
+            ? 'The invoice list could not be read.'
+            : `${inv.invoices.length} invoice(s).`),
+      facts: {
+        openTab: tab,
+        plan: snap ? { tier: snap.plan, label: snap.planLabel, lastUpdated: snap.lastUpdated } : null,
+        planUnavailable: usageState.error ? 'the usage snapshot read failed' : null,
+        sessionWindow: snap?.session ?? null,
+        weeklyCaps: snap?.weekly ?? null,
+        credits: cr && cr.balanceCents != null
+          ? { balanceCents: cr.balanceCents, autoReload: cr.autoReload }
+          : null,
+        creditsUnavailable: creditsState.error ? 'the credits read failed' : null,
+        invoices: inv
+          ? inv.invoices.slice(0, 10).map((iv) => ({
+              number: iv.number, date: iv.date, amount: iv.amount,
+              currency: iv.currency, status: iv.status,
+            }))
+          : null,
+        invoicesUnavailable: invoicesState.error ? 'the invoice read failed' : null,
+      },
+      availableActions: [
+        'Switch between the usage and billing tabs',
+        'Read plan usage limits, the session window and the weekly caps',
+        'Read the credit balance and its auto-reload settings',
+        'Open an invoice (hosted page or PDF) from the invoice list',
+        'View all plans on the licensing surface',
+      ],
+    };
+  }, [tab, usageState.loading, usageState.error, snap, invoicesState.loading, invoicesState.error, invoicesState.data, creditsState.loading, creditsState.error, creditsState.data]);
+  usePublishSurfaceContext('usage', activeId === 'usage' ? anaContext : null);
+  usePublishSurfaceContext('billing', activeId === 'billing' ? anaContext : null);
 
   return (
     <div className="sp" style={{ maxWidth: 1000 }}>

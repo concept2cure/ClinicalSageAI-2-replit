@@ -95,7 +95,7 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
-        });
+        }, { createdById: ctx.userId ?? null });
         if (result.bridged) bridged.push({ sectionKey: section.sectionKey, artifactId: result.artifactId, isNew: result.isNew });
       } catch { /* non-fatal */ }
     }
@@ -210,7 +210,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
       completeness: section.completeness,
       missingInputs: section.missingInputs,
       lineage: section.lineage,
-    });
+    }, { createdById: ctx.userId ?? null });
     if (result.bridged) bridgedArtifact = { artifactId: result.artifactId, isNew: result.isNew };
   } catch { /* non-fatal */ }
 
@@ -311,7 +311,7 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
-      });
+      }, { createdById: ctx.userId ?? null });
     } catch { /* non-fatal */ }
     refreshed.push(section.sectionKey);
   }

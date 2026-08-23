@@ -42,17 +42,15 @@ function toTurn(m: AnaChatMessage): CtTurn {
   };
 }
 
-/* ---- AnA turn (thinking + tools + proposal + answer + grounding) ---- */
+/* ---- AnA turn (thinking + tools + answer + grounding) ---- */
 
 interface AnaTurnProps {
   turn: CtTurn;
-  onApply: () => void;
   onRefine: () => void;
   onNav?: (id: string) => void;
-  onViewArtifact?: (id: string) => void;
 }
 
-function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
   const [openThink, setOpenThink] = useState(false);
   return (
     <div className="ct-turn ct-ana">
@@ -78,40 +76,27 @@ function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProp
             <span className="ct-tool-r">{I.check} {tl.result}</span>
           </div>
         ))}
-        {turn.proposal && (
-          <div className="ct-prop" data-status={turn.proposal.status}>
-            <div className="ct-prop-h">
-              <span className="ct-prop-ic">{I.penLine}</span>
-              <span className="ct-prop-t">{turn.proposal.title}</span>
-              <span className="ct-prop-delta">{turn.proposal.delta}</span>
-            </div>
-            <div className="ct-prop-diff">
-              <div className="ct-diff-row ct-diff-del"><span>-</span><p>{turn.proposal.before}</p></div>
-              <div className="ct-diff-row ct-diff-add"><span>+</span><p>{turn.proposal.after}</p></div>
-            </div>
-            {turn.proposal.status === 'pending' ? (
-              <div className="ct-prop-actions">
-                <button className="ct-prop-accept" onClick={onApply}>{I.check} Accept and write to section {turn.proposal.section}</button>
-                <button className="ct-prop-refine" onClick={onRefine}>{I.penLine} Refine</button>
-                <button className="ct-prop-discard">Discard</button>
-                <span className="ct-prop-gov">{I.lock} Governed — immutable version + audit entry on persist</span>
-              </div>
-            ) : (
-              <div className="ct-prop-applied">
-                {I.checkCircle || I.check} Applied in preview to section {turn.proposal.section} / {turn.proposal.ver || 'v0.9'} -- sign-off + audit pending
-                <button className="ct-prop-open" onClick={() => onNav && onNav('document-authoring')}>{I.externalLink} Open in editor</button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* ── The proposal block was unreachable, and it advertised a
+            workflow this surface does not have ───────────────────────────────
+            It rendered a diff with Accept / Refine / Discard, and a chip for a
+            "generated artifact". None of it could ever appear: `toTurn` above
+            maps an AnaChatMessage to answer / thinking / grounding /
+            executedActions / pendingSignoffs and NEVER sets `proposal` or
+            `artifactRef`, so both guards were permanently false.
+
+            Two of those buttons were dead in a second way even if they had
+            rendered — `onApply` and `onViewArtifact` are both passed
+            `() => undefined` at the call site, and Discard had no handler at
+            all. So the code described an accept/discard governance ceremony
+            that nothing produced, nothing wired, and no user could reach.
+
+            Deleted rather than wired. Wiring it would mean inventing a
+            proposal pipeline on the client, which is precisely the fabricated
+            governance the house rule forbids; the REAL governed path on this
+            surface is `pendingSignoffs`, rendered by EctdSignoffs below from
+            what the server actually sent. If a proposal workflow is built
+            later it starts from a server-issued proposal, not from this. */}
         {turn.answer && <div className="ct-ana-text">{turn.answer}</div>}
-        {turn.artifactRef && (
-          <button className="ct-art-chip" onClick={() => onViewArtifact && onViewArtifact(turn.artifactRef!.id)}>
-            <span className="ct-art-chip-ic">{I.sparkles}</span>
-            <span className="ct-art-chip-b"><b>Generated artifact</b> / {turn.artifactRef.type}</span>
-            <span className="ct-art-chip-go">{I.arrowRight || I.right}</span>
-          </button>
-        )}
         {turn.links && (
           <div className="ct-refs">
             {turn.links.map((l, i) => (
@@ -319,6 +304,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
     screenName: 'conversation-thread',
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -461,7 +447,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
               )}
               {turns.map((t, i) => t.role === 'user'
                 ? (<div key={i} className="ct-turn ct-user"><div className="ct-user-b">{t.text}</div></div>)
-                : (<AnaTurn key={i} turn={t} onApply={() => undefined} onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }} onNav={onNav} onViewArtifact={() => undefined} />)
+                : (<AnaTurn key={i} turn={t} onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }} onNav={onNav} />)
               )}
               {busy && (
                 <div className="ct-turn ct-ana"><div className="ct-ana-av">{'✻'}</div><div className="ct-ana-body"><div className="ct-typing"><span /><span /><span /></div></div></div>

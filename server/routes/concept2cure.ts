@@ -13758,6 +13758,97 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
   }
 });
 
+/**
+ * Advance an agency communication through triage.
+ *
+ * ── Why this route exists ────────────────────────────────────────────────────
+ * The Communication Center's "Triage" / "Advance" button — the only action on
+ * every agency-communication card — moved the status in React state and stopped
+ * there. Nothing was persisted, so the triage a regulatory lead performed
+ * vanished on reload, and a second person opening the same screen saw an
+ * untouched queue. On a surface whose entire purpose is tracking what the
+ * agency asked for and whether anyone has answered, that is a record-keeping
+ * failure rather than a UI one.
+ *
+ * The columns were always there — `human_review_status` and `closure_status`
+ * are written by the POST above and read by the GET above. Only the transition
+ * was missing.
+ *
+ * ── The transition is computed here, not accepted from the client ────────────
+ * The client sends WHICH event to advance, not what to advance it to. Letting
+ * the caller name the next status would let a card jump from pending_review
+ * straight to actioned, skipping the triage step the audit trail is supposed to
+ * record. The pairing (review status, closure status) advances together because
+ * that is what the button means: triaging opens work, actioning closes it.
+ */
+const AGENCY_COMM_ADVANCE: Record<string, { humanReviewStatus: string; closureStatus: string }> = {
+  pending_review: { humanReviewStatus: 'triaged', closureStatus: 'in_progress' },
+  triaged: { humanReviewStatus: 'actioned', closureStatus: 'closed' },
+};
+
+router.patch(
+  '/projects/:projectId/agency-communications/:eventId/advance',
+  async (req: Request, res: Response) => {
+    try {
+      await ensureCommunicationCenterTables();
+      const organizationId = getOrganizationId(req);
+      const projectId = parseProjectParam(req.params.projectId);
+      const eventId = String(req.params.eventId || '').trim();
+      if (!eventId) {
+        return sendError(res, 400, 'An event id is required.');
+      }
+
+      // Read the current state inside the same request so the transition is
+      // computed from what is stored, not from what the client last rendered.
+      const current = await pool.query(
+        `SELECT human_review_status
+           FROM concept2cure_agency_communications
+          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3`,
+        [organizationId, projectId, eventId]
+      );
+      if (current.rowCount === 0) {
+        return sendError(res, 404, 'That communication was not found in this project.');
+      }
+
+      const from = String(current.rows[0].human_review_status || 'pending_review');
+      const next = AGENCY_COMM_ADVANCE[from];
+      if (!next) {
+        // Already actioned. Refused rather than silently re-applied, so the
+        // audit trail never carries a transition that did not change anything.
+        return sendError(res, 409, 'That communication has already been actioned.');
+      }
+
+      const updated = await pool.query(
+        `UPDATE concept2cure_agency_communications
+            SET human_review_status = $4, closure_status = $5, updated_at = NOW()
+          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
+          RETURNING event_id, human_review_status, closure_status`,
+        [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
+      );
+
+      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
+        agencyCommunicationEventId: eventId,
+        humanReviewStatusFrom: from,
+        humanReviewStatusTo: next.humanReviewStatus,
+        closureStatusTo: next.closureStatus,
+      });
+
+      const row = updated.rows[0];
+      return sendSuccess(res, {
+        id: row.event_id,
+        humanReviewStatus: row.human_review_status,
+        closureStatus: row.closure_status,
+      });
+    } catch (error: any) {
+      return sendError(
+        res,
+        communicationCenterErrorStatus(error),
+        error?.message || 'Failed to advance the agency communication'
+      );
+    }
+  }
+);
+
 router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
   try {
     await ensureCommunicationCenterTables();

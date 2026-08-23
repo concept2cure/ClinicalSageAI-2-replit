@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { useLiveRows, unwrapList, EmptyState } from '../dataConnect';
@@ -340,6 +341,78 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
 
   const enhanced = sites.filter((s) => s.tier === 'enhanced');
   const worst = sites.slice().sort((a, b) => (b.composite || 0) - (a.composite || 0))[0] || ({} as CoSite);
+
+  /* What AnA can see of this screen.
+     Every starter this surface offers her — "which sites are behind enrollment
+     and why?", "summarize the open protocol deviations" — is a question about
+     rows she could not see. The two live reads fail independently, so each
+     publishes its own state rather than one collapsed verdict.
+
+     The deviations board is published as what it is: an unpersisted local list.
+     There is no reachable org-wide deviations endpoint, and letting AnA present
+     these as the organisation's deviation record would make a governed claim
+     out of a form the user has only typed into. */
+  const anaContext = useMemo(() => {
+    const sitesState = liveSites.loading
+      ? 'still loading'
+      : liveSites.error
+        ? 'could not be read'
+        : `${sites.length} site(s), ${enhanced.length} at enhanced tier`;
+    const studiesState = liveStudies.loading
+      ? 'still loading'
+      : liveStudies.error
+        ? 'could not be read'
+        : `${liveStudies.rows.length} study(ies)`;
+    return {
+      summary:
+        `Clinical operations: the site-risk roster is ${sitesState}; studies and enrolment are ${studiesState}. ` +
+        /* One sentence for every count. A `devs.length ? … : …` here picked the
+           copy BY the list being empty, so an untouched board told AnA "no
+           protocol deviations have been logged" — clearance vocabulary for a
+           state that is `not-assessed`. This board records what someone typed;
+           it never assesses whether deviations exist, so it says that outright
+           and lets the number be the number. */
+        `${devs.length} protocol deviation(s) entered on this board this session — session-local, not ` +
+        'persisted to a governed store. This board does not assess whether deviations exist, so a count ' +
+        'of 0 is not a finding that there are none.',
+      facts: {
+        siteRoster: liveSites.loading || liveSites.error
+          ? null
+          : {
+              totalSites: sites.length,
+              enhancedTier: enhanced.length,
+              highestRiskSite: worst.n
+                ? { site: worst.n, name: worst.name, country: worst.country, composite: worst.composite, tier: worst.tier, driver: worst.driver }
+                : null,
+              sites: sites.slice(0, 12).map((st) => ({
+                site: st.n, name: st.name, country: st.country,
+                composite: st.composite, tier: st.tier, driver: st.driver,
+              })),
+            },
+        siteRosterUnavailable: liveSites.error ? 'the site-risk roster read failed' : null,
+        studies: liveStudies.loading || liveStudies.error
+          ? null
+          : liveStudies.rows.slice(0, 12).map((st) => ({
+              protocol: st.id, phase: st.phase, design: st.design,
+              enrolled: st.n, target: st.target, status: st.status, note: st.note,
+            })),
+        studiesUnavailable: liveStudies.error ? 'the studies read failed' : null,
+        /* Local-only: this board has no org-wide deviations endpoint, so these
+           are rows the user typed here, not the organisation's record. */
+        locallyLoggedDeviations: devs.map((d) => ({
+          site: d.site, severity: d.sev, deviation: d.title, capa: d.capa, status: d.status,
+        })),
+        deviationsArePersisted: false,
+      },
+      availableActions: [
+        'Add a study site to the board for review (not yet a governed-store write)',
+        'Log a protocol deviation on the board (not yet persisted, no CAPA workflow opened)',
+        'Read the site-risk composite scores and monitoring tiers',
+        'Read study enrolment against target',
+      ],
+    };
+  }, [liveSites.loading, liveSites.error, liveStudies.loading, liveStudies.error, liveStudies.rows, sites, enhanced.length, worst, devs]);
+  usePublishSurfaceContext('clinical-ops', anaContext);
 
   return (
     <BpComposer

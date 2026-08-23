@@ -142,14 +142,18 @@ router.post('/', async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO cmc_batch_records (
-        project_id, tenant_id, batch_number, product_name, batch_size,
+        project_id, tenant_id, organization_id, batch_number, product_name, batch_size,
         manufacturing_date, expiry_date, manufacturing_site,
         status, process_parameters, in_process_controls,
         yield_data, deviations
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *`,
       [
         data.projectId || null,
+        tenantId,
+        // organization_id is NOT NULL on the provisioned table (migrations/0006)
+        // and IS the tenant — the same value, written to both columns so reads
+        // scoped by either agree.
         tenantId,
         data.batchNumber,
         data.productName,
