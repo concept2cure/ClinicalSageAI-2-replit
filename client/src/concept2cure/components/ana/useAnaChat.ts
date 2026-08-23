@@ -982,6 +982,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     };
                   })
                 );
+                // Follow-the-work hook: a listener throw must not kill the
+                // stream (same rule as onDriveEvent above).
+                try {
+                  options.onArtifactSaved?.(artifactId);
+                } catch {
+                  /* listener error — the save is still recorded above */
+                }
               }
             } else if (event.type === 'intelligence_question') {
               const question = event.question;
@@ -1114,6 +1121,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.modelOverride,
       options.liveDrive,
       options.onDriveEvent,
+      options.onArtifactSaved,
     ]
   );
 

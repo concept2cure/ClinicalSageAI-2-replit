@@ -292,6 +292,29 @@ export function V2App() {
     },
     [dispatchDrive, nav]
   );
+  /* ── Follow the work (declared before useAnaChat, which takes it) ─────
+     The point of Live Drive is WATCHING AnA work — and her biggest work
+     product is a persisted draft (`artifact_version_saved` → onArtifactSaved,
+     fired by EVERY chat instance: the rail's and each owned dock's via the
+     bridge). When a driven turn lands one, take the subscriber to the
+     Artifacts Center with that artifact focused, so the document appears in
+     front of them instead of behind a nav item. */
+  const followedArtifactsRef = React.useRef<Set<string>>(new Set());
+  const followWork = React.useCallback(
+    (artifactId: string) => {
+      /* Both gates on purpose: the toggle must still be ON (a turn-old ref
+         must not outlive the person switching drive off) AND this turn must
+         have genuinely driven (an un-entitled or undriven turn never moves
+         the screen, drafts included). Deduped per artifact so a re-render or
+         duplicate event can never re-hijack the screen. */
+      if (!artifactId || !prefs.liveDrive || !droveThisTurnRef.current) return;
+      if (followedArtifactsRef.current.has(artifactId)) return;
+      followedArtifactsRef.current.add(artifactId);
+      stashNavParamsForTarget('artifacts-center', { artifactId });
+      nav('artifacts-center');
+    },
+    [nav, prefs.liveDrive]
+  );
   /* The real AnA assistant for the whole shell — one streaming conversation
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
   /* What the active surface is showing, forwarded to AnA as `module_context` on
@@ -323,6 +346,7 @@ export function V2App() {
        turn's drive events feed the shell's apply/take-over machine above. */
     liveDrive: prefs.liveDrive,
     onDriveEvent,
+    onArtifactSaved: followWork,
   });
   /* A turn ending releases the drive (and its per-turn cap/take-over) so the
      overlay never claims AnA is driving after she has stopped working. */
@@ -368,26 +392,7 @@ export function V2App() {
     dispatchDrive({ kind: 'take_over' });
     set('liveDrive', false);
   };
-  /* ── Follow the work ──────────────────────────────────────────────────
-     The point of Live Drive is WATCHING AnA work — and her biggest work
-     product is a persisted draft (`artifact_version_saved` → the message's
-     generatedDraft.artifactId). When a driven turn lands one, take the
-     subscriber to the Artifacts Center with that artifact focused, so the
-     document appears in front of them instead of behind a nav item. Gated on
-     the turn having genuinely driven (droveThisTurnRef — drafts persist after
-     `done`, when the reducer has already released), killed by take-over, and
-     deduped per artifact so a re-render can never re-hijack the screen. */
-  const followedArtifactsRef = React.useRef<Set<string>>(new Set());
   const lastMsg = anaChat.messages[anaChat.messages.length - 1];
-  const savedArtifactId =
-    lastMsg?.role === 'assistant' ? lastMsg.generatedDraft?.artifactId ?? null : null;
-  React.useEffect(() => {
-    if (!savedArtifactId || !droveThisTurnRef.current || !prefs.liveDrive) return;
-    if (followedArtifactsRef.current.has(savedArtifactId)) return;
-    followedArtifactsRef.current.add(savedArtifactId);
-    stashNavParamsForTarget('artifacts-center', { artifactId: savedArtifactId });
-    nav('artifacts-center');
-  }, [savedArtifactId, prefs.liveDrive, nav]);
   /* What AnA is doing right now, for the drive strip — only ever a label the
      stream genuinely reported (the running tool's label, else the phase). */
   const driveActivity =
@@ -398,8 +403,8 @@ export function V2App() {
   /* The bridge for surfaces that run their own conversation (see
      SurfaceViewProps.liveDrive) — same toggle, same reducer, one machine. */
   const liveDriveBridge = React.useMemo(
-    () => ({ on: prefs.liveDrive, onDriveEvent }),
-    [prefs.liveDrive, onDriveEvent]
+    () => ({ on: prefs.liveDrive, onDriveEvent, onWorkSaved: followWork }),
+    [prefs.liveDrive, onDriveEvent, followWork]
   );
   const { user } = useAuth();
   /* The onboarding welcome must reflect the TENANT's real client type
