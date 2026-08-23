@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:43:05.737Z",
+  "generatedAt": "2026-08-23T23:45:47.580Z",
   "git": {
-    "sha": "06befb2dd03c40ca134d83dc67325f5112bb4ec9",
+    "sha": "ef164822f5cac3aa4d7d81f6e3c72838b2c3d6c9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2172,7 +2172,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 262187
+        "bytes": 266129
       },
       {
         "file": "server/statistics-service.ts",
@@ -2207,6 +2207,10 @@
         "bytes": 138092
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 137628
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 136607
       },
@@ -2225,10 +2229,6 @@
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 133930
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6580
+        "lines": 6678
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2358,7 +2358,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3190
+        "lines": 3272
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
