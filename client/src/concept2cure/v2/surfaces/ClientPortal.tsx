@@ -201,12 +201,19 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
               <div className="ctable">
                 <div className="ct-head" style={{ gridTemplateColumns: '1fr 90px 100px 90px' }}><div>Document</div><div>Program</div><div>Status</div><div>Shared</div></div>
                 {cp.deliverables.map((d, i) => (
-                  <button key={i} className="ct-row" style={{ gridTemplateColumns: '1fr 90px 100px 90px' }}>
+                  /* Was a <button>: a pointer cursor, a tab stop and a button role
+               on every row, with no onClick behind any of them. The surface's
+               own copy calls this view "read-only", and there is no
+               per-document route to address from here — GET /api/client-portal
+               returns no document id — so the row is what it always was, a
+               row. A <div> says that; a dead <button> said the opposite to
+               every mouse and every screen reader. */
+            <div key={i} className="ct-row" style={{ gridTemplateColumns: '1fr 90px 100px 90px' }}>
                     <div className="vn"><span className="ct-strong">{d.name}</span>{d.sig && <span className="esig">{I.shieldCheck}</span>}</div>
                     <div className="mono" style={{ fontSize: 11 }}>{d.prog}</div>
                     <div><span className={`rd-chip tone-${CP_T[d.status] || 'ai'}`}>{d.status}</span></div>
                     <div style={{ color: 'var(--text-400)' }}>{ago(d.when)}</div>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}

@@ -1517,6 +1517,121 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     }
   }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
 
+  /* ── Resolve / reopen a comment thread ──
+     PATCH /api/authoring/comments/:id has recorded status changes with resolver
+     attribution (JWT actor, resolved_at) since the store shipped — and no
+     surface ever called it, so review threads could only accumulate. The row
+     is never deleted by this: a resolved comment stays in the record with who
+     resolved it; reopen is the honest undo. */
+  const setCommentStatus = useCallback(
+    async (commentId: string, statusTo: 'resolved' | 'open') => {
+      if (!activeDocId) return;
+      try {
+        const res = await apiRequest(
+          'PATCH',
+          `/api/authoring/comments/${encodeURIComponent(commentId)}`,
+          { status: statusTo }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not changed — your session isn’t authenticated.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t update the comment — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              '. Its status is unchanged.',
+            'error'
+          );
+          return;
+        }
+        fireToast(
+          statusTo === 'resolved'
+            ? 'Comment resolved — recorded under your name. The thread stays in the record.'
+            : 'Comment reopened.'
+        );
+        void loadComments(activeDocId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t update the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeDocId, fireToast, loadComments]
+  );
+
+  /* ── Rename the open section (code and title) ──
+     PATCH /sections/:id has accepted `title` and `code` since the route was
+     written; only `content` ever had UI. A mistyped section title was
+     permanent unless someone edited the database. Renaming is metadata — the
+     server records no content revision for it — and it is held to the same
+     honesty contract: awaited, adopted from the server's row, nothing local
+     mutated on failure. */
+  const [renaming, setRenaming] = useState(false);
+  const [renameCode, setRenameCode] = useState('');
+  const [renameTitle, setRenameTitle] = useState('');
+  const [renameBusy, setRenameBusy] = useState(false);
+  useEffect(() => {
+    setRenaming(false);
+  }, [activeSectionId]);
+
+  const openRename = useCallback(() => {
+    if (!activeSection) return;
+    setRenameCode(activeSection.code);
+    setRenameTitle(activeSection.title);
+    setRenaming(true);
+  }, [activeSection]);
+
+  const saveRename = useCallback(async () => {
+    if (!activeSection) return;
+    const code = renameCode.trim();
+    const title = renameTitle.trim();
+    if (!code || !title) {
+      fireToast('Both the section code and the title are required.', 'error');
+      return;
+    }
+    if (code === activeSection.code && title === activeSection.title) {
+      setRenaming(false);
+      return;
+    }
+    setRenameBusy(true);
+    try {
+      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+        code,
+        title,
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated.', 'error');
+        return;
+      }
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t rename the section — ' +
+            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            '. Nothing was changed.',
+          'error'
+        );
+        return;
+      }
+      const adopted = (json as { section?: AuthSection })?.section;
+      setSections(ss =>
+        ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
+      );
+      setRenaming(false);
+      fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
+    } catch (e) {
+      fireToast(
+        'Couldn’t rename the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
+    } finally {
+      setRenameBusy(false);
+    }
+  }, [activeSection, renameCode, renameTitle, fireToast]);
+
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
     : 'Draft this section from the linked section evidence.';
@@ -1932,8 +2047,71 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             ) : (
               <>
                 <div className="ed-mast">
-                  <div className="ed-mast-num">{activeSection.code}</div>
-                  <h1 className="ed-mast-t">{activeSection.title}</h1>
+                  {renaming ? (
+                    <div
+                      role="group"
+                      aria-label={`Rename section ${activeSection.code}`}
+                      style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+                      onKeyDown={e => {
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          setRenaming(false);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void saveRename();
+                        }
+                      }}
+                    >
+                      <input
+                        className="c2c-input"
+                        style={{ width: 110, height: 30 }}
+                        aria-label="Section code"
+                        value={renameCode}
+                        autoFocus
+                        onChange={e => setRenameCode(e.target.value)}
+                      />
+                      <input
+                        className="c2c-input"
+                        style={{ flex: 1, minWidth: 200, height: 30 }}
+                        aria-label="Section title"
+                        value={renameTitle}
+                        onChange={e => setRenameTitle(e.target.value)}
+                      />
+                      <button
+                        className="btn primary"
+                        style={{ height: 30 }}
+                        disabled={renameBusy || !renameCode.trim() || !renameTitle.trim()}
+                        onClick={() => void saveRename()}
+                      >
+                        {renameBusy ? 'Renaming…' : 'Rename'}
+                      </button>
+                      <button
+                        className="btn ghost"
+                        style={{ height: 30 }}
+                        disabled={renameBusy}
+                        onClick={() => setRenaming(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="ed-mast-num">{activeSection.code}</div>
+                      <h1 className="ed-mast-t" style={{ display: 'inline' }}>
+                        {activeSection.title}
+                      </h1>
+                      {!docSealed && (
+                        <button
+                          className="nda-open"
+                          style={{ marginLeft: 8, verticalAlign: 'middle' }}
+                          title="Rename this section's code and title — its content and history are unchanged"
+                          onClick={openRename}
+                        >
+                          {I.penLine} Rename
+                        </button>
+                      )}
+                    </>
+                  )}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
@@ -2624,10 +2802,31 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     <b>{c.author_name ?? 'Unknown'}</b>
                     {c.section_code && <span className="cmt-role">{c.section_code}</span>}
                     <span className="cmt-when">· {relTime(c.created_at)}</span>
-                    {c.status && c.status !== 'open' && (
-                      <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>
-                        {c.status}
-                      </span>
+                    {/* The thread's lifecycle. Resolving records the resolver
+                        and keeps the row; reopen is the honest undo. Neither
+                        deletes anything. */}
+                    {c.status && c.status !== 'open' ? (
+                      <>
+                        <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>
+                          {c.status}
+                        </span>
+                        <button
+                          className="nda-open"
+                          title="Reopen this comment thread"
+                          onClick={() => void setCommentStatus(c.id, 'open')}
+                        >
+                          Reopen
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="nda-open"
+                        style={{ marginLeft: 'auto' }}
+                        title="Mark this comment resolved — recorded under your name; the thread stays in the record"
+                        onClick={() => void setCommentStatus(c.id, 'resolved')}
+                      >
+                        Resolve
+                      </button>
                     )}
                   </div>
                   {/* The quoted range this thread is anchored to, with a jump
