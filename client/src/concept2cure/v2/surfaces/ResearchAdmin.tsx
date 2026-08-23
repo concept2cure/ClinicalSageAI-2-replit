@@ -236,7 +236,7 @@ export function ResearchAdmin({ onAsk }: SurfaceViewProps) {
       <div className="ra-head">
         <div>
           <h1 className="ra-title">Research administration</h1>
-          <div className="ra-sub">Committee governance, coverage analysis, funding and compliance -- for the research organization</div>
+          <div className="ra-sub">Committee governance, coverage analysis, funding and compliance — for the research organization</div>
         </div>
         <button className="btn ghost" onClick={() => onAsk && onAsk('Summarize what needs my attention across committees, coverage and continuing review.')}>{I.sparkles} Ask AnA</button>
       </div>

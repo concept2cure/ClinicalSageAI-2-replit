@@ -87,7 +87,20 @@ describe('live audit events attribute only what the client can actually observe'
     for (const e of events) expect(e.ip, 'a source address was invented').toBeUndefined();
   });
 
-  it('records a file attach with no invented source address', () => {
+  it('records NO audit event for a file attach — the server owns that entry', () => {
+    /* This assertion is inverted from what it used to be, deliberately.
+       It read `expect(events.some((e) => e.kind === 'attach')).toBe(true)`,
+       pinning the store's client-authored attach event and checking only that
+       it carried no invented `ip`. That was the right fix for the narrower
+       defect and it left the wider one standing: the event itself was
+       fabricated. `attachFile` wrote name and size into an in-memory Map, never
+       touched the bytes, and then logged a Part 11 'attach' with a hardcoded
+       'Reg Lead' for a transfer that had not happened.
+       W0-6 made the attachment a real upload (POST /api/vault/ingest), and the
+       server writes the audit row in the same transaction as the document. A
+       browser cannot witness a governed event — it does not know the actor's
+       real role, cannot see its own source address, and has nothing to chain
+       to — so the honest count of client-authored audit events is zero. */
     DossierStore.attachFile(
       'k510',
       11,
@@ -96,8 +109,17 @@ describe('live audit events attribute only what the client can actually observe'
       { who: 'You', role: 'Reg Lead' },
     );
     const events = DossierStore.activityForSection('k510', 11);
-    expect(events.some((e) => e.kind === 'attach')).toBe(true);
-    for (const e of events) expect(e.ip).toBeUndefined();
+    expect(events.some((e) => e.kind === 'attach')).toBe(false);
+    /* The attachment is still listed — the tab updates without a round trip.
+       This read used to be `listDir('k510', 11, 'Performance testing')`, which
+       was wrong twice over: `listDir` takes ONE argument, a path prefix, so
+       this did not typecheck; and `.toBeDefined()` on a function that always
+       returns an array cannot fail, so it asserted nothing the comment above
+       it claims. The store's own reader takes the three parts and returns what
+       the tab renders. */
+    expect(
+      DossierStore.readSectionAttachments('k510', 11, 'Performance testing').map((a) => a.name),
+    ).toContain('mard-by-age-band.pdf');
   });
 
   it('holds for every live event the store can emit, not only the two probed above', () => {

@@ -73,15 +73,30 @@ export function citationCoverage(content: string): CitationCoverage {
 }
 
 /**
- * Whether computed groundedness scores should be enforced (block on low) by
- * default, org-wide. Off by default so existing accept flows are unchanged;
- * set AI_GROUNDEDNESS_ENFORCE=1 in the environment to turn the gate on for
- * every accept once the org is ready. Read at call time so it is configurable
- * per deployment without a rebuild.
+ * Whether computed groundedness scores should be enforced (block on low)
+ * by default, org-wide. ON by default as of 2026-08-13.
+ *
+ * ── What changed, and what it costs ─────────────────────────────────────────
+ * This was off, which meant citation coverage was computed on every accept,
+ * written into the governance ledger, and then ignored. A score that is
+ * recorded but never acted on is a measurement, not a control — and the
+ * platform's own risk tiers already declare drafting/submission content as
+ * `requires_review` with thresholds of 0.80–0.85. Enforcing is what makes
+ * those declarations true.
+ *
+ * Enforcement is NOT a hard refusal. A below-threshold accept is blocked only
+ * when no human has acknowledged the content: `groundednessReviewAck: true`
+ * (or `humanReviewed: true`) on the payload lets it through, and the ledger
+ * records that a human took responsibility. That is the 21 CFR Part 11 posture
+ * — a person in the loop, named in the record — rather than a wall.
+ *
+ * Opt out per deployment with AI_GROUNDEDNESS_ENFORCE=0 (or `false`). Read at
+ * call time, so it is configurable without a rebuild.
  */
 export function groundednessEnforcedByDefault(): boolean {
   const v = process.env.AI_GROUNDEDNESS_ENFORCE;
-  return v === '1' || v === 'true';
+  if (v === undefined || v === '') return true;
+  return !(v === '0' || v.toLowerCase() === 'false' || v.toLowerCase() === 'off');
 }
 
 /**

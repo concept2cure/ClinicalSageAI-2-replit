@@ -29,7 +29,7 @@ fi
 
 # 4. Start the Express + Vite server
 echo "🌐 Starting Express server on port 5000..."
-cd /workspaces/Concept2Cure.RI-2-replit
+cd "$(dirname "$0")"
 
 # Use env-provided secrets if set; otherwise mint ephemeral ones per run.
 # Never commit secrets — sessions issued under an ephemeral secret are
@@ -73,7 +73,7 @@ echo ""
 echo "======================================"
 echo "✅ Platform is UP!"
 echo "   URL:      http://localhost:5000"
-echo "   Login:    jm.smith@concept2cure.pro"
+echo "   Login:    jonmichaelpsmith@gmail.com"
 echo "   Password: demo123"
 echo "   Logs:     tail -f /tmp/app.log"
 echo "======================================"

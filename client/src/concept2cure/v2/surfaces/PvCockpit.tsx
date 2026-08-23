@@ -28,6 +28,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { saveToAuthoring } from '../authoringHandoff';
+import { engineResultToHtml, type EngineProvenance } from '../engineResultHtml';
 
 interface Overview {
   kpis: { totalAdverseEvents: number; seriousEvents: number; expeditedReports: number; overdueReports: number; pendingSignals: number; upcomingPeriodicReports: number; complianceRate: number };
@@ -72,6 +74,8 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
   // Disproportionality screener state (2×2: a=drug+event, b=drug+other, c=other+event, d=other+other).
   const [scr, setScr] = useState({ drug: '', event: '', a: '', b: '', c: '', d: '' });
   const [scrRes, setScrRes] = useState<Disproportion | null>(null);
+  const [scrProv, setScrProv] = useState<EngineProvenance | null>(null);
+  const [scrFiling, setScrFiling] = useState(false);
   const [scrBusy, setScrBusy] = useState(false);
 
   // Reporting-deadline calculator state.
@@ -96,12 +100,17 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
     if (![counts.a, counts.b, counts.c, counts.d].every((x) => Number.isFinite(x))) { fireToast('Enter all four 2×2 cell counts (a, b, c, d).', 'error'); return; }
     setScrBusy(true);
     try {
-      const { ok, status, data } = await readData<{ rows: Array<{ result: Disproportion }>; summary: { total: number; signals: number } }>(
+      const { ok, status, data } = await readData<{
+        rows: Array<{ result: Disproportion }>;
+        summary: { total: number; signals: number };
+        provenance?: EngineProvenance;
+      }>(
         'POST', '/api/pharmacovigilance/signals/screen',
         { pairs: [{ drug: scr.drug || 'drug', event: scr.event || 'event', counts }] },
       );
       if (!ok || !data?.rows?.[0]) { fireToast(status === 401 ? 'Sign in to screen signals.' : `Screening failed (HTTP ${status}).`, 'error'); return; }
       setScrRes(data.rows[0].result);
+      setScrProv(data.provenance ?? null);
       fireToast(data.rows[0].result.signalDetected ? 'Disproportionality signal detected.' : 'No disproportionality signal.');
     } finally { setScrBusy(false); }
   }, [scr, fireToast]);
@@ -217,6 +226,48 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
                   <tr><td>EBGM</td><td style={{ textAlign: 'right' }} className="mono">{fmt(scrRes.ebgm)}</td></tr>
                   <tr><td>EB05</td><td style={{ textAlign: 'right' }} className="mono">{fmt(scrRes.eb05)}</td></tr>
                 </tbody></table>
+                {scrProv && (
+                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-300,#6b6963)' }}>
+                    {scrProv.method} · {scrProv.engine} {scrProv.engineVersion}
+                    {scrProv.inputsSha256 ? <> · inputs <span className="mono">{String(scrProv.inputsSha256).slice(0, 12)}</span></> : null}
+                    {scrProv.reproducible ? ' · reproducible' : null}
+                  </div>
+                )}
+                {/* BP-W2-4: a screened signal is signal-detection-report content;
+                    file it with its stamp instead of retyping it without one. */}
+                <button
+                  className="btn"
+                  style={{ height: 30, marginTop: 8 }}
+                  disabled={scrFiling}
+                  onClick={() => void (async () => {
+                    setScrFiling(true);
+                    try {
+                      const outcome = await saveToAuthoring({
+                        title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
+                        module: 'M5',
+                        code: 'pv.signal-screen',
+                        content: engineResultToHtml({
+                          title: `Disproportionality screen — ${scr.drug || 'drug'} / ${scr.event || 'event'}`,
+                          rows: [
+                            ['Signal detected', scrRes.signalDetected ? 'Yes' : 'No'],
+                            ['PRR', fmt(scrRes.prr)],
+                            ['ROR (95% CI)', `${fmt(scrRes.ror)} (${fmt(scrRes.rorCi?.lower)}–${fmt(scrRes.rorCi?.upper)})`],
+                            ['Chi-squared (Yates)', fmt(scrRes.chiSquared)],
+                            ['EBGM', fmt(scrRes.ebgm)],
+                            ['EB05', fmt(scrRes.eb05)],
+                          ],
+                          provenance: scrProv,
+                        }),
+                        subject: 'the screened signal',
+                      });
+                      fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
+                    } finally {
+                      setScrFiling(false);
+                    }
+                  })()}
+                >
+                  {scrFiling ? 'Filing…' : 'Insert into document'}
+                </button>
               </div>
             )}
           </div>

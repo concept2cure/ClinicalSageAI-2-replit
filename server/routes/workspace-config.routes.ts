@@ -4,7 +4,7 @@
  * Exposes the document-type → workspace projection so the UI (built separately)
  * can render the project-creation picker and the self-tailoring project
  * workspace without reaching into shared modules. Pure projections over the
- * canonical 158-type filing registry + the supplementary QMS catalog; no tenant
+ * canonical filing registry (count derived, never hardcoded) + the supplementary QMS catalog; no tenant
  * data is read or written, but auth is required for consistency with the rest of
  * the API.
  *

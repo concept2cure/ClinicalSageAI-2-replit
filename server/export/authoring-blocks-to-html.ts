@@ -28,6 +28,8 @@ function inline(runs: InlineRun[]): string {
   return runs
     .map((r) => {
       let t = escapeHtml(r.text);
+      if (r.superScript) t = `<sup>${t}</sup>`;
+      if (r.subScript) t = `<sub>${t}</sub>`;
       if (r.bold) t = `<b>${t}</b>`;
       if (r.italics) t = `<i>${t}</i>`;
       /* An unresolved suggestion exports AS REDLINE. Settling it silently at

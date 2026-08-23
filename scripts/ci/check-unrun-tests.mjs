@@ -41,7 +41,17 @@ const TAG = '[ci:unrun-tests]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** Roots a test file may live under. Anything outside these is not our problem. */
-const ROOTS = ['tests', 'server', 'client', 'shared'];
+/* `scripts` is here because it was not, and that blind spot hid two dead files.
+   `scripts/visual-qa/*.spec.tsx` are real vitest specs, named in a real npm
+   script — and vitest matches a filter against its `include` globs first, which
+   covered tests|server|client|shared and not scripts. Both were silently
+   filtered out, so `npm run visual-qa:capture` exited "No test files found" and
+   the documented `npm run visual-qa` entry point died at step one. This guard
+   reported "every test file is reachable" the whole time, because it never
+   walked the directory they live in. A guard that does not look somewhere
+   cannot report on it, and reporting a clean result over unexamined ground is
+   the failure this file exists to prevent. */
+const ROOTS = ['tests', 'server', 'client', 'shared', 'scripts'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', '_archive', '_deprecated', '.git', 'coverage']);
 
 /**
@@ -129,7 +139,7 @@ function globMatch(glob, filePath) {
  * parser read the config at all: a guard with its own copy of the list agrees
  * with itself and not with the runner.
  */
-const VITEST_CONFIGS = ['vitest.config.ts', 'vitest.db.config.ts'];
+const VITEST_CONFIGS = ['vitest.config.ts', 'vitest.db.config.ts', 'vitest.visual-qa.config.ts'];
 
 /** Pull the `include:` array out of a vitest config as written. */
 function readVitestIncludes(configFile) {

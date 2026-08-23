@@ -62,22 +62,22 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
     <div className="reg-wrap lp">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Platform -- authoring</div>
-          <h1 className="reg-title">Labeling -- prescribing information</h1>
-          <p className="reg-sub">The label itself -- PLLR / 21 CFR 201.57 (USPI), EU SmPC (QRD), and SPL for submission. The highest-stakes document of the review, negotiated with the agency at end of cycle.</p>
+          <div className="reg-eyebrow">Platform — authoring</div>
+          <h1 className="reg-title">Labeling — prescribing information</h1>
+          <p className="reg-sub">The label itself — PLLR / 21 CFR 201.57 (USPI), EU SmPC (QRD), and SPL for submission. The highest-stakes document of the review, negotiated with the agency at end of cycle.</p>
         </div>
         <button className="reg-cta" onClick={() => onAsk && onAsk('Draft the BX-204 USPI from the clinical studies, safety file, and CMC')}>{I.sparkles} Draft with AnA</button>
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">PLLR</div><div className="reg-kpi-l">USPI format -- 21 CFR 201.57</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">PLLR</div><div className="reg-kpi-l">USPI format — 21 CFR 201.57</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">{loading ? '--' : numberedSections}</div><div className="reg-kpi-l">Full PI sections</div></div>
         <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{loading ? '--' : agencyOpen}</div><div className="reg-kpi-l">Open agency edits</div></div>
         <div className="reg-kpi" data-tone={boxedProposed ? 'err' : undefined}><div className="reg-kpi-v">{loading ? '--' : boxedProposed}</div><div className="reg-kpi-l">Boxed warning proposed</div></div>
       </div>
 
       <div className="lp-fmt">
-        {([['uspi', 'USPI -- PLLR'], ['smpc', 'EU SmPC -- QRD'], ['spl', 'SPL -- submission']] as [string, string][]).map(([id, l]) => (
+        {([['uspi', 'USPI — PLLR'], ['smpc', 'EU SmPC — QRD'], ['spl', 'SPL — submission']] as [string, string][]).map(([id, l]) => (
           <button key={id} className={'lp-fmt-b' + (fmt === id ? ' on' : '')} onClick={() => setFmt(id)}>{l}</button>
         ))}
         <div className="lp-stages">
@@ -121,7 +121,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
         <div className="lp-main">
           <div className="lp-doc">
             <div className="lp-doc-bar">
-              <span className="lp-doc-id">BX-204 (rezatinib) -- USPI -- v3.2</span>
+              <span className="lp-doc-id">BX-204 (rezatinib) -- USPI — v3.2</span>
               <div className="lp-doc-acts">
                 <button className="reg-mini">{I.fileText} PDF</button>
                 <button className="reg-mini">{I.download} Word</button>

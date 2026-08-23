@@ -149,8 +149,10 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * and returned verbatim as a blocker / validation finding so the caller is told,
  * in so many words, why readiness is 0% — never left to infer it from silence.
  */
+// Client-reaching copy: names the condition and the consequence, but no schema
+// object — table names must never reach a response body (BP-W0-5).
 const PROGRAM_SECTION_STORE_BLOCKER =
-  'This program has no linked section-tracking store: project_sections is keyed by the ' +
+  'This program has no linked section-tracking store: section tracking is keyed by the ' +
   'legacy numeric project id and no numeric project row exists for this program, so no ' +
   'authored sections are visible to the compiler (pending the document-identity contract).';
 

@@ -90,7 +90,11 @@ export interface StreamPostProcessingContext {
  * upsert is wrapped so a DB failure never propagates (and so never blocks the
  * caller's `post_done`).
  */
-async function persistCollectedDrafts(args: {
+/* Exported for its own test. The three ways a draft can fail to reach the
+   version history — no project context, an unchanged content hash, and a
+   database failure — are indistinguishable to the client, so what this function
+   does and does NOT announce is the whole contract. */
+export async function persistCollectedDrafts(args: {
   res: Response;
   orgId: string | number | null | undefined;
   streamProjectId: string | number | null | undefined;
@@ -134,6 +138,36 @@ async function persistCollectedDrafts(args: {
       }
     } catch (e: any) {
       console.warn('[AnA RI Stream] Draft version persistence failed:', e?.message);
+      /* Tell the person, not just the log.
+       *
+       * AnA announces the deliverable — the rail renders "Drafted <title>" —
+       * and until now a failure to write its governed artifact version was a
+       * server-side console line and nothing else. Someone could close the
+       * session believing a draft was durably recorded when no version row
+       * exists. In a Part 11 context that is the product overstating what it
+       * did, which is the one thing it must not do.
+       *
+       * A `warning` rather than an `error`: the draft itself is real and still
+       * on screen, and discarding it would lose work. What is false is the
+       * impression that it was SAVED, so the caveat names exactly that and
+       * nothing more. No error detail — `e.message` is an internal database
+       * string and customer copy is not where it belongs.
+       *
+       * Never throws: this sits on the path to `post_done`, and a caveat that
+       * prevented the turn from closing would be a worse defect than the one
+       * it reports. */
+      try {
+        if (!res.writableEnded) {
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'warning',
+              message: `${draft.title} was drafted but could not be saved to the version history.`,
+            })}\n\n`
+          );
+        }
+      } catch {
+        /* The client is gone. The draft failing to save is already logged. */
+      }
     }
   }
 }
@@ -347,6 +381,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         threadId,
         organizationId: Number(orgId),
         messages: writebackMessages,
+        // Recorded so the nightly consolidation job can promote this thread's
+        // memory into project_memory_entries; null when the stream had no
+        // project scope.
+        projectId: streamProjectId ? Number(streamProjectId) || null : null,
       });
     }
 

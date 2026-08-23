@@ -17,7 +17,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createFeatureStore } from '../utils/feature-persistence';
-import { MODALITIES, normalizeModality } from '../../shared/regulatory/modality';
+import { MODALITIES, normalizeModality, frameFor } from '../../shared/regulatory/modality';
 
 const router = Router();
 const store = createFeatureStore('mission_control');
@@ -108,7 +108,43 @@ const programSchema = z.object({
   sponsorName: z.string().optional(),
   operatingModel: z.string().optional(),
   targetSubmissionDate: z.string().optional(),
+  // ── Product characterisation (BP-W2-2) ─────────────────────────────────────
+  // Project creation captured the therapeutic area but nothing about what the
+  // PRODUCT is — which is why the lanes could not differentiate. Controlled
+  // vocabularies where a wrong value would mislead; free text where the value
+  // is an external identifier.
+  dosageForm: z.string().max(120).optional(),
+  routeOfAdministration: z.string().max(120).optional(),
+  /** INN / active substance name. */
+  inn: z.string().max(200).optional(),
+  /** WHO ATC code (e.g. L01FF01). Format-checked, not dictionary-checked. */
+  atcCode: z.string().regex(/^[A-Z](\d{2}([A-Z]{2}(\d{2})?)?)?$/i, 'not an ATC code shape (e.g. L01FF01)').optional(),
+  /** Agency application number (IND / NDA / BLA / EU procedure number). */
+  applicationNumber: z.string().max(60).optional(),
+  /** Review centre. Absent → derived from modality (frameFor); explicit wins,
+   *  because combination products get a centre by RFD, not by derivation. */
+  reviewCenter: z.enum(['CDER', 'CBER']).optional(),
+  developmentPhase: z
+    .enum(['preclinical', 'phase1', 'phase2', 'phase3', 'submission', 'approved', 'post_approval'])
+    .optional(),
+  orphanStatus: z.enum(['none', 'requested', 'designated']).optional(),
+  expeditedPrograms: z
+    .array(z.enum(['fast_track', 'breakthrough', 'rmat', 'priority_review', 'accelerated_approval', 'prime', 'sakigake', 'ilap']))
+    .optional(),
 });
+
+/**
+ * Modality drives centre routing (BP-W2-2): when the caller did not state a
+ * review centre, derive it from the modality's regulatory frame. An explicit
+ * centre is kept — a combination product's centre comes from a Part 3 RFD, not
+ * from a table.
+ */
+function withDerivedCenter<T extends { modality?: string; reviewCenter?: string }>(data: T): T {
+  if (data.reviewCenter || !data.modality) return data;
+  const m = normalizeModality(data.modality);
+  const center = m ? frameFor(m).center : null;
+  return center ? { ...data, reviewCenter: center } : data;
+}
 
 router.get('/programs', async (req: Request, res: Response) => {
   try {
@@ -144,7 +180,7 @@ router.post('/programs', async (req: Request, res: Response) => {
 
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const data = {
+    const data = withDerivedCenter({
       organizationId: orgId,
       createdById: userId,
       ownerId: userId,
@@ -153,7 +189,7 @@ router.post('/programs', async (req: Request, res: Response) => {
       targetSubmissionDate: parsed.data.targetSubmissionDate
         ? new Date(parsed.data.targetSubmissionDate).toISOString()
         : null,
-    };
+    });
 
     const program = await store.insert(orgId, 'program', parsed.data.name, data);
     await logProvenance(orgId, program.id, 'program', program.id, 'created', userId);
@@ -176,8 +212,16 @@ router.put('/programs/:id', async (req: Request, res: Response) => {
       req.body.modality = modality; // canonical, or null to clear
     }
 
+    // The characterisation fields validate on update exactly as on create —
+    // an enum that only holds on POST is not a vocabulary. Unknown keys pass
+    // through untouched (status transitions and older fields keep working);
+    // modality is omitted because resolveModality above already canonicalised
+    // it, including the null-to-clear case the schema's string type refuses.
+    const partial = programSchema.omit({ modality: true }).partial().passthrough().safeParse(req.body);
+    if (!partial.success) return res.status(400).json({ error: partial.error.flatten() });
+
     const { id: _id, createdAt: _ca, updatedAt: _ua, ...prev } = existing;
-    const updated = { ...prev, ...req.body };
+    const updated = withDerivedCenter({ ...prev, ...partial.data });
     const result = await store.update(id, orgId, updated, req.body.name);
     await logProvenance(orgId, id, 'program', id, 'updated', getUserId(req), { prev, next: updated });
     res.json({ data: result });

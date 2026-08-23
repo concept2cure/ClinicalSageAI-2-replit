@@ -18,7 +18,12 @@ export type Agency =
   | 'Swissmedic' | 'ANVISA' | 'CDSCO' | 'MFDS' | 'HSA'
   | 'ICH'
   // Global standards / harmonization bodies (cross-cutting documents).
-  | 'ISO' | 'IEC' | 'IMDRF';
+  | 'ISO' | 'IEC' | 'IMDRF'
+  // Issuing bodies that are not medicines agencies but issue filing-type
+  // artefacts (BP-W1-3: a CEP is issued by EDQM, not EMA; a GMP certificate by
+  // the national competent authority that inspected, published in EudraGMDP;
+  // EU device conformity runs through a Notified Body, not EMA).
+  | 'EDQM' | 'National_Competent_Authority' | 'Notified_Body';
 
 export type ApplicationFamily =
   | 'clinical_trial' | 'marketing_authorization' | 'variation' | 'renewal'
@@ -66,16 +71,26 @@ export type FilingCategory =
   | 'device_market_auth_eu_intl'
   | 'device_post_market'
   | 'device_samd_ai'
+  // Device clinical investigations (IDE-class trial applications and their
+  // plans) — added with the BP-W1-2 catalog unification; previously these rows
+  // lived only in the client-side mirror under its own category axis.
+  | 'device_clinical'
   // Diagnostics & IVD
   | 'ivd_classification_pre_sub'
   | 'ivd_market_auth_us'
   | 'ivd_companion_dx'
   | 'ivd_market_auth_eu'
+  // Ex-US/EU IVD registrations (PMDA / NMPA / TGA / Health Canada) — BP-W1-2.
+  | 'ivd_market_auth_intl'
   | 'ivd_post_market'
   // Cross-Cutting
   | 'ctd_ectd'
   | 'qms'
-  | 'safety_pv';
+  | 'safety_pv'
+  // Strategy/intelligence work products (regulatory strategy, gap analysis,
+  // meeting minutes) — BP-W1-2; not agency submissions, but governed documents
+  // the catalog offers to author.
+  | 'regulatory_intelligence';
 
 export interface SegmentMetadata {
   id: Segment;
@@ -148,6 +163,15 @@ export interface RegulatoryApplicationType {
    * specification — which is a finding, not a default.
    */
   moduleAuthority?: string;
+  /**
+   * Scaffolding pathway key consumed by the project wizard
+   * (client `programTypeFor`): decides which document class / rule pack a
+   * project created from this filing type scaffolds ('ind', 'cta', 'bla',
+   * 'maa', 'anda', '510k', 'mdr', 'ivdr', …). Absent means the wizard falls
+   * back to its segment default and, where no rule pack matches, the scaffold
+   * declines honestly (NO_RULE_PACK) rather than guessing.
+   */
+  pathwayKey?: string;
   /** Product class(es) this applies to */
   productClass: ProductClass[];
   /** Dossier format standard */

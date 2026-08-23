@@ -218,4 +218,26 @@ describe('the PDF branch renders the same structure as the DOCX branch', () => {
     const xmlCells = (xml.match(/<w:tc>/g) || []).length;
     expect(htmlCells).toBe(xmlCells);
   });
+
+  it('superscript and subscript reach the DOCX as vertical alignment, not flattened text (BP-W1-1)', async () => {
+    // Before the sup/sub marks were modeled, "cm<sup>2</sup>" exported as
+    // "cm2" — the run text survived and the meaning did not.
+    const xml = await renderToDocumentXml('<p>BSA in cm<sup>2</sup>; CO<sub>2</sub> ≤ 5%.</p>');
+    expect(xml).toContain('<w:vertAlign w:val="superscript"/>');
+    expect(xml).toContain('<w:vertAlign w:val="subscript"/>');
+  });
+
+  it('superscript and subscript survive the HTML/PDF branch too', () => {
+    const html = blocksToHtml(sectionContentToBlocks('<p>cm<sup>2</sup> and CO<sub>2</sub></p>'));
+    expect(html).toContain('<sup>2</sup>');
+    expect(html).toContain('<sub>2</sub>');
+  });
+
+  it('sup/sub inside a table cell keep their alignment in the DOCX', async () => {
+    const xml = await renderToDocumentXml(
+      '<table><tr><th>Parameter</th></tr><tr><td>AUC<sub>0–t</sub> (µg·h/mL)</td></tr></table>',
+    );
+    expect(xml).toContain('<w:vertAlign w:val="subscript"/>');
+    expect((xml.match(/<w:tbl>/g) || []).length).toBe(1);
+  });
 });

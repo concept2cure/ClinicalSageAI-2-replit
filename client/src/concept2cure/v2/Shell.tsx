@@ -27,6 +27,9 @@ import {
 import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
+import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
+import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -49,6 +52,13 @@ import {
   type AnaContext,
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
+import {
+  isLocked,
+  lockShortReason,
+  useNavEntitlements,
+  type NavSurfaceEntitlement,
+} from './navEntitlements';
+import { NavUnlockPanel } from './NavUnlockPanel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
 export interface ShellSurfaceRef {
@@ -68,6 +78,37 @@ export interface AnaMessage {
   executedActions?: AnaChatAction[];
   /** Governed commands ANA proposed that are blocked on a Part 11 e-signature. */
   pendingSignoffs?: PendingSignoff[];
+  /**
+   * What ANA is doing / did this turn — the live work record rendered by
+   * {@link AnaActivity}. Every field is something the turn genuinely reported;
+   * see that module for why the rail used to show none of it.
+   */
+  activity?: AnaActivityProps;
+  /**
+   * Caveats about THIS answer — a degraded-mode signal from the server, or a
+   * timeout that cut the turn short. Deliberately not part of `activity`: the
+   * work record is about how the answer was reached and lives behind a
+   * disclosure, whereas a caveat qualifies the answer itself and has to be read
+   * without going looking for it.
+   */
+  warnings?: string[];
+  /**
+   * Steers the human sent mid-run that AnA accepted, in order. `useAnaChat`
+   * has recorded these since run control shipped and nothing rendered them:
+   * a steer you cannot see afterwards is one you cannot tell was taken.
+   */
+  interjections?: string[];
+  /**
+   * The server's evidence verdict for this answer. Emitted as `grounding_strip`
+   * and stored by `useAnaChat` since that pipeline shipped; nothing rendered it.
+   */
+  evidence?: AnaGroundingEvidence;
+  /**
+   * The CRL/RTF pre-mortem decision artifact, when the turn assembled one.
+   * `CrlPremortemPanel` has existed, and been tested, since E14 with ZERO mount
+   * sites — a board-ready artifact the product could not show anyone.
+   */
+  crlPremortem?: CrlPremortemArtifact;
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -88,6 +129,14 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const [acct, setAcct] = React.useState(false);
+  /* Live licence verdicts for this organization. Until the server answers —
+     and permanently if it cannot — `verdictFor` returns null for everything and
+     the rail renders exactly as it did before: a lock badge is a claim about a
+     customer's contract, and inventing one from a failed fetch is the failure
+     mode worth avoiding here, not an unlocked rail. */
+  const { verdictFor } = useNavEntitlements();
+  /** The locked destination the human just activated, if any. */
+  const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   const name = user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
@@ -124,18 +173,43 @@ export function Rail({
     s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
+    /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
+       Documents" and "Starred Items" are shortcuts onto document-authoring and
+       projects, so they inherit those modules' verdicts rather than looking up
+       ids the catalog has never heard of. */
+    const verdict = verdictFor(target);
+    const locked = isLocked(verdict);
     return (
       <button
         key={s.id}
         type="button"
         className="nav-item"
         data-on={activeId === target || undefined}
+        /* Locked is a data attribute, not `disabled`. A disabled control is
+           unreachable by keyboard and explains nothing — the entitlements spec
+           requires a locked destination to stay an activatable, labelled
+           affordance that opens an honest panel. */
+        data-locked={locked || undefined}
         aria-current={activeId === target ? 'page' : undefined}
-        onClick={() => onNav(target)}
-        title={s.label}
+        onClick={() => (locked && verdict ? setLockedFor(verdict) : onNav(target))}
+        /* The lock reaches assistive tech through the accessible name, not the
+           icon: the icon is decorative and the colour shift is never the only
+           channel. The reason is the SERVER'S reason, per verdict — this used
+           to hard-code "not included in your plan" for all three, which is only
+           true of a tier gap: a module an admin switched off needs nothing
+           bought, and one outside the workspace's industry mode is not fixed by
+           any plan. Hover and screen-reader users were getting a different, and
+           wrong, reason from the one the panel gave them on activation. */
+        aria-label={locked && verdict ? `${s.label} — ${lockShortReason(verdict)}` : undefined}
+        title={locked && verdict ? `${s.label} — ${lockShortReason(verdict)}` : s.label}
       >
         <span className="ico">{I[s.icon] ?? I.grid}</span>
         <span className="lbl">{s.label}</span>
+        {locked && (
+          <span className="nav-lic" data-lic="off" aria-hidden="true">
+            {I.lock}
+          </span>
+        )}
         {s.badge && <span className="nav-badge">{s.badge}</span>}
         {s.count != null && <span className="nav-count">{s.count}</span>}
       </button>
@@ -248,6 +322,14 @@ export function Rail({
           </>
         )}
       </div>
+      {lockedFor && (
+        <NavUnlockPanel
+          verdict={lockedFor}
+          isOrgAdmin={isOrgAdmin}
+          onClose={() => setLockedFor(null)}
+          onNav={onNav}
+        />
+      )}
     </nav>
   );
 }
@@ -407,6 +489,13 @@ export function AnaRail({
   onDismissWelcome,
   onNav,
   projectId = null,
+  runStatus = null,
+  streaming = false,
+  onPause,
+  onResume,
+  onStop,
+  onSteer,
+  liveDrive,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -421,13 +510,42 @@ export function AnaRail({
    *  a conversation or dismissed it — the rail only renders it when present. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /**
+   * Mid-run control. The server has supported pause / resume / cancel /
+   * interject at the agentic loop's round boundaries since run control
+   * shipped, and `useAnaChat` exposes all four — the rail offered none of
+   * them, so a human watching AnA work a question the wrong way could only
+   * wait for her to finish. Absent handlers simply hide the affordance.
+   */
+  runStatus?: 'running' | 'paused' | 'cancelled' | null;
+  streaming?: boolean;
+  onPause?: () => void;
+  onResume?: () => void;
+  onStop?: () => void;
+  /** Splices a steer into the next round. Capped server-side at 2000 chars. */
+  onSteer?: (message: string) => void;
   /** Lets a welcome starter open a real surface (e.g. the upload flow). */
   onNav?: (id: string) => void;
   /** Scopes chat uploads so extracted text lands in that project's memory.
    *  Null is valid — the file still uploads, it is just not project-scoped. */
   projectId?: string | number | null;
+  /**
+   * AnA Live Drive toggle (V2App owns the state machine). `locked` carries the
+   * server's honest entitlement deny from the last attempted turn — the
+   * control stays enabled with the real required tier named, never a
+   * disabled, reasonless button (the platform's Locked-never-dead rule).
+   */
+  liveDrive?: {
+    on: boolean;
+    locked: { reason: string; requiredTier?: string | null } | null;
+    setOn: (v: boolean) => void;
+  };
 }) {
   const [draft, setDraft] = React.useState('');
+  /* The steer field is separate from `draft` on purpose: a steer joins the
+     RUNNING turn, a draft starts the next one, and sharing one buffer would
+     make it ambiguous which a half-typed sentence was about to do. */
+  const [steer, setSteer] = React.useState('');
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
@@ -538,7 +656,14 @@ export function AnaRail({
           </button>
         </div>
       </div>
-      <div className="ana-body" aria-live="polite">
+      {/* NOT aria-live. It was, and that made the entire growing transcript a
+          live region: every streamed token, every new tool row and round
+          heading was a mutation inside it, so a screen-reader user got the
+          whole subtree re-read instead of a status message — and any narrow
+          region nested inside was undefined behaviour on top. Status is
+          announced by the narrow, always-mounted regions that own it:
+          AnaActivity for what AnA is doing, and the upload region below. */}
+      <div className="ana-body">
         {welcome && (
           <div className="ana-welcome">
             <div className="ana-welcome-greet">
@@ -680,6 +805,51 @@ export function AnaRail({
                 </div>
               )}
               <div className="bd">{m.body}</div>
+              {/* Caveats sit directly under the answer they qualify, above the
+                  work record and never inside it. `useAnaChat` records a
+                  server degraded-mode signal, and a timeout, on the message —
+                  and on timeout it KEEPS whatever text had already streamed.
+                  Nothing rendered these, so a turn cut off mid-answer showed
+                  its truncated text with no sign it was truncated: an
+                  incomplete result presented as a complete one. */}
+              {/* The pre-mortem artifact, when this turn assembled one. No
+                  `onExport` is passed: the rail has no DOCX route for it, and
+                  the panel now disables that action and says where export lives
+                  rather than offering a button that does nothing. */}
+              {m.role === 'ana' && m.crlPremortem && (
+                <div className="ana-premortem">
+                  <CrlPremortemPanel artifact={m.crlPremortem} />
+                </div>
+              )}
+              {/* How well-grounded the answer is. Above the caveats and the
+                  work record on purpose: those say what went wrong and how she
+                  got here, this says how far the answer can be trusted, which
+                  is read first. */}
+              {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
+              {/* Steers AnA accepted for this turn. Shown because a steer you
+                  cannot see afterwards is one you cannot tell was taken — and
+                  the server has already written it into the decision lineage. */}
+              {m.role === 'ana' && Array.isArray(m.interjections) && m.interjections.length > 0 && (
+                <div className="ana-steers">
+                  {m.interjections.map((t, si) => (
+                    <div key={si} className="ana-steer">
+                      <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
+                      <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {m.role === 'ana' && Array.isArray(m.warnings) && m.warnings.length > 0 && (
+                <div className="ana-msg-warnings" role="note">
+                  {m.warnings.map((w, wi) => (
+                    <div key={wi} className="ana-msg-warning">
+                      <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
               {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
                 <div className="ana-msg-actions">
                   {m.actions.map((id) => {
@@ -752,6 +922,72 @@ export function AnaRail({
                   {a.label}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+        {/* Mid-run control.
+            Every action here lands at a ROUND BOUNDARY, not instantly — the
+            loop checks between rounds — so the copy says "after this step"
+            rather than implying the tool in flight stops dead. Steering is the
+            reason this exists: a reviewer watching AnA work a question the
+            wrong way could previously only wait for her to finish, while the
+            server has spliced steers into the next round, and recorded them in
+            the decision lineage, all along. */}
+        {streaming && (onPause || onStop || onSteer) && (
+          <div className="ana-runctl" role="group" aria-label="Control this run">
+            <span className="ana-runctl-state">
+              <span
+                className={runStatus === 'paused' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+                aria-hidden="true"
+              >
+                {runStatus === 'paused' ? I.pause : I.dot}
+              </span>
+              {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
+            </span>
+
+            {onSteer && (
+              <form
+                className="ana-runctl-steer"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const v = steer.trim();
+                  if (!v) return;
+                  onSteer(v);
+                  setSteer('');
+                }}
+              >
+                <input
+                  type="text"
+                  className="ana-runctl-input"
+                  value={steer}
+                  maxLength={2000}
+                  onChange={(e) => setSteer(e.target.value)}
+                  placeholder="Steer this run…"
+                  aria-label="Steer this run"
+                />
+                <button type="submit" className="ana-runctl-go" disabled={!steer.trim()}>
+                  Steer
+                </button>
+              </form>
+            )}
+
+            <div className="ana-runctl-actions">
+              {runStatus === 'paused'
+                ? onResume && (
+                    <button type="button" className="ana-runctl-btn" onClick={onResume}>
+                      Resume
+                    </button>
+                  )
+                : onPause && (
+                    <button type="button" className="ana-runctl-btn" onClick={onPause}>
+                      Pause
+                    </button>
+                  )}
+              {onStop && (
+                <button type="button" className="ana-runctl-btn is-stop" onClick={onStop}>
+                  Stop
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -1011,6 +1247,26 @@ export function AnaRail({
               >
                 <span className="ico">{I.wand}</span>Agent<span className="mh">AnA takes governed actions</span>
               </button>
+              {liveDrive && (
+                <button
+                  type="button"
+                  className="ana-menu-item"
+                  data-on={liveDrive.on || undefined}
+                  onClick={() => {
+                    liveDrive.setOn(!liveDrive.on);
+                    setModeOpen(false);
+                  }}
+                >
+                  <span className="ico">{I.play}</span>Live Drive
+                  <span className="mh">
+                    {liveDrive.locked
+                      ? liveDrive.locked.requiredTier
+                        ? `Requires the ${liveDrive.locked.requiredTier} plan`
+                        : 'Not available for this workspace'
+                      : 'AnA navigates the screens; you watch and can take over'}
+                  </span>
+                </button>
+              )}
               <div className="ana-menu-sec">Engine</div>
               {ANA_MODES.map((m) => (
                 <button
@@ -1031,6 +1287,16 @@ export function AnaRail({
             <div className="ana-agent-note">
               <span className="ico">{I.shieldCheck}</span>Agent mode — AnA runs tools &amp; drafts
               governed actions. Changes require your e-signature.
+            </div>
+          )}
+          {liveDrive?.on && (
+            <div className="ana-agent-note">
+              <span className="ico">{I.play}</span>
+              {liveDrive.locked
+                ? liveDrive.locked.requiredTier
+                  ? `Live Drive requires the ${liveDrive.locked.requiredTier} plan — AnA will offer destinations as chips instead.`
+                  : 'Live Drive is not available for this workspace — AnA will offer destinations as chips instead.'
+                : 'Live Drive — AnA navigates your screens as she works. Take over any time (Esc).'}
             </div>
           )}
         </div>

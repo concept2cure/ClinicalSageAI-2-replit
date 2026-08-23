@@ -32,7 +32,23 @@ import {
   workNotOnTheBoard,
 } from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
-import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { useSampleRows, useSampleValue, useShowingSample } from '../lib/useSampleRows';
+import { SampleDataBanner } from '../components/SampleDataBanner';
+import { EmptyState } from '../../v2/dataConnect';
+
+/**
+ * Column widths for the validation-rules table, shared by its head and its rows
+ * so the two cannot drift.
+ *
+ * Every column but Sev and Since is fractional. The fixed widths they replace —
+ * 88/110/110/140 plus a bare `1fr` — summed to 608px of tracks and gaps inside
+ * the 590px this table is given on a 748px surface, which left `1fr` pinned at
+ * the min-content width of the word "Message" and still overflowed. Fractions
+ * divide the room that exists instead of asserting room that does not, and
+ * `minmax(0, …)` is what lets them go below their content rather than refusing.
+ */
+const VALIDATION_COLS =
+  '76px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2fr) 88px';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -346,7 +362,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
         <div className="ctable">
           <div
             className="ctable-head"
-            style={{ gridTemplateColumns: '88px 110px 110px 140px 1fr 100px' }}
+            style={{ gridTemplateColumns: VALIDATION_COLS }}
           >
             <div>Sev</div>
             <div>Rule</div>
@@ -359,7 +375,7 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
             <div
               key={r.id + r.prog}
               className="ctable-row"
-              style={{ gridTemplateColumns: '88px 110px 110px 140px 1fr 100px' }}
+              style={{ gridTemplateColumns: VALIDATION_COLS }}
             >
               <div>
                 <span className={`sev-pill ${r.severity}`}>
@@ -395,6 +411,22 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
      the empty state below is intentional. */
   const live = useSubmissions();
   const sourceSubmissions = useSampleRows(live.submissions, SUBMISSIONS);
+  /* Gated correctly and marked nowhere. The fixture rows carry `cover: 'signed'`,
+     `esig: true` and a log line reading "Cover letter e-signed (AUD-9104)" — an
+     invented Part 11 audit id — and they drive the transmission gate rendered
+     below. Sample mode is the only way to reach them, and the user is now told
+     when they have. */
+  const submissionsAreSample = useShowingSample(live.submissions);
+
+  /* One definition of "start a new submission", used by the header button and
+     by the empty state's CTA. Two copies of this string is how a panel comes to
+     name an action slightly differently from the control that performs it. */
+  const startNewSubmission = React.useCallback(() => {
+    onAskAna(
+      'Start a new submission. Walk me through selecting program, target authority (FDA ESG, notified body, EU MDR), ' +
+        'pathway, package contents and cover letter — and run the gate checks before transmission.',
+    );
+  }, [onAskAna]);
 
   /* Default selection re-syncs to the first row of the live list when it
      arrives — avoids clicking onto a stale fixture id. */
@@ -443,19 +475,17 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
           >
             {I.filter} {statusFilter === 'all' ? 'Filter' : statusFilter}
           </button>
-          <button
-            className="btn primary small"
-            onClick={() =>
-              onAskAna(
-                'Start a new submission. Walk me through selecting program, target authority (FDA ESG, notified body, EU MDR), ' +
-                  'pathway, package contents and cover letter — and run the gate checks before transmission.',
-              )
-            }
-          >
+          <button className="btn primary small" onClick={startNewSubmission}>
             {I.rocket} New submission
           </button>
         </div>
       </div>
+
+      <SampleDataBanner
+        show={submissionsAreSample}
+        loading={live.loading}
+        label="submission packages"
+      />
 
       <section className="section">
         <div className="section-head">
@@ -488,21 +518,20 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
         </div>
         <div className="sub-layout">
           <div className="sub-list">
+            {/* The prose used to say: Use "New submission" above. The button was
+                real and forty lines up, so the empty state named an action and
+                made the user go and find it — the same passive instruction W0-5
+                retired on the DataGate panels, in a hand-rolled panel that the
+                gate never covered. It renders the action now, wired to the same
+                handler as the header button so the two cannot drift. */}
             {live.submissions !== null && live.submissions.length === 0 && (
-              <div
-                style={{
-                  padding: '24px 16px',
-                  textAlign: 'center',
-                  fontSize: 12,
-                  color: 'var(--text-300)',
-                }}
-              >
-                <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
-                  No submissions yet
-                </div>
-                Packages you create appear here. Use "New submission" above to start your first FDA
-                ESG · notified body · EU MDR transmittal.
-              </div>
+              <EmptyState
+                icon={I.rocket}
+                title="No submissions yet"
+                hint="Packages you create appear here — FDA ESG, notified body, or EU MDR transmittals."
+                action={{ label: 'New submission', onAct: startNewSubmission }}
+                testId="workbench-no-submissions"
+              />
             )}
             {visible.map(s => (
               <button

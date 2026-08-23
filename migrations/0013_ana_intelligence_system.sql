@@ -211,6 +211,14 @@ CREATE INDEX IF NOT EXISTS ana_objectives_category_idx ON ana_client_objectives(
 -- ============================================================
 DO $$
 BEGIN
+  -- Guarded on the TABLE, not just the columns: project_intelligence_profiles
+  -- is a push-surface table no journal file creates, and on a database
+  -- maintained only by the migration set it does not exist — an unguarded
+  -- ALTER there aborts the whole file. Where the table exists (every fresh
+  -- install), behavior is unchanged.
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'project_intelligence_profiles') THEN
+    RETURN;
+  END IF;
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'project_intelligence_profiles' AND column_name = 'target_regulatory_bodies') THEN
     ALTER TABLE project_intelligence_profiles ADD COLUMN target_regulatory_bodies JSONB DEFAULT '[]';
   END IF;

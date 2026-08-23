@@ -129,7 +129,7 @@ const ENFORCED_APPROVAL_RULES: Array<{
     id: 'machine-only',
     title: 'Machine-only segments are never approvable',
     detail:
-      'Machine translation is a draft accelerator. A segment still carrying method "machine" cannot reach approved -- only human and mt_postedited can.',
+      'Machine translation is a draft accelerator. A segment still carrying method "machine" cannot reach approved — only human and mt_postedited can.',
     evidence: "approvableMethods: ['human', 'mt_postedited'] -- rejects with method_not_approvable.",
   },
   {
@@ -331,7 +331,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
     if (why.length < 3) {
       setSaveNote({
         tone: 'warn',
-        text: 'Enter a reason of at least 3 characters -- it is written to the audit record.',
+        text: 'Enter a reason of at least 3 characters — it is written to the audit record.',
       });
       return;
     }
@@ -406,7 +406,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
 
   const clientTypeStatus: string =
     profile.status === 'error'
-      ? 'Governed profile unreachable -- the client type could not be read and cannot be changed.'
+      ? 'Governed profile unreachable — the client type could not be read and cannot be changed.'
       : saveState.status === 'saving'
         ? 'Saving to governed org profile…'
         : saveState.status === 'error'
@@ -416,9 +416,9 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             : profile.status === 'loading'
               ? 'Loading governed org profile…'
               : profile.status === 'empty'
-                ? 'No governed profile saved yet -- pick a type to create one.'
+                ? 'No governed profile saved yet — pick a type to create one.'
                 : profile.status === 'ready'
-                  ? 'Governed -- loaded from your org industry profile.'
+                  ? 'Governed — loaded from your org industry profile.'
                   : '';
 
   const ALL_LANGS: LangOption[] = [
@@ -447,7 +447,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Admin -- organization"
+        eyebrow="Admin — organization"
         title={
           <React.Fragment>
             Setup {!loadError && !loading && <SampleTag sample={false} />}
@@ -539,10 +539,10 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   {loading
                     ? 'Loading the organization record…'
                     : loadError
-                      ? 'Unavailable -- the organization record did not load.'
+                      ? 'Unavailable — the organization record did not load.'
                       : nameDirty
-                        ? 'Unsaved -- give a reason and save to write it to the organization record.'
-                        : 'Governed -- stored on the organization record.'}
+                        ? 'Unsaved — give a reason and save to write it to the organization record.'
+                        : 'Governed — stored on the organization record.'}
                 </span>
               </div>
             </div>
@@ -550,7 +550,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
               <div className="txw-row-l">
                 Client type
                 <small>
-                  Sets the default rail focus and AnA framing. Governed -- saved to your
+                  Sets the default rail focus and AnA framing. Governed — saved to your
                   organization's industry profile.
                 </small>
               </div>
@@ -609,7 +609,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   {I.lock} Open Identity console
                 </button>
                 <span className="txw-help">
-                  Governed there, not here -- SAML endpoints, SCIM provisioning tokens and the SCIM
+                  Governed there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM
                   IP allowlist. A boolean on this page would be a second copy of that state with
                   nothing to reconcile it.
                 </span>
@@ -622,10 +622,10 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         <div className="txw-set-card">
           <div className="txw-set-head">
             <div className="txw-set-head-l">
-              <div className="txw-set-eyebrow">Module -- authoring</div>
+              <div className="txw-set-eyebrow">Module — authoring</div>
               <h2 className="txw-set-title">Translation workspace</h2>
               <p className="txw-set-sub">
-                Bilingual review for non-English regulatory content -- drafted by MT, post-edited by a
+                Bilingual review for non-English regulatory content — drafted by MT, post-edited by a
                 human, back-translated for verification, and approved under 21 CFR Part 11. Exposed
                 inside the Document editor's Trans dock.
               </p>
@@ -650,7 +650,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                   than letting an administrator assume enforcement. */}
               <div className="txw-help" data-tone="warn">
                 {I.info} Declared org defaults. These three persist on the organization record and
-                are audited, but the translation service does not read them yet -- a project still
+                are audited, but the translation service does not read them yet — a project still
                 chooses its own target language and drafting routes through the AnA gateway's model
                 policy. The approval guardrails further down are a different matter: those are
                 enforced on every approval.
@@ -775,13 +775,13 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="txw-row-l">
                   Open in editor
                   <small>
-                    Reach the workspace from any document -- click the <b>Trans</b> dock tab in the
+                    Reach the workspace from any document — click the <b>Trans</b> dock tab in the
                     Document editor.
                   </small>
                 </div>
                 <div className="txw-row-r">
                   <span className="txw-help">
-                    Surfaces inside <b>Document editor -- Trans</b> with Sections / Segments /
+                    Surfaces inside <b>Document editor — Trans</b> with Sections / Segments /
                     Glossary / QA toggles.
                   </span>
                 </div>
@@ -915,9 +915,9 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Admin -- compliance"
+        eyebrow="Admin — compliance"
         title="Audit trail"
-        sub={`${entries.length} entries -- hash-chained -- append-only -- 21 CFR Part 11 ss11.10(e)`}
+        sub={`${entries.length} entries — hash-chained — append-only — 21 CFR Part 11 ss11.10(e)`}
         actions={
           <React.Fragment>
             <button
@@ -952,13 +952,13 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the audit trail"
-          hint="The append-only, hash-chained 21 CFR Part 11 ledger didn't respond. Sign in and retry, or check the audit service is reachable -- the trail is never shown as an empty 'no events' state when it can't be read."
+          hint="The append-only, hash-chained 21 CFR Part 11 ledger didn't respond. Sign in and retry, or check the audit service is reachable — the trail is never shown as an empty 'no events' state when it can't be read."
         />
       ) : entries.length === 0 ? (
         <EmptyState
           icon={I.scroll}
           title="No audit entries yet"
-          hint="Governed actions -- authoring, review, submission, vault locks and e-signatures -- are written here to the immutable hash-chained ledger as they happen."
+          hint="Governed actions — authoring, review, submission, vault locks and e-signatures — are written here to the immutable hash-chained ledger as they happen."
         />
       ) : (
         <React.Fragment>
@@ -994,7 +994,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           </div>
           <div style={{ fontSize: 11.5, color: 'var(--text-400)', marginTop: 2 }}>
             {chainStatus.total} entries -- {chainStatus.valid}/{chainStatus.total} links
-            verified -- SHA-256 -- append-only ledger
+            verified — SHA-256 — append-only ledger
           </div>
         </div>
         <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>
@@ -1049,7 +1049,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           }}
         >
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-300)', marginBottom: 8 }}>
-            Hash chain -- newest to oldest
+            Hash chain — newest to oldest
           </div>
           {entries.map((e, i) => (
             <div key={e.id} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
@@ -1504,7 +1504,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Workspace -- /api/module-subscriptions"
         title="Apps catalog"
-        sub="Every application -- the destinations you open and work in -- entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
+        sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
           <button
             className="btn ghost"
@@ -1609,7 +1609,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         <EmptyState
           icon={I.grid}
           title="No apps enabled yet"
-          hint="Modules auto-provision by tier. Once provisioned, your apps appear here entitlement-aware -- active apps launch and add-ons show an upgrade path."
+          hint="Modules auto-provision by tier. Once provisioned, your apps appear here entitlement-aware — active apps launch and add-ons show an upgrade path."
         />
       ) : (
         groups.map((g, gi) => (
@@ -1642,7 +1642,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                     {!a.on
                       ? isAddOn
                         ? `Upgrade your plan to unlock ${label}.`
-                        : `Disabled for this organization -- an admin can re-enable it.`
+                        : `Disabled for this organization — an admin can re-enable it.`
                       : a.desc}
                   </div>
                   <div className="launch-foot">
@@ -1702,13 +1702,13 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sec">
         <div className="sec-hdr">
           <div className="sec-title">Platform services</div>
-          <div className="sec-sub">Not apps -- capabilities that run inside apps</div>
+          <div className="sec-sub">Not apps — capabilities that run inside apps</div>
         </div>
         <div className="svc-note">
           {I.info}
           <span>
             A <b>service</b> is not a destination. You never "open" a service; it works inside the
-            applications above -- grounding a draft, routing a model, sealing a report, signing an
+            applications above — grounding a draft, routing a model, sealing a report, signing an
             action. Listed here for transparency, not navigation.
           </span>
         </div>
@@ -1762,9 +1762,9 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace -- evidence"
+        eyebrow="Workspace — evidence"
         title="Artifacts Center"
-        sub="Every artifact AnA has drafted -- across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
+        sub="Every artifact AnA has drafted — across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
         actions={
           // MOCK ACTION (flagged): "Export all" has no handler and no bulk-export
           // endpoint exists — inert button, left for a later actions pass.
@@ -1784,7 +1784,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         <EmptyState
           icon={I.fileText}
           title="No artifacts yet"
-          hint="Every artifact AnA drafts across your projects lands here -- with its version chain, provenance and signature status. Draft a section, SAP, memo or report to get started."
+          hint="Every artifact AnA drafts across your projects lands here — with its version chain, provenance and signature status. Draft a section, SAP, memo or report to get started."
         />
       ) : (
       <div className="ctable">
@@ -2049,7 +2049,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
     const roleMeta = LIC_ROLES.find((r) => r.id === form.role);
     const okMsg =
       (roleMeta && roleMeta.business ? 'Business-tier ' : '') +
-      'role granted -- audited (Part 11)';
+      'role granted — audited (Part 11)';
 
     // Real, audited write. apiRequest passes 401 through; other non-OK throws
     // with the server's reason (business-admin required, no such user). Only
@@ -2061,7 +2061,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         reason: form.reason.trim(),
       });
       if (!res.ok) {
-        fireToast('Could not grant -- sign in as a platform admin', 'error');
+        fireToast('Could not grant — sign in as a platform admin', 'error');
         return;
       }
       const row = await res.json().catch(() => null);
@@ -2123,11 +2123,11 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         reason: reason.trim(),
       });
       if (!res.ok) {
-        fireToast('Could not revoke -- sign in as a platform admin', 'error');
+        fireToast('Could not revoke — sign in as a platform admin', 'error');
         return;
       }
       setGrants((g) => g.filter((x) => x.id !== id));
-      fireToast('Grant revoked -- reason recorded -- audited');
+      fireToast('Grant revoked — reason recorded — audited');
     } catch (e) {
       fireToast(
         // Only apiRequest's own error has been through the envelope reader; a
@@ -2218,7 +2218,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
         setRevokeError(serverMessage(json) ?? 'Sign in as an admin');
         return;
       }
-      fireToast('API key revoked -- audited');
+      fireToast('API key revoked — audited');
       setRevokeConfirm(null);
       setKeysReload((n) => n + 1);
     } catch (e) {
@@ -2248,7 +2248,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
           <h1 className="sp-title">Admin console</h1>
           <p className="sp-state">
             Designate personnel, manage SSO/SCIM, security policy, module entitlements and API
-            keys -- every governed action carries a reason and a 21 CFR Part 11 audit entry.
+            keys — every governed action carries a reason and a 21 CFR Part 11 audit entry.
           </p>
         </div>
       </div>
@@ -2282,14 +2282,14 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="ac-val">
                   <div className="ac-val-row">
                     <div className="ac-val-main">
-                      <b>Part 11 audit trail -- SIEM export</b>
+                      <b>Part 11 audit trail — SIEM export</b>
                       <span>
                         Cursor-paginated NDJSON pull of this org's append-only audit trail for
                         SOC/SIEM ingestion.
                       </span>
                     </div>
                     <span className="ac-val-st ok">
-                      {I.check} Live -- /api/admin/audit
+                      {I.check} Live
                     </span>
                   </div>
                   <div className="ac-val-row">
@@ -2300,7 +2300,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     </div>
                     <span className="ac-val-st ok">
-                      {I.check} Live -- audit-trail routes
+                      {I.check} Live — audit-trail routes
                     </span>
                   </div>
                   <div className="ac-val-row">
@@ -2311,7 +2311,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     </div>
                     <span className="ac-val-st ok">
-                      {I.check} Live -- /api/esignature
+                      {I.check} Live
                     </span>
                   </div>
                   <div className="ac-val-row">
@@ -2348,7 +2348,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     ) : (
                       <span className="ac-val-st soon">
-                        Provided at contract -- not yet self-serve
+                        Provided at contract — not yet self-serve
                       </span>
                     )}
                   </div>
@@ -2357,7 +2357,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                       <b>Data residency</b>
                       <span>
                         Single-region deployment today; committed regions are stated in your order
-                        form. Multi-region residency is on the roadmap -- it will appear here when
+                        form. Multi-region residency is on the roadmap — it will appear here when
                         it ships, not before.
                       </span>
                     </div>
@@ -2378,7 +2378,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
                   <span className="t">Platform role grants</span>
                   <span className="s">
-                    {grants.length} active -- platform_role_grants
+                    {grants.length} active — platform_role_grants
                   </span>
                 </div>
                 <div className="ac-grant-form">
@@ -2417,7 +2417,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
                 {LIC_ROLES.find((r) => r.id === form.role && r.business) && (
                   <div className="scaf-note" style={{ margin: '8px 0 0' }}>
-                    {I.alertTriangle || I.alertTriangle} Business-tier role -- confers finance
+                    {I.alertTriangle || I.alertTriangle} Business-tier role — confers finance
                     access; only a business administrator may grant it.
                   </div>
                 )}
@@ -2429,7 +2429,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                       tone="error"
                       icon={I.alertTriangle}
                       title="Couldn't load access grants"
-                      hint="Platform role grants require a platform-admin session -- sign in and retry."
+                      hint="Platform role grants require a platform-admin session — sign in and retry."
                     />
                   ) : grants.length === 0 ? (
                     <EmptyState
@@ -2505,17 +2505,17 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   [
                     [
                       'SAML / OIDC SSO',
-                      'Enterprise SSO via authEnterprise -- IdP metadata, ACS URL, JIT provisioning',
+                      'Enterprise SSO via authEnterprise — IdP metadata, ACS URL, JIT provisioning',
                       'SAML SSO on Professional+',
                     ],
                     [
                       'SCIM 2.0 provisioning',
-                      'Automated user lifecycle from your IdP -- scim-tenants',
+                      'Automated user lifecycle from your IdP — scim-tenants',
                       'Token-scoped, per-tenant',
                     ],
                     [
                       'SCIM IP allowlist',
-                      'Restrict SCIM to your IdP egress ranges -- scim-ip-allowlist',
+                      'Restrict SCIM to your IdP egress ranges — scim-ip-allowlist',
                       'CIDR ranges',
                     ],
                   ] as [string, string, string][]
@@ -2535,7 +2535,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   [
                     [
                       'MFA policy',
-                      'Require TOTP for all members or by role -- admin-security',
+                      'Require TOTP for all members or by role — admin-security',
                       'Recommended: required',
                     ],
                     [
@@ -2545,12 +2545,12 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     ],
                     [
                       'Session policy',
-                      'JWT sliding 7-day refresh -- idle timeout',
+                      'JWT sliding 7-day refresh — idle timeout',
                       '7-day refresh',
                     ],
                     [
                       'Audit to SIEM',
-                      'Stream the Part-11 audit log to your SIEM -- audit-siem',
+                      'Stream the Part-11 audit log to your SIEM — audit-siem',
                       'Splunk / S3 / webhook',
                     ],
                   ] as [string, string, string][]
@@ -2620,7 +2620,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     tone="error"
                     icon={I.alertTriangle}
                     title="Couldn't load API keys"
-                    hint="Managing API keys requires an admin session -- sign in and retry."
+                    hint="Managing API keys requires an admin session — sign in and retry."
                   />
                 ) : apiKeys.length === 0 ? (
                   <EmptyState

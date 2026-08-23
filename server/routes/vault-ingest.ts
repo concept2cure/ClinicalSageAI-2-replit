@@ -4,8 +4,12 @@
  * Accepts a multipart file upload plus regulatory metadata and:
  *   1. Validates the payload (Zod schema)
  *   2. Verifies file bytes (magic-byte signature + ClamAV)
- *   3. Persists the file to local storage (tenant-scoped path)
- *   4. INSERTs a vault.documents row (processing_status = 'PENDING')
+ *   3. Persists the file to local storage (tenant-scoped path) — FATAL on
+ *      failure, because a content hash for bytes nobody holds is a record that
+ *      lies rather than a partial success
+ *   4. INSERTs a vault.documents row and its hash-chained 21 CFR Part 11 audit
+ *      entry in one transaction, so a document cannot enter the governed corpus
+ *      without a record of who put it there
  *   5. Extracts text via the OCR service and stores it inline
  *   6. Returns the document record for the caller to track
  *
@@ -14,6 +18,15 @@
  * Why this exists: prior to this route no production code path ever wrote
  * to vault.documents — documents could not enter the RAG corpus.
  * See DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md §3 (GAP 1).
+ *
+ * NOTE FOR ANY ROUTE THAT PUTS MULTER IN FRONT OF TENANT-SCOPED WORK. Multer
+ * parses off the request stream, and an EventEmitter listener runs in the
+ * emitting context rather than the registering one, so the AsyncLocalStorage
+ * tenant scope opened by `establishRequestTenantScope` is NOT active once the
+ * upload middleware resolves. Under `RLS_ENFORCE=on` every subsequent
+ * `pool.query` / `pool.connect` then fails closed. This handler re-enters the
+ * scope from the identity the middleware published on the request; the other
+ * multipart routes in this codebase have the same exposure.
  */
 
 import { Router, type Request, type Response } from 'express';
@@ -22,9 +35,12 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
+import { VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
 import { pool } from '../db';
+import { runWithTenantScope } from '../db/tenantStore';
 import { createScopedLogger } from '../utils/logger';
 import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
+import { writeChainedAuditRow } from '../services/auditService';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -50,11 +66,7 @@ const IngestBodySchema = z.object({
   programId: z.string().uuid('programId must be a UUID'),
   documentCode: z.string().min(1, 'documentCode is required'),
   documentTitle: z.string().min(1, 'documentTitle is required'),
-  documentType: z.enum([
-    'CSR', 'PROTOCOL', 'CER', 'IB', 'DSUR', 'PSUR',
-    'SAP', 'SAR', 'MODULE_2', 'MODULE_3', 'MODULE_4', 'MODULE_5',
-    'SOP', 'REPORT', 'CORRESPONDENCE', 'OTHER',
-  ]),
+  documentType: z.enum(VAULT_INGEST_DOCUMENT_TYPES),
   version: z.string().optional(),
   classification: z.enum(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']).optional(),
   retentionPolicy: z.string().optional(),
@@ -88,11 +100,52 @@ export default function createVaultIngestRoutes(): Router {
     }
     const data = parsed.data;
 
-    // Tenant ownership guard: this route runs on the owner `pool` connection
-    // (RLS-bypassing), so it MUST verify at the application layer that the
-    // caller's organization owns the target program before writing anything.
-    // `vault.documents.program_id` carries no FK; the canonical org→program
-    // mapping is `regulatory_programs` (uuid id, integer organization_id).
+    /* RE-ENTER THE TENANT SCOPE MULTER DROPPED.
+     *
+     * `establishRequestTenantScope` opens an AsyncLocalStorage scope around the
+     * rest of the request, and `pool` fails closed without it while
+     * `RLS_ENFORCE=on`. Multer breaks that scope: its busboy parse runs off
+     * `req`'s stream events, and a plain EventEmitter listener executes in the
+     * context of whoever calls `emit` — the socket read — not the context the
+     * listener was registered in. So this handler resumes OUTSIDE the scope,
+     * and every query from here on fails:
+     *
+     *   [tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope
+     *
+     * which the route reported as a 500 OWNERSHIP_CHECK_FAILED, on every
+     * upload, in any environment with enforcement on. Its own comment claimed
+     * it "runs on the owner pool connection (RLS-bypassing)" — true when
+     * written, untrue since the fail-closed wrapper landed.
+     *
+     * `req.dbClient` is not the way out either: it is lazy, so its first query
+     * calls `pool.connect()`, which fails closed for the same reason.
+     *
+     * The scope is re-opened here from the identity the middleware already
+     * published on the request. This does not widen anything — it restores the
+     * exact scope the request was granted, for the span that needs it. Any
+     * route that puts multer in front of tenant-scoped work has this problem;
+     * see the note in the module header. */
+    const tenantScopeId =
+      (req as any).tenantId ?? (req as any).tenantContext?.organizationId ?? null;
+    const runScoped = <T>(fn: () => Promise<T>): Promise<T> =>
+      tenantScopeId == null
+        ? fn()
+        : runWithTenantScope(
+            {
+              tenantId: String(tenantScopeId),
+              orgUuid: (req as any).tenantContext?.organizationUuid ?? null,
+              role: (req as any).userRole ?? (req as any).user?.role ?? null,
+              source: 'request',
+              caller: 'server/routes/vault-ingest.ts',
+            },
+            fn,
+          );
+
+    // Tenant ownership guard: `vault.documents` has no organization_id column,
+    // so nothing at the database layer confines this write to the caller's
+    // tenant. The canonical org→program mapping is `regulatory_programs`
+    // (uuid id, integer organization_id), and this check is the only thing
+    // standing between two tenants until that column exists.
     const authedUser = (req as any).user;
     const rawOrg = authedUser?.organizationId ?? authedUser?.tenantId;
     const orgId = Number(rawOrg);
@@ -105,9 +158,11 @@ export default function createVaultIngestRoutes(): Router {
       });
     }
     try {
-      const owns = await pool.query(
-        `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-        [data.programId, orgId],
+      const owns = await runScoped(() =>
+        pool.query(
+          `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+          [data.programId, orgId],
+        ),
       );
       if (owns.rowCount === 0) {
         logger.warn('Vault ingest denied: program not owned by caller organization', {
@@ -161,13 +216,32 @@ export default function createVaultIngestRoutes(): Router {
     const s3Key = storagePath; // local-mode: key == path
     const s3Bucket = 'local';  // no S3 configured; downstream can migrate later
 
+    /* Writing the bytes is NOT best-effort, and treating it as such was the
+       worst thing this route did.
+       The failure was caught, logged at warn, and execution fell through to the
+       INSERT below — so a `vault.documents` row was committed carrying a
+       `content_hash` and an `s3_key` for bytes that are not on disk. The row
+       looks indistinguishable from a good one: the hash is real, it is the
+       correct SHA-256 of the file the user chose. It just refers to nothing.
+       The user is told the upload succeeded, the document appears in the vault,
+       and the absence surfaces whenever someone later tries to retrieve the
+       artifact a submission depends on.
+       A rejected upload is recoverable. A hash for bytes nobody has is a record
+       that lies, so this fails the request instead. */
     try {
       const resolved = path.resolve(process.cwd(), storagePath);
       await fs.mkdir(path.dirname(resolved), { recursive: true });
       await fs.writeFile(resolved, fileBuffer);
     } catch (err) {
-      logger.warn('Vault file persistence failed (non-fatal)', {
+      logger.error('Vault file persistence failed — refusing to record the document', {
         reason: err instanceof Error ? err.message : 'unknown',
+        contentHash,
+      });
+      return res.status(500).json({
+        error: {
+          code: 'STORAGE_WRITE_FAILED',
+          message: 'The document could not be stored. Nothing was recorded — try again.',
+        },
       });
     }
 
@@ -187,9 +261,18 @@ export default function createVaultIngestRoutes(): Router {
       logger.warn('Vault ingest text extraction failed (non-fatal)', { err: extractErr?.message });
     }
 
-    // INSERT into vault.documents
-    const client = await pool.connect();
+    /* INSERT into vault.documents, and the Part 11 audit row, in ONE transaction.
+       The route previously ran a bare autocommit INSERT on this client and wrote
+       no audit row at all — on the ingestion path for a vault whose own surface
+       advertises "21 CFR Part 11 audit trail · SHA-256 chained". A document
+       entered the regulated corpus leaving no record of who put it there.
+       The transaction is what makes the pair atomic: `writeChainedAuditRow`
+       takes `FOR UPDATE` on the chain tip and deliberately does not manage its
+       own BEGIN/COMMIT, so the audit entry and the document it describes commit
+       together or not at all. */
+    const client = await runScoped(() => pool.connect());
     try {
+      await client.query('BEGIN');
       // tenant-isolation-safe: vault.documents is program-scoped (program_id, no
       // org_id column); the caller's ownership of data.programId was already
       // enforced above against regulatory_programs.organization_id (403 on
@@ -253,6 +336,40 @@ export default function createVaultIngestRoutes(): Router {
       );
 
       const doc = result.rows[0];
+
+      /* The Part 11 record of the ingestion. `writeChainedAuditRow`, not
+         `auditService.logAction` — logAction runs on its own connection and
+         SWALLOWS persistence failures, which is the wrong policy for a governed
+         event: it would let the document land with the audit entry silently
+         missing, which is the state this route was already in.
+         `details` carries the content hash, so the audit trail records WHICH
+         bytes were admitted, not merely that an upload happened. That is the
+         link that makes a later integrity check meaningful. */
+      await writeChainedAuditRow(client, {
+        tenantId: orgId,
+        userId: userId ?? undefined,
+        action: 'vault.document.ingest',
+        resourceType: 'vault_document',
+        resourceId: String(doc.id),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        details: {
+          programId: data.programId,
+          documentCode: data.documentCode,
+          documentTitle: data.documentTitle,
+          documentType: data.documentType,
+          version: data.version ?? '1.0',
+          fileName,
+          fileSize,
+          mimeType,
+          contentHash,
+          classification: data.classification ?? 'INTERNAL',
+          storageKey: s3Key,
+        },
+      });
+
+      await client.query('COMMIT');
+
       logger.info('Vault document ingested', {
         id: doc.id,
         code: data.documentCode,
@@ -282,9 +399,21 @@ export default function createVaultIngestRoutes(): Router {
         },
       });
     } catch (err: any) {
-      logger.error('Vault ingest DB insert failed', { err: err?.message });
+      /* Roll back BOTH halves. A failure in the audit write now aborts the
+         document row with it — deliberately: an ungoverned document in a
+         governed vault is the outcome this route is being fixed to stop
+         producing, so it must not be the outcome of a partial failure either. */
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackErr: any) {
+        logger.error('Vault ingest rollback failed', { err: rollbackErr?.message });
+      }
+      logger.error('Vault ingest failed — nothing recorded', { err: err?.message });
       res.status(500).json({
-        error: { code: 'INGEST_FAILED', message: 'Failed to ingest document into vault' },
+        error: {
+          code: 'INGEST_FAILED',
+          message: 'The document could not be recorded in the vault. Nothing was saved.',
+        },
       });
     } finally {
       client.release();

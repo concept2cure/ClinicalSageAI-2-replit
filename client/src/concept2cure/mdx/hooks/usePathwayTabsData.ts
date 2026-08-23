@@ -9,13 +9,16 @@
  * `/api/approval-workflows/pending`) and adapts each response to the kit's
  * `AuditEvent` / `Correspondence` / `Approval` shapes.
  *
- * Data honesty: live data wins when present. The kit fixtures
- * (`PATHWAY_TABS_DATA`) — which include a *synthesized* Part 11 audit
- * hash-chain — render only when the user has explicitly enabled sample mode
- * (../lib/sampleMode, force-disabled in production builds). In every other
- * case a bucket resolves to an empty collection, and `states.*` carries the
- * honest DataState (loading / error / idle / empty) for the pane's DataGate.
- * `live.*` reports which buckets are real.
+ * Data honesty: live data wins when present. Correspondence may fall back to
+ * the kit fixture under the explicit sample-mode boundary (../lib/sampleMode,
+ * force-disabled in production builds), always under the standing banner.
+ *
+ * Audit and approvals have NO fallback. They used to share one — a synthesized
+ * Part 11 hash-chain and a set of fabricated signed approvals — and it is
+ * deleted, along with the type fields that carried it. Those two buckets are
+ * live rows or nothing. `states.*` carries the honest DataState (loading /
+ * error / idle / empty) for the pane's DataGate; `live.*` reports which buckets
+ * are real.
  *
  * Scope note: the Files tree + DossierDrawer document content are still served by
  * the in-memory `dossierStore`. Backing those with real document content is an
@@ -152,6 +155,11 @@ function num(v: unknown): number | undefined {
   return undefined;
 }
 
+/* Stable identities: FilesTreePane keys its tree memo on these arrays, so a
+   fresh `[]` each render would rebuild the tree on every render. */
+const EMPTY_AUDIT: AuditEvent[] = [];
+const EMPTY_APPROVALS: Approval[] = [];
+
 /** Operator-facing message for a failed query, or null when there is none. */
 function errorMessage(e: unknown): string | null {
   if (!e) return null;
@@ -159,6 +167,10 @@ function errorMessage(e: unknown): string | null {
 }
 
 export interface PathwayTabsLive extends PathwayTabsBundle {
+  /** Live audit events. Never sample content — see the note above. */
+  audit: AuditEvent[];
+  /** Live pending/decided approvals. Never sample content. */
+  approvals: Approval[];
   /** Which buckets resolved from the backend (true) vs sample/empty (false). */
   live: { audit: boolean; correspondence: boolean; approvals: boolean };
   /** Honest per-bucket state for DataGate — loading / error / idle / empty / ready. */
@@ -198,13 +210,20 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
     [apprQ.data],
   );
 
-  /* The sample-mode guard the other surfaces obey: live rows win; the kit
-     fixtures render only when the user explicitly turned sample mode on
-     (never possible in a production build); otherwise the bucket is empty
-     and the pane renders its honest state — never a synthesized audit chain. */
-  const audit = useSampleRows(liveAudit, fixtures.audit);
+  /* Correspondence may fall back to sample content under the explicit
+     sample-mode boundary, always under the standing banner.
+
+     AUDIT AND APPROVALS MAY NOT, and no longer can: there is no fixture left to
+     pass. Both used to run through `useSampleRows` against a synthesized Part 11
+     hash-chain and a set of invented signed approvals. Sample mode gated them
+     and is force-disabled in production, which made the exposure small — but the
+     rule is not about exposure. An audit trail's only evidentiary value is that
+     nothing in it was authored for display, so a demonstrable one is not a
+     lesser version of the record, it is the opposite of one. Empty is the
+     honest answer, and it is the only one these two buckets can now give. */
+  const audit = liveAudit ?? EMPTY_AUDIT;
   const correspondence = useSampleRows(liveCorr, fixtures.correspondence);
-  const approvals = useSampleRows(liveAppr, fixtures.approvals);
+  const approvals = liveAppr ?? EMPTY_APPROVALS;
 
   return {
     audit,
@@ -225,7 +244,7 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
         corrQ.data ? liveCorr ?? [] : null,
         corrQ.isLoading,
         errorMessage(corrQ.error),
-        { idleReason: 'Select a program to load its correspondence.' },
+        { idleReason: 'Agency and notified-body correspondence is filed per program.' },
       ),
       approvals: toDataState<Approval[]>(
         apprQ.data ? liveAppr ?? [] : null,

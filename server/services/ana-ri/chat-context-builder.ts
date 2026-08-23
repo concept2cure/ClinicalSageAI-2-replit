@@ -13,12 +13,7 @@
 import type { Request } from 'express';
 import type { GatewayMessage } from '../ai-gateway/types.js';
 import { pool } from '../../db.js';
-import {
-  orchestrate,
-  type OrchestratorInput,
-  type IntentLens,
-  type UserRole,
-} from './index.js';
+import { orchestrate, type OrchestratorInput, type IntentLens, type UserRole } from './index.js';
 import { prefetchProjectIntelligence, preloadRIMContext } from './orchestrator.js';
 import type { SubmissionType } from './deficiency-taxonomy.js';
 import {
@@ -38,12 +33,27 @@ import { buildSurfaceContextBlock } from './surface-context-block.js';
 import { loadRelationalOverlay } from './relational-profile-service.js';
 import { buildExternalIntelBlock } from '../external-intelligence/index.js';
 import { getDeadlineRadar, buildDeadlineRadarBlock } from '../ana/deadline-radar.js';
+import {
+  getOpenContradictionsForOrg,
+  buildContradictionWatchBlock,
+} from '../ana/contradiction-watch.js';
 import { getSessionBriefing } from '../ana/session-briefing.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
-const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'biostatistician', 'pharmacovigilance', 'quality', 'investor', 'general'];
+const VALID_ROLES: UserRole[] = [
+  'ceo',
+  'ra_lead',
+  'medical_writer',
+  'clinical_lead',
+  'cmc_lead',
+  'biostatistician',
+  'pharmacovigilance',
+  'quality',
+  'investor',
+  'general',
+];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -73,6 +83,15 @@ export interface PrefetchedRouteIntelligenceContext {
   deadlineRadarBlock: string;
   /** Session-start situational briefing block ('' except on the first turn). */
   sessionBriefingBlock: string;
+  /**
+   * Open contradiction-engine findings block ('' when none). Unlike the
+   * briefing/deadline pair this does NOT alternate by turn: an unresolved
+   * finding that blocks promotion is live on every turn until someone
+   * resolves it, and until this field existed the block had a builder, a
+   * docstring promising the chat context, and no caller — findings that
+   * blocked promotion were invisible in chat.
+   */
+  contradictionWatchBlock: string;
 }
 
 // ─── Authoring context builder ───────────────────────────────────────────────
@@ -107,7 +126,9 @@ export function buildRouteContextBlock(context: any): string {
   if (productType) {
     const bridgeCtx = getSubmissionTypeContext(productType);
     if (bridgeCtx) {
-      parts.push(`  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`);
+      parts.push(
+        `  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`
+      );
     } else {
       parts.push(`  <submission_type>${productType}</submission_type>`);
     }
@@ -129,18 +150,25 @@ export function buildAuthoringContextBlock(authoring_context: any): string {
   if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
   if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
   if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
-  if (ac.artifactVersionId) parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
+  if (ac.artifactVersionId)
+    parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
   if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
   if (ac.submissionType) {
     const bridgeCtx = getSubmissionTypeContext(ac.submissionType);
     if (bridgeCtx) {
-      parts.push(`  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`);
+      parts.push(
+        `  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`
+      );
     } else {
       parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
     }
   }
   if (ac.readiness) {
-    parts.push(`  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${ac.readiness.blocked ?? false}">`);
+    parts.push(
+      `  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${
+        ac.readiness.blocked ?? false
+      }">`
+    );
     if (ac.readiness.blockers?.length) {
       for (const b of ac.readiness.blockers) {
         parts.push(`    <blocker severity="${b.severity}" code="${b.code}">${b.message}</blocker>`);
@@ -151,7 +179,9 @@ export function buildAuthoringContextBlock(authoring_context: any): string {
   if (ac.contradictions?.length) {
     parts.push('  <contradictions>');
     for (const c of ac.contradictions) {
-      parts.push(`    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`);
+      parts.push(
+        `    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`
+      );
     }
     parts.push('  </contradictions>');
   }
@@ -181,6 +211,12 @@ const PROACTIVE_PREFETCH_TIMEOUT_MS = 1500;
 
 type ProactiveBlock = { kind: 'briefing' | 'deadline' | 'none'; block: string };
 
+type ProjectPrefetchResults = [
+  PromiseSettledResult<Awaited<ReturnType<typeof getFeedbackSummary>>>,
+  PromiseSettledResult<Awaited<ReturnType<typeof prefetchProjectIntelligence>>>,
+  PromiseSettledResult<Awaited<ReturnType<typeof preloadRIMContext>>>
+];
+
 export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
   organizationId?: number | null;
@@ -192,7 +228,8 @@ export async function prefetchRouteIntelligenceContext(params: {
   /** First turn of a session — surface the full situational briefing instead of just deadlines. */
   sessionStart?: boolean;
 }): Promise<PrefetchedRouteIntelligenceContext> {
-  const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } = params;
+  const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } =
+    params;
   const projectIdNumber = projectId != null ? Number(projectId) : null;
 
   let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
@@ -200,37 +237,73 @@ export async function prefetchRouteIntelligenceContext(params: {
   let rimContext = '';
   let decisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
 
-  // Independent of the project gate below: the relational overlay needs only
-  // org + user, and the external-intel block is global (and process-cached).
-  const [relationalResult, externalIntelResult, deadlineResult] = await Promise.allSettled([
-    loadRelationalOverlay({
-      organizationId: organizationId ?? null,
-      userId: userId ?? null,
-      projectId: projectIdNumber,
-    }),
-    buildExternalIntelBlock(targetAgency ?? null),
-    // Proactive risk surfacing — org-scoped, fail-soft. On the FIRST turn of a
-    // session, surface the full situational briefing (deadlines + recent
-    // decisions); on later turns, just the deadline block (overdue + due-soon).
-    // Only one is non-empty per turn, so deadlines are never duplicated.
-    organizationId && Number.isFinite(organizationId)
-      ? withTimeout<ProactiveBlock>(
-          sessionStart
-            ? getSessionBriefing({ organizationId, projectId: projectIdNumber }).then(r => ({
-                kind: 'briefing' as const,
-                block: r.block,
-              }))
-            : getDeadlineRadar({ organizationId }).then(r => ({
-                kind: 'deadline' as const,
-                block: buildDeadlineRadarBlock(r),
-              })),
-          PROACTIVE_PREFETCH_TIMEOUT_MS,
-          { kind: 'none' as const, block: '' }
-        )
-      : Promise.resolve({ kind: 'none' as const, block: '' }),
+  // All context sources are independent. Start project-scoped work alongside
+  // the global/user-scoped work so pre-gateway latency is bounded by the slowest
+  // source rather than the sum of two sequential batches.
+  const projectContextPromise: Promise<ProjectPrefetchResults> =
+    projectIdNumber &&
+    Number.isFinite(projectIdNumber) &&
+    organizationId &&
+    Number.isFinite(organizationId)
+      ? (Promise.allSettled([
+          getFeedbackSummary(projectIdNumber, organizationId),
+          prefetchProjectIntelligence(projectIdNumber, organizationId),
+          authoringContext?.sectionCode || authoringContext?.artifactId
+            ? preloadRIMContext(String(projectIdNumber), organizationId)
+            : Promise.resolve(''),
+        ]) as Promise<ProjectPrefetchResults>)
+      : Promise.resolve([
+          { status: 'rejected' as const, reason: 'project context not requested' },
+          { status: 'rejected' as const, reason: 'project context not requested' },
+          { status: 'rejected' as const, reason: 'project context not requested' },
+        ] as ProjectPrefetchResults);
+
+  // The relational overlay needs only org + user, and the external-intel block
+  // is global (and process-cached).
+  const [
+    [relationalResult, externalIntelResult, deadlineResult, contradictionResult],
+    projectResults,
+  ] = await Promise.all([
+    Promise.allSettled([
+      loadRelationalOverlay({
+        organizationId: organizationId ?? null,
+        userId: userId ?? null,
+        projectId: projectIdNumber,
+      }),
+      buildExternalIntelBlock(targetAgency ?? null),
+      // Proactive risk surfacing — org-scoped, fail-soft. On the FIRST turn of a
+      // session, surface the full situational briefing (deadlines + recent
+      // decisions); on later turns, just the deadline block (overdue + due-soon).
+      // Only one is non-empty per turn, so deadlines are never duplicated.
+      organizationId && Number.isFinite(organizationId)
+        ? withTimeout<ProactiveBlock>(
+            sessionStart
+              ? getSessionBriefing({ organizationId, projectId: projectIdNumber }).then(r => ({
+                  kind: 'briefing' as const,
+                  block: r.block,
+                }))
+              : getDeadlineRadar({ organizationId }).then(r => ({
+                  kind: 'deadline' as const,
+                  block: buildDeadlineRadarBlock(r),
+                })),
+            PROACTIVE_PREFETCH_TIMEOUT_MS,
+            { kind: 'none' as const, block: '' }
+          )
+        : Promise.resolve({ kind: 'none' as const, block: '' }),
+      // Open contradiction findings stay live on every turn until resolved.
+      organizationId && Number.isFinite(organizationId)
+        ? withTimeout<string>(
+            getOpenContradictionsForOrg(organizationId).then(items =>
+              buildContradictionWatchBlock(items)
+            ),
+            PROACTIVE_PREFETCH_TIMEOUT_MS,
+            ''
+          )
+        : Promise.resolve(''),
+    ]),
+    projectContextPromise,
   ]);
-  const relationalOverlay =
-    relationalResult.status === 'fulfilled' ? relationalResult.value : '';
+  const relationalOverlay = relationalResult.status === 'fulfilled' ? relationalResult.value : '';
   const externalIntelBlock =
     externalIntelResult.status === 'fulfilled' ? externalIntelResult.value : '';
   const proactive =
@@ -239,6 +312,8 @@ export async function prefetchRouteIntelligenceContext(params: {
       : { kind: 'none' as const, block: '' };
   const deadlineRadarBlock = proactive.kind === 'deadline' ? proactive.block : '';
   const sessionBriefingBlock = proactive.kind === 'briefing' ? proactive.block : '';
+  const contradictionWatchBlock =
+    contradictionResult.status === 'fulfilled' ? contradictionResult.value : '';
 
   if (
     projectIdNumber &&
@@ -246,13 +321,7 @@ export async function prefetchRouteIntelligenceContext(params: {
     organizationId &&
     Number.isFinite(organizationId)
   ) {
-    const [feedbackResult, profileResult, rimResult] = await Promise.allSettled([
-      getFeedbackSummary(projectIdNumber, organizationId),
-      prefetchProjectIntelligence(projectIdNumber, organizationId),
-      authoringContext?.sectionCode || authoringContext?.artifactId
-        ? preloadRIMContext(String(projectIdNumber), organizationId)
-        : Promise.resolve(''),
-    ]);
+    const [feedbackResult, profileResult, rimResult] = projectResults;
 
     if (feedbackResult.status === 'fulfilled' && feedbackResult.value.totalFeedback > 0) {
       feedbackContext = {
@@ -277,7 +346,9 @@ export async function prefetchRouteIntelligenceContext(params: {
             ? authoringContext.sectionCode
             : undefined,
         moduleCode:
-          typeof authoringContext?.moduleCode === 'string' ? authoringContext.moduleCode : undefined,
+          typeof authoringContext?.moduleCode === 'string'
+            ? authoringContext.moduleCode
+            : undefined,
         limit: 10,
       });
     } catch {
@@ -311,6 +382,7 @@ export async function prefetchRouteIntelligenceContext(params: {
     externalIntelBlock,
     deadlineRadarBlock,
     sessionBriefingBlock,
+    contradictionWatchBlock,
   };
 }
 
@@ -375,11 +447,13 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
       : undefined;
 
   // Infer role
-  const effectiveRole: UserRole = validatedRole || inferRole({
-    screenName: req.body.context?.screenName,
-    title: req.body.context?.userTitle,
-    department: req.body.context?.department,
-  });
+  const effectiveRole: UserRole =
+    validatedRole ||
+    inferRole({
+      screenName: req.body.context?.screenName,
+      title: req.body.context?.userTitle,
+      department: req.body.context?.department,
+    });
 
   // Build authoring context
   const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
@@ -402,7 +476,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     projectContext: project_context,
     documentContext: document_context,
     submissionType: submission_type
-      ? resolveToDeficiencyType(submission_type) as SubmissionType
+      ? (resolveToDeficiencyType(submission_type) as SubmissionType)
       : undefined,
     conversationHistory: conversation_history,
     authoringContext: prefetchedContext.orchestratorAuthoringContext,
@@ -412,6 +486,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     _externalIntelBlock: prefetchedContext.externalIntelBlock,
     _deadlineRadarBlock: prefetchedContext.deadlineRadarBlock,
     _sessionBriefingBlock: prefetchedContext.sessionBriefingBlock,
+    _contradictionWatchBlock: prefetchedContext.contradictionWatchBlock,
   };
   const orchestration = orchestrate(orchestratorInput);
 
@@ -481,13 +556,20 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   let skillBundleBlock = '';
   if (numericOrgId) {
     try {
-      const { resolveAccountContext, formatResolvedContextForPrompt } = await import('../../services/account-canon.js');
+      const { resolveAccountContext, formatResolvedContextForPrompt } = await import(
+        '../../services/account-canon.js'
+      );
       const resolved = await resolveAccountContext({
         organizationId: numericOrgId,
         submissionType: orchestration.detectedSubmissionType || undefined,
         projectId: projectId ? Number(projectId) : undefined,
       });
-      if (resolved && (resolved.bundles?.length > 0 || resolved.terms?.length > 0 || resolved.templates?.length > 0)) {
+      if (
+        resolved &&
+        (resolved.bundles?.length > 0 ||
+          resolved.terms?.length > 0 ||
+          resolved.templates?.length > 0)
+      ) {
         skillBundleBlock = '\n\n' + formatResolvedContextForPrompt(resolved);
       }
     } catch {
@@ -512,12 +594,14 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     try {
       const result = await buildMdxContextBlock(pool, {
         organizationId: numericOrgId,
-        activeNav: typeof (module_context as any).activeNav === 'string'
-          ? (module_context as any).activeNav
-          : undefined,
-        activeProgramCode: typeof (module_context as any).activeProgramCode === 'string'
-          ? (module_context as any).activeProgramCode
-          : null,
+        activeNav:
+          typeof (module_context as any).activeNav === 'string'
+            ? (module_context as any).activeNav
+            : undefined,
+        activeProgramCode:
+          typeof (module_context as any).activeProgramCode === 'string'
+            ? (module_context as any).activeProgramCode
+            : null,
       });
       mdxContextBlock = '\n\n' + result.systemPromptBlock;
     } catch {
@@ -540,7 +624,15 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
      and bounds the whole thing — see that module's header. */
   const surfaceContextBlock = buildSurfaceContextBlock(module_context);
 
-  const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + governedContextBlock + skillBundleBlock + memoryResult.memoryBlock + enrichment.block + mdxContextBlock + surfaceContextBlock;
+  const fullSystemPrompt =
+    intelligencePrefix +
+    orchestration.systemPrompt +
+    governedContextBlock +
+    skillBundleBlock +
+    memoryResult.memoryBlock +
+    enrichment.block +
+    mdxContextBlock +
+    surfaceContextBlock;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
@@ -556,7 +648,9 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
         }
         historyLoaded = true;
       }
-    } catch { /* Fall through to client history */ }
+    } catch {
+      /* Fall through to client history */
+    }
   }
   if (!historyLoaded && conversation_history && Array.isArray(conversation_history)) {
     for (const msg of conversation_history.slice(-20)) {
@@ -573,14 +667,12 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
       // name and MIME type regardless of which organization owned it. The
       // shared helper enforces both the organization column and the
       // storage-path prefix. See uploaded-file-access.ts.
-      const { loadUploadedFileMetadata } = await import(
-        '../ana/uploaded-file-access.js'
-      );
+      const { loadUploadedFileMetadata } = await import('../ana/uploaded-file-access.js');
       const attachedFiles = await loadUploadedFileMetadata(fileIds, numericOrgId);
       if (attachedFiles.length > 0) {
-        const fileContext = attachedFiles.map(f =>
-          `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`
-        ).join('\n');
+        const fileContext = attachedFiles
+          .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)
+          .join('\n');
         messages.push({
           role: 'user' as const,
           content: `[The user has attached the following files:\n${fileContext}\nReference these files when relevant.]`,

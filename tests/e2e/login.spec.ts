@@ -11,7 +11,7 @@ test.describe('Login -> Client Portal flows', () => {
     await page.goto(`${APP_BASE}/concept2cure/login`);
 
     // fill email -> continue -> password
-    await page.fill('input[type="email"]', 'jm.smith@concept2cure.pro');
+    await page.fill('input[type="email"]', 'jonmichaelpsmith@gmail.com');
     await page.click('button:has-text("Continue")');
 
     const passwordInput = page.locator('input[type="password"]');
@@ -25,7 +25,7 @@ test.describe('Login -> Client Portal flows', () => {
       await expect(passwordInput).toBeVisible({ timeout: 10000 });
     }
 
-    await page.fill('input[type="password"]', 'Concept2Cure2026!');
+    await page.fill('input[type="password"]', 'Seahawks12s!');
     await page.click('button:has-text("Sign in")');
 
     // wait for navigation to an authenticated landing page
@@ -50,7 +50,7 @@ test.describe('Login -> Client Portal flows', () => {
           accessToken: 'dummy-sso-token',
           user: {
             id: '1',
-            email: 'jm.smith@concept2cure.pro',
+            email: 'jonmichaelpsmith@gmail.com',
             organizationId: '1',
             roles: ['user'],
           },

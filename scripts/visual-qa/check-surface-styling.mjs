@@ -39,40 +39,19 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchChromium } from './playwright.mjs';
 import { assertCaptureIsFresh } from './capture-freshness.mjs';
+import { builtStylesheets, styleTags } from './built-css.mjs';
 
 const TAG = '[visual-qa]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MARKUP = path.join(REPO, '.visual-qa/markup');
 const SHOTS = path.join(REPO, '.visual-qa/shots');
-const ASSETS = path.join(REPO, 'dist/public/assets');
 
 const VIEWPORT = { width: 1440, height: 900 };
 
-/** Resolve the content-hashed bundles by prefix, so a rebuild doesn't break this. */
-function asset(prefix) {
-  const hit = fs.readdirSync(ASSETS).find((f) => f.startsWith(prefix) && f.endsWith('.css'));
-  if (!hit) {
-    console.error(`${TAG} no built stylesheet matching ${prefix}*.css in dist/public/assets.`);
-    console.error(`${TAG} Run \`npm run build\` first — this checks the SHIPPED css, not source.`);
-    process.exit(1);
-  }
-  return path.join(ASSETS, hit);
-}
-
-const ENTRY_CSS = asset('index-');   // design tokens + Tailwind; everything else uses its vars
-const V2_CSS = asset('V2App-');      // the shell, including the `.c2c-v2 { … }` nested surface sheets
-const MDX_CSS = asset('MdxSurfaceHost-');
-const PDEV_CSS = asset('PdevRoute-');
-
-const sheetsFor = (name) =>
-  name.startsWith('mdx__') ? [ENTRY_CSS, V2_CSS, MDX_CSS] : [ENTRY_CSS, V2_CSS, PDEV_CSS];
-
-// Read once — these are up to a few hundred KB each and every surface needs them.
-const cssCache = new Map();
-const cssText = (p) => {
-  if (!cssCache.has(p)) cssCache.set(p, fs.readFileSync(p, 'utf8'));
-  return cssCache.get(p);
-};
+// Every built stylesheet, resolved and read once — see built-css.mjs for why
+// all of them rather than the four this file used to name.
+const SHEETS = builtStylesheets(TAG);
+const STYLES = styleTags(SHEETS);
 
 /**
  * The surface as the shell actually mounts it: inside `<div class="c2c-v2 shell">`
@@ -92,8 +71,7 @@ const cssText = (p) => {
  * inside the CSS no longer resolve, which does not matter: fonts and background
  * images are not what is being measured.
  */
-function page(markup, sheets) {
-  const styles = sheets.map((p) => `<style>${cssText(p)}</style>`).join('\n');
+function page(markup, styles = STYLES) {
   return `<!doctype html><html><head><meta charset="utf-8">${styles}</head>
 <body><div class="c2c-v2 shell">${markup}</div></body></html>`;
 }
@@ -156,7 +134,7 @@ const ctx = await browser.newContext({ viewport: VIEWPORT });
 {
   const probe = await ctx.newPage();
   await probe.setContent(
-    page('<div class="rc-ana"><span class="rc-ana-mark">*</span></div>', [ENTRY_CSS, V2_CSS]),
+    page('<div class="rc-ana"><span class="rc-ana-mark">*</span></div>'),
     { waitUntil: 'load' },
   );
   const ok = await probe.evaluate(() => {
@@ -189,13 +167,13 @@ for (const file of files) {
   const p = await ctx.newPage();
 
   // Styled.
-  await p.setContent(page(markup, sheetsFor(name)), { waitUntil: 'load' });
+  await p.setContent(page(markup), { waitUntil: 'load' });
   const styled = await p.evaluate(SNAPSHOT);
   const metrics = await p.evaluate(METRICS);
   await p.screenshot({ path: path.join(SHOTS, `${name}.png`), fullPage: true });
 
   // Unstyled — same markup, same wrapper, no stylesheets.
-  await p.setContent(page(markup, []), { waitUntil: 'load' });
+  await p.setContent(page(markup, ''), { waitUntil: 'load' });
   const bare = await p.evaluate(SNAPSHOT);
 
   await p.close();

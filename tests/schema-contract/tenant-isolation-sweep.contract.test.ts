@@ -34,10 +34,13 @@ import { citext } from '@electric-sql/pglite/contrib/citext';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
+import { C2C_MIGRATION_FILES, TENANT_ISOLATION_SWEEP } from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+// Imported, not re-typed: the same string used to be hardcoded in four places,
+// so the invariant had four copies and no definition. It lives next to the list
+// it constrains, and scripts/ci/check-migration-set-order.mjs reads the same one.
+const SWEEP = TENANT_ISOLATION_SWEEP;
 const BATCH_START = 'db/migrations/022_stability_v2.sql';
 const T = 180_000;
 
@@ -212,6 +215,9 @@ describe('C-33: the batch applies in set order, twice, and ends fully isolated',
       'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
       'db/migrations/20260306_precedent_engine.sql',
       'db/migrations/20260208_phase6_6a_risk_rollups.sql', // reads the first file's tables
+      // adds a vector(1536) column to conversation_working_memory; the rest of
+      // that table ships pgvector-free in 20260820, which IS applied here
+      'migrations/20260602_working_memory_embeddings.sql',
     ]);
     const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf(BATCH_START)).filter(
       (rel: string) => !PGVECTOR_DEPENDENT.has(rel),

@@ -1,6 +1,7 @@
 import { createScopedLogger } from '../../utils/logger';
 import type { ParsedDocument } from '../../services/documentIntelligence/contracts';
 
+import { toBinaryBody } from '../../utils/binary-body.js';
 const logger = createScopedLogger('unstructured-client');
 
 export class UnstructuredClient {
@@ -15,7 +16,7 @@ export class UnstructuredClient {
 
     try {
       const formData = new FormData();
-      formData.append('files', new Blob([input]), filename);
+      formData.append('files', new Blob([toBinaryBody(input)]), filename);
       formData.append('strategy', 'fast');
 
       const response = await fetch(`${this.baseUrl}/general/v0/general`, {

@@ -461,10 +461,29 @@ jobs:
             docs/reports/orphan-endpoints-latest.md
           retention-days: 14
 
+      # ── The verification steps below run even when a guardrail above failed ──
+      #
+      # These three are the only steps in this job that read the TypeScript
+      # source, and until now they were steps 71-73 of 73. GitHub skips every
+      # remaining step once one fails, so ANY of the ~70 guardrails above
+      # silently disabled all three — and a skipped step is not red, it is
+      # simply absent from the summary.
+      #
+      # Observed, not theorised: on b3b2005 the tenant-isolation guardrail
+      # (step 29) failed, so ESLint and the typecheck gate never ran. The
+      # typecheck restoration that had just landed was invisible in CI, and
+      # every downstream job (`needs: lint`) skipped with it.
+      #
+      # `!cancelled()` — not `always()` — so a deliberately cancelled run still
+      # stops. The job still fails if a guardrail failed; these simply also
+      # report, so a green typecheck can never again be indistinguishable from
+      # one that was never executed.
       - name: Run ESLint
+        if: '!cancelled()'
         run: npm run lint
 
       - name: Run TypeScript check (no regression vs baseline)
+        if: '!cancelled()'
         # The .typecheck-baseline.json count has been ratcheted down to 0
         # (from ~2,598 when the server/routes/auth.ts parse error was fixed
         # and the pre-existing debt became visible), so this gate now fails
@@ -475,6 +494,7 @@ jobs:
         run: npm run ci:typecheck:no-regression
 
       - name: Run beta-slice TypeScript check
+        if: '!cancelled()'
         run: npm run beta:typecheck
 
   test:
@@ -1034,6 +1054,23 @@ jobs:
         # database produced by the real installers exists to ask.
         run: npm run ci:tables-live-schema
 
+      - name: Guardrails — what a tenant purge cannot reach (ratchet)
+        # tenant-offboarding.ts purges via PURGE_CHILD_TABLES — 8 tables — and
+        # UPDATEs the organizations row to 'purged' rather than deleting it, so
+        # nothing cascades from there. Against this freshly provisioned schema,
+        # 666 tables carry organization_id; following every ON DELETE CASCADE
+        # out of those 8 reaches 74. The other 615 still hold the tenant's rows
+        # after an erasure, and only 19 of them are the audit/billing records
+        # the implementation deliberately keeps.
+        #
+        # This does NOT re-implement the purge (that service is owned
+        # elsewhere). It measures the gap so the number is checkable, and
+        # ratchets it: a NEW org-keyed table outside the purge's reach fails the
+        # build. The gap grew to 615 precisely because nothing was watching.
+        # Same job for the same reason as the guard above — this is the one
+        # place in CI with a database the real installers built.
+        run: npm run ci:purge-coverage
+
   # ── Production boot smoke — the shipped build must actually serve ──────────
   #
   # Every other DB-backed job here proves something about the SCHEMA. None of
@@ -1203,6 +1240,26 @@ jobs:
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
+          # This job has no AI provider, and since /readyz gained its `ana`
+          # dependency (startup/ana-readiness-state.ts) that is no longer a
+          # silent condition: a process where AnA cannot answer refuses to
+          # report ready, which is the entire point of that gate. This job hit
+          # it and sat at 503 for the full 300s budget on its first run after
+          # the change.
+          #
+          # The honest fix is to declare the posture rather than weaken the
+          # gate. Deterministic mode is the documented opt-in for exactly this:
+          # AnA serves fixed responses, readiness passes, and /readyz reports
+          # `anaState: "deterministic"` — never "ready" — so nobody can mistake
+          # this environment for one with a live model.
+          #
+          # A throwaway ANTHROPIC_API_KEY would also turn the probe green and
+          # would be WORSE: it would claim an enabled provider that does not
+          # exist, which is the kind of green this whole gate exists to prevent.
+          #
+          # This job proves the build boots against a real database with RLS on
+          # as a non-superuser. It is not an AI test and must not need a key.
+          AI_GATEWAY_DETERMINISTIC: 'true'
 
       - name: Tear down PostgreSQL
         if: always()

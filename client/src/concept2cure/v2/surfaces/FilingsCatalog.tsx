@@ -52,8 +52,8 @@ function FilingDetail({
     onClose();
   };
   const build = hasWf
-    ? `Opens the ${wfLabel} workflow -- structured sections, evidence binding, and validation gates, with AnA drafting alongside you.`
-    : 'Authored in the document editor with AnA -- from the section template, grounded in your linked evidence.';
+    ? `Opens the ${wfLabel} workflow — structured sections, evidence binding, and validation gates, with AnA drafting alongside you.`
+    : 'Authored in the document editor with AnA — from the section template, grounded in your linked evidence.';
   const meta: [string, string][] = [
     ['Authority / region', it.a],
     ['Submission format', it.f && it.f !== '—' ? it.f : 'No standard transmission format'],
@@ -80,7 +80,7 @@ function FilingDetail({
         </div>
 
         {loop && <>
-          <div className="fc-detail-sec">The lifecycle -- concept to approval, and the loop back from the agency</div>
+          <div className="fc-detail-sec">The lifecycle — concept to approval, and the loop back from the agency</div>
           <div className="fc-loop-clock">{I.clock || I.info} {loop.clock}</div>
           <div className="fc-loop-arc">
             {loop.stages.map((s, i) => (
@@ -183,7 +183,7 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
         <div className="fc-sub">Search {total} filing types, or browse by area. Each opens its build workflow.</div>
         <div className="fc-search">
           <span className="fc-search-ic">{I.search}</span>
-          <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search filings" placeholder="Search by name, authority, or pathway -- CSR, 510(k), EMA..." autoFocus />
+          <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search filings" placeholder="Search by name, authority, or pathway — CSR, 510(k), EMA..." autoFocus />
           {q && <button className="fc-search-x" onClick={() => setQ('')}>{I.close}</button>}
         </div>
       </div>

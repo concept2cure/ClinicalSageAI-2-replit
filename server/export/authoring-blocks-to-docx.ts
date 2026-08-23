@@ -46,6 +46,8 @@ function runsOf(D: DocxNs, runs: InlineRun[], forceBold = false) {
         italics: r.italics,
         underline: r.underline ? {} : undefined,
         strike: r.strike,
+        superScript: r.superScript,
+        subScript: r.subScript,
         color:
           r.suggestion === 'insertion'
             ? REDLINE_INSERT

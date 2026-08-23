@@ -123,3 +123,53 @@ describe('the FDA facts the frames must never get wrong', () => {
     expect(frameSummary('small_molecule')).toContain('CDER · NDA 505(b)(1) (PDUFA)');
   });
 });
+
+describe('cmcSectionModelFor — modality drives the CMC section model (BP-W2-2)', () => {
+  it('every modality carries the common Module 3 base', async () => {
+    const { MODALITIES, cmcSectionModelFor } = await import('../modality');
+    for (const m of MODALITIES) {
+      const model = cmcSectionModelFor(m);
+      const sections = model.map((r) => r.section);
+      expect(sections, `${m} lost the drug substance base`).toContain('3.2.S');
+      expect(sections, `${m} lost the drug product base`).toContain('3.2.P');
+      expect(sections, `${m} lost the stability programme`).toContain('3.2.P.8');
+      for (const r of model) expect(r.rationale.length, `${m}/${r.title} has no rationale`).toBeGreaterThan(0);
+    }
+  });
+
+  it('a mAb is told about cell banks, potency and Q5E comparability — a small molecule is not', async () => {
+    const { cmcSectionModelFor } = await import('../modality');
+    const mab = JSON.stringify(cmcSectionModelFor('mab'));
+    expect(mab).toContain('Cell banks');
+    expect(mab).toContain('Potency');
+    expect(mab).toContain('Q5E');
+    const sm = JSON.stringify(cmcSectionModelFor('small_molecule'));
+    expect(sm).not.toContain('Cell banks');
+    expect(sm).not.toContain('Q5E');
+  });
+
+  it('a small molecule is told about polymorphism, impurities and dissolution — a mAb is not', async () => {
+    const { cmcSectionModelFor } = await import('../modality');
+    const sm = JSON.stringify(cmcSectionModelFor('small_molecule'));
+    expect(sm).toContain('Polymorphism');
+    expect(sm).toContain('Q3A');
+    expect(sm).toContain('Dissolution');
+    const mab = JSON.stringify(cmcSectionModelFor('mab'));
+    expect(mab).not.toContain('Polymorphism');
+    expect(mab).not.toContain('Dissolution');
+  });
+
+  it('an ADC carries BOTH the biologic core and payload–linker chemistry', async () => {
+    const { cmcSectionModelFor } = await import('../modality');
+    const adc = JSON.stringify(cmcSectionModelFor('adc'));
+    expect(adc).toContain('Q5E');
+    expect(adc).toContain('Payload');
+    expect(adc).toContain('Drug–antibody ratio');
+  });
+
+  it('a combination product gets the Part 3 per-constituent rule, not a borrowed model', async () => {
+    const { cmcSectionModelFor } = await import('../modality');
+    const combo = cmcSectionModelFor('combination');
+    expect(JSON.stringify(combo)).toContain('constituent');
+  });
+});

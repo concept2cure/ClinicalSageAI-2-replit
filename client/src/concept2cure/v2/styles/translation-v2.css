@@ -210,7 +210,7 @@
 .txw-set-head-l{flex:1;min-width:0;}
 .txw-set-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);margin-bottom:4px;}
 .txw-set-title{font-size:15px;font-weight:600;color:var(--text-100);margin:0 0 4px;}
-.txw-set-sub{font-size:12px;color:var(--text-400);line-height:1.5;margin:0;}
+.txw-set-sub{font-size:12px;color:var(--text-300);line-height:1.5;margin:0;}
 .txw-set-body{padding:14px 20px 18px;display:flex;flex-direction:column;gap:12px;}
 
 .txw-row{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--bg-100);}

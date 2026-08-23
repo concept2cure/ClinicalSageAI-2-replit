@@ -61,6 +61,27 @@ export function useSampleRows<T>(live: T[] | null | undefined, sample: readonly 
 }
 
 /**
+ * True exactly when `useSampleRows(live, …)` would substitute the fixture.
+ *
+ * A surface has to know this to render `<SampleDataBanner>`, and before this
+ * existed each one re-derived it — which is how two governed registers came to
+ * be gated correctly and marked not at all. `PostmarketSurface`'s vigilance
+ * document register and `Workbench`'s submission pipeline both resolved through
+ * `useSampleRows`, so neither could leak a fixture outside sample mode, and
+ * neither told the user when it was inside it. The rows carried
+ * `esigState: 'signed'` with a named signer and a date.
+ *
+ * Deriving it here means the banner cannot drift from the gate: one predicate,
+ * one place, changed together or not at all.
+ *
+ * @param live The same value passed to `useSampleRows`.
+ */
+export function useShowingSample(live: unknown[] | null | undefined): boolean {
+  const sampleOn = useSampleMode();
+  return sampleOn && !(live && live.length > 0);
+}
+
+/**
  * Resolve a single-object panel (a settings blob, an SSO config).
  *
  * Returns `null` rather than an empty object when there is nothing to

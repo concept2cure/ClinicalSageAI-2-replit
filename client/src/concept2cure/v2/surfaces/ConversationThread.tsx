@@ -94,7 +94,7 @@ function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProp
                 <button className="ct-prop-accept" onClick={onApply}>{I.check} Accept and write to section {turn.proposal.section}</button>
                 <button className="ct-prop-refine" onClick={onRefine}>{I.penLine} Refine</button>
                 <button className="ct-prop-discard">Discard</button>
-                <span className="ct-prop-gov">{I.lock} Governed -- immutable version + audit entry on persist</span>
+                <span className="ct-prop-gov">{I.lock} Governed — immutable version + audit entry on persist</span>
               </div>
             ) : (
               <div className="ct-prop-applied">
@@ -286,9 +286,9 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
         <span className="ct-art-panel-t">{I.layers} Artifacts <span className="ct-art-panel-n">{artifacts.length}</span></span>
         <button className="ct-art-panel-x" onClick={() => setCollapsed(true)} title="Collapse">{I.chevronRight || I.right}</button>
       </div>
-      <div className="ct-art-panel-sub">Governed outputs -- AnA builds, you approve and e-sign</div>
+      <div className="ct-art-panel-sub">Governed outputs — AnA builds, you approve and e-sign</div>
       <div className="ct-art-list">
-        {artifacts.length === 0 && <div className="ct-art-empty">Artifacts AnA generates in this conversation appear here -- classification reports, predicate analyses, eSTAR sections -- each versioned, traceable, and exportable.</div>}
+        {artifacts.length === 0 && <div className="ct-art-empty">Artifacts AnA generates in this conversation appear here — classification reports, predicate analyses, eSTAR sections — each versioned, traceable, and exportable.</div>}
         {artifacts.map(a => (
           <ArtifactCard key={a.id} art={a} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)}
             onNav={onNav} onAdvance={() => onAdvance(a.id)} onDownload={() => onAdvance(a.id, true)} />
@@ -300,7 +300,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
+export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation; the default is a fresh conversation.
   const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
@@ -311,7 +311,15 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
   // messages stream token-by-token, and every turn is DB-persisted. Nothing is
   // simulated — the previous canned run510k/ctRespond composer and its
   // Math.random()-"audited" fabricated artifacts are gone.
-  const anaChat = useAnaChat({ initialThreadId: isNew ? null : sel.id, screenName: 'conversation-thread' });
+  // Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
+  // surface owns its own chat instance, so its turns carry the same opt-in and
+  // feed the same shell-level apply/take-over machine as the rail's turns.
+  const anaChat = useAnaChat({
+    initialThreadId: isNew ? null : sel.id,
+    screenName: 'conversation-thread',
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+  });
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -367,8 +375,24 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
       setLoadErr(false);
       Promise.resolve(anaChat.loadThread(sel.id)).catch(() => setLoadErr(true));
     } else if (sel.seed) {
-      void anaChat.send(sel.seed);
+      // Deferred by one task ON PURPOSE. Sending synchronously here opened a
+      // fetch during StrictMode's first mount pass; the cleanup at the top of
+      // useAnaChat aborted it, and the second pass was swallowed by the
+      // isStreaming guard because the abort's finally had not run yet. The
+      // result was exactly one aborted turn — the question visible, the answer
+      // a permanently blank bubble. This is the front door: Home's composer
+      // lands here. A timeout lets pass 1's cleanup cancel before any fetch
+      // exists, so only pass 2 actually sends.
+      const seed = sel.seed;
+      let cancelled = false;
+      const t = setTimeout(() => {
+        if (!cancelled) void anaChat.send(seed);
+      }, 0);
       (window as any).C2C_CONVO = { ...sel, seed: null };
+      return () => {
+        cancelled = true;
+        clearTimeout(t);
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -427,7 +451,7 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
                 <div className="ct-empty">
                   <div className="ct-empty-mk">{'✻'}</div>
                   <h2>Talk to AnA</h2>
-                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer -- every turn is saved to your governed conversation store.</p>
+                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer — every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
                     {['File a 510(k) for our glucose monitoring patch', 'Is the section 2.5.4 efficacy claim defensible?', 'What blocks the Module 3 freeze?'].map((q, i) => (
                       <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
@@ -437,7 +461,7 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
               )}
               {turns.map((t, i) => t.role === 'user'
                 ? (<div key={i} className="ct-turn ct-user"><div className="ct-user-b">{t.text}</div></div>)
-                : (<AnaTurn key={i} turn={t} onApply={() => undefined} onRefine={() => { void anaChat.send('Refine that -- keep it tighter and more declarative.'); }} onNav={onNav} onViewArtifact={() => undefined} />)
+                : (<AnaTurn key={i} turn={t} onApply={() => undefined} onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }} onNav={onNav} onViewArtifact={() => undefined} />)
               )}
               {busy && (
                 <div className="ct-turn ct-ana"><div className="ct-ana-av">{'✻'}</div><div className="ct-ana-body"><div className="ct-typing"><span /><span /><span /></div></div></div>
@@ -466,7 +490,7 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
               >
                 {I.paperclip}
               </button>
-              <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA -- ask, or request a draft..." value={draft}
+              <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA — ask, or request a draft..." value={draft}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
               <button
@@ -507,7 +531,7 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
               </div>
             )}
             <span className="sr-only" aria-live="polite">{statusMessage}</span>
-            <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
+            <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
 

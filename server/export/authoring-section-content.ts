@@ -45,6 +45,9 @@ export interface InlineRun {
   italics?: boolean;
   underline?: boolean;
   strike?: boolean;
+  /** cm², t½ — CTD text is full of these (BP-W1-1). */
+  superScript?: boolean;
+  subScript?: boolean;
   /** Present when this run is an unresolved tracked change. */
   suggestion?: 'insertion' | 'deletion';
 }
@@ -97,6 +100,8 @@ interface InlineState {
   italics?: boolean;
   underline?: boolean;
   strike?: boolean;
+  superScript?: boolean;
+  subScript?: boolean;
   suggestion?: 'insertion' | 'deletion';
 }
 
@@ -111,6 +116,8 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     !!prev.italics === !!st.italics &&
     !!prev.underline === !!st.underline &&
     !!prev.strike === !!st.strike &&
+    !!prev.superScript === !!st.superScript &&
+    !!prev.subScript === !!st.subScript &&
     prev.suggestion === st.suggestion
   ) {
     prev.text += text;
@@ -122,6 +129,8 @@ function pushRun(runs: InlineRun[], text: string, st: InlineState): void {
     ...(st.italics ? { italics: true } : {}),
     ...(st.underline ? { underline: true } : {}),
     ...(st.strike ? { strike: true } : {}),
+    ...(st.superScript ? { superScript: true } : {}),
+    ...(st.subScript ? { subScript: true } : {}),
     ...(st.suggestion ? { suggestion: st.suggestion } : {}),
   });
 }
@@ -133,6 +142,8 @@ function applyMark(tag: string, st: InlineState): InlineState {
   if (tag === 'i' || tag === 'em') next.italics = true;
   if (tag === 'u') next.underline = true;
   if (tag === 's' || tag === 'strike') next.strike = true;
+  if (tag === 'sup') next.superScript = true;
+  if (tag === 'sub') next.subScript = true;
   if (tag === 'ins') {
     next.underline = true;
     next.suggestion = 'insertion';

@@ -18,6 +18,7 @@
 
 import * as React from 'react';
 import { I } from './icons';
+import { registerRowMinWidth } from './registerGrid';
 import {
   SOP_TEMPLATES,
   FIXTURE_DOCS,
@@ -30,6 +31,11 @@ import {
   isReviewOverdue,
 } from './data';
 import { useSopRegister, useSopTemplates, useReviewDue, useTrainingCompliance } from './hooks';
+/* The canonical sample-mode guard and its marker, shared with the MDX lane —
+   one definition of "may a fixture reach the screen", so two lanes cannot
+   answer it differently. */
+import { useSampleRows, useShowingSample } from '../mdx/lib/useSampleRows';
+import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
@@ -46,6 +52,9 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
 ];
 
 const GRID = '110px minmax(0, 1fr) 130px 64px 108px 100px 116px 150px';
+/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
+   resolves to 0px and the row's last columns are clipped away. */
+const ROW_MIN = registerRowMinWidth(GRID);
 
 function Kpi({
   label,
@@ -77,13 +86,27 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
   const tpl = useSopTemplates();
   const rev = useReviewDue();
 
-  const docs = reg.docs ?? FIXTURE_DOCS;
-  const templates = tpl.templates ?? SOP_TEMPLATES;
+  /* Four raw `?? FIXTURE` fallbacks on a GxP document register, none of them
+     gated by sample mode and none of them marked. They fired on an empty
+     tenant, an expired token, a 500, or a fetch that had not started — and
+     `data.ts` supplies rows asserting `status: 'effective'` with effective
+     dates, plus training-completion counts ("SOP-820-100 CAPA, 47 of 47,
+     2026-03-30"). A training record and an effective-SOP list are exactly the
+     things an auditor asks to see, and nothing on screen said they were
+     examples.
+     `deriveReviewDue(docs)` stays a derivation rather than a fixture: it is
+     computed from whatever `docs` resolved to, so it inherits that decision
+     instead of making a second one. */
+  const docs = useSampleRows(reg.docs, FIXTURE_DOCS);
+  const templates = useSampleRows(tpl.templates, SOP_TEMPLATES);
   const reviewDue = rev.rows ?? deriveReviewDue(docs);
   /* Live read-and-understood compliance (numerator = distinct current
-     acknowledgments, denominator = org roster); fixture fallback on load. */
+     acknowledgments, denominator = org roster). */
   const trainComp = useTrainingCompliance();
-  const training = trainComp.rows ?? FIXTURE_TRAINING;
+  const training = useSampleRows(trainComp.rows, FIXTURE_TRAINING);
+  /* One predicate for the whole surface: the document register is what the
+     rest is derived from, so if that is sample then so is the view. */
+  const showingSample = useShowingSample(reg.docs);
 
   const [filter, setFilter] = React.useState<StatusFilter>('all');
 
@@ -100,6 +123,9 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
 
   return (
     <>
+      {/* This register showed effective SOPs and training-completion counts
+          with no marker of any kind. */}
+      <SampleDataBanner show={showingSample} loading={reg.loading} label="SOPs and training records" />
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -214,7 +240,7 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
         </div>
 
         <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID }}>
+          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
             <div>Number</div>
             <div>Title</div>
             <div>Type</div>
@@ -227,7 +253,7 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
           {visible.map((d) => {
             const overdue = isReviewOverdue(d.nextReviewDate);
             return (
-              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID }} data-status={d.status}>
+              <div key={d.id} className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={d.status}>
                 <button
                   className="qms-cell qms-num mono"
                   onClick={() =>

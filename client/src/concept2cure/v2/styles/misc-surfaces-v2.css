@@ -64,7 +64,7 @@
   .rd-chip.tone-warn{ background:var(--warning-muted); color:var(--warning); }
   .rd-chip.tone-ai{ background:var(--accent-000); color:var(--accent-200); }
   .rd-chip.tone-flight{ background:#eef2fb; color:#3a5bbf; }
-  .rd-chip.tone-idle{ background:var(--bg-200); color:var(--text-400); }
+  .rd-chip.tone-idle{ background:var(--bg-200); color:var(--text-200); }
 
   /* buttons */
   .pdev-btn{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:8px; border:1px solid var(--border-strong); background:var(--bg-000); color:var(--text-100); cursor:pointer; transition:background var(--dur,.2s); }

@@ -69,6 +69,10 @@ export interface IndlBlocker {
 
 export interface IndlReadinessReport {
   filingType: string;
+  /** False when the checklist held nothing to evaluate — an empty input set is
+      "nothing assessed", never clearance (BP-W0-3). `ready` is only ever true
+      when `assessed` is. */
+  assessed: boolean;
   ready: boolean;
   overallPercentage: number;
   moduleProgress: IndlModuleProgress[];
@@ -121,31 +125,12 @@ export interface IndlClockState {
  * costs nothing — it was invented content whose only job was to be spoken.
  */
 
-export const INDL_FORMS: IndlForm[] = [
-  { id: 'FDA_1571', title: 'Form FDA 1571', label: 'IND Application', ref: '21 CFR 312.23(a)(1)', done: true },
-  { id: 'FDA_1572', title: 'Form FDA 1572', label: 'Statement of Investigator', ref: '21 CFR 312.53(c)', done: true },
-  { id: 'FDA_3674', title: 'Form FDA 3674', label: 'Certification of Compliance (ClinicalTrials.gov)', ref: '42 USC 282(j)(5)(B)', done: false },
-];
-
-export const INDL_SECTIONS: IndlSection[] = [
-  { code: 'm1.2', title: 'Cover Letter', module: 'M1', ref: '21 CFR 312.23(a)(1)', ai: true, status: 'signed' },
-  { code: 'm1.3.3', title: 'Debarment Certification', module: 'M1', ref: '21 USC 335a', ai: false, status: 'approved' },
-  { code: 'm1.5', title: 'Table of Contents', module: 'M1', ref: '21 CFR 312.23(a)(1)', ai: true, status: 'approved' },
-  { code: 'm1.6.1', title: 'Introductory Statement', module: 'M1', ref: '21 CFR 312.23(a)(3)(i)', ai: true, status: 'approved' },
-  { code: 'm1.6.2', title: 'General Investigational Plan', module: 'M1', ref: '21 CFR 312.23(a)(3)(iv)', ai: true, status: 'qa_review' },
-  { code: 'm1.7', title: "Investigator's Brochure", module: 'M1', ref: '21 CFR 312.23(a)(5)', ai: true, status: 'drafting' },
-  { code: 'm1.9', title: 'Environmental Assessment / Categorical Exclusion', module: 'M1', ref: '21 CFR 25.31', ai: true, status: 'approved' },
-  { code: 'm2.3', title: 'Quality Overall Summary', module: 'M2', ref: 'ICH M4Q(R1)', ai: true, status: 'approved' },
-  { code: 'm2.4', title: 'Nonclinical Overview', module: 'M2', ref: 'ICH M4S(R2)', ai: true, status: 'internal_review' },
-  { code: 'm2.6', title: 'Nonclinical Written & Tabulated Summaries', module: 'M2', ref: 'ICH M4S(R2)', ai: true, status: 'approved' },
-  { code: 'm3.2.S.2', title: 'Manufacture (Drug Substance)', module: 'M3', ref: 'ICH Q7', ai: true, status: 'approved' },
-  { code: 'm3.2.S.4', title: 'Control of Drug Substance', module: 'M3', ref: 'ICH Q6A', ai: true, status: 'approved' },
-  { code: 'm3.2.S.7', title: 'Stability (Drug Substance)', module: 'M3', ref: 'ICH Q1A/Q1B', ai: true, status: 'drafting' },
-  { code: 'm3.2.P.3', title: 'Manufacture (Drug Product)', module: 'M3', ref: 'ICH Q7', ai: true, status: 'approved' },
-  { code: 'm3.2.P.8', title: 'Stability (Drug Product)', module: 'M3', ref: 'ICH Q1A/Q5C', ai: true, status: 'drafting' },
-  { code: 'm4.2.1', title: 'Pharmacology', module: 'M4', ref: 'ICH S7A/S7B', ai: false, status: 'approved' },
-  { code: 'm4.2.2', title: 'Pharmacokinetics', module: 'M4', ref: 'ICH M4S', ai: false, status: 'approved' },
-];
+/* The fixture form/section arrays that used to live here -- 17 invented
+   sections with fabricated 'approved'/'drafting' statuses -- are deleted.
+   They had no importer, but they remained the DEFAULT ARGUMENTS of
+   indlReadiness below, so one argless call anywhere would have rendered a
+   fabricated readiness figure for a real program. The defaults are gone with
+   them: readiness is computable only from data a caller actually has. */
 
 export const INDL_STATUS_LABEL: Record<string, string> = {
   not_started: 'Not started',
@@ -225,8 +210,8 @@ const MODULE_TITLES: Record<string, string> = {
 };
 
 export function indlReadiness(
-  sections: IndlSection[] = INDL_SECTIONS,
-  forms: IndlForm[] = INDL_FORMS,
+  sections: IndlSection[],
+  forms: IndlForm[],
   overdueSafetyReports = 0,
 ): IndlReadinessReport {
   const incomplete: IndlIncompleteSection[] = [];
@@ -272,10 +257,15 @@ export function indlReadiness(
 
   const totalItems = sections.length + forms.length;
   const doneItems = completed + completedForms.length;
+  // Zero items means zero evidence: nothing was evaluated, so nothing can be
+  // "ready" and nothing is 100% done. The old `totalItems === 0 ? 100` branch
+  // was literally "empty set ⇒ clearance" — the exact BP-W0-3 defect class.
+  const assessed = totalItems > 0;
   return {
     filingType: 'initial',
-    ready: blockers.length === 0,
-    overallPercentage: totalItems === 0 ? 100 : Math.round((doneItems / totalItems) * 100),
+    assessed,
+    ready: assessed && blockers.length === 0,
+    overallPercentage: assessed ? Math.round((doneItems / totalItems) * 100) : 0,
     moduleProgress,
     requiredSections: { total: sections.length, completed, incomplete },
     forms: { required: forms.map((f) => f.id), completed: completedForms, missing: missingForms },

@@ -546,9 +546,9 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     <div className="page-inner tb">
       <div className="ph">
         <div>
-          <div className="ph-eyebrow">Project -- collaboration</div>
+          <div className="ph-eyebrow">Project — collaboration</div>
           <h1 className="ph-title">Task board</h1>
-          <div className="ph-sub">The org-wide unified task board. Org-scoped by design -- filter to a project below. Tasks from sections, the pyramid engine, the legacy WBS and modules are surfaced here with their origin store labelled.</div>
+          <div className="ph-sub">The org-wide unified task board. Org-scoped by design — filter to a project below. Tasks from sections, the pyramid engine, the legacy WBS and modules are surfaced here with their origin store labelled.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
@@ -582,15 +582,15 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       <>
       <AnswerLead
         tone={critBlocked || overdue.length ? 'urgent' : 'calm'}
-        eyebrow="What is on the critical path -- and what needs you first"
+        eyebrow="What is on the critical path — and what needs you first"
         headline={critBlocked
           ? <>Your path to {milestone ? <b>"{milestone.title}"</b> : 'the milestone'} is <b>blocked</b> at "{critBlocked.title}".</>
           : critOpen.length
             ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
-            : <>The critical path is clear -- nothing open is blocking the milestone right now.</>}
+            : <>The critical path is clear — nothing open is blocking the milestone right now.</>}
         body={critBlocked
           ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks -- workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
+          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
         reassure={critBlocked || overdue.length ? "I will help you unblock the path and rebalance the team, one step at a time." : "You are on track. I will flag the moment anything threatens the milestone."}
         action={{
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : 'Start a workflow from a template',
@@ -676,7 +676,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                       <div className="tb-card-meta">
                         <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
                         <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
-                        {t.approvalRequired && <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval -- pending' : 'needs approval'}</span>}
+                        {t.approvalRequired && <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval — pending' : 'needs approval'}</span>}
                       </div>
                       {t.progress > 0 && t.progress < 100 && <div className="tb-prog"><span style={{ width: t.progress + '%' }} /></div>}
                       <div className="tb-card-foot">
@@ -702,7 +702,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'path' && (
         <div className="tb-path">
-          <div className="tb-path-h">Critical path -- {critChain.length} tasks -- computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
+          <div className="tb-path-h">Critical path -- {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
           {critChain.map((t, i) => (
             <div
               key={t.taskId}
@@ -1252,7 +1252,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
     <div className="tb-detail-bd tb-create-bd" onClick={onClose}>
       <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks -- new</span><h3>New task</h3></div>
+          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks — new</span><h3>New task</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-form">
@@ -1272,7 +1272,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label>Status</label><select value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
-            <div className="tb-field"><label>Assignee</label><select value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto -- optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+            <div className="tb-field"><label>Assignee</label><select value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label>Impact score -- {f.impactScore}/10</label><input type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
@@ -1441,7 +1441,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
     <div className="tb-detail-bd" onClick={onClose}>
       <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates -- from-template</span><h3>Start a workflow</h3></div>
+          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates — from-template</span><h3>Start a workflow</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
 

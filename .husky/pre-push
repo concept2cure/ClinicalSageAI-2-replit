@@ -111,4 +111,42 @@ if ! npm run --silent ci:risk-codes 2>&1; then
 fi
 echo "   ✅ Risk code validation passed."
 
+# ── Ledger integrity (unconditional) ──
+#
+# Duplicate row ids are the failure this catches, and they arrive through a
+# MERGE rather than through anyone's edit: two sessions each append the next
+# free id to docs/GA_COMPLETION_LEDGER_2026-08.md, both are correct in
+# isolation, and the merge keeps both. So a pre-COMMIT check cannot see it —
+# the offending state does not exist until the histories join — and the author
+# who merges is not the author who wrote either row.
+#
+# It has now been pushed twice, both times by a session that HAD run
+# ledger-check and read its output after the push had already gone. A check
+# whose result does not decide whether the push happens is a log line, not a
+# gate. This makes it decide.
+echo "   Validating migration apply-order invariants..."
+if ! npm run --silent ci:migration-set-order 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration apply-order check FAILED."
+  echo "   A file ordered after the tenant-isolation sweep is never swept, so a"
+  echo "   tenant-keyed table ships with no RLS policy — silently, because the"
+  echo "   policy COUNT goes up when unprotected tables are added."
+  echo "   Fix C2C_MIGRATION_FILES in scripts/db/migration-set.mjs and re-push."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Migration apply-order passed."
+echo "   Validating ledger integrity (row ids, evidence paths)..."
+if ! node scripts/ops/ledger-check.mjs >/dev/null 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Ledger check FAILED."
+  node scripts/ops/ledger-check.mjs 2>&1 | tail -20
+  echo ""
+  echo "   A duplicate id usually means a merge kept two rows that each took"
+  echo "   the same next-free number. Renumber the one that landed second."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Ledger integrity passed."
+
 echo "✅ Pre-push checks complete — all gates passed."

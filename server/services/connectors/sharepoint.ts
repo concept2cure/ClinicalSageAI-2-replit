@@ -14,6 +14,7 @@ import {
   ConnectorDocument,
   ConnectorCredentials,
 } from './connector-interface.js';
+import { toBinaryBody } from '../../utils/binary-body.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -248,7 +249,7 @@ export class SharePointConnector implements DataConnector {
         Authorization: `Bearer ${token}`,
         'Content-Type': mimeType,
       },
-      body: file,
+      body: toBinaryBody(file),
     });
 
     if (!res.ok) {

@@ -5778,6 +5778,11 @@ export const conversationWorkingMemory = pgTable(
       onDelete: 'cascade',
     }),
     threadId: text('thread_id'), // For legacy chat_threads integration
+    // Project attribution recorded at write time so the nightly consolidation
+    // job can promote thread-keyed rows (conversation_id NULL — the live AnA
+    // chat path) into project_memory_entries. Nullable: surfaces with no
+    // project in scope write NULL and stay excluded from promotion.
+    projectId: integer('project_id').references(() => projects.id),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),
@@ -5802,6 +5807,7 @@ export const conversationWorkingMemory = pgTable(
   table => ({
     convIdx: index('cwm_conv_idx').on(table.conversationId),
     threadIdx: index('cwm_thread_idx').on(table.threadId),
+    projectIdx: index('cwm_project_idx').on(table.projectId),
     orgIdx: index('cwm_org_idx').on(table.organizationId),
     generatedAtIdx: index('cwm_generated_at_idx').on(table.generatedAt),
   })

@@ -27,7 +27,7 @@
 .c2c-v2 .hf-sev{ font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; white-space:nowrap; }
 .c2c-v2 .hf-sev.tone-err{ background:var(--error-muted); color:var(--error); }
 .c2c-v2 .hf-sev.tone-warn{ background:var(--warning-muted); color:var(--warning); }
-.c2c-v2 .hf-sev.tone-idle{ background:var(--bg-200); color:var(--text-400); }
+.c2c-v2 .hf-sev.tone-idle{ background:var(--bg-200); color:var(--text-300); }
 .c2c-v2 .hf-mit{ font-size:11.5px; font-weight:600; display:inline-flex; align-items:center; gap:4px; min-width:96px; }
 .c2c-v2 .hf-mit.tone-ok{ color:var(--success); }
 .c2c-v2 .hf-mit.tone-err{ color:var(--error); }
@@ -180,7 +180,11 @@
 .c2c-v2 .cv-card-id{ font-size:11px; color:var(--text-400); font-family:var(--font-mono,ui-monospace,monospace); margin-top:-4px; }
 .c2c-v2 .cv-eps{ display:flex; flex-wrap:wrap; gap:5px; }
 .c2c-v2 .cv-ep{ font-size:10.5px; font-family:var(--font-mono,ui-monospace,monospace); color:var(--text-300); background:var(--bg-050); border:1px solid var(--border); border-radius:5px; padding:2px 6px; }
-.c2c-v2 .cv-note{ font-size:12px; color:var(--text-400); line-height:1.45; }
+/* These notes quote identifiers — `sourceLinks.ts:`, table and column names —
+   and an identifier is one unbreakable word. In the 327px note column of a
+   `.cv-card` one of them ran 4px past the edge with wrapping otherwise
+   working normally. `break-word` only breaks a word that would not fit. */
+.c2c-v2 .cv-note{ font-size:12px; color:var(--text-400); line-height:1.45; overflow-wrap:break-word; }
 .c2c-v2 .cv-card-foot{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:2px; padding-top:9px; border-top:1px solid var(--border); }
 .c2c-v2 .cv-flags{ display:flex; flex-wrap:wrap; gap:8px; }
 .c2c-v2 .cv-flag{ display:inline-flex; align-items:center; gap:3px; font-size:10.5px; color:var(--text-400); }
@@ -194,7 +198,7 @@
 .c2c-v2 .rd-chip.tone-ok{ background:color-mix(in srgb, var(--success) 15%, transparent); color:var(--success); }
 .c2c-v2 .rd-chip.tone-ai{ background:var(--accent-000); color:var(--accent-200); }
 .c2c-v2 .rd-chip.tone-warn{ background:color-mix(in srgb, var(--warning) 16%, transparent); color:var(--warning); }
-.c2c-v2 .rd-chip.tone-idle{ background:var(--bg-100); color:var(--text-400); }
+.c2c-v2 .rd-chip.tone-idle{ background:var(--bg-100); color:var(--text-300); }
 
 /* Template library */
 .c2c-v2 .tl-spec-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
@@ -236,13 +240,13 @@
 .c2c-v2 .al-h{ font-family:var(--font-serif,Georgia,serif); font-size:21px; line-height:1.34; color:var(--text-100); margin-bottom:9px; max-width:66ch; }
 .c2c-v2 .al-h b{ font-weight:700; }
 .c2c-v2 .al-b{ font-size:14px; line-height:1.65; color:var(--text-300); max-width:72ch; }
-.c2c-v2 .al-re{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-400); margin-top:10px; font-style:italic; }
+.c2c-v2 .al-re{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-300); margin-top:10px; font-style:italic; }
 .c2c-v2 .al-re svg{ width:14px; height:14px; flex-shrink:0; }
 .c2c-v2 .al-act{ display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap; }
-.c2c-v2 .al-btn{ display:inline-flex; align-items:center; gap:7px; background:var(--accent-100); color:#fff; border:none; border-radius:9px; padding:9px 16px; font-size:13.5px; font-weight:500; cursor:pointer; }
+.c2c-v2 .al-btn{ display:inline-flex; align-items:center; gap:7px; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:9px; padding:9px 16px; font-size:13.5px; font-weight:500; cursor:pointer; }
 .c2c-v2 .al-btn svg{ width:15px; height:15px; }
 .c2c-v2 .al-btn2{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); color:var(--text-200); border:1px solid var(--border); border-radius:9px; padding:9px 14px; font-size:13px; cursor:pointer; }
-.c2c-v2 .al-note{ font-size:12.5px; color:var(--text-400); }
+.c2c-v2 .al-note{ font-size:12.5px; color:var(--text-300); }
 
 /* Precedent — answer-first empathy lead */
 .c2c-v2 .pe-answer{ background:var(--accent-000); border:1px solid var(--accent-muted); border-radius:14px; padding:20px 22px; margin-bottom:16px; }
@@ -271,9 +275,14 @@
 .c2c-v2 .bs-doc-chk svg{ width:14px; height:14px; }
 .c2c-v2 .bs-presets{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
 .c2c-v2 .bs-preset{ font-size:11px; padding:5px 9px; border-radius:7px; border:1px solid var(--border); background:var(--bg-000); color:var(--text-300); cursor:pointer; }
-.c2c-v2 .bs-preset.on{ background:var(--accent-100); color:#fff; border-color:var(--accent-100); }
-.c2c-v2 .bs-fields{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.c2c-v2 .bs-f{ display:flex; flex-direction:column; gap:3px; font-size:10px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-400); font-weight:600; }
+.c2c-v2 .bs-preset.on{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-100); }
+/* `1fr` is `minmax(auto,1fr)`, and that `auto` floor is the track's min-content —
+   here a <select> as wide as its longest option ("sensitivity specificity").
+   Two such tracks came to 366px inside the 300px `.bs-side` column and spilled
+   over the document pane beside it. `minmax(0,…)` lets the track shrink, and
+   `min-width:0` on the item lets the item follow it down. */
+.c2c-v2 .bs-fields{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+.c2c-v2 .bs-f{ display:flex; flex-direction:column; gap:3px; min-width:0; font-size:10px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-400); font-weight:600; }
 .c2c-v2 .bs-f select, .c2c-v2 .bs-f input{ border:1px solid var(--border-control); border-radius:7px; padding:6px 8px; font-size:12.5px; color:var(--text-100); background:var(--bg-000); font-weight:400; text-transform:none; letter-spacing:0; }
 .c2c-v2 .bs-mini{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:13px; color:var(--text-300); }
 .c2c-v2 .bs-mini b{ color:var(--accent-200); font-size:15px; }
@@ -281,10 +290,10 @@
 .c2c-v2 .bs-doc{ border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--bg-100); }
 .c2c-v2 .bs-doc-bar{ display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); background:var(--bg-050); }
 .c2c-v2 .bs-doc-kind{ font-size:13px; font-weight:600; color:var(--text-100); }
-.c2c-v2 .bs-doc-prov{ font-size:11px; color:var(--text-400); margin-left:10px; font-family:var(--font-mono,monospace); }
+.c2c-v2 .bs-doc-prov{ font-size:11px; color:var(--text-300); margin-left:10px; font-family:var(--font-mono,monospace); }
 .c2c-v2 .bs-doc-bar-a{ display:flex; gap:8px; }
 .c2c-v2 .bs-da{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg-000); color:var(--text-200); cursor:pointer; }
-.c2c-v2 .bs-da.primary{ background:var(--accent-100); color:#fff; border-color:var(--accent-100); }
+.c2c-v2 .bs-da.primary{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-100); }
 .c2c-v2 .bs-da svg{ width:14px; height:14px; }
 .c2c-v2 .bs-doc-page{ max-height:74vh; overflow:auto; padding:40px 52px; background:var(--bg-000); }
 .c2c-v2 .bs-doc-render{ max-width:660px; margin:0 auto; font-family:var(--font-serif,Georgia,'Times New Roman',serif); color:var(--text-100); }
@@ -295,7 +304,12 @@
 .c2c-v2 .bs-doc-render ul{ margin:0 0 14px; padding-left:22px; display:flex; flex-direction:column; gap:6px; }
 .c2c-v2 .bs-doc-render li{ font-size:14px; line-height:1.6; color:var(--text-200); }
 .c2c-v2 .bs-doc-render strong{ font-weight:700; color:var(--text-100); }
-.c2c-v2 .bs-doc-render table{ width:100%; border-collapse:collapse; margin:6px 0 18px; font-family:var(--font-sans,system-ui,sans-serif); }
+/* The engine renders these tables from its own output, so their column count
+   is not known here — an assumptions table of Parameter/Value/Source/
+   Sensitivity measured 387 in the 376px document column. A table that
+   cannot fit scrolls in its own box rather than pushing the prose sideways.
+   `display:block` is what makes overflow apply to a table at all. */
+.c2c-v2 .bs-doc-render table{ display:block; overflow-x:auto; max-width:100%; width:100%; border-collapse:collapse; margin:6px 0 18px; font-family:var(--font-sans,system-ui,sans-serif); }
 .c2c-v2 .bs-doc-render th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-400); font-weight:600; padding:7px 10px; border-bottom:1.5px solid var(--border); }
 .c2c-v2 .bs-doc-render td{ font-size:12.5px; color:var(--text-200); padding:7px 10px; border-bottom:1px solid var(--bg-200); }
 .c2c-v2 .bs-doc-render hr{ border:none; border-top:1px solid var(--border); margin:22px 0 12px; }
@@ -382,7 +396,7 @@
 .c2c-v2 .ra-parsed{ display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); font-size:12.5px; color:var(--text-300); }
 .c2c-v2 .ra-parsed b{ color:var(--accent-200); }
 .c2c-v2 .ra-doc{ min-height:340px; }
-.c2c-v2 .ra-empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 30px; color:var(--text-400); }
+.c2c-v2 .ra-empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:60px 30px; color:var(--text-300); }
 .c2c-v2 .ra-empty-ic{ width:44px; height:44px; opacity:0.4; margin-bottom:14px; }
 .c2c-v2 .ra-empty-ic svg{ width:44px; height:44px; }
 .c2c-v2 .ra-empty-t{ font-size:15px; font-weight:600; color:var(--text-200); margin-bottom:5px; }
@@ -438,7 +452,7 @@
 .c2c-v2 .lic-controls{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin:6px 0 16px; }
 .c2c-v2 .lic-cycle{ display:inline-flex; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
 .c2c-v2 .lic-cycle button{ border:none; background:var(--bg-000); color:var(--text-300); padding:6px 14px; font-size:12.5px; cursor:pointer; white-space:nowrap; }
-.c2c-v2 .lic-cycle button.on{ background:var(--accent-100); color:#fff; }
+.c2c-v2 .lic-cycle button.on{ background:var(--accent-strong); color:var(--accent-on-strong); }
 .c2c-v2 .lic-save{ font-size:9px; background:var(--success); color:#fff; padding:1px 5px; border-radius:999px; margin-left:4px; }
 .c2c-v2 .lic-arch{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-400); }
 .c2c-v2 .lic-arch select, .c2c-v2 .lic-arch input{ border:1px solid var(--border-control); border-radius:8px; padding:6px 10px; font-size:13px; color:var(--text-100); background:var(--bg-000); }
@@ -450,7 +464,7 @@
 .c2c-v2 .lic-usage-row{ display:flex; align-items:center; gap:16px; margin-top:16px; padding:13px 16px; background:var(--bg-050); border:1px solid var(--border); border-radius:var(--radius-lg); }
 .c2c-v2 .lic-usage-main{ flex:1; min-width:0; }
 .c2c-v2 .lic-usage-main b{ display:block; font-size:12.5px; font-weight:600; color:var(--text-100); margin-bottom:2px; }
-.c2c-v2 .lic-usage-main span{ font-size:11.5px; color:var(--text-400); line-height:1.5; }
+.c2c-v2 .lic-usage-main span{ font-size:11.5px; color:var(--text-300); line-height:1.5; }
 .c2c-v2 .lic-usage-cta{ border:1px solid var(--border-strong); background:var(--bg-000); border-radius:var(--radius-md); padding:7px 13px; font-size:12px; font-weight:600; color:var(--text-200); cursor:pointer; white-space:nowrap; }
 .c2c-v2 .lic-usage-cta:hover{ background:var(--bg-100); color:var(--text-100); }
 .c2c-v2 .lic-card{ position:relative; background:var(--bg-000); border:1px solid var(--border); border-radius:14px; padding:18px 16px; display:flex; flex-direction:column; }
@@ -465,7 +479,7 @@
 .c2c-v2 .lic-feats li{ display:flex; gap:6px; font-size:12px; color:var(--text-300); align-items:flex-start; }
 .c2c-v2 .lic-feats li svg{ width:13px; height:13px; color:var(--success); flex-shrink:0; margin-top:1px; }
 .c2c-v2 .lic-trial{ color:var(--accent-200)!important; font-weight:600; }
-.c2c-v2 .lic-cta{ border:none; background:var(--accent-100); color:#fff; border-radius:9px; padding:9px; font-size:13px; font-weight:600; cursor:pointer; }
+.c2c-v2 .lic-cta{ border:none; background:var(--accent-strong); color:var(--accent-on-strong); border-radius:9px; padding:9px; font-size:13px; font-weight:600; cursor:pointer; }
 .c2c-v2 .lic-cta.ghost{ background:var(--bg-100); color:var(--text-400); cursor:default; }
 
 /* Onboarding */
@@ -473,8 +487,8 @@
 .c2c-v2 .ob-step{ display:flex; align-items:center; gap:7px; padding:7px 12px; border-radius:999px; border:1px solid var(--border); font-size:12px; color:var(--text-400); }
 .c2c-v2 .ob-step.on{ border-color:var(--accent-100); background:var(--accent-000); color:var(--accent-200); font-weight:600; }
 .c2c-v2 .ob-step.done{ color:var(--success); border-color:color-mix(in srgb,var(--success) 40%,transparent); }
-.c2c-v2 .ob-step-n{ width:18px; height:18px; border-radius:999px; background:var(--bg-200); color:var(--text-300); display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; }
-.c2c-v2 .ob-step.on .ob-step-n{ background:var(--accent-100); color:#fff; }
+.c2c-v2 .ob-step-n{ width:18px; height:18px; border-radius:999px; background:var(--bg-200); color:var(--text-200); display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; }
+.c2c-v2 .ob-step.on .ob-step-n{ background:var(--accent-strong); color:var(--accent-on-strong); }
 .c2c-v2 .ob-step.done .ob-step-n{ background:var(--success); color:#fff; }
 .c2c-v2 .ob-step.done .ob-step-n svg{ width:11px; height:11px; }
 .c2c-v2 .ob-in{ width:100%; border:1px solid var(--border); border-radius:9px; padding:10px 12px; font-size:14px; color:var(--text-100); background:var(--bg-000); margin:4px 0 4px; }
@@ -482,7 +496,7 @@
 .c2c-v2 .ob-arch-b{ text-align:left; border:1px solid var(--border); border-radius:11px; padding:12px 13px; background:var(--bg-000); cursor:pointer; display:flex; flex-direction:column; gap:3px; }
 .c2c-v2 .ob-arch-b.on{ border-color:var(--accent-100); background:var(--accent-000); }
 .c2c-v2 .ob-arch-l{ font-size:13.5px; font-weight:600; color:var(--text-100); }
-.c2c-v2 .ob-arch-f{ font-size:11px; color:var(--text-400); text-transform:capitalize; }
+.c2c-v2 .ob-arch-f{ font-size:11px; color:var(--text-300); text-transform:capitalize; }
 .c2c-v2 .ob-models{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .c2c-v2 .ob-model{ text-align:left; border:1px solid var(--border); border-radius:12px; padding:18px; background:var(--bg-000); cursor:pointer; }
 .c2c-v2 .ob-model.on{ border-color:var(--accent-100); box-shadow:0 0 0 1px var(--accent-100); }
@@ -793,7 +807,7 @@
 .c2c-v2 .etmf .surface-head-actions{ display:flex; align-items:center; gap:10px; }
 .c2c-v2 .etmf-scope{ display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
 .c2c-v2 .etmf-scope button{ font-size:11.5px; padding:6px 11px; background:var(--bg-000); color:var(--text-300); border:none; cursor:pointer; }
-.c2c-v2 .etmf-scope button.on{ background:var(--accent-100); color:#fff; }
+.c2c-v2 .etmf-scope button.on{ background:var(--accent-strong); color:var(--accent-on-strong); }
 .c2c-v2 .etmf-body{ display:grid; grid-template-columns:352px 1fr; gap:18px; margin-top:18px; align-items:start; }
 .c2c-v2 .etmf-left{ display:flex; flex-direction:column; gap:14px; }
 .c2c-v2 .etmf-panel{ background:var(--bg-050); border:1px solid var(--border); border-radius:12px; padding:13px 14px; }
@@ -1428,7 +1442,7 @@
 .c2c-v2 .sr-foot-note{ font-size:11px; color:var(--text-400); line-height:1.55; text-wrap:pretty; }
 .c2c-v2 .sr-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:2px; }
 .c2c-v2 .sr-run{ font:inherit; font-size:12px; font-weight:600; color:#fff; background:var(--accent-200); border:none; border-radius:9px; padding:9px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
-.c2c-v2 .sr-run:hover{ background:var(--accent-100); }
+.c2c-v2 .sr-run:hover{ background:var(--accent-strong); }
 .c2c-v2 .sr-run svg{ width:14px; height:14px; }
 .c2c-v2 .sr-run.alt{ background:none; color:var(--text-200); border:1px solid var(--border); }
 .c2c-v2 .sr-run.alt:hover{ background:var(--bg-100); color:var(--text-100); }

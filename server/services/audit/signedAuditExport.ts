@@ -18,6 +18,8 @@
 import crypto from 'crypto';
 import { Pool } from 'pg';
 
+import { stableStringify } from '../../../shared/canonical-json.js';
+
 // ---------------------------------------------------------------------------
 // TYPES
 // ---------------------------------------------------------------------------
@@ -59,6 +61,13 @@ export interface ExportManifest {
   truncated: boolean;
   dataHash: string;          // SHA-256 of the raw data payload
   hashAlgorithm: string;
+  /**
+   * Which canonicalization sealed this manifest — see {@link canonicalizeManifest}.
+   * Absent on exports issued before the fix in ledger L55; those verify under
+   * version 1, which is what makes this field a compatibility marker rather
+   * than a version bump.
+   */
+  manifestVersion?: 1 | 2;
   chainIntegrity: {
     status: 'intact' | 'broken' | 'unavailable';
     totalEntries: number;
@@ -94,6 +103,39 @@ function hmacSign(data: string): string {
     .createHmac('sha256', getSigningKey())
     .update(data, 'utf8')
     .digest('hex');
+}
+
+/**
+ * Canonicalize a manifest for signing, by the version that sealed it.
+ *
+ * ── What version 1 did, and why it is kept ──────────────────────────────────
+ * `JSON.stringify(manifest, Object.keys(manifest).sort())` reads as "stringify
+ * with sorted keys" and is not that. The second argument is a replacer ARRAY —
+ * a key allow-list applied at every depth, whose order `JSON.stringify` ignores.
+ * No nested key name also appears at the top level, so `queryFilters`,
+ * `chainIntegrity` and `compliance` each serialized to `{}`. The signature
+ * therefore covered none of them: an export for one date range with an intact
+ * chain and an export for another with `chainIntegrity.status: 'broken'`
+ * produced byte-identical signed manifests, so a broken chain could be
+ * presented as an intact one without invalidating the signature. `dataHash` is
+ * top level and WAS covered, so modification of the exported rows always
+ * remained detectable — the gap was the manifest's claims about itself.
+ *
+ * Version 1 stays here, frozen and reachable only from the verify path, because
+ * exports already issued were signed with it. Deleting it would not fix those
+ * signatures; it would make them unverifiable, which is worse. It must never be
+ * called on a write path.
+ *
+ * ── Version 2 ───────────────────────────────────────────────────────────────
+ * The one canonicalizer in `shared/canonical-json.ts`, which sorts keys at
+ * every depth and drops nothing.
+ */
+export function canonicalizeManifest(manifest: ExportManifest): string {
+  if (manifest.manifestVersion === 2) return stableStringify(manifest);
+  // No marker means an export sealed before L55 was fixed. Reproduce the
+  // original expression exactly — including its defect — so the signature it
+  // produced still verifies.
+  return JSON.stringify(manifest, Object.keys(manifest).sort());
 }
 
 function sha256(data: string): string {
@@ -277,6 +319,7 @@ export async function generateSignedAuditExport(
     truncated,
     dataHash,
     hashAlgorithm: 'SHA-256',
+    manifestVersion: 2,
     chainIntegrity,
     compliance: {
       standard: '21 CFR Part 11',
@@ -285,8 +328,8 @@ export async function generateSignedAuditExport(
     },
   };
 
-  // 5. Sign manifest
-  const canonicalManifest = JSON.stringify(manifest, Object.keys(manifest).sort());
+  // 5. Sign manifest — every field, at every depth (L55).
+  const canonicalManifest = canonicalizeManifest(manifest);
   const signature = hmacSign(canonicalManifest);
 
   // 6. Build filename
@@ -348,8 +391,8 @@ export function verifySignedAuditExport(
     errors.push('Data hash mismatch — export data has been modified');
   }
 
-  // 2. Verify manifest signature
-  const canonicalManifest = JSON.stringify(manifest, Object.keys(manifest).sort());
+  // 2. Verify manifest signature, using the serializer that sealed it.
+  const canonicalManifest = canonicalizeManifest(manifest);
   const expectedSignature = hmacSign(canonicalManifest);
   if (signature !== expectedSignature) {
     errors.push('Manifest signature invalid — manifest or signing key has been altered');

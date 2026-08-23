@@ -60,10 +60,11 @@ import { isSigningAuthorized } from '../services/part11/signing-authority.js';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { composeFullModule3 } from '../services/module3-extensions.js';
 import {
-  composeFullModule3,
-} from '../services/module3-extensions.js';
-import { validateEctdPackageHardened, type HardenedValidationContext } from '../services/ectd/ectd-validator-hardening.js';
+  validateEctdPackageHardened,
+  type HardenedValidationContext,
+} from '../services/ectd/ectd-validator-hardening.js';
 import crypto from 'crypto';
 import type { ECTDLeaf } from '../services/ectd/ectd4-validator.js';
 import type { ComposedSection } from '../services/module3Composer.js';
@@ -76,8 +77,7 @@ const log = createScopedLogger('submission-sign-release');
  * identical between the two routes.
  */
 function resolveOrgId(req: Request): number | null {
-  const raw =
-    (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
+  const raw = (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
   if (raw == null) return null;
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -123,7 +123,7 @@ const router = Router();
  * Returns null if the sign step has no parseable payload digest.
  */
 async function recomputeBoundDigestFromRun(
-  run: Awaited<ReturnType<typeof getRun>>,
+  run: Awaited<ReturnType<typeof getRun>>
 ): Promise<string | null> {
   if (!run) return null;
   const signStep = run.steps.find(s => s.key === 'package.sign');
@@ -168,7 +168,8 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   const signerRole = await resolveSignerOrgRole(signerId, organizationId);
   if (!isSigningAuthorized(signerRole)) {
     return res.status(403).json({
-      error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+      error:
+        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
       code: 'ESIGNATURE_NO_AUTHORITY',
     });
   }
@@ -236,10 +237,7 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   }
 
   // ── Verify password (21 CFR Part 11 §11.200 — two-factor for e-sig) ─────
-  const credentialsOk = await part11ComplianceService.verifyUserCredentials(
-    signerId,
-    password,
-  );
+  const credentialsOk = await part11ComplianceService.verifyUserCredentials(signerId, password);
   if (!credentialsOk) {
     // 401 — never reveal whether the user exists, whether the password was
     // close, or anything about the bound digest. Just the credentials.
@@ -257,15 +255,13 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   // invariant).
   let documentIdForSig: number | null = run.submissionFk ?? null;
   if (!documentIdForSig) {
-    documentIdForSig = await loadSubmissionFkBySubmissionIdText(
-      run.submissionId,
-      organizationId,
-    );
+    documentIdForSig = await loadSubmissionFkBySubmissionIdText(run.submissionId, organizationId);
   }
   if (!documentIdForSig) {
     return res.status(422).json({
       error: 'submission_lineage_unresolved',
-      message: 'submission record FK cannot be resolved; cannot bind a §11.70 signature without a document anchor',
+      message:
+        'submission record FK cannot be resolved; cannot bind a §11.70 signature without a document anchor',
     });
   }
 
@@ -322,36 +318,54 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   }
 
   // ── Audit the action ────────────────────────────────────────────────────
-  try {
-    await auditService.logAction({
-      tenantId: organizationId,
-      userId: signerId,
-      action: 'release_signature_created',
-      resourceType: 'submission_release',
-      resourceId: runId,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details: {
-        submissionId: submissionIdParam,
-        signatureId,
-        signatureMeaning,
-        // NEVER include the password or full digest in audit details — the
-        // digest is recoverable via the signature row + reproducing the
-        // orchestrator state; leaking it here would cost cardinality
-        // without buying forensic value.
-      },
-    });
-  } catch (err) {
-    log.warn('release-signature audit write failed (non-fatal)', {
+  const auditWrite = await auditService.logAction({
+    tenantId: organizationId,
+    userId: signerId,
+    action: 'release_signature_created',
+    resourceType: 'submission_release',
+    resourceId: runId,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details: {
+      submissionId: submissionIdParam,
+      signatureId,
+      signatureMeaning,
+      // NEVER include the password or full digest in audit details — the
+      // digest is recoverable via the signature row + reproducing the
+      // orchestrator state; leaking it here would cost cardinality
+      // without buying forensic value.
+    },
+  });
+
+  /* This was `try { await logAction } catch { log.warn('non-fatal') }`, and the
+     catch could not fire: logAction swallows its persistence failures and
+     resolves normally. So on an audit outage the signer received
+     `200 { signatureId, signedAt }`, an electronic_signatures row already
+     committed on a separate connection, and NOT EVEN the route's own warning
+     was emitted. A §11.10(e) record silently did not exist.
+
+     The signature is real and is still returned — it committed before this
+     point and retracting it would be a worse lie than the one being fixed —
+     but the gap now travels with it, and the operator warning actually runs. */
+  if (!auditWrite.persisted) {
+    log.warn('release-signature audit write failed', {
       organizationId,
       runId,
-      err: err instanceof Error ? err.message : String(err),
+      signatureId,
+      reason: auditWrite.error,
     });
   }
 
   return res.json({
     signatureId,
     signedAt: new Date().toISOString(),
+    ...(auditWrite.persisted
+      ? {}
+      : {
+          auditWriteFailed: true,
+          auditWarning:
+            'The signature was recorded, but its audit-trail entry could not be written. Raise this with your administrator before relying on the audit trail for this release.',
+        }),
   });
 });
 

@@ -124,12 +124,12 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
     <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
       <div className="reg-h">
         <div>
-          <div className="ph-eyebrow">Clinical -- risk-based quality management</div>
+          <div className="ph-eyebrow">Clinical — risk-based quality management</div>
           <h1 className="reg-title">Risk-based monitoring</h1>
           <p className="reg-sub">
             ICH E6(R3) RBQM for the study: risk assessment, KRIs and QTLs, central
             statistical monitoring, site oversight and the monitoring plan. Every score
-            is engine output -- the number behind each chip is always visible.
+            is engine output — the number behind each chip is always visible.
           </p>
         </div>
         <div className="rbm-study">

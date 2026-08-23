@@ -78,13 +78,13 @@ CREATE POLICY tenant_isolation_policy ON onboarding_proposal_runs
     COALESCE(current_setting('app.rls_enforce', true), 'off') <> 'on'
     OR current_setting('app.current_user_role', true) = 'super_admin'
     OR organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
-    OR organization_id = NULLIF(current_setting('app.current_org_id', true), '')::INTEGER
+    OR organization_id = substring(current_setting('app.current_org_id', true) from '^[0-9]+$')::INTEGER
   )
   WITH CHECK (
     COALESCE(current_setting('app.rls_enforce', true), 'off') <> 'on'
     OR current_setting('app.current_user_role', true) = 'super_admin'
     OR organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER
-    OR organization_id = NULLIF(current_setting('app.current_org_id', true), '')::INTEGER
+    OR organization_id = substring(current_setting('app.current_org_id', true) from '^[0-9]+$')::INTEGER
   );
 
 COMMENT ON TABLE onboarding_proposal_runs IS

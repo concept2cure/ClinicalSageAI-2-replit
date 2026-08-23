@@ -876,13 +876,13 @@ ALTER TABLE compliance.data_residency ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS audit_trail_read ON compliance.audit_trail;
 CREATE POLICY audit_trail_read ON compliance.audit_trail
     FOR SELECT
-    USING (organization_id = current_setting('app.current_org_id', true)::UUID);
+    USING (organization_id = identity.current_org_id());
 
 -- Electronic signatures: Read for same org
 DROP POLICY IF EXISTS esig_read ON compliance.electronic_signatures;
 CREATE POLICY esig_read ON compliance.electronic_signatures
     FOR SELECT
-    USING (organization_id = current_setting('app.current_org_id', true)::UUID);
+    USING (organization_id = identity.current_org_id());
 
 -- ============================================================================
 -- SECTION 13: PERMISSIONS

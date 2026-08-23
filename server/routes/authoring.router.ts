@@ -11,7 +11,9 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
 import { getPool } from '../db';
-import auditService from '../services/auditService';
+import auditService, { writeChainedAuditRow } from '../services/auditService';
+import { isSigningAuthorized } from '../services/part11/signing-authority.js';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 // c2c_documents is the system of record for a filing; this router is the
@@ -548,6 +550,69 @@ const computeDocHash = async (
   const content = sections.rows.map(s => `${s.code}:${s.content}`).join('|||');
   return crypto.createHash('sha256').update(content).digest('hex');
 };
+
+/**
+ * 21 CFR Part 11 §11.10(g) — may this signer apply a signature at all?
+ *
+ * "Use of ... controls to ensure that persons who ... electronically sign
+ * records ... have the authority to do so." Identity is NOT authority: this
+ * router verified a PIN (§11.200 second component) and a token, and then let
+ * any authenticated member sign — including `meaning: 'APPROVER'`, which flips
+ * the document to APPROVED and inserts a frozen_documents row. A viewer with a
+ * PIN could approve and seal a regulated record.
+ *
+ * The policy already existed and this router simply never asked it.
+ * signing-authority.ts is the single source of truth (its own header names the
+ * surfaces that consult it — /api/esignature/sign, sign-release, the AnA
+ * verified-seal route — and this file was not among them), and the role comes
+ * from resolveSignerOrgRole, which reads `organization_users` rather than
+ * `req.user.role`: the resolver's header is explicit that the request-borne
+ * role "is not reliably populated on every signing route".
+ *
+ * Fails closed — no membership row, or a role outside the allowlist, is not
+ * authorized. Deployments tune the allowlist with ESIGNATURE_SIGNING_ROLES.
+ *
+ * @compliance 21 CFR Part 11 §11.10(d), §11.10(g)
+ */
+async function assertSigningAuthority(
+  req: Request,
+  res: Response,
+): Promise<boolean> {
+  const actorId = Number(getActorId(req));
+  const orgId = getTenantId(req);
+  const role = await resolveSignerOrgRole(actorId, orgId);
+  if (!isSigningAuthorized(role)) {
+    res.status(403).json({
+      error:
+        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+      code: 'ESIGNATURE_NO_AUTHORITY',
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Does this document exist for this tenant?
+ *
+ * computeDocHash hashes the section rows and returns sha256("") when there are
+ * none — which is indistinguishable from an unknown or cross-tenant docId. So a
+ * signature could be written, an approval flip attempted against zero rows, and
+ * a frozen_documents row inserted, all bound to the hash of the empty string,
+ * and the caller told the document was signed and approved. §11.70 requires a
+ * signature to be linked to its record; a signature bound to no record is not.
+ */
+async function documentExistsForTenant(
+  docId: string | string[] | undefined,
+  tenantId: number,
+  executor: Queryable = pool,
+): Promise<boolean> {
+  const r = await executor.query(
+    'SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2 LIMIT 1',
+    [docId, tenantId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
 
 // Comprehensive audit logging for 21 CFR Part 11 compliance
 const createAuditTrail = async (
@@ -3734,9 +3799,13 @@ router.get('/stats', async (req: Request, res: Response) => {
       `
       SELECT
         COUNT(DISTINCT d.id) as total_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'draft' THEN d.id END) as draft_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'review' THEN d.id END) as review_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'approved' THEN d.id END) as approved_documents,
+        -- The store holds MIXED-case statuses: create writes 'draft', the
+        -- workflow writes 'IN_REVIEW'/'APPROVED', freeze writes 'FROZEN'. The
+        -- old literals ('draft'/'review'/'approved') matched only the first,
+        -- so every counter past draft sat at 0 forever (BP-W0-7 defect class).
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'DRAFT' THEN d.id END) as draft_documents,
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'IN_REVIEW' THEN d.id END) as review_documents,
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'APPROVED' THEN d.id END) as approved_documents,
         COUNT(DISTINCT s.id) as total_sections,
         COUNT(DISTINCT c.id) as total_comments,
         COUNT(DISTINCT CASE WHEN c.status = 'open' THEN c.id END) as open_comments,
@@ -3874,8 +3943,10 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
 
     const doc = docResult.rows[0];
 
-    // Check if already frozen
-    if (doc.status === 'FROZEN' || doc.status === 'APPROVED') {
+    // Check if already frozen. Case-insensitive on purpose: the store holds
+    // mixed-case statuses, and an idempotency guard that only recognises one
+    // casing lets the same document be frozen twice.
+    if (['FROZEN', 'APPROVED'].includes(String(doc.status ?? '').toUpperCase())) {
       return res.status(400).json({ error: 'Document is already frozen' });
     }
 
@@ -3932,6 +4003,30 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         client,
       );
 
+      /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
+         `createAuditTrail` above writes authoring_audit_trail, which carries no
+         chain and no HMAC, and its mirror into the chained `audit_logs` runs
+         ONLY when the executor is the pool (see the guard at its foot). Every
+         governed handler here passes its own transaction client — correctly, so
+         the record commits with the mutation — which meant the mirror was
+         skipped and these events never reached the chain at all. So
+         verifyAuditChain had nothing to verify for the three actions that most
+         need it, and the document's own audit view read an unchained table.
+         writeChainedAuditRow is the primitive built for this case and is what
+         /api/esignature/sign already uses: on the caller's client, so if the
+         audit row cannot be written the whole transaction rolls back and the
+         signature never exists either. */
+      await writeChainedAuditRow(client, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action: 'authoring.document.freeze',
+        resourceType: 'authoring_document',
+        resourceId: String(docId ?? ''),
+        ipAddress: (req.ip ?? undefined) as string | undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { contentHash, version: versionNumber, reason: reason ?? null },
+      });
+
       await client.query('COMMIT');
     } catch (txError) {
       try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
@@ -3967,6 +4062,11 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // §11.10(g) authority, checked BEFORE the PIN. Order matters: an
+    // unauthorized caller must not learn whether a PIN is correct, and must not
+    // be able to use this endpoint as a PIN oracle.
+    if (!(await assertSigningAuthority(req, res))) return;
+
     if (!pin) {
       return res.status(400).json({ error: 'PIN required for signature' });
     }
@@ -3977,6 +4077,12 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
 
     if (!intent) {
       return res.status(400).json({ error: 'Signature intent is required' });
+    }
+
+    // §11.70 — a signature must be linked to the record it signs. Without this
+    // an unknown or cross-tenant docId produced a signature bound to sha256("").
+    if (!(await documentExistsForTenant(docId, tenantId))) {
+      return res.status(404).json({ error: 'Document not found' });
     }
 
     // §11.50(a)(1) printed name, from the user record — never `req.user.name`,
@@ -4075,6 +4181,30 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
           [docId, 'approved', frozenContent, docHash, email, 'Approved and frozen', tenantId]
         );
       }
+
+      /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
+         `createAuditTrail` above writes authoring_audit_trail, which carries no
+         chain and no HMAC, and its mirror into the chained `audit_logs` runs
+         ONLY when the executor is the pool (see the guard at its foot). Every
+         governed handler here passes its own transaction client — correctly, so
+         the record commits with the mutation — which meant the mirror was
+         skipped and these events never reached the chain at all. So
+         verifyAuditChain had nothing to verify for the three actions that most
+         need it, and the document's own audit view read an unchained table.
+         writeChainedAuditRow is the primitive built for this case and is what
+         /api/esignature/sign already uses: on the caller's client, so if the
+         audit row cannot be written the whole transaction rolls back and the
+         signature never exists either. */
+      await writeChainedAuditRow(client, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action: 'authoring.document.e-sign',
+        resourceType: 'authoring_document',
+        resourceId: String(docId ?? ''),
+        ipAddress: (req.ip ?? undefined) as string | undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { meaning, intent, documentHash: docHash, signer: email },
+      });
 
       await client.query('COMMIT');
     } catch (txError) {
@@ -5384,10 +5514,13 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(fileContent);
   } catch (error) {
+    // The raw error goes to the LOG only. This body feeds the client's export
+    // toast verbatim, and a library/DB message here was the one remaining path
+    // for exception text to reach the UI (BP-W0-5).
     console.error('Export error:', error);
     res.status(500).json({
       error: 'Export failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'The export could not be rendered. No file was produced; the document is unchanged.',
     });
   }
 });
@@ -5575,6 +5708,12 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // address as a printed name.
     const signerName = await resolveSignerName(signerEmail as string);
 
+    // §11.10(g) authority, before the PIN — same reasoning as /e-sign. This
+    // path also advances a workflow step, and it already consulted the caller's
+    // roles to decide THAT (below); it never consulted them to decide whether
+    // the signature itself could be applied.
+    if (!(await assertSigningAuthority(req, res))) return;
+
     // Validate required fields
     if (!pin || !reason) {
       return res.status(400).json({ error: 'PIN and reason are required for signing' });
@@ -5587,6 +5726,11 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // attestation and would render verbatim in any manifestation of it.
     if (!SIGNATURE_MEANINGS.includes(meaning)) {
       return res.status(400).json({ error: 'Invalid signature meaning' });
+    }
+
+    // §11.70 — the signature must be linked to a real record in this tenant.
+    if (!(await documentExistsForTenant(docId, tenantId))) {
+      return res.status(404).json({ error: 'Document not found' });
     }
 
     // Verify PIN
@@ -5687,6 +5831,30 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         tenantId,
         client
       );
+
+      /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
+         `createAuditTrail` above writes authoring_audit_trail, which carries no
+         chain and no HMAC, and its mirror into the chained `audit_logs` runs
+         ONLY when the executor is the pool (see the guard at its foot). Every
+         governed handler here passes its own transaction client — correctly, so
+         the record commits with the mutation — which meant the mirror was
+         skipped and these events never reached the chain at all. So
+         verifyAuditChain had nothing to verify for the three actions that most
+         need it, and the document's own audit view read an unchained table.
+         writeChainedAuditRow is the primitive built for this case and is what
+         /api/esignature/sign already uses: on the caller's client, so if the
+         audit row cannot be written the whole transaction rolls back and the
+         signature never exists either. */
+      await writeChainedAuditRow(client, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action: 'authoring.document.sign',
+        resourceType: 'authoring_document',
+        resourceId: String(docId ?? ''),
+        ipAddress: (req.ip ?? undefined) as string | undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { signatureId, meaning, reason, contentHash, signer: signerEmail },
+      });
 
       await client.query('COMMIT');
     } catch (txError) {
@@ -5801,10 +5969,33 @@ router.post('/users/pin', async (req: Request, res: Response) => {
   try {
     const { pin, old_pin } = req.body;
     const tenantId = getTenantId(req);
-    const email = req.headers['x-user-email'] || req.body.email;
 
-    if (!email || !pin) {
-      return res.status(400).json({ error: 'Email and PIN are required' });
+    /* SECURITY (21 CFR Part 11 §11.200 / §11.10(d)) — the PIN is the credential
+       that gates EVERY electronic signature in this router. Two holes were open
+       on the endpoint that manages it.
+
+       IDENTITY came from `req.headers['x-user-email'] || req.body.email`. The
+       router's middleware clears any client-supplied x-user-email and re-derives
+       it from the JWT, so the header is safe — but only when the token carries
+       an email claim. Without one it fell through to `req.body.email`, which the
+       caller controls, so a request could set ANOTHER user's signing PIN. This
+       is the same fallback that was closed at export (see the comment there);
+       the PIN endpoint was missed, and it is the worst place to miss it.
+
+       OLD-PIN verification was conditional — `if (old_pin)`. An existing PIN
+       could therefore be overwritten by simply omitting the field. Possession of
+       a session became possession of the signing credential, which is precisely
+       what §11.200(a)(1) requires two distinct components to prevent.
+
+       No caller anywhere sets another user's PIN (grep: the endpoint has no
+       client callers at all), so scoping it to the authenticated actor breaks
+       nothing and closes both. */
+    const email = getActorEmail(req);
+    if (!email) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    if (!pin) {
+      return res.status(400).json({ error: 'PIN is required' });
     }
 
     // Check if PIN exists
@@ -5813,13 +6004,14 @@ router.post('/users/pin', async (req: Request, res: Response) => {
       [email, tenantId]
     );
 
-    if (((existing.rowCount ?? 0) > 0)) {
-      // Verify old PIN if updating
-      if (old_pin) {
-        const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
-        if (!valid) {
-          return res.status(401).json({ error: 'Invalid old PIN' });
-        }
+    const isUpdate = (existing.rowCount ?? 0) > 0;
+    if (isUpdate) {
+      if (!old_pin) {
+        return res.status(400).json({ error: 'Current PIN is required to change it' });
+      }
+      const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid old PIN' });
       }
     }
 
@@ -5840,6 +6032,20 @@ router.post('/users/pin', async (req: Request, res: Response) => {
         [pinHash, email, tenantId]
       );
     }
+
+    /* A change to the signing credential is itself a governed event: §11.10(e)
+       wants the record of who did what and when, and this endpoint wrote none.
+       The PIN never appears in the trail — only that it was set or rotated. */
+    await createAuditTrail(
+      req,
+      undefined,
+      null,
+      isUpdate ? 'SIGNING_PIN_ROTATED' : 'SIGNING_PIN_CREATED',
+      null,
+      null,
+      isUpdate ? 'Signing PIN rotated by its owner' : 'Signing PIN created',
+      { email },
+    );
 
     res.json({ success: true, message: 'PIN set successfully' });
   } catch (error) {

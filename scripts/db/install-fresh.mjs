@@ -23,9 +23,15 @@
  *   5. Apply the RLS-bearing raw migrations in their required order, tracking
  *      applied files in an _install_applied_migrations ledger.
  *   6. Apply the governed-content tree (*_gcc_*.sql) via psql — the `audit`
- *      schema and Part-11 tamper-proof audit tables.
- *   7. Verify: table count, pg_policies count, and that the core route tables +
- *      the authoring subsystem exist.
+ *      schema and Part-11 tamper-proof audit tables — then re-run the canonical
+ *      tenant-isolation sweep, because that tree creates tenant-keyed tables
+ *      AFTER 0021 swept in step 5 and they would otherwise carry no policy.
+ *   7. Provision the non-superuser runtime role (opt-in, APP_SERVICE_DB_PASSWORD).
+ *   8. Verify: table count, pg_policies count, the core route tables and the
+ *      authoring subsystem, the required-object contract (columns, primary keys,
+ *      foreign keys, indexes and RLS posture per capability, each reported with
+ *      the step that created it), and full tenant-isolation coverage via
+ *      scripts/db/rls-coverage-check.sql.
  *
  * The authoring subsystem in step 4 is the ONE db/migrations/ exception run
  * here. It is included precisely because it is NOT part of the *_gcc_* tree
@@ -185,6 +191,407 @@ function targetTable(sql) {
   return m ? m[1] : null;
 }
 
+/**
+ * ── Schema provenance ─────────────────────────────────────────────────────────
+ *
+ * The installer has THREE creators, and until now it never said which one
+ * produced any given table:
+ *
+ *   1. `drizzle-kit push` from the entrypoint in drizzle.config.ts,
+ *   2. the raw `migrations/` overlay,
+ *   3. the authoring subsystem and the governed-content (*_gcc_*) tree.
+ *
+ * "It reported 786 tables" is not an answer to "where did stability_studies
+ * come from" — and that question is exactly what an operator debugging a
+ * missing capability needs answered. So a snapshot of the public base tables is
+ * taken after each creator runs, and every required object is reported with the
+ * step that actually created it.
+ *
+ * This is also the evidence for the entrypoint decision itself. drizzle.config.ts
+ * points at shared/schema.ts, NOT the shared/schema/index.ts barrel. The barrel
+ * reaches 175 more tables, but 172 of them are already created by the raw
+ * overlay — pushing them too would give those tables a SECOND creator with a
+ * possibly different shape, which is the parallel-implementation failure this
+ * repo forbids, and introspecting an already-provisioned database to do it takes
+ * minutes. The remaining 3 (module_documents, document_audit_logs,
+ * document_attachments) are provisioned by their own raw migration
+ * (migrations/20260729b_unified_workflow_companion_tables.sql), on the same
+ * terms as 20260729_unified_documents_provision.sql. So shared/schema.ts stays
+ * canonical, no table has two creators, and this report proves it per table.
+ */
+const schemaSources = [];
+function recordSchemaSource(label, tables) {
+  schemaSources.push({ label, tables });
+}
+
+/** The public base tables present right now. */
+async function snapshotPublicTables() {
+  const { rows } = await pool.query(
+    `SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+  );
+  return new Set(rows.map((r) => r.table_name));
+}
+
+/** The step that first created `table`, or null when nothing created it. */
+function sourceOf(table) {
+  let previous = new Set();
+  for (const { label, tables } of schemaSources) {
+    if (tables.has(table) && !previous.has(table)) return label;
+    previous = tables;
+  }
+  return null;
+}
+
+/**
+ * The drizzle entrypoint actually in effect, read from drizzle.config.ts.
+ *
+ * Reported, never guessed: if the config cannot be read or the `schema` field
+ * cannot be found, that is said plainly rather than printing a plausible
+ * default. An installer that names the wrong schema source is worse than one
+ * that admits it does not know, because the wrong name sends the next operator
+ * to the wrong file.
+ */
+function resolveDrizzleEntrypoint() {
+  const configPath = path.resolve(__dirname, '..', '..', 'drizzle.config.ts');
+  let text;
+  try {
+    text = fs.readFileSync(configPath, 'utf8');
+  } catch (err) {
+    return { path: null, detail: `drizzle.config.ts unreadable: ${err.message}` };
+  }
+  const m = text.match(/\bschema\s*:\s*['"]([^'"]+)['"]/);
+  if (!m) {
+    return { path: null, detail: 'drizzle.config.ts has no literal `schema:` field' };
+  }
+  const entry = m[1];
+  const full = path.resolve(path.dirname(configPath), entry);
+  return {
+    path: entry,
+    detail: fs.existsSync(full) ? null : `declared entrypoint ${entry} does not exist on disk`,
+  };
+}
+
+/**
+ * ── Required-object contract ──────────────────────────────────────────────────
+ *
+ * Verification used to be a table COUNT plus a presence list. A count cannot
+ * tell the difference between a table that exists and a table that exists with
+ * the wrong columns, no primary key, no foreign keys, and no RLS policy — and
+ * every one of those ships a capability that is broken in a different way:
+ *
+ *   • missing column      → the route 500s on its first SELECT;
+ *   • missing FK          → orphan rows accumulate and DELETE cascades silently
+ *                           do not cascade;
+ *   • missing index       → the declared query pattern seq-scans the table;
+ *   • missing RLS policy  → a tenant-keyed table stays fully readable across
+ *                           tenants even under RLS_ENFORCE=on, because there is
+ *                           no predicate to filter it;
+ *   • policy on the WRONG   → the opposite failure, and just as broken: the
+ *     tenant column            predicate compares a column no writer stamps, so
+ *                              every tenant-scoped read returns zero rows and
+ *                              every write is refused.
+ *
+ * So each entry names a CAPABILITY and the objects that capability actually
+ * needs. Anything missing is a shortfall by name, and the success banner is
+ * withheld. `tenantColumn: null` means the table is deliberately global (a
+ * registry with no tenant scope) and is expected to carry no RLS policy —
+ * stated, not inferred from its absence.
+ */
+const REQUIRED_OBJECT_CONTRACT = [
+  {
+    table: 'stability_studies',
+    capability: 'CMC stability program (study registry, shelf-life evidence)',
+    columns: ['id', 'organization_id', 'study_title', 'product_name', 'study_type', 'status'],
+    foreignKeys: [
+      { column: 'organization_id', references: 'organizations' },
+      { column: 'study_director', references: 'users' },
+    ],
+    indexedColumns: ['organization_id'],
+    tenantColumn: 'organization_id',
+  },
+  {
+    table: 'project_intelligence_profiles',
+    capability: 'ANA project intelligence (per-project profile + readiness scoring)',
+    columns: [
+      'id',
+      'project_id',
+      'organization_id',
+      'regulatory_strategy',
+      'target_regulatory_bodies',
+      'project_type',
+      'therapeutic_area',
+    ],
+    foreignKeys: [
+      { column: 'organization_id', references: 'organizations' },
+      { column: 'project_id', references: 'projects' },
+    ],
+    indexedColumns: ['organization_id', 'project_id'],
+    tenantColumn: 'organization_id',
+  },
+  {
+    table: 'immutable_report_records',
+    capability: 'Report OS sealed records (Part 11 immutable report spine)',
+    columns: [
+      'id',
+      'organization_id',
+      'report_uuid',
+      'report_code',
+      'seal_status',
+      'content_hash',
+      'previous_hash',
+    ],
+    foreignKeys: [
+      { column: 'organization_id', references: 'organizations' },
+      { column: 'project_id', references: 'projects' },
+      { column: 'sealed_by_id', references: 'users' },
+    ],
+    indexedColumns: ['organization_id'],
+    tenantColumn: 'organization_id',
+  },
+  {
+    table: 'evidence_claims',
+    capability: 'Evidence fabric (extracted, versioned, verifiable claims)',
+    columns: [
+      'id',
+      'organization_id',
+      'claim_text',
+      'claim_type',
+      'is_current',
+      'version',
+      'confidence',
+    ],
+    foreignKeys: [],
+    indexedColumns: ['organization_id'],
+    tenantColumn: 'organization_id',
+  },
+  {
+    table: 'conversation_working_memory',
+    capability: 'Conversation working memory (rolling summary + embeddings)',
+    columns: [
+      'id',
+      'conversation_id',
+      'organization_id',
+      'project_id',
+      'summary',
+      'message_count_at_generation',
+    ],
+    foreignKeys: [
+      { column: 'organization_id', references: 'organizations' },
+      { column: 'project_id', references: 'projects' },
+      { column: 'conversation_id', references: 'concept2cure_conversations' },
+    ],
+    indexedColumns: ['organization_id', 'conversation_id'],
+    tenantColumn: 'organization_id',
+  },
+  {
+    table: 'ana_capability_registry',
+    capability: 'ANA capability governance (intended use, risk tier, oversight)',
+    columns: [
+      'id',
+      'capability_key',
+      'category',
+      'slash_command',
+      'intended_use',
+      'risk_tier',
+      'human_oversight',
+      'gxp_applicable',
+    ],
+    foreignKeys: [],
+    indexedColumns: ['category'],
+    // Deliberately global: the capability catalogue is platform-wide, identical
+    // for every tenant, and carries no tenant column — so it is expected to have
+    // no RLS policy. Said here so its absence is a decision, not an oversight.
+    tenantColumn: null,
+  },
+  {
+    table: 'report_type_registry',
+    capability: 'Report OS type registry (scopes, dependencies, governance rules)',
+    columns: [
+      'id',
+      'type_id',
+      'label',
+      'family',
+      'allowed_scopes',
+      'governance_requirements',
+      'truthfulness_rules',
+      'enabled',
+    ],
+    foreignKeys: [],
+    indexedColumns: ['family'],
+    // Global for the same reason as ana_capability_registry.
+    tenantColumn: null,
+  },
+];
+
+/**
+ * Verify REQUIRED_OBJECT_CONTRACT against the live catalog.
+ *
+ * Returns { lines, shortfalls } — `lines` is what to print (one per capability,
+ * naming the step that created it), `shortfalls` is every missing object.
+ */
+async function verifyRequiredObjects() {
+  const names = REQUIRED_OBJECT_CONTRACT.map((c) => c.table);
+
+  const present = new Set(
+    (
+      await pool.query(
+        `SELECT table_name FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+            AND table_name = ANY($1::text[])`,
+        [names],
+      )
+    ).rows.map((r) => r.table_name),
+  );
+
+  const columns = new Map();
+  for (const row of (
+    await pool.query(
+      `SELECT table_name, column_name FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = ANY($1::text[])`,
+      [names],
+    )
+  ).rows) {
+    if (!columns.has(row.table_name)) columns.set(row.table_name, new Set());
+    columns.get(row.table_name).add(row.column_name);
+  }
+
+  // Primary keys and foreign keys, read from pg_constraint so a constraint that
+  // exists under any name is recognised (names are generated and vary by
+  // creator; the SHAPE is what the contract is about).
+  const primaryKeys = new Set(
+    (
+      await pool.query(
+        `SELECT c.relname FROM pg_constraint con
+           JOIN pg_class c ON c.oid = con.conrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public' AND con.contype = 'p' AND c.relname = ANY($1::text[])`,
+        [names],
+      )
+    ).rows.map((r) => r.relname),
+  );
+
+  const foreignKeys = new Set(
+    (
+      await pool.query(
+        `SELECT c.relname AS tbl, att.attname AS col, ref.relname AS target
+           FROM pg_constraint con
+           JOIN pg_class c ON c.oid = con.conrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+           JOIN pg_class ref ON ref.oid = con.confrelid
+           JOIN unnest(con.conkey) AS k(attnum) ON true
+           JOIN pg_attribute att ON att.attrelid = c.oid AND att.attnum = k.attnum
+          WHERE n.nspname = 'public' AND con.contype = 'f' AND c.relname = ANY($1::text[])`,
+        [names],
+      )
+    ).rows.map((r) => `${r.tbl}.${r.col}->${r.target}`),
+  );
+
+  // An index "covers" a column when that column is the index's LEADING column —
+  // the only position Postgres can use for a lookup on that column alone.
+  const leadingIndexColumns = new Set(
+    (
+      await pool.query(
+        `SELECT c.relname AS tbl, att.attname AS col
+           FROM pg_index idx
+           JOIN pg_class c ON c.oid = idx.indrelid
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+           JOIN pg_attribute att ON att.attrelid = c.oid AND att.attnum = idx.indkey[0]
+          WHERE n.nspname = 'public' AND idx.indisvalid AND c.relname = ANY($1::text[])`,
+        [names],
+      )
+    ).rows.map((r) => `${r.tbl}.${r.col}`),
+  );
+
+  // RLS posture, including WHICH COLUMN the policy actually keys on.
+  //
+  // "a policy exists" is not the property. 0021 used to attach the policy to the
+  // alphabetically-last tenant column, so six tables ended up policied on a
+  // NULLABLE adapter `tenant_id` that no writer stamps — `NULL = <tenant>` is
+  // NULL, so every read returned zero rows and every INSERT was refused, while
+  // the policy count and the coverage gate both reported green. The deparsed
+  // policy renders the predicate as `(<column> = (NULLIF(…))::integer)`, so the
+  // declared tenant column must appear in that form.
+  const rls = new Map(
+    (
+      await pool.query(
+        `SELECT c.relname,
+                c.relrowsecurity AS enabled,
+                (SELECT count(*)::int FROM pg_policies p
+                  WHERE p.schemaname = 'public' AND p.tablename = c.relname) AS policies,
+                (SELECT string_agg(COALESCE(p.qual, ''), ' ') FROM pg_policies p
+                  WHERE p.schemaname = 'public' AND p.tablename = c.relname) AS quals
+           FROM pg_class c
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])`,
+        [names],
+      )
+    ).rows.map((r) => [r.relname, r]),
+  );
+
+  const lines = [];
+  const shortfalls = [];
+
+  for (const contract of REQUIRED_OBJECT_CONTRACT) {
+    const { table } = contract;
+    if (!present.has(table)) {
+      shortfalls.push(`${table} is ABSENT — capability unavailable: ${contract.capability}`);
+      lines.push(`    ✗ ${table} — ABSENT (${contract.capability})`);
+      continue;
+    }
+
+    const missing = [];
+    const cols = columns.get(table) ?? new Set();
+    const missingColumns = contract.columns.filter((c) => !cols.has(c));
+    if (missingColumns.length) missing.push(`column(s) ${missingColumns.join(', ')}`);
+
+    if (!primaryKeys.has(table)) missing.push('primary key');
+
+    const missingFks = contract.foreignKeys.filter(
+      (fk) => !foreignKeys.has(`${table}.${fk.column}->${fk.references}`),
+    );
+    if (missingFks.length) {
+      missing.push(
+        `foreign key(s) ${missingFks.map((fk) => `${fk.column}→${fk.references}`).join(', ')}`,
+      );
+    }
+
+    const missingIndexes = (contract.indexedColumns ?? []).filter(
+      (c) => cols.has(c) && !leadingIndexColumns.has(`${table}.${c}`),
+    );
+    if (missingIndexes.length) missing.push(`index on ${missingIndexes.join(', ')}`);
+
+    const posture = rls.get(table);
+    if (contract.tenantColumn) {
+      if (!cols.has(contract.tenantColumn)) {
+        missing.push(`tenant column ${contract.tenantColumn}`);
+      } else if (!posture?.enabled) {
+        missing.push('row-level security not enabled');
+      } else if (!(posture.policies > 0)) {
+        missing.push('no RLS policy');
+      } else if (!String(posture.quals ?? '').includes(`(${contract.tenantColumn} = `)) {
+        missing.push(
+          `RLS policy does not key on ${contract.tenantColumn} (it is attached to a different ` +
+            'column, so every tenant-scoped read returns zero rows and every write is refused)',
+        );
+      }
+    }
+
+    const from = sourceOf(table) ?? 'unknown step';
+    if (missing.length) {
+      shortfalls.push(`${table} incomplete — missing ${missing.join('; ')} (${contract.capability})`);
+      lines.push(`    ✗ ${table} — missing ${missing.join('; ')}`);
+    } else {
+      const scope = contract.tenantColumn
+        ? `RLS on ${contract.tenantColumn}`
+        : 'global (no tenant scope, no policy expected)';
+      lines.push(`    ✓ ${table} — from ${from} · ${scope}`);
+    }
+  }
+
+  return { lines, shortfalls };
+}
+
 async function step(label, fn) {
   process.stdout.write(`\n▶ ${label}\n`);
   await fn();
@@ -282,6 +689,22 @@ async function main() {
   });
 
   await step('2/8 Tables — drizzle-kit push', async () => {
+    // Baseline BEFORE any creator runs: on a truly empty database this is
+    // empty, and on a re-run it is everything a previous run left behind. Both
+    // are needed for the provenance report to be honest — on a re-run nothing
+    // is "created by" this run, and saying so beats attributing every table to
+    // whichever step happened to run first.
+    recordSchemaSource('pre-existing (before this run)', await snapshotPublicTables());
+
+    const entrypoint = resolveDrizzleEntrypoint();
+    if (entrypoint.path) {
+      console.log(`  • schema source: drizzle-kit push from ${entrypoint.path} (drizzle.config.ts)`);
+    }
+    if (entrypoint.detail) {
+      console.log(`  ⚠ ${entrypoint.detail}`);
+      recordIncomplete('drizzle schema entrypoint', entrypoint.detail);
+    }
+
     if (pgvectorAvailable) {
       // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
       // destructive changes so it proceeds. Inherit env so drizzle.config.ts
@@ -457,6 +880,8 @@ async function main() {
     }
   });
 
+  recordSchemaSource(`drizzle-kit push (${resolveDrizzleEntrypoint().path ?? 'drizzle.config.ts'})`, await snapshotPublicTables());
+
   await step('3/8 Complete schema — raw migration overlay', async () => {
     // drizzle-kit push lays down ONLY shared/schema.ts. The core product tables
     // — regulatory_programs, c2c_documents / c2c_document_sections /
@@ -527,10 +952,16 @@ async function main() {
     const CLASSIFIED_OVERLAY_SKIPS = new Map([
       ['0008_critical_fk_delete_policies.sql',
         'superseded by db/migrations/20260730_fk_delete_policies_port.sql (guarded port applied pre-overlay); the original aborts on retired user_sessions'],
-      ['0004_workflow_performance_indexes.sql',
-        'indexes unified_documents — push-vs-overlay identity collision, ledger C-29 (only creator also redefines users/tenants with TEXT keys)'],
-      ['0007_tenant_isolation_fixes.sql',
-        'policies unified_documents — same C-29 collision as 0004'],
+      // 0004_workflow_performance_indexes.sql and 0007_tenant_isolation_fixes.sql
+      // were classified-skipped here for the ledger C-29 collision. They were
+      // not actually blocked by that collision: 0004 needed document_audit_logs
+      // and 0007 needed module_documents, and those two tables (plus
+      // document_attachments) simply had NO creator on any provisioning path —
+      // defined only in shared/schema/unified_workflow.ts, which the pushed
+      // entrypoint does not re-export. migrations/20260729b_unified_workflow_companion_tables.sql
+      // provisions all three with the canonical Drizzle shape, on the same terms
+      // as 20260729_unified_documents_provision.sql did for their siblings, so
+      // both files now apply for real and are no longer expected skips.
       // 001_create_ivdr_tables.sql was classified-skipped here ("needs a
       // rename decision") because its rival shape-1 CREATE of
       // ivdr_classifications collided with the push shape. The D11d IVDR
@@ -556,6 +987,20 @@ async function main() {
 
     const done = new Set();
     const lastErr = new Map();
+    /**
+     * Files that failed for a reason that will NOT resolve on a later pass.
+     *
+     * These were counted (`hard=N` in the per-pass line), printed, and then
+     * dropped on the floor: nothing recorded them, so a migration that errored
+     * outright did not stop the installer printing "✅ Application schema
+     * install complete." That is the exact failure this script exists to
+     * prevent, one level down. A re-run made it concrete —
+     * 0007_tenant_isolation_fixes.sql aborts on an already-policied
+     * unified_documents, and the run still exited 0.
+     *
+     * A hard failure is now a shortfall unless it is classified below.
+     */
+    const hardFailures = new Map();
     let applied = 0;
     let present = 0;
 
@@ -606,7 +1051,9 @@ async function main() {
             done.add(file); // a hard failure won't self-resolve — record + move on
             hard++;
             progressed = true;
-            console.log(`  ⚠ ${file}: ${(err.message || '').split('\n')[0]}`);
+            const why = (err.message || '').split('\n')[0];
+            hardFailures.set(file, why);
+            console.log(`  ⚠ ${file}: ${why}`);
           }
         }
       }
@@ -617,8 +1064,29 @@ async function main() {
       if (!progressed) break;
     }
 
+    // Hard failures that are not a documented, classified skip are shortfalls.
+    const unclassifiedHard = [...hardFailures].filter(([f]) => !CLASSIFIED_OVERLAY_SKIPS.has(f));
+    if (unclassifiedHard.length) {
+      console.log(
+        `  ⚠ ${unclassifiedHard.length} file(s) failed outright (not a classified skip). ` +
+          'Each ran and errored — this is not a deferred dependency:',
+      );
+      for (const [f, why] of unclassifiedHard) console.log(`      ${f} — ${why}`);
+      recordIncomplete(
+        'raw migration overlay',
+        `${unclassifiedHard.length} file(s) failed outright: ` +
+          unclassifiedHard.map(([f, why]) => `${f} (${why})`).join(' | '),
+      );
+    }
+
     const remainingAll = files.filter((f) => !done.has(f));
-    const classified = remainingAll.filter((f) => CLASSIFIED_OVERLAY_SKIPS.has(f));
+    // A classified file can leave the loop two ways: still deferred (its
+    // dependency never appeared) or hard-failed. Both are the documented
+    // outcome, so report either — otherwise a classified file that hard-fails
+    // vanishes from the report entirely.
+    const classified = [
+      ...new Set([...remainingAll, ...hardFailures.keys()].filter((f) => CLASSIFIED_OVERLAY_SKIPS.has(f))),
+    ].sort();
     const remaining = remainingAll.filter((f) => !CLASSIFIED_OVERLAY_SKIPS.has(f));
     if (classified.length) {
       console.log(
@@ -627,7 +1095,7 @@ async function main() {
       );
       for (const f of classified) {
         console.log(`      ${f} — ${CLASSIFIED_OVERLAY_SKIPS.get(f)}`);
-        console.log(`        last error: ${lastErr.get(f) || '(none recorded)'}`);
+        console.log(`        last error: ${lastErr.get(f) || hardFailures.get(f) || '(none recorded)'}`);
       }
     }
     if (remaining.length) {
@@ -651,6 +1119,8 @@ async function main() {
     console.log(`  ✓ overlay: ${applied} applied, ${present} already-present from push`);
   });
 
+  recordSchemaSource('raw migrations/ overlay', await snapshotPublicTables());
+
   await step('4/8 Authoring subsystem (Part-11 unit)', async () => {
     // The four db/migrations/20260725_authoring_* files back the flagship IND
     // authoring loop and, until now, had NO durable provisioning path — the
@@ -662,6 +1132,8 @@ async function main() {
       log: (m) => console.log(m),
     });
   });
+
+  recordSchemaSource('authoring subsystem (db/migrations/20260725_authoring_*)', await snapshotPublicTables());
 
   await step('5/8 Row-Level Security policies (raw migrations)', async () => {
     // The RLS rollout (0021) hard-fails if ANY tenant column is still text.
@@ -837,7 +1309,45 @@ async function main() {
         `${failed.length} of ${gccFiles.length} file(s) failed: ${failed.join(' | ')}`,
       );
     }
+
+    // ── Close the sweep over what this tree just created ────────────────────
+    // 0021 (step 5) policies every integer tenant-keyed table that exists WHEN
+    // IT RUNS. This tree runs after it and adds more — 063_gcc_cognitive_agent_runtime.sql
+    // alone creates three public tables with an integer tenant_id and no RLS of
+    // its own. They shipped cross-tenant readable on every fresh install, and
+    // nothing said so: a policy COUNT goes up when tables like these are added,
+    // so counting policies could never catch it.
+    //
+    // db/migrations/20260801_tenant_isolation_sweep.sql is 0021's loop made
+    // re-runnable — same policy shape, same canonical allowlist, guarded so it
+    // never overwrites a subsystem's hand-tuned policy. It is the LAST entry in
+    // C2C_MIGRATION_FILES for exactly this reason on the deploy path; the
+    // install path needs it for the same reason and did not have it. Reusing
+    // the file rather than re-implementing the loop keeps one canonical sweep.
+    const sweepPath = path.resolve(gccDir, '20260801_tenant_isolation_sweep.sql');
+    if (!fs.existsSync(sweepPath)) {
+      recordIncomplete(
+        'tenant isolation sweep',
+        `${path.relative(process.cwd(), sweepPath)} is missing — tables created after 0021 ` +
+          'would keep no RLS policy',
+      );
+      return;
+    }
+    try {
+      await pool.query(fs.readFileSync(sweepPath, 'utf8'));
+      console.log('  ✓ tenant-isolation sweep re-run over the tables this tree created');
+    } catch (err) {
+      const why = (err.message || '').split('\n')[0];
+      console.log(`  ⚠ tenant-isolation sweep failed: ${why}`);
+      recordIncomplete(
+        'tenant isolation sweep',
+        `20260801_tenant_isolation_sweep.sql failed: ${why} — tenant-keyed tables created by the ` +
+          'governed-content tree may carry no RLS policy',
+      );
+    }
   });
+
+  recordSchemaSource('governed content (db/migrations/*_gcc_*)', await snapshotPublicTables());
 
   await step('7/8 Runtime role — non-superuser app_service grants', async () => {
     // The RLS unlock. Everything above ran as the owner/admin (DATABASE_URL),
@@ -940,6 +1450,56 @@ async function main() {
       verifyFail(
         'authoring subsystem',
         `authoring subsystem incomplete (authoring routes would throw; /readyz would fail closed): missing ${missingAuthoring.join(', ')}`,
+      );
+    }
+
+    // ── Required-object contract ─────────────────────────────────────────
+    // Tables, columns, primary keys, foreign keys, indexes and RLS policies for
+    // every capability this installer must land. A table COUNT cannot tell a
+    // working capability from a table with the wrong columns and no policy;
+    // this can. See REQUIRED_OBJECT_CONTRACT.
+    const required = await verifyRequiredObjects();
+    console.log(
+      `  required objects: ${REQUIRED_OBJECT_CONTRACT.length - required.shortfalls.length}/` +
+        `${REQUIRED_OBJECT_CONTRACT.length} capabilities complete`,
+    );
+    for (const line of required.lines) console.log(line);
+    for (const shortfall of required.shortfalls) {
+      verifyFail('required objects', `required object contract not met: ${shortfall}`);
+    }
+
+    // ── Tenant-isolation coverage ────────────────────────────────────────────
+    // The repo's own gate (scripts/db/rls-coverage-check.sql), run here rather
+    // than reimplemented: every integer tenant-keyed base table, in EVERY
+    // schema, minus the pinned allowlist, must carry a policy. Its allowlist is
+    // kept in sync with 0021 and the deploy sweep by
+    // scripts/ci/check-rls-allowlist-sync.mjs, so running the file itself is
+    // the only way to stay on that single source of truth.
+    //
+    // A count of 802 policies says nothing about WHICH tables have one. A table
+    // that gained a tenant column after 0021 ran — anything the overlay or the
+    // governed-content tree adds later — is org-keyed and unprotected, and the
+    // count goes UP when that happens. This names them.
+    const coverageSqlPath = path.resolve(__dirname, 'rls-coverage-check.sql');
+    if (fs.existsSync(coverageSqlPath)) {
+      const unprotected = (
+        await pool.query(fs.readFileSync(coverageSqlPath, 'utf8'))
+      ).rows.map((r) => r.unprotected);
+      if (unprotected.length) {
+        verifyFail(
+          'tenant isolation coverage',
+          `${unprotected.length} tenant-keyed table(s) carry no RLS policy — rows are readable ` +
+            `across tenants once anything reads them: ${unprotected.slice(0, 15).join(', ')}` +
+            (unprotected.length > 15 ? `, …and ${unprotected.length - 15} more` : ''),
+        );
+      } else {
+        console.log('  tenant isolation: every integer tenant-keyed table is policied ✓');
+      }
+    } else {
+      verifyFail(
+        'tenant isolation coverage',
+        `${path.relative(process.cwd(), coverageSqlPath)} is missing — tenant-isolation coverage ` +
+          'could not be checked, so this install is not verified against cross-tenant reads',
       );
     }
 

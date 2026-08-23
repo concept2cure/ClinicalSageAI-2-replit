@@ -38,6 +38,13 @@ const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
 const baselinePath = path.join(repoRoot, '.typecheck-baseline.json');
 
+
+/** Installed TypeScript version, for the config-failure message. Best-effort. */
+function tscVersion() {
+  const r = spawnSync('npx', ['tsc', '--version'], { cwd: repoRoot, encoding: 'utf8' });
+  return (r.stdout || r.stderr || 'unknown').trim();
+}
+
 const args = process.argv.slice(2);
 const writeBaseline = args.includes('--write-baseline');
 
@@ -112,6 +119,53 @@ if (abnormal) {
   console.error(
     combined.split('\n').slice(-40).map((l) => `    ${l}`).join('\n')
   );
+  process.exit(1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Did the compiler check anything AT ALL?
+//
+// THE SECOND INCIDENT. The guard above catches a compiler that died. It does
+// not catch a compiler that ran perfectly and checked nothing.
+//
+// On 2026-08-13 Dependabot bumped typescript 5.6.3 -> 7.0.2 (1b3c154). TS 7
+// removed `baseUrl` and `moduleResolution: node10`, both of which tsconfig.json
+// used. From that commit tsc rejected the CONFIG and typechecked ZERO FILES —
+// while exiting 1 and printing five well-formed `error TS` lines. Every guard
+// here passed: the process completed, the status was 1, the count parsed. The
+// gate reported "error count 5 exceeds baseline 0" and told the operator to
+// either fix the errors or run write-baseline.
+//
+// Following that advice would have written errorCount: 5 and turned the gate
+// permanently green over a typechecker that checks nothing. Nobody ran it, so
+// instead the repo simply had no typechecking for a week, and a silently
+// deleted endpoint went unnoticed because the gate that existed to catch it
+// was inert.
+//
+// A config diagnostic is categorically different from a type error and must
+// never be counted as one. tsc reports them against the tsconfig file itself,
+// and they carry the TS5xxx / TS6xxx "option" codes. When any appear, the
+// number below describes nothing about the source tree.
+// ─────────────────────────────────────────────────────────────────────────────
+const configDiagnostics = combined
+  .split('\n')
+  .filter((line) => /error TS/.test(line))
+  .filter((line) => /^\s*tsconfig[\w.-]*\.json\(/.test(line) || /error TS[56]\d{3}:/.test(line));
+
+if (configDiagnostics.length > 0) {
+  console.error(
+    '[ci:typecheck-no-regression] FAIL — tsc rejected the CONFIG, so NOTHING was typechecked.'
+  );
+  console.error('');
+  for (const line of configDiagnostics) console.error(`    ${line}`);
+  console.error('');
+  console.error('  This is not a type regression and the error count means nothing here.');
+  console.error('  Fix tsconfig.json for the installed TypeScript, then re-run.');
+  console.error(`  installed TypeScript: ${tscVersion()}`);
+  console.error('');
+  console.error('  Do NOT run write-baseline to clear this. Baselining a run that');
+  console.error('  checked zero files leaves the gate green over a dead typechecker —');
+  console.error('  which is exactly how this went unnoticed for a week in 2026-08.');
   process.exit(1);
 }
 

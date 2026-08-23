@@ -18,6 +18,7 @@ import {
 } from '../../services/module3-convergence-service';
 import { composeModule3FromCanonicalSources, impactedSectionsForSourceType, CmcSourceType } from '../../services/module3Composer';
 import { createSourceHash } from '../../services/cmc-module3-compiler';
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 
 const router = express.Router();
 
@@ -179,18 +180,28 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
 
     await client.query('COMMIT');
 
-    // 6. Auto-bridge to governed artifact
+    // 6. Auto-bridge to governed artifact. A bridge that could not run is
+    // reported, not swallowed — the old catch-and-warn hid the spine break.
     let bridgedArtifact: { artifactId: string; isNew: boolean } | null = null;
+    let bridgeSkip: { reason: string; detail: string } | null = null;
     try {
-      bridgedArtifact = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
+      const bridged = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
         narrativeDraft: section.narrativeDraft,
         tables: section.tables,
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
       });
+      if (bridged.bridged) {
+        bridgedArtifact = { artifactId: bridged.artifactId, isNew: bridged.isNew };
+      } else {
+        bridgeSkip = { reason: bridged.reason, detail: bridged.detail };
+      }
     } catch (bridgeErr) {
-      console.warn(`Bridge to artifact failed for ${sectionKey}:`, bridgeErr);
+      bridgeSkip = {
+        reason: 'error',
+        detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+      };
     }
 
     return res.json({
@@ -202,6 +213,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
         narrativePreview: section.narrativeDraft.substring(0, 500),
         sourceCount: section.lineage.length,
         bridgedArtifact,
+        bridgeSkip,
       },
     });
   } catch (error) {
@@ -250,15 +262,20 @@ router.get('/source-lineage/:projectId/:sectionKey', async (req, res) => {
         )
       : { rows: [] };
 
-    // Get governed artifact
-    const artifactRes = await pool.query(
-      `SELECT id, artifact_id as "artifactId", title, status, version,
-              metadata, updated_at as "updatedAt"
-       FROM concept2cure_artifacts
-       WHERE organization_id = $1 AND project_id = $2 AND ctd_section = $3
-       ORDER BY version DESC LIMIT 1`,
-      [orgId, projectId, sectionKey]
-    );
+    // Get governed artifact — via the integer artifact spine; the raw TEXT
+    // project id aborts this query for uuid programs (22P02).
+    const spine = await resolveCmcArtifactProject(orgId, projectId);
+    const artifactRes =
+      spine.state === 'linked'
+        ? await pool.query(
+            `SELECT id, artifact_id as "artifactId", title, status, version,
+                    metadata, updated_at as "updatedAt"
+             FROM concept2cure_artifacts
+             WHERE organization_id = $1 AND project_id = $2 AND ctd_section = $3
+             ORDER BY version DESC LIMIT 1`,
+            [orgId, spine.artifactProjectId, sectionKey]
+          )
+        : { rows: [] as any[] };
 
     // Check for hash drift (source changed since compile)
     const driftingSources = lineageRes.rows.filter(
@@ -272,6 +289,9 @@ router.get('/source-lineage/:projectId/:sectionKey', async (req, res) => {
         compiled: sectionRes.rows[0] || null,
         sourceObjects: lineageRes.rows,
         governedArtifact: artifactRes.rows[0] || null,
+        // Distinguishes "no artifact" from "registry not addressable".
+        artifactRegistry:
+          spine.state === 'linked' ? { state: 'linked' } : { state: spine.state, detail: spine.detail },
         driftingSources: driftingSources.map((d: any) => ({
           sourceObjectId: d.sourceObjectId,
           sourceType: d.sourceType,

@@ -38,7 +38,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
-import { cmcProjectUuid, cmcWriteError, openProgramAction } from './cmcShared';
+import { cmcProjectUuid, cmcWriteError } from './cmcShared';
+import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 
 /* ── Read models (mirrors of the service types) ──────────────────────────── */
@@ -638,7 +639,7 @@ function Head({ ask, actions }: { ask: (text: string) => void; actions?: React.R
     <>
       <div className="cm-head">
         <div>
-          <div className="cm-kicker">CMC -- Module 3 operating system</div>
+          <div className="cm-kicker">CMC — Module 3 operating system</div>
           <h1 className="cm-title">Quality by design</h1>
           <div className="cm-meta">CQAs and CPPs derived from your own records, the control strategy over them, and the ICH check</div>
         </div>

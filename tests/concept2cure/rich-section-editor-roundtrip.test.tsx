@@ -21,6 +21,8 @@ import { Editor, generateJSON } from '@tiptap/core';
 import type { JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { TableKit } from '@tiptap/extension-table';
+import Superscript from '@tiptap/extension-superscript';
+import Subscript from '@tiptap/extension-subscript';
 
 import {
   assessFidelity,
@@ -35,6 +37,8 @@ import { CommentAnchor } from '../../client/src/concept2cure/v2/editor/commentAn
 const EXTENSIONS = [
   StarterKit,
   TableKit.configure({ table: { resizable: false } }),
+  Superscript,
+  Subscript,
   TrackChanges,
   CommentAnchor,
 ];
@@ -174,5 +178,54 @@ describe('round-trip fidelity gate', () => {
     // And the words arrive in order, unfused across the break.
     expect(back).toContain('Line one');
     expect(back).toContain('Line two');
+  });
+});
+
+/**
+ * BP-W1-1 — the editor must be able to MAKE the content a CTD needs, not just
+ * round-trip content that arrives by paste.
+ */
+describe('BP-W1-1 authoring capabilities', () => {
+  it('superscript and subscript survive as formatting, not just as text', () => {
+    // Before the extensions were wired in, "cm<sup>2</sup>" parsed to plain
+    // "cm2": the fidelity gate passed (no TEXT was lost) while the meaning
+    // changed — the silent-flatten defect this pins.
+    const stored = '<p>Body surface area in cm<sup>2</sup>; CO<sub>2</sub> headspace ≤ 5%.</p>';
+    const { html1, html2 } = roundTrip(stored);
+    expect(html2).toBe(html1);
+    expect(html1).toContain('<sup>');
+    expect(html1).toContain('<sub>');
+  });
+
+  it('a stability table can be AUTHORED with the editor commands and serializes as a real table', () => {
+    // The ribbon's insert-table button runs exactly this chain. 3 storage
+    // conditions × timepoint columns — the wave-gate shape, built from
+    // nothing rather than pasted.
+    const ed = makeEditor('<p></p>');
+    ed.chain().focus().insertTable({ rows: 4, cols: 3, withHeaderRow: true }).run();
+    ed.chain().focus().insertContent('Condition').run();
+    const html = ed.getHTML();
+    ed.destroy();
+    expect(html).toContain('<table');
+    expect(html).toContain('<th');
+    expect((html.match(/<tr>/g) ?? []).length).toBe(4);
+    expect(html).toContain('Condition');
+
+    // And the authored table re-parses as itself: authoring → save → reload.
+    const { html1, html2 } = roundTrip(html);
+    expect(html2).toBe(html1);
+    expect(html1).toContain('<table');
+  });
+
+  it('table structure commands work against an authored table', () => {
+    const ed = makeEditor('<p></p>');
+    ed.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: true }).run();
+    ed.chain().focus().addRowAfter().run();
+    ed.chain().focus().addColumnAfter().run();
+    const html = ed.getHTML();
+    ed.destroy();
+    expect((html.match(/<tr>/g) ?? []).length).toBe(3);
+    // 3 columns in the header row after addColumnAfter.
+    expect((html.match(/<th[\s>]/g) ?? []).length).toBe(3);
   });
 });

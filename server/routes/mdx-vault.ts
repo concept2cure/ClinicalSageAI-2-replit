@@ -6,6 +6,13 @@
  *   GET /api/mdx/vault/:artifactId         artifact metadata + linked sections
  *   GET /api/mdx/vault/:artifactId/versions  version history rows
  *
+ * Reads BOTH halves of the vault and merges them:
+ *   • concept2cure_artifacts — documents AUTHORED in the product
+ *   • vault.documents        — files UPLOADED via POST /api/vault/ingest
+ * Each row carries `source: 'authored' | 'upload'`. Before this they were two
+ * unrelated tables and only the first was listed, so a file uploaded into the
+ * vault did not appear in the vault.
+ *
  * Reads from concept2cure_artifacts (existing table, see schema.ts:5276).
  * concept2cure_artifacts.project_id is the legacy projects.id (numeric).
  * Regulatory programs are uuid-keyed; the bridge between the two is
@@ -68,6 +75,29 @@ interface VaultRow {
   updated_at:       Date;
   locked_at:        Date | null;
   metadata:         Record<string, unknown> | null;
+}
+
+/* A row from `vault.documents` — the UPLOADED half of the vault.
+ *
+ * Deliberately a separate shape from VaultRow above: an authored artifact and
+ * an uploaded file share a surface, not a schema. `id` is a uuid here and an
+ * integer there; `version` is TEXT here and an integer there. Typing them as
+ * one row is how those differences turn into silent coercions. */
+interface UploadRow {
+  id:                string;
+  document_code:     string | null;
+  document_title:    string | null;
+  document_type:     string | null;
+  version:           string | null;
+  content_hash:      string | null;
+  file_name:         string | null;
+  file_size:         string | number | null;
+  mime_type:         string | null;
+  classification:    string | null;
+  processing_status: string | null;
+  created_by:        number | null;
+  created_at:        Date;
+  updated_at:        Date;
 }
 
 /* ─── GET /api/mdx/vault — list ───────────────────────────────────── */
@@ -143,27 +173,113 @@ router.get('/vault', async (req: Request, res: Response) => {
       return 'Working files';
     };
 
-    return ok(
-      res,
-      rows.map((r) => ({
-        id:           r.id,
-        artifactId:   r.artifact_id,
-        title:        r.title,
-        type:         r.type,
-        category:     r.category,
-        family:       familyOf(r.ctd_section),
-        ctdSection:   r.ctd_section,
-        status:       r.status,
-        version:      r.version,
-        contentHash:  r.content_hash,
-        createdById:  r.created_by_id,
-        createdAt:    r.created_at,
-        updatedAt:    r.updated_at,
-        lockedAt:     r.locked_at,
-        eSig:         Boolean((r.metadata as { eSig?: unknown } | null)?.eSig),
-      })),
-      { count: rows.length },
+    /* UPLOADED FILES, from the other half of the vault.
+     *
+     * This route lists `concept2cure_artifacts` — documents AUTHORED in the
+     * product. Files UPLOADED through `POST /api/vault/ingest` land in
+     * `vault.documents`, a different table with a different key. Nothing joined
+     * the two, so a user who uploaded a file into the vault was shown a vault
+     * that did not contain it: the upload succeeded, the surface stayed empty,
+     * and the only way to tell them apart was to query the database. Adding an
+     * upload control to the MDX surface without this would have shipped exactly
+     * that silent failure.
+     *
+     * A union rather than a migration of one table into the other: an authored
+     * artifact and an uploaded file are genuinely different records — one has
+     * versions and a CTD section, the other has bytes, a size and a content
+     * hash — and collapsing them would lose what each is for. `source` marks
+     * which is which so the surface never has to guess.
+     *
+     * Tenancy: `vault.documents` has no organization_id column, so the join
+     * through `regulatory_programs` IS the tenant predicate here, exactly as it
+     * is the ownership check on the ingest side. */
+    const uploadArgs: unknown[] = [orgId];
+    let uploadProgramFilter = '';
+    if (programId) {
+      uploadArgs.push(programId);
+      uploadProgramFilter = ` AND d.program_id = $${uploadArgs.length}::uuid`;
+    }
+    uploadArgs.push(limit);
+
+    let uploads: UploadRow[] = [];
+    try {
+      const uploaded = await pool.query<UploadRow>(
+        `SELECT d.id, d.document_code, d.document_title, d.document_type,
+                d.version, d.content_hash, d.file_name, d.file_size, d.mime_type,
+                d.classification, d.processing_status, d.created_by,
+                d.created_at, d.updated_at
+           FROM vault.documents d
+           JOIN regulatory_programs p
+             ON p.id = d.program_id AND p.organization_id = $1
+          WHERE d.deleted_at IS NULL${uploadProgramFilter}
+          ORDER BY d.updated_at DESC
+          LIMIT $${uploadArgs.length}`,
+        uploadArgs,
+      );
+      uploads = uploaded.rows;
+    } catch (uploadErr) {
+      /* The authored half is the established contract and must not be taken
+         down by the newer half. An environment whose vault schema has not been
+         reconciled (see migrations/20260821_vault_documents_canonical_shape.sql)
+         raises 42703/42P01 here; the honest response is the artifacts the route
+         has always returned, plus a log — not a 500 that loses both. */
+      log.warn('vault.documents unavailable — listing authored artifacts only', {
+        orgId,
+        code: (uploadErr as { code?: string })?.code,
+      });
+    }
+
+    const artifactRows = rows.map((r) => ({
+      id:           r.id,
+      artifactId:   r.artifact_id,
+      title:        r.title,
+      type:         r.type,
+      category:     r.category,
+      family:       familyOf(r.ctd_section),
+      ctdSection:   r.ctd_section,
+      status:       r.status,
+      version:      r.version,
+      contentHash:  r.content_hash,
+      createdById:  r.created_by_id,
+      createdAt:    r.created_at,
+      updatedAt:    r.updated_at,
+      lockedAt:     r.locked_at,
+      eSig:         Boolean((r.metadata as { eSig?: unknown } | null)?.eSig),
+      source:       'authored' as const,
+      fileSize:     null as number | null,
+      mimeType:     null as string | null,
+    }));
+
+    const uploadRows = uploads.map((d) => ({
+      id:           d.id,
+      artifactId:   d.document_code,
+      title:        d.document_title ?? d.file_name,
+      type:         d.document_type,
+      category:     d.classification,
+      family:       'Uploaded files',
+      ctdSection:   null,
+      status:       d.processing_status === 'INDEXED' ? 'final' : 'draft',
+      /* `version` is TEXT here and a number on the artifact side; the surface
+         renders `v${version}`, so the numeric prefix is what it can use. */
+      version:      Number.parseInt(String(d.version ?? '1'), 10) || 1,
+      contentHash:  d.content_hash,
+      createdById:  d.created_by,
+      createdAt:    d.created_at,
+      updatedAt:    d.updated_at,
+      /* An uploaded file is not locked by the authoring workflow. Reporting a
+         lock it does not have would render an e-signature state nobody set. */
+      lockedAt:     null,
+      eSig:         false,
+      source:       'upload' as const,
+      fileSize:     d.file_size == null ? null : Number(d.file_size),
+      mimeType:     d.mime_type,
+    }));
+
+    const merged = [...artifactRows, ...uploadRows].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
+
+    return ok(res, merged, { count: merged.length, authored: artifactRows.length, uploaded: uploadRows.length });
   } catch (err) {
     /* Fail closed on an un-migrated database: 42703 (undefined_column) can
        only reach here from the program filter above, and the honest answer is

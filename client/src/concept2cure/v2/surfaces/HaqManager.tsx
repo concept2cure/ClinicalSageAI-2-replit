@@ -107,7 +107,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   const effActiveId = activeId || qs[0]?.id || '';
 
   const HAQ_FORM: C2CFormConfig = {
-    eyebrow: 'HAQ -- log question',
+    eyebrow: 'HAQ — log question',
     title: 'Log an agency question',
     governed:
       'Logging an agency question persists it to the response package under the selected round; AnA decomposition and source-tracing follow.',
@@ -148,13 +148,13 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       });
       if (!res.ok) {
         // apiRequest only reaches here non-OK on 401 (auth); others throw.
-        fireToast('Could not log question -- sign in and retry', 'error');
+        fireToast('Could not log question — sign in and retry', 'error');
         return;
       }
       const body = await res.json().catch(() => null);
       const created = body?.data;
       if (!created || !created.id) {
-        fireToast('Could not log question -- unexpected response', 'error');
+        fireToast('Could not log question — unexpected response', 'error');
         return;
       }
       setExtra((xs) => [
@@ -289,10 +289,10 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM -- POST-SUBMISSION</div>
+            <div className="sec-kicker">PLATFORM — POST-SUBMISSION</div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
-              Agency information requests and lists of questions -- decomposed,
+              Agency information requests and lists of questions — decomposed,
               source-traced, answered with precedent, and governed onto the
               response package.
             </p>
@@ -356,7 +356,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     >
                       <span className="ico">{I.clock}</span>
                       <span>
-                        <b>{r.clockDays}d</b> of {r.clockTotal}d left -- due{' '}
+                        <b>{r.clockDays}d</b> of {r.clockTotal}d left — due{' '}
                         {r.due}
                       </span>
                     </div>
@@ -445,11 +445,11 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     <span className="ico">{I.sparkles}</span>
                     <div>
                       <div className="haq-analysis-l">
-                        AnA analysis -- what they are really asking
+                        AnA analysis — what they are really asking
                       </div>
                       <p>
                         {q.analysis ||
-                          'Not yet analyzed -- ask AnA to decompose what the agency is really asking.'}
+                          'Not yet analyzed — ask AnA to decompose what the agency is really asking.'}
                       </p>
                     </div>
                   </div>
@@ -463,7 +463,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     </div>
                     <p className="haq-resp-text">
                       {q.draft ||
-                        'No draft yet -- ask AnA to draft a source-traced response.'}
+                        'No draft yet — ask AnA to draft a source-traced response.'}
                     </p>
                     <div className="haq-cites">
                       <span className="haq-cites-l">Cited evidence</span>
@@ -537,7 +537,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                       )
                     ) : (
                       <span className="haq-approved">
-                        {I.checkCircle} Approved -- persisted to the HAQ store
+                        {I.checkCircle} Approved — persisted to the HAQ store
                         (e-signature &amp; package assembly still to come)
                       </span>
                     )}

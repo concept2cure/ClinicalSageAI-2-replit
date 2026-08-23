@@ -71,8 +71,102 @@ const INTERNALS = [
 
 /** Copy-bearing JSX attributes: `hint="…"` / `title={'…'}`. */
 const ATTR = /\b(hint|title|subtitle|placeholder|label|note|caption|message|desc|description)\s*=\s*\{?\s*["'`]([^"'`]{0,400})["'`]/g;
-/** JSX text between tags, excluding expressions. */
-const TEXT = />([^<>{}\n]{3,400})</g;
+/**
+ * JSX text runs.
+ *
+ * The original rule was `/>([^<>{}\n]{3,400})</` — copy had to sit between `>`
+ * and `<` on ONE line with no JSX expression anywhere between. Measured against
+ * the four shapes real copy takes, it caught one:
+ *
+ *   `<p>text</p>`                        caught
+ *   `<p>{I.icon} text</p>`               missed — text follows an expression
+ *   `<p>\n  text\n</p>`                  missed — the run spans lines
+ *   `<div>\n  {I.icon} text\n</div>`     missed — both
+ *
+ * Multi-line JSX is how nearly all copy in this codebase is formatted, and
+ * `{I.icon} label` is the dominant kicker idiom, so the gate reported zero
+ * findings while a live `/api/ind-checklist` sat in an IND Lifecycle eyebrow
+ * (UAT report BP-07). A gate that has only ever been seen to pass has not been
+ * tested.
+ *
+ * This run spans lines and tolerates embedded `{…}` expressions, which
+ * {@link jsxProse} then strips before the INTERNALS patterns are applied.
+ *
+ * Two things went wrong on the way to this rule, both worth leaving written
+ * down. Anchoring on `[>}]…[<{]` matched plain TypeScript, because a `}`
+ * ending one function and a `{` opening the next captured everything between.
+ * And `((?:[^<>]|\{[^{}]*\})*?)` — an alternation under a lazy quantifier —
+ * backtracks catastrophically and hung the gate on large files. A CI gate that
+ * hangs is worse than one that misses. What survives is a single bounded
+ * character class, linear to scan, filtered to prose below.
+ */
+const TEXT = />([^<>]{3,600})</g;
+
+/**
+ * The human-readable residue of a JSX text run, or '' if it is not copy.
+ *
+ * Strips embedded expressions, then rejects anything carrying the punctuation
+ * of code rather than prose. Without this the rule reads statements as
+ * sentences; with it, `{I.rocket} IND Lifecycle -- /api/ind-checklist` reduces
+ * to the sentence a user actually sees.
+ */
+function jsxProse(run) {
+  const text = run.replace(/\{[^{}]*\}/g, ' ').replace(/\s+/g, ' ').trim();
+  if (text.length < 3) return '';
+  if (/[;=()]|=>|\breturn\b|\bconst\b|\bimport\b/.test(text)) return '';
+  return text;
+}
+
+/**
+ * The blind spot `jsxProse` opened, and the rule that closes it.
+ *
+ * `jsxProse` strips `{...}` before matching, deliberately — without that,
+ * `{I.rocket} IND Lifecycle` reads as code and every icon becomes noise. But a
+ * string literal INSIDE the expression is rendered text too, and stripping the
+ * container took the literal with it. So this sailed through untouched:
+ *
+ *   <span className="bs-doc-prov">
+ *     {live ? '/api/ana-biostats' : 'Deterministic engine'} -- v1.0.0 — draft
+ *   </span>
+ *
+ * — an API route printed onto the provenance line of a statistical document, in
+ * the exact lane this gate exists to police. A second instance sat in
+ * ReportEngine on the same CSS class. Both are fixed; this stops the third.
+ *
+ * Deliberately narrow: only literals inside an expression container that holds
+ * NO call parenthesis. A ternary or member access renders its literals to the
+ * user; `apiRequest('/api/x')` does not, and telling them apart by paren is
+ * exact enough to carry an empty baseline without false positives.
+ */
+const EXPR_IN_TEXT = /\{([^{}()]{0,300})\}/g;
+
+/**
+ * `TEXT`'s 600-character bound exists so the rule cannot hang. It also means a
+ * long comment sitting inside a JSX element hides everything after it: comments
+ * are blanked to SPACES (to keep byte offsets, and therefore line numbers,
+ * correct), and those spaces count toward the bound. Proven, not assumed — the
+ * first version of this rule was tested by reintroducing both routes and caught
+ * NEITHER, because the explanatory comment left beside them pushed the run past
+ * 600.
+ *
+ * A bound is unnecessary here anyway: `[^<>]` is a negated class terminated by a
+ * character it excludes, so the match is deterministic and linear with or
+ * without it. The literal pass uses the unbounded form.
+ */
+const TEXT_ALL = />([^<>]{3,})</g;
+
+function jsxExprLiterals(run) {
+  const out = [];
+  EXPR_IN_TEXT.lastIndex = 0;
+  let m;
+  while ((m = EXPR_IN_TEXT.exec(run)) !== null) {
+    const body = m[1];
+    for (const lit of body.match(/['"`]([^'"`]{3,200})['"`]/g) || []) {
+      out.push(lit.slice(1, -1));
+    }
+  }
+  return out;
+}
 
 function sourceFiles() {
   const out = execSync("git ls-files 'client/src/**/*.tsx' 'client/src/**/*.ts'", {
@@ -102,11 +196,11 @@ function findings() {
     const code = stripComments(raw);
     const lineOf = (idx) => code.slice(0, idx).split('\n').length;
 
-    const scan = (re, group) => {
+    const scan = (re, group, refine) => {
       re.lastIndex = 0;
       let m;
       while ((m = re.exec(code)) !== null) {
-        const value = m[group];
+        const value = refine ? refine(m[group] ?? '') : m[group];
         if (!value) continue;
         for (const { re: bad, what } of INTERNALS) {
           if (!bad.test(value)) continue;
@@ -116,7 +210,22 @@ function findings() {
       }
     };
     scan(ATTR, 2);
-    scan(TEXT, 1);
+    // JSX text only exists in .tsx; scanning .ts with this rule reads code.
+    if (file.endsWith('.tsx')) {
+      scan(TEXT, 1, jsxProse);
+      // …and the literals jsxProse throws away with the expression around them.
+      TEXT_ALL.lastIndex = 0;
+      let t;
+      while ((t = TEXT_ALL.exec(code)) !== null) {
+        for (const value of jsxExprLiterals(t[1])) {
+          for (const { re: bad, what } of INTERNALS) {
+            if (!bad.test(value)) continue;
+            hits.push({ file, line: lineOf(t.index), what, text: value.trim().slice(0, 110) });
+            break;
+          }
+        }
+      }
+    }
   }
   return hits;
 }

@@ -132,10 +132,41 @@ describe('CrlPremortemPanel', () => {
     expect(reason!.textContent).toMatch(/Not exportable/);
   });
 
-  it('exportable artifact has no dangling aria-describedby', () => {
+  it('never leaves a dangling aria-describedby, in either configuration', () => {
+    /* The invariant is the one this test is named for: describedby points at a
+       real element, or is absent. It used to assert `null` for an exportable
+       artifact, which held only because such an artifact rendered no reason at
+       all — and that was true only while a missing `onExport` went unmentioned.
+       Now a host that wires no export handler gets a reason, so the assertion
+       is the invariant itself rather than a proxy for it. */
+    const check = (el: HTMLElement) => {
+      const btn = screen.getByText('Export as DOCX').closest('button') as HTMLButtonElement;
+      const id = btn.getAttribute('aria-describedby');
+      if (id === null) return;
+      expect(el.querySelector(`#${id}`)).not.toBeNull();
+    };
+    const a = render(<CrlPremortemPanel artifact={artifact()} />);
+    check(a.container);
+    cleanup();
+    const b = render(<CrlPremortemPanel artifact={artifact()} onExport={() => {}} />);
+    check(b.container);
+  });
+
+  it('will not offer an export the host cannot perform', () => {
+    /* Mounted without a handler the button used to render ENABLED, and its
+       click ran `onExport?.(…)` on undefined — a control that looks available
+       and silently does nothing. The v2 rail is exactly that host: it has no
+       DOCX route for this artifact. */
     render(<CrlPremortemPanel artifact={artifact()} />);
     const btn = screen.getByText('Export as DOCX').closest('button') as HTMLButtonElement;
-    expect(btn.getAttribute('aria-describedby')).toBeNull();
+    expect(btn.disabled).toBe(true);
+    expect(screen.getByText(/Export is not available from here/)).toBeTruthy();
+  });
+
+  it('offers the export when the host wired one', () => {
+    render(<CrlPremortemPanel artifact={artifact()} onExport={() => {}} />);
+    const btn = screen.getByText('Export as DOCX').closest('button') as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
   });
 
   it('labels the panel and the estimate strip for assistive tech', () => {

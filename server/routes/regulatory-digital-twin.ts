@@ -21,6 +21,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { getSecureOrgId } from '../utils/tenantContext';
 
 const router = Router();
 
@@ -45,40 +46,21 @@ const SIMULATION_DISCLOSURE = {
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DB Table Initialization
+// DB Table Initialization — REMOVED
+//
+// regulatory_twin_simulations used to be created here by a CREATE TABLE IF NOT
+// EXISTS issued at module load, inside a try/catch that logged a warning and
+// carried on. That made the table exist only on a database whose app process had
+// booted, never on one built by provisioning alone, so
+// ci:tables-live-schema correctly reported the queries below as reading a table
+// nothing creates. Runtime DDL also runs as the application role, which under the
+// app_service split has no CREATE right, and it runs after the routes are already
+// mounted.
+//
+// The identical DDL now lives in migrations/20260821_regulatory_twin_simulations.sql
+// and is on C2C_MIGRATION_FILES, so deploy-migrate creates the table before the
+// services roll. One creator, not two.
 // ═══════════════════════════════════════════════════════════════════════════════
-
-async function ensureSimulationsTable(): Promise<void> {
-  try {
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS regulatory_twin_simulations (
-        id TEXT PRIMARY KEY,
-        submission_type TEXT NOT NULL,
-        therapeutic_area TEXT NOT NULL,
-        agencies TEXT[] DEFAULT ARRAY['FDA'],
-        submission_profile JSONB,
-        results JSONB NOT NULL DEFAULT '{}'::jsonb,
-        summary JSONB,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS idx_reg_twin_sim_created
-        ON regulatory_twin_simulations (created_at DESC)
-    `);
-    await db.execute(sql`
-      CREATE INDEX IF NOT EXISTS idx_reg_twin_sim_type
-        ON regulatory_twin_simulations (submission_type)
-    `);
-    console.log('[DigitalTwin] regulatory_twin_simulations table ready');
-  } catch (err) {
-    console.warn('[DigitalTwin] Table init warning:', (err as Error).message);
-  }
-}
-
-// Initialize table on module load
-ensureSimulationsTable();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types & Interfaces
@@ -1450,7 +1432,28 @@ function buildAgencyArray(agencies: readonly string[]) {
   return sql`ARRAY[${elements}]::text[]`;
 }
 
+/**
+ * ── Tenant scope ─────────────────────────────────────────────────────────────
+ *
+ * Every function below takes the organization id and every statement filters on
+ * it. That was not true before: the table had no tenant column and the list
+ * query had no predicate, so GET /simulations returned every tenant's rows and
+ * GET /simulations/:id returned any tenant's row to anyone holding the id. The
+ * stored submission_profile carries submission type, therapeutic area and target
+ * agencies, which on a platform holding unannounced programmes is the
+ * confidential part.
+ *
+ * The org id comes from getSecureOrgId(), which derives it from the verified JWT
+ * and never from a client-supplied header. A request that cannot produce one is
+ * refused rather than served a cross-tenant view — see requireOrgId() below.
+ *
+ * The database enforces the same boundary independently:
+ * db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql adds the
+ * column and the canonical sweep attaches tenant_isolation_policy, so under
+ * RLS_ENFORCE=on a missed predicate here filters to nothing instead of leaking.
+ */
 async function dbInsertSimulation(
+  organizationId: number,
   simulationId: string,
   submission: SubmissionProfile,
   agencies: string[],
@@ -1459,9 +1462,10 @@ async function dbInsertSimulation(
 ): Promise<void> {
   await db.execute(sql`
     INSERT INTO regulatory_twin_simulations
-      (id, submission_type, therapeutic_area, agencies, submission_profile, results, summary, created_at, updated_at)
+      (id, organization_id, submission_type, therapeutic_area, agencies, submission_profile, results, summary, created_at, updated_at)
     VALUES (
       ${simulationId},
+      ${organizationId},
       ${submission.type},
       ${submission.therapeuticArea},
       ${buildAgencyArray(agencies)},
@@ -1474,7 +1478,7 @@ async function dbInsertSimulation(
   `);
 }
 
-async function dbGetSimulation(simulationId: string): Promise<{
+async function dbGetSimulation(organizationId: number, simulationId: string): Promise<{
   id: string;
   submissionType: string;
   therapeuticArea: string;
@@ -1487,6 +1491,7 @@ async function dbGetSimulation(simulationId: string): Promise<{
     SELECT id, submission_type, therapeutic_area, submission_profile, results, summary, created_at
     FROM regulatory_twin_simulations
     WHERE id = ${simulationId}
+      AND organization_id = ${organizationId}
     LIMIT 1
   `);
   const row = (rows as any).rows?.[0] ?? (rows as any)?.[0];
@@ -1502,7 +1507,7 @@ async function dbGetSimulation(simulationId: string): Promise<{
   };
 }
 
-async function dbListSimulations(): Promise<Array<{
+async function dbListSimulations(organizationId: number): Promise<Array<{
   simulationId: string;
   submissionType: string;
   therapeuticArea: string;
@@ -1512,6 +1517,7 @@ async function dbListSimulations(): Promise<Array<{
   const rows = await db.execute(sql`
     SELECT id, submission_type, therapeutic_area, created_at, results
     FROM regulatory_twin_simulations
+    WHERE organization_id = ${organizationId}
     ORDER BY created_at DESC
     LIMIT 100
   `);
@@ -1525,6 +1531,26 @@ async function dbListSimulations(): Promise<Array<{
   }));
 }
 
+/**
+ * The request's organization id, or null after answering 403.
+ *
+ * Fail closed rather than fall back: a handler with no tenant used to read the
+ * whole table, so "no org" must be a refusal, not a wider query. getSecureOrgId
+ * reads the verified JWT and ignores client-supplied org headers.
+ */
+function requireOrgId(req: Request, res: Response): number | null {
+  const raw = getSecureOrgId(req);
+  const orgId = raw == null ? NaN : Number(raw);
+  if (!Number.isInteger(orgId)) {
+    res.status(403).json({
+      error: 'Organization context required',
+      message: 'This request carries no verified organization; simulations are tenant-scoped.',
+    });
+    return null;
+  }
+  return orgId;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // API Endpoints
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1534,6 +1560,9 @@ async function dbListSimulations(): Promise<Array<{
  */
 router.post('/simulations', async (req: Request, res: Response) => {
   try {
+    const organizationId = requireOrgId(req, res);
+    if (organizationId === null) return;
+
     const { submission, agencies } = req.body as {
       submission: SubmissionProfile;
       agencies?: string[];
@@ -1578,6 +1607,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
     // Persist to DB
     try {
       await dbInsertSimulation(
+        organizationId,
         simulationId,
         submission,
         agencies || ['FDA'],
@@ -1607,7 +1637,11 @@ router.post('/simulations', async (req: Request, res: Response) => {
  */
 router.get('/simulations/:id', async (req: Request, res: Response) => {
   try {
-    const sim = await dbGetSimulation(String(req.params.id));
+    const organizationId = requireOrgId(req, res);
+    if (organizationId === null) return;
+
+    // Scoped read, so another tenant's simulation is a 404 rather than a body.
+    const sim = await dbGetSimulation(organizationId, String(req.params.id));
     if (!sim) {
       return res.status(404).json({ error: 'Simulation not found' });
     }
@@ -1627,9 +1661,12 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
 /**
  * GET /simulations — List all simulations
  */
-router.get('/simulations', async (_req: Request, res: Response) => {
+router.get('/simulations', async (req: Request, res: Response) => {
   try {
-    const simulations = await dbListSimulations();
+    const organizationId = requireOrgId(req, res);
+    if (organizationId === null) return;
+
+    const simulations = await dbListSimulations(organizationId);
     res.json({ simulations, total: simulations.length, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to list simulations:', error);
@@ -1764,13 +1801,27 @@ router.get('/rtf-criteria', (_req: Request, res: Response) => {
 /**
  * GET /health — Health check
  */
-router.get('/health', async (_req: Request, res: Response) => {
-  let simulationCount = 0;
-  try {
-    const countResult = await db.execute(sql`SELECT COUNT(*)::int AS cnt FROM regulatory_twin_simulations`);
-    const row = (countResult as any).rows?.[0] ?? (countResult as any)?.[0];
-    simulationCount = row?.cnt ?? 0;
-  } catch { /* table may not exist yet */ }
+router.get('/health', async (req: Request, res: Response) => {
+  // `simulationsStored` is a TENANT count, not a platform one. Unscoped, it
+  // reported how many simulations every other customer had run — a small
+  // cross-tenant disclosure on an endpoint nobody thinks of as a data route.
+  // A health check with no org context reports null rather than a global total.
+  const rawOrgId = getSecureOrgId(req);
+  const orgId = rawOrgId == null ? NaN : Number(rawOrgId);
+  let simulationCount: number | null = null;
+  if (Number.isInteger(orgId)) {
+    try {
+      const countResult = await db.execute(
+        sql`SELECT COUNT(*)::int AS cnt FROM regulatory_twin_simulations WHERE organization_id = ${orgId}`,
+      );
+      const row = (countResult as any).rows?.[0] ?? (countResult as any)?.[0];
+      simulationCount = row?.cnt ?? 0;
+    } catch (err) {
+      // Report the shortfall instead of a zero that reads like "none stored".
+      console.warn('[DigitalTwin] simulation count unavailable:', (err as Error).message);
+      simulationCount = null;
+    }
+  }
 
   res.json({
     status: 'healthy',

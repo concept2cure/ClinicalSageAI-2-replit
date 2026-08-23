@@ -104,7 +104,7 @@
 .ro-m-st{ font-size:10.5px; font-weight:600; margin-top:6px; }
 .ro-m-st.st-ready{ color:color-mix(in srgb,var(--success) 72%,#000); }
 .ro-m-st.st-partial{ color:color-mix(in srgb,var(--warning) 74%,#000); }
-.ro-m-st.st-missing{ color:#c84a4a; }
+.ro-m-st.st-missing{ color:var(--error); }
 .ro-m-prov{ font-size:10px; font-style:italic; color:var(--text-400); margin-top:3px; }
 .ro-table{ border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:0 0 12px; }
 .ro-thead{ display:grid; background:var(--bg-050); border-bottom:1px solid var(--border); }
@@ -127,7 +127,7 @@
 .ro-li{ display:flex; align-items:baseline; gap:9px; padding:7px 0; border-top:1px dashed var(--border); font-size:12.5px; }
 .ro-li:first-child{ border-top:none; }
 .ro-sev{ font-size:9.5px; letter-spacing:.05em; text-transform:uppercase; font-weight:700; flex:0 0 62px; }
-.ro-sev.sev-critical{ color:#8a3a3a; } .ro-sev.sev-high{ color:#c84a4a; } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
+.ro-sev.sev-critical{ color:#8a3a3a; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
 .ro-li-b{ color:var(--text-100); flex:1; min-width:0; }
 .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
 .ro-disc{ margin:0 0 12px; padding:12px 14px; border-left:3px solid var(--warning); background:color-mix(in srgb,var(--warning) 6%,transparent); border-radius:8px; max-width:680px; }

@@ -18,7 +18,7 @@ async function login(page: Page) {
   // Email step
   const emailInput = page.locator('input#email');
   await expect(emailInput).toBeVisible({ timeout: 15000 });
-  await emailInput.fill('jm.smith@concept2cure.pro');
+  await emailInput.fill('jonmichaelpsmith@gmail.com');
 
   // Click Continue button
   const continueBtn = page.locator('button').filter({ hasText: 'Continue' });

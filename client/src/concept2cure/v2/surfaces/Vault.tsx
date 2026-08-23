@@ -1,6 +1,13 @@
 import React, { useState, useMemo } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { useVaultUpload } from '../useVaultUpload';
+import {
+  VAULT_INGEST_DOCUMENT_TYPES,
+  type VaultIngestDocumentType,
+} from '@shared/constants/domain/vault-taxonomy';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   vaultStatus,
@@ -33,6 +40,9 @@ interface VaultDisplayShape {
   documentCount: number;
   tree: VaultFolder[];
   pendingStore?: boolean;
+  /** Branches the server could not serve, with why — rendered, not swallowed:
+   *  a vault silently missing "Uploaded files" reads as a vault with no uploads. */
+  unavailable?: Array<{ branch: string; reason: string }>;
 }
 
 /* Stable empty tree while the live vault is loading / absent — `useLiveData`
@@ -162,64 +172,26 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      Nothing is faked here — the row appears in the tree because the server
      wrote it, and a refusal is reported as a refusal. */
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadNote, setUploadNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /* Moved to ../useVaultUpload and shared with the MDX Document vault, which
+     had no upload control at all (its button opened a chat prompt). Copying
+     these forty lines into that surface would have produced a second copy of a
+     governed write path — the SHA-256, the audit row and the tenant check all
+     live behind this one endpoint, and two callers drifting is how a lane ends
+     up filing documents differently from the lane beside it. Behaviour here is
+     unchanged: sequential uploads, per-file outcomes, a refusal reported as a
+     refusal, and a refresh only when the server actually stored something. */
+  const { uploading, note: uploadNote, upload } = useVaultUpload(
+    projectId ? String(projectId) : null,
+  );
+
+  /* What the user says the file is; travels with every file in the batch. */
+  const [docType, setDocType] = useState<VaultIngestDocumentType>('OTHER');
 
   const uploadFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    if (!projectId) return;
-    setUploading(true);
-    setUploadNote(null);
-    const done: string[] = [];
-    const failed: string[] = [];
-    try {
-      for (const file of Array.from(files)) {
-        const form = new FormData();
-        form.append('file', file);
-        form.append('programId', String(projectId));
-        /* The ingest schema requires a code, a title and a type. The filename
-           is the only thing the user has actually told us here, so it supplies
-           the first two verbatim and the type is recorded as OTHER rather than
-           guessed from the extension — a document filed as a CSR because it was
-           named like one is a classification this surface has no basis to make.
-           Both are editable on the document once it lands. */
-        form.append('documentCode', file.name);
-        form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
-        form.append('documentType', 'OTHER');
-
-        const res = await fetch('/api/vault/ingest', {
-          method: 'POST',
-          body: form,
-          credentials: 'include',
-        });
-        if (res.ok) done.push(file.name);
-        else {
-          const body = await res.json().catch(() => null);
-          const why = (body && (body.message || body.error)) || `HTTP ${res.status}`;
-          failed.push(`${file.name} (${String(why)})`);
-        }
-      }
-      if (failed.length === 0) {
-        setUploadNote({ tone: 'ok', text: `Uploaded ${done.length} document${done.length === 1 ? '' : 's'} to the Vault.` });
-      } else {
-        setUploadNote({
-          tone: 'error',
-          text:
-            (done.length ? `Uploaded ${done.length}. ` : '') +
-            `Not uploaded: ${failed.join('; ')}. Nothing partial was filed for those.`,
-        });
-      }
-      // Re-read the tree so what is shown is what the server stored.
-      if (done.length) setVaultEpoch((n) => n + 1);
-    } catch (e) {
-      setUploadNote({
-        tone: 'error',
-        text: `Upload failed — ${e instanceof Error ? e.message : String(e)}. Nothing was filed.`,
-      });
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    const outcome = await upload(files, { documentType: docType });
+    // Re-read the tree so what is shown is what the server stored.
+    if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
@@ -265,6 +237,58 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const sel =
     allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
 
+  /* What AnA can see of this screen.
+     Until now she knew the user was on "vault" and nothing else — not which
+     folder was open, which document was selected, or that a search was
+     narrowing the list — so "what is blocking this?" had to be answered by the
+     user restating their own screen.
+
+     A FAILED read publishes the failure, never counts. `allDocs` is [] both
+     when the vault is genuinely empty and when the read threw, and a summary
+     saying "0 documents" over an outage would make AnA confidently wrong about
+     a customer's repository. Loading says loading for the same reason. */
+  const anaContext = useMemo(() => {
+    if (vaultState.loading) {
+      return { summary: 'The document vault is still loading; nothing on screen is final yet.' };
+    }
+    if (vaultState.error) {
+      return {
+        summary:
+          'The document vault could not be read, so this screen is showing no documents because of a failure, not because there are none.',
+        availableActions: ['Retry the vault read'],
+      };
+    }
+    const shown = results.length;
+    return {
+      summary:
+        `Document vault: ${allDocs.length} document(s) in the tree` +
+        (folder ? `, folder "${folder.label}" open` : '') +
+        (searching ? `, filtered to ${shown} by the search "${q.trim()}"` : '') +
+        (sel ? `, "${sel.title}" selected` : ''),
+      facts: {
+        totalDocuments: allDocs.length,
+        shownInList: shown,
+        searchQuery: searching ? q.trim() : null,
+        openFolder: folder ? { id: folder.id, code: folder.code, label: folder.label } : null,
+        selected: sel
+          ? {
+              id: sel.id, number: sel.num, title: sel.title, type: sel.type,
+              status: sel.status, version: sel.ver, owner: sel.owner,
+              updated: sel.updated, percentComplete: sel.pct,
+              blocker: sel.blocker ?? false, flag: sel.flag ?? null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Open a document to see its detail, version and status',
+        'Search the vault by title, number, type or preview text',
+        'Browse a folder in the document tree',
+        'Upload a file into the vault (multipart ingest, virus-scanned, one row per file)',
+      ],
+    };
+  }, [vaultState.loading, vaultState.error, allDocs, results.length, folder, searching, q, sel]);
+  usePublishSurfaceContext('vault', anaContext);
+
   const st = (s: string) => vaultStatus(s);
 
   const openDoc = () => {
@@ -275,7 +299,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     <div className="vd-wrap">
       <div className="vd-top">
         <div>
-          <div className="sp-eyebrow">Documents {I.dot} /api/c2c/project-vault</div>
+          <div className="sp-eyebrow">Documents {I.dot} project vault</div>
           <h1 className="vd-title">Vault (DMS)</h1>
           <div className="vd-sub">
             <span className="vd-sub-x">
@@ -298,6 +322,25 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         >
           {I.shieldCheck} Inspection readiness
         </button>
+        {/* What the file IS — the ingest schema's own vocabulary, so the
+            picker can never offer a type the server refuses. MODULE_3 is how
+            an uploaded CMC document declares itself and gets handled as one
+            downstream; the default stays OTHER rather than a guess from the
+            filename. */}
+        <select
+          className="c2c-input"
+          aria-label="Document type for uploaded files"
+          value={docType}
+          onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
+          disabled={uploading}
+          data-testid="vault-upload-type"
+        >
+          {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t.replace(/_/g, ' ')}
+            </option>
+          ))}
+        </select>
         {/* The picker itself. Accepts exactly what POST /api/vault/ingest
             accepts, so the OS dialog does not offer files the server will
             refuse. */}
@@ -352,6 +395,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           {uploadNote.text}
         </div>
       )}
+
+      {/* A branch the server could not serve is said, not silently omitted —
+          otherwise "no Uploaded files folder" and "no uploads" look identical. */}
+      {vault?.unavailable?.map((u) => (
+        <div key={u.branch} className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+          {u.branch}: {u.reason}
+        </div>
+      ))}
 
       <div className="vd-coexist">
         <span className="vd-coexist-txt">

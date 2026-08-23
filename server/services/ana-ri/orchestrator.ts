@@ -292,6 +292,14 @@ export interface OrchestratorInput {
    * (deadlines + recent decisions) so AnA can open with where the program stands.
    */
   _sessionBriefingBlock?: string | null;
+  /**
+   * Pre-rendered OPEN CONTRADICTIONS block — unresolved contradiction-engine
+   * findings, severity-first (loaded async by the route layer). Present on
+   * every turn while findings are open, because a finding that blocks
+   * promotion stays live until someone resolves it — it does not alternate
+   * with the briefing/deadline pair.
+   */
+  _contradictionWatchBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -412,6 +420,15 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   //     the standalone deadline block on that turn (the prefetch emits only one).
   if (input._sessionBriefingBlock && input._sessionBriefingBlock.trim()) {
     systemPrompt += '\n\n' + input._sessionBriefingBlock.trim();
+  }
+
+  // 4a-quater. Inject open contradiction findings (pre-fetched by route layer):
+  //     persisted, unresolved contradiction-engine findings — including ones
+  //     that BLOCK PROMOTION. Every turn, not just session start: an open
+  //     contradiction stays live until it is resolved, not until it is
+  //     mentioned once.
+  if (input._contradictionWatchBlock && input._contradictionWatchBlock.trim()) {
+    systemPrompt += '\n\n' + input._contradictionWatchBlock.trim();
   }
 
   // 4b. Inject project intelligence profile (pre-fetched by route layer)

@@ -84,7 +84,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
           <div className="reg-kicker">Platform · commercial</div>
           <h1 className="reg-title">Market access &amp; reimbursement</h1>
           <p className="reg-sub">
-            Payer coverage, value dossiers and coding strategy -- the bridge from
+            Payer coverage, value dossiers and coding strategy — the bridge from
             a cleared device to a reimbursed one. Grounds the market-access
             advisory, CMS coverage lookup, and value-dossier composer.
           </p>

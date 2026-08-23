@@ -113,7 +113,7 @@ export function useRbqm(programId: string | null): UseRbqmResult {
   const s = useFetchJson<SummaryPayload>(summaryUrl);
   const a = useFetchJson<AttentionPayload>(attentionUrl);
 
-  const idleReason = 'Select a project or a study to see its risk-based monitoring.';
+  const idleReason = 'Risk-based monitoring is scoped to one program or study.';
 
   // orderAttention sorts, so a non-array payload throws here the same way a
   // `.map` would. Same guard, same reason.

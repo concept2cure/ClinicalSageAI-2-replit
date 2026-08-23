@@ -108,7 +108,10 @@ BEGIN
     RAISE NOTICE '[type-coerce] altered %.%  → integer', tbl, col;
   END LOOP;
 
-  -- Phase 3: handle UUID-typed tenant columns introduced by the GCC
+  -- Phase 3: UUID tenant columns belong to UUID-native schemas. Preserve them;
+  -- 0021 installs UUID-aware policies instead of dropping dependent objects.
+  /*
+  -- handle UUID-typed tenant columns introduced by the GCC
   -- migration set. These can't be cast to INTEGER while data exists, but
   -- on a fresh DB (integration tests, brand-new tenant) the rows-clean
   -- case is safe: drop the column and add it back as INTEGER. The
@@ -148,6 +151,7 @@ BEGIN
         uuid_rec.table_schema, uuid_rec.table_name, uuid_rec.column_name;
     END LOOP;
   END;
+  */
 END
 $$;
 

@@ -552,6 +552,32 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
     }
     if (!enforceSubjectAccess(req, res, userId)) return;
 
+    /* Every statement below runs inside ONE transaction and none of them may
+       swallow its own failure.
+
+       Three of the redaction UPDATEs and the DSR completion INSERT used to end
+       `.catch(() => ({ rows: [] }))`. That reads as resilience and is the
+       opposite. Once any statement in a Postgres transaction fails, the
+       transaction is ABORTED: every following statement errors 25P02, each
+       catch turned that into an empty result, and `COMMIT` on an aborted
+       transaction performs a ROLLBACK and returns WITHOUT throwing — node-pg
+       does not error on it.
+
+       So a single failure on the conversations UPDATE rolled back the `users`
+       redaction that had already succeeded, skipped the artifacts and comments,
+       never wrote the statutory DSR record, and still returned
+
+           { success: true, data: { redactedUser: true, ... } }
+
+       because `userResult.rows.length` had been captured before the rollback.
+       An Article 17 erasure reported as completed with nothing erased and no
+       completion record is the worst outcome this endpoint has.
+
+       The author knew the failure mode — the comment below moves the provenance
+       write outside the transaction precisely because "a failed write inside
+       the transaction would have poisoned it" — but the four in-transaction
+       swallows were left. They are gone; the outer catch rolls back and returns
+       500, which is the honest answer to "did the erasure happen". */
     await client.query('BEGIN');
 
     const userResult = await client.query(
@@ -579,7 +605,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
        WHERE organization_id = $1 AND created_by_id = $2
        RETURNING id`,
       [orgId, userId]
-    ).catch(() => ({ rows: [] as any[] }));
+    );
 
     const artifactsResult = await client.query(
       `UPDATE concept2cure_artifacts
@@ -590,7 +616,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
        WHERE organization_id = $1 AND created_by_id = $2
        RETURNING id, artifact_id`,
       [orgId, userId]
-    ).catch(() => ({ rows: [] as any[] }));
+    );
 
     const commentsResult = await client.query(
       `UPDATE concept2cure_thread_comments
@@ -599,7 +625,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
        WHERE org_id = $1 AND author_id = $2
        RETURNING id`,
       [orgId, userId]
-    ).catch(() => ({ rows: [] as any[] }));
+    );
 
     await client.query(
       `INSERT INTO gdpr_data_subject_requests
@@ -610,7 +636,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
         dataSubjectIdRaw,
         `Erasure completed at ${new Date().toISOString()}. Reason: ${reason}`,
       ]
-    ).catch(() => undefined);
+    );
 
     await client.query('COMMIT');
 

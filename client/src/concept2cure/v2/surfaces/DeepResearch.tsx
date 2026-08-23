@@ -331,7 +331,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1060 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Intelligence -- connectors & deep research</div>
+          <div className="sp-eyebrow">Intelligence — connectors & deep research</div>
           <h1 className="sp-title">Deep Research & Connectors</h1>
           <p className="sp-state">
             Fan out one question across your connected sources and get a grounded synthesis with
@@ -361,12 +361,12 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
             connectorsReady ? (
               <>
                 Ask one question and I fan it out across{' '}
-                <b>{conn.filter((c) => c.configured).length}</b> connected sources -- then hand you
+                <b>{conn.filter((c) => c.configured).length}</b> connected sources — then hand you
                 a synthesis with <b>every claim traced to source</b>.
               </>
             ) : (
               <>
-                Ask one question and I fan it out across your connected sources -- then hand you a
+                Ask one question and I fan it out across your connected sources — then hand you a
                 synthesis with <b>every claim traced to source</b>.
               </>
             )
@@ -387,7 +387,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
               )}
             </>
           }
-          reassure="Nothing is fabricated -- if a source can't support a claim, I say so and cite what I did find."
+          reassure="Nothing is fabricated — if a source can't support a claim, I say so and cite what I did find."
           action={{ label: 'Launch this research', onClick: launch }}
           secondary="Or refine the question and connectors below."
         />
@@ -531,7 +531,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                   </button>
                 )}
                 <span className="sp-q-s">
-                  Parallel fan-out -- grounded synthesis
+                  Parallel fan-out — grounded synthesis
                   {credits ? ` -- ${credits.remaining < 0 ? 'unlimited' : credits.remaining + '/' + credits.limit} credits` : ''}
                 </span>
               </div>
