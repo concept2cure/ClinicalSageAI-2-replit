@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:24:46.775Z",
+  "generatedAt": "2026-08-23T22:36:36.211Z",
   "git": {
-    "sha": "bad8a05f5ddac931a4ddb9ba2786f73d8941a536",
+    "sha": "cad411a199144a2eacdc935e14caa14554bc62a2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2236,11 +2236,15 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 123378
+        "bytes": 125184
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 120988
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 117833
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2249,10 +2253,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 115207
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2370,7 +2370,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 2974
+        "lines": 3012
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2378,7 +2378,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2768
+        "lines": 2827
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2641,12 +2641,12 @@
         "lines": 1549
       },
       {
-        "file": "server/services/submission-twin-service.ts",
-        "lines": 1534
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1541
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1533
+        "file": "server/services/submission-twin-service.ts",
+        "lines": 1534
       },
       {
         "file": "server/routes/cortex-unified.ts",

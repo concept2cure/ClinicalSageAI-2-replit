@@ -71,7 +71,7 @@ const LINK_ICONS: Record<string, string> = {
    destructured here and never read, which is exactly the shape the union
    exists to forbid: a surface that hides the rail while still holding the
    handle that writes into it. */
-export function Rbm({ onNav }: OwnedSurfaceViewProps) {
+export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
@@ -105,7 +105,13 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
      canned cards from fixture constants is gone: the dock now shows the real
      turn (streamed text, executed actions, and the real Part 11 sign-off for a
      governed command). */
-  const anaChat = useAnaChat({ screenName: 'rbm', projectId: study ?? undefined });
+  const anaChat = useAnaChat({
+    screenName: 'rbm',
+    projectId: study ?? undefined,
+    // Live Drive bridge — same opt-in and shell-level apply machine as the rail.
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+  });
   const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
     role: m.role,
     text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),

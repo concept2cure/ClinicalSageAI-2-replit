@@ -200,7 +200,14 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
               <div className="chg-doc-l">{I.fileText} Generates: <b>{item.doc?.kind}</b></div>
               <div className="chg-doc-acts">
                 <button className="reg-doc-open" onClick={() => onAsk && onAsk(`Draft the ${item.doc?.kind} for ${item.id} -- ${item.title}`)}>{I.sparkles} Draft with AnA</button>
-                <button className="reg-doc-open ghost">{I.externalLink} Open change record</button>
+                {/* "Open change record" was a dead button — no onClick, and no
+                    second view to reach. The .chg-detail pane beside it already
+                    IS the change record: id, device, area, raised date, both
+                    jurisdictions' decision trees, outcomes, rationales, doc kind
+                    and status. Removed rather than wired, because wiring it
+                    would mean inventing a change-record document store this
+                    product does not have. "Draft with AnA" is the real action
+                    here and it works. */}
               </div>
             </div>
           </div>

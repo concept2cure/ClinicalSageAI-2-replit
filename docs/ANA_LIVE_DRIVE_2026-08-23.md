@@ -81,17 +81,33 @@ permanent gate — written first, shown failing on exactly those 10, then fixed.
 | Client | `client/src/concept2cure/v2/surfaces/ConversationThread.tsx` | drive bridge for the owned conversation surface |
 | Tests | `server/services/ana-ri/__tests__/live-drive.test.ts`, `client/.../liveDrive.test.ts`, `client/.../navigationReachability.test.ts` | decision matrix, fail-closed validation, reachability gate |
 
-## Honest gaps (known, deliberate)
+## Expansion pass (same day, second commit)
 
-- Directive `params` (e.g. `intelligenceTab`) are validated end-to-end but not
-  yet applied inside destination surfaces — the client drops them at `nav(id)`
-  today, exactly as chip clicks always have. Applying them is a per-surface
-  follow-up.
+The first three gaps below were closed:
+
+- **Params deep-apply.** A validated directive's params now ride the
+  `navParams` channel (`client/src/concept2cure/v2/navParams.ts` — the
+  editorTarget window-channel idiom: one module owns both ends, resolved
+  surface id, one-shot, TTL). Stashed by BOTH appliers (Live Drive and chip
+  click); consumed by `global-ri` (`intelligenceTab` → tolerant catalog-group
+  preselect, `matchIntelligenceGroup`) and `document-authoring` (`sectionCode`
+  → the SAME bounded section search + honest-miss notices the editor-target
+  hand-off uses; docType/program guards apply only when a sender claims them).
+  So "open 3.2.P.8" now opens section 3.2.P.8.
+- **All owned docks drive.** DocumentAuthoring, EctdCoauthor, and Rbm now pass
+  the shell's `liveDrive` bridge into their own chat instances, alongside
+  ConversationThread — every conversation surface can originate drive turns,
+  and they all feed the one shell-level apply/take-over machine.
+- **Pre-emptive verdict.** `GET /api/ana-ri/live-drive/state` runs the exact
+  per-turn decision (`resolveDriveState`) so the toggle shows its honest lock
+  (with the real required tier) before the first attempted turn. Advisory
+  only — every turn still resolves its own `drive_state`; a failed read
+  annotates nothing.
+
+## Honest gaps (remaining, deliberate)
+
+- `authoringDocType` (the `authoring` target's second param) is carried but
+  not consumed — applying a free-form doc type to the governed editor's
+  template machinery is its own change.
 - The non-streaming `POST /api/ana-ri/chat` has no navigation wiring at all
   (pre-existing); Live Drive is a streaming-path capability.
-- Owned surfaces other than `ConversationThread` (DocumentAuthoring,
-  EctdCoauthor docks…) don't originate drive turns yet; the `liveDrive` bridge
-  prop is in place for each to adopt.
-- Pre-emptive lock display: the toggle learns it is locked from the first
-  attempted turn's `drive_state` rather than from `/api/billing/capabilities`
-  up front. The copy is honest either way.
