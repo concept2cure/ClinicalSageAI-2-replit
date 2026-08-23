@@ -39,6 +39,13 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
      Real rows, an honest empty, or an honest error — never a fixture. `rows` is
      a fresh [] while loading/on error, so the KPI derivations are null-safe. */
   const live = useLiveRows<RciChange>('/api/reg-change');
+  /* Gated on error as well as loading. `useLiveRows`/`useLiveData` return
+     `data: null` on a FAILED read, so each count below derives from an empty
+     list and resolves to 0 — and with `loading` already false the strip renders
+     a SETTLED zero rather than a placeholder. Rows are empty in three
+     situations and only the third may say "nothing is on file"; the pattern is
+     MarketAccess.tsx:62. */
+  const kv = (n: number | string) => (live.loading || live.error ? '—' : String(n));
   const changes = live.rows;
   const [open, setOpen] = useState<string | null>(null);
 
@@ -68,10 +75,10 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{changes.length}</div><div className="reg-kpi-l">Changes tracked</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{affecting}</div><div className="reg-kpi-l">Affect your portfolio</div></div>
-        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{actionReq}</div><div className="reg-kpi-l">Action required</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{inForce}</div><div className="reg-kpi-l">In force / imminent</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(changes.length)}</div><div className="reg-kpi-l">Changes tracked</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(affecting)}</div><div className="reg-kpi-l">Affect your portfolio</div></div>
+        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{kv(actionReq)}</div><div className="reg-kpi-l">Action required</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(inForce)}</div><div className="reg-kpi-l">In force / imminent</div></div>
       </div>
 
       <div className="rci-feed">

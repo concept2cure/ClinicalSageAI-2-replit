@@ -151,7 +151,7 @@ const PJ_STAGES: PjStage[] = [
     what: 'Phase 1->3 execution: dose-finding, the pivotal trial, risk-based monitoring and interim DSMB reviews. The End-of-Phase-2 meeting fixes the pivotal design and endpoints that the whole submission will rest on.',
     deliv: [['Phase 1/2 CSRs', 1], ['EOP2 meeting alignment', 1], ['Pivotal trial -- enrolled', 1], ['Pivotal topline & CSR', 0]],
     caps: ['rbm', 'clinical-ops', 'biostatistics', 'csr-workflow', 'protocol-dev', 'safety-narrative'],
-    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 -- continue', 'Complete'], ['Pivotal', 'BX204-301 · database lock', 'Upcoming']],
+    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 -- continue', 'Complete'], ['Pivotal', 'Pivotal trial database lock', 'Upcoming']],
     ana: 'Summarize pivotal readiness -- enrollment, DSMB history, and the gap to database lock' },
   { id: 'presub', num: 'Stage 5', label: 'Pre-submission', icon: 'messageSquare',
     gate: 'Pre-NDA / Pre-BLA meeting · filing plan & format agreed',
@@ -396,11 +396,23 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
 
             <p className="pj-what">{stage.what}</p>
 
+            {/* The deliverable NAMES are definitional — a Pre-IND briefing book is
+                what Stage 2 requires of anyone, and that reference value is why
+                this catalog exists. The completion flag beside them was not:
+                `d[1]` is a literal in the stage catalog, identical for every
+                organization, and `createProgramJourney` writes all nine stages as
+                `upcoming/0`. So a newly provisioned journey rendered "Upcoming ·
+                0%" at the top of the panel and green check marks against GLP tox
+                reports and first GMP lots underneath it.
+
+                Ticking a regulatory deliverable done is a claim about a specific
+                program's record. There is no per-stage deliverable state to make
+                it from, so the claim is withdrawn rather than guessed. */}
             <div className="pj-seclbl">Key deliverables</div>
             <div className="pj-deliv">
               {stage.deliv.map((d, i) => (
-                <div key={i} className="pj-deliv-row" data-done={d[1] ? true : undefined}>
-                  <span className="dot">{d[1] ? I.checkCircle : I.clock}</span>{d[0]}
+                <div key={i} className="pj-deliv-row">
+                  <span className="dot">{I.clock}</span>{d[0]}
                 </div>
               ))}
             </div>
@@ -417,13 +429,29 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
               })}
             </div>
 
-            <div className="pj-seclbl">Agency interactions</div>
+            {/* Agency interactions: the KIND and the description are definitional
+                (Stage 2 is where a Type B Pre-IND meeting happens); the OUTCOME
+                was not, and the outcome is what this block was really showing.
+
+                `PjRecord` has no `interactions` field, so nothing could ever
+                override the literals — every organization was told its Pre-IND
+                minutes were filed, its 30-day safe-to-proceed was Complete and a
+                protocol amendment was in drafting, under a header built from its
+                own live program code. One row still named a retired invented
+                study. That is fabricated regulatory history, and it is the
+                single most dangerous thing this surface could say to a customer.
+
+                The interactions are still listed, because knowing Stage 3 turns
+                on a 30-day safe-to-proceed is useful. The status chip is gone
+                until there is a record behind it; Agency meetings owns that and
+                the row still routes there. */}
+            <div className="pj-seclbl">Agency interactions at this stage</div>
             <div className="pj-interact">
               {stage.interactions.map((x, i) => (
                 <button key={i} className="pj-int" onClick={() => open('agency-meetings')}>
                   <span className="pj-int-kind">{x[0]}</span>
                   <div className="pj-int-b"><div className="pj-int-t">{x[1]}</div></div>
-                  <span className="pj-chip" data-t={x[2] === 'Complete' ? 'done' : x[2] === 'Upcoming' ? 'upcoming' : 'active'}>{x[2]}</span>
+                  <span className="go">{I.right}</span>
                 </button>
               ))}
             </div>

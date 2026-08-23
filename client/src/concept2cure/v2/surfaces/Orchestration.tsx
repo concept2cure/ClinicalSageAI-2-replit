@@ -510,6 +510,21 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     return dec.indexOf('pending') > -1 || dec.indexOf('blocked') > -1;
   });
 
+  /* The metrics strip speaks from the reads that feed it.
+     `runs` and `cps` are local state seeded ONLY when their mapped value is
+     non-null, and both mappers return null while loading or on error — so both
+     stay `[]` and every metric resolved to a settled 0. On a failed
+     `/api/orchestration/checkpoints` read the surface told a reviewer that zero
+     human-in-the-loop Part 11 approval gates were awaiting them. Approval
+     checkpoints are the gate before dispatch: a reviewer who trusts
+     "Awaiting approval: 0" walks away from signatures that are actually
+     pending. The readiness tile two over already did this correctly
+     (`r ? r.overallScore + '%' : '—'`), so the strip disagreed with itself. */
+  const runsReady = !runsState.loading && !runsState.error;
+  const gatesReady = !cpsState.loading && !cpsState.error;
+  const kvRuns = (n: number) => (runsReady ? String(n) : '—');
+  const kvGates = (n: number) => (gatesReady ? String(n) : '—');
+
   /* Only Cancel and "Open gate" do anything real, so only they are enabled.
      The unwired controls stay visible (the run state they belong to is real)
      but are disabled and carry the reason on hover, instead of silently
@@ -575,12 +590,12 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
       <div className="metrics">
         <div className="metric">
           <div className="metric-l">Active runs</div>
-          <div className="metric-n">{runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length}</div>
-          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>of {runs.length} total</div>
+          <div className="metric-n">{kvRuns(runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length)}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>{runsReady ? `of ${runs.length} total` : 'not read'}</div>
         </div>
-        <div className="metric" data-tone="warn">
+        <div className="metric" data-tone={gatesReady && pendingGates.length ? 'warn' : undefined}>
           <div className="metric-l">Awaiting approval</div>
-          <div className="metric-n">{pendingGates.length}</div>
+          <div className="metric-n">{kvGates(pendingGates.length)}</div>
           <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>HITL gates</div>
         </div>
         <div className="metric" data-tone={r ? (r.isReady ? '' : 'err') : ''}>
