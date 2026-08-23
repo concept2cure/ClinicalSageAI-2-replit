@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ── Display metadata — 5-state Submission Center lifecycle + chip vocabularies ── */
@@ -174,6 +175,65 @@ export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
     { l: 'Submissions in flight', n: allSubs.filter((s) => s.state !== 'dispatched').length, m: 'pre-dispatch', t: 'ai' },
     { l: 'SOWs needing attention', n: sponsors.filter((s) => s.sow !== 'on-track').length, m: 'change-order / renewal', t: 'warn' },
   ];
+
+  /* What AnA can see of this screen. The header button asks her "which sponsor
+     submissions are at risk of missing their dispatch window?" — a question she
+     could not answer, because she was told the screen was called
+     "cro-portfolio" and nothing about which sponsors are on it.
+
+     A FAILED read publishes the failure: an empty roster and an unreachable one
+     are indistinguishable from here, and naming a CRO's sponsor count from a
+     failed fetch is a claim about their book of business. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The sponsor portfolio is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The sponsor portfolio could not be read, so this screen is showing no sponsors because of a ' +
+          'failure, not because there are none.',
+        availableActions: ['Retry the sponsor portfolio read'],
+      };
+    }
+    return {
+      summary:
+        `CRO sponsor portfolio: ${sponsors.length} sponsor client(s), ${allStudies.length} study(ies), ` +
+        `${allSubs.length} submission(s) — ${allSubs.filter((s) => s.state !== 'dispatched').length} still ` +
+        `pre-dispatch, ${sponsors.filter((s) => s.sow !== 'on-track').length} SOW(s) needing attention` +
+        (sel ? `. Sponsor "${sel.name}" is open.` : '.'),
+      facts: {
+        sponsorCount: sponsors.length,
+        studyCount: allStudies.length,
+        submissionCount: allSubs.length,
+        pipelineByState: Object.fromEntries(pipe.map((p) => [p.k, p.n])),
+        sponsors: sponsors.slice(0, 12).map((s) => ({
+          id: s.id, name: s.name, type: s.type, lead: s.lead,
+          sowState: s.sow ?? null, sowNote: s.sowNote,
+          studies: (s.studies ?? []).length, submissions: (s.subs ?? []).length,
+        })),
+        selectedSponsor: sel
+          ? {
+              id: sel.id, name: sel.name, type: sel.type, lead: sel.lead,
+              sowState: sel.sow ?? null, sowNote: sel.sowNote,
+              studies: selStudies.map((st) => ({
+                code: st.code, phase: st.phase, ind: st.ind, status: st.status, enrolment: st.n,
+              })),
+              submissions: selSubs.map((sb) => ({
+                id: sb.id, type: sb.type, region: sb.region, state: sb.state,
+                gate: sb.gate, due: sb.due,
+              })),
+            }
+          : null,
+      },
+      availableActions: [
+        'Select a sponsor to open its studies and submissions',
+        'Read a sponsor submission\u2019s lifecycle state, gate and dispatch due date',
+        'Onboard a new sponsor client',
+      ],
+    };
+  }, [live.loading, live.error, sponsors, allStudies, allSubs, pipe, sel, selStudies, selSubs]);
+  usePublishSurfaceContext('cro-portfolio', anaContext);
 
   return (
     <div className="page-inner">

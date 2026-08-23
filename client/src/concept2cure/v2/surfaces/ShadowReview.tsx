@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import {
   SHADOW_LENSES, shadowLens, shadowAggregateRisk, SR_SEV, SR_DIM,
@@ -77,6 +78,69 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   const crl = risk.crl;
   const criticals = findings.filter((f) => f.severity === 'critical').length;
   const majors = findings.filter((f) => f.severity === 'major').length;
+
+  /* What AnA can see of this screen.
+     `lensRan` is the fact that carries this surface. A lens with no row has NOT
+     been run; a lens with a row and zero findings passed. Both draw an empty
+     finding list, and telling AnA "no findings" for the first would have her
+     report a clean reviewer verdict on a review that never happened — on the
+     surface whose whole purpose is predicting an RTF or CRL before filing. So
+     the two are published as different states, and the risk scores are withheld
+     entirely for a lens that has not run. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The shadow-review worklist is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The shadow-review store could not be read, so this screen is showing no reviewer findings ' +
+          'because of a failure. That is NOT a clean review and must not be reported as one.',
+        availableActions: ['Retry the shadow-review read'],
+      };
+    }
+    const lensLabel = lens?.label ?? lensId;
+    if (!lensRan) {
+      return {
+        summary:
+          `Shadow review: the "${lensLabel}" reviewer lens has NOT been run against this submission, so ` +
+          'there are no findings and no RTF or CRL risk score on screen. This is an absence of review, ' +
+          'not a clean result.',
+        facts: {
+          selectedLens: lensId,
+          lensHasRun: false,
+          lensesRun: Object.keys(findingsByLens),
+        },
+        availableActions: ['Run the selected reviewer lens', 'Switch to a lens that has already been run'],
+      };
+    }
+    return {
+      summary:
+        `Shadow review under the "${lensLabel}" reviewer lens: ${findings.length} finding(s) — ` +
+        `${criticals} critical, ${majors} major. Refuse-to-file risk ${rtf}, complete-response risk ${crl} ` +
+        '(0-1 deterministic aggregation over the findings on screen).',
+      facts: {
+        selectedLens: lensId,
+        lensHasRun: true,
+        lensesRun: Object.keys(findingsByLens),
+        findingCount: findings.length,
+        criticalFindings: criticals,
+        majorFindings: majors,
+        refuseToFileRisk: rtf,
+        completeResponseRisk: crl,
+        findings: findings.slice(0, 12).map((f) => ({
+          dimension: f.dimension, severity: f.severity, title: f.title,
+          detail: f.detail, basis: f.basis, recommendation: f.recommendation, leafRef: f.leafRef,
+        })),
+      },
+      availableActions: [
+        'Switch reviewer lens',
+        'Open a finding to read its basis and the recommended fix',
+        'Re-run the lens after addressing findings',
+      ],
+    };
+  }, [live.loading, live.error, lens, lensId, lensRan, findingsByLens, findings, criticals, majors, rtf, crl]);
+  usePublishSurfaceContext('shadow-review', anaContext);
 
   /* AnA's answer-first verdict -- reviewer voice, honest, one clear next step.
      Speaks to the connected submission; no fabricated sequence identity (the
