@@ -149,4 +149,23 @@ if ! node scripts/ops/ledger-check.mjs >/dev/null 2>&1; then
 fi
 echo "   ✅ Ledger integrity passed."
 
+# ── Catalog copy (unconditional) ──
+#
+# available_modules.description renders to CUSTOMERS in the Apps catalog. The
+# catalog was seeded from each surface's engineering notes, so 33 of 84 cards
+# shipped saying "In progress." / "Partially built in ui_kits/home" / naming
+# repository paths. check-internals-in-copy.mjs could not see it: that gate
+# scans client/src only, and this copy lives in SQL and reaches the browser at
+# runtime. This is the gate that covers it.
+echo "   Validating module catalog copy..."
+if ! npm run --silent check:catalog-copy 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Catalog copy check FAILED."
+  echo "   A module description reads like an engineering note. Customers see"
+  echo "   these strings in the Apps catalog."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Catalog copy passed."
+
 echo "✅ Pre-push checks complete — all gates passed."
