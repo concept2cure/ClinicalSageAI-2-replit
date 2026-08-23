@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:04:44.635Z",
+  "generatedAt": "2026-08-23T23:07:38.136Z",
   "git": {
-    "sha": "1d8f2da4c4557c7fe9399ab582755c31eca10908",
+    "sha": "88d7fd1c803002e7f7efe13acad2cf11e332364c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2223,6 +2223,10 @@
         "bytes": 132966
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 132082
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
         "bytes": 131221
       },
@@ -2237,10 +2241,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 127216
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2357,6 +2357,10 @@
         "lines": 3275
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 3153
+      },
+      {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3113
       },
@@ -2371,10 +2375,6 @@
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "lines": 3060
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3054
       },
       {
         "file": "server/src/routes/stability.router.ts",
