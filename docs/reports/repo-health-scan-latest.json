@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:09:02.440Z",
+  "generatedAt": "2026-08-23T23:16:51.675Z",
   "git": {
-    "sha": "49a54b10621458f9430c44fae2887d925f05c85a",
+    "sha": "197700024ab57d92e06c754fb4585bdedd019d26",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2232,7 +2232,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 131221
+        "bytes": 132009
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2366,7 +2366,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3088
+        "lines": 3103
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
