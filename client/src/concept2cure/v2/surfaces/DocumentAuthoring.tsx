@@ -737,10 +737,16 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      honest-miss notices as an editor-target hand-off — one resolution flow,
      two senders. Carries no docType/program claim, so those guards below
      simply don't apply to it. */
-  const [navSectionCode] = useState<string | null>(() => {
-    const code = consumeNavParams('document-authoring')?.sectionCode?.trim();
-    return code && code.length > 0 ? code : null;
+  const [navHandOff] = useState<{ sectionCode: string | null; docQuery: string | null }>(() => {
+    const p = consumeNavParams('document-authoring');
+    const code = p?.sectionCode?.trim();
+    const doc = p?.authoringDocType?.trim();
+    return {
+      sectionCode: code && code.length > 0 ? code : null,
+      docQuery: doc && doc.length > 0 ? doc : null,
+    };
   });
+  const navSectionCode = navHandOff.sectionCode;
   /** Unified open-on-mount target: a workbench editor-target wins (it carries
    *  the stronger claim); otherwise the navigation directive's section. */
   const sectionOpenTarget = useMemo(
@@ -1174,6 +1180,42 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     loadSections,
     fireToast,
   ]);
+
+  /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
+     "AnA, open the Clinical Overview for authoring" → the directive names a
+     document, not a section. Matched against the REAL documents in scope by
+     title (normalized exact first, then containment) — never a fabricated
+     document, and an honest notice on a miss. A section hand-off wins when
+     both were named: its bounded search already spans every document. */
+  const docQueryAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (docQueryAttemptedRef.current) return;
+    if (!navHandOff.docQuery || sectionOpenTarget || docsState === 'loading') return;
+    docQueryAttemptedRef.current = true;
+    const wanted = navHandOff.docQuery;
+    if (docsState === 'error') {
+      setTargetNotice(
+        `Couldn’t open “${wanted}” — the document list failed to load, so nothing was resolved. ` +
+          'Retry once documents load.'
+      );
+      return;
+    }
+    const norm = (s: string) => s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const want = norm(wanted);
+    const match =
+      docs.find(d => norm(d.title) === want) ?? docs.find(d => norm(d.title).includes(want));
+    if (match) {
+      if (match.id !== activeDocId) setActiveDocId(match.id);
+      setTreeScrollNonce(n => n + 1);
+      fireToast(`Opened “${match.title}” — as requested in chat.`);
+      return;
+    }
+    setTargetNotice(
+      `Couldn’t find a document matching “${wanted}” in scope ` +
+        `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
+        'it may not be drafted here yet, or may sit under another status.'
+    );
+  }, [navHandOff.docQuery, sectionOpenTarget, docsState, docs, activeDocId, status, fireToast]);
 
   /* Bring the deep-linked section's tree row into view once it is active.
      Re-runs as the tree fills in; a no-op when nothing is active yet. */

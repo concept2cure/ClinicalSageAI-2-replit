@@ -35,10 +35,19 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const TAG = '[ci:catalog-copy]';
 
-/** Migrations that author catalog rows. A new one must be added here. */
+/**
+ * Migrations that author catalog rows. A new one must be added here.
+ *
+ * ORDER IS SIGNIFICANT: the cross-file supersede pass below treats the LAST
+ * file that authors an id as the one whose copy actually ships, which is how
+ * the customer-copy repair supersedes the seed it is fixing. List a new
+ * migration in the same order the applier runs it (scripts/db/migration-set.mjs)
+ * or the gate will scan copy that no database ever ends up with.
+ */
 const SOURCES = [
   'db/migrations/20260810_reconcile_module_catalog.sql',
   'db/migrations/20260823_module_catalog_customer_copy.sql',
+  'db/migrations/20260823_module_catalog_mdx_registers.sql',
 ];
 
 /**

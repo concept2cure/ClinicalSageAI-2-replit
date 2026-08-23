@@ -93,6 +93,7 @@ import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
 import './styles/pathway-core-v2.css';
 import './styles/pathway-panels-v2.css';
+import { restoreShellProject } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -199,6 +200,15 @@ function hasReportableWork(m: AnaChatMessage): boolean {
       m.generatedDraft?.title,
   );
 }
+
+/* Rehydrate the open program BEFORE any surface renders. The selection is a
+   window global set by Projects/MdxSurfaceHost via publishShellProject and
+   mirrored per-tab; without this, a reload or a deep link straight to
+   /concept2cure/cmc (or /vault, /ectd-compile) dropped every project-scoped
+   surface to "Open a program" until the user detoured through Projects.
+   Module scope deliberately: it must run when the shell bundle evaluates,
+   ahead of the first render of any reader. A live selection always wins. */
+restoreShellProject();
 
 /* The shell's grounding for ANA: the project currently in context (set on the
    window by the projects surface, the same source the CMC/board surfaces read).

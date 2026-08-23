@@ -104,10 +104,26 @@ The first three gaps below were closed:
   only — every turn still resolves its own `drive_state`; a failed read
   annotates nothing.
 
-## Honest gaps (remaining, deliberate)
+## Final closure pass (same day, third commit)
 
-- `authoringDocType` (the `authoring` target's second param) is carried but
-  not consumed — applying a free-form doc type to the governed editor's
-  template machinery is its own change.
-- The non-streaming `POST /api/ana-ri/chat` has no navigation wiring at all
-  (pre-existing); Live Drive is a streaming-path capability.
+- **`authoringDocType` is consumed.** DocumentAuthoring now resolves it
+  against the REAL documents in scope by normalized title (exact, then
+  containment) and opens the match — with the same honest-miss notice
+  discipline as every other hand-off. "Open the Clinical Overview for
+  authoring" opens that document. A `sectionCode` hand-off takes precedence
+  when both are named (its bounded search already spans every document).
+- **The generic chat route stopped dropping directives.** `POST /api/chat`
+  (server/routes/chat/send-message.ts) runs the full agentic loop and used to
+  silently discard `navigate_to` results — AnA would resolve a target, say she
+  could take the user there, and no chip ever reached that client. It now
+  collects directives in `onToolExecution` (`directiveFromToolResult`) and
+  returns them as offer-chips after guidance actions (`toNavigationActions` —
+  same dedup, cap, and offer-only contract as the SSE path).
+
+## Non-gaps (by design, documented)
+
+- `POST /api/ana-ri/chat` (the firecrawl/server-tools-only path) runs NO local
+  tools by design — navigation is tool-driven, so it structurally cannot occur
+  there. Not a gap: the tool paths (SSE stream + /api/chat) both carry it.
+- The `/ana` socket namespace has no client consumer; Live Drive rides the SSE
+  stream. Adding a second live transport would be duplication, not coverage.

@@ -449,3 +449,17 @@
   .vd-d-move{ display:inline-flex; gap:6px; align-items:center; }
   .vd-d-move-sel{ font-size:11.5px; color:var(--text-200); background:var(--bg-000); border:1px solid var(--border-control,var(--border)); border-radius:7px; padding:6px 8px; max-width:190px; }
 }
+
+/* ── Master Licensing · provisioning outcome ──────────────────────────────
+   Reports what a provisioning run ACTUALLY did. Both halves render together on
+   purpose: "provisioned" alone reads as "the plan now applies", and after a
+   downgrade that is false — provisioning grants and never revokes, so the
+   tenant keeps what it already held. The retained list is how the operator sees
+   that gap instead of assuming capability was withdrawn. */
+.c2c-v2 .ml-note{margin:10px 0 0;font-size:12px;line-height:1.55;color:var(--text-300);max-width:70ch;}
+.c2c-v2 .ml-provision-result{margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
+.c2c-v2 .ml-provision-line{font-size:13px;font-weight:500;color:var(--text-100);}
+.c2c-v2 .ml-provision-retained{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.c2c-v2 .ml-provision-retained-h{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-300);}
+.c2c-v2 .ml-provision-retained .ml-sub{margin:4px 0 8px;}
+.c2c-v2 .ml-provision-list{margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--text-200);}

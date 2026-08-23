@@ -186,6 +186,105 @@ describe('Master Licensing — reads', () => {
   });
 });
 
+describe('Master Licensing — applying a plan', () => {
+  const TENANT_DETAIL = {
+    organization: { id: 42, name: 'Northwind Bio', slug: 'northwind', tier: 'standard', industryMode: 'biotech', status: 'active' },
+    modules: [
+      { moduleId: 'pv-cockpit', name: 'PV cockpit', category: null, minTier: 'professional', subscriptionState: 'enabled', effective: true, source: 'subscribed' },
+    ],
+  };
+
+  function routeTenant(patch?: (url: string, body: unknown) => Promise<Response>) {
+    apiRequest.mockImplementation(async (method: string, url: string, body: unknown) => {
+      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(TENANT_DETAIL);
+      if ((method === 'POST' || method === 'PATCH') && patch) return patch(url, body);
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+  }
+
+  async function openTenant() {
+    render(<MasterLicensing />);
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING));
+    const tenantsTab = screen.getAllByRole('button').find((b) => /^tenants$/i.test((b.textContent ?? '').trim()));
+    expect(tenantsTab, 'a Tenants tab must exist').toBeTruthy();
+    fireEvent.click(tenantsTab as HTMLButtonElement);
+    const row = await screen.findByText(ORG.name);
+    fireEvent.click(row.closest('button') ?? row);
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c: unknown[]) => String(c[1]).startsWith(`${LICENSING}/tenants/`))).toBe(true),
+    );
+  }
+
+  /* THE DOWNGRADE CASE. provision_org_modules grants and never revokes, so
+     applying a plan after a downgrade adds nothing and removes nothing. A
+     console that reports only "provisioned" lets an operator conclude that
+     capability was withdrawn when the customer still has all of it — wrong in
+     the most expensive direction available. Both halves must render. */
+  it('names the grants a downgraded tenant KEEPS above its new plan', async () => {
+    routeTenant(async (url) => {
+      if (url.endsWith('/provision')) {
+        return ok({
+          id: 42,
+          name: 'Northwind Bio',
+          tier: 'standard',
+          granted: 0,
+          enabledTotal: 4,
+          retainedAboveTier: [{ moduleId: 'pv-cockpit', name: 'PV cockpit' }],
+        });
+      }
+      throw apiError(404, { error: 'unrouted' });
+    });
+    await openTenant();
+
+    const apply = screen.getAllByRole('button').find((b) => /apply plan/i.test(b.textContent ?? ''));
+    expect(apply, 'the tenant view must offer a way to apply the plan').toBeTruthy();
+    fireEvent.click(apply as HTMLButtonElement);
+    await completeConfirmDialog('applying the standard plan');
+
+    await waitFor(() =>
+      expect(apiRequest.mock.calls.some((c: unknown[]) => c[0] === 'POST' && String(c[1]).endsWith('/provision'))).toBe(true),
+    );
+
+    // It must say nothing was granted AND name what is still held above tier.
+    await waitFor(() => {
+      const text = document.body.textContent ?? '';
+      expect(/no new modules to grant/i.test(text), `expected the zero-grant sentence, got: ${text.slice(0, 300)}`).toBe(true);
+      expect(/PV cockpit/.test(text), 'the retained module must be named').toBe(true);
+      expect(/never revoke|until turned off|above this plan/i.test(text), 'it must say applying a plan does not revoke').toBe(true);
+    });
+  });
+
+  it('reports the real grant count from the server, not a guess', async () => {
+    routeTenant(async (url) => {
+      if (url.endsWith('/provision')) {
+        return ok({ id: 42, name: 'Northwind Bio', tier: 'standard', granted: 7, enabledTotal: 7, retainedAboveTier: [] });
+      }
+      throw apiError(404, { error: 'unrouted' });
+    });
+    await openTenant();
+    const apply = screen.getAllByRole('button').find((b) => /apply plan/i.test(b.textContent ?? ''));
+    fireEvent.click(apply as HTMLButtonElement);
+    await completeConfirmDialog('applying the plan');
+    await waitFor(() => expect(document.body.textContent).toMatch(/7 modules granted/i));
+  });
+
+  it('reports nothing at all when provisioning fails', async () => {
+    // A provisioning result that did not happen must never appear.
+    routeTenant(async (url) => {
+      if (url.endsWith('/provision')) throw apiError(500, { error: 'Provisioning failed. Apply the pending migrations first.' });
+      throw apiError(404, { error: 'unrouted' });
+    });
+    await openTenant();
+    const apply = screen.getAllByRole('button').find((b) => /apply plan/i.test(b.textContent ?? ''));
+    fireEvent.click(apply as HTMLButtonElement);
+    await completeConfirmDialog('deliberate failure');
+    await waitFor(() => expect(document.body.textContent).toMatch(/Provisioning failed/));
+    expect(document.body.textContent).not.toMatch(/modules granted|no new modules to grant/i);
+  });
+});
+
 describe('Master Licensing — governed writes', () => {
   /* CONTRACT 3. The server requires a reason and audit-logs it verbatim. A
      PATCH fired before one is collected is either a governed action with no

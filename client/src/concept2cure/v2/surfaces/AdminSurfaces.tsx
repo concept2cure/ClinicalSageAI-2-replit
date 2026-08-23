@@ -2827,7 +2827,29 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             )}
 
             {sec === 'security' && (
-              <div className="ac-cards">
+              <>
+                {/* ── These describe controls; they never read this org's config ──
+                    Two of the tags used to assert a posture: "IP allowlist —
+                    Off" and "Session policy — 7-day refresh". Both were string
+                    literals in this array. An admin opening Security &
+                    IP allowlist read them as their organisation's real settings
+                    — and would have reported "our IP allowlist is off" on a
+                    security questionnaire on the strength of a constant.
+
+                    No governed read exists for MFA policy, IP allowlist or
+                    session policy (unlike modules and API keys below, which are
+                    live). Rather than fabricate a posture, the two state-shaped
+                    tags now describe the control like the others do, and the
+                    note says plainly that this is a catalogue. When a read is
+                    wired, this section takes the loading/error/empty shape the
+                    modules section already uses. */}
+                <div className="scaf-note" style={{ marginBottom: 10 }}>
+                  These are the security controls available on this platform, not a readout of
+                  this organization&rsquo;s current configuration — no governed read is wired for
+                  MFA, IP allowlist or session policy yet. Module entitlements and API keys below
+                  are live.
+                </div>
+                <div className="ac-cards">
                 {(
                   [
                     [
@@ -2838,12 +2860,12 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     [
                       'IP allowlist',
                       'Restrict app access to corporate ranges (CIDR)',
-                      'Off',
+                      'CIDR ranges',
                     ],
                     [
                       'Session policy',
-                      'JWT sliding 7-day refresh — idle timeout',
-                      '7-day refresh',
+                      'JWT sliding refresh — idle timeout',
+                      'Refresh + idle timeout',
                     ],
                     [
                       'Audit to SIEM',
@@ -2858,7 +2880,8 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="ac-card-tag">{tag}</span>
                   </div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
 
             {sec === 'modules' && (
