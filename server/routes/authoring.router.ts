@@ -34,6 +34,7 @@ import {
   sha256Hex,
   verifyLedger,
   type RevisionOrigin,
+  machineContributors,
 } from '../services/authoring/revision-ledger';
 import {
   checkSectionWritable,
@@ -1030,7 +1031,17 @@ const createRevision = async (
   // so the revision commits atomically with the section update. Defaults to the
   // pool for standalone callers.
   executor: Queryable = pool,
-  origin: RevisionOrigin = 'human-edit'
+  origin: RevisionOrigin = 'human-edit',
+  /**
+   * Non-human authors whose insertions this save incorporated.
+   *
+   * Accepting a tracked suggestion strips the mark that named its author, so
+   * by the time the content reaches here nothing in it says a model drafted
+   * the words. Without this the ledger records the reviewer as the sole author
+   * of text they only approved — a §11.10(e) attribution the record cannot
+   * support. Empty for an ordinary edit.
+   */
+  contributors: { id: string; name: string }[] = []
 ) => {
   try {
     const revisionId = crypto.randomUUID();
@@ -1061,7 +1072,10 @@ const createRevision = async (
         ORDER BY created_at ASC`,
       [sectionId, tenantId]
     );
-    const inputs = JSON.stringify({ citations: cites.rows });
+    const inputs = JSON.stringify({
+      citations: cites.rows,
+      ...(contributors.length ? { contributors } : {}),
+    });
 
     await executor.query(
       `INSERT INTO doc_revisions
@@ -2027,6 +2041,11 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
     const { content, track_changes, title, code } = req.body;
+    /* Who authored the accepted suggestions this save carries in. The client
+       reads them off the marks before accepting strips them; the server keeps
+       only the ones it recognises as non-human, because a human co-author is
+       already named by created_by. */
+    const contributors = machineContributors(req.body?.acceptedAuthors);
     const tenantId = getTenantId(req);
     const updatedByUser = getActorId(req);
     if (!updatedByUser) {
@@ -2114,7 +2133,18 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       // edit path agree with it. The prior content is not lost — it is the
       // preceding row. Only when content changed.
       if (recordRevision) {
-        await createRevision(sectionId, content, updatedByUser, tenantId, client, 'human-edit');
+        /* A save that incorporates accepted machine-authored text is not a
+           plain human edit, and saying so is the whole point: the origin marks
+           it in the chain hash, the contributor list names who drafted it. */
+        await createRevision(
+          sectionId,
+          content,
+          updatedByUser,
+          tenantId,
+          client,
+          contributors.length ? 'ai-draft-accept' : 'human-edit',
+          contributors,
+        );
       }
 
       result = await client.query(updateQuery, values);

@@ -392,6 +392,35 @@ export function V2App() {
     dispatchDrive({ kind: 'take_over' });
     set('liveDrive', false);
   };
+  /* ── One-click guided tour ("Show me around") ─────────────────────────
+     Enable the toggle, then send the tour ask only AFTER the pref has
+     committed — sending in the same tick would build the request from this
+     render's stale options and the tour turn would stream WITHOUT live_drive
+     (the toolsOverride trap, documented in useAnaChat). Already-on skips the
+     wait and sends immediately. */
+  const TOUR_ASK =
+    'Show me around this workspace. Take me through the screens that matter most for my work — navigate to each one and briefly explain what I can do there as you go.';
+  const pendingTourRef = React.useRef(false);
+  const startTour = () => {
+    /* The tour button lives in the AnaRail's Control menu, and the rail is
+       only rendered on surfaces that do NOT own the conversation — so opening
+       the rail is always the right move here. */
+    if (!prefs.anaOpen) set('anaOpen', true);
+    if (prefs.liveDrive) {
+      void anaChat.send(TOUR_ASK);
+      return;
+    }
+    pendingTourRef.current = true;
+    set('liveDrive', true);
+  };
+  React.useEffect(() => {
+    if (!pendingTourRef.current || !prefs.liveDrive) return;
+    pendingTourRef.current = false;
+    void anaChat.send(TOUR_ASK);
+    // anaChat.send is rebuilt each render with fresh options; this effect runs
+    // on the render WHERE liveDrive committed, so the turn carries the flag.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs.liveDrive]);
   const lastMsg = anaChat.messages[anaChat.messages.length - 1];
   /* What AnA is doing right now, for the drive strip — only ever a label the
      stream genuinely reported (the running tool's label, else the phase). */
@@ -673,6 +702,7 @@ export function V2App() {
               set('liveDrive', v);
               if (!v) dispatchDrive({ kind: 'take_over' });
             },
+            onStartTour: startTour,
           }}
         />
       )}

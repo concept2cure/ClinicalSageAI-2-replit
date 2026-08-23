@@ -150,3 +150,49 @@ export function verifyLedger(rowsOldestFirst: LedgerRow[]): LedgerVerdict {
 
   return { intact: breaks.length === 0, chainedCount, preLedgerCount, breaks };
 }
+
+/**
+ * The non-human authors a save is allowed to name.
+ *
+ * Accepting a tracked suggestion strips the mark that named its author, so the
+ * client is the only party that still knows an AnA draft went in — it reads the
+ * authors off the marks before accepting erases them, and sends them with the
+ * write. That makes the list client-supplied, and it lands in an append-only
+ * §11.10(e) ledger, so it is validated rather than trusted.
+ *
+ * Only ids on this list are kept. A human co-author needs no entry here: the
+ * revision's `created_by` already names the person who saved, and admitting
+ * arbitrary ids would let a caller write any name it liked into the attribution
+ * of a governed record.
+ */
+export const MACHINE_AUTHOR_IDS: Readonly<Record<string, string>> = Object.freeze({
+  ana: 'AnA (AI draft)',
+});
+
+export interface MachineContributor {
+  id: string;
+  name: string;
+}
+
+/**
+ * Reduce a client-supplied accepted-author list to the machine authors this
+ * server recognises. Returns [] for anything malformed — an unparseable
+ * attribution is recorded as no attribution, never as a guess.
+ *
+ * The NAME comes from this module, not from the request: the id is the claim
+ * being checked, and echoing a caller-supplied display name would put
+ * unvalidated text in the attribution position of a filed record.
+ */
+export function machineContributors(raw: unknown): MachineContributor[] {
+  if (!Array.isArray(raw)) return [];
+  const out: MachineContributor[] = [];
+  for (const entry of raw.slice(0, 32)) {
+    const id = (entry as { id?: unknown })?.id;
+    if (typeof id !== 'string') continue;
+    const canonicalName = MACHINE_AUTHOR_IDS[id];
+    if (!canonicalName) continue;
+    if (out.some((c) => c.id === id)) continue;
+    out.push({ id, name: canonicalName });
+  }
+  return out;
+}

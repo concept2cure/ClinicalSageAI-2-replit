@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:24:15.184Z",
+  "generatedAt": "2026-08-23T23:28:34.098Z",
   "git": {
-    "sha": "fe8ab05905012656825a335af97124f7ab15d19b",
+    "sha": "ef8948e4273ca9c968e6085f86e115231acd09dc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2172,7 +2172,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 260888
+        "bytes": 262187
       },
       {
         "file": "server/statistics-service.ts",
@@ -2215,12 +2215,16 @@
         "bytes": 135234
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 135023
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 133419
+        "bytes": 133930
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2229,10 +2233,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
         "bytes": 132049
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 132009
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6550
+        "lines": 6580
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2358,15 +2358,15 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3183
+        "lines": 3190
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3159
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3113
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3103
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2593,12 +2593,12 @@
         "lines": 1704
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1683
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1659
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2637,6 +2637,10 @@
         "lines": 1582
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1553
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
@@ -2651,10 +2655,6 @@
       {
         "file": "server/routes/cortex-unified.ts",
         "lines": 1533
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1532
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",

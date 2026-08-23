@@ -3324,3 +3324,7 @@
 @media (max-width: 480px) {
   .c2c-global-errors { right: 8px; left: 8px; bottom: 8px; width: auto; }
 }
+
+/* The batch-draft card, opened for editing. Same box as the rendered body so
+   the card does not jump when the two swap. */
+.c2c-v2 .bd-card-edit{width:100%;min-height:160px;resize:vertical;font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--text-100);background:var(--bg-000);border:1px solid var(--accent-100);border-radius:8px;padding:10px 12px;outline:none;}
