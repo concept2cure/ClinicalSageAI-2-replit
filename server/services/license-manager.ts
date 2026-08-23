@@ -293,13 +293,40 @@ export const FEATURE_TIER_MAP: Record<string, string> = {
   ana_proactive_mode: 'professional',      // Ana proactive regulatory alerts
   ana_auto_remediate: 'professional',      // Ana auto-fix detected issues
 
+  /**
+   * Part 11 electronic signature. STANDARD, and it must not move up.
+   *
+   * This read 'enterprise' until 2026-08-23, which would have made the
+   * standard plan unsellable the moment anything enforced it. Every governed
+   * action in this product manifests an e-signature: approve a document,
+   * accept an AnA draft, transmit a submission. A tier that cannot e-sign is a
+   * tier that cannot approve anything, which in a GxP tool is not a reduced
+   * product — it is not a product.
+   *
+   * The market boundary runs the other way from horizontal SaaS, and that
+   * inversion is the whole point. In horizontal SaaS the enterprise wall is
+   * built from audit logs, SSO/SCIM, residency and SLA — governance is the
+   * upsell. In life sciences, audit trail, e-signature, Part 11 and immutable
+   * versioned history are the ENTRY TICKET: a system of record without them
+   * cannot be sold at any tier, so gating them buys nothing and costs the
+   * plan. (The one vendor found gating an audit trail behind a paid tier is an
+   * analysis tool, not a system of record. We are the system of record.)
+   *
+   * Nothing enforced this — no requireFeature('electronic_signatures') call
+   * exists — so no customer was ever refused. That is exactly why it was worth
+   * correcting now rather than when a route finally mounted the gate.
+   *
+   * What DOES belong at enterprise is below: identity (SSO/SCIM), the API, and
+   * autonomous agency. Those are the transferable enterprise gates.
+   */
+  electronic_signatures: 'standard',
+
   // Enterprise tier
   unlimited_research: 'enterprise',
   api_access: 'enterprise',
   sso: 'enterprise',
   custom_integrations: 'enterprise',
   ana_autonomous_actions: 'enterprise',    // Full autonomous agentic control
-  electronic_signatures: 'enterprise',
 };
 
 /**
