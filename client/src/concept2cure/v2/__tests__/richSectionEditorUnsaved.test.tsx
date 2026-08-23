@@ -128,7 +128,7 @@ describe('a debounced autosave survives the unmount that interrupts it', () => {
     unmount();
     await vi.advanceTimersByTimeAsync(0);
     expect(onSave).toHaveBeenCalledTimes(1);
-    expect(String(onSave.mock.calls[0][0])).toContain('Edits made 300ms before the drawer closed');
+    expect(String((onSave.mock.calls[0] as unknown[])[0])).toContain('Edits made 300ms before the drawer closed');
     vi.useRealTimers();
   });
 

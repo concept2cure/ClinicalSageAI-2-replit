@@ -45,6 +45,7 @@
     "fetch:fda-forms": "tsx scripts/fetch-fda-forms.ts",
     "check:compliance-claims": "node scripts/ci/check-compliance-claims.mjs",
     "check:microcopy": "node scripts/ci/check-microcopy.mjs",
+    "check:catalog-copy": "node scripts/ci/check-catalog-copy.mjs",
     "check:ledger": "node scripts/ops/ledger-check.mjs",
     "verify:ana": "node scripts/ops/verify-ana-answers.mjs",
     "pack:whitepaper": "node scripts/build-investor-whitepaper.mjs",

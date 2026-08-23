@@ -41,8 +41,25 @@ import { assumptionRegistryService } from '../services/assumption-registry-servi
 import { decisionRecordService } from '../services/decision-record-service';
 import { contradictionEngineService } from '../services/contradiction-engine-service';
 import { reactiveDependencyService } from '../services/reactive-dependency-service';
+import { requireUuidParams } from '../middleware/uuidParam';
 
 const router = Router();
+
+/* ── A malformed id is a 400, not a 500 ─────────────────────────────────────
+ * `assumption_records.id`, `cmc_contradictions.id` and `governed_dependencies.id`
+ * are uuid, checked against the live catalog. Without this, a non-uuid segment
+ * reached SQL and 22P02 came back as a 500 carrying the driver's text.
+ *
+ * The case that found it is worth keeping in view: `GET /contradictions/scan/`
+ * is not a bad id at all — `scan` is the literal segment of the sibling route
+ * `POST /contradictions/scan/:projectId`, reached with the wrong method and a
+ * trailing slash, falling through to `GET /contradictions/:id`. Nothing was
+ * broken but the routing, and the product answered "internal server error".
+ *
+ * `:projectId` is deliberately excluded — regulatory_programs.id is uuid but
+ * several project-scoped routes here accept the integer PM-spine id, so a uuid
+ * rule on that name would refuse valid requests. */
+requireUuidParams(router, ['id']);
 const log = createScopedLogger('governed-intelligence-routes');
 
 function getOrgId(req: Request): number {
