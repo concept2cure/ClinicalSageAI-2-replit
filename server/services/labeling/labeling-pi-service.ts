@@ -207,6 +207,110 @@ export async function upsertLabelingPiSection(orgId: number, input: UpsertLabeli
   }
 }
 
+/** Raised when an accept is asked for on a section that has nothing to accept. */
+export class LabelingPiConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LabelingPiConflictError';
+  }
+}
+
+export interface AcceptAgencyTextResult {
+  row: LabelingPiSectionRow;
+  /** The section content as it stood before the accept — kept for the audit entry. */
+  previousContent: LabelingPiContent | null;
+}
+
+/**
+ * Adopt the agency's proposed wording for a section — the governed end of the
+ * end-of-cycle labeling negotiation.
+ *
+ * This is a Part 11 record change, not a UI state flip: the sponsor's text is
+ * replaced by the text the agency proposed, the section moves to `approved`,
+ * the "FDA proposed an edit" flag clears, and the WHOLE negotiation is kept on
+ * the row so the redline that produced the change stays readable afterwards.
+ * The prior content is returned so the route can write it into the audit entry
+ * — the reviewer question after an accept is always "what did it say before".
+ *
+ * Fails closed. A section with no stored negotiation has no agency text to
+ * adopt, so accepting is refused rather than silently approving the sponsor's
+ * own draft under a label that claims the agency wrote it.
+ *
+ * `reason` is the 21 CFR 11.10(e) reason-for-change; the route requires it and
+ * carries it into the audit trail.
+ */
+export async function acceptAgencyText(
+  orgId: number,
+  sectionNo: string,
+  opts: { userId?: number | null },
+): Promise<AcceptAgencyTextResult> {
+  if (!sectionNo || !SECTION_NO_RE.test(sectionNo)) {
+    throw new LabelingPiValidationError("sectionNo must be 'HL', 'BW', or a numbered USPI section ('1'..'17', dotted subsections allowed).");
+  }
+  const actor = String(opts.userId ?? 'system');
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Lock the row for the life of the accept so two reviewers cannot both
+    // adopt against the same pre-image and have one of them silently win.
+    const { rows: found } = await client.query<LabelingPiSectionRow>(
+      `SELECT ${SELECT_COLS} FROM labeling_pi_sections
+        WHERE organization_id = $1 AND section_no = $2 AND deleted_at IS NULL
+        FOR UPDATE`,
+      [orgId, sectionNo],
+    );
+    const current = found[0];
+    if (!current) {
+      await client.query('ROLLBACK');
+      throw new LabelingPiConflictError(`No label section ${sectionNo} in this organization.`);
+    }
+    const negotiation = current.negotiation;
+    if (!negotiation || typeof negotiation.agency !== 'string' || negotiation.agency.trim() === '') {
+      await client.query('ROLLBACK');
+      throw new LabelingPiConflictError(
+        `Section ${sectionNo} has no agency-proposed text on record, so there is nothing to accept.`,
+      );
+    }
+
+    const previousContent = current.content;
+    // The accepted text becomes the section's content. The heading is the
+    // section's own — the agency proposes wording, not a new section title —
+    // and the hl/warn display flags carry over untouched.
+    const nextContent: LabelingPiContent = {
+      heading: previousContent?.heading ?? `${current.section_no}  ${current.label}`,
+      body: [negotiation.agency],
+    };
+    if (previousContent?.hl) nextContent.hl = true;
+    if (previousContent?.warn) nextContent.warn = true;
+
+    const { rows } = await client.query<LabelingPiSectionRow>(
+      `UPDATE labeling_pi_sections
+          SET content = $3::jsonb, status = 'approved', flag = NULL, updated_at = now()
+        WHERE organization_id = $1 AND section_no = $2 AND deleted_at IS NULL
+        RETURNING ${SELECT_COLS}`,
+      [orgId, sectionNo, JSON.stringify(nextContent)],
+    );
+
+    // Re-attribute the section's clauses to whoever performed the accept —
+    // the adopted words are now theirs to answer for, not the prior author's.
+    await enforceAuthorLineage(
+      client,
+      orgId,
+      { documentTable: 'labeling_pi_sections', documentId: String(rows[0].id) },
+      [nextContent.heading, ...nextContent.body].join('\n\n'),
+      actor,
+    );
+    await client.query('COMMIT');
+    return { row: rows[0], previousContent };
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /**
  * List the org's label sections in USPI document order (HL, BW, then numeric;
  * soft-deleted excluded).
