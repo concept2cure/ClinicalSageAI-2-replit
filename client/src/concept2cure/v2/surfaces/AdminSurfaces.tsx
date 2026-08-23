@@ -1756,9 +1756,56 @@ interface ArtifactRow {
   prog: string;
 }
 
+/* CSV cell: quote always, double any embedded quote. Artifact names carry
+   commas and parentheses ("… — 510(k) Summary, rev 2"), which is exactly the
+   text that silently corrupts a hand-rolled CSV. */
+function csvCell(v: unknown): string {
+  return `"${String(v ?? '').replace(/"/g, '""')}"`;
+}
+
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   // Real cross-project artifact gallery, unwrapped from { success, data }.
   const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
+
+  /* ── "Export all" was inert, and the code said so ──────────────────────────
+     The two lines above it read: "MOCK ACTION (flagged): 'Export all' has no
+     handler and no bulk-export endpoint exists — inert button, left for a later
+     actions pass." An admin clicked it and got nothing: no file, no error, no
+     toast.
+
+     It exports the MANIFEST, and is labelled that way. There is genuinely no
+     bulk-file endpoint — /api/artifacts-center returns a gallery with no
+     content, and the three single-document exporters in routes/concept2cure.ts
+     take { title, content } for one document behind an export-governance gate
+     that a bulk loop must not skip. Building that is a backend change, not a
+     button fix. What this surface HAS is the index, and an index is a real,
+     useful thing to hand someone — so the button now delivers exactly that and
+     its label no longer promises the files. */
+  const exportManifest = () => {
+    const cols: Array<[string, (r: ArtifactRow) => unknown]> = [
+      ['Name', (r) => r.name],
+      ['Kind', (r) => r.kind],
+      ['Format', (r) => r.fmt ?? ''],
+      ['Size', (r) => r.size],
+      ['Model', (r) => r.model ?? ''],
+      ['Version', (r) => r.ver],
+      ['Signed', (r) => (r.sig ? 'yes' : 'no')],
+      ['Program', (r) => r.prog],
+      ['Updated', (r) => r.when],
+    ];
+    const csv = [
+      cols.map((c) => csvCell(c[0])).join(','),
+      ...rows.map((r) => cols.map((c) => csvCell(c[1](r))).join(',')),
+    ].join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'artifacts-manifest.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  };
   return (
     <div className="page-inner">
       <AdminHeader
@@ -1766,9 +1813,21 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         title="Artifacts Center"
         sub="Every artifact AnA has drafted — across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
         actions={
-          // MOCK ACTION (flagged): "Export all" has no handler and no bulk-export
-          // endpoint exists — inert button, left for a later actions pass.
-          <button className="btn ghost">{I.externalLink} Export all</button>
+          <button
+            className="btn ghost"
+            onClick={exportManifest}
+            /* Disabled on empty or failed, so it can never present as a
+               no-op again: with no rows there is no manifest to export. */
+            disabled={loading || Boolean(error) || rows.length === 0}
+            title={
+              rows.length === 0
+                ? 'No artifacts to export yet'
+                : 'Download the artifact index as CSV (names, versions, signature status — not the files)'
+            }
+            data-testid="artifacts-export-manifest"
+          >
+            {I.download || I.externalLink} Export manifest
+          </button>
         }
       />
       {loading ? (
