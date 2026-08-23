@@ -251,7 +251,7 @@ router.post('/compile/:projectId', async (req, res) => {
           completeness: section.completeness,
           missingInputs: section.missingInputs,
           lineage: section.lineage,
-        });
+        }, { createdById: Number((req as any).user?.id) || null });
         if (bridged.bridged) {
           bridgedArtifacts.push({
             sectionKey: section.sectionKey,
@@ -319,18 +319,55 @@ router.post('/contradictions/:projectId', async (req, res) => {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
+    /* The sweep reads the REAL register shapes, tenant-scoped:
+       - quality_specifications / cmc_batch_records / cmc_comparability_
+         assessments carry a uuid project_id, so the project filter applies
+         only when the id IS a uuid (a legacy numeric id matches nothing —
+         honestly — instead of aborting the whole statement with 22P02);
+       - analytical_methods / stability_studies are the ORGANIZATION's
+         registers (no project column by design), read org-wide — and their
+         columns are `title` / `study_title`, which the previous SQL imagined
+         as method_name / study_name, so this endpoint had never returned
+         anything but 500 against a provisioned database. Every query also
+         carries the org — the old ones filtered by project alone, which on
+         the shared-uuid space was a cross-tenant read. */
+    const isUuidProject = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId);
+    const noRows = Promise.resolve({ rows: [] as any[] });
     const [specs, methods, stability, batch, comparability] = await Promise.all([
+      isUuidProject
+        ? pool.query(
+            `SELECT material_name as "materialName", acceptance_criteria as "acceptanceCriteria"
+             FROM quality_specifications
+             WHERE project_id = $1::uuid AND (tenant_id = $2 OR tenant_id IS NULL)`,
+            [projectId, orgId]
+          )
+        : noRows,
       pool.query(
-        `SELECT material_name as "materialName", acceptance_criteria as "acceptanceCriteria" FROM quality_specifications WHERE project_id = $1`,
-        [projectId]
+        // The engine's contract reads `validationStatus` (ICH Q2 validated /
+        // verified / transferred); the table's column is `status`.
+        `SELECT title as "methodName", purpose, status as "validationStatus"
+         FROM analytical_methods WHERE organization_id = $1`,
+        [orgId]
       ),
-      pool.query(`SELECT method_name as "methodName", purpose FROM analytical_methods WHERE project_id = $1`, [projectId]),
-      pool.query(`SELECT study_name as "studyName", status FROM stability_studies WHERE project_id = $1`, [projectId]),
-      pool.query(`SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records WHERE project_id = $1`, [projectId]),
       pool.query(
-        `SELECT assessment_name as "assessmentName", regulatory_risk_level as "regulatoryRiskLevel" FROM cmc_comparability_assessments WHERE project_id = $1`,
-        [projectId]
+        `SELECT study_title as "studyName", status FROM stability_studies WHERE organization_id = $1`,
+        [orgId]
       ),
+      isUuidProject
+        ? pool.query(
+            `SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records
+             WHERE project_id = $1::uuid AND (tenant_id = $2 OR organization_id = $2)`,
+            [projectId, orgId]
+          )
+        : noRows,
+      isUuidProject
+        ? pool.query(
+            `SELECT assessment_name as "assessmentName", regulatory_risk_level as "regulatoryRiskLevel"
+             FROM cmc_comparability_assessments
+             WHERE project_id = $1::uuid AND organization_id = $2`,
+            [projectId, orgId]
+          )
+        : noRows,
     ]);
 
     const contradictions = detectContradictions({

@@ -424,6 +424,16 @@ export async function bridgeCompileToArtifact(
     missingInputs: string[];
     lineage: Array<{ sourceObjectId: string; sourceHashAtCompile: string }>;
   },
+  opts: {
+    /**
+     * The acting user's id for concept2cure_artifacts.created_by_id — an
+     * INTEGER FK → users.id. The previous literal 'system' could never insert
+     * (invalid input syntax for type integer), so every bridge on a fresh
+     * database failed and the caller's catch logged it away. NULL is the
+     * honest value for a system-initiated bridge with no identified actor.
+     */
+    createdById?: number | null;
+  } = {},
 ): Promise<BridgeToArtifactResult> {
   const spine = await resolveCmcArtifactProject(orgId, projectId);
   if (spine.state !== 'linked') {
@@ -498,7 +508,7 @@ export async function bridgeCompileToArtifact(
            (organization_id, project_id, artifact_id, type, category, title,
             content, content_hash, version, ctd_section, status, metadata, created_by_id)
          VALUES ($1, $2, $3, 'markdown', 'document', $4,
-                 $5, $6, 1, $7, 'draft', $8::jsonb, 'system')`,
+                 $5, $6, 1, $7, 'draft', $8::jsonb, $9)`,
         [
           orgId,
           artifactProjectId,
@@ -508,6 +518,7 @@ export async function bridgeCompileToArtifact(
           contentHash,
           sectionKey,
           JSON.stringify(metadata),
+          opts.createdById ?? null,
         ],
       );
     }
