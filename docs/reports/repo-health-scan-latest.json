@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:21:09.777Z",
+  "generatedAt": "2026-08-23T22:24:46.775Z",
   "git": {
-    "sha": "a5904eb1ec9ddfa5e90520566a3299127037f4b3",
+    "sha": "bad8a05f5ddac931a4ddb9ba2786f73d8941a536",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2172,7 +2172,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 253129
+        "bytes": 253130
       },
       {
         "file": "server/statistics-service.ts",
@@ -2235,6 +2235,10 @@
         "bytes": 127662
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 123378
+      },
+      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 120988
       },
@@ -2245,10 +2249,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 115393
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6380
+        "lines": 6381
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2369,12 +2369,12 @@
         "lines": 3060
       },
       {
-        "file": "server/src/routes/stability.router.ts",
-        "lines": 2832
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 2974
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 2775
+        "file": "server/src/routes/stability.router.ts",
+        "lines": 2832
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2645,12 +2645,12 @@
         "lines": 1534
       },
       {
-        "file": "server/routes/cortex-unified.ts",
+        "file": "client/src/concept2cure/v2/Shell.tsx",
         "lines": 1533
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1529
+        "file": "server/routes/cortex-unified.ts",
+        "lines": 1533
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",

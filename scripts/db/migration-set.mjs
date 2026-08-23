@@ -1457,6 +1457,15 @@ export const C2C_MIGRATION_FILES = [
   // the broken function chokes on.
   'db/migrations/20260823_module_catalog_commercial_packaging.sql',
 
+  // ── Catalog descriptions become customer copy (added 2026-08-23) ──────────
+  // The 20260810 seed copied each surface's registry `notes` verbatim into
+  // `description`, which the Apps catalog renders to CUSTOMERS — so 33 of 84
+  // cards told a prospect the product was unfinished ("In progress.",
+  // "Partially built in ui_kits/home") or leaked repository internals.
+  // Display text only; nothing keys on it. scripts/ci/check-catalog-copy.mjs
+  // stops it recurring.
+  'db/migrations/20260823_module_catalog_customer_copy.sql',
+
   // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
   // Name + description only (adds Swissmedic to the modeled-agency list); no
   // entitlement change. Idempotent UPDATE keyed on module_id.

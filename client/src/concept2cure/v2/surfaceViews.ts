@@ -240,6 +240,7 @@ const Apps = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({
 const ArtifactsCenter = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.ArtifactsCenter })));
 const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
+const MasterLicensing = lazySurface(() => import('./surfaces/MasterLicensing').then((m) => ({ default: m.MasterLicensing })));
 const AgencyMeetings = lazySurface(() => import('./surfaces/AgencyMeetings').then((m) => ({ default: m.AgencyMeetings })));
 const AnaCommand = lazySurface(() => import('./surfaces/AnaCommand').then((m) => ({ default: m.AnaCommand })));
 const AnaMemory = lazySurface(() => import('./surfaces/AnaMemory').then((m) => ({ default: m.AnaMemory })));
@@ -345,6 +346,11 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // single-column fallback and `.adm-access{min-width:0}` — so the rail is the
   // right home, not a compromise.
   'admin-console': { component: AdminAccess, full: true },
+  // Platform-owner licensing control. Deliberately NOT seeded into
+  // available_modules — the surface that EDITS entitlements must never itself
+  // be lockable, or a mis-set tier could strand the owner outside the only
+  // place the tier can be un-set.
+  'master-licensing': { component: MasterLicensing, full: true },
   'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
   'ana-memory': { component: AnaMemory },
