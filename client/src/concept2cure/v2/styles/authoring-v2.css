@@ -245,6 +245,103 @@
     margin: 0 auto;
     padding: 36px 44px 80px;
   }
+  /* ── Whole-document view ─────────────────────────────────────────────
+     Section view edits one section in a box; this is the document that box
+     is part of. Prose keeps the same measure as the editor so the read does
+     not change shape between the two views, while tables stay free to use
+     the column. */
+  .ed-viewtoggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 10px);
+    background: var(--bg-050);
+  }
+  .ed-viewtoggle .btn {
+    border-color: transparent;
+    background: transparent;
+  }
+  .ed-viewtoggle .btn[data-active] {
+    background: var(--bg-000);
+    border-color: var(--border);
+  }
+  .ed-full-mast {
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ed-full-sec {
+    padding: 0 0 30px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--bg-200, #eaecf0);
+    scroll-margin-top: 24px;
+  }
+  .ed-full-sec:last-child { border-bottom: none; }
+  .ed-full-sec[data-active] {
+    box-shadow: -14px 0 0 -12px var(--accent-100, #2563eb);
+  }
+  .ed-full-sec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .ed-full-sec-num {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-400);
+    font-variant-numeric: tabular-nums;
+  }
+  .ed-full-sec-t {
+    font-family: var(--font-serif);
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .ed-full-edit { opacity: 0; transition: opacity 120ms ease-out; }
+  .ed-full-sec:hover .ed-full-edit,
+  .ed-full-edit:focus-visible { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .ed-full-edit { transition: none; }
+  }
+  .ed-full-sec-body {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-100);
+  }
+  .ed-full-sec-body > p,
+  .ed-full-sec-body > h1,
+  .ed-full-sec-body > h2,
+  .ed-full-sec-body > h3,
+  .ed-full-sec-body > ul,
+  .ed-full-sec-body > ol { max-width: 78ch; }
+  .ed-full-sec-body p { margin: 0 0 12px; }
+  .ed-full-sec-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .ed-full-sec-body th {
+    padding: 8px 12px;
+    background: var(--bg-050);
+    border: 1px solid var(--border);
+    font-weight: 600;
+    text-align: left;
+  }
+  .ed-full-sec-body td { padding: 7px 12px; border: 1px solid var(--border); }
+  .ed-full-sec-empty {
+    font-size: 13px;
+    color: var(--text-400);
+    font-style: italic;
+    margin: 0;
+  }
+
   .ed-mast {
     padding-bottom: 20px;
     margin-bottom: 22px;
