@@ -83,7 +83,14 @@ export interface SurfaceViewProps {
    * apply/take-over reducer. Optional: a surface that ignores it simply
    * cannot originate driving turns — the rail still can everywhere.
    */
-  liveDrive?: { on: boolean; onDriveEvent: (event: DriveSseEvent) => void };
+  liveDrive?: {
+    on: boolean;
+    onDriveEvent: (event: DriveSseEvent) => void;
+    /** Follow-the-work: forward to `useAnaChat`'s `onArtifactSaved` so a
+     *  driven turn's persisted draft appears in front of the subscriber from
+     *  this surface's dock too, not only the shell rail. */
+    onWorkSaved?: (artifactId: string) => void;
+  };
 }
 
 /**

@@ -159,6 +159,7 @@ function verdictText(m: TenantModule): string {
 type Pending =
   | { kind: 'module-tier'; config: ConfirmConfig; moduleId: string; label: string; from: Tier | null; to: Tier | null }
   | { kind: 'tenant-tier'; config: ConfirmConfig; orgId: string; label: string; from: string; to: Tier }
+  | { kind: 'tenant-provision'; config: ConfirmConfig; orgId: string; label: string; tier: string }
   | { kind: 'tenant-module'; config: ConfirmConfig; orgId: string; moduleId: string; label: string; enabled: boolean }
   | { kind: 'flag'; config: ConfirmConfig; key: string; label: string; enabled: boolean };
 
@@ -233,8 +234,15 @@ export function MasterLicensing() {
   }, [tenant.data]);
 
   const [orgTier, setOrgTier] = useState<string | null>(null);
+  /** The last provisioning run's REAL outcome, straight from the server. Null
+   *  until one has run — this surface never shows a provisioning result it did
+   *  not receive. */
+  const [provisionResult, setProvisionResult] = useState<
+    { name: string; granted: number; retained: Array<{ moduleId: string; name: string }> } | null
+  >(null);
   useEffect(() => {
     setOrgTier(tenant.data?.organization?.tier ?? null);
+    setProvisionResult(null); // a previous tenant's result must never sit over this one
   }, [tenant.data]);
 
   const [flags, setFlags] = useState<FeatureFlag[] | null>(null);
@@ -348,6 +356,46 @@ export function MasterLicensing() {
       return;
     }
 
+    if (action.kind === 'tenant-provision') {
+      /* Not optimistic, deliberately. Provisioning's OUTCOME is the point —
+         how many grants it added, and which grants the tenant keeps that this
+         plan does not include — and only the server can compute either. Guessing
+         a result here and correcting it a moment later would show the operator a
+         number that was never true. */
+      const res = await apiCall(
+        'POST',
+        `${LICENSING_PATH}/tenants/${encodeURIComponent(action.orgId)}/provision`,
+        { reason },
+      );
+      if (!res.ok) {
+        fireToast(apiErrorText(res, `${action.label} was not provisioned.`), 'error');
+        return;
+      }
+      const body = (res.body ?? {}) as {
+        granted?: number;
+        retainedAboveTier?: Array<{ moduleId: string; name: string }>;
+      };
+      const granted = typeof body.granted === 'number' ? body.granted : 0;
+      const retained = Array.isArray(body.retainedAboveTier) ? body.retainedAboveTier : [];
+      /* Both halves, always. "Provisioned" alone reads as "the plan now
+         applies", and after a DOWNGRADE that is false: provisioning grants and
+         never revokes, so the tenant keeps everything it already held. An
+         operator who is not told that concludes capability was withdrawn when
+         it was not. */
+      setProvisionResult({
+        name: action.label,
+        granted,
+        retained,
+      });
+      fireToast(
+        granted === 0
+          ? `${action.label} — no new modules to grant on this plan.`
+          : `${action.label} — ${granted} module${granted === 1 ? '' : 's'} granted.`,
+      );
+      retry();
+      return;
+    }
+
     if (action.kind === 'tenant-module') {
       setTenantModuleState(action.moduleId, action.enabled);
       const res = await apiCall(
@@ -396,6 +444,24 @@ export function MasterLicensing() {
         action: 'Change the plan tier a module belongs to',
         target: `${m.name} · ${tierLabel(m.minTier)} → ${tierLabel(to)}`,
         resource: m.moduleId,
+        minReason: 3,
+      },
+    });
+  };
+
+  const askTenantProvision = () => {
+    const org = tenant.data?.organization;
+    if (!org) return;
+    setProvisionResult(null);
+    setPending({
+      kind: 'tenant-provision',
+      orgId: String(org.id),
+      label: org.name,
+      tier: (orgTier ?? org.tier) as string,
+      config: {
+        action: 'Apply the plan to this workspace',
+        target: `${org.name} · ${tierLabel(orgTier ?? org.tier)}`,
+        resource: org.slug,
         minReason: 3,
       },
     });
@@ -726,7 +792,52 @@ export function MasterLicensing() {
                           ))}
                         </select>
                       </div>
+                      <button
+                        type="button"
+                        className="btn ghost"
+                        onClick={askTenantProvision}
+                      >
+                        Apply plan
+                      </button>
                     </div>
+
+                    {/* Changing the tier writes no subscription rows — provisioning
+                        is a separate act. Said here rather than left implicit,
+                        because a plan change that appears to have taken effect and
+                        has not is the failure this control exists to prevent. */}
+                    <p className="ml-note">
+                      Changing the plan does not grant its modules on its own. Apply
+                      the plan to grant what this tier includes. Nothing is ever
+                      revoked by applying a plan.
+                    </p>
+
+                    {provisionResult && (
+                      <div className="ml-provision-result" role="status">
+                        <div className="ml-provision-line">
+                          {provisionResult.granted === 0
+                            ? `No new modules to grant for ${provisionResult.name} on this plan.`
+                            : `${provisionResult.granted} module${
+                                provisionResult.granted === 1 ? '' : 's'
+                              } granted for ${provisionResult.name}.`}
+                        </div>
+                        {provisionResult.retained.length > 0 && (
+                          <div className="ml-provision-retained">
+                            <div className="ml-provision-retained-h">
+                              Still granted above this plan ({provisionResult.retained.length})
+                            </div>
+                            <p className="ml-sub">
+                              Applying a plan never revokes. These stay available to the
+                              workspace until turned off individually below.
+                            </p>
+                            <ul className="ml-provision-list">
+                              {provisionResult.retained.map((r) => (
+                                <li key={r.moduleId}>{r.name}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {tenantRows.length === 0 ? (
                       <EmptyState

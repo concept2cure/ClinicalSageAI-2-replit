@@ -6,6 +6,7 @@ import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
+import { consumeNavParams } from '../navParams';
 import { LIC_ROLES } from '../fixtures/licensing';
 // Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
 // filter taxonomy the server's deriveKind() mirrors; PLATFORM_SERVICES is the
@@ -1958,6 +1959,19 @@ function csvCell(v: unknown): string {
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   // Real cross-project artifact gallery, unwrapped from { success, data }.
   const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
+  /* Follow-the-work hand-off (Live Drive): a driven turn that just persisted a
+     draft lands here with its artifactId, and the gallery brings that row into
+     view, highlighted — the subscriber watches the document ARRIVE. Consumed
+     once; a stale or absent hand-off changes nothing. */
+  const [focusId] = useState<string | null>(
+    () => consumeNavParams('artifacts-center')?.artifactId ?? null,
+  );
+  const focusRowRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (focusId && focusRowRef.current) {
+      focusRowRef.current.scrollIntoView({ block: 'center' });
+    }
+  }, [focusId, rows.length]);
 
   /* What AnA can see of this screen.
      This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and
@@ -2141,7 +2155,8 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
           return (
             <div
               key={a.id}
-              className="ct-row art-row"
+              ref={a.id === focusId ? focusRowRef : undefined}
+              className={`ct-row art-row${a.id === focusId ? ' is-focus' : ''}`}
               style={{ gridTemplateColumns: '1.7fr 78px 90px 96px 84px 60px 132px' }}
             >
               <div className="vn">

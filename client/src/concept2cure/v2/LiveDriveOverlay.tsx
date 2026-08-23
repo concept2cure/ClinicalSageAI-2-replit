@@ -17,10 +17,17 @@ import type { LiveDriveState } from './liveDrive';
 
 export function LiveDriveOverlay({
   state,
+  activity,
   onTakeOver,
   onStop,
 }: {
   state: LiveDriveState;
+  /**
+   * What AnA is doing RIGHT NOW — the running tool's label (or the turn's
+   * status phase) from the live stream. Only ever a label the turn genuinely
+   * reported; undefined renders nothing rather than a fabricated verb.
+   */
+  activity?: string;
   /** Stop applying AnA's navigations this turn (she keeps answering). */
   onTakeOver: () => void;
   /** Cancel the run entirely (the rail's Stop, reachable from the strip). */
@@ -51,9 +58,14 @@ export function LiveDriveOverlay({
     <div className="ana-drive-strip" role="status" aria-live="polite">
       <span className="ana-drive-dot" aria-hidden="true" />
       <span className="ana-drive-title">AnA is driving</span>
+      {activity && (
+        <span className="ana-drive-activity" title={activity}>
+          {activity}
+        </span>
+      )}
       {last && (
         <span className="ana-drive-step" title={last.label}>
-          {last.label}
+          → {last.label}
         </span>
       )}
       <div className="ana-drive-actions">

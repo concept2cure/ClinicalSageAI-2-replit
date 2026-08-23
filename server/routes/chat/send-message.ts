@@ -49,6 +49,12 @@ import { getCachedSignalReliability } from '../../services/intelligence/learning
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
 import {
+  directiveFromToolResult,
+  toNavigationActions,
+  type NavigationAction,
+} from '../../services/ana-ri/navigation-actions.js';
+import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import {
   handleSubmissionChat,
   isPostSectionGenerationTurn,
 } from '../../services/ana/submission-chat-handler.js';
@@ -388,6 +394,12 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // The catch block returns 503, so reaching the response site implies
     // the assignment inside the try succeeded — hence non-null at use.
     let orchestratorResult: OrchestratorOutput | null = null;
+    // Validated navigation directives the agentic loop's navigate_to produced
+    // this turn. Hoisted for the same reason: collected inside the try (the
+    // loop's onToolExecution), offered as chips by the action step after it.
+    // This caller used to DROP them silently — AnA resolved a target, told the
+    // user she could take them there, and no chip ever reached this client.
+    const collectedNavigation: NavigationDirective[] = [];
 
     // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
@@ -754,6 +766,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           documentType: tool_context && typeof tool_context === 'object' ? ((tool_context as any).documentType ?? null) : null,
         },
         onToolExecution: (toolName, input, result) => {
+          // A navigate_to that resolved against the governed registry becomes
+          // an offer-chip in the response (same contract as the SSE path;
+          // refusals yield null here and never become one).
+          const directive = directiveFromToolResult(toolName, result);
+          if (directive) collectedNavigation.push(directive);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -842,14 +859,17 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
     // Process AnA's response for action signals and execute governed actions.
     // Only runs when project context is available (org + project scoped).
-    let executedActions: Array<{
-      actionType: string;
-      executed: boolean;
-      confidence: string;
-      artifactId: string | null;
-      threadId: string | null;
-      error: string | null;
-    }> = [];
+    let executedActions: Array<
+      | {
+          actionType: string;
+          executed: boolean;
+          confidence: string;
+          artifactId: string | null;
+          threadId: string | null;
+          error: string | null;
+        }
+      | NavigationAction
+    > = [];
 
     if (numericOrgId && project_id) {
       try {
@@ -877,6 +897,13 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         // Non-fatal — chat still works, actions just don't execute
         console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
       }
+    }
+
+    // Navigation chips AFTER guidance actions — same ordering rationale as the
+    // SSE path's post-processing: an artifact the turn actually created still
+    // leads. Deduped + capped by toNavigationActions (first occurrence wins).
+    if (collectedNavigation.length > 0) {
+      executedActions = [...executedActions, ...toNavigationActions(collectedNavigation)];
     }
 
     // Save to legacy chat_messages for backward compat

@@ -269,6 +269,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
        rail's turns (see SurfaceViewProps.liveDrive). */
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const turns = anaChat.messages;
 
