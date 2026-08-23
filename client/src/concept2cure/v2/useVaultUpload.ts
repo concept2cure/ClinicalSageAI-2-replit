@@ -38,6 +38,9 @@ export interface VaultUploadOutcome {
   succeeded: string[];
   /** Files it refused, each with the reason as the server phrased it. */
   failed: Array<{ name: string; reason: string }>;
+  /** Per-file filing outcome, as the server stored it: the classifier's
+   *  suggested dossier folder, or unfiled (visible review queue). */
+  filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean }>;
 }
 
 export interface VaultUploadOptions {
@@ -66,7 +69,10 @@ async function uploadOne(
   programId: string,
   file: File,
   documentType: VaultIngestDocumentType,
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<
+  | { ok: true; folderLabel: string | null; needsReview: boolean }
+  | { ok: false; reason: string }
+> {
   const form = new FormData();
   form.append('file', file);
   form.append('programId', programId);
@@ -90,7 +96,20 @@ async function uploadOne(
     return { ok: false, reason: 'the connection dropped before the file was sent' };
   }
 
-  if (res.ok) return { ok: true };
+  if (res.ok) {
+    /* The ingest response reports the filing outcome the server stored — the
+       suggested dossier folder (auto-filed, awaiting confirmation) or unfiled.
+       Read, never assumed: a missing block reads as no placement reported. */
+    const body = (await res.json().catch(() => null)) as
+      | { filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean } }
+      | null;
+    const filing = body?.filing;
+    return {
+      ok: true,
+      folderLabel: filing?.folderId ? filing.folderLabel || filing.folderId : null,
+      needsReview: Boolean(filing?.needsReview ?? !filing?.folderId),
+    };
+  }
 
   const body = (await res.json().catch(() => null)) as
     | { error?: { message?: string; code?: string } | string; message?: string }
@@ -122,7 +141,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
   const upload = React.useCallback(
     async (files: FileList | File[] | null, opts?: VaultUploadOptions): Promise<VaultUploadOutcome> => {
       const list = files ? Array.from(files as ArrayLike<File>) : [];
-      const empty: VaultUploadOutcome = { succeeded: [], failed: [] };
+      const empty: VaultUploadOutcome = { succeeded: [], failed: [], filings: [] };
       if (list.length === 0) return empty;
       if (!programId) {
         setNote({
@@ -134,20 +153,47 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
 
       setUploading(true);
       setNote(null);
-      const outcome: VaultUploadOutcome = { succeeded: [], failed: [] };
+      const outcome: VaultUploadOutcome = { succeeded: [], failed: [], filings: [] };
       try {
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
            run a virus scan and a text extraction server-side; firing a whole
            drop-zone's worth in parallel is how one user stalls the pool. */
         for (const file of list) {
           const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE);
-          if (r.ok) outcome.succeeded.push(file.name);
-          else outcome.failed.push({ name: file.name, reason: r.reason });
+          if (r.ok) {
+            outcome.succeeded.push(file.name);
+            outcome.filings.push({
+              name: file.name,
+              folderLabel: r.folderLabel,
+              needsReview: r.needsReview,
+            });
+          } else outcome.failed.push({ name: file.name, reason: r.reason });
         }
 
         if (outcome.failed.length === 0) {
+          /* Say where each file LANDED, not merely that bytes arrived — the
+             filing outcome is the server's own record. Auto-filed placements
+             are suggestions until confirmed, and the copy says so. */
+          const placed = outcome.filings.filter((f) => f.folderLabel);
+          const unplaced = outcome.filings.length - placed.length;
+          const placedText =
+            placed.length > 0
+              ? `Auto-filed ${placed
+                  .map((f) => `${f.name} → ${f.folderLabel}`)
+                  .join('; ')} — suggested until confirmed.`
+              : '';
+          const unplacedText =
+            unplaced > 0
+              ? ` ${unplaced} landed in Unfiled — the classifier could not place ${unplaced === 1 ? 'it' : 'them'}; review where ${unplaced === 1 ? 'it belongs' : 'they belong'}.`
+              : '';
           const n = outcome.succeeded.length;
-          setNote({ tone: 'ok', text: `Filed ${n} document${n === 1 ? '' : 's'} to the vault.` });
+          setNote({
+            tone: 'ok',
+            text:
+              placedText || unplacedText
+                ? `${placedText}${unplacedText}`.trim()
+                : `Filed ${n} document${n === 1 ? '' : 's'} to the vault.`,
+          });
         } else {
           setNote({
             tone: 'error',

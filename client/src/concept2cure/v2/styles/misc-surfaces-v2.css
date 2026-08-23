@@ -409,4 +409,43 @@
   .vd-ev-row{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-300); }
   .vd-ev-row svg{ width:13px; height:13px; color:var(--text-400); }
   .vd-d-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+
+  /* ── Data room lane (capture → classify → file pipeline) ── */
+  .vd-dr{ border-bottom:1px solid var(--border); background:var(--bg-050); padding:10px 24px; }
+  .vd-dr-head{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .vd-dr-title{ display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--text-200); }
+  .vd-dr-title svg{ width:14px; height:14px; color:var(--text-400); }
+  .vd-dr-meta{ font-size:11.5px; color:var(--text-400); }
+  .vd-dr-stages{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--text-300); }
+  .vd-dr-stage b{ font-weight:600; color:var(--text-100); font-variant-numeric:tabular-nums; }
+  .vd-dr-arrow{ color:var(--text-400); }
+  .vd-dr-toggle{ margin-left:auto; border:none; background:none; font-size:11.5px; font-weight:600; color:var(--accent-200); cursor:pointer; padding:2px 0; }
+  .vd-dr-toggle:hover{ text-decoration:underline; }
+  .vd-dr-empty{ font-size:11.5px; color:var(--text-400); padding:6px 0 2px; }
+  .vd-dr-err{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--error); padding:6px 0 2px; }
+  .vd-dr-err svg{ width:13px; height:13px; flex-shrink:0; }
+  .vd-dr-err-strip{ padding:8px 24px; border-bottom:1px solid var(--border); }
+  .vd-dr-rows{ display:flex; flex-direction:column; gap:2px; margin-top:8px; max-height:180px; overflow-y:auto; }
+  .vd-dr-row{ display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:7px; font-size:12px; }
+  .vd-dr-row:hover{ background:var(--bg-000); }
+  .vd-dr-kind{ font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-400); min-width:38px; }
+  .vd-dr-name{ color:var(--text-100); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:32%; }
+  .vd-dr-detail{ color:var(--text-400); font-size:11px; }
+  .vd-dr-suggest{ color:var(--text-300); font-size:11px; margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vd-dr-row .rd-chip{ flex-shrink:0; }
+  .vd-dr-suggest + .rd-chip{ margin-left:8px; }
+  .vd-dr-row > .rd-chip:last-child{ margin-left:auto; }
+  .vd-dr-suggest ~ .rd-chip:last-child{ margin-left:8px; }
+
+  /* ── Dossier filing block (detail drawer, uploads) ── */
+  .vd-d-filing{ display:flex; flex-direction:column; gap:6px; font-size:12px; }
+  .vd-d-filing-row{ display:flex; gap:10px; align-items:baseline; }
+  .vd-d-filing-row .k{ min-width:82px; color:var(--text-400); font-size:11px; }
+  .vd-d-filing-row .v{ color:var(--text-100); }
+  .vd-d-filing-row .v.mono{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; }
+  .vd-d-hash{ word-break:break-all; }
+  .vd-d-filing-why{ font-size:11.5px; color:var(--text-300); line-height:1.45; padding:8px 10px; background:var(--bg-050); border-radius:7px; }
+  .vd-d-filing-acts{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:4px; }
+  .vd-d-move{ display:inline-flex; gap:6px; align-items:center; }
+  .vd-d-move-sel{ font-size:11.5px; color:var(--text-200); background:var(--bg-000); border:1px solid var(--border-control,var(--border)); border-radius:7px; padding:6px 8px; max-width:190px; }
 }

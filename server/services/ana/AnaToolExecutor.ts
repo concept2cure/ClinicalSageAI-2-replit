@@ -18284,6 +18284,22 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
   if (!title) return JSON.stringify({ error: 'title (string) is required.' });
   if (!content) return JSON.stringify({ error: 'content (string) is required.' });
   if (!reason) return JSON.stringify({ error: 'reason (min 8 characters) is required — governed action.' });
+  /* concept2cure_artifacts.project_id is integer NOT NULL — the INSERT below
+     omitted it, so this tool failed on EVERY real call while its contract test
+     (mocked pool) stayed green. The explicit "AnA, file this" path must file
+     under a project or say plainly that it cannot; a vault document belonging
+     to no project is exactly the orphaned capture this platform must not
+     produce. */
+  const projectId =
+    typeof ctx.projectId === 'number' && Number.isFinite(ctx.projectId) && ctx.projectId > 0
+      ? ctx.projectId
+      : null;
+  if (!projectId) {
+    return JSON.stringify({
+      error:
+        'save_document_to_vault needs an open project — every vault document is filed under one. Open or select a project, then ask again.',
+    });
+  }
   try {
     const { getPool } = await import('../../db.js');
     const { createHash, randomUUID } = await import('crypto');
@@ -18299,12 +18315,12 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
       await setTenantContextTx(client, ctx.organizationId);
       const ins = await client.query<{ id: number }>(
         `INSERT INTO concept2cure_artifacts (
-           artifact_id, organization_id, type, category, title, content, content_hash,
+           artifact_id, organization_id, project_id, type, category, title, content, content_hash,
            ctd_section, status, version, created_by_id, metadata
-         ) VALUES ($1, $2, 'document', $3, $4, $5, $6, $7, 'draft', 1, $8,
-           jsonb_build_object('source', 'ana_tool', 'reason', $9::text))
+         ) VALUES ($1, $2, $3, 'document', $4, $5, $6, $7, $8, 'draft', 1, $9,
+           jsonb_build_object('source', 'ana_tool', 'reason', $10::text))
          RETURNING id`,
-        [externalId, ctx.organizationId, category, title, content, hash, ctd, ctx.userId, reason],
+        [externalId, ctx.organizationId, projectId, category, title, content, hash, ctd, ctx.userId, reason],
       );
       await client.query(
         `INSERT INTO concept2cure_artifact_versions

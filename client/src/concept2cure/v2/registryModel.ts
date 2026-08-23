@@ -1110,7 +1110,7 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   'submission-center': ['Validate the OR-902 package', 'What gates transmit?', 'Compare ESG vs eSTAR export'],
   'document-authoring': ['Draft §2.5 from the predicate', 'Check claims against evidence', 'Rewrite for FDA tone'],
   projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
-  vault: ['Find the latest biocompat report', 'Surface unsigned documents', 'Search by SHA-256'],
+  vault: ['Find the latest biocompat report', 'What is still unfiled in the cabinet?', 'Search by SHA-256'],
   tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
   'crl-library': [
     'Findings on this endpoint class',

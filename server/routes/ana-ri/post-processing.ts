@@ -103,13 +103,51 @@ export async function persistCollectedDrafts(args: {
   collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
 }): Promise<void> {
   const { res, orgId, streamProjectId, userId, threadId, collectedDrafts } = args;
-  const projectId =
-    streamProjectId != null && streamProjectId !== ''
-      ? typeof streamProjectId === 'string'
-        ? Number.parseInt(streamProjectId, 10)
-        : streamProjectId
-      : NaN;
-  if (!orgId || !threadId || !Number.isFinite(projectId) || collectedDrafts.length === 0) {
+  if (!orgId || !threadId || collectedDrafts.length === 0) {
+    return;
+  }
+  /* The ADR-0011 coercion hazard, live on this exact line until now:
+     `Number.parseInt('7abb1c22-…', 10) === 7`, so a draft produced in a
+     UUID-keyed program conversation was FILED UNDER integer project 7 — a
+     valid, wrong row — whenever the program UUID began with digits, and
+     silently dropped whenever it did not. Fail-closed parse instead; a
+     genuine program UUID resolves through the projects.regulatory_program_id
+     anchor so drafts from the live UUID spine are captured too. */
+  const { parseIntegerProjectId, looksLikeProgramUuid } = await import('../../lib/project-id.js');
+  let projectId = parseIntegerProjectId(streamProjectId);
+  if (projectId == null && looksLikeProgramUuid(streamProjectId)) {
+    try {
+      const { pool } = await import('../../db.js');
+      const anchor = await pool.query(
+        `SELECT id FROM projects WHERE regulatory_program_id = $1 LIMIT 1`,
+        [String(streamProjectId).trim()],
+      );
+      const anchored = parseIntegerProjectId(anchor.rows[0]?.id);
+      if (anchored != null) projectId = anchored;
+    } catch (anchorErr: any) {
+      console.warn('[AnA RI Stream] Program→project anchor lookup failed:', anchorErr?.message);
+    }
+  }
+  if (projectId == null) {
+    /* No project to file under. The rail says "Drafted <title>" — saying
+       nothing here leaves the user believing a version was durably recorded.
+       Same honesty contract as the write-failure warning below: name exactly
+       what is false (the SAVE), never discard the on-screen draft. */
+    try {
+      if (!res.writableEnded) {
+        for (const draft of collectedDrafts) {
+          if (!draft.content) continue;
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'warning',
+              message: `${draft.title} was drafted but could not be saved to the version history — no project is linked to this conversation.`,
+            })}\n\n`,
+          );
+        }
+      }
+    } catch {
+      /* The client is gone; nothing further to tell. */
+    }
     return;
   }
   for (const draft of collectedDrafts) {

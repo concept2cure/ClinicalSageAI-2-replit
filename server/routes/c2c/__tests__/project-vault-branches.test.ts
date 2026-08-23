@@ -63,6 +63,8 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
         ],
       })
       // uploads
+      .mockResolvedValueOnce({ rows: [] })
+      // data room sources (cre_evidence_sources — same mocked pool)
       .mockResolvedValueOnce({ rows: [] });
 
     const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
@@ -85,7 +87,10 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
     expect(String(artifactCall?.[0])).toContain('regulatory_program_id');
   });
 
-  it('lists what the Upload button ingested — the row really does appear in the tree', async () => {
+  it('lists what the Upload button ingested — the row really does appear in the tree, WHERE its filing says', async () => {
+    // The uploads branch is the filing cabinet: the same vault.documents rows,
+    // placed by their (suggested or confirmed) dossier filing rather than a
+    // flat "Uploaded files" bucket — one uploads branch, carrying placement.
     seedBase();
     queryMock
       .mockResolvedValueOnce({ rows: [] }) // no M3 artifacts
@@ -94,20 +99,31 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
           {
             id: 'aaaa-1', document_code: 'stab-summary.pdf', document_title: 'stab-summary',
             document_type: 'MODULE_3', version: '1.0', file_name: 'stab-summary.pdf',
-            created_at: null, owner_name: 'A. Analyst',
+            file_size: 1048576, mime_type: 'application/pdf', content_hash: 'h1',
+            folder_id: 'module-3', evidence_kind: 'report', ctd_section: '3.2.P.8',
+            placement_status: 'suggested', placement_confidence: 'high',
+            placement_rationale: 'CTD pattern "Stability" → Module 3 (3.2.P.8).',
+            updated_at: null, owner_name: 'A. Analyst',
           },
         ],
-      });
+      })
+      // data room sources
+      .mockResolvedValueOnce({ rows: [] });
 
     const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
     expect(res.status).toBe(200);
 
-    const uploads = folders(res.body)['vault-uploads'];
-    expect(uploads).toBeTruthy();
-    expect(uploads.label).toBe('Uploaded files');
-    expect(uploads.children[0].type).toBe('MODULE_3');
-    expect(uploads.children[0].status).toBe('uploaded');
-    expect(uploads.children[0].owner).toBe('A. Analyst');
+    const cabinet = folders(res.body)['cabinet'];
+    expect(cabinet).toBeTruthy();
+    expect(cabinet.label).toBe('Source files · filing cabinet');
+    const m3Folder = cabinet.children.find((c: any) => c.id === 'cab-module-3');
+    expect(m3Folder).toBeTruthy();
+    const leaf = m3Folder.children[0];
+    expect(leaf.title).toBe('stab-summary');
+    expect(leaf.status).toBe('suggested');
+    expect(leaf.owner).toBe('A. Analyst');
+    expect(leaf.filing.folderId).toBe('module-3');
+    expect(leaf.filing.ctdSection).toBe('3.2.P.8');
   });
 
   it('reports an unprovisioned store as unavailable — never as an empty branch', async () => {
@@ -118,9 +134,12 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
 
     const res = await request(app(7)).get(`/api/c2c/project-vault/${PROJECT}`);
     expect(res.status).toBe(200);
-    expect(folders(res.body)['vault-uploads']).toBeUndefined();
+    expect(folders(res.body)['cabinet']).toBeUndefined();
+    // The data room's 'filed' stage joins against the missing uploads store,
+    // so it is reported unavailable alongside — never a silent Filed=0.
     expect(res.body.data.unavailable).toEqual([
       expect.objectContaining({ branch: 'Uploaded files' }),
+      expect.objectContaining({ branch: 'Data room' }),
     ]);
   });
 

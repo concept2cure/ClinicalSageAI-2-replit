@@ -565,6 +565,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
    */
   const openingRef = useRef(false);
   const [opening, setOpening] = useState(false);
+  const attachingRef = useRef(false);
+  const [attaching, setAttaching] = useState(false);
+
   const openEditor = async () => {
     if (openingRef.current) return; // a second click must not create a second document
     const title = docDef?.label || 'Statistical document';
@@ -615,14 +618,39 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
    * same reason its twin is: both controls live in one AnswerLead gated on
    * `res && jud && docDef`, so it only bites if `docDef.gen()` returns empty.
    */
-  const attach = () => {
+  const attach = async () => {
     const label = docDef?.label || 'Document';
     if (!md.trim()) {
       fireToast('Nothing to attach yet — the document has not been generated.', 'error');
       return;
     }
-    ask('Attach the ' + (docDef?.label || 'document') + ' to the submission dossier statistical section');
-    fireToast(label + ' — attachment requested. AnA will confirm in the conversation; nothing is attached until it does.');
+    if (attachingRef.current) return; // a second click must not file a second copy
+    attachingRef.current = true;
+    setAttaching(true);
+    try {
+      /* This used to hand the request to the conversation — `ask('Attach the
+         … to the submission dossier statistical section')` — and then toast
+         that an attachment had been "requested". `ask()` returns void: it
+         streams a sentence into the AnA panel. Nothing was filed, and the user
+         was left waiting for a confirmation that had no producer.
+
+         `saveToAuthoring` is the real filing path and the sibling button beside
+         this one already uses it: it POSTs /api/authoring/docs with
+         window.C2C_PROJECT.id as client_program_id, which is what binds the
+         document to the project's dossier, then writes the content. Same call,
+         same module (statistical documentation files under M5), same failure
+         reporting — the only difference from "Open in editor" is that this one
+         does not navigate away. */
+      const r = await saveToAuthoring({
+        title: label, module: 'M5', code: docDef?.id || 'statistical_document',
+        content: md, subject: 'the document',
+      });
+      if (!r.ok) { fireToast(r.message, 'error'); return; }
+      fireToast(label + ' filed to the dossier under Module 5 — open it from Document authoring.');
+    } finally {
+      attachingRef.current = false;
+      setAttaching(false);
+    }
   };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
@@ -644,7 +672,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
           body={<>Everything below is written, not just calculated — the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
           reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
-          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: 'Ask AnA to attach it to the dossier', onClick: attach } }}
+          action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
           secondary="Or pick a different document and adjust the design on the left."
         />
       )}
