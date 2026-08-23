@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:49:17.704Z",
+  "generatedAt": "2026-08-23T22:52:16.883Z",
   "git": {
-    "sha": "1a4f588a7779aad3c92749d8735b8ae0485d4c8a",
+    "sha": "2021e8439e6ed842d6c50f301b0dd76a5a597eb9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2223,6 +2223,10 @@
         "bytes": 132966
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 129663
+      },
+      {
         "file": "shared/regulatory/global-document-registry.ts",
         "bytes": 129044
       },
@@ -2241,10 +2245,6 @@
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 120988
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 118556
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2365,16 +2365,16 @@
         "lines": 3067
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3065
+      },
+      {
         "file": "server/services/submission-package-orchestrator.ts",
         "lines": 3060
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
         "lines": 3012
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2838
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2654,7 +2654,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1516
+        "lines": 1527
       }
     ]
   },
