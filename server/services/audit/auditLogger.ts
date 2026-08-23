@@ -94,24 +94,34 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
   // caller (an audit-trail outage must not break the user action it records).
   // resourceType is required there; fall back to the event category when a
   // resource is not named.
-  const canonical = await auditService.logAction({
-    action: `${event.category}.${event.action}`,
-    resourceType: event.resourceType ?? event.category,
-    resourceId: event.resourceId,
-    organizationId: event.organizationId,
-    userId: event.userId,
-    ipAddress: event.ipAddress,
-    userAgent: event.userAgent,
-    details: {
-      ...(event.metadata ?? {}),
-      category: event.category,
-      severity: event.severity,
-      success: event.success,
-      ...(event.previousValue !== undefined ? { previousValue: event.previousValue } : {}),
-      ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
-      ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
-    },
-  });
+  let canonical: { persisted?: boolean; error?: string } | undefined;
+  try {
+    canonical = await auditService.logAction({
+      action: `${event.category}.${event.action}`,
+      resourceType: event.resourceType ?? event.category,
+      resourceId: event.resourceId,
+      organizationId: event.organizationId,
+      userId: event.userId,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
+      details: {
+        ...(event.metadata ?? {}),
+        category: event.category,
+        severity: event.severity,
+        success: event.success,
+        ...(event.previousValue !== undefined ? { previousValue: event.previousValue } : {}),
+        ...(event.newValue !== undefined ? { newValue: event.newValue } : {}),
+        ...(event.errorMessage ? { errorMessage: event.errorMessage } : {}),
+      },
+    });
+  } catch (err) {
+    /* logAction is documented never to throw, and the general call sites rely on
+       that. "Documented" is not "guaranteed": a bug below it, or a store that
+       rejects before its own guard runs, still lands here. An audit-trail outage
+       must not crash the user action it records, so the throw stops at this
+       boundary — and it stops as a KNOWN failure, not a silent one. */
+    canonical = { persisted: false, error: err instanceof Error ? err.message : String(err) };
+  }
 
   /* This was `try { await logAction } catch { logger.error(...) }` — a DOUBLE
      swallow, and the outer half could never fire, because logAction resolves
@@ -125,14 +135,14 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
      lost §11.10(e) record now says so, loudly, with the reason — and the
      in-memory event carries the outcome so the store is not claiming a
      durability it does not have. */
-  if (!canonical.persisted) {
+  if (!canonical?.persisted) {
     logger.error('Audit event NOT persisted to the canonical store', {
       auditEventId: auditEvent.id,
       action: `${event.category}.${event.action}`,
-      reason: canonical.error,
+      reason: canonical?.error ?? 'the canonical store returned no write result',
     });
   }
-  (auditEvent as { persisted?: boolean }).persisted = canonical.persisted;
+  (auditEvent as { persisted?: boolean }).persisted = canonical?.persisted === true;
 
   return auditEvent.id;
 }
