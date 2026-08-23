@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:30:22.025Z",
+  "generatedAt": "2026-08-23T23:43:05.737Z",
   "git": {
-    "sha": "52470ce396801437fef0a399ff991cde52859830",
+    "sha": "06befb2dd03c40ca134d83dc67325f5112bb4ec9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2203,6 +2203,10 @@
         "bytes": 138123
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 138092
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 136607
       },
@@ -2229,10 +2233,6 @@
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 132966
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 132049
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2409,6 +2409,10 @@
         "lines": 2419
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2400
+      },
+      {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 2391
       },
@@ -2423,10 +2427,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2298
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",

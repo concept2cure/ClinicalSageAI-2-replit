@@ -601,6 +601,40 @@ function specErr(json: unknown, status: number): string {
   return serverMessage(json) ?? `The server did not accept the change (HTTP ${status}).`;
 }
 
+/* ── Correspondence signpost — open agency questions citing THIS tab's work ──
+   The record of truth (with loading/error/empty states) is the Program-records
+   card; this bar is an extra signpost rendered only when questions EXIST that
+   reference the sections this tab owns. It asserts presence, never absence —
+   on load failure it stays silent and the primary card reports the failure. */
+function CmCorrNotice({ prefixes, noun }: { prefixes: string[]; noun: string }) {
+  const board = useLiveData<CmcBoardData>('/api/cmc/module3-board');
+  const rows = (board.data?.correspondence ?? []).filter((c) =>
+    prefixes.some((pfx) => (c.sectionRef ?? '').toLowerCase().startsWith(pfx.toLowerCase())),
+  );
+  if (rows.length === 0) return null;
+  const overdue = rows.filter((c) => c.overdue).length;
+  return (
+    <div className={'pj-con' + (overdue ? '' : ' is-ok')} style={{ marginBottom: 12 }} data-testid="cmc-corr-notice">
+      <span className="ico">{overdue ? I.alertTriangle : I.globe}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div>
+          <div className="pj-con-t">
+            {rows.length} open agency {rows.length === 1 ? 'question references' : 'questions reference'} {noun}
+            {overdue ? ` — ${overdue} overdue` : ''}
+          </div>
+          <div className="pj-con-d">{rows[0].sectionRef ?? 'Module 3'} · {rows[0].question.slice(0, 90)}{rows[0].question.length > 90 ? '…' : ''}</div>
+        </div>
+        <button
+          className="nda-open"
+          onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway')}
+        >
+          {I.scroll} Open correspondence
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* REAL slice: the specifications workbench is bound to the governed
      quality_specifications table (server/api/cmc/specificationRoutes.ts,
@@ -711,6 +745,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
     <div className="cm-body">
       <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
         actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a program to record specifications' : ''}>{I.plus} New specification</button>} />
+      <CmCorrNotice prefixes={['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5']} noun="these specifications" />
       {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Specification table</span><span className="s">{rows.length} attributes</span></div>
@@ -1129,6 +1164,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         suggest={CMC_SUGGEST.stability}
         actions={<button className="nda-open" onClick={() => setRegistering(true)}>{I.plus} Register study</button>}
       />
+      <CmCorrNotice prefixes={['3.2.S.7', '3.2.P.8', 'm3.2.S.7', 'm3.2.P.8']} noun="the stability program" />
       <div className="cm-kpis">
         {/* Two tiles, not six. "Studies", "Long-term" and "Accelerated" were
             classification counts nobody acts on — the register below is sorted
@@ -1943,6 +1979,45 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
      KPI; the source was connected all along. */
   const board = useLiveData<CmcBoardData>('/api/cmc/module3-board');
   const corr = board.data?.correspondence;
+  const [toast, fireToast] = useToast();
+
+  /* "Draft response" — the same real handoff as the change memo's editor
+     button: the response document is CREATED (POST document + section via
+     saveToAuthoring) and we navigate only on a clean write. The skeleton
+     quotes the actual question and leaves [DATA NEEDED] markers — a scaffold
+     for the responder, never a fabricated answer. One draft at a time; a
+     second click while a write is in flight must not create a second document. */
+  const draftingRef = useRef(false);
+  const [draftingId, setDraftingId] = useState<string | number | null>(null);
+  const draftMd = (c: CmcCorrespondence) => {
+    const sec = c.sectionRef ? `§${c.sectionRef}` : 'Module 3';
+    const due = c.dueDate ? new Date(c.dueDate).toLocaleDateString() : 'no deadline recorded';
+    let s = `# Response to Agency Question — ${sec}\n\n`;
+    s += `> ${c.question}\n\n`;
+    s += `- **Region**: ${c.region ?? 'not recorded'}\n- **Due**: ${due}${c.overdue ? ' — **overdue**' : ''}\n- **Priority**: ${c.priority ?? c.severity ?? 'not recorded'}\n- **Status**: ${c.status}\n\n`;
+    s += `## Response\n\n[DATA NEEDED] State the position first, then the evidence. Cite the governed record (specification, method, batch, stability study) by identifier — the reviewer will trace it.\n\n`;
+    s += `## Supporting evidence\n\n- [ ] Approved Module 3 section(s) covering ${sec}\n- [ ] Specification / analytical method records cited in the response\n- [ ] Batch or stability data referenced, with lot numbers\n- [ ] Comparability or justification memo, if the answer relies on one\n\n`;
+    s += `---\n*Drafted from open agency question ${c.id}. Route through review and e-signature before it goes to the agency.*\n`;
+    return s;
+  };
+  const draftResponse = async (c: CmcCorrespondence) => {
+    if (draftingRef.current) return;
+    draftingRef.current = true; setDraftingId(c.id);
+    try {
+      const res = await saveToAuthoring({
+        title: 'Response to agency question — ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3'),
+        module: 'M3', code: 'agency_question_response',
+        content: draftMd(c), subject: 'the draft response',
+      });
+      // Navigate only on a clean write — see authoringHandoff.
+      if (!res.ok) { fireToast(res.message, 'error'); return; }
+      if (nav) nav('document-authoring');
+      else fireToast(res.message);
+    } finally {
+      draftingRef.current = false; setDraftingId(null);
+    }
+  };
+
   const sections = useLiveRows<{ sectionKey: string; sectionPath: string; approvalState: string; stale: boolean; updatedAt: string }>(
     projectId ? '/api/cmc/module3-os/sections/' + encodeURIComponent(projectId) : null,
   );
@@ -2022,7 +2097,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
             </div>
           ) : (
             <table className="reg-tbl">
-          <thead><tr><th>Due</th><th>Section</th><th>Question</th><th>Priority</th><th>Status</th><th>Assigned</th></tr></thead>
+          <thead><tr><th>Due</th><th>Section</th><th>Question</th><th>Priority</th><th>Status</th><th>Assigned</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
           <tbody>
             {corr.map((c) => (
               <tr key={c.id}>
@@ -2044,6 +2119,32 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
                 </td>
                 <td className="mono">{c.status}</td>
                 <td>{c.assignedTo ?? '—'}</td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  <div style={{ display: 'inline-flex', gap: 6 }}>
+                    <button
+                      className="nda-open"
+                      disabled={draftingId != null}
+                      title="Create a governed response draft quoting this question and open it in the editor"
+                      onClick={() => void draftResponse(c)}
+                    >
+                      {draftingId === c.id ? <>Creating…</> : <>{I.fileText} Draft response</>}
+                    </button>
+                    <button
+                      className="nda-open"
+                      title="Ask AnA about this question"
+                      onClick={() => ask('An agency question is open against ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3') + ': "' + c.question + '" — what evidence from our specifications, batch records and stability program answers it, and what is missing?')}
+                    >
+                      {I.sparkles} Ask AnA
+                    </button>
+                    <button
+                      className="nda-open"
+                      title="Create a task for this question"
+                      onClick={() => cmcTask('Agency question ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3'))}
+                    >
+                      {I.checkSquare} Task
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -2168,6 +2269,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
           </div>
         </>
       )}
+      <C2CToast msg={toast} />
     </div>
   );
 }
