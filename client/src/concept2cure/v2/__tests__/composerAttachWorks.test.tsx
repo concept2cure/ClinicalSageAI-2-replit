@@ -73,7 +73,7 @@ const noopProps = {
   onNav: () => {},
   onSend: () => {},
   segment: 'mdx',
-} as never;
+} as any;
 
 let clickSpy: ReturnType<typeof vi.spyOn>;
 /** Inputs whose .click() was called — i.e. pickers that were actually opened. */
@@ -103,19 +103,19 @@ function pickFile(input: HTMLInputElement, name: string) {
 
 const SURFACES: Array<{
   name: string;
-  Component: React.ComponentType<never>;
+  Component: React.ComponentType<any>;
   button: string;
   input: string;
 }> = [
   {
     name: 'ConversationThread',
-    Component: ConversationThread as React.ComponentType<never>,
+    Component: ConversationThread as React.ComponentType<any>,
     button: 'ct-attach-button',
     input: 'ct-attach-input',
   },
   {
     name: 'EctdCoauthor',
-    Component: EctdCoauthor as React.ComponentType<never>,
+    Component: EctdCoauthor as React.ComponentType<any>,
     button: 'ec-attach-button',
     input: 'ec-attach-input',
   },
