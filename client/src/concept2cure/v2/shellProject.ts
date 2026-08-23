@@ -37,7 +37,12 @@ export interface ShellProject {
 
 const KEY = 'c2c.shell-project';
 
-type ShellWindow = Window & { C2C_PROJECT?: ShellProject };
+/* Deliberately NOT `Window & {…}`: ProjectHome's `declare global` types
+   window.C2C_PROJECT as Record<string, string>, and intersecting with Window
+   merges that in — making the channel unassignable from the very type this
+   module publishes. The local-cast shape is the same idiom every surface
+   reader uses (`window as unknown as { C2C_PROJECT?: … }`). */
+type ShellWindow = { C2C_PROJECT?: ShellProject };
 
 /** Set the open program: the live global plus its per-tab mirror. */
 export function publishShellProject(project: ShellProject): void {
