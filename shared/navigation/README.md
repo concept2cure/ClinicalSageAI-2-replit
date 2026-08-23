@@ -19,26 +19,44 @@ tools) and the client (the navigate handler).
   produce a directive). Both registered and reachable today; `navigate_to`
   returns `{ status: 'navigation_ready', directive }`.
 
-The frontend half already exists: an AnA chat action carrying a `path` flows
-through the streamed `executedActions` into the chat client
-(`client/src/concept2cure/components/ana/Ana.tsx` → `handleActionClick` →
-`onNavigate(action.path)` → ZenApp's navigate handler → `layoutMode`).
+The frontend half is the v2 shell (the old ZenApp/`Ana.tsx` path this README
+once described is deleted): a `NavigationAction` chip
+(`server/services/ana-ri/navigation-actions.ts`) reaches the client on
+`post_done`, and `client/src/concept2cure/v2/Shell.tsx` renders it as a button
+whose click calls `onNav(targetId)` → `V2App.nav` →
+`locationForSurface(targetId)` → `surfaceIdFromLocation` (which applies
+`DEEP_LINK_ALIASES`) → the `SURFACE_VIEWS` entry.
 
-## What is deferred ("wire later", pending Claude Design's final routes)
+## Both formerly-deferred steps are now wired
 
-1. **Surface the directive into the stream.** In
-   `server/routes/ana-ri/post-processing.ts`, after the response text is ready,
-   push navigation directives into the streamed `executedActions` so the chat
-   client applies them. Two options (pick when the UI is final):
-   - **Tool-driven:** collect `navigate_to` tool results whose
-     `status === 'navigation_ready'` and map each `directive` to an action
-     `{ label: directive.label, path: directive.path, actionType: 'navigate', ...directive.params }`.
-   - **Signal-driven:** call `parseNavigationSignals(fullContent)` and map each
-     directive the same way.
-2. **Reconcile the registry with the final routes.** Keep `NAVIGATION_TARGETS`
-   in lock-step with the final `LayoutMode` / nav constants. `navigation.test.ts`
-   guards the contract shape; add a reconciliation check against the UI constants
-   once they stabilize.
+1. **Directives surface into the stream — tool-driven only.**
+   `server/routes/ana-ri/stream.ts` collects `navigate_to` results whose
+   `status === 'navigation_ready'` (via `directiveFromToolResult`) and
+   post-processing appends them to `executedActions` as chips. The
+   signal-driven option (`parseNavigationSignals`) is deliberately NOT wired
+   and must stay unwired: fenced prose arrives from retrieved documents and
+   tool output, and steering the screen from prose would let any ingested PDF
+   move the operator — see the header of
+   `server/services/ana-ri/navigation-actions.ts`.
+2. **Registry ↔ routes reconciliation.** Registry ids that predate the v2
+   surface ids resolve through `DEEP_LINK_ALIASES`
+   (`client/src/concept2cure/v2/registryModel.ts`), and
+   `client/src/concept2cure/v2/__tests__/navigationReachability.test.ts` fails
+   the moment any `NAVIGATION_TARGETS` id stops resolving to a real surface
+   view — the lock-step check this section used to defer.
+
+## Live Drive (applied navigation, opt-in)
+
+`server/services/ana-ri/live-drive.ts` + `client/src/concept2cure/v2/liveDrive.ts`:
+when the subscriber turns the Live Drive toggle on (AnA rail → Control), each
+turn is sent with `live_drive: true`; entitled turns (`ana_live_drive`,
+professional tier, `ENTITLEMENTS_ENFORCE` modes) stream `drive_navigation`
+events the shell APPLIES as they arrive — AnA drives, the person watches, with
+an on-screen strip, per-turn cap shared with the chip budget, client-side
+re-validation against this registry, an `agent.ana.screen.navigate` audit row
+per applied move, and instant take-over (Esc). Chips remain the default for
+everyone else; governed actions keep their confirmation/e-sign gates in every
+mode.
 
 No app **surfaces** are created here — only the navigation ability + contract.
 Surfaces remain owned by Claude Design.

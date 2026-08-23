@@ -46,6 +46,7 @@ export type {
   UseAnaChatOptions,
   RunControlStatus,
   UseAnaChatReturn,
+  DriveSseEvent,
 } from './useAnaChat.types';
 
 import type {
@@ -61,6 +62,7 @@ import type {
   UseAnaChatOptions,
   RunControlStatus,
   UseAnaChatReturn,
+  DriveSseEvent,
 } from './useAnaChat.types';
 
 
@@ -594,6 +596,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // default routing (effort='balanced', no model pin).
         effort_level: options.effortLevel ?? undefined,
         model_override: options.modelOverride ?? undefined,
+        // Live Drive opt-in — sent only while the toggle is on, so the common
+        // case stays byte-identical and the server does zero extra work.
+        live_drive: options.liveDrive === true ? true : undefined,
       });
 
       let streamedText = '';
@@ -808,6 +813,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     : m
                 )
               );
+            } else if (event.type === 'drive_state' || event.type === 'drive_navigation') {
+              // Live Drive events — forwarded verbatim; the shell validates and
+              // applies (v2/liveDrive.ts). A listener throw must not kill the
+              // stream: the turn's answer matters more than the drive.
+              try {
+                options.onDriveEvent?.(event as DriveSseEvent);
+              } catch {
+                /* listener error — drive skips, stream continues */
+              }
             } else if (event.type === 'warning') {
               const msg: string = event.message || '';
               if (msg) {
@@ -1098,6 +1112,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.selectedTools,
       options.effortLevel,
       options.modelOverride,
+      options.liveDrive,
+      options.onDriveEvent,
     ]
   );
 

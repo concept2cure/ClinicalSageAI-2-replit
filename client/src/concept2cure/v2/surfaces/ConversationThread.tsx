@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
+import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -299,7 +300,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
+export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation; the default is a fresh conversation.
   const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
@@ -310,12 +311,48 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
   // messages stream token-by-token, and every turn is DB-persisted. Nothing is
   // simulated — the previous canned run510k/ctRespond composer and its
   // Math.random()-"audited" fabricated artifacts are gone.
-  const anaChat = useAnaChat({ initialThreadId: isNew ? null : sel.id, screenName: 'conversation-thread' });
+  // Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
+  // surface owns its own chat instance, so its turns carry the same opt-in and
+  // feed the same shell-level apply/take-over machine as the rail's turns.
+  const anaChat = useAnaChat({
+    initialThreadId: isNew ? null : sel.id,
+    screenName: 'conversation-thread',
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+  });
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  /* ── The attach button was decoration ─────────────────────────────────────
+     It rendered a paperclip with `title="Attach a document for AnA to use"` and
+     NO onClick — not a no-op handler, no handler at all. Clicking it did
+     nothing, on the one surface whose entire purpose is a conversation with an
+     assistant about documents.
+
+     Wired to the same `useChatUpload` the shell composer uses, which POSTs to
+     /api/chat/upload, OCRs the file and writes its text into project memory so
+     AnA can actually retrieve it. Not a new upload path — the existing one,
+     which this surface simply never called. */
+  const fileRef = useRef<HTMLInputElement>(null);
+  /* Scoped to the open project so extracted text lands in THAT project's
+     memory, exactly as the shell composer and ProjectHome do. Null when no
+     project is open, which the hook accepts — the file is still read, it just
+     is not filed against a programme. */
+  const uploadProjectId = (() => {
+    try {
+      const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+      return p && (typeof p.id === 'string' || typeof p.id === 'number') ? p.id : null;
+    } catch {
+      return null;
+    }
+  })();
+  const { attachments, addFiles, removeAttachment, clear: clearAttachments, statusMessage } =
+    useChatUpload({ projectId: uploadProjectId });
+  const readyAttachments = attachments.filter((a) => a.status === 'ready');
+  const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
 
   const turns: CtTurn[] = anaChat.messages.map(toTurn);
   const busy = anaChat.isStreaming;
@@ -363,9 +400,21 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
 
   const send = () => {
     const t = draft.trim();
-    if (!t || busy) return;
+    // Never send mid-upload: AnA would answer about a document the server has
+    // not finished reading. Same rule as the shell composer.
+    if (busy || uploadingAttachments.length > 0) return;
+    if (!t && readyAttachments.length === 0) return;
+
+    // Only files the server CONFIRMED it read are named. A failed upload must
+    // never be described as attached — its chip stays visible with the error
+    // and the message says nothing about it.
+    const names = readyAttachments.map((a) => a.name);
+    const line = names.length ? `Attached: ${names.join(', ')}` : '';
+    const body = t && line ? `${t}\n\n${line}` : t || line;
+
     setDraft('');
-    void anaChat.send(t);
+    clearAttachments();
+    void anaChat.send(body);
   };
 
   const loadingHistory = !isNew && anaChat.isLoadingThread && turns.length === 0;
@@ -422,12 +471,66 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
 
           <div className="ct-composer-wrap">
             <div className="ct-composer">
-              <button className="ct-comp-attach" title="Attach a document for AnA to use">{I.paperclip}</button>
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                className="ana-hidden-input"
+                aria-label="Attach a document for AnA to read"
+                onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ''; }}
+                data-testid="ct-attach-input"
+              />
+              <button
+                type="button"
+                className="ct-comp-attach"
+                title="Attach a document for AnA to use"
+                aria-label="Attach a document for AnA to use"
+                onClick={() => fileRef.current?.click()}
+                data-testid="ct-attach-button"
+              >
+                {I.paperclip}
+              </button>
               <textarea rows={1} aria-label="Reply to AnA" placeholder="Reply to AnA — ask, or request a draft..." value={draft}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
-              <button className="ct-comp-send" aria-label="Send message to AnA" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
+              <button
+                className="ct-comp-send"
+                aria-label="Send message to AnA"
+                /* Attachments alone are a valid message, and an in-flight
+                   upload blocks send — the old condition looked only at the
+                   textarea, which is why attaching could never have worked
+                   even if the paperclip had opened a picker. */
+                disabled={busy || uploadingAttachments.length > 0 || (!draft.trim() && readyAttachments.length === 0)}
+                onClick={send}
+              >
+                {I.arrowUp}
+              </button>
             </div>
+
+            {/* What was actually attached, and how the server read it. A failed
+                upload stays visible with its reason rather than disappearing
+                and leaving the user to assume it worked. */}
+            {attachments.length > 0 && (
+              <div className="ct-comp-atts">
+                {attachments.map((a) => (
+                  <span key={a.id} className="ct-att-chip" data-status={a.status}>
+                    {I.paperclip} {a.name}
+                    {a.status === 'uploading' && <em> · reading…</em>}
+                    {a.status === 'ready' && <em> · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}</em>}
+                    {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
+                    <button
+                      type="button"
+                      className="ct-att-x"
+                      aria-label={`Remove ${a.name}`}
+                      onClick={() => removeAttachment(a.id)}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <span className="sr-only" aria-live="polite">{statusMessage}</span>
             <div className="ct-comp-foot">{I.lock} Governed — AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>

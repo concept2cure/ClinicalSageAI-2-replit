@@ -154,6 +154,10 @@ export function Rail({
     // itself renders a non-leaky denied state, but we hide the entry entirely
     // for non-admins to mirror Claude exactly.
     ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
+    // Licensing control sits beside Admin, same gate. The surface itself
+    // re-checks platform-admin server-side on every read and write; this only
+    // decides whether the entry is offered.
+    ...(isOrgAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
     { sep: true },
@@ -495,6 +499,7 @@ export function AnaRail({
   onResume,
   onStop,
   onSteer,
+  liveDrive,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -528,6 +533,17 @@ export function AnaRail({
   /** Scopes chat uploads so extracted text lands in that project's memory.
    *  Null is valid — the file still uploads, it is just not project-scoped. */
   projectId?: string | number | null;
+  /**
+   * AnA Live Drive toggle (V2App owns the state machine). `locked` carries the
+   * server's honest entitlement deny from the last attempted turn — the
+   * control stays enabled with the real required tier named, never a
+   * disabled, reasonless button (the platform's Locked-never-dead rule).
+   */
+  liveDrive?: {
+    on: boolean;
+    locked: { reason: string; requiredTier?: string | null } | null;
+    setOn: (v: boolean) => void;
+  };
 }) {
   const [draft, setDraft] = React.useState('');
   /* The steer field is separate from `draft` on purpose: a steer joins the
@@ -1235,6 +1251,26 @@ export function AnaRail({
               >
                 <span className="ico">{I.wand}</span>Agent<span className="mh">AnA takes governed actions</span>
               </button>
+              {liveDrive && (
+                <button
+                  type="button"
+                  className="ana-menu-item"
+                  data-on={liveDrive.on || undefined}
+                  onClick={() => {
+                    liveDrive.setOn(!liveDrive.on);
+                    setModeOpen(false);
+                  }}
+                >
+                  <span className="ico">{I.play}</span>Live Drive
+                  <span className="mh">
+                    {liveDrive.locked
+                      ? liveDrive.locked.requiredTier
+                        ? `Requires the ${liveDrive.locked.requiredTier} plan`
+                        : 'Not available for this workspace'
+                      : 'AnA navigates the screens; you watch and can take over'}
+                  </span>
+                </button>
+              )}
               <div className="ana-menu-sec">Engine</div>
               {ANA_MODES.map((m) => (
                 <button
@@ -1255,6 +1291,16 @@ export function AnaRail({
             <div className="ana-agent-note">
               <span className="ico">{I.shieldCheck}</span>Agent mode — AnA runs tools &amp; drafts
               governed actions. Changes require your e-signature.
+            </div>
+          )}
+          {liveDrive?.on && (
+            <div className="ana-agent-note">
+              <span className="ico">{I.play}</span>
+              {liveDrive.locked
+                ? liveDrive.locked.requiredTier
+                  ? `Live Drive requires the ${liveDrive.locked.requiredTier} plan — AnA will offer destinations as chips instead.`
+                  : 'Live Drive is not available for this workspace — AnA will offer destinations as chips instead.'
+                : 'Live Drive — AnA navigates your screens as she works. Take over any time (Esc).'}
             </div>
           )}
         </div>
