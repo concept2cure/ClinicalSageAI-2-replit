@@ -70,7 +70,10 @@ function seed(readiness: number) {
         { section_key: '2.5', status: 'drafted', version: 3, updated_at: null, has_content: true, owner_name: null },
         { section_key: '2.6', status: 'approved', version: 1, updated_at: null, has_content: true, owner_name: null },
       ],
-    });
+    })
+    // 4+) the derived branches (Module 3 artifacts, vault uploads) — empty
+    // here; project-vault-branches.test.ts covers them.
+    .mockResolvedValue({ rows: [] });
 }
 
 /**

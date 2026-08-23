@@ -5,11 +5,16 @@
  * renders (its `Spine` of VaultFolder / VaultDoc), populated from REAL,
  * org-scoped data:
  *
- *   regulatory_programs   → project name + product modality (→ vault view)
- *   c2c_documents         → one top-level folder per active document build
- *   c2c_rule_packs        → the required-section spec tree for each build
- *   c2c_document_sections → LIVE section status / version / owner / timestamp
- *   users                 → real owner attribution (section & document owner_id)
+ *   regulatory_programs      → project name + product modality (→ vault view)
+ *   c2c_documents            → one top-level folder per active document build
+ *   c2c_rule_packs           → the required-section spec tree for each build
+ *   c2c_document_sections    → LIVE section status / version / owner / timestamp
+ *   users                    → real owner attribution (section & document owner_id)
+ *   concept2cure_artifacts   → the "Module 3 (CMC)" branch: governed §3.x
+ *                              artifacts the CMC compile bridge files, via the
+ *                              program→project anchor
+ *   vault.documents          → the "Uploaded files" branch: what this surface's
+ *                              own Upload button ingests
  *
  * This is the same document/section data the existing
  * `GET /api/c2c/projects/:id/vault-structure` endpoint reads, but mapped
@@ -81,6 +86,12 @@ interface VaultDisplayShape {
   tree: VaultFolder[];
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
+  /**
+   * Branches that could not be served, with why. A vault that silently omits
+   * "Uploaded files" because its store is unprovisioned reads exactly like a
+   * vault with no uploads — this field is the difference.
+   */
+  unavailable?: Array<{ branch: string; reason: string }>;
 }
 
 // ─── Row shapes (what the SQL projects) ────────────────────────────────────────
@@ -297,6 +308,112 @@ function countDocs(nodes: Array<VaultFolder | VaultDoc>): number {
   return n;
 }
 
+/** Missing table (42P01) / missing column (42703) — a store this environment
+ *  has not provisioned. The branch degrades honestly instead of 500ing. */
+function isMissingStore(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  return code === '42P01' || code === '42703';
+}
+
+interface M3ArtifactRow {
+  id: string | number;
+  artifact_id: string;
+  title: string | null;
+  ctd_section: string;
+  status: string | null;
+  version: number | null;
+  updated_at: string | Date | null;
+}
+
+/**
+ * The Module 3 (CMC) branch: governed §3.x artifacts the CMC compile bridge
+ * files into concept2cure_artifacts, reached through the program→project
+ * anchor (the same EXISTS idiom mdx-vault.ts uses — org predicate repeated on
+ * projects so a mis-anchored row can never pull another tenant's data in).
+ * These rows were invisible in this surface even though the CMC module's
+ * "vault" affordances pointed here — the data room now lists what the
+ * pipeline files, organized by CTD section.
+ */
+async function module3Branch(programId: string, orgId: number): Promise<VaultFolder | null> {
+  const artRes = await pool.query(
+    `SELECT a.id, a.artifact_id, a.title, a.ctd_section, a.status, a.version, a.updated_at
+       FROM concept2cure_artifacts a
+      WHERE a.organization_id = $2
+        AND a.status != 'archived'
+        AND a.ctd_section LIKE '3.%'
+        AND EXISTS (SELECT 1 FROM projects p
+                     WHERE p.id = a.project_id
+                       AND p.organization_id = a.organization_id
+                       AND p.regulatory_program_id = $1::uuid)
+      ORDER BY a.ctd_section, a.version DESC`,
+    [programId, orgId],
+  );
+  if (artRes.rows.length === 0) return null;
+  const children: VaultDoc[] = (artRes.rows as M3ArtifactRow[]).map((a) => ({
+    id: `m3art-${a.id}`,
+    num: a.ctd_section,
+    title: a.title || a.ctd_section,
+    type: 'Governed artifact',
+    // The same status vocabulary the artifact registry stores, mapped through
+    // the one normalizer; completion is the section-approval definition the
+    // rest of this read-model uses (approved/locked = 100, else 0).
+    status: normalizeStatus(a.status === 'draft' ? 'drafted' : a.status, true),
+    pct: sectionCompletionPct(a.status),
+    owner: '—',
+    ver: a.version != null ? `v${a.version}` : '—',
+    updated: relativeTime(a.updated_at),
+    preview: `${a.title || a.ctd_section} · CTD §${a.ctd_section} · compiled from CMC canonical sources`,
+  }));
+  return { id: 'm3-cmc', code: 'M3', label: 'Module 3 (CMC)', children };
+}
+
+interface UploadRow {
+  id: string;
+  document_code: string | null;
+  document_title: string | null;
+  document_type: string | null;
+  version: string | null;
+  file_name: string | null;
+  created_at: string | Date | null;
+  owner_name: string | null;
+}
+
+/**
+ * The Uploaded-files branch: vault.documents rows for this program — the rows
+ * this surface's own Upload button creates via POST /api/vault/ingest. The
+ * tree never read them, so an upload landed in a store the vault never looked
+ * at and the surface's "the row appears in the tree" promise was false.
+ * Tenancy: the program row was org-verified by the caller before this runs
+ * (vault.documents has no org column; program ownership is the boundary, the
+ * same posture vault-ingest takes).
+ */
+async function uploadsBranch(programId: string): Promise<VaultFolder | null> {
+  const upRes = await pool.query(
+    `SELECT d.id, d.document_code, d.document_title, d.document_type, d.version,
+            d.file_name, d.created_at,
+            COALESCE(u.name, u.email) AS owner_name
+       FROM vault.documents d
+       LEFT JOIN users u ON u.id = d.created_by
+      WHERE d.program_id = $1 AND d.deleted_at IS NULL
+      ORDER BY d.created_at DESC`,
+    [programId],
+  );
+  if (upRes.rows.length === 0) return null;
+  const children: VaultDoc[] = (upRes.rows as UploadRow[]).map((d) => ({
+    id: `vaultup-${d.id}`,
+    num: d.document_code || '—',
+    title: d.document_title || d.file_name || 'Uploaded document',
+    type: d.document_type || 'OTHER',
+    status: 'uploaded',
+    pct: 100,
+    owner: d.owner_name ?? '—',
+    ver: d.version ? `v${d.version}` : '—',
+    updated: relativeTime(d.created_at),
+    preview: `${d.document_title || d.file_name || 'Uploaded document'} · ingested via /api/vault/ingest (virus-scanned, SHA-256 pinned, Part 11 audit row)`,
+  }));
+  return { id: 'vault-uploads', code: 'Uploads', label: 'Uploaded files', children };
+}
+
 // ─── Router factory ─────────────────────────────────────────────────────────────
 
 export default function createProjectVaultRoutes(): Router {
@@ -384,12 +501,38 @@ export default function createProjectVaultRoutes(): Router {
         tree.push(documentFolder(doc, live));
       }
 
+      // 5) Derived branches: what the pipelines file for this program.
+      //    Each degrades independently — a store this environment has not
+      //    provisioned is REPORTED as unavailable, never rendered as empty.
+      const unavailable: Array<{ branch: string; reason: string }> = [];
+      try {
+        const m3 = await module3Branch(id, orgId);
+        if (m3) tree.push(m3);
+      } catch (err) {
+        if (!isMissingStore(err)) throw err;
+        unavailable.push({
+          branch: 'Module 3 (CMC)',
+          reason: 'The governed artifact registry (or its program anchor) is not provisioned in this environment.',
+        });
+      }
+      try {
+        const uploads = await uploadsBranch(id);
+        if (uploads) tree.push(uploads);
+      } catch (err) {
+        if (!isMissingStore(err)) throw err;
+        unavailable.push({
+          branch: 'Uploaded files',
+          reason: 'The vault document store (vault.documents) is not provisioned in this environment.',
+        });
+      }
+
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultViewLabel(view),
         standard: view,
         documentCount: countDocs(tree),
         tree,
+        ...(unavailable.length ? { unavailable } : {}),
       };
       return res.json({ success: true, data });
     } catch (err: unknown) {
