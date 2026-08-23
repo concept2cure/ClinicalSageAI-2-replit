@@ -57,6 +57,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { TableKit } from '@tiptap/extension-table';
 import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
+import TextAlign from '@tiptap/extension-text-align';
+import Highlight from '@tiptap/extension-highlight';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
@@ -78,6 +80,7 @@ import {
   looksLikeHtml,
   plainTextToHtml,
 } from './roundTrip';
+import { FindReplace, getFindState } from './findReplace';
 import { I } from '../icons';
 
 /* ── Public contract ──────────────────────────────────────────── */
@@ -235,6 +238,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       'off' | 'connecting' | 'connected' | 'disconnected' | 'denied'
     >(collab ? 'connecting' : 'off');
     const [restoreOffer, setRestoreOffer] = useState<string | null>(null);
+    /* ── Find & replace bar state ──
+       The query text lives here; the matches and the focused index live in
+       the editor's plugin state (the one source of truth for what is
+       highlighted) and are mirrored into `findInfo` for the counter. */
+    const [findOpen, setFindOpen] = useState(false);
+    const [findQuery, setFindQuery] = useState('');
+    const [findCase, setFindCase] = useState(false);
+    const [replaceWith, setReplaceWith] = useState('');
+    const [findInfo, setFindInfo] = useState({ count: 0, active: -1 });
+    const findInputRef = useRef<HTMLInputElement>(null);
     const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSavedRef = useRef<string>(value ?? '');
     const editorHostRef = useRef<HTMLDivElement>(null);
@@ -284,6 +297,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       const exts: any[] = [
         StarterKit.configure({
           heading: { levels: [1, 2, 3] },
+          // A link in the canvas is a mark being edited, not a navigation:
+          // clicking it must place the caret, and the ribbon's Link control
+          // is where the href is read or changed.
+          link: { openOnClick: false, autolink: true },
           // Yjs owns undo/redo when live co-editing is on.
           ...(collabRuntime ? { undoRedo: false } : {}),
         }),
@@ -293,6 +310,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // flattened to plain text (BP-W1-1).
         Superscript,
         Subscript,
+        // Same defect class as sup/sub: installed, declared, imported nowhere —
+        // so an author could not centre a table caption and stored <mark>
+        // highlights flattened to plain text on the next save.
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        Highlight,
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
@@ -300,6 +322,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         CommentAnchor.configure({
           onAnchorClick: commentsApi?.onOpen ?? null,
         }),
+        FindReplace,
       ];
       if (placeholder) exts.push(Placeholder.configure({ placeholder }));
       if (collabRuntime) exts.push(Collaboration.configure({ document: collabRuntime.doc }));
@@ -613,15 +636,136 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       [doSave, editor, boot.mode, sourceText, serialize],
     );
 
+    /* ── Find & replace ──
+       Open seeds the query from the current selection (the phrase you just
+       noticed is the phrase you want to find). Close clears the plugin state
+       so no stale highlight outlives the bar. Focus stays in the bar's input
+       throughout — findNext moves the editor SELECTION, not the focus, so
+       Enter keeps cycling. */
+    const openFind = useCallback(() => {
+      if (boot.mode !== 'rich') return;
+      let seed: string | null = null;
+      if (editor) {
+        const { from, to } = editor.state.selection;
+        if (to > from && to - from <= 120) {
+          const sel = editor.state.doc.textBetween(from, to, ' ').trim();
+          if (sel) seed = sel;
+        }
+      }
+      setFindOpen(true);
+      const q = seed ?? findQuery;
+      if (seed != null) setFindQuery(seed);
+      if (q) editor?.commands.setFindQuery(q, findCase);
+    }, [editor, boot.mode, findQuery, findCase]);
+
+    const closeFind = useCallback(() => {
+      setFindOpen(false);
+      editor?.commands.clearFind();
+      editor?.commands.focus();
+    }, [editor]);
+
+    /* Mirror the plugin's matches into the counter — on every transaction
+       while the bar is open, because typing, replacing and accepting
+       suggestions all move the matches. */
+    useEffect(() => {
+      if (!findOpen || !editor) return;
+      const refresh = () => {
+        const st = getFindState(editor.state);
+        setFindInfo({ count: st.matches.length, active: st.activeIndex });
+      };
+      refresh();
+      editor.on('transaction', refresh);
+      return () => {
+        editor.off('transaction', refresh);
+      };
+    }, [findOpen, editor]);
+
+    useEffect(() => {
+      if (findOpen) {
+        findInputRef.current?.focus();
+        findInputRef.current?.select();
+      }
+    }, [findOpen]);
+
+    const onFindQueryChange = useCallback(
+      (q: string) => {
+        setFindQuery(q);
+        editor?.commands.setFindQuery(q, findCase);
+      },
+      [editor, findCase],
+    );
+
+    const toggleFindCase = useCallback(() => {
+      const next = !findCase;
+      setFindCase(next);
+      if (findQuery) editor?.commands.setFindQuery(findQuery, next);
+    }, [editor, findCase, findQuery]);
+
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         if ((e.metaKey || e.ctrlKey) && e.key === 's') {
           e.preventDefault();
           void doSave();
+        } else if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'F')) {
+          if (boot.mode !== 'rich') return; // source mode: the browser's find works
+          e.preventDefault();
+          openFind();
         }
       },
-      [doSave],
+      [doSave, openFind, boot.mode],
     );
+
+    /* ── Link bar ──
+       The ribbon's Link control opens a small inline bar (no window.prompt):
+       the input reads the selection's current href when the caret is on a
+       link, Apply writes it back through setLink, Remove unsets it. Only
+       http(s) and mailto go in — a scheme-less entry is completed to https,
+       anything else is refused with the reason on screen. */
+    const [linkOpen, setLinkOpen] = useState(false);
+    const [linkHref, setLinkHref] = useState('');
+    const [linkError, setLinkError] = useState<string | null>(null);
+    const linkInputRef = useRef<HTMLInputElement>(null);
+
+    const openLink = useCallback(() => {
+      if (!editor) return;
+      const existing = (editor.getAttributes('link').href as string | undefined) ?? '';
+      setLinkHref(existing);
+      setLinkError(null);
+      setLinkOpen(true);
+    }, [editor]);
+
+    useEffect(() => {
+      if (linkOpen) {
+        linkInputRef.current?.focus();
+        linkInputRef.current?.select();
+      }
+    }, [linkOpen]);
+
+    const closeLink = useCallback(() => {
+      setLinkOpen(false);
+      editor?.commands.focus();
+    }, [editor]);
+
+    const applyLink = useCallback(() => {
+      if (!editor) return;
+      const raw = linkHref.trim();
+      if (!raw) {
+        setLinkError('Enter a URL.');
+        return;
+      }
+      const href = /^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : 'https://' + raw;
+      if (!/^(https?:|mailto:)/i.test(href)) {
+        setLinkError('Only http(s) and mailto links can be inserted.');
+        return;
+      }
+      editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+      setLinkOpen(false);
+    }, [editor, linkHref]);
+
+    const removeLink = useCallback(() => {
+      editor?.chain().focus().extendMarkRange('link').unsetLink().run();
+      setLinkOpen(false);
+    }, [editor]);
 
     /* ── Suggestion review actions ── */
     const resolveOne = useCallback(
@@ -751,12 +895,37 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 x<sub>2</sub>
               </span>
             </RB>
+            <RB title="Highlight" active={editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
+              <span className="rse-hl-glyph">ab</span>
+            </RB>
             <span className="rse-sep" />
             <RB title="Bullet list" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
               {I.listBullet}
             </RB>
             <RB title="Numbered list" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
               {I.listOrdered}
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Align left" active={editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
+              {I.alignLeft}
+            </RB>
+            <RB title="Align center" active={editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
+              {I.alignCenter}
+            </RB>
+            <RB title="Align right" active={editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
+              {I.alignRight}
+            </RB>
+            <RB
+              title={editor?.isActive('link') ? 'Edit or remove the link' : 'Insert a link'}
+              active={editor?.isActive('link') || linkOpen}
+              disabled={
+                !linkOpen &&
+                !editor?.isActive('link') &&
+                editor?.state.selection.from === editor?.state.selection.to
+              }
+              onClick={() => (linkOpen ? closeLink() : openLink())}
+            >
+              {I.link}
             </RB>
             <span className="rse-sep" />
             {/* A CTD dossier is a tabular document — Module 3 most of all. The
@@ -783,8 +952,29 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 <RB title="Delete column" onClick={() => editor?.chain().focus().deleteColumn().run()}>
                   −Col
                 </RB>
+                {/* A CTD specification table is written with spanning headers
+                    ("Acceptance criteria" over three columns). The commands
+                    shipped with TableKit from day one; the ribbon never
+                    offered them. */}
+                <RB
+                  title="Merge the selected cells"
+                  disabled={!editor?.can().mergeCells()}
+                  onClick={() => editor?.chain().focus().mergeCells().run()}
+                >
+                  Merge
+                </RB>
+                <RB
+                  title="Split the merged cell"
+                  disabled={!editor?.can().splitCell()}
+                  onClick={() => editor?.chain().focus().splitCell().run()}
+                >
+                  Split
+                </RB>
                 <RB title="Toggle header row" onClick={() => editor?.chain().focus().toggleHeaderRow().run()}>
                   Hdr
+                </RB>
+                <RB title="Toggle header column" onClick={() => editor?.chain().focus().toggleHeaderColumn().run()}>
+                  HdrCol
                 </RB>
                 <RB title="Delete table" onClick={() => editor?.chain().focus().deleteTable().run()}>
                   {I.close}
@@ -815,6 +1005,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             </RB>
             <RB title="Redo" onClick={() => editor?.chain().focus().redo().run()}>
               {I.redo}
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Find & replace (Ctrl/⌘-F)" active={findOpen} onClick={() => (findOpen ? closeFind() : openFind())}>
+              {I.search}
             </RB>
             {onAsk && (
               <>
@@ -879,6 +1073,159 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── Find & replace bar ──
+            Works read-only too (finding is not editing); the replace half is
+            drawn only when the canvas is editable. Enter finds the next match,
+            Shift-Enter the previous, Escape closes and clears the highlights.
+            The editor selection follows the focused match; DOM focus stays
+            here so the keys keep cycling. */}
+        {findOpen && boot.mode === 'rich' && (
+          <div
+            className="rse-find"
+            role="search"
+            aria-label="Find in this section"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeFind();
+              }
+            }}
+          >
+            <input
+              ref={findInputRef}
+              className="rse-find-input"
+              type="text"
+              placeholder="Find in this section…"
+              aria-label="Text to find"
+              value={findQuery}
+              onChange={(e) => onFindQueryChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.shiftKey) editor?.commands.findPrevious();
+                  else editor?.commands.findNext();
+                }
+              }}
+            />
+            <span className="rse-find-count" aria-live="polite">
+              {findQuery
+                ? findInfo.count === 0
+                  ? 'No matches'
+                  : `${findInfo.active + 1} of ${findInfo.count}`
+                : ''}
+            </span>
+            <RB title="Previous match (Shift-Enter)" disabled={findInfo.count === 0} onClick={() => editor?.commands.findPrevious()}>
+              ‹
+            </RB>
+            <RB title="Next match (Enter)" disabled={findInfo.count === 0} onClick={() => editor?.commands.findNext()}>
+              ›
+            </RB>
+            <RB title="Match case" active={findCase} onClick={toggleFindCase}>
+              Aa
+            </RB>
+            {!readOnly && (
+              <>
+                <span className="rse-sep" />
+                <input
+                  className="rse-find-input"
+                  type="text"
+                  placeholder="Replace with…"
+                  aria-label="Replacement text"
+                  value={replaceWith}
+                  onChange={(e) => setReplaceWith(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      editor?.commands.replaceActiveMatch(replaceWith);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="rse-link"
+                  disabled={findInfo.active < 0}
+                  onClick={() => editor?.commands.replaceActiveMatch(replaceWith)}
+                >
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  className="rse-link"
+                  disabled={findInfo.count === 0}
+                  title="One transaction — a single undo restores everything"
+                  onClick={() => editor?.commands.replaceAllMatches(replaceWith)}
+                >
+                  Replace all{findInfo.count > 1 ? ` (${findInfo.count})` : ''}
+                </button>
+                {trackOn && findInfo.count > 0 && (
+                  <span className="rse-find-note" title="Replacements are captured as attributed suggestions; the replaced text stays visible, struck through, until each edit is accepted or rejected.">
+                    replacements are tracked
+                  </span>
+                )}
+              </>
+            )}
+            <span style={{ flex: 1 }} />
+            <button type="button" className="rse-link" aria-label="Close find" onClick={closeFind}>
+              {I.close}
+            </button>
+          </div>
+        )}
+
+        {/* ── Link bar ── */}
+        {linkOpen && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Link"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeLink();
+              }
+            }}
+          >
+            <span className="rse-find-label">{I.link} Link</span>
+            <input
+              ref={linkInputRef}
+              className="rse-find-input"
+              type="text"
+              inputMode="url"
+              placeholder="https://…"
+              aria-label="Link URL"
+              value={linkHref}
+              onChange={(e) => {
+                setLinkHref(e.target.value);
+                setLinkError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  applyLink();
+                }
+              }}
+            />
+            <button type="button" className="rse-link" onClick={applyLink}>
+              Apply
+            </button>
+            {editor?.isActive('link') && (
+              <button type="button" className="rse-link" onClick={removeLink}>
+                Remove link
+              </button>
+            )}
+            {linkError && (
+              <span className="rse-find-err" role="alert">
+                {linkError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button type="button" className="rse-link" aria-label="Close link editor" onClick={closeLink}>
+              {I.close}
+            </button>
           </div>
         )}
 
@@ -998,6 +1345,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-review-txt { color:var(--text-300,#475467); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .rse-link { font-size:11px; border:none; background:none; color:var(--accent-100,#2563eb); cursor:pointer; padding:2px 4px; }
         .rse-link:disabled { color:var(--text-400,#667085); cursor:default; }
+        .rse-find { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); flex-wrap:wrap; }
+        .rse-find-label { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--text-300,#475467); }
+        .rse-find-input { flex:0 1 220px; min-width:120px; height:24px; font-size:12px; padding:2px 8px; border:1px solid var(--border-control,#d0d5dd); border-radius:4px; background:var(--bg-000,#fff); color:var(--text-100,#101828); }
+        .rse-find-count { font-size:11px; color:var(--text-400,#667085); min-width:64px; }
+        .rse-find-err { font-size:11px; color:var(--error,#b42318); }
+        .rse-find-note { font-size:10px; color:var(--warning,#b54708); }
+        .rse-find-hit { background:color-mix(in srgb, var(--warning,#b54708) 25%, transparent); border-radius:2px; }
+        .rse-find-hit-active { background:color-mix(in srgb, var(--warning,#b54708) 50%, transparent); box-shadow:0 0 0 1px var(--warning,#b54708); }
+        .rse-hl-glyph { background:color-mix(in srgb, var(--warning,#b54708) 30%, transparent); padding:0 3px; border-radius:2px; }
         .rse-body { flex:1; min-height:0; overflow-y:auto; }
         .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
         /* Measure lives on the prose blocks, not the canvas: a CTD table must be
@@ -1012,6 +1368,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-body .tiptap table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
         .rse-body .tiptap th { padding:8px 12px; background:var(--bg-50,#f9fafb); border:1px solid var(--border,#e4e7ec); font-weight:600; text-align:left; }
         .rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border,#e4e7ec); }
+        .rse-body .tiptap mark { background:color-mix(in srgb, var(--warning,#b54708) 28%, transparent); padding:0 1px; border-radius:2px; }
+        .rse-body .tiptap a { color:var(--accent-100,#2563eb); text-decoration:underline; text-underline-offset:2px; }
+        .rse-body .tiptap .selectedCell { outline:2px solid color-mix(in srgb, var(--accent-100,#2563eb) 55%, transparent); outline-offset:-2px; }
         .rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400,#667085); pointer-events:none; height:0; }
         .rse-ins { background:color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success,#067647); }
         .rse-del { background:color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error,#b42318); }
