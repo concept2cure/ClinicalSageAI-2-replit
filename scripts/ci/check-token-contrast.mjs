@@ -85,6 +85,34 @@ const ENFORCED = [
   ['success', 'success-muted'],
   ['warning', 'bg-000'],
   ['warning', 'warning-muted'],
+
+  /* The AnA persona blue. It was the seventh status tone and nothing here
+     tracked it, which is why it sat at 2.35:1 on its own badge — the worst
+     pairing in the palette — through two passes that fixed the other six. */
+  ['ai', 'bg-000'],
+  ['ai', 'ai-muted'],
+
+  /* The accent as TEXT. `--accent-main-200` is not the brand hue; it is the
+     accent's readable weight, and 427 of its 551 uses are `color:`. Untracked,
+     it sat at 3.70:1 and was the largest single accessibility defect in the
+     product: 371 failures, 75% of what remained after the muted ramp was
+     fixed. Enforced on every light surface it can land on, not only the ones
+     it happens to land on today. */
+  ['accent-main-200', 'bg-000'],
+  ['accent-main-200', 'bg-100'],
+  /* Not `accent-main-000`: in dark it is `rgba(217,119,87,0.12)`, and a
+     translucent ground has no ratio until it is composited over whatever is
+     behind it — which this file, reading hex out of a stylesheet, cannot know.
+     `visual-qa:contrast` composites and does measure it (4.69:1 in light).
+     Asserting it here would mean asserting a number that does not exist. */
+
+  /* The filled-accent pair — a primary button's label against its own ground.
+     This is the pairing `--accent-main-100` could never satisfy (white on it
+     is 3.12:1), and the reason a third accent token exists. Both halves flip
+     by theme, so asserting the PAIR is what keeps them flipping together: a
+     future edit that darkens the fill without darkening the label, or lightens
+     one side only, fails here rather than in a customer's VPAT. */
+  ['accent-on-strong', 'accent-strong'],
 ];
 
 /**
@@ -104,6 +132,12 @@ const NON_TEXT = [
   ['border-control', 'bg-000'],
   ['border-control', 'bg-100'],
   ['border-control', 'bg-200'],
+  /* A filled button's own ground against the page. Its label being readable is
+     not enough — SC 1.4.11 wants the control's boundary discernible too, and
+     that is the constraint that decided the fill must INVERT by theme rather
+     than take one value: #ad5132 carries a white label fine on a dark page
+     (5.25:1) but disappears into it at 2.89:1. */
+  ['accent-strong', 'bg-000'],
 ];
 const NON_TEXT_MIN = 3.0;
 
@@ -135,13 +169,25 @@ const SUBTLE_MAX = 2.5;
  */
 const EXCEPTIONS = [
   { theme: 'light', fg: 'accent-main-100', bg: 'bg-000', min: 2.96,
-    why: 'the brand orange itself; changing it is a design decision, not a lint fix' },
-  { theme: 'light', fg: 'text-400', bg: 'bg-000', min: 3.37,
-    why: 'muted-text ramp used in 59 files; passes AA for large text only' },
+    why: 'the brand orange itself, and it stays. 2026-08-21 resolved the design '
+      + 'decision this line was waiting on by not taking it: --accent-100 is '
+      + 'what the brand is SEEN in — rail indicator, borders, progress fills, '
+      + 'focus ring — and 481 of its 607 uses are fill or border. Its readable '
+      + 'weight is --accent-main-200 and its filled-label form is '
+      + '--accent-strong, both now ENFORCED above. So this token no longer '
+      + 'colours text anywhere and this exception records a hue that is not '
+      + 'asked to be legible, rather than one that is failing to be' },
+  { theme: 'light', fg: 'text-400', bg: 'bg-000', min: 4.50,
+    why: 'muted-text ramp. Was 3.37 and excused as "passes AA for large text '
+      + 'only" — measurement killed that premise: of 1,756 failing elements, '
+      + 'ONE (0.1%) was large text, while this token alone caused 1,202 (68.5%). '
+      + 'Now #75736d, 4.50:1, an AA pass on bg-000. It stays an exception '
+      + 'because bg-100/bg-200 still fall short (4.13 / 3.84) — see '
+      + '`npm run visual-qa:contrast-why`' },
   { theme: 'light', fg: 'text-500', bg: 'bg-000', min: 2.11,
     why: 'faintest ramp step, 22 files; verify each use is disabled/decorative' },
-  { theme: 'dark', fg: 'text-400', bg: 'bg-000', min: 4.27,
-    why: 'same ramp, dark side' },
+  { theme: 'dark', fg: 'text-400', bg: 'bg-000', min: 4.50,
+    why: 'same ramp, dark side; #8e8c84, raised from 4.27 to an AA pass' },
   { theme: 'dark', fg: 'text-500', bg: 'bg-000', min: 2.76,
     why: 'same ramp, dark side' },
 

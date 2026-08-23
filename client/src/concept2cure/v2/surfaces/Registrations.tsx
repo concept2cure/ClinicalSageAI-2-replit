@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, isRowsWith, hasKeys, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -217,6 +219,62 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
     .map((r) => ({ r, days: daysUntil(r.renewal_due_date) }))
     .filter((x) => x.days != null)
     .sort((a, b) => (a.days as number) - (b.days as number));
+
+  /* What AnA can see of this screen.
+     She knew the user was on "registrations" and nothing else — not how many
+     markets are approved, how many are under review, or which registration
+     renews next — so "what lapses first?" needed the user to read their own
+     grid back to her. A lapsing registration is not a small event.
+
+     A failed read publishes the failure. `regs` is [] both when the org has no
+     registrations and when the grid read threw, and "0 markets approved" over
+     an outage would misreport a company's entire market position. This surface
+     already learned that lesson once — the comment above `GridResponse`
+     records it reporting "No market registrations yet" for a grid it had never
+     read. */
+  const anaContext = useMemo(() => {
+    if (grid.loading) {
+      return { summary: 'The registrations grid is still loading; nothing on screen is final yet.' };
+    }
+    if (grid.error) {
+      return {
+        summary:
+          'The registrations grid could not be read, so this screen shows no markets because of a failure, not because none are registered.',
+        availableActions: ['Retry the registrations read'],
+      };
+    }
+    const soonest = renewals[0] ?? null;
+    return {
+      summary:
+        `Market registrations: ${regs.length} registration(s) across ${countries} country/countries and ${products} product(s) — ` +
+        `${approved} approved, ${review} submitted or under review` +
+        (soonest
+          ? `; soonest renewal ${productLabel(soonest.r)} in ${soonest.r.country} due in ${soonest.days} day(s)`
+          : ''),
+      facts: {
+        registrationCount: regs.length,
+        approved,
+        submittedOrUnderReview: review,
+        countries,
+        products,
+        soonestRenewal: soonest
+          ? {
+              product: productLabel(soonest.r),
+              country: soonest.r.country,
+              daysUntilRenewal: soonest.days,
+              status: soonest.r.market_status,
+            }
+          : null,
+        openTab: tab,
+      },
+      availableActions: [
+        'Review a registration and its market status',
+        'Check which registrations renew next',
+        'Switch between the registrations grid and the data-standards view',
+      ],
+    };
+  }, [grid.loading, grid.error, regs, approved, review, countries, products, renewals, tab]);
+  usePublishSurfaceContext('registrations', anaContext);
 
   // Group the real rows by product for the design's grouped table layout.
   const groups: { label: string; rows: RimRegistration[] }[] = [];

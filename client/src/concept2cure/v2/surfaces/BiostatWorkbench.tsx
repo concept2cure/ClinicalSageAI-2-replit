@@ -47,6 +47,8 @@ import {
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import type { FireToast } from '../toast';
+import { saveToAuthoring } from '../authoringHandoff';
+import { engineResultToHtml } from '../engineResultHtml';
 
 interface Defensibility {
   overallScore?: number;
@@ -216,12 +218,37 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
   const [result, setResult] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
+  const [inserting, setInserting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const visible = useMemo(() => calc.fields.filter(f => isFieldVisible(f, values)), [calc, values]);
   const rows = useMemo(() => scalarRows(result), [result]);
   const tables = useMemo(() => objectTables(result), [result]);
   const provenance = result?.provenance ?? null;
+
+  /* BP-W2-4: file the tabulated result + full-hash provenance stamp as a
+     governed authoring section. Never throws; the outcome is toasted either
+     way, and on failure nothing navigates and the result stays on screen. */
+  const insertIntoDocument = useCallback(async () => {
+    setInserting(true);
+    try {
+      const html = engineResultToHtml({
+        title: `${calc.title} — engine result`,
+        rows: rows.map(([k, v]) => [k, v] as [string, unknown]),
+        provenance,
+      });
+      const outcome = await saveToAuthoring({
+        title: `${calc.title} — engine result`,
+        module: 'M5',
+        code: `biostat.${calc.id}`,
+        content: html,
+        subject: 'the computed result',
+      });
+      fireToast(outcome.message, outcome.ok ? 'ok' : 'error');
+    } finally {
+      setInserting(false);
+    }
+  }, [calc, rows, provenance, fireToast]);
 
   const run = useCallback(async () => {
     const { body, errors, fieldErrors: errs } = buildRequestBody(calc, values);
@@ -282,6 +309,20 @@ function CalculatorPanel({ calc, fireToast }: { calc: Calculator; fireToast: Fir
           </button>
           <button className="btn" style={{ height: 32 }} onClick={reset} disabled={busy}>Reset</button>
           {result && <button className="btn" style={{ height: 32 }} aria-expanded={showRaw} aria-controls={`raw-${calc.id}`} onClick={() => setShowRaw(r => !r)}>{showRaw ? 'Hide' : 'Show'} raw response</button>}
+          {result !== null && rows.length > 0 && (
+            /* BP-W2-4: these numbers are SAP content, and until this button the
+               only way off this screen was retyping them — which severs the
+               provenance stamp from the result. The section is filed as the
+               tabulated result plus the stamp with the FULL inputs hash. */
+            <button
+              className="btn"
+              style={{ height: 32 }}
+              disabled={inserting}
+              onClick={() => void insertIntoDocument()}
+            >
+              {inserting ? 'Filing…' : 'Insert into document'}
+            </button>
+          )}
         </div>
 
         {result !== null && (

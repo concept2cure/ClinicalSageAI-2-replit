@@ -97,6 +97,11 @@ beforeAll(async () => {
       // composite tenant-parent FKs), so no separate permission-store migration
       // is loaded here.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
+      // ALTERs doc_revisions above with the ledger columns the router now writes
+      // (content/chain hashes, origin, input manifest) and installs the
+      // append-only triggers. Same position the durable applier uses.
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       // The section create/save handlers now record span lineage in the same
       // transaction (source-attribution, landed via #1288), so document_span_lineage
       // is a hard prerequisite for exercising POST /sections and PATCH here.

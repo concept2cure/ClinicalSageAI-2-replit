@@ -85,10 +85,34 @@ export function clientError(
 }
 
 /**
- * 500 Internal Server Error. Logs the underlying error via the caller's
- * scoped logger (preserves the route's `where` label) before responding
- * with a sanitized envelope. The `where` parameter shows up in the log
- * line so ops can grep failures by endpoint.
+ * 500 Internal Server Error.
+ *
+ * ── What this used to do, and why it was a finding ───────────────────────────
+ * It put `err.message` straight into the response body while its own docstring
+ * claimed the envelope was "sanitized". It was not. A driver error reaches this
+ * helper verbatim, so a route whose table was missing answered the browser with
+ *
+ *     500 {"error":"relation \"software_lifecycle_items\" does not exist"}
+ *
+ * — the exact string the MDX work order's verification step says must never
+ * appear, arriving at whoever holds the session. 272 call sites across 40 route
+ * files send through here, so the leak was not one endpoint's mistake; it was
+ * the default for every MDX-owned endpoint that fails.
+ *
+ * The client-side redaction added later (ErrorState + extractApiError) hid the
+ * symptom on screen and left the API shipping Postgres text to anything that
+ * reads the response — a proxy log, a browser devtools panel, a saved HAR.
+ * Redaction at the render layer is not containment at the boundary.
+ *
+ * ── What it does now ─────────────────────────────────────────────────────────
+ * The real message goes to the LOG, keyed by the request id the `requestId`
+ * middleware already set and echoed as `X-Request-Id`. The client gets a stable
+ * code, a sentence, and that same id. The operator question — "what actually
+ * broke?" — is answered by one log lookup on an id the user can read off the
+ * screen and quote. Nothing is lost except the disclosure.
+ *
+ * This is the same shape `pendingStore()` in server/routes/c2c/projects.ts
+ * already uses for its 503; one way of doing this, not two.
  *
  * @example
  *   } catch (err) {
@@ -100,10 +124,35 @@ export function serverError(
   log: ScopedLogger,
   where: string,
   err: unknown,
+  /* Route-scoped facts to log alongside the failure — the ids that make one
+     log line answer "which record?" without a second lookup (e.g.
+     `{ programId }`). Log-only: nothing here reaches the response, so it is
+     safe to put internal identifiers in it. Optional so the 272 existing call
+     sites are unchanged. */
+  extra?: Record<string, unknown>,
 ): Response {
-  const message = err instanceof Error ? err.message : 'Operation failed';
-  log.error(`${where} failed`, { err: message });
-  const envelope: ApiErrorEnvelope = { error: message };
+  const detail = err instanceof Error ? err.message : 'Operation failed';
+  /* Set by the requestId middleware (server/middleware/enterprise-security.ts)
+     before any route runs, so reading it back off the response needs no change
+     at the 272 call sites. Absent only in a unit test that never mounted the
+     middleware, where a null id is honest rather than a fabricated one. */
+  const header = res.getHeader('X-Request-Id');
+  const correlationId = typeof header === 'string' && header ? header : null;
+
+  log.error(`${where} failed`, {
+    ...extra,
+    err: detail,
+    correlationId,
+    code: (err as { code?: string })?.code ?? null,
+  });
+
+  const envelope: ApiErrorEnvelope = {
+    error: 'INTERNAL_ERROR',
+    message:
+      `Something went wrong while ${where}. The problem has been logged.` +
+      (correlationId ? ' Quote the reference below if you contact support.' : ''),
+    ...(correlationId ? { correlationId } : {}),
+  };
   return res.status(500).json(envelope);
 }
 

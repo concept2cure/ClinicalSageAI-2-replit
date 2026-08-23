@@ -2,7 +2,7 @@
  * Region selector configuration for the MAA / Module-1 cockpit.
  *
  * ── This file is not a fixture, despite living in fixtures/ ───────────────────
- * Everything below is display configuration for the market chips — the six
+ * Everything below is display configuration for the market chips — the non-US
  * `RegulatoryMarket` codes the requirements engine models, plus the agency name
  * and procedure shown beside each. No submission data, no readiness state, no
  * checklist content. MaaCockpit gets all of that live from
@@ -71,5 +71,6 @@ export const MAA_MARKETS: MaaMarket[] = [
   { key: 'MHRA', label: 'UK (MHRA)', agency: 'Medicines and Healthcare products Regulatory Agency', procedure: 'UK MA' },
   { key: 'TGA', label: 'Australia (TGA)', agency: 'Therapeutic Goods Administration', procedure: 'Registration' },
   { key: 'HEALTH_CANADA', label: 'Canada (HC)', agency: 'Health Canada', procedure: 'NDS' },
+  { key: 'SWISSMEDIC', label: 'Switzerland (Swissmedic)', agency: 'Swissmedic', procedure: 'Swiss MA' },
   { key: 'NMPA', label: 'China (NMPA)', agency: 'National Medical Products Administration', procedure: 'NDA' },
 ];

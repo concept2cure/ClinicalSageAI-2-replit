@@ -228,7 +228,16 @@ export function RegisterCard<T>({
       setRows((rs) => [row, ...rs]);
       onWrite?.(row);
       setCreating(false);
-      fireToast(`${create.subject.charAt(0).toUpperCase() + create.subject.slice(1)} saved.`);
+      /* A record created with no program in context persists org-wide but the
+         Module 3 write-through never fires for it (the server skips canonical
+         propagation without a projectId) — a fact the person filing it needs
+         at the moment of filing, not one to discover at compile time. */
+      fireToast(
+        `${create.subject.charAt(0).toUpperCase() + create.subject.slice(1)} saved.` +
+          (projectId
+            ? ''
+            : ' Not linked to a program — it will not feed a Module 3 build until a program links it.'),
+      );
     } catch (e) {
       fireToast(cmcWriteThrew(create.subject, e), 'error');
     }
@@ -389,7 +398,7 @@ export function CmMethodLibrary() {
       title="Analytical method library"
       meta={(rows) => {
         const validated = rows.filter((r) => String(r.status || '').toLowerCase() === 'validated').length;
-        return `organization-wide -- ICH Q2 -- ${validated}/${rows.length} validated`;
+        return `organization-wide — ICH Q2 -- ${validated}/${rows.length} validated`;
       }}
       icon={I.clipboardList}
       loadingTitle="Loading analytical methods…"
@@ -571,7 +580,7 @@ export function CmChangeRegister() {
       title="Change-control register"
       meta={(rows) => {
         const open = rows.filter((r) => !CLOSED.includes(String(r.status || '').toLowerCase())).length;
-        return `organization-wide -- ${open} open -- ICH Q12`;
+        return `organization-wide -- ${open} open — ICH Q12`;
       }}
       icon={I.gitBranch}
       loadingTitle="Loading change-control records…"
@@ -741,7 +750,7 @@ export function CmProcessValidation() {
       title="Process validation"
       meta={(rows) => {
         const done = rows.filter((r) => cmcStatusTone(r.status) === 'ok').length;
-        return `${rows.length} ${rows.length === 1 ? 'process' : 'processes'} -- ${done} complete -- 3-stage lifecycle`;
+        return `${rows.length} ${rows.length === 1 ? 'process' : 'processes'} -- ${done} complete — 3-stage lifecycle`;
       }}
       icon={I.workflow}
       loadingTitle="Loading process validation…"

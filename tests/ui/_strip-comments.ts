@@ -38,10 +38,31 @@ export function stripComments(src: string, isCss = false): string {
       const stop = nl === -1 ? src.length : nl;
       blank(i, stop);
       i = stop;
-    } else if (c === '"' || c === "'" || c === '`') {
+    } else if (c === '"' || c === "'") {
       // Skip string bodies so a `//` or `/*` inside one is never treated as a
-      // comment. Escape-aware; template-literal interpolation is not descended
-      // into, which is safe for every current caller.
+      // comment. Escape-aware.
+      //
+      // Bounded to the LINE, because a single- or double-quoted JS string cannot
+      // contain a raw newline. Without that bound, any unpaired quote opens a
+      // phantom string that runs to the next matching quote and swallows every
+      // comment in between — and this scanner cannot recognise a regex literal,
+      // so `/"/g` looks exactly like an unpaired quote.
+      //
+      // That is not hypothetical. `.replace(/"/g, '&quot;')` in
+      // server/routes/authoring.router.ts opened a phantom string that chained
+      // through the rest of the file, so ~900 lines of comments were never
+      // stripped. The contract test asserting deleted table names appear
+      // "nowhere in the router" then failed on a COMMENT explaining that those
+      // tables had been deleted — precisely the self-defeating guard this
+      // helper exists to prevent.
+      //
+      // A trailing backslash still continues the string onto the next line: the
+      // escape step consumes the newline before the bound is tested.
+      i++;
+      while (i < src.length && src[i] !== c && src[i] !== '\n') i += src[i] === '\\' ? 2 : 1;
+      if (src[i] === c) i++; // closing quote; an unterminated one resumes at the newline
+    } else if (c === '`') {
+      // Template literals legitimately span lines, so this one is unbounded.
       i++;
       while (i < src.length && src[i] !== c) i += src[i] === '\\' ? 2 : 1;
       i++;

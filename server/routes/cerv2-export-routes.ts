@@ -40,8 +40,9 @@ import { authMiddleware } from '../auth';
 import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
 import type { ExportSourceType } from '../services/export/governedExportConsequence';
 import { requestDb } from '../db/requestDb';
-import { fda510kProjects } from '../../shared/schema';
+import { fda510kProjects, projects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import auditService from '../services/auditService';
 import {
   loadAuthoredDeviceSections,
@@ -177,11 +178,12 @@ interface ProjectAnchor {
  * path, carries the numeric anchor the artifact registry needs), UUID →
  * regulatoryPrograms.id, else → regulatoryPrograms.code. Returns null when
  * nothing in this org matches — the caller must 404, never export against an
- * unresolved project. A UUID/code program resolves WITHOUT a numeric anchor:
- * the artifact registry (concept2cure_artifacts.project_id → projects.id FK)
- * predates the program spine; those exports are delivered + audit-logged but
- * explicitly not registry-placed (same contract as the estar /build handler,
- * pending the document-identity contract — RECONCILE.md §6).
+ * unresolved project. A UUID/code program resolves its numeric anchor through
+ * `projects.regulatory_program_id` (Document Identity Contract slice C1), which
+ * the artifact registry needs — `concept2cure_artifacts.project_id` is an
+ * integer FK to `projects.id` and predates the program spine. Where no anchor
+ * exists the export is still delivered + audit-logged but explicitly not
+ * registry-placed (same contract as the estar /build handler).
  */
 async function resolveProjectAnchor(
   req: Request,
@@ -219,7 +221,18 @@ async function resolveProjectAnchor(
         ),
       )
       .limit(1);
-    if (row) return { anchorProjectId: null, programUuid: row.id, title: row.name ?? null };
+    if (row) {
+      // Ask for the C1 anchor before degrading. Null is a fact about the data
+      // — a program created before C1, an intake that skipped it for one of its
+      // stated reasons, or a database without the migration — and keeps the
+      // audited-unplaced path exactly as it was.
+      const anchorProjectId = await resolveProgramProjectAnchor(rdb, {
+        programId: row.id,
+        orgId,
+        context: 'cerv2-export',
+      });
+      return { anchorProjectId, programUuid: row.id, title: row.name ?? null };
+    }
   } catch {
     /* fall through */
   }
@@ -248,6 +261,35 @@ async function resolveExportRequest(
 
   let anchorProjectId: number | null = data.projectId ?? null;
   let programUuid: string | null = null;
+
+  // A caller-supplied numeric projectId must be proved to belong to the caller's
+  // org before it can anchor a placement.
+  //
+  // It previously went straight through: `meta.ident` was resolved org-scoped
+  // (404 outside the org) but `data.projectId` was not checked at all, so a
+  // caller could file their own export into ANOTHER TENANT'S project lineage.
+  // That was dormant only because the registry writeback named a column no
+  // schema defines and therefore 500'd before reaching the insert — the same
+  // defect this change fixes. Reconciling the column list without this check
+  // would have turned a dead bug into a live cross-tenant write.
+  //
+  // `projects` is the right table to check: concept2cure_artifacts.project_id
+  // carries a FOREIGN KEY to projects.id, so this is simultaneously the tenant
+  // guard and the guarantee that placement cannot fail at the constraint.
+  if (anchorProjectId !== null) {
+    const [owned] = await requestDb(req)
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.id, anchorProjectId), eq(projects.organizationId, orgId)))
+      .limit(1);
+    if (!owned) {
+      // Same shape as the ident miss: it must not distinguish "not yours" from
+      // "does not exist".
+      res.status(404).json({ error: 'Project not found in your organization' });
+      return null;
+    }
+  }
+
   if (data.meta?.ident) {
     const anchor = await resolveProjectAnchor(req, orgId, data.meta.ident);
     if (!anchor) {

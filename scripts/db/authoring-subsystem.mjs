@@ -84,6 +84,12 @@ export const AUTHORING_SUBSYSTEM_FILES = [
   // 20260730_authoring_subsystem_schema.sql). Additive ALTER … ADD COLUMN IF NOT
   // EXISTS; must run after the loop tables that create these tables.
   'db/migrations/20260730_authoring_comments_router_columns.sql',
+  // Immutable revision ledger: hash-chain + origin + input-manifest columns on
+  // doc_revisions, and the engine-enforced append-only trigger. Additive ALTER
+  // + CREATE OR REPLACE FUNCTION/TRIGGER; must follow the loop-tables file
+  // that creates doc_revisions. Verified end-to-end by
+  // authoring-ledger.pglite.integration.test.ts.
+  'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
   // C-30: the genuinely-new authoring WORKFLOW tables (reviews, audit events, AI
   // suggestions, compliance scoring, suggestion feedback, comment activity,
   // exports, change requests, checklists(+items), template sections). After C-27
@@ -190,7 +196,7 @@ export const AUTHORING_SUBSYSTEM_TABLES = [
 // session vars tenant_isolation_policy consults, applied to the PARENT document's
 // tenant_id. Kept as one constant so the doc-scoped and tenant policies converge.
 const PARENT_TENANT_MATCH = `(d.tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR d.tenant_id = NULLIF(current_setting('app.current_org_id', TRUE), '')::INT)`;
+        OR d.tenant_id = substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT)`;
 
 export const AUTHORING_SUBSYSTEM_DOCSCOPED_TABLES = [
   {
@@ -258,13 +264,13 @@ function tenantPolicySql(table) {
       USING (
         NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
         OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR tenant_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+        OR tenant_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
       )
       WITH CHECK (
         NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'
         OR tenant_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-        OR tenant_id = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT
+        OR tenant_id = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT
         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
       );
   `;

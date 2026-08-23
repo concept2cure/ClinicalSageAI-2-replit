@@ -28,6 +28,7 @@ import path from 'node:path';
 import { getAnthropicClient } from './anthropic-client.js';
 import { createScopedLogger } from '../utils/logger';
 
+import { toBinaryBody } from '../utils/binary-body.js';
 const logger = createScopedLogger('anthropic-files');
 
 const FILES_API_BETA = 'files-api-2025-04-14';
@@ -79,7 +80,7 @@ export async function uploadFileToAnthropic(params: {
 
   // The SDK's Uploadable type accepts Buffer/Blob/File; Node Buffer is fine.
   // Construct a File-like object: the SDK converts Buffer → FormData internally.
-  const blob = new Blob([data], { type: mimeType });
+  const blob = new Blob([toBinaryBody(data)], { type: mimeType });
   const file = new File([blob], filename, { type: mimeType });
 
   const response = await (client as any).beta.files.upload(

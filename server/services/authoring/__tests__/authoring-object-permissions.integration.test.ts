@@ -41,6 +41,8 @@ beforeAll(async () => {
     prereqSql: PREREQ,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
       'db/migrations/20260727_authoring_object_permissions.sql',
     ],
   });

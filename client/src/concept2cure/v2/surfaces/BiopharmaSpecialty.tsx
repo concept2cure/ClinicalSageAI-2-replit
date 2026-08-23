@@ -238,7 +238,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
   const FORM: C2CFormConfig = {
     eyebrow: 'Pediatric · new plan',
     title: 'Open a pediatric plan',
-    governed: 'Pediatric plans are governed -- saving writes an audit entry; AnA drafts the rationale for review.',
+    governed: 'Pediatric plans are governed — saving writes an audit entry; AnA drafts the rationale for review.',
     submitLabel: 'Add plan',
     fields: [
       { key: 'product', label: 'Product', type: 'text', placeholder: 'Product code', required: true, half: true },
@@ -310,12 +310,12 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
         ) : (
           <AnswerLead
             tone="calm"
-            eyebrow="Where do your pediatric obligations stand -- and what's next"
+            eyebrow="Where do your pediatric obligations stand — and what's next"
             headline={drafts.length && topDraft
-              ? <>{drafts.length} pediatric {drafts.length === 1 ? 'plan is' : 'plans are'} still in draft -- the closest gate is <b>{topDraft.kind} for {topDraft.product}</b> ({topDraft.due}).</>
-              : <>Your pediatric plans are filed -- the next thing to watch is the {nextMsLabel}.</>}
+              ? <>{drafts.length} pediatric {drafts.length === 1 ? 'plan is' : 'plans are'} still in draft — the closest gate is <b>{topDraft.kind} for {topDraft.product}</b> ({topDraft.due}).</>
+              : <>Your pediatric plans are filed — the next thing to watch is the {nextMsLabel}.</>}
             body={drafts.length && topDraft
-              ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main program on track. The age-range extrapolation is the part reviewers scrutinize most -- get that right and the plan moves.</>
+              ? <>A pediatric plan usually gates the parent submission, so finishing the {topDraft.kind} rationale keeps your main program on track. The age-range extrapolation is the part reviewers scrutinize most — get that right and the plan moves.</>
               /* BP-W0-3: `prea` being empty means no PREA milestone has been
                  RECORDED, which is not the same as none being overdue. The old
                  copy read "No milestones are overdue -- you're in good standing",
@@ -331,7 +331,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
                       ? <>The {nextMsLabel} for {nextMs.product} is due {nextMs.due}. Staying ahead of PREA milestones avoids deferral slippage.</>
                       : <>No PREA milestones have been recorded against {plans.length === 1 ? 'this plan' : 'these plans'} yet, so milestone standing is unknown rather than clear. Record the deferral and study-completion dates and they are tracked here.</>}</>}
             reassure={drafts.length
-              ? "You don't have to draft the extrapolation rationale from scratch -- I'll write the first pass with you."
+              ? "You don't have to draft the extrapolation rationale from scratch — I'll write the first pass with you."
               : nextMs
                 ? "I'll watch each milestone and flag anything before it slips."
                 : undefined}
@@ -452,7 +452,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
   const FORM: C2CFormConfig = {
     eyebrow: 'Orphan · designation request',
     title: 'Open a designation application',
-    governed: 'A designation request is a governed submission -- prevalence evidence and rationale are captured for the application package.',
+    governed: 'A designation request is a governed submission — prevalence evidence and rationale are captured for the application package.',
     submitLabel: 'Create request',
     fields: [
       { key: 'product', label: 'Product', type: 'text', placeholder: 'Product code', required: true, half: true },
@@ -502,7 +502,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
             eyebrow="Where do your rare-disease designations stand"
             headline={<>No orphan or rare-disease designations are on file for this organization yet.</>}
             body={<>Open a designation application to track orphan status across FDA, EMA and PMDA. Designations, RPD vouchers and advocacy engagements appear here once recorded — nothing is invented in the meantime.</>}
-            reassure="Designation narratives follow a pattern reviewers recognize -- when you start one I'll draft the prevalence and rationale sections with you."
+            reassure="Designation narratives follow a pattern reviewers recognize — when you start one I'll draft the prevalence and rationale sections with you."
             action={{ label: 'Open a designation application', onClick: () => setForm(true) }}
             secondary="Or ask AnA about orphan strategy below."
           />
@@ -532,12 +532,12 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
                 ? <>You hold <b>{designated.length} orphan {designated.length === 1 ? 'designation' : 'designations'}</b> -- the exclusivity and incentives are secured.</>
                 : <>None of the <b>{des.length}</b> recorded {des.length === 1 ? 'designation has' : 'designations have'} been granted.</>}
             body={topPending
-              ? <>Orphan status brings 7-year exclusivity, fee waivers, and RPD-voucher eligibility -- real value worth getting right. The prevalence evidence and scientific rationale are what carry the application; that's where I can help most.</>
+              ? <>Orphan status brings 7-year exclusivity, fee waivers, and RPD-voucher eligibility — real value worth getting right. The prevalence evidence and scientific rationale are what carry the application; that's where I can help most.</>
               : designated.length > 0
                 ? <>Across the portfolio these designations translate to years of exclusivity and priority review. The next move is keeping the patient-advocacy engagements and any RPD-voucher opportunities warm.</>
                 : <>No exclusivity or incentive entitlement follows from these records in their current state. Their dispositions are below.</>}
             reassure={topPending
-              ? "Designation narratives follow a pattern reviewers recognize -- I'll draft the prevalence and rationale sections with you."
+              ? "Designation narratives follow a pattern reviewers recognize — I'll draft the prevalence and rationale sections with you."
               : designated.length > 0
                 ? "Your designations are in hand. I'll help you make the most of the incentives that come with them."
                 : undefined}
@@ -698,13 +698,13 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
   const FORM: C2CFormConfig = {
     eyebrow: 'Lifecycle · new supplement',
     title: 'New supplement / variation',
-    governed: 'Supplements are governed submissions -- classification and pathway are recorded; dispatch requires e-signature.',
+    governed: 'Supplements are governed submissions — classification and pathway are recorded; dispatch requires e-signature.',
     submitLabel: 'Create supplement',
     fields: [
       { key: 'agency', label: 'Agency & type', type: 'select', options: ['FDA sBLA', 'FDA sNDA', 'FDA CBE-30', 'FDA CBE-0', 'EMA Type IA', 'EMA Type IB', 'EMA Type II', 'PMDA partial change'], required: true },
       { key: 'product', label: 'Product', type: 'text', placeholder: 'Product code', required: true, half: true },
       { key: 'id', label: 'Sequence / ID', type: 'text', placeholder: 'e.g. sBLA-005', half: true },
-      { key: 'subject', label: 'Subject of change', type: 'text', placeholder: 'e.g. New indication -- 2L expansion', required: true },
+      { key: 'subject', label: 'Subject of change', type: 'text', placeholder: 'e.g. New indication — 2L expansion', required: true },
       { key: 'due', label: 'Target / due', type: 'text', placeholder: 'e.g. PDUFA Feb 2027', half: true },
       { key: 'status', label: 'Status', type: 'seg', options: ['drafted', 'review', 'approved'], default: 'drafted', half: true },
       { key: 'justification', label: 'Change justification', type: 'textarea', placeholder: 'Basis for the change and supporting data...' },
@@ -769,7 +769,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
               ? <>A <b>high-risk CMC change</b> is in play -- {topChgTitle} -- and it decides your filing path.</>
               : <>Your post-approval portfolio is steady -- {inReview.length} {inReview.length === 1 ? 'supplement' : 'supplements'} in agency review{nextRen ? <>, next renewal {nextRen.due}</> : null}.</>}
             body={highChg.length && topChg
-              ? <>Under ICH Q12 this is the difference between a PACMP and a prior-approval supplement -- get the classification right and you avoid a costly re-file. {inReview.length ? <>{inReview.length} {inReview.length === 1 ? 'supplement is' : 'supplements are'} already in review.</> : null}</>
+              ? <>Under ICH Q12 this is the difference between a PACMP and a prior-approval supplement — get the classification right and you avoid a costly re-file. {inReview.length ? <>{inReview.length} {inReview.length === 1 ? 'supplement is' : 'supplements are'} already in review.</> : null}</>
               /* BP-W0-3: "Nothing is overdue" was asserted whether or not any
                  renewal cycle existed to be overdue. With no renewal records the
                  truthful statement is that nothing is TRACKED, not that nothing
@@ -779,14 +779,14 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
                   ? <>Nothing recorded is overdue. The next thing on the horizon is the {nextRen.authority} {nextRen.next} for {nextRen.product}, due {nextRen.due}.</>
                   : <>No renewal cycle is recorded, so renewal standing is untracked rather than clear.</>}{cmc.length === 0 ? <> No CMC changes have been assessed either.</> : null}</>}
             reassure={highChg.length
-              ? "You don't have to guess the pathway -- I'll classify it against Q12 and draft the justification with you."
+              ? "You don't have to guess the pathway — I'll classify it against Q12 and draft the justification with you."
               : cmc.length > 0 && nextRen
                 ? "I'll prep the next renewal whenever you want to start."
                 : undefined}
             action={{
               label: highChg.length ? 'Classify the change against ICH Q12' : (nextRen ? 'Prepare the next renewal' : 'Review the portfolio'),
               onClick: () => ask(highChg.length && topChg
-                ? ('Assess ' + topChg.title + ' against ICH Q12 -- PACMP eligible or prior-approval supplement?')
+                ? ('Assess ' + topChg.title + ' against ICH Q12 — PACMP eligible or prior-approval supplement?')
                 : (nextRen
                   ? ('Prepare the ' + nextRen.authority + ' ' + nextRen.next + ' renewal for ' + nextRen.product)
                   : 'Summarize the post-approval portfolio and any upcoming obligations')),
@@ -829,7 +829,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="CMC change control" meta={cmc.length + ' tracked'} foot={cmc.length > 0 ? <SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" /> : undefined}>
+        <SpCard title="CMC change control" meta={cmc.length + ' tracked'} foot={cmc.length > 0 ? <SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 — flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" /> : undefined}>
           <div className="sp-list">
             {liveCmc.loading ? (
               <div className="sp-row"><span className="sp-row-s">Loading CMC changes…</span></div>
@@ -939,7 +939,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   const FORM: C2CFormConfig = {
     eyebrow: 'Pharmacovigilance · log signal',
     title: 'Log a safety signal',
-    governed: 'Signals are governed safety records -- logging creates a §11 audit entry and routes causality assessment.',
+    governed: 'Signals are governed safety records — logging creates a §11 audit entry and routes causality assessment.',
     submitLabel: 'Log signal',
     fields: [
       { key: 'product', label: 'Product', type: 'text', placeholder: 'Product code', required: true, half: true },
@@ -1024,15 +1024,15 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
             headline={highPrr && top
               ? <>Yes -- <b>{topTerm.toLowerCase()}</b> on {top.product} is the one to look at: PRR <b>{prrOf(top)}</b> across {top.count} cases.</>
               : top
-                ? <>Nothing is alarming today -- the highest screened signal is {topTerm.toLowerCase()} (PRR {prrOf(top)}), still within routine monitoring.</>
+                ? <>Nothing is alarming today — the highest screened signal is {topTerm.toLowerCase()} (PRR {prrOf(top)}), still within routine monitoring.</>
                 : <>No signals have been screened for this organization.</>}
             body={highPrr && top
-              ? <>A PRR above 3 with this many cases is worth a real causality read, not a wait-and-see. This is about patients on the drug now -- pulling the case narratives and running the assessment tells you whether a label change is warranted. {agg ? <>The {agg.cycle} is also in {agg.status} for the {agg.due} window.</> : null}</>
+              ? <>A PRR above 3 with this many cases is worth a real causality read, not a wait-and-see. This is about patients on the drug now — pulling the case narratives and running the assessment tells you whether a label change is warranted. {agg ? <>The {agg.cycle} is also in {agg.status} for the {agg.due} window.</> : null}</>
               : top
-                ? <>You're keeping watch across FAERS and EudraVigilance and nothing crosses the threshold for expedited action. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that's the next scheduled obligation.</> : null}</>
-                : <>Safety standing is unknown, not clear: no disproportionality screen has been run against the adverse-event store, so there is no highest signal to report. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window -- that obligation is tracked independently of signal screening.</> : null}</>}
+                ? <>You're keeping watch across FAERS and EudraVigilance and nothing crosses the threshold for expedited action. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window — that's the next scheduled obligation.</> : null}</>
+                : <>Safety standing is unknown, not clear: no disproportionality screen has been run against the adverse-event store, so there is no highest signal to report. {agg ? <>The {agg.cycle} is in {agg.status} for its {agg.due} window — that obligation is tracked independently of signal screening.</> : null}</>}
             reassure={highPrr
-              ? "You caught this early -- that's the system working. I'll pull every case narrative and draft the causality assessment with you."
+              ? "You caught this early — that's the system working. I'll pull every case narrative and draft the causality assessment with you."
               : top
                 ? "Your surveillance is doing its job. I'll flag the moment anything crosses the line."
                 : undefined}

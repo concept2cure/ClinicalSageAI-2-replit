@@ -580,16 +580,27 @@ function computeFigureConfidence(
 async function storeFigure(figure: FigureSpec, request: FigureGenerationRequest): Promise<void> {
   try {
     const figRes = await pool.query<{ id: number }>(
+      // Named `user_id` and `content_type`, neither of which this table has —
+      // they are created_by_id and type — and omitted artifact_id, type and
+      // category, all NOT NULL with no default. So every generated figure
+      // failed to store. Found by ci:insert-columns-declared.
+      //
+      // 'figure' was already the value being passed; it was simply going into a
+      // column that does not exist. `category` is 'visualization' from the
+      // table's own documented vocabulary (document | interactive |
+      // visualization), which is what a figure is.
       `INSERT INTO concept2cure_artifacts (
-        project_id, organization_id, user_id, title, content, content_type, status,
-        metadata, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) RETURNING id`,
+        artifact_id, project_id, organization_id, created_by_id, title, content,
+        content_hash, type, category, status, metadata, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'visualization', $9, $10, NOW(), NOW()) RETURNING id`,
       [
+        `artifact_${crypto.randomUUID()}`,
         request.projectId,
         request.organizationId,
         request.userId,
         figure.title,
         figure.generatedContent,
+        crypto.createHash('sha256').update(String(figure.generatedContent ?? '')).digest('hex'),
         'figure',
         'draft',
         JSON.stringify({

@@ -340,7 +340,10 @@ export const UI_V2_SURFACES: UiSurface[] = [
   },
   {
     id: 'maa-cockpit',
-    label: 'MAA / non-US Module 1',
+    // BP-W1-5: was 'MAA / non-US Module 1'. Module 1 is regional by definition —
+    // "non-US Module 1" is not one thing — and the surface itself is already a
+    // per-agency checklist, so the name now says so.
+    label: 'MAA Module 1 (Regional)',
     navTier: 'project',
     layoutMode: 'maa-cockpit',
     group: 'submission',
@@ -352,7 +355,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Non-US marketing-application administrative module (eCTD Module 1) — region-accurate required-component checklist for EMA/PMDA/MHRA/TGA/HC/NMPA over the global-RI regional-module1-requirements engine.',
+    notes: 'Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.',
   },
   {
     id: 'device-workstream',
@@ -1247,9 +1250,17 @@ export const UI_V2_SURFACES: UiSurface[] = [
   },
   {
     /* Wired into the shell (surfaceViews.ts:347, NAV_HIDDEN, and the
-       "Review & govern" group of every segment) but never registered here, so
-       `getSurface('mission-control')` returned undefined and the surface had no
-       catalog row. Registered against what it actually mounts. */
+       "Review & govern" group of every segment). Registered against what it
+       actually mounts.
+
+       NOTE (2026-08-17): the comment here used to say the surface was "never
+       registered", so `getSurface` returned undefined. That was wrong — an
+       older entry already existed in the v1 half of the registry, and because
+       SURFACE_BY_ID is built with Object.fromEntries (LAST wins) this entry was
+       already the one getSurface returned. The two together broke the
+       uniqueness invariant and listed the surface under two different navTiers
+       at once. The v1 duplicate is deleted and its substantive notes merged
+       here; this entry's placement is unchanged, so nothing moves on screen. */
     id: 'mission-control',
     label: 'Mission control',
     navTier: 'project',
@@ -1264,11 +1275,16 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes:
-      'Cross-program standing: what is blocking, what moves next. Router mounted at /api/mission-control behind authenticateToken (register-advanced-platform-routes.ts).',
+      'Cross-program standing: what is blocking, what moves next. Router mounted at /api/mission-control behind authenticateToken (register-advanced-platform-routes.ts). ' +
+      'The regulatory program engine — programs, server-computed readiness across nine ' +
+      'dimensions, and the artifacts, risks, decisions and stale dependencies behind that ' +
+      'score. Distinct from `projects` (/api/c2c/projects), which models the workspace a ' +
+      'team works inside rather than the regulatory program.',
   },
   {
-    /* Same gap as mission-control: present in the shell and in the segment
-       "Intelligence" groups, absent from this registry. */
+    /* Same as mission-control: present in the shell and in the segment
+       "Intelligence" groups. A v1 duplicate of this id also existed and is
+       deleted (see the note above); its notes are merged below. */
     id: 'filing-strategy',
     label: 'Global filing strategy',
     navTier: 'project',
@@ -1283,6 +1299,9 @@ export const UI_V2_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes:
-      'Cross-jurisdictional filing sequence, agency divergence and reliance pathways over the regulatory_intel.* tables. Those tables ship EMPTY — this is storage plus query for a record the tenant builds, not a shipped knowledge base (see migrations/20260814l_catalog_filing_strategy.sql).',
+      'Cross-jurisdictional filing sequence, agency divergence and reliance pathways over the regulatory_intel.* tables. Those tables ship EMPTY — this is storage plus query for a record the tenant builds, not a shipped knowledge base (see migrations/20260814l_catalog_filing_strategy.sql). ' +
+      'Reads the cross-jurisdictional and confidence families only — the CRL/RTF/EMA/' +
+      'advisory-committee endpoints on the same router are NOT authoritative ' +
+      '(see docs/adr/0013).',
   },
 ];

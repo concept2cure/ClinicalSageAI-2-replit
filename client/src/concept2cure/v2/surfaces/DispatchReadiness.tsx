@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { PedigreeBadge } from '../intelligence/Intelligence';
-import { liveGet, unwrapList, useLiveData, EmptyState } from '../dataConnect';
+import { liveGetOrNull, unwrapList, useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { evaluateDispatchGate, mergeDispatchGates } from '../fixtures/dispatch-readiness';
@@ -61,13 +61,16 @@ function useLatestSequenceId(): { seqId: number | null; discovering: boolean } {
     let cancelled = false;
     (async () => {
       try {
-        const subs = await liveGet<unknown>('/api/submissions', null);
-        if (subs.sample) return; // discovery failed → stay on empty
+        // liveGetOrNull rather than liveGet: this call never wanted a fixture
+        // (it passed null and bailed on .sample), and the fixture-backed helper
+        // is being retired — see ledger L68.
+        const subs = await liveGetOrNull<unknown>('/api/submissions');
+        if (subs.error || subs.data == null) return; // discovery failed → stay on empty
         const subList = unwrapList(subs.data);
         const first = Array.isArray(subList) ? (subList[0] as { id?: number } | undefined) : undefined;
         if (!first?.id) return;
-        const seqs = await liveGet<unknown>(`/api/submissions/${first.id}/sequences`, null);
-        if (seqs.sample) return;
+        const seqs = await liveGetOrNull<unknown>(`/api/submissions/${first.id}/sequences`);
+        if (seqs.error || seqs.data == null) return;
         const seqList = unwrapList(seqs.data);
         const rows = Array.isArray(seqList) ? (seqList as Array<{ id?: number }>) : [];
         const latest = rows[rows.length - 1];

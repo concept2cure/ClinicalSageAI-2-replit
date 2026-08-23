@@ -132,6 +132,7 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   return res.json({ success: true, data });
 };
 import { ai } from '../lib/unified-ai-client';
+import { parseIntegerProjectId } from '../lib/project-id.js';
 import { registerCommunicationCenterRoutes } from './concept2cure-communication-center';
 
 const sendError = (
@@ -260,8 +261,8 @@ function parseProjectParam(projectParam: string | string[] | undefined): number 
   if (typeof raw !== 'string') {
     throw new Error('Invalid project ID');
   }
-  const numericId = Number.parseInt(raw.replace('proj_', ''), 10);
-  if (!Number.isFinite(numericId) || numericId <= 0) {
+  const numericId = parseIntegerProjectId(raw);
+  if (numericId === null) {
     throw new Error('Invalid project ID');
   }
   return numericId;
@@ -683,7 +684,7 @@ const SubmissionTypeEnum = z
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
 // Registry-driven instruction builder replaces hardcoded templates.
-// Works for ALL 158+ application types in the Global Document Registry.
+// Works for every application type in the Global Document Registry.
 import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
 
 function generateDefaultCustomInstructions(
@@ -1145,8 +1146,8 @@ function getProjectScope(
   const raw = Array.isArray(projectParam) ? projectParam[0] : projectParam;
   if (typeof raw !== 'string') return null;
   const projectId = raw.replace('proj_', '');
-  const numericId = parseInt(projectId, 10);
-  if (isNaN(numericId)) {
+  const numericId = parseIntegerProjectId(projectId);
+  if (numericId === null) {
     return null;
   }
   return { numericId };
@@ -1694,8 +1695,8 @@ async function getOwnershipDerivationData(
     .orderBy(desc(regulatoryAuditLogs.timestamp))
     .limit(500);
   for (const row of auditRows) {
-    const numeric = Number.parseInt((row.entityId || '').replace('proj_', ''), 10);
-    if (!numeric || Number.isNaN(numeric)) continue;
+    const numeric = parseIntegerProjectId(row.entityId);
+    if (numeric === null) continue;
     const list = activitiesByProject.get(numeric) || [];
     if (list.length >= 50) continue;
     list.push({
@@ -2449,9 +2450,9 @@ router.put('/projects/:id', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2561,8 +2562,8 @@ router.patch('/projects/:id/ownership-preferences', async (req: Request, res: Re
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.id).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(projectId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2659,9 +2660,9 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -2793,9 +2794,9 @@ router.put('/projects/:projectId/collaborators', async (req: Request, res: Respo
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3244,8 +3245,8 @@ router.post('/projects/:id/export', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3296,8 +3297,8 @@ router.post('/projects/:id/duplicate', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3366,8 +3367,8 @@ router.post('/projects/:id/transfer', async (req: Request, res: Response) => {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
     const rawId = String(req.params.id ?? '');
-    const numericId = parseInt(rawId.replace('proj_', ''), 10);
-    if (isNaN(numericId)) {
+    const numericId = parseIntegerProjectId(rawId);
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -3484,9 +3485,9 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-      if (isNaN(numericProjectId)) {
+      if (numericProjectId === null) {
         return sendError(res, 400, 'Invalid project ID');
       }
 
@@ -3569,9 +3570,9 @@ router.get(
 router.get('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-    if (isNaN(numericProjectId)) {
+    if (numericProjectId === null) {
       return sendError(res, 400, 'Invalid project ID');
     }
 
@@ -3650,9 +3651,9 @@ router.get('/projects/:projectId/linked', async (req: Request, res: Response) =>
 router.post('/projects/:projectId/linked', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
-    if (isNaN(numericProjectId)) {
+    if (numericProjectId === null) {
       return sendError(res, 400, 'Invalid project ID');
     }
 
@@ -3671,8 +3672,8 @@ router.post('/projects/:projectId/linked', async (req: Request, res: Response) =
       return sendError(res, 400, 'targetProjectId and kind are required');
     }
 
-    const numericTargetId = parseInt(String(targetProjectId).replace('proj_', ''), 10);
-    if (isNaN(numericTargetId)) {
+    const numericTargetId = parseIntegerProjectId(targetProjectId);
+    if (numericTargetId === null) {
       return sendError(res, 400, 'Invalid targetProjectId');
     }
 
@@ -4082,9 +4083,9 @@ router.get('/projects/:projectId/apps', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4120,9 +4121,9 @@ router.post('/projects/:projectId/apps', async (req: Request, res: Response) => 
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4214,9 +4215,9 @@ router.delete('/projects/:projectId/apps/:appId', async (req: Request, res: Resp
   try {
     const organizationId = getOrganizationId(req);
     const projectId = paramStr(req.params.projectId).replace('proj_', '');
-    const numericId = parseInt(projectId, 10);
+    const numericId = parseIntegerProjectId(projectId);
 
-    if (isNaN(numericId)) {
+    if (numericId === null) {
       return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
     }
 
@@ -4292,8 +4293,8 @@ router.post(
         return sendError(res, 400, 'Project ID is required');
       }
 
-      const numericId = parseInt(projectIdRaw.replace('proj_', ''), 10);
-      if (isNaN(numericId)) {
+      const numericId = parseIntegerProjectId(projectIdRaw);
+      if (numericId === null) {
         return sendError(res, 400, 'Invalid project ID format', undefined, 'INVALID_ID');
       }
 
@@ -6570,10 +6571,10 @@ router.post('/projects/:projectId/conversations', async (req: Request, res: Resp
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
+    if (!hasAccess || numericProjectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
@@ -6782,9 +6783,9 @@ router.patch(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || Number.isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -6859,9 +6860,9 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || Number.isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -7006,10 +7007,10 @@ router.get('/projects/all/artifacts-summary', async (req: Request, res: Response
 router.get('/projects/:projectId/artifacts', async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
-    const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+    const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
     const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-    if (!hasAccess || isNaN(numericProjectId)) {
+    if (!hasAccess || numericProjectId === null) {
       return sendError(res, 404, 'Project not found');
     }
 
@@ -7033,10 +7034,10 @@ router.post(
     try {
       const organizationId = getOrganizationId(req);
       const userId = getUserId(req);
-      const numericProjectId = parseInt(paramStr(req.params.projectId).replace('proj_', ''), 10);
+      const numericProjectId = parseIntegerProjectId(req.params.projectId);
 
       const hasAccess = await verifyProjectAccess(req, req.params.projectId);
-      if (!hasAccess || isNaN(numericProjectId)) {
+      if (!hasAccess || numericProjectId === null) {
         return sendError(res, 404, 'Project not found');
       }
 
@@ -13756,6 +13757,97 @@ router.post('/projects/:projectId/agency-communications', async (req: Request, r
     );
   }
 });
+
+/**
+ * Advance an agency communication through triage.
+ *
+ * ── Why this route exists ────────────────────────────────────────────────────
+ * The Communication Center's "Triage" / "Advance" button — the only action on
+ * every agency-communication card — moved the status in React state and stopped
+ * there. Nothing was persisted, so the triage a regulatory lead performed
+ * vanished on reload, and a second person opening the same screen saw an
+ * untouched queue. On a surface whose entire purpose is tracking what the
+ * agency asked for and whether anyone has answered, that is a record-keeping
+ * failure rather than a UI one.
+ *
+ * The columns were always there — `human_review_status` and `closure_status`
+ * are written by the POST above and read by the GET above. Only the transition
+ * was missing.
+ *
+ * ── The transition is computed here, not accepted from the client ────────────
+ * The client sends WHICH event to advance, not what to advance it to. Letting
+ * the caller name the next status would let a card jump from pending_review
+ * straight to actioned, skipping the triage step the audit trail is supposed to
+ * record. The pairing (review status, closure status) advances together because
+ * that is what the button means: triaging opens work, actioning closes it.
+ */
+const AGENCY_COMM_ADVANCE: Record<string, { humanReviewStatus: string; closureStatus: string }> = {
+  pending_review: { humanReviewStatus: 'triaged', closureStatus: 'in_progress' },
+  triaged: { humanReviewStatus: 'actioned', closureStatus: 'closed' },
+};
+
+router.patch(
+  '/projects/:projectId/agency-communications/:eventId/advance',
+  async (req: Request, res: Response) => {
+    try {
+      await ensureCommunicationCenterTables();
+      const organizationId = getOrganizationId(req);
+      const projectId = parseProjectParam(req.params.projectId);
+      const eventId = String(req.params.eventId || '').trim();
+      if (!eventId) {
+        return sendError(res, 400, 'An event id is required.');
+      }
+
+      // Read the current state inside the same request so the transition is
+      // computed from what is stored, not from what the client last rendered.
+      const current = await pool.query(
+        `SELECT human_review_status
+           FROM concept2cure_agency_communications
+          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3`,
+        [organizationId, projectId, eventId]
+      );
+      if (current.rowCount === 0) {
+        return sendError(res, 404, 'That communication was not found in this project.');
+      }
+
+      const from = String(current.rows[0].human_review_status || 'pending_review');
+      const next = AGENCY_COMM_ADVANCE[from];
+      if (!next) {
+        // Already actioned. Refused rather than silently re-applied, so the
+        // audit trail never carries a transition that did not change anything.
+        return sendError(res, 409, 'That communication has already been actioned.');
+      }
+
+      const updated = await pool.query(
+        `UPDATE concept2cure_agency_communications
+            SET human_review_status = $4, closure_status = $5, updated_at = NOW()
+          WHERE organization_id = $1 AND project_id = $2 AND event_id = $3
+          RETURNING event_id, human_review_status, closure_status`,
+        [organizationId, projectId, eventId, next.humanReviewStatus, next.closureStatus]
+      );
+
+      await logAuditEntry(req, 'UPDATE', 'project', `proj_${projectId}`, undefined, {
+        agencyCommunicationEventId: eventId,
+        humanReviewStatusFrom: from,
+        humanReviewStatusTo: next.humanReviewStatus,
+        closureStatusTo: next.closureStatus,
+      });
+
+      const row = updated.rows[0];
+      return sendSuccess(res, {
+        id: row.event_id,
+        humanReviewStatus: row.human_review_status,
+        closureStatus: row.closure_status,
+      });
+    } catch (error: any) {
+      return sendError(
+        res,
+        communicationCenterErrorStatus(error),
+        error?.message || 'Failed to advance the agency communication'
+      );
+    }
+  }
+);
 
 router.get('/projects/:projectId/publishops/services', async (req: Request, res: Response) => {
   try {

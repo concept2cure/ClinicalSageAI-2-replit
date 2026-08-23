@@ -826,6 +826,70 @@ export async function upsertLeaf(
   return row as SubmissionLeaf;
 }
 
+/**
+ * Remove a misplaced leaf from a DRAFT-stage sequence (BP-W1-6 find F05: a
+ * wrong placement could only be corrected in place, never removed — the first
+ * end-to-end chain exercise had to clean its own mistakes with SQL).
+ *
+ * Soft delete, because every reader of `submission_leaves` — listLeaves, the
+ * assembler, dispatch readiness — already filters `deleted_at IS NULL`, and a
+ * hard delete would erase the row an audit event refers to. Guards mirror
+ * upsertLeaf: the sequence must belong to the caller's org and must not be
+ * frozen/dispatched, and a leaf that another leaf's `parentLeafId` points at
+ * cannot be removed — that would orphan the lifecycle chain.
+ */
+export async function removeLeaf(
+  leafId: number,
+  sequenceId: number,
+  ctx: { organizationId: number; userId: number }
+): Promise<void> {
+  const seq = await getSequence(sequenceId, ctx);
+  if (isSequenceLocked(seq.status)) {
+    throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
+  }
+
+  const [dependent] = await db
+    .select({ id: submissionLeaves.id })
+    .from(submissionLeaves)
+    .where(
+      and(
+        eq(submissionLeaves.parentLeafId, leafId),
+        eq(submissionLeaves.organizationId, ctx.organizationId),
+        isNull(submissionLeaves.deletedAt)
+      )
+    )
+    .limit(1);
+  if (dependent) {
+    throw new SubmissionError(
+      'INVALID_STATE',
+      'Another leaf’s lifecycle operation references this leaf; remove or re-point that leaf first.'
+    );
+  }
+
+  const [row] = await db
+    .update(submissionLeaves)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(
+      and(
+        eq(submissionLeaves.id, leafId),
+        eq(submissionLeaves.sequenceId, sequenceId),
+        eq(submissionLeaves.organizationId, ctx.organizationId),
+        isNull(submissionLeaves.deletedAt)
+      )
+    )
+    .returning();
+  if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
+
+  await auditService.logAction({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'LEAF_REMOVED',
+    resourceType: 'submission_leaf',
+    resourceId: leafId,
+    details: { sequenceId, sectionCode: row.sectionCode },
+  });
+}
+
 export default {
   createSubmission,
   createSubmissionTx,
@@ -836,6 +900,7 @@ export default {
   transitionSequence,
   listLeaves,
   upsertLeaf,
+  removeLeaf,
   canTransitionSequence,
   isSequenceLocked,
   SubmissionError,

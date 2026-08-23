@@ -129,7 +129,12 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   if (id.includes('pma')) return 'pma';
   if (id === 'cer' || pw === 'cer') return 'cer';
   if (pw === 'ide' || id === 'ide') return 'ide';
-  if (id.includes('jnda') || id.includes('jp_')) return 'jnda';
+  // 'jnda' is the JP MARKETING application only. The old `id.includes('jp_')`
+  // shortcut held while the registry's JP rows were named pmda_*/ctn_jp; the
+  // unified catalog's ids are lowercase canonical (jp_shonin, jp_ctn, …), so a
+  // prefix match would file a Japanese device approval as a J-NDA. The
+  // pathwayKey carries the intent now.
+  if (id.includes('jnda') || pw === 'jnda') return 'jnda';
   if (id.includes('bla') || pw === 'bla') return 'bla';
   if (id.includes('maa') || pw === 'maa') return 'maa';
   if (id.includes('anda') || pw === 'anda') return 'anda';
@@ -333,7 +338,7 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
           <span className="ico" style={{ fontSize: 18 }}>{I.plus}</span>
           <div style={{ flex: 1 }}>
             <span className="t" id="new-project-title" style={{ fontSize: 15 }}>New project</span>
-            <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 2 }}>
               Step {step + 1} of 3 — {['Choose template', 'Configure project', 'Review & create'][step]}
             </div>
           </div>
@@ -357,7 +362,7 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
                 <span className="ico" style={{ fontSize: 15, color: 'var(--accent-200)' }}>{I.sparkles}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-100)' }}>Tailored for {segLabel}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-400)' }}>Showing the filing types that fit your client type. Switch the tab to browse other segments.</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-300)' }}>Showing the filing types that fit your client type. Switch the tab to browse other segments.</div>
                 </div>
               </div>
               <div style={{ maxHeight: 440, overflowY: 'auto' }}>
@@ -423,34 +428,34 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14 }}>Review & create</div>
               <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '10px 16px', fontSize: 12.5, padding: 16, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-100)' }}>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Filing type</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Filing type</span>
                 <span style={{ fontWeight: 500 }}>{selTpl.label}</span>
                 {selTpl.agency && <>
-                  <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Agency / Region</span>
+                  <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Agency / Region</span>
                   <span>{selTpl.agency} · {selTpl.region}</span>
                 </>}
                 {selTpl.dossierStandard && selTpl.dossierStandard !== '—' && <>
-                  <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Dossier</span>
+                  <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Dossier</span>
                   <span>{selTpl.dossierStandard}{selTpl.ctdModule && selTpl.ctdModule !== '—' ? ' · ' + selTpl.ctdModule : ''}</span>
                 </>}
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Project name</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Project name</span>
                 <span>{name || '(unnamed)'}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Product</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Product</span>
                 <span>{product || '—'}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Therapeutic area</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Therapeutic area</span>
                 <span>{taList.find(t => t.id === ta)?.label || ta}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Target date</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Target date</span>
                 <span>{target || 'Not set'}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Pathway</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Pathway</span>
                 <span>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Workstream</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Workstream</span>
                 {/* Both lines are derived exactly as the create call derives
                     them, so the review step shows what will actually persist.
                     They were read off the UI segment before, which is why this
                     pane said "Workstream: Biotech / Recorded as: 510K · biologic"
                     for a device filing — and then stored it. */}
                 <span>{workstreamForFilingType(programTypeFor(selTpl, uiSeg)) ?? SEG2WS[uiSeg] ?? 'Biotech'}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Recorded as</span>
+                <span style={{ color: 'var(--text-300)', fontWeight: 500 }}>Recorded as</span>
                 <span>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg)}</span>
               </div>
 
@@ -606,7 +611,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   };
 
   return (
-    <div className="page-inner">
+    /* `.page-full` on the shell sets `display:flex; padding:0`, so this is the
+       flex child that has to claim the row and carry its own padding. Using
+       `.page-inner` here is what capped the workspace index at a 1160px reading
+       measure — see the note beside `projects:` in surfaceViews.ts. */
+    <div className="pj-index">
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Workspace</div>
@@ -626,7 +635,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           <div key={i} className="metric" data-tone={h.t || undefined}>
             <div className="metric-l">{h.l}</div>
             <div className="metric-n">{h.n}</div>
-            <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>{h.m}</div>
+            <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>{h.m}</div>
           </div>
         ))}
       </div>
@@ -688,7 +697,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
                 <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-400)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-300)' }}>
                 <span>{p.readiness}% ready</span><span>{p.due}</span>
               </div>
               {p.blocker
@@ -706,7 +715,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
             <button key={p.id} className="ct-row" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }} onClick={() => openProj(p)}>
               <div>
                 <div className="ct-strong">{p.title}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-400)' }}>{p.code}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}</div>
               </div>
               <div><span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span></div>
               <div>
@@ -717,7 +726,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
               </div>
               <div style={{ fontSize: 11, color: p.blocker ? 'var(--warning)' : 'var(--text-400)' }}>{p.blocker ? '1 blocker' : '—'}</div>
               <div style={{ fontSize: 11.5 }}>{p.lead}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-400)' }}>{p.due}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.due}</div>
             </button>
           ))}
         </div>

@@ -383,27 +383,37 @@ export class AtomQualityService {
     await this.pool.query(
       `
       INSERT INTO lumen_atom_quality_scores (
-        atom_id, completeness_score, accuracy_score, timeliness_score,
-        source_reliability, citation_score, overall_score, assessed_at
+        atom_id, completeness_score, accuracy_score, recency_score,
+        citation_score, overall_score, assessed_at, assessment_notes
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (atom_id) DO UPDATE SET
         completeness_score = $2,
         accuracy_score = $3,
-        timeliness_score = $4,
-        source_reliability = $5,
-        citation_score = $6,
-        overall_score = $7,
-        assessed_at = $8
+        recency_score = $4,
+        citation_score = $5,
+        overall_score = $6,
+        assessed_at = $7,
+        assessment_notes = $8
     `,
       [
         atomId,
         metrics.completenessScore,
         metrics.accuracyScore,
+        // timelinessScore is documented "How recent/relevant" and the column
+        // for that is recency_score. `timeliness_score` does not exist, so
+        // every quality score failed to store (42703 at PLAN time, and the
+        // ON CONFLICT clause named it too). Found by ci:insert-columns-declared.
         metrics.timelinessScore,
-        metrics.sourceReliability,
         metrics.citationScore,
         metrics.overallScore,
         metrics.assessedAt,
+        // sourceReliability has no column at all. It is NOT written to
+        // `relevance_score` — that column exists but means something else, and
+        // quietly storing "source trustworthiness" under "relevance" would make
+        // the number wrong rather than missing. Recorded in assessment_notes,
+        // which is otherwise unused, so the metric survives until the table
+        // gains a column for it.
+        JSON.stringify({ sourceReliability: metrics.sourceReliability }),
       ]
     );
   }

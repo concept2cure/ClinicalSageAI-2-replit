@@ -80,6 +80,8 @@ beforeAll(async () => {
     `INSERT INTO organizations (id, name) VALUES (${ORG},'a'), (${OTHER_ORG},'b');`,
   );
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
+  await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
+  await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
   // listDocumentSpans LEFT JOINs the canonical source registry to report
   // staleness, so the reads need it even though the backfill writes only
   // author assertions.

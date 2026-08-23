@@ -15,12 +15,14 @@
  * A record that exists and is never displayed satisfies §11.50(a) — the data is
  * captured — and fails §11.50(b), which is about the human-readable form.
  *
- * ── What this deliberately does NOT claim ────────────────────────────────────
- * This is the ELECTRONIC DISPLAY half of §11.50(b). The other half is the
- * printout: `POST /docs/:docId/export` emits DOCX, PDF and XML containing title
- * and sections only, with no signature block in any of the three. That is
- * untouched here and is recorded as still open — this pane must not be mistaken
- * for having closed it.
+ * ── Scope ────────────────────────────────────────────────────────────────────
+ * This is the ELECTRONIC DISPLAY half of §11.50(b). The other half — the
+ * printout — is closed too: `POST /docs/:docId/export` renders the signature
+ * manifest (printed name, executed time, meaning, §11.70 coverage) into all
+ * three formats via `signatureManifestLines` in authoring.router.ts, pinned by
+ * server/routes/__tests__/authoringExportSignatureManifest.test.ts. An earlier
+ * version of this header recorded the printout half as still open; that note
+ * outlived the fix and read as if the gap persisted.
  *
  * ── Honesty rules ────────────────────────────────────────────────────────────
  * A missing printed name renders AS missing. `signer_name` is NULL when the

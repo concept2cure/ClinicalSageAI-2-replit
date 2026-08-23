@@ -14,7 +14,7 @@
           "007_gcc_heatmap_views.sql",
           "007_gcc_shadow_run_groups.sql"
         ],
-        "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
+        "resolution": "Execute in alphabetical order: verify \u2192 heatmap \u2192 shadow"
       },
       {
         "prefix": "008",
@@ -583,6 +583,7 @@
     "20260730_licensing_ip_tables.sql",
     "20260730_submission_center_tables.sql",
     "20260730_authoring_comments_router_columns.sql",
+    "20260817_doc_revisions_immutable_ledger.sql",
     "20260730_cmc_change_control_store.sql",
     "20260731_retire_intelligence_cluster_blobs.sql",
     "20260730_ectd_compilations_leaf_manifest.sql",

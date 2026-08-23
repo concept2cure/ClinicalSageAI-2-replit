@@ -59,13 +59,29 @@ const DOC_A2 = 101; // org A
 const DOC_B1 = 200; // org B
 
 const PREREQ = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    -- The socket namespace resolves a tenant access posture from these two
+    -- columns before it will accept a connection, so the fixture table must
+    -- carry them or every connect is refused.
+    status TEXT,
+    payment_status TEXT
+  );
   CREATE TABLE coauthor_documents (
     id SERIAL PRIMARY KEY,
     organization_id INTEGER NOT NULL,
     title TEXT
   );
-  INSERT INTO organizations (id, name) VALUES (${ORG_A}, 'org-a'), (${ORG_B}, 'org-b');
+  -- status/payment_status are set explicitly. The socket namespace gates on the
+  -- tenant access posture (shouldProcessTenantInBackground → organizations
+  -- .status/.payment_status), and it fails CLOSED: an org row that leaves them
+  -- unset is refused with "Organization is not active", which is the correct
+  -- product behaviour and not what this file is about. These tests are about
+  -- ISOLATION between two live tenants, so both are seeded live.
+  INSERT INTO organizations (id, name, status, payment_status) VALUES
+    (${ORG_A}, 'org-a', 'active', 'active'),
+    (${ORG_B}, 'org-b', 'active', 'active');
   INSERT INTO coauthor_documents (id, organization_id, title) VALUES
     (${DOC_A1}, ${ORG_A}, 'a-one'),
     (${DOC_A2}, ${ORG_A}, 'a-two'),

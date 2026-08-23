@@ -23,8 +23,6 @@
 
 import * as React from 'react';
 import { K510_ESTAR } from '../data/k510';
-import { PATHWAY_TABS_DATA } from '../data/pathwayTabs';
-import { isSampleMode } from '../lib/sampleMode';
 import type {
   AuditEvent,
   DossierAttachment,
@@ -309,7 +307,14 @@ function writeSectionBody(
       target:    label || `§${sectionId}`,
       target_id: sectionId,
       diff:      diffApprox,
-      ip:        '10.0.4.21',
+      /* NO `ip`. A browser cannot observe its own source address — only the
+         server that received the request can — so any value written here is
+         invented. This field held one hard-coded private address on every event: a
+         fabricated attribution in a 21 CFR Part 11 surface, not a placeholder.
+         `AuditEvent.ip` is optional and the detail pane already renders an em
+         dash when it is absent, so omitting it reports exactly what this store
+         knows. A real address arrives when these events are written
+         server-side; until then the honest value is none. */
       live:      true,
     });
   }
@@ -342,20 +347,20 @@ function attachFile(
   };
   fs.set(path, { kind: 'dir', files: [newFile, ...cur] });
 
-  if (!opts.silent) {
-    liveAuditEvents.push({
-      id:        `live-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      when:      opts.when || new Date().toISOString(),
-      kind:      'attach',
-      actor:     opts.who || 'You',
-      role:      opts.role || 'Reg Lead',
-      target:    label || `§${sectionId}`,
-      target_id: sectionId,
-      file:      `${file.name} · ${fmtSize(file.size || 0)}`,
-      ip:        '10.0.4.21',
-      live:      true,
-    });
-  }
+  /* NO client-authored audit event here.
+     This used to push a `kind: 'attach'` row into `liveAuditEvents` — the same
+     array the dossier's Part 11 activity feed renders — with actor 'You' and a
+     hardcoded role of 'Reg Lead', for a file that at the time was never
+     transmitted anywhere. A browser cannot witness a governed event: it does
+     not know the actor's real role, it cannot see its own source address, and
+     it has nothing to chain the entry to. What it produced was an audit line
+     that looked exactly like a real one and recorded something that had not
+     happened.
+     The attachment is a real upload now (PathwayPanes onAttach → POST
+     /api/vault/ingest), and the server writes the audit row in the same
+     transaction as the document. That entry arrives through /api/mdx/audit
+     like every other one. This function keeps the local list current so the
+     tab updates without a round trip; it no longer claims to record history. */
 
   notify(path);
   notify(`audit:${pathway}`);
@@ -365,15 +370,14 @@ function liveEventsForPathway(_pathway: PathwayId): AuditEvent[] {
   return [...liveAuditEvents];
 }
 
-function activityForSection(pathway: PathwayId, sectionId: string | number): AuditEvent[] {
-  /* The kit's seed audit slice — a *synthesized* hash-chain — merges in only
-     under explicit sample mode. A live dossier's Activity tab must never show
-     fictional Part 11 events alongside (or instead of) real in-store edits. */
-  const seed = isSampleMode()
-    ? PATHWAY_TABS_DATA[pathway as keyof typeof PATHWAY_TABS_DATA]?.audit || []
-    : [];
-  const all = [...liveAuditEvents, ...seed];
-  return all.filter((e) => e.target_id === sectionId);
+function activityForSection(_pathway: PathwayId, sectionId: string | number): AuditEvent[] {
+  /* Real in-store edits only.
+     This used to merge the kit's seed audit slice — a *synthesized* hash-chain —
+     under explicit sample mode, so a live dossier's Activity tab could show
+     fictional Part 11 events interleaved with real ones, in timestamp order and
+     visually identical. The seed is deleted (data/pathwayTabs.ts); there is
+     nothing left to merge and no branch that could merge it. */
+  return liveAuditEvents.filter((e) => e.target_id === sectionId);
 }
 
 /* ─────────────── Helpers ─────────────── */

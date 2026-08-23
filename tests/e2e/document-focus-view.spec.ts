@@ -25,7 +25,7 @@ function mintToken(): string {
   return jwt.sign(
     {
       userId: '3',
-      email: 'jm.smith@concept2cure.pro',
+      email: 'jonmichaelpsmith@gmail.com',
       organizationId: '2',
       organizationUuid: null,
       type: 'access',
@@ -38,7 +38,7 @@ function mintToken(): string {
 function buildAuthUser(): object {
   return {
     id: '3',
-    email: 'jm.smith@concept2cure.pro',
+    email: 'jonmichaelpsmith@gmail.com',
     firstName: 'JM',
     lastName: 'Smith',
     displayName: 'JM Smith',

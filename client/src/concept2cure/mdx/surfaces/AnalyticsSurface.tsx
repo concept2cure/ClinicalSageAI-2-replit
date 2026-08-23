@@ -47,8 +47,13 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
   const reviewers = useSampleRows(live.reviewers, ANL_REVIEWERS);
   const usage = useSampleRows(live.anaUsage, ANL_ANA_USAGE);
   const pace = useSampleRows(live.pace24m, ANL_PACE_24M);
-  const documents = ANL_DOCUMENTS as unknown as KitDocument[];
-  const frameworks = ANL_DOC_FRAMEWORKS as unknown as KitDocFramework[];
+  // Documents/frameworks have no live feed yet. They were the ONE panel on
+  // this surface wired to fixtures unconditionally — example artifacts
+  // rendered as real in production while every sibling panel honored the
+  // sample gate. Same gate now: live rows would win, sample only in explicit
+  // sample mode, honest empty otherwise.
+  const documents = useSampleRows<KitDocument>(null, ANL_DOCUMENTS as unknown as readonly KitDocument[]);
+  const frameworks = useSampleRows<KitDocFramework>(null, ANL_DOC_FRAMEWORKS as unknown as readonly KitDocFramework[]);
 
   const docsReady = documents.filter(
     (d) => d.status === 'ready' || d.status === 'locked',

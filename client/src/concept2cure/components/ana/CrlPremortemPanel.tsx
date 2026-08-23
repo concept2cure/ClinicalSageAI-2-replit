@@ -15,7 +15,9 @@
  *
  * Microcopy is factual (no emoji, no cheerleading). The probability strip is a
  * live region. The component owns no chat state — it is a pure view over the
- * artifact the chat hook produced. Gated by ENABLE_ANA_DOCUMENT_STUDIO upstream.
+ * artifact the chat hook produced. Gated upstream by the SERVER env flag
+ * ENABLE_ANA_DOCUMENT_STUDIO (the client flag of that name was deleted —
+ * it had no call sites).
  *
  * E1 INTEGRATION: when E1's Sign-and-seal + SealBadge/ProvenanceTrail land, the
  * seal action and the SealBadge attach here — next to the export action, keyed
@@ -108,6 +110,14 @@ export interface CrlPremortemPanelProps {
 
 export function CrlPremortemPanel({ artifact, onExport, exporting }: CrlPremortemPanelProps) {
   const ap = artifact.approvalProbability;
+  /* Why export is unavailable, or empty when it is available. The artifact's
+     own status is the first answer; a host that wired no handler is the
+     second, and saying nothing there would leave a dead button on screen. */
+  const exportReason = !artifact.exportable
+    ? STATUS_REASON[artifact.status as Exclude<ArtifactStatus, 'estimated'>]
+    : !onExport
+      ? 'Export is not available from here. Open this artifact in Document Studio to export it as a DOCX.'
+      : '';
   const pct = ap.value != null ? Math.round(ap.value * 100) : null;
 
   return (
@@ -202,19 +212,28 @@ export function CrlPremortemPanel({ artifact, onExport, exporting }: CrlPremorte
       </div>
 
       <footer className={styles.premortemFooter}>
+        {/* `!onExport` disables too, and says so.
+            The disabled state used to key off `artifact.exportable` alone, so a
+            host that mounted this panel without wiring an export handler — the
+            v2 rail, which has no DOCX route for this artifact — rendered an
+            ENABLED button whose click ran `onExport?.(…)` on undefined and did
+            nothing. A control that looks available and silently does nothing is
+            the same defect as a status that claims work nobody did; the panel
+            already had the disabled-with-a-reason pattern and simply did not
+            cover this case. */}
         <button
           type="button"
           className={styles.premortemExport}
           onClick={() => artifact.exportable && onExport?.(artifact)}
-          disabled={!artifact.exportable || exporting}
-          aria-describedby={artifact.exportable ? undefined : 'premortem-export-reason'}
+          disabled={!artifact.exportable || !onExport || exporting}
+          aria-describedby={exportReason ? 'premortem-export-reason' : undefined}
         >
           <I.share size={13} />
           <span>{exporting ? 'Preparing…' : 'Export as DOCX'}</span>
         </button>
-        {!artifact.exportable && (
+        {exportReason && (
           <p id="premortem-export-reason" className={styles.premortemExportReason}>
-            {STATUS_REASON[artifact.status as Exclude<ArtifactStatus, 'estimated'>]}
+            {exportReason}
           </p>
         )}
         {/* E1 INTEGRATION: the "Sign and seal" action attaches here, keyed off

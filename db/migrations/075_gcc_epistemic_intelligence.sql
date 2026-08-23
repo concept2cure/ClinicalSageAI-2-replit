@@ -424,23 +424,23 @@ ALTER TABLE cortex.confidence_history ENABLE ROW LEVEL SECURITY;
 -- Policies
 DROP POLICY IF EXISTS uncertainty_org_isolation ON cortex.uncertainty_estimates;
 CREATE POLICY uncertainty_org_isolation ON cortex.uncertainty_estimates
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id));
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id));
 
 DROP POLICY IF EXISTS gaps_org_isolation ON cortex.knowledge_gaps;
 CREATE POLICY gaps_org_isolation ON cortex.knowledge_gaps
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
 
 DROP POLICY IF EXISTS learning_org_isolation ON cortex.active_learning_queue;
 CREATE POLICY learning_org_isolation ON cortex.active_learning_queue
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
 
 DROP POLICY IF EXISTS triggers_org_isolation ON cortex.confidence_triggers;
 CREATE POLICY triggers_org_isolation ON cortex.confidence_triggers
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
 
 DROP POLICY IF EXISTS calibration_org_isolation ON cortex.calibration_log;
 CREATE POLICY calibration_org_isolation ON cortex.calibration_log
-    FOR ALL USING (org_id = COALESCE(current_setting('app.current_org_id', true)::UUID, org_id) OR org_id IS NULL);
+    FOR ALL USING (org_id = COALESCE(identity.current_org_id(), org_id) OR org_id IS NULL);
 
 DROP POLICY IF EXISTS confidence_history_isolation ON cortex.confidence_history;
 CREATE POLICY confidence_history_isolation ON cortex.confidence_history

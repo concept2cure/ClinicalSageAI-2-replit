@@ -36,6 +36,7 @@ import {
   countCitationMix,
 } from './submission-chat-metrics.js';
 import { resolveEvidenceSourceIdsByArtifact } from '../clinical-regulatory-evidence/retrieval-source-link.js';
+import { ANA_PERSONALITY_BRIEF } from '../ana-ri/personality-core.js';
 
 // Cross-encoder relevance threshold for retrieval — matches the chat default
 // so submission-chat doesn't surface lower-quality matches than the section
@@ -840,6 +841,8 @@ export function buildSystemPrompt(
   })();
 
   return [
+    ANA_PERSONALITY_BRIEF,
+    '',
     'You are AnA in submission-chat mode. The user has already generated a regulatory',
     'section and is now interrogating the draft. Your scope is the ENTIRE project',
     'dossier, not only the active document.',
@@ -976,6 +979,8 @@ export function buildStreamingSystemPrompt(
   })();
 
   return [
+    ANA_PERSONALITY_BRIEF,
+    '',
     'You are AnA in submission-chat mode (streaming variant). The user has',
     'already generated a regulatory section and is now interrogating the draft.',
     'Your scope is the ENTIRE project dossier, not only the active document.',

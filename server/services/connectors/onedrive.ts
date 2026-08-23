@@ -9,6 +9,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger.js';
+import { toBinaryBody } from '../../utils/binary-body.js';
 import type {
   DataConnector,
   ConnectorHealth,
@@ -187,7 +188,7 @@ export class OneDriveConnector implements DataConnector {
         Authorization: `Bearer ${this.accessToken}`,
         'Content-Type': mimeType,
       },
-      body: file,
+      body: toBinaryBody(file),
     });
 
     if (!res.ok) {

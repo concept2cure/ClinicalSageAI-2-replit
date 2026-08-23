@@ -89,7 +89,7 @@
 /* metrics */
 .c2c-v2 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
 .c2c-v2 .metric{border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 16px;background:var(--bg-050);}
-.c2c-v2 .metric-l{font-size:11px;color:var(--text-400);font-weight:500;}
+.c2c-v2 .metric-l{font-size:11px;color:var(--text-300);font-weight:500;}
 .c2c-v2 .metric-n{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:4px;}
 .c2c-v2 .metric[data-tone="err"] .metric-n{color:var(--error);}
 .c2c-v2 .metric[data-tone="ok"] .metric-n{color:var(--success);}
@@ -278,8 +278,15 @@
 .c2c-v2 .cmt-body{font-size:12.5px;line-height:1.55;color:var(--text-200);}
 .c2c-v2 .cmt-actions{display:flex;gap:6px;margin-top:9px;}
 
-/* kanban */
-.c2c-v2 .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start;}
+/* The `.c2c-v2 .kanban` rule that stood here is deleted, not moved. Nothing in
+   the v2 tree renders that class — the task board is `.tb-kanban`, which takes
+   its track count from a `data-cols` attribute precisely so it cannot drift.
+   The only element this rule could still reach was the MDX workbench board, in
+   a different sheet, at identical specificity (0,2,0). While that sheet also
+   declared `grid-template-columns` the collision was invisible; the moment it
+   stopped, `repeat(4,1fr)` and `align-items:start` from here took over a
+   five-column board and sized its tracks to 99px. One capability, one
+   implementation — the parallel path goes rather than gets a tie-break. */
 .c2c-v2 .kcol{background:var(--bg-100);border-radius:var(--radius-xl);padding:10px;}
 .c2c-v2 .kcol-h{display:flex;align-items:center;gap:8px;padding:4px 6px 10px;font-size:12px;font-weight:600;}
 .c2c-v2 .kdot{width:7px;height:7px;border-radius:50%;}

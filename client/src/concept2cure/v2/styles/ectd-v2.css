@@ -29,14 +29,14 @@
   .ec-topbtn{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:7px; border:1px solid transparent; background:transparent; font-size:12px; font-weight:500; color:var(--text-300); cursor:pointer; transition:background var(--dur), color var(--dur); }
   .ec-topbtn:hover{ background:var(--bg-100); color:var(--text-100); }
   .ec-topbtn svg{ width:15px; height:15px; }
-  .ec-topbtn.primary{ background:var(--accent-100); border-color:var(--accent-100); color:#fff; }
+  .ec-topbtn.primary{ background:var(--accent-strong); border-color:var(--accent-100); color:var(--accent-on-strong); }
   .ec-topbtn.primary:hover{ background:var(--accent-200); color:#fff; }
 
   /* eCTD tree */
   .ec-tree{ background:var(--bg-050); padding:14px 10px; overflow-y:auto; border-right:1px solid var(--border); min-width:0; transition:opacity 200ms var(--ease); }
   .ec-tree-head{ display:flex; align-items:center; justify-content:space-between; padding:0 6px 10px; }
-  .ec-tree-head b{ font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-400); }
-  .ec-tree-head .mono{ font-size:10px; color:var(--text-500); }
+  .ec-tree-head b{ font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-300); }
+  .ec-tree-head .mono{ font-size:10px; color:var(--text-300); }
   .ec-tree-search{ display:flex; align-items:center; gap:6px; margin:0 0 10px; padding:6px 8px; background:var(--bg-000); border:1px solid var(--border-control); border-radius:7px; color:var(--text-400); }
   .ec-tree-search svg{ width:13px; height:13px; }
   .ec-tree-search input{ flex:1; border:0; background:transparent; outline:none; color:var(--text-100); font-size:12px; }
@@ -91,8 +91,24 @@
   .ec-composer textarea{ width:100%; resize:none; border:0; outline:none; background:transparent; padding:12px 14px 6px; font-size:13px; line-height:1.55; color:var(--text-100); min-height:20px; max-height:180px; font-family:inherit; }
   .ec-composer textarea::placeholder{ color:var(--text-500); }
   .ec-composer-row{ display:flex; align-items:center; justify-content:space-between; padding:4px 8px 6px; }
-  .ec-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11.5px; color:var(--text-400); }
+  /* Now a real <button> — it used to be a <span>, i.e. a paperclip and the word
+     "Sources" that could not be clicked. Reset the UA button chrome and give it
+     the affordances a control owes: pointer, hover, and a visible focus ring. */
+  .ec-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; font-size:11.5px; color:var(--text-400); background:none; border:1px solid transparent; font-family:inherit; cursor:pointer; }
+  .ec-chip:hover{ background:var(--bg-100); color:var(--text-200); }
+  .ec-chip:focus-visible{ outline:2px solid var(--accent-100); outline-offset:1px; }
   .ec-chip svg{ width:13px; height:13px; }
+
+  /* Attached sources, with how the server read each one. Status is in the text
+     as well as the colour. */
+  .ec-atts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .ec-att-chip{ display:inline-flex; align-items:center; gap:5px; padding:3px 6px 3px 8px; border:1px solid var(--border); border-radius:8px; background:var(--bg-050); font-size:11.5px; color:var(--text-200); }
+  .ec-att-chip svg{ width:12px; height:12px; flex-shrink:0; }
+  .ec-att-chip em{ font-style:normal; color:var(--text-400); }
+  .ec-att-chip[data-status="error"]{ border-color:var(--error); }
+  .ec-att-chip[data-status="error"] em{ color:var(--error); }
+  .ec-att-x{ border:none; background:none; color:var(--text-400); cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+  .ec-att-x:hover{ color:var(--text-100); }
   .ec-send{ width:28px; height:28px; border-radius:7px; background:var(--accent-100); color:#fff; display:inline-flex; align-items:center; justify-content:center; border:0; cursor:pointer; transition:background 160ms var(--ease), opacity 160ms var(--ease); }
   .ec-send svg{ width:15px; height:15px; }
   .ec-send:hover{ background:var(--accent-200); }
@@ -100,7 +116,9 @@
 
   /* Artifact (right) */
   .ec-artifact{ background:var(--bg-000); display:flex; flex-direction:column; min-width:0; }
-  .ec-art-head{ display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid var(--border); font-size:12px; }
+  /* Wraps: title, meta and a four-tab switcher come to 392px in the 361px
+     artifact pane at the 796px a surface really gets. */
+  .ec-art-head{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid var(--border); font-size:12px; }
   .ec-art-title{ font-weight:600; color:var(--text-100); }
   .ec-art-meta{ color:var(--text-400); font-size:11px; }
   .ec-art-tabs{ display:flex; gap:2px; background:var(--bg-100); padding:2px; border-radius:7px; }
@@ -169,7 +187,7 @@
   .ec-panel-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
   .ec-panel-t{ font-size:16px; font-weight:650; color:var(--text-100); }
   .ec-panel-s{ font-size:11.5px; color:var(--text-400); font-family:var(--font-mono); margin-top:3px; }
-  .ec-empty{ color:var(--text-400); font-size:13px; padding:40px 0; text-align:center; }
+  .ec-empty{ color:var(--text-300); font-size:13px; padding:40px 0; text-align:center; }
   .ec-vstat{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
   .ec-vbadge{ font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; }
   .ec-vbadge.ok{ background:var(--success-muted); color:var(--success); }

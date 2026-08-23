@@ -591,22 +591,22 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
         <div className="metric">
           <div className="metric-l">Active runs</div>
           <div className="metric-n">{kvRuns(runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length)}</div>
-          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>{runsReady ? `of ${runs.length} total` : 'not read'}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>{runsReady ? `of ${runs.length} total` : 'not read'}</div>
         </div>
         <div className="metric" data-tone={gatesReady && pendingGates.length ? 'warn' : undefined}>
           <div className="metric-l">Awaiting approval</div>
           <div className="metric-n">{kvGates(pendingGates.length)}</div>
-          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>HITL gates</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>HITL gates</div>
         </div>
         <div className="metric" data-tone={r ? (r.isReady ? '' : 'err') : ''}>
           <div className="metric-l">Readiness score</div>
           <div className="metric-n">{r ? r.overallScore + '%' : '—'}</div>
-          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>{r ? r.blockerCount + ' blockers' : 'not evaluated'}</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>{r ? r.blockerCount + ' blockers' : 'not evaluated'}</div>
         </div>
         <div className="metric" data-tone={r ? (r.isReady ? 'ok' : 'err') : ''}>
           <div className="metric-l">Dispatch</div>
           <div className="metric-n">{r ? (r.isReady ? 'Ready' : 'Blocked') : '—'}</div>
-          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-400)' }}>readinessEvaluations</div>
+          <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>readinessEvaluations</div>
         </div>
       </div>
 

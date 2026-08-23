@@ -204,7 +204,21 @@ const REF_RE = new RegExp(
     // prose — `'AnA batch draft accepted into document'` yielded a table called
     // `document` — and in PL/pgSQL's `SELECT … INTO <variable>`, which names a
     // variable, not a relation.
-    String.raw`(?:\bFROM|\bJOIN|\bINSERT\s+INTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?`,
+    String.raw`(?:\bFROM|\bJOIN|\bINSERT\s+INTO|\bUPDATE)\s+(?:"?([a-z][a-z0-9_]*)"?\s*\.\s*)?"?([a-z][a-z0-9_]{3,})"?` +
+    // A qualified name whose OBJECT half is a template expression —
+    // `FROM regulatory_intel.${table}` in services/precedent-engine.ts — is
+    // composed at runtime and cannot be resolved statically. Without this, the
+    // schema-qualified alternative fails to match `${…}`, the engine backtracks
+    // to the unqualified branch, and the SCHEMA name is captured as if it were a
+    // table. `regulatory_intel` then resolves against no relation on a live
+    // database — the phantom-named-after-its-schema this file's header warns
+    // about, arriving through the dynamic-name door instead of the qualified one.
+    //
+    // `(?!\w)` first, and not merely for tidiness: without it the engine answers
+    // the rejection by backtracking to a SHORTER object name — `regulatory_inte`
+    // — which satisfies the lookahead and produces a phantom one character off
+    // the original. The name must end where the identifier ends.
+    String.raw`(?!\w)(?!\s*\.\s*\$)`,
   'gi',
 );
 
@@ -317,8 +331,35 @@ for (const abs of walk(path.join(repoRoot, 'db/migrations'), (n) => n.endsWith('
 for (const abs of walk(path.join(repoRoot, 'migrations'), (n) => n.endsWith('.sql'))) {
   for (const t of tablesIn(read(abs))) durableTables.add(t);
 }
-// drizzle push surface — provisions fresh installs from shared/.
-for (const abs of walk(path.join(repoRoot, 'shared'), (n) => n.endsWith('.ts'))) {
+// drizzle push surface — provisions fresh installs from shared/schema.ts.
+//
+// Scoped the way drizzle scopes it, NOT by walking shared/. drizzle.config.ts
+// sets `schema: './shared/schema.ts'`, so drizzle-kit sees that one file plus
+// what it re-exports and nothing else. Walking the whole tree counted tables
+// that drizzle never creates — shared/cmc-schema.ts declares
+// quality_specifications, project_workflows, module_documents,
+// defense_packets and document_audit_logs, none of which is re-exported, all
+// of which are queried by live server code, and none of which any migration
+// creates either. They were registered as "durably created" here, so this
+// guard reported green while those tables existed on no database and their
+// endpoints 500'd. Verified against a fresh install: absent, with named
+// consumers in server/.
+const drizzleEntry = path.join(repoRoot, 'shared/schema.ts');
+const drizzleFiles = [drizzleEntry];
+if (fs.existsSync(drizzleEntry)) {
+  const entrySrc = read(drizzleEntry);
+  for (const m of entrySrc.matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
+    for (const ext of ['.ts', '/index.ts']) {
+      const candidate = path.resolve(repoRoot, 'shared', `${m[1]}${ext}`);
+      if (fs.existsSync(candidate)) {
+        drizzleFiles.push(candidate);
+        break;
+      }
+    }
+  }
+}
+for (const abs of drizzleFiles) {
+  if (!fs.existsSync(abs)) continue;
   const src = read(abs);
   for (const m of src.matchAll(/pg(?:Table|View|MaterializedView)\(\s*['"]([a-z0-9_]+)['"]/gi)) {
     durableTables.add(m[1].toLowerCase());

@@ -341,6 +341,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       _externalIntelBlock: prefetchedChatContext.externalIntelBlock,
       _deadlineRadarBlock: prefetchedChatContext.deadlineRadarBlock,
       _sessionBriefingBlock: prefetchedChatContext.sessionBriefingBlock,
+      _contradictionWatchBlock: prefetchedChatContext.contradictionWatchBlock,
     };
 
     const orchestration = orchestrate(orchestratorInput);

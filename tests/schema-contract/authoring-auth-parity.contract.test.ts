@@ -94,7 +94,13 @@ async function post(token: string) {
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
-    migrations: ['db/migrations/20260725_authoring_document_loop_tables.sql'],
+    migrations: [
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // Everything the durable applier ships that ALTERs the tables above, so
+      // this harness models the deploy rather than a subset of it.
+      'db/migrations/20260730_authoring_comments_router_columns.sql',
+      'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
+    ],
   });
   h.db = jdb.db;
   h.pool = jdb.pool;

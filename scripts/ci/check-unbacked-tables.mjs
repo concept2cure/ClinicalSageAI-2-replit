@@ -217,6 +217,20 @@ for (const f of SCANNED.flatMap((d) => collect(path.join(repoRoot, d), ['.ts']))
       if (t.startsWith('pg_') || t.startsWith('information_schema.')) continue;
       // `FROM ${expr}` — the name is not statically known.
       if (t.startsWith('$')) continue;
+      // `FROM schema.${expr}` — same case, one level in. The name group can
+      // only reach `schema`, because the qualified half needs `[a-zA-Z_]` and
+      // finds `$`. So the SCHEMA got recorded as though it were a table, and
+      // schemas are never created by `CREATE TABLE`, so it could never be
+      // backed: `precedent-engine.ts` doing `FROM regulatory_intel.${table}`
+      // reported a missing table `regulatory_intel` while every table in that
+      // schema existed (db/migrations/20260322_regulatory_precedent_intelligence.sql).
+      //
+      // Detected on the source text rather than with a lookahead in REF_RE: a
+      // lookahead lets the name group backtrack one character to satisfy it,
+      // which is what produced the `INSERT INTO users (…)` → `user` phantoms
+      // documented above. Bounded slice so this stays linear.
+      const after = body.slice(m.index + m[0].length, m.index + m[0].length + 8);
+      if (/^\s*\.\s*[$`{]/.test(after)) continue;
       if (!refs.has(t)) refs.set(t, new Set());
       refs.get(t).add(f);
     }

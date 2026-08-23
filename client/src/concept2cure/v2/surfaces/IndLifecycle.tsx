@@ -242,7 +242,12 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      than showing a fabricated program. */
   const kicker = (
     <div className="surface-kicker">
-      {I.rocket} IND Lifecycle -- 21 CFR 312 -- /api/ind-checklist
+      {/* The endpoint this reads from used to be printed here. A route in a
+          client-facing eyebrow tells a regulatory user nothing and tells an
+          outside reader the shape of the API — the information-disclosure class
+          in the UAT report's BP-07, of which this was the last live instance.
+          The regulation is the useful half; the route is documented above. */}
+      {I.rocket} IND Lifecycle — 21 CFR 312
     </div>
   );
   if (loading) {
@@ -730,15 +735,20 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
 
       <AnswerLead
         tone={
-          R.ready ? 'good' : R.blockers.length > 4 ? 'urgent' : 'calm'
+          !R.assessed ? 'calm' : R.ready ? 'good' : R.blockers.length > 4 ? 'urgent' : 'calm'
         }
         eyebrow={
           'Is the ' +
           drug +
-          ' IND ready to file -- and what stands between you and submission'
+          ' IND ready to file — and what stands between you and submission'
         }
         headline={
-          R.ready ? (
+          !R.assessed ? (
+            <>
+              Nothing has been assessed for this IND yet — the checklist holds
+              no required sections or Module 1 forms to evaluate.
+            </>
+          ) : R.ready ? (
             <>
               The {drug} IND is <b>ready to file</b> -- every
               required section is approved and all three Module 1 forms are
@@ -756,7 +766,13 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           )
         }
         body={
-          R.ready ? (
+          !R.assessed ? (
+            <>
+              Readiness is computed from the org's IND checklist. Until it
+              carries section and form state, no statement about blockers —
+              present or absent — can be made.
+            </>
+          ) : R.ready ? (
             clearDate ? (
               <>
                 Once you file, the 30-day safe-to-proceed clock runs to{' '}
@@ -787,13 +803,23 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </>
           )
         }
-        reassure="None of these are FDA findings -- they are the checklist I hold so nothing slips before you submit."
+        reassure={
+          R.assessed
+            ? 'None of these are FDA findings — they are the checklist I hold so nothing slips before you submit.'
+            : undefined
+        }
         action={{
-          label: R.ready
-            ? 'Assemble the submission sequence'
-            : 'Resolve the top blocker',
+          label: !R.assessed
+            ? 'Ask AnA how to populate the checklist'
+            : R.ready
+              ? 'Assemble the submission sequence'
+              : 'Resolve the top blocker',
           onClick: () => {
-            if (R.ready) {
+            if (!R.assessed) {
+              ask(
+                'The ' + drug + ' IND checklist is empty — how do I populate its sections and Module 1 forms?',
+              );
+            } else if (R.ready) {
               onNav && onNav('submission-center');
             } else if (R.blockers[0]) {
               ask(
@@ -820,7 +846,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 <span
                   className={'indl-verdict ' + (R.ready ? 'ok' : 'no')}
                 >
-                  {R.ready ? 'READY TO FILE' : 'NOT YET FILEABLE'}
+                  {!R.assessed
+                    ? 'NOT ASSESSED'
+                    : R.ready
+                      ? 'READY TO FILE'
+                      : 'NOT YET FILEABLE'}
                 </span>
                 <button
                   className="btn ghost sm"
@@ -838,11 +868,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="cm-doc-body indl-doc-body">
               <div className="indl-cover">
-                <h2>IND Filing Readiness -- 21 CFR 312.23</h2>
+                <h2>IND Filing Readiness — 21 CFR 312.23</h2>
                 <div className="indl-cover-meta">
                   {prog.productName && <span>{prog.productName}</span>}
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
-                  <span>Initial IND -- eCTD v4.0 (FDA)</span>
+                  <span>Initial IND — eCTD v4.0 (FDA)</span>
                   <span>
                     Assessed{' '}
                     {new Date().toLocaleDateString([], {
@@ -865,7 +895,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               </div>
 
-              <h3>1 -- Module progress</h3>
+              <h3>1 — Module progress</h3>
               {R.moduleProgress.length === 0 && (
                 <div className="scaf-note" style={{ margin: '4px 0 10px' }}>
                   No eCTD sections have been placed into this submission's filing yet.
@@ -897,7 +927,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               </div>
 
               <h3>
-                2 -- Module 1 forms{' '}
+                2 — Module 1 forms{' '}
                 <span className="indl-h-x">
                   -- 21 CFR 312.23(a)(1)
                 </span>
@@ -929,23 +959,36 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               </div>
 
               <h3>
-                2a -- Build &amp; render the FDA form PDFs{' '}
+                2a — Build &amp; render the FDA form PDFs{' '}
                 <span className="indl-h-x">-- real form engine</span>
               </h3>
               <IndFormsPanel note={setFormsNote} />
               <C2CToast msg={formsNote} />
 
               <h3>
-                3 -- Blockers to filing{' '}
+                3 — Blockers to filing{' '}
                 <span className="indl-h-x">
-                  -- {R.blockers.length} -- ready = zero blockers
+                  -- {R.blockers.length} -- ready = assessed with zero blockers
                 </span>
               </h3>
               {R.blockers.length === 0 ? (
                 <p className="indl-clean">
-                  {I.check} No blockers. Every required section is approved
-                  and all Module 1 forms are complete -- the package is
-                  fileable.
+                  {/* "No blockers" is a finding, and a finding needs an
+                      assessment behind it — over an empty checklist the honest
+                      sentence is that nothing was evaluated (BP-W0-3). */}
+                  {R.assessed ? (
+                    <>
+                      {I.check} No blockers. Every required section is approved
+                      and all Module 1 forms are complete — the package is
+                      fileable.
+                    </>
+                  ) : (
+                    <>
+                      Nothing has been assessed — the checklist holds no
+                      sections or forms to evaluate, so no blocker statement
+                      can be made.
+                    </>
+                  )}
                 </p>
               ) : (
                 <div className="indl-blockers">

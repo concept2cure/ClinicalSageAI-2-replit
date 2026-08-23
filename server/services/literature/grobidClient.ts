@@ -1,3 +1,5 @@
+import { toBinaryBody } from '../../utils/binary-body.js';
+
 export interface GrobidExtractionResult {
   title?: string;
   abstract?: string;
@@ -37,7 +39,7 @@ export async function extractWithGrobid(file: {
   const baseUrl = (process.env.GROBID_BASE_URL as string).replace(/\/$/, '');
 
   const body = new FormData();
-  body.append('input', new Blob([file.buffer], { type: 'application/pdf' }), file.filename);
+  body.append('input', new Blob([toBinaryBody(file.buffer)], { type: 'application/pdf' }), file.filename);
   body.append('consolidateHeader', '1');
   body.append('consolidateCitations', '1');
   body.append('includeRawCitations', '1');

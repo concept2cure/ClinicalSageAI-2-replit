@@ -19,12 +19,12 @@ import * as React from 'react';
 import { I } from '../../icons';
 import { useSampleMode } from '../../components/DataGate';
 import { DossierStore } from '../../store/dossierStore';
+import type { PathwayTabsLive } from '../../hooks/usePathwayTabsData';
 import type {
   Approval,
   Correspondence,
   DossierAttachment,
   PathwayKey,
-  PathwayTabsBundle,
   SectionTarget,
 } from '../../types';
 
@@ -66,7 +66,7 @@ function slug(s: string | undefined): string {
 /* Build the tree as a nested object. `data` is the caller's resolved
    Audit / Correspondence / Approvals bundle (already sample-gated);
    `sampleOn` additionally gates the kit's example Sources/ placeholders. */
-function buildTree(pathway: PathwayKey, data: PathwayTabsBundle, sampleOn: boolean): TreeNode {
+function buildTree(pathway: PathwayKey, data: PathwayTabsLive, sampleOn: boolean): TreeNode {
   const root = DossierStore.rootFor(pathway) || `Files/Dossier/${pathway}`;
   const programLabel = root.replace(/^Files\/Dossier\//, '');
 
@@ -110,15 +110,15 @@ function buildTree(pathway: PathwayKey, data: PathwayTabsBundle, sampleOn: boole
     return { name: fname, kind: 'file', fileKind: 'correspondence', path: `Files/Correspondence/${fname}`, data: c };
   });
 
-  /* — Approvals branch (synth) — */
+  /* — Approvals branch — live rows only; the fabricated signed set is gone. */
   const apprChildren: TreeNode[] = (data.approvals || []).map((a) => {
     const fname = `${a.id} — ${slug(a.target)}.json`;
     return { name: fname, kind: 'file', fileKind: 'approval', path: `Files/Approvals/${fname}`, data: a };
   });
 
-  /* — Audit branch (synth, single ndjson) — only materialised when there are
-     events to list; an empty tenant gets an honestly empty Audit/ dir rather
-     than a zero-event file claiming a hash chain exists. */
+  /* — Audit branch (single ndjson) — live events only, and materialised only
+     when there are some; an empty tenant gets an honestly empty Audit/ dir
+     rather than a zero-event file claiming a hash chain exists. */
   const auditChildren: TreeNode[] = (data.audit || []).length ? [{
     name: 'audit-trail.ndjson',
     kind: 'file',
@@ -380,7 +380,7 @@ export interface FilesTreePaneProps {
   pathway: PathwayKey;
   /** Resolved Audit / Correspondence / Approvals rows from usePathwayTabsData
    *  — live backend rows, or fixtures only in explicit sample mode. */
-  tabs: PathwayTabsBundle;
+  tabs: PathwayTabsLive;
   onOpenSection: (t: SectionTarget) => void;
 }
 

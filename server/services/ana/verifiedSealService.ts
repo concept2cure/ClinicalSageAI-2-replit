@@ -311,10 +311,17 @@ export async function sealVerifiedVersion(
     // ── Provenance event (append-only lineage) ──
     const provenanceEventId = `prov_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
+      // No `updated_at` — the table has none, in any lineage or Drizzle model,
+      // and the comment above is the reason: an append-only lineage row records
+      // a moment, so `created_at` IS its only time. Postgres rejects an unknown
+      // column at PLAN time (42703), so naming it failed this seal write on
+      // EVERY execution. Found by ci:insert-columns-declared after the same
+      // defect was fixed by hand in exportGovernance.ts and artifactWriteback.ts
+      // and this third site was missed — which is the argument for the guard.
       `INSERT INTO concept2cure_provenance_events (
         event_id, artifact_id, artifact_version_id, organization_id, event_type, event_action,
-        actor_id, actor_name, actor_email, details, source_description, backend_route, backend_service, ip_address, created_at, updated_at
-      ) VALUES ($1,$2,$3,$4,'approval','verified_seal',$5,$6,$7,$8,$9,$10,'ana-verified-seal',$11,$12,$12)`,
+        actor_id, actor_name, actor_email, details, source_description, backend_route, backend_service, ip_address, created_at
+      ) VALUES ($1,$2,$3,$4,'approval','verified_seal',$5,$6,$7,$8,$9,$10,'ana-verified-seal',$11,$12)`,
       [
         provenanceEventId,
         artifactPk,

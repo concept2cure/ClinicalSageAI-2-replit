@@ -54,7 +54,7 @@ describe('module3AutoDraftRoutes', () => {
   });
 
   it('persists drafted sections via the existing bridge when persist=true', async () => {
-    bridgeCompileToArtifact.mockResolvedValue({ artifactId: 'm3-x', isNew: true });
+    bridgeCompileToArtifact.mockResolvedValue({ bridged: true, artifactId: 'm3-x', isNew: true });
     const app = makeApp();
 
     const res = await request(app)

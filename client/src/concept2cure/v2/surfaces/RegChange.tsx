@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -62,6 +64,56 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
   const actionReq = changes.filter(c => c.sev === 'high').length;
   const inForce = changes.filter(c => c.live).length;
   const ask = onAsk;
+
+  /* What AnA can see of this screen.
+     She knew the user was on "reg-change" and nothing else — not how many
+     changes are tracked, which ones touch this portfolio, or which change is
+     open — so "does this affect us?" could only be answered by the user
+     retyping their own worklist.
+
+     A failed read publishes the failure. `live.rows` is [] both when the
+     horizon scan is genuinely clear and when the read threw, and "0 changes
+     tracked" over an outage would tell a regulatory lead that nothing is
+     coming when in fact nothing is known. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The regulatory-change worklist is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The regulatory-change worklist could not be read, so this screen shows no changes because of a failure, not because none are tracked.',
+        availableActions: ['Retry the regulatory-change read'],
+      };
+    }
+    const sel = changes.find((c) => c.id === open) ?? null;
+    return {
+      summary:
+        `Regulatory change intelligence: ${changes.length} change(s) tracked, ${affecting} affecting this portfolio, ` +
+        `${actionReq} requiring action, ${inForce} in force or imminent` +
+        (sel ? `; "${sel.title}" open` : ''),
+      facts: {
+        tracked: changes.length,
+        affectingPortfolio: affecting,
+        actionRequired: actionReq,
+        inForceOrImminent: inForce,
+        selected: sel
+          ? {
+              id: sel.id, title: sel.title, source: sel.src, kind: sel.kind,
+              severity: sel.sev, inForce: sel.live, effective: sel.when,
+              owner: sel.owner, due: sel.due, action: sel.action,
+              affectsCount: (sel.affects ?? []).length,
+            }
+          : null,
+      },
+      availableActions: [
+        'Open a change to see its impact assessment and the action it resolves to',
+        'Assess a change against the portfolio',
+        'Draft the impact assessment for a tracked change',
+      ],
+    };
+  }, [live.loading, live.error, changes, open, affecting, actionReq, inForce]);
+  usePublishSurfaceContext('reg-change', anaContext);
 
   return (
     <div className="reg-wrap">

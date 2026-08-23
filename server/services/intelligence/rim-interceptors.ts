@@ -24,6 +24,15 @@ import {
   type RimSignalType,
 } from './rim-pattern-store.js';
 
+/**
+ * Memoized dynamic import (dynamic to keep the drizzle graph out of this
+ * module's load path; memoized so concurrent fire-and-forget callers share ONE
+ * in-flight import instead of racing the module registry).
+ */
+let capabilityRegistryModule: Promise<typeof import('../ana-capability-registry.js')> | null = null;
+const getCapabilityRegistry = () =>
+  (capabilityRegistryModule ??= import('../ana-capability-registry.js'));
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // 0. LEARNED-PATTERN INTERCEPTOR (Lane E — RIM learning loop)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -67,7 +76,9 @@ export function interceptLearnedPattern(input: LearnedPatternInterceptInput): vo
       return;
     }
 
-    recordPattern({ orgId: organizationId, domain, signalType, observation, confidence, observedAt });
+    // recordPattern is async (it hydrates persisted state before upserting) and
+    // never rejects — fire-and-forget keeps this off the primary pipeline.
+    void recordPattern({ orgId: organizationId, domain, signalType, observation, confidence, observedAt });
   } catch (err) {
     console.warn('[RIM] Learned-pattern interceptor failed (non-blocking):', err instanceof Error ? err.message : err);
   }
@@ -224,6 +235,8 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
     });
 
     // Capture individual critical compliance errors
+    const learnedDomain =
+      (input.submissionType ?? input.documentType ?? 'compliance').trim() || 'compliance';
     for (const issue of issues.filter(i => i.type === 'error')) {
       integrateSignal(ctx, {
         type: 'compliance_scan',
@@ -240,6 +253,19 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
           message: issue.message,
           issueType: issue.type,
         },
+      });
+
+      // The durable half of the learning loop: the signal above is volatile
+      // (in-memory, lost on restart); this records the aggregated, tenant-scoped
+      // pattern that recall_rim_patterns later surfaces. The observation is
+      // keyed on the RULE, not the message — messages embed document-specific
+      // fragments, and an identity that varies per document never aggregates,
+      // which is a pattern store full of single-occurrence noise.
+      interceptLearnedPattern({
+        organizationId,
+        domain: learnedDomain,
+        signalType: 'deficiency',
+        observation: `Compliance rule ${issue.rule} violated`,
       });
     }
   } catch (err) {
@@ -370,6 +396,62 @@ export function interceptFeedback(input: FeedbackInterceptInput): void {
         editDelta,
       },
     });
+
+    // Durable learning: a rejection or regeneration is the user telling AnA
+    // her output missed — the strongest ground-truth signal this layer gets.
+    // Aggregated per section (not per artifact — per-artifact identity never
+    // repeats, so it could never strengthen into a pattern) so repeated
+    // rejections in the same section become a rising-confidence pattern the
+    // read path can warn her with before she drafts there again.
+    if (feedbackType === 'rejected' || feedbackType === 'regenerated') {
+      interceptLearnedPattern({
+        organizationId,
+        domain: 'authoring_feedback',
+        signalType: 'rejection',
+        observation: `AnA output ${feedbackType} in section ${sectionCode ?? 'unspecified'}`,
+      });
+    }
+
+    // Outcome log: the same verdict, recorded where session bootstrap reads
+    // "AnA's past lessons" and the capability registry keeps aggregate
+    // counters. This was the table read by bootstrap and written by NOTHING —
+    // logOutcome() had zero callers. Everything recorded is factual: the
+    // outcome mapping restates the user's own action, and a lesson is written
+    // only for a rejection/regeneration, stating what happened and where —
+    // never an invented diagnosis of why. capabilityKey is deliberately the
+    // generic 'authoring-output': feedback does not know which capability
+    // produced the artifact, and guessing one would corrupt that capability's
+    // success counters.
+    void (async () => {
+      try {
+        const { logOutcome } = await getCapabilityRegistry();
+        await logOutcome({
+          organizationId,
+          projectId,
+          userId,
+          capabilityKey: 'authoring-output',
+          actionType: 'user_feedback',
+          outcome:
+            feedbackType === 'accepted'
+              ? 'success'
+              : feedbackType === 'edited'
+                ? 'partial'
+                : 'failure',
+          userFeedback: feedbackType,
+          editDelta: typeof editDelta === 'number' ? String(editDelta) : undefined,
+          sectionCode,
+          lessonsLearned:
+            feedbackType === 'rejected' || feedbackType === 'regenerated'
+              ? `Output was ${feedbackType} by the user in section ${sectionCode ?? 'unspecified'} — the draft did not meet their needs.`
+              : undefined,
+        });
+      } catch (outcomeErr) {
+        console.warn(
+          '[RIM] Feedback → outcome log failed (non-blocking):',
+          outcomeErr instanceof Error ? outcomeErr.message : outcomeErr,
+        );
+      }
+    })();
 
     // Close the learning loop: tag the N most recent signals for this artifact
     // with a validation verdict so future RIM runs can weight signals by their

@@ -1,6 +1,7 @@
 import { createScopedLogger } from '../../utils/logger';
 import type { TikaMetadataResult } from '../../services/documentIntelligence/contracts';
 
+import { toBinaryBody } from '../../utils/binary-body.js';
 const logger = createScopedLogger('tika-client');
 
 export class TikaClient {
@@ -21,7 +22,7 @@ export class TikaClient {
           'Content-Type': 'application/octet-stream',
           'X-File-Name': filename,
         },
-        body: input,
+        body: toBinaryBody(input),
         signal: controller.signal,
       });
 

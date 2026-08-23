@@ -71,7 +71,7 @@ const LINK_ICONS: Record<string, string> = {
    destructured here and never read, which is exactly the shape the union
    exists to forbid: a surface that hides the rail while still holding the
    handle that writes into it. */
-export function Rbm({ onNav }: OwnedSurfaceViewProps) {
+export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
@@ -105,7 +105,13 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
      canned cards from fixture constants is gone: the dock now shows the real
      turn (streamed text, executed actions, and the real Part 11 sign-off for a
      governed command). */
-  const anaChat = useAnaChat({ screenName: 'rbm', projectId: study ?? undefined });
+  const anaChat = useAnaChat({
+    screenName: 'rbm',
+    projectId: study ?? undefined,
+    // Live Drive bridge — same opt-in and shell-level apply machine as the rail.
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+  });
   const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
     role: m.role,
     text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
@@ -124,12 +130,12 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
     <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
       <div className="reg-h">
         <div>
-          <div className="ph-eyebrow">Clinical -- risk-based quality management</div>
+          <div className="ph-eyebrow">Clinical — risk-based quality management</div>
           <h1 className="reg-title">Risk-based monitoring</h1>
           <p className="reg-sub">
             ICH E6(R3) RBQM for the study: risk assessment, KRIs and QTLs, central
             statistical monitoring, site oversight and the monitoring plan. Every score
-            is engine output -- the number behind each chip is always visible.
+            is engine output — the number behind each chip is always visible.
           </p>
         </div>
         <div className="rbm-study">

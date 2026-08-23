@@ -29,6 +29,8 @@ import {
   type PostMarketDocType,
 } from '../../hooks/useCerPostMarket';
 import { SampleDataBanner } from '../../components/SampleDataBanner';
+import { EmptyState, ErrorState } from '../../../v2/dataConnect';
+import { redactInternals } from '@/lib/queryClient';
 import { useSampleMode } from '../../components/DataGate';
 
 export interface PmsPmcfTabProps {
@@ -55,11 +57,15 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
   const deviceName = (profile?.productName ?? profile?.name ?? '').trim();
 
   const summary = !programId
-    ? 'Select a program to load its post-market documentation'
+    ? 'Post-market documentation is held per program'
     : loading
       ? 'Loading post-market documentation status…'
       : error
-        ? `Post-market backend unavailable — ${error}`
+        /* `error` is `useFetchJson`'s `HTTP ${status}: ${body.slice(0,200)}` —
+           transport jargon plus up to 200 characters of unparsed response body.
+           The panel below reports the failure properly; this one-line subtitle
+           states it without carrying the payload. */
+        ? 'Post-market documentation status is unavailable'
         : report
           ? `${report.requiredPresent} of ${report.requiredTotal} required documents present · ` +
             `${report.requiredApprovedCount} approved · ${report.regulation}` +
@@ -71,7 +77,10 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
     : outcome
       ? outcome.ok
         ? `Draft ${outcome.draft?.document?.documentType?.replace(/_/g, ' ') ?? 'document'} created in draft status — specialise and approve it before use`
-        : `Draft not created — ${outcome.error}`
+        /* `outcome.error` is whatever the write path produced, and this line is
+           rendered. Through the shared filter first — a failed governed write
+           reports its reason, not its plumbing. */
+        : `Draft not created — ${redactInternals(outcome.error, 'the server did not accept it')}`
       : null;
 
   return (
@@ -183,17 +192,35 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
         </div>
       )}
 
+      {/* A FAILURE AND AN EMPTY RESULT ARE NOT THE SAME PANEL, and this drew one
+          for both — announced as `role="status"`, which is polite, so a screen
+          reader was told nothing had gone wrong. It also interpolated `error`
+          verbatim and offered no retry, on a hook that has exposed `refresh`
+          all along. */}
       {!report && !loading && programId && (
         <div className="panel">
-          <div
-            role="status"
-            style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12, color: 'var(--text-300)' }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 4 }}>
-              Post-market documentation status unavailable
-            </div>
-            {error ? `The post-market backend did not respond — ${error}` : 'No report was returned.'}
-          </div>
+          {error ? (
+            <ErrorState
+              variant="panel"
+              title="Couldn't load the post-market documentation status"
+              retry={refresh}
+              /* No `regulation` here: <ErrorState> deliberately has no such
+                 slot. A failure is not an empty state — the one action on it is
+                 recovery, and naming the record a screen cannot show is
+                 explanation the user did not ask for. That is upstream's W0-5
+                 call and it is right. */
+              testId="pms-status-error"
+            />
+          ) : (
+            <EmptyState
+              icon={I.folder}
+              title="No post-market documentation status yet"
+              hint="The status is computed once post-market documents exist for this program."
+              action={{ label: 'Check again', onAct: refresh }}
+              regulation="Serves the post-market surveillance record"
+              testId="pms-status-empty"
+            />
+          )}
         </div>
       )}
 

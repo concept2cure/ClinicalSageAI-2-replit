@@ -50,33 +50,18 @@ import { assertCaptureIsFresh } from './capture-freshness.mjs';
    rather than a transcription of it. Two correct copies of one formula is still
    two, and a correction to either would have applied to half the product. */
 import { browserSource } from '../lib/wcag.mjs';
+import { builtStylesheets, styleTags } from './built-css.mjs';
 
 const TAG = '[visual-qa:contrast]';
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MARKUP = path.join(REPO, '.visual-qa/markup');
-const ASSETS = path.join(REPO, 'dist/public/assets');
 
-function asset(prefix) {
-  const hit = fs.readdirSync(ASSETS).find((f) => f.startsWith(prefix) && f.endsWith('.css'));
-  if (!hit) {
-    console.error(`${TAG} no built stylesheet matching ${prefix}*.css — run \`npm run build\` first.`);
-    process.exit(1);
-  }
-  return fs.readFileSync(path.join(ASSETS, hit), 'utf8');
-}
+// Every built stylesheet, in load order — see built-css.mjs. A colour measured
+// against a partial cascade is a measurement of a page the product never serves.
+const STYLES = styleTags(builtStylesheets(TAG));
 
-const ENTRY = asset('index-');
-const V2 = asset('V2App-');
-const MDX = asset('MdxSurfaceHost-');
-const PDEV = asset('PdevRoute-');
-
-const sheetsFor = (name) =>
-  name.startsWith('mdx__') ? [ENTRY, V2, MDX]
-    : name.startsWith('pdev__') ? [ENTRY, V2, PDEV]
-      : [ENTRY, V2];
-
-const page = (markup, sheets) =>
-  `<!doctype html><html><head><meta charset="utf-8">${sheets.map((c) => `<style>${c}</style>`).join('')}</head>
+const page = (markup) =>
+  `<!doctype html><html><head><meta charset="utf-8">${STYLES}</head>
 <body><div class="c2c-v2 shell">${markup}</div></body></html>`;
 
 /** Runs in the browser. Returns one record per text-bearing element. */
@@ -129,7 +114,7 @@ const MEASURE = () => {
     // reader would read out, and counting them inflates the failure rate with
     // characters no user needs to perceive. Recorded separately rather than
     // silently dropped, so the exclusion is auditable.
-    const decorative = /^[·•|/\\\-–—,:;()\[\]]{1,2}$/.test(own);
+    const decorative = window.__wcag.decorativeText(own);
 
     out.push({
       decorative,
@@ -192,7 +177,7 @@ for (const file of files) {
   const name = file.replace(/\.html$/, '');
   const markup = fs.readFileSync(path.join(MARKUP, file), 'utf8');
   const p = await ctx.newPage();
-  await p.setContent(page(markup, sheetsFor(name)), { waitUntil: 'load' });
+  await p.setContent(page(markup), { waitUntil: 'load' });
   const rows = await p.evaluate(MEASURE);
   await p.close();
 

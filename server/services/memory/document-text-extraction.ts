@@ -70,7 +70,14 @@ export async function extractTextFromFile(
       try {
         const ExcelJS = await import('exceljs');
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(buffer);
+        // exceljs's own typings resolve `Buffer` through the older
+        // @types/node bundled under its @fast-csv/* dependencies, so it is a
+        // structurally different interface from the root @types/node 26
+        // `Buffer<ArrayBufferLike>` this file has. The runtime value is a real
+        // Node Buffer and exceljs handles it; only the two type copies
+        // disagree. Cast at this one boundary rather than deduping the
+        // dependency tree, which is a far wider change than a typecheck fix.
+        await workbook.xlsx.load(buffer as unknown as Parameters<typeof workbook.xlsx.load>[0]);
         const textParts: string[] = [];
         workbook.eachSheet((worksheet) => {
           textParts.push(`\n--- Sheet: ${worksheet.name} ---\n`);

@@ -207,7 +207,7 @@ BEGIN
            SELECT 1 FROM public.%I p
             WHERE p.%I = public.%I.%I
               AND ( p.%I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-                 OR p.%I = NULLIF(current_setting('app.current_org_id',    TRUE), '')::INT )
+                 OR p.%I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT )
          )$p$,
       parent, parent_col, child, fk_col, parent_tenant, parent_tenant);
 

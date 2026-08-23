@@ -133,7 +133,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
         <div style={{ marginTop: 14, fontSize: 13, color: 'var(--c2c-dim,#667085)' }}>
           The nested folder/document tree isn’t connected yet (no backend serves that contract), so none is shown.{' '}
           <button type="button" onClick={() => onNav && onNav('dossier-map')}
-            style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-100)', font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
+            style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-200)', font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
             Open the module-level dossier map {I.arrowRight}
           </button>
         </div>

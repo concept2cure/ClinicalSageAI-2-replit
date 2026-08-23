@@ -1,20 +1,18 @@
 {
-  "_comment": "Files where a request-controlled value reaches a filesystem path with no containment check detectable by scripts/ci/check-path-containment.mjs. Every entry needs a REASON. The digest pins the file contents: change the file and it re-flags, so a baseline cannot quietly cover new code. This list may shrink, never grow.",
+  "_comment": "Files where a request-controlled value reaches a filesystem path with no containment check detectable by scripts/ci/check-path-containment.mjs. Every entry needs a REASON. `sites` pins the exact text of each reviewed line: a new or edited site re-flags, so a baseline cannot quietly cover new code, while an unrelated edit elsewhere in the same file does not. This list may shrink, never grow.",
   "entries": {
     "server/routes/authoring.router.ts": {
-      "digest": "cb3af5a49bfab116",
-      "lines": [
-        4562
+      "sites": [
+        "const content = fs.readFileSync(path.join(dir, file), 'utf8');"
       ],
-      "reason": "FALSE POSITIVE. `path.join(dir, file)` in loadTemplates(): `dir` is templatesDir() (a server constant) and `file` comes from fs.readdirSync on that directory, filtered to *.json. Neither is request input — the detector matches because the NAME `file` is also bound from a request elsewhere in this 4500-line router. Verified by reading the enclosing function."
+      "reason": "FALSE POSITIVE. `path.join(dir, file)` in loadTemplates(): `dir` is templatesDir() (a server constant, cwd/server/templates/m3) and `file` comes from fs.readdirSync on that directory, filtered to *.json. Neither is request input. The detector matches on the assignment target `content`, which is ALSO bound from req.body elsewhere in this ~4600-line router — a name collision, not a dataflow. (It previously matched on the name `file` for the same reason; the line itself is unchanged.) Re-verified by reading loadTemplates() and templatesDir() in full."
     },
     "server/routes/protocol_routes.ts": {
-      "digest": "5ffaf000aa718664",
-      "lines": [
-        723,
-        1015
+      "sites": [
+        "text = fs.readFileSync(filePath, 'utf8');",
+        "text = fs.readFileSync(filePath, 'utf8');"
       ],
-      "reason": "FALSE POSITIVE. `filePath` is `req.file.path` — the path MULTER generated for the upload it just wrote, not a client-supplied string. The client controls `originalname` (used only for path.extname), never the storage path. assertUploadSafe() runs on it first. Verified at both sites (723, 1015)."
+      "reason": "FALSE POSITIVE for THIS gate. `filePath` is `req.file.path` — the path MULTER generated for the upload it just wrote, not a client-supplied string, so no request value reaches the path and there is nothing to contain. The client controls `originalname`, used only for path.extname. CORRECTION: the previous reason also claimed \"assertUploadSafe() runs on it first\" at both sites. That is true of the first site (POST /analyze-file, guarded at line 707) and was NOT true of the second (POST /upload-and-optimize), which read an unverified, unscanned upload. The guard has since been added there too. Re-read both handlers in full."
     }
   }
 }

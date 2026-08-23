@@ -170,6 +170,13 @@ export interface DossierHydration {
   live: boolean;
   documentId: string | null;
   status: 'loading' | 'live-data' | 'empty' | 'unavailable' | 'permission-denied' | 'sample';
+  /**
+   * Re-run the dossier fetch. Every other live hook in this lane has exposed
+   * one (`usePathwayTabsData.refresh`, `useMdxPrograms.refresh`); this one did
+   * not, which is why the Files tab's failure states offered no way out —
+   * there was nothing for a retry control to call. UI standards §8.
+   */
+  refresh: () => void;
 }
 
 interface DossierStatusInput {
@@ -223,5 +230,6 @@ export function useDossierHydration(pathway: PathwayKey, programId?: string | nu
   }, [q.data, q.isLoading, pathway, programId, sampleOn]);
 
   const status = deriveDossierStatus({ hasSections, sampleOn, isLoading: q.isLoading, error: q.error });
-  return { version, live: hasSections, documentId: q.data?.docId ?? null, status };
+  const refresh = React.useCallback(() => void q.refetch(), [q]);
+  return { version, live: hasSections, documentId: q.data?.docId ?? null, status, refresh };
 }

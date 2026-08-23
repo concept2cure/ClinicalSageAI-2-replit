@@ -168,12 +168,25 @@ export class AssumptionRegistryService {
       return null;
     }
     try {
+      // `status` is not a column here and `created_by` is `created_by_id`, so
+      // this INSERT 42703'd at PLAN time and no contradiction link was ever
+      // recorded. The catch below logs it as "table unavailable" and returns
+      // null, which is why it read as a missing table rather than a bad
+      // statement. Found by ci:insert-columns-declared.
+      //
+      // The literal 'open' mapped to nothing: this table models link state as
+      // `is_active` plus `inconsistency_detected`, not a status string. A new
+      // link is active and not yet adjudicated, which is what 'open' meant.
+      //
+      // (This comment lives outside the template literal on purpose — the first
+      // version put it inside, and the backticks quoting the column names
+      // terminated the string.)
       const result = await pool!.query(
         `
         INSERT INTO contradiction_links (
           organization_id, project_id, source_type, source_id,
-          target_type, target_id, comparison_type, status, created_by
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,'open',$8)
+          target_type, target_id, comparison_type, is_active, created_by_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,TRUE,$8)
         RETURNING *
       `,
         [
@@ -184,7 +197,15 @@ export class AssumptionRegistryService {
           targetType,
           targetId,
           comparisonType ?? 'value_mismatch',
-          String(options.createdById ?? 'system'),
+          // created_by_id is INTEGER REFERENCES users(id). The old value was
+          // `String(createdById ?? 'system')`, so even once the column name was
+          // right the literal 'system' would have been a 22P02 — and a string
+          // id would have been coerced or rejected depending on its content.
+          // An unattributable link records NULL rather than inventing an actor:
+          // this column is a foreign key to a real user, not a label.
+          Number.isInteger(Number(options.createdById)) && Number(options.createdById) > 0
+            ? Number(options.createdById)
+            : null,
         ]
       );
       return result.rows[0] ?? null;

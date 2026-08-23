@@ -152,9 +152,40 @@ argument for merging.
 
 - [ ] **A — Differentiate.** I add modality, split the module lists, and build
       lane-specific capability.
-- [ ] **B — Merge (recommended).** I add modality, collapse to one lane with a
+- [x] **B — Merge (recommended).** I add modality, collapse to one lane with a
       modality filter, redirect the retired route, and we pick a capability for
       the reclaimed slot.
+
+## Decision record — 2026-08-17
+
+JM delegated both calls ("Both but you decide"). Taken as recommended:
+
+**B — Merge.** Executed on `concept2cure-v2`:
+- BP-W2-2 landed first (`shared/regulatory/modality.ts` + program record +
+  Mission Control identity strip) — the prerequisite both options shared.
+- `SEGMENTS` now carries one `biopharma` lane ("Biotech & Pharma"); the
+  `pharma` duplicate in `SEGMENT_MODULES` is DELETED, which removes the
+  accidental `labeling-pi` ordering divergence as a side effect.
+- The redirect: `SEGMENT_ALIASES` resolves the retired `biotech`/`pharma` ids
+  everywhere a segment id arrives (getSegment, getSegmentContext,
+  getSegmentModules, getCoauthor, and stored-preference reads in V2App), so a
+  pref or deep link from before the merge lands on the merged lane instead of
+  falling back to medtech. Pinned by test.
+- The one hero action pharma had that biotech did not (Draft USPI label) is
+  folded into the merged coauthor set; nothing else was lane-specific.
+- The module-list modality FILTER is deferred, with the reason recorded: it
+  needs a per-module modality-relevance model that does not exist yet, and
+  inventing one ad hoc would be a guess — the same doctrine that keeps
+  `normalizeModality('biologic')` returning null. The program-header half of
+  the filter shipped with BP-W2-2.
+
+**The reclaimed slot: Generics** — per this memo's own reading of BP-W2-3.
+ANDA is an offered filing type today with nothing behind it, and BP-W1-3
+corrected its module assignment so it can carry its own bioequivalence
+evidence. `frameFor('small_molecule')` already names `ANDA 505(j) (GDUFA)` as
+a pathway, so the frame layer is ready for it. Scope for the capability build
+(BE design, RLD identification, Orange Book, GDUFA fee logic) is the next
+work order to write — it is the "real investment either way" this memo named.
 
 Either way, please also confirm which capability takes the slot / next
 investment — my reading of BP-W2-3 is that **Generics** is the sharpest gap,

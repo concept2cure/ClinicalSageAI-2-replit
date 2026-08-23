@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #c96442; text-decoration: none; }
+    a:hover { color: #431407; }
+    .fig { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1100px; box-sizing: border-box; background: #faf9f5; color: #141413; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 64px 72px 72px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #dad9d4; padding-bottom: 20px;">
+    <div style="font-family: 'Lora', Georgia, serif; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8880;">Concept2Cure.RI</div>
+    <div class="fig" style="font-size: 12px; color: #8a8880;">measured on concept2cure-v2</div>
+  </div>
+
+  <h1 style="font-family: 'Lora', Georgia, serif; font-size: 46px; line-height: 1.1; font-weight: 500; margin: 40px 0 0; letter-spacing: -0.02em; text-wrap: pretty; max-width: 20ch;">The surface layer</h1>
+  <p style="font-family: 'Lora', Georgia, serif; font-size: 21px; line-height: 1.5; color: #3d3d3a; margin: 20px 0 0; max-width: 62ch; font-style: italic;">The platform has a design system and no component vocabulary.</p>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: #dad9d4; border: 1px solid #dad9d4; border-radius: 8px; overflow: hidden; margin: 44px 0 0;">
+    <div style="background: #faf9f5; padding: 24px 26px;">
+      <div class="fig" style="font-size: 40px; font-weight: 500; letter-spacing: -0.03em;">111</div>
+      <div style="font-size: 13px; color: #6b6963; margin-top: 6px; line-height: 1.45;">surface modules</div>
+    </div>
+    <div style="background: #faf9f5; padding: 24px 26px;">
+      <div class="fig" style="font-size: 40px; font-weight: 500; letter-spacing: -0.03em;">13</div>
+      <div style="font-size: 13px; color: #6b6963; margin-top: 6px; line-height: 1.45;">shared components between them</div>
+    </div>
+    <div style="background: #faf9f5; padding: 24px 26px;">
+      <div class="fig" style="font-size: 40px; font-weight: 500; letter-spacing: -0.03em; color: #d97757;">33</div>
+      <div style="font-size: 13px; color: #6b6963; margin-top: 6px; line-height: 1.45;">per-surface stylesheets carrying the consistency instead</div>
+    </div>
+  </div>
+
+  <p style="font-size: 15px; line-height: 1.65; color: #3d3d3a; margin: 28px 0 0; max-width: 74ch;">Every surface re-invents its table, its empty state, its filter bar and its refusal state. The only thing keeping them alike is that the same person wrote them. That is why the same weakness appears in every measurement below — these are not six problems.</p>
+
+  <h2 style="font-family: 'Lora', Georgia, serif; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a8880; font-weight: 500; margin: 52px 0 0;">What is governed, and enforced by machine</h2>
+
+  <div style="display: flex; flex-direction: column; gap: 0; margin-top: 18px; border-top: 1px solid #dad9d4;">
+    <sc-for list="{{gates}}" as="g" hint-placeholder-count="4">
+      <div style="display: flex; align-items: baseline; gap: 20px; padding: 13px 4px; border-bottom: 1px solid #ebeae4;">
+        <div class="fig" style="font-size: 13px; color: #5e6d49; width: 26px; flex-shrink: 0;">ok</div>
+        <div class="fig" style="font-size: 13px; color: #3d3d3a; width: 260px; flex-shrink: 0;">{{g.name}}</div>
+        <div style="font-size: 14px; color: #6b6963; line-height: 1.5;">{{g.result}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <p style="font-size: 15px; line-height: 1.65; color: #3d3d3a; margin: 22px 0 0; max-width: 74ch;">Colour is not a matter of taste here — it is a checked property. So is motion, so is tone. <strong style="font-weight: 600;">The vocabulary is governed. The composition is not.</strong></p>
+
+  <h2 style="font-family: 'Lora', Georgia, serif; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a8880; font-weight: 500; margin: 52px 0 0;">What is not</h2>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px;">
+    <sc-for list="{{findings}}" as="f" hint-placeholder-count="6">
+      <div style="border: 1px solid #dad9d4; border-radius: 8px; padding: 20px 22px; background: #ffffff;">
+        <div style="display: flex; align-items: baseline; gap: 10px;">
+          <div class="fig" style="font-size: 12px; color: #d97757;">{{f.n}}</div>
+          <div style="font-size: 15px; font-weight: 600; line-height: 1.35; color: #141413;">{{f.title}}</div>
+        </div>
+        <div style="font-size: 14px; line-height: 1.6; color: #3d3d3a; margin-top: 10px;">{{f.body}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top: 40px; border-left: 2px solid #d97757; padding: 4px 0 4px 22px;">
+    <p style="font-family: 'Lora', Georgia, serif; font-size: 18px; line-height: 1.6; color: #141413; margin: 0; max-width: 66ch;">The engine is consistently stronger than the interface onto it. Nothing here is a rewrite — the tokens are right, the motion doctrine is right, the enforcement pattern is right. What is missing is the layer between tokens and screens.</p>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1100,"height":1360}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      gates: [
+        { name: 'ci:token-cascade',        result: '33 stylesheets, all resolve cleanly' },
+        { name: 'ci:token-contrast',       result: '27 pairs checked, every enforced pair at 4.5:1 or better' },
+        { name: 'ci:check-chip-tones',     result: '75 literal tone uses, all 25 tones resolve to a real rule' },
+        { name: 'ci:design-system',        result: 'Lucide only, no spring or bounce motion — zero violations' },
+        { name: 'check:microcopy',         result: '298 customer-facing files, no exclamations or pictographs' },
+        { name: 'ci:internals-in-copy',    result: 'no endpoint names or table names in anything a customer reads' },
+      ],
+      findings: [
+        { n: '01', title: 'No shared composition layer',
+          body: '111 modules, 13 shared components. Token adoption inside TSX is 331 var(--…) against 116 raw hex.' },
+        { n: '02', title: 'The surface count was never consolidated',
+          body: 'Six submission surfaces, four authoring, three labeling, three eCTD. Some splits encode a real regulatory distinction. Others are the same capability built twice.' },
+        { n: '03', title: 'Provenance is reported and discarded',
+          body: '72 surfaces call useLive, which returns sample:true on any failure including a 401. Four render the pill that says so.' },
+        { n: '04', title: 'Motion and focus are thin in practice',
+          body: '205 transitions; 4 of 23 stylesheets honour prefers-reduced-motion. Five :focus-visible rules in the whole layer.' },
+        { n: '05', title: 'Keyboard access fails at the edges',
+          body: '788 real buttons against 28 clickable divs missing a role, a tabIndex or a key handler. The default is right; these are the exceptions.' },
+        { n: '06', title: 'No shared breakpoint scale',
+          body: 'Ad-hoc breakpoints in two spellings, and seven stylesheets carry none — including three screens a regulatory lead lives in.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

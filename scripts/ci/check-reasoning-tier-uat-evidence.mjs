@@ -73,7 +73,14 @@ if (runFiles.length === 0) {
     process.exit(1);
   }
   console.log(msg);
-  console.log('✅ UAT evidence structure check passed (non-strict mode).');
+  // Not "✅ passed". Nothing was verified about a UAT that has not happened —
+  // this branch checked the SHAPE of an evidence tree that contains only a
+  // template and a sample. Printing a tick here is how a run with zero evidence
+  // came to sit under a line reading "Reasoning Tier readiness suite passed".
+  // The token below is what the suite reads to qualify that line; keep them in
+  // step.
+  console.log('NO_UAT_EVIDENCE — structure only. This is not evidence that UAT was run.');
+  console.log(`   Run with --strict (npm run ci:reasoning-tier-readiness:strict) to make this a failure.`);
   process.exit(0);
 }
 

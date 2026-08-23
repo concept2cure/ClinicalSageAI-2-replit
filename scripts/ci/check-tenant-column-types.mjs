@@ -29,6 +29,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
@@ -62,6 +63,9 @@ const ALLOWED_NON_INTEGER = new Set([
   // 'shared/example.ts:42:tenantId', // why: this column joins to a
   //                                    third-party UUID-keyed table.
 ]);
+
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:tenant-column-types]', [path.join(repoRoot, 'shared')]);
 
 const violations = [];
 

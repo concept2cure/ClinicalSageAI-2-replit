@@ -66,16 +66,16 @@ function readinessReportMd(
   R: TmfCompletenessResult,
   missing: MissingDoc[],
 ): string {
-  let s = '# Trial Master File -- Inspection-Readiness Package\n\n';
+  let s = '# Trial Master File — Inspection-Readiness Package\n\n';
   s += '**Trial:** ' + trialId + '\n\n';
   s += '**Reference model:** DIA TMF Reference Model (ICH E6(R2) §8)  --  **Scope:** ' + (scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R2) §8)') + '\n\n';
   s += '**Verdict (completeness):** ' + (R.ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY') + '  --  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  --  Open gaps ' + R.summary.totalMissing + '\n\n';
   s += '## Zone index\n\n| Zone | Name | Filed | Status |\n|---|---|---|---|\n';
   (R.zones || []).forEach((z) => { s += '| ' + z.number + ' | ' + z.name + ' | ' + z.present.length + '/' + z.required.length + ' | ' + (z.complete ? 'complete' : (z.required.length - z.present.length) + ' open') + ' |\n'; });
   s += '\n## Open essential documents\n\n';
-  if (!missing.length) s += '_None -- every required document is filed._\n';
+  if (!missing.length) s += '_None — every required document is filed._\n';
   else { s += '| Zone | Document | Code |\n|---|---|---|\n'; missing.forEach((m) => { s += '| ' + m.zone + ' | ' + m.name + ' | ' + m.code + ' |\n'; }); }
-  s += '\n---\n_This package is the inspection index and completeness picture -- not the document bytes, which live in the systems of record referenced per artifact. Assessed against the DIA TMF Reference Model (ICH E6(R2) §8) from the trial\'s filed artifacts. Completeness only; timeliness and QC are not yet persisted._\n';
+  s += '\n---\n_This package is the inspection index and completeness picture — not the document bytes, which live in the systems of record referenced per artifact. Assessed against the DIA TMF Reference Model (ICH E6(R2) §8) from the trial\'s filed artifacts. Completeness only; timeliness and QC are not yet persisted._\n';
   return s;
 }
 
@@ -148,7 +148,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       const t = (body && body.total != null) ? body.total : codes.length;
       fireToast(n + ' of ' + t + ' essentials filed to the TMF'); reload();
     } catch {
-      fireToast('Couldn’t file the essentials -- not persisted, try again', 'error');
+      fireToast('Couldn’t file the essentials — not persisted, try again', 'error');
     } finally {
       setBusy(false);
     }
@@ -188,7 +188,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     <div className="page-inner etmf">
       <div className="surface-head">
         <div>
-          <div className="surface-kicker">{I.vault || I.folder} Vault -- CRO / service view -- Trial Master File (DIA Reference Model v3)</div>
+          <div className="surface-kicker">{I.vault || I.folder} Vault — CRO / service view — Trial Master File (DIA Reference Model v3)</div>
           <h1>Inspection readiness</h1>
           <p className="surface-sub">{tid ? 'Trial ' + tid : 'Name a trial to begin'} -- completeness against the DIA TMF Reference Model (ICH E6(R2) §8)</p>
         </div>
@@ -246,7 +246,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
               ? <>{tid}'s TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones -- <b>complete</b> on a completeness basis.</>
               : <>{tid}'s TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}.</>}
             body={<>This assessment is <b>completeness only</b> -- which DIA TMF Reference Model {scope === 'all' ? 'artifacts are' : 'essential documents are'} filed vs missing for this trial, computed from its filed artifacts. Timeliness and QC signals aren't persisted yet, so they are not part of this verdict.</>}
-            reassure={R.ready ? 'Every required document is filed -- this is the clean completeness picture an inspector would see.' : 'None of these are findings yet -- they are gaps you can close before an inspector ever opens the file.'}
+            reassure={R.ready ? 'Every required document is filed — this is the clean completeness picture an inspector would see.' : 'None of these are findings yet — they are gaps you can close before an inspector ever opens the file.'}
             action={{ label: R.ready ? 'Generate the inspection package' : 'Generate the readiness package', onClick: generatePackage }}
             secondary="Live from the trial's filed TMF artifacts."
           />
@@ -315,7 +315,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
 
             {/* Right -- THE DELIVERABLE: the generated inspection-readiness package */}
             <div className="etmf-right">
-              <div className="etmf-sec">Inspection-readiness package <span className="etmf-sec-x">-- generated by AnA from the DIA Reference Model assessment -- the index + readiness picture, not the document bytes (those stay in the systems of record)</span></div>
+              <div className="etmf-sec">Inspection-readiness package <span className="etmf-sec-x">-- generated by AnA from the DIA Reference Model assessment — the index + readiness picture, not the document bytes (those stay in the systems of record)</span></div>
               <div className="cm-doc etmf-doc">
                 <div className="cm-doc-bar">
                   <span className="cm-doc-name">{tid}_inspection-package{scope === 'all' ? '_all' : ''}</span>
@@ -328,7 +328,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="cm-doc-body etmf-doc-body">
                   <div className="etmf-cover">
                     <div className="etmf-cover-badge" data-ready={R.ready || undefined}>{R.ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY'}</div>
-                    <h2>Trial Master File -- Inspection-Readiness Package</h2>
+                    <h2>Trial Master File — Inspection-Readiness Package</h2>
                     <div className="etmf-cover-meta">
                       <span>Trial {tid}</span><span>DIA TMF Reference Model (ICH E6(R2) §8)</span>
                       <span>Scope: {scopeLabel}</span>
@@ -342,12 +342,12 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                     <div className={'etmf-kpi' + (R.summary.totalMissing ? ' warn' : '')}><div className="v">{R.summary.totalMissing}</div><div className="k">Open gaps</div></div>
                   </div>
 
-                  <h3>1 -- Readiness verdict (completeness)</h3>
+                  <h3>1 — Readiness verdict (completeness)</h3>
                   <p>{R.ready
                     ? <>This trial's TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones. On a completeness basis it is <b>inspection-ready</b>.</>
                     : <>This trial's TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}. It is <b>not yet inspection-ready</b>; the open items are listed in §3.</>}</p>
 
-                  <h3>2 -- Zone index (DIA TMF Reference Model)</h3>
+                  <h3>2 — Zone index (DIA TMF Reference Model)</h3>
                   <table className="etmf-tbl">
                     <thead><tr><th>Zone</th><th>Name</th><th>Filed</th><th>Status</th></tr></thead>
                     <tbody>
@@ -358,15 +358,15 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                     </tbody>
                   </table>
 
-                  <h3>3 -- Open essential documents</h3>
+                  <h3>3 — Open essential documents</h3>
                   {missing.length === 0
-                    ? <p className="etmf-none">None -- every required {scope === 'all' ? 'artifact' : 'essential document'} is filed.</p>
+                    ? <p className="etmf-none">None — every required {scope === 'all' ? 'artifact' : 'essential document'} is filed.</p>
                     : (<table className="etmf-tbl">
                         <thead><tr><th>Zone</th><th>Document</th><th>Artifact code</th></tr></thead>
                         <tbody>{missing.map((m) => <tr key={m.code}><td className="mono">{m.zone}</td><td>{m.name}</td><td className="mono">{m.code}</td></tr>)}</tbody>
                       </table>)}
 
-                  <h3>4 -- What this package is</h3>
+                  <h3>4 — What this package is</h3>
                   <p className="etmf-readme">This package is the inspection <b>index and readiness picture</b> -- the manifest of filed artifacts, the completeness assessment, and the zone-by-zone gap list. The document bytes themselves live in the systems of record referenced per artifact; this package does not contain them. It reports completeness only; timeliness and QC signals are not yet persisted for TMF artifacts. Present it to an inspector as the map to the file, not the file itself.</p>
                 </div>
               </div>

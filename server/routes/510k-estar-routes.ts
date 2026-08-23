@@ -148,11 +148,16 @@ interface ProjectAnchor {
  * else → programs.code. Returns null when nothing in this org matches — the
  * caller must 404, never export against an unresolved project.
  *
- * A UUID/code program resolves WITHOUT a numeric anchor: the artifact registry
- * (concept2cure_artifacts.project_id → projects.id FK) predates the program
- * spine and has no mapping for it. Until the document-identity contract
- * (RECONCILE.md §6) lands, those exports are delivered + audit-logged but
- * explicitly not registry-placed — see the /build handler.
+ * A UUID/code program resolves its numeric anchor through
+ * `projects.regulatory_program_id` (Document Identity Contract slice C1), which
+ * intake writes in the same transaction that creates the program. That mapping
+ * is what the artifact registry needs — `concept2cure_artifacts.project_id` is
+ * an integer FK to `projects.id` and predates the program spine.
+ *
+ * When no anchor exists — a program created before C1, an intake that skipped
+ * it for one of the stated reasons, or a database without the migration — the
+ * export is still delivered and audit-logged but explicitly not registry-placed,
+ * exactly as before. See the /build handler.
  */
 async function resolveProjectAnchor(
   req: Request,
@@ -195,7 +200,25 @@ async function resolveProjectAnchor(
         ),
       )
       .limit(1);
-    if (row) return { anchorProjectId: null, programUuid: row.id, title: row.name ?? null };
+    if (row) {
+      // The program spine DOES have a numeric anchor now, when intake created
+      // one: Document Identity Contract slice C1 added
+      // `projects.regulatory_program_id` and the resolver below. Ask for it
+      // before falling back to the audited-unplaced path, so an export for a
+      // uuid program lands in the governed registry like any other.
+      //
+      // A null answer is a fact about the data, not a failure to try — the
+      // program predates the anchor, intake skipped it for a stated reason, or
+      // the migration is not applied here. The unplaced path stays exactly as
+      // it was for that case; this only stops it being taken when a real
+      // anchor exists.
+      const anchorProjectId = await resolveProgramProjectAnchor(requestDb(req), {
+        programId: row.id,
+        orgId,
+        context: '510k-estar.export',
+      });
+      return { anchorProjectId, programUuid: row.id, title: row.name ?? null };
+    }
   } catch {
     /* fall through */
   }

@@ -16,7 +16,7 @@ const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[
 };
 
 import { aiDraftIR } from './regulatory_aiDraft'; // created below
-import { buildIRPackageZip } from './regulatory_irPackager'; // created below
+import { buildIRPackageZip, InvalidSubmissionIdError } from './regulatory_irPackager';
 import { authedActorName } from '../../utils/authedActor';
 
 /**
@@ -47,6 +47,11 @@ router.get('/submissions/:id/questions', async (req: Request, res: Response) => 
     );
     res.json(rows);
   } catch (error) {
+    // A malformed :id is the caller's mistake, not a server fault, and the
+    // packager refuses it rather than writing outside storage/ir-packs.
+    if (error instanceof InvalidSubmissionIdError) {
+      return res.status(400).json({ error: 'Invalid submission id' });
+    }
     res.status(500).json({ error: error instanceof Error ? error.message : 'Operation failed' });
   }
 });

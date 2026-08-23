@@ -36,6 +36,13 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import {
+  MODALITIES,
+  MODALITY_LABEL,
+  cmcSectionModelFor,
+  frameSummary,
+  normalizeModality,
+} from '@shared/regulatory/modality';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -46,6 +53,7 @@ interface Program {
   name: string;
   code?: string;
   customerTrack?: string;
+  modality?: string;
   indication?: string;
   therapeuticArea?: string;
   developmentStage?: string;
@@ -53,7 +61,34 @@ interface Program {
   status?: string;
   targetSubmissionDate?: string | null;
   updatedAt?: string;
+  // Product characterisation (BP-W2-2)
+  dosageForm?: string;
+  routeOfAdministration?: string;
+  inn?: string;
+  atcCode?: string;
+  applicationNumber?: string;
+  reviewCenter?: 'CDER' | 'CBER';
+  developmentPhase?: string;
+  orphanStatus?: string;
+  expeditedPrograms?: string[];
 }
+
+const PHASES = ['preclinical', 'phase1', 'phase2', 'phase3', 'submission', 'approved', 'post_approval'] as const;
+const PHASE_LABEL: Record<string, string> = {
+  preclinical: 'Preclinical', phase1: 'Phase 1', phase2: 'Phase 2', phase3: 'Phase 3',
+  submission: 'Submission', approved: 'Approved', post_approval: 'Post-approval',
+};
+const EXPEDITED = [
+  ['fast_track', 'Fast Track'],
+  ['breakthrough', 'Breakthrough'],
+  ['rmat', 'RMAT'],
+  ['priority_review', 'Priority Review'],
+  ['accelerated_approval', 'Accelerated Approval'],
+  ['prime', 'PRIME'],
+  ['sakigake', 'Sakigake'],
+  ['ilap', 'ILAP'],
+] as const;
+const EXPEDITED_LABEL: Record<string, string> = Object.fromEntries(EXPEDITED);
 
 interface Readiness {
   readiness: Record<string, number>;
@@ -219,7 +254,13 @@ export function MissionControl(_props: SurfaceViewProps) {
   const [stale, setStale] = useState<Load<any[]>>(idle<any[]>());
 
   const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState({ name: '', customerTrack: 'biotech', indication: '' });
+  const EMPTY_DRAFT = {
+    name: '', customerTrack: 'biotech', modality: '', indication: '',
+    dosageForm: '', routeOfAdministration: '', inn: '', atcCode: '',
+    applicationNumber: '', developmentPhase: '', orphanStatus: '',
+    expeditedPrograms: [] as string[],
+  };
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
 
   const loadPrograms = useCallback(async () => {
@@ -261,7 +302,16 @@ export function MissionControl(_props: SurfaceViewProps) {
       const res = await apiRequest('POST', `${BASE}/programs`, {
         name: draft.name.trim(),
         customerTrack: draft.customerTrack,
+        ...(draft.modality ? { modality: draft.modality } : {}),
         ...(draft.indication.trim() ? { indication: draft.indication.trim() } : {}),
+        ...(draft.inn.trim() ? { inn: draft.inn.trim() } : {}),
+        ...(draft.dosageForm.trim() ? { dosageForm: draft.dosageForm.trim() } : {}),
+        ...(draft.routeOfAdministration.trim() ? { routeOfAdministration: draft.routeOfAdministration.trim() } : {}),
+        ...(draft.atcCode.trim() ? { atcCode: draft.atcCode.trim().toUpperCase() } : {}),
+        ...(draft.applicationNumber.trim() ? { applicationNumber: draft.applicationNumber.trim() } : {}),
+        ...(draft.developmentPhase ? { developmentPhase: draft.developmentPhase } : {}),
+        ...(draft.orphanStatus ? { orphanStatus: draft.orphanStatus } : {}),
+        ...(draft.expeditedPrograms.length ? { expeditedPrograms: draft.expeditedPrograms } : {}),
       });
       const parsed = (await res.json().catch(() => null)) as any;
       if (!res.ok) {
@@ -277,7 +327,7 @@ export function MissionControl(_props: SurfaceViewProps) {
         return;
       }
       setCreating(false);
-      setDraft({ name: '', customerTrack: 'biotech', indication: '' });
+      setDraft(EMPTY_DRAFT);
       fireToast('Program created.');
       await loadPrograms();
       if (parsed?.data?.id) setSelectedId(parsed.data.id);
@@ -296,6 +346,11 @@ export function MissionControl(_props: SurfaceViewProps) {
     () => asArray<Program>(programs.data).find(p => p.id === selectedId) ?? null,
     [programs.data, selectedId]
   );
+
+  /* BP-W2-2: the stored value may predate normalization (the schema accepted
+     any string for months), so the read side normalizes too — an unrecognized
+     historical value renders nothing rather than a wrong frame. */
+  const selectedModality = normalizeModality(selected?.modality);
 
   const readinessRows = useMemo(() => {
     const r = readiness.data?.readiness;
@@ -325,6 +380,8 @@ export function MissionControl(_props: SurfaceViewProps) {
         programId: selected.id,
         programName: selected.name,
         customerTrack: selected.customerTrack ?? null,
+        modality: selectedModality ? MODALITY_LABEL[selectedModality] : null,
+        regulatoryFrame: selectedModality ? frameSummary(selectedModality) : null,
         indication: selected.indication ?? null,
         overallConfidence: readiness.data?.overallConfidence ?? null,
         readinessLoaded: readiness.state === 'ready',
@@ -341,7 +398,7 @@ export function MissionControl(_props: SurfaceViewProps) {
         'Explain what is blocking this program',
       ],
     };
-  }, [selected, programs.data, readiness.state, readiness.data, artifacts.data, risks.data, stale.data]);
+  }, [selected, selectedModality, programs.data, readiness.state, readiness.data, artifacts.data, risks.data, stale.data]);
 
   usePublishSurfaceContext('mission-control', anaContext);
 
@@ -402,9 +459,69 @@ export function MissionControl(_props: SurfaceViewProps) {
                   {TRACKS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </label>
+              <label style={{ fontSize: 12 }}>Modality <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                {/* BP-W2-2: the variable the regulatory work is actually keyed on —
+                    centre, pathway, fee programme and CMC core all derive from it.
+                    Canonical members only; "Not set" is an honest value, a guess is not. */}
+                <select className="c2c-input" style={{ height: 30 }} value={draft.modality} onChange={e => setDraft({ ...draft, modality: e.target.value })}>
+                  <option value="">Not set</option>
+                  {MODALITIES.map(m => <option key={m} value={m}>{MODALITY_LABEL[m]}</option>)}
+                </select>
+              </label>
               <label style={{ fontSize: 12 }}>Indication <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
                 <input className="c2c-input" style={{ height: 30 }} value={draft.indication} onChange={e => setDraft({ ...draft, indication: e.target.value })} placeholder="e.g. NSCLC" />
               </label>
+              {/* ── Product characterisation (BP-W2-2) — what the product IS.
+                  All optional; an empty field is honest, a guessed one is not. ── */}
+              <label style={{ fontSize: 12 }}>INN / active substance <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                <input className="c2c-input" style={{ height: 30 }} value={draft.inn} onChange={e => setDraft({ ...draft, inn: e.target.value })} placeholder="e.g. rezatinib" />
+              </label>
+              <label style={{ fontSize: 12 }}>Dosage form <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                <input className="c2c-input" style={{ height: 30 }} value={draft.dosageForm} onChange={e => setDraft({ ...draft, dosageForm: e.target.value })} placeholder="e.g. film-coated tablet" />
+              </label>
+              <label style={{ fontSize: 12 }}>Route of administration <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                <input className="c2c-input" style={{ height: 30 }} value={draft.routeOfAdministration} onChange={e => setDraft({ ...draft, routeOfAdministration: e.target.value })} placeholder="e.g. oral" />
+              </label>
+              <label style={{ fontSize: 12 }}>ATC code <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                <input className="c2c-input" style={{ height: 30 }} value={draft.atcCode} onChange={e => setDraft({ ...draft, atcCode: e.target.value })} placeholder="e.g. L01FF01" />
+              </label>
+              <label style={{ fontSize: 12 }}>Application number <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                <input className="c2c-input" style={{ height: 30 }} value={draft.applicationNumber} onChange={e => setDraft({ ...draft, applicationNumber: e.target.value })} placeholder="e.g. IND 123456" />
+              </label>
+              <label style={{ fontSize: 12 }}>Development phase <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                <select className="c2c-input" style={{ height: 30 }} value={draft.developmentPhase} onChange={e => setDraft({ ...draft, developmentPhase: e.target.value })}>
+                  <option value="">Not set</option>
+                  {PHASES.map(p => <option key={p} value={p}>{PHASE_LABEL[p]}</option>)}
+                </select>
+              </label>
+              <label style={{ fontSize: 12 }}>Orphan status <span style={{ color: 'var(--text-300, #6b6963)' }}>(optional)</span>
+                <select className="c2c-input" style={{ height: 30 }} value={draft.orphanStatus} onChange={e => setDraft({ ...draft, orphanStatus: e.target.value })}>
+                  <option value="">Not set</option>
+                  <option value="none">None</option>
+                  <option value="requested">Requested</option>
+                  <option value="designated">Designated</option>
+                </select>
+              </label>
+              <fieldset style={{ border: 'none', margin: 0, padding: 0, fontSize: 12, gridColumn: '1 / -1' }}>
+                <legend style={{ fontSize: 12, padding: 0 }}>Expedited programmes <span style={{ color: 'var(--text-300, #6b6963)' }}>(all that are granted)</span></legend>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', marginTop: 4 }}>
+                  {EXPEDITED.map(([id, label]) => (
+                    <label key={id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <input
+                        type="checkbox"
+                        checked={draft.expeditedPrograms.includes(id)}
+                        onChange={e => setDraft({
+                          ...draft,
+                          expeditedPrograms: e.target.checked
+                            ? [...draft.expeditedPrograms, id]
+                            : draft.expeditedPrograms.filter(x => x !== id),
+                        })}
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button className="btn primary" style={{ height: 30 }} onClick={createProgram} disabled={busy}>{busy ? 'Creating…' : 'Create'}</button>
                 <button className="btn" style={{ height: 30 }} onClick={() => setCreating(false)} disabled={busy}>Cancel</button>
@@ -418,6 +535,66 @@ export function MissionControl(_props: SurfaceViewProps) {
 
       {selected && (
         <>
+          {selectedModality && (
+            /* BP-W2-2: the program states its regulatory frame where its name is —
+               centre, default pathway with its fee programme, CMC core. Derived
+               from modality by shared/regulatory/modality.ts, never stored, so
+               the header cannot drift from the registry. */
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '2px 2px 0', fontSize: 12 }}>
+              <span className="rd-chip">{MODALITY_LABEL[selectedModality]}</span>
+              <span style={{ color: 'var(--text-300, #6b6963)' }}>{frameSummary(selectedModality)}</span>
+            </div>
+          )}
+          {(selected.inn || selected.dosageForm || selected.routeOfAdministration || selected.atcCode ||
+            selected.applicationNumber || selected.reviewCenter || selected.developmentPhase ||
+            selected.orphanStatus || (selected.expeditedPrograms?.length ?? 0) > 0) && (
+            /* What the product IS — only the facts that were actually recorded.
+               Nothing here is derived except the centre, which the server sets
+               from modality when it was not stated (BP-W2-2). */
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 6, padding: '2px 2px 0', fontSize: 12 }}>
+              {selected.inn && <span className="rd-chip">{selected.inn}</span>}
+              {(selected.dosageForm || selected.routeOfAdministration) && (
+                <span className="rd-chip">{[selected.dosageForm, selected.routeOfAdministration].filter(Boolean).join(' · ')}</span>
+              )}
+              {selected.atcCode && <span className="rd-chip mono">ATC {selected.atcCode}</span>}
+              {selected.applicationNumber && <span className="rd-chip mono">{selected.applicationNumber}</span>}
+              {selected.reviewCenter && <span className="rd-chip">{selected.reviewCenter}</span>}
+              {selected.developmentPhase && <span className="rd-chip">{PHASE_LABEL[selected.developmentPhase] ?? selected.developmentPhase}</span>}
+              {selected.orphanStatus && selected.orphanStatus !== 'none' && (
+                <span className="rd-chip">Orphan: {selected.orphanStatus}</span>
+              )}
+              {(selected.expeditedPrograms ?? []).map(p => (
+                <span key={p} className="rd-chip">{EXPEDITED_LABEL[p] ?? p}</span>
+              ))}
+            </div>
+          )}
+          {selectedModality && (
+            /* ── The CMC section model this modality carries (BP-W2-2) ──
+               This is the derivation the modality field exists to power: a mAb
+               program is told about cell banks, potency and Q5E comparability;
+               a small molecule about polymorphism, Q3A/B impurities and
+               dissolution. Derived per render from the shared registry. */
+            <div className="pj-card">
+              <div className="pj-card-h">
+                <span className="t">CMC section model — {MODALITY_LABEL[selectedModality]}</span>
+                <span className="s">Module 3 requirements this modality carries</span>
+              </div>
+              <div className="pj-card-b">
+                <table className="reg-tbl">
+                  <thead><tr><th scope="col">Section</th><th scope="col">Requirement</th><th scope="col">Why this modality</th></tr></thead>
+                  <tbody>
+                    {cmcSectionModelFor(selectedModality).map(r => (
+                      <tr key={r.section + r.title}>
+                        <td className="mono" style={{ whiteSpace: 'nowrap' }}>{r.section}</td>
+                        <td>{r.title}</td>
+                        <td style={{ color: 'var(--text-300, #6b6963)' }}>{r.rationale}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
           {/* ── Readiness ── */}
           <div className="pj-card">
             <div className="pj-card-h">

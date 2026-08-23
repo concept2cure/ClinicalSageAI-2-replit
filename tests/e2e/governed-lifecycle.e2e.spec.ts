@@ -38,11 +38,11 @@ async function login(page: import('@playwright/test').Page) {
   await page.goto(`${BASE_URL}/concept2cure/login`);
   const emailInput = page.locator('input[type="email"], input#email');
   await expect(emailInput).toBeVisible({ timeout: 15000 });
-  await emailInput.fill('jm.smith@concept2cure.pro');
+  await emailInput.fill('jonmichaelpsmith@gmail.com');
   await page.click('button:has-text("Continue")');
   const passwordInput = page.locator('input[type="password"], input#password');
   await expect(passwordInput).toBeVisible({ timeout: 10000 });
-  await passwordInput.fill('Concept2Cure2026!');
+  await passwordInput.fill('Seahawks12s!');
   await page.click('button:has-text("Sign in")');
   await page.waitForURL(
     url => {

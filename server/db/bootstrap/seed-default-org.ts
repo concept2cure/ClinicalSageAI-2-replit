@@ -21,7 +21,10 @@ const logger = createScopedLogger('database');
 // to have that value hashed at the same cost instead (see resolveDemoPasswordHash).
 // Production deployments that don't want this demo user can delete the user row
 // after startup; the seed is idempotent.
-const DEMO_EMAIL = 'jm.smith@concept2cure.pro';
+const LEGACY_DEMO_EMAIL = 'jm.smith@concept2cure.pro';
+const DEMO_EMAIL = (process.env.DEMO_USER_EMAIL ?? 'jonmichaelpsmith@gmail.com')
+  .trim()
+  .toLowerCase();
 const DEMO_NAME = 'JM Smith';
 const DEMO_PASSWORD_HASH = '$2b$12$ZE1acJqmLIAbDLl2h2eUiOeXLXCunsidscRZDA7Wt4.kiYBiNgFnu';
 const DEMO_PASSWORD_ROUNDS = 12; // same cost as the pre-computed hash above
@@ -135,6 +138,12 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     return;
   }
 
+  // The legacy demo identity is disposable local/demo data, not a second
+  // account. Never remove an address from a production database implicitly.
+  if (DEMO_EMAIL !== LEGACY_DEMO_EMAIL && process.env.NODE_ENV !== 'production') {
+    await client.query(`DELETE FROM users WHERE email = $1`, [LEGACY_DEMO_EMAIL]);
+  }
+
   const demoPasswordHash = await resolveDemoPasswordHash();
 
   await client.query(
@@ -149,10 +158,9 @@ export async function seedGaDemoUser(client: PoolClient): Promise<void> {
     [DEMO_EMAIL, DEMO_NAME, demoPasswordHash, c2cOrgId]
   );
 
-  const demoUser = await client.query(
-    `SELECT id FROM users WHERE email = $1 LIMIT 1`,
-    [DEMO_EMAIL]
-  );
+  const demoUser = await client.query(`SELECT id FROM users WHERE email = $1 LIMIT 1`, [
+    DEMO_EMAIL,
+  ]);
   if (demoUser.rows[0]) {
     await client.query(
       `

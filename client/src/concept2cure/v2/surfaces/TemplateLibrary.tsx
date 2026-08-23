@@ -398,7 +398,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1180 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Authoring {I.dot} /api/c2c/templates</div>
+          <div className="sp-eyebrow">Authoring {I.dot} templates</div>
           <h1 className="sp-title">Template library</h1>
           <p className="sp-state">
             Upload a form and AnA reads its OOXML to recreate the exact page

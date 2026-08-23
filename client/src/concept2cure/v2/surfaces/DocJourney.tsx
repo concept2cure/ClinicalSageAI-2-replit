@@ -145,25 +145,31 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
   const s = snap as DjDocSnap;
   return (
     <>
+      {/* The toolbar is the visual language of a document preview and stays —
+          but its buttons are DISABLED, not wired to anything. They used to
+          fire document.execCommand against a non-editable region: inert by
+          accident. A control that cannot act renders as one that cannot act.
+          (That also removed the last execCommand calls in the client — the
+          canonical editor is v2/editor/RichSectionEditor.) */}
       <div className="dj-toolbar">
-        <select className="dj-tb-sel" defaultValue="h" title="Paragraph style">
+        <select className="dj-tb-sel" defaultValue="h" title="Read-only preview" disabled>
           <option value="t">Title</option>
           <option value="h">Heading 1</option>
           <option value="h2">Heading 2</option>
           <option value="b">Body text</option>
         </select>
         <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Bold" onMouseDown={(e) => { e.preventDefault(); document.execCommand('bold'); }}><b>B</b></button>
-        <button className="dj-tb-b" title="Italic" onMouseDown={(e) => { e.preventDefault(); document.execCommand('italic'); }}><i>I</i></button>
-        <button className="dj-tb-b" title="Underline" onMouseDown={(e) => { e.preventDefault(); document.execCommand('underline'); }}><span style={{ textDecoration: 'underline' }}>U</span></button>
+        <button className="dj-tb-b" title="Read-only preview" disabled><b>B</b></button>
+        <button className="dj-tb-b" title="Read-only preview" disabled><i>I</i></button>
+        <button className="dj-tb-b" title="Read-only preview" disabled><span style={{ textDecoration: 'underline' }}>U</span></button>
         <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Bulleted list" onMouseDown={(e) => { e.preventDefault(); document.execCommand('insertUnorderedList'); }}>{I.list}</button>
-        <button className="dj-tb-b" title="Numbered list" onMouseDown={(e) => { e.preventDefault(); document.execCommand('insertOrderedList'); }}>1.</button>
+        <button className="dj-tb-b" title="Read-only preview" disabled>{I.list}</button>
+        <button className="dj-tb-b" title="Read-only preview" disabled>1.</button>
         <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Insert citation">{I.quote}</button>
-        <button className="dj-tb-b" title="Insert table">{I.grid}</button>
+        <button className="dj-tb-b" title="Read-only preview" disabled>{I.quote}</button>
+        <button className="dj-tb-b" title="Read-only preview" disabled>{I.grid}</button>
         <span className="dj-tb-sep" />
-        <button className="dj-tb-tc" title="Toggle track changes"><span className="dj-tb-dot" />Track changes</button>
+        <button className="dj-tb-tc" title="Read-only preview" disabled><span className="dj-tb-dot" />Track changes</button>
         {/* Was: a green-check "Autosaved · v1.0" pill. This surface has no save
             path of any kind — its only request is GET /api/doc-journey. The
             page below carried `contentEditable` with no onInput, no state and

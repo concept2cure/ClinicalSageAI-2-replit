@@ -106,7 +106,7 @@ export function PyGlobal({ globals }: { globals: PyGlobalConfig[] }) {
             <button key={r} className="rbm-filter" data-on={region === r || undefined} onClick={() => setRegion(r)}>{r === 'all' ? 'All regions' : r}</button>
           ))}
         </div>
-        <span className="rbm-bar-info">globalPyramids.ts · {globals.length} configurations · normalized to the engine task model</span>
+        <span className="rbm-bar-info">{globals.length} configurations · normalized to the engine task model</span>
       </div>
       <div className="py-glob-grid">
         {shown.map((g) => (

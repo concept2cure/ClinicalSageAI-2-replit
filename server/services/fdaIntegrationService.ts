@@ -31,6 +31,27 @@ import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('fdaIntegrationService');
 
+/**
+ * Is the ESG transport fence in force?
+ *
+ * Was `process.env.NODE_ENV === 'production'`, which fails OPEN: an unset,
+ * blank, misspelled or `staging` NODE_ENV all took the simulation branch. The
+ * three checked-in entrypoints do set it (package.json's start script, the
+ * Replit deployment run command, Dockerfile.optimized's CMD), so this was not
+ * live — but a platform-level override or a direct `node dist/index.js` would
+ * have opened it silently, and a fence whose safe state depends on a string
+ * matching exactly is the wrong way round for an FDA transport.
+ *
+ * Mirrors bundleTrustEnforced() in server/services/submission-gateways/
+ * bundle-namespace.ts, which already states the rule for this repo: enforce
+ * everywhere except an explicitly declared local development or test
+ * environment.
+ */
+function esgTransportEnforced(): boolean {
+  const env = (process.env.NODE_ENV ?? '').trim().toLowerCase();
+  return !(env === 'development' || env === 'test');
+}
+
 class FDAIntegrationService {
   private fdaApiBase: string;
   private openFDABase: string;
@@ -430,11 +451,17 @@ class FDAIntegrationService {
         esgTimestamp: submissionResult.timestamp
       });
 
-      // Log submission
-      await this.logIntegration(organizationId, 'FDA_SUBMISSION', 'success', {
+      // Log submission. `simulated` is carried through deliberately: sendToESG
+      // sets it precisely so no caller can mistake the result for a real FDA
+      // acknowledgement, and dropping it here turned that honesty into an
+      // unqualified `success` row in fda_integration_logs — the only surviving
+      // tell being the SIMULATED- prefix inside the receipt string.
+      const simulated = Boolean((submissionResult as { simulated?: boolean }).simulated);
+      await this.logIntegration(organizationId, 'FDA_SUBMISSION', simulated ? 'simulated' : 'success', {
         trackingId,
         receiptNumber: submissionResult.receiptNumber,
-        status: submissionResult.status
+        status: submissionResult.status,
+        simulated
       });
 
       // Start status polling
@@ -445,7 +472,10 @@ class FDAIntegrationService {
         trackingId,
         receiptNumber: submissionResult.receiptNumber,
         status: submissionResult.status,
-        message: 'Submission sent to FDA successfully'
+        simulated,
+        message: simulated
+          ? 'Submission was SIMULATED and NOT transmitted to FDA.'
+          : 'Submission sent to FDA successfully'
       };
     } catch (error: any) {
       logger.error('Error submitting to FDA', { error });
@@ -671,23 +701,44 @@ class FDAIntegrationService {
   }
 
   /**
-   * Sign package with digital certificate
+   * Sign package with digital certificate.
+   *
+   * REFUSES. There is no signing implementation here, and there never was.
+   *
+   * This method took `certificate` and `privateKey`, used NEITHER, and returned
+   *
+   *     signature:         sha256(JSON.stringify({ ectd, fhir }))
+   *     algorithm:         'SHA256withRSA'
+   *     certificateSerial: 'FDA-CERT-001'
+   *
+   * — a plain digest, labelled as an RSA signature, under a canned certificate
+   * serial. A digest is not a signature: it proves nothing about who produced
+   * the package, which is the entire content of a 21 CFR Part 11 signature.
+   * The result was written into the submission envelope by packagePMASubmission
+   * and package510k, with no environment fence of any kind.
+   *
+   * CR-1 gave sendToESG and queryESGStatus exactly this treatment — throw rather
+   * than fabricate an agency acknowledgement — and stopped one method short.
+   * Nothing outside this file calls any of it today, which is the only reason
+   * this never shipped a fabricated signature; that is an absence of callers,
+   * not a control.
+   *
+   * Unconditional, not environment-gated. A transport can honestly simulate
+   * outside production because a simulated receipt is labelled and discarded.
+   * A signature cannot: its whole purpose is to be relied upon later, and a
+   * fake one is indistinguishable from a real one to everything downstream.
    */
-  signPackage({ ectd, fhir, certificate, privateKey }: any) {
-    const payload = JSON.stringify({ ectd, fhir });
-
-    // Mock signature for development
-    const signature = crypto
-      .createHash('sha256')
-      .update(payload)
-      .digest('hex');
-
-    return {
-      payload,
-      signature,
-      algorithm: 'SHA256withRSA',
-      certificateSerial: 'FDA-CERT-001'
-    };
+  signPackage(_args: {
+    ectd?: unknown;
+    fhir?: unknown;
+    certificate?: unknown;
+    privateKey?: unknown;
+  }): { payload: string; signature: string; algorithm: string; certificateSerial: string } {
+    throw new Error(
+      'FDA package signing is not implemented. No digital signature was produced, and the ' +
+        'package was NOT signed. Refusing to return a hash labelled as an RSA signature — ' +
+        'wire a real signing implementation (certificate + private key) before submitting.'
+    );
   }
 
   /**
@@ -725,7 +776,7 @@ class FDAIntegrationService {
    * caller can mistake it for a real acknowledgment.
    */
   async sendToESG(submissionPackage: any, trackingId: any) {
-    if (process.env.NODE_ENV === 'production') {
+    if (esgTransportEnforced()) {
       throw new Error(
         'FDA ESG transport is not configured. Submission was NOT transmitted. ' +
           'Real AS2/SFTP gateway integration and FDA credentials are required ' +
@@ -753,7 +804,7 @@ class FDAIntegrationService {
    * closed in production; return an explicit simulated/UNKNOWN status otherwise.
    */
   async queryESGStatus(receiptNumber: any) {
-    if (process.env.NODE_ENV === 'production') {
+    if (esgTransportEnforced()) {
       throw new Error(
         'FDA ESG status query is not configured. Cannot determine real ' +
           'submission status. Wire the ESG status endpoint before use.'

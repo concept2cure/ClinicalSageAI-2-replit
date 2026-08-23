@@ -5,6 +5,24 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    ignore:
+      # TypeScript majors are held until the lint toolchain can follow.
+      #
+      # On 2026-08-13 a bump to 7.0.2 (1b3c154) took out BOTH CI gates that
+      # read the TypeScript source, and nobody noticed for a week:
+      #   - TS 7 removed `baseUrl` and `moduleResolution: node10`, so
+      #     `tsc -p tsconfig.json` rejected the config and checked ZERO files
+      #     while still printing "error TS" lines the CI gate read as ordinary
+      #     type errors (see scripts/ci/typecheck-no-regression.mjs).
+      #   - No typescript-eslint release supports TS 7 — its peer range is
+      #     `>=4.8.4 <6.1.0` — so `npm run lint` (ci.yml) crashed outright.
+      #
+      # A dev-dependency major that silently disables the checks protecting
+      # every other dependency bump is not a routine update. LIFT THIS once
+      # typescript-eslint declares TS 7 support in its peerDependencies; the
+      # tsconfig is already TS 7-ready, so that is the only blocker left.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "pip"
     directory: "/"

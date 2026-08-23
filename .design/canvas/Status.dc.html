@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #c96442; text-decoration: none; }
+    a:hover { color: #431407; }
+    .fig { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="width: 1180px; box-sizing: border-box; background: #faf9f5; color: #141413; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 64px 72px 72px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #dad9d4; padding-bottom: 20px;">
+    <div style="font-family: 'Lora', Georgia, serif; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8880;">BioPharma UAT · re-measured</div>
+    <div class="fig" style="font-size: 12px; color: #8a8880;">report dated 14 Aug · verified against trunk</div>
+  </div>
+
+  <h1 style="font-family: 'Lora', Georgia, serif; font-size: 46px; line-height: 1.1; font-weight: 500; margin: 40px 0 0; letter-spacing: -0.02em; max-width: 22ch;">Sixteen blockers, re-measured</h1>
+  <p style="font-family: 'Lora', Georgia, serif; font-size: 21px; line-height: 1.5; color: #3d3d3a; margin: 20px 0 0; max-width: 64ch; font-style: italic;">The observations were sound. The diagnoses frequently were not.</p>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: #dad9d4; border: 1px solid #dad9d4; border-radius: 8px; overflow: hidden; margin: 40px 0 0;">
+    <sc-for list="{{tally}}" as="t" hint-placeholder-count="4">
+      <div style="background: #faf9f5; padding: 22px 24px;">
+        <div class="fig" style="font-size: 34px; font-weight: 500; letter-spacing: -0.03em; color: {{t.tint}};">{{t.n}}</div>
+        <div style="font-size: 13px; color: #6b6963; margin-top: 6px; line-height: 1.45;">{{t.label}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 18px; margin: 34px 0 0; font-size: 12px; color: #6b6963;">
+    <sc-for list="{{legend}}" as="l" hint-placeholder-count="4">
+      <div style="display: flex; align-items: center; gap: 7px;">
+        <div style="width: 9px; height: 9px; border-radius: 9999px; background: {{l.tint}};"></div>
+        <div>{{l.label}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top: 22px; border-top: 1px solid #dad9d4;">
+    <sc-for list="{{items}}" as="i" hint-placeholder-count="8">
+      <div style="display: flex; align-items: flex-start; gap: 18px; padding: 15px 4px; border-bottom: 1px solid #ebeae4;">
+        <div style="width: 9px; height: 9px; border-radius: 9999px; background: {{i.tint}}; margin-top: 6px; flex-shrink: 0;"></div>
+        <div class="fig" style="font-size: 12px; color: #8a8880; width: 74px; flex-shrink: 0; margin-top: 2px;">{{i.id}}</div>
+        <div style="width: 250px; flex-shrink: 0; font-size: 14px; font-weight: 600; line-height: 1.4; color: #141413;">{{i.claim}}</div>
+        <div style="font-size: 14px; line-height: 1.55; color: #3d3d3a;">{{i.finding}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 40px;">
+    <sc-for list="{{lessons}}" as="l" hint-placeholder-count="3">
+      <div style="background: #ffffff; border: 1px solid #dad9d4; border-radius: 8px; padding: 20px 22px;">
+        <div style="font-size: 13px; font-weight: 600; color: #955d22; letter-spacing: 0.02em;">{{l.seen}}</div>
+        <div style="font-size: 14px; line-height: 1.6; color: #3d3d3a; margin-top: 8px;">{{l.was}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top: 34px; border-left: 2px solid #d97757; padding: 4px 0 4px 22px;">
+    <p style="font-family: 'Lora', Georgia, serif; font-size: 18px; line-height: 1.6; color: #141413; margin: 0; max-width: 70ch;">In every case something real was seen and attributed a layer above where it lived. This is a good bug-sighting record and a poor work plan — re-measure before scheduling from it. Doing so cost a few hours and removed twelve items.</p>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1180,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const GREEN = '#5e6d49', ORANGE = '#d97757', AMBER = '#955d22', GREY = '#8a8880';
+    return {
+      tally: [
+        { n: '12', label: 'already closed, or disproven as stated', tint: GREEN },
+        { n: '3',  label: 'fixed in this session',                  tint: ORANGE },
+        { n: '2',  label: 'open — need a decision, not code',        tint: AMBER },
+        { n: '1',  label: 'retracted after I got it wrong',          tint: GREY },
+      ],
+      legend: [
+        { label: 'closed',        tint: GREEN },
+        { label: 'fixed here',    tint: ORANGE },
+        { label: 'open',          tint: AMBER },
+        { label: 'not a finding', tint: GREY },
+      ],
+      items: [
+        { id: 'BP-01',   tint: GREEN,  claim: 'Project creation returns 503',
+          finding: 'Token leak fixed, with a regression test. The 503 is deliberate fail-soft on an unprovisioned store — provisioning, not code.' },
+        { id: 'BP-02',   tint: ORANGE, claim: 'Half the specialist services are down',
+          finding: 'Five of six mount and route correctly. The one real cause was a tenant gate bound to a shared /api/mdx prefix, gating twenty routers instead of two.' },
+        { id: 'BP-03',   tint: GREEN,  claim: 'The editor is a plain textarea',
+          finding: 'RichSectionEditor — TipTap with TableKit, which is the actual CTD requirement — is imported and rendered. Its test drives a real editor instance.' },
+        { id: 'BP-04',   tint: AMBER,  claim: 'The eCTD chain is unexercised',
+          finding: 'Genuinely open. Unit coverage exists; end-to-end against a real sequence needs a provisioned store.' },
+        { id: 'BP-05',   tint: GREEN,  claim: 'Word export fails silently',
+          finding: 'require(‘docx’) in a package declaring type: module. Now await import, and a failure toast covers the silent half.' },
+        { id: 'BP-06',   tint: GREEN,  claim: 'A frozen document is unreachable',
+          finding: 'frozen is in the status filter — a sealed record can be produced.' },
+        { id: 'BP-07',   tint: ORANGE, claim: 'Internal routes rendered as UI',
+          finding: 'Twelve real leaks fixed — and the gate that was meant to catch them had been blind to 3 of the 4 shapes real copy takes.' },
+        { id: 'P1-1 / 5', tint: GREEN, claim: 'Biotech and Pharma are one product',
+          finding: 'Right about the cause, not just the symptom. Merged to biopharma: company label was the wrong axis, modality is the real one.' },
+        { id: 'P1-2',    tint: GREEN,  claim: 'False assurance from a zero state',
+          finding: 'assessmentState plus 23 tests now separate assessed-and-clear from nothing-assessed.' },
+        { id: 'P1-3',    tint: GREEN,  claim: 'The statistics engine looks broken',
+          finding: 'Not the engine. 47 controls had no border and inline-block, so a field was indistinguishable from adjacent text. One CSS rule fixed both symptoms.' },
+        { id: 'P1-4',    tint: AMBER,  claim: 'Two filing catalogs, two counts',
+          finding: 'Confirmed by counting, not by docstring: 113 items in the client fixture, 158 in the shared registry. Needs a regulatory owner.' },
+        { id: 'P1-6',    tint: ORANGE, claim: 'MDX endpoints on the pharma path',
+          finding: 'The 401 was the prefix gate, fixed. The naming stands: TaskTray renders from the Shell, so it really is on every lane.' },
+        { id: 'P1-7',    tint: ORANGE, claim: 'Typography and filter gaps',
+          finding: '399 literal double-hyphens against 2,287 em-dashes — converted. Portfolio filters are now derived from the canonical segment list.' },
+      ],
+      lessons: [
+        { seen: 'Sixteen broken device surfaces', was: 'A stale node_modules. One package version behind its lockfile.' },
+        { seen: 'A broken statistics engine',     was: 'An input with no border.' },
+        { seen: 'Unstable session handling',      was: 'Middleware scoped to a prefix instead of a router. Entirely deterministic.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

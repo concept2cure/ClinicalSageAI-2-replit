@@ -274,11 +274,11 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const head = (
     <div className="sp-head">
       <div>
-        <div className="sp-eyebrow">Specialist -- precedent board</div>
+        <div className="sp-eyebrow">Specialist — precedent board</div>
         <h1 className="sp-title">Precedent intelligence</h1>
         <p className="sp-state">
           Search cleared precedents, compare your submission, and run regulatory-risk, strategy,
-          CRL/RTF-trigger, EMA-question and Advisory-Committee analyses -- every result traces to
+          CRL/RTF-trigger, EMA-question and Advisory-Committee analyses — every result traces to
           registry precedents.
         </p>
       </div>
@@ -422,10 +422,10 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
               .
             </>
           ) : results.length === 0 ? (
-            <>No cleared precedents matched this search yet -- widen the criteria or ingest a precedent.</>
+            <>No cleared precedents matched this search yet — widen the criteria or ingest a precedent.</>
           ) : (
             <>
-              No single strong predicate yet -- worth a search or a De Novo look before you
+              No single strong predicate yet — worth a search or a De Novo look before you
               commit.
             </>
           )
@@ -443,7 +443,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         }
         reassure={
           strong
-            ? "You're not starting from zero -- I'll draft the argument with you."
+            ? "You're not starting from zero — I'll draft the argument with you."
             : "Whatever the path, I'll walk it with you step by step."
         }
         action={{
@@ -674,7 +674,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
             <input
               aria-label="Claim to check against precedent"
               className="tl-edit-in"
-              placeholder='Paste a claim to check against precedent -- e.g. "14-day wear with no fingerstick calibration"'
+              placeholder='Paste a claim to check against precedent — e.g. "14-day wear with no fingerstick calibration"'
               value={claim}
               onChange={(e) => setClaim(e.target.value)}
               onKeyDown={(e) => {

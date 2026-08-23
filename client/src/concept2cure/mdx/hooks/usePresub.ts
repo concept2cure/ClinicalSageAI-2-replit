@@ -246,6 +246,8 @@ export interface UsePresubDetailResult {
   detail: PresubDetail | null;
   loading: boolean;
   error: string | null;
+  /** Re-run the detail fetch. Its failure state had no way out without one. */
+  refresh: () => void;
 }
 
 /**
@@ -259,7 +261,7 @@ export interface UsePresubDetailResult {
 export function usePresubDetail(id: string | null): UsePresubDetailResult {
   const url = id ? `/api/q-sub/${encodeURIComponent(id)}` : null;
   /* Canonical envelope: server returns { data: ServerQSubDetail }. */
-  const { data, loading, error } = useFetchJson<{ data: ServerQSubDetail }>(url);
+  const { data, loading, error, refresh } = useFetchJson<{ data: ServerQSubDetail }>(url);
   const detail = useMemo(() => (data ? adaptDetail(data.data) : null), [data]);
-  return { detail, loading, error };
+  return { detail, loading, error, refresh };
 }

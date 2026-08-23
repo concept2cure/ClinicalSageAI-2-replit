@@ -1,6 +1,6 @@
 (() => {
 /* Labeling / IFU — surface (AnA-first → data → coverage dashboard) + shared rail. */
-const { useState, useRef } = React;
+var { useState, useRef } = React;
 const Icon = ({ d }) => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{typeof d==='string'?<path d={d}/>:d}</svg>);
 const I = {
   tag:     <Icon d={<><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>}/>,

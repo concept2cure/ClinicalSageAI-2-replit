@@ -190,6 +190,14 @@ export interface ToolContext {
   projectType?: string | null;
   /** Active document / CTD type (e.g. 'nonclinical_overview', 'qos') — situational context. */
   documentType?: string | null;
+  /**
+   * True when the turn runs under Live Drive (services/ana-ri/live-drive):
+   * navigate_to directives are applied to the subscriber's screen as they
+   * stream, so the handler's instruction to the model must say "you are
+   * taking them there" instead of "you can offer to". Never grants any tool
+   * additional authority — it only changes the narration contract.
+   */
+  liveDrive?: boolean | null;
 }
 
 type ToolHandler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
@@ -571,7 +579,7 @@ registerToolHandler('recall_rim_patterns', async (input, ctx) => {
 
   try {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const patterns = getPatterns({ orgId: ctx.organizationId, domain });
+    const patterns = await getPatterns({ orgId: ctx.organizationId, domain });
     return JSON.stringify({
       source: 'RIM Pattern Store',
       pedigree: 'deterministic_query',
@@ -612,7 +620,7 @@ registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string,
     const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
     const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
 
-    const patterns = getPatterns({ orgId, domain })
+    const patterns = (await getPatterns({ orgId, domain }))
       .filter((p) => p.confidence >= minConfidence && p.occurrences >= minOccurrences)
       .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence);
 
@@ -638,7 +646,7 @@ registerToolHandler('summarize_rim_intelligence', async (_input: Record<string, 
       throw new Error('summarize_rim_intelligence requires tenant context (organizationId).');
     }
 
-    const patterns = getPatterns({ orgId });
+    const patterns = await getPatterns({ orgId });
     if (patterns.length === 0) {
       return {
         source: 'RIM Pattern Store',
@@ -16105,7 +16113,7 @@ registerToolHandler('list_app_screens', async (input: Record<string, unknown>) =
 // AnA self-navigation — validate a target against the governed registry and
 // produce the navigation directive the chat client applies. Refuses unknown
 // targets / invalid params rather than emitting a broken jump.
-registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
+registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   try {
     const target = typeof input.target === 'string' ? input.target.trim() : '';
     if (!target) {
@@ -16124,8 +16132,12 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
     return JSON.stringify({
       status: 'navigation_ready',
       directive: res.directive,
-      instruction:
-        'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
+      // The instruction must match what actually happens on screen: under Live
+      // Drive the directive is applied as it streams (the user opted in and is
+      // watching); otherwise it is offered as a chip the user activates.
+      instruction: ctx?.liveDrive
+        ? 'Live Drive is on: this navigation is being applied to the user’s screen now — they are watching you drive. Narrate where you have taken them and why, then continue the work there. Project-scoped screens require an active project.'
+        : 'A navigation directive was produced and is OFFERED to the user as an action they activate — the screen does not change on its own. Say where you can take them and why, not that you have taken them. Project-scoped screens require an active project.',
     });
   } catch (err: any) {
     return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
@@ -18272,6 +18284,22 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
   if (!title) return JSON.stringify({ error: 'title (string) is required.' });
   if (!content) return JSON.stringify({ error: 'content (string) is required.' });
   if (!reason) return JSON.stringify({ error: 'reason (min 8 characters) is required — governed action.' });
+  /* concept2cure_artifacts.project_id is integer NOT NULL — the INSERT below
+     omitted it, so this tool failed on EVERY real call while its contract test
+     (mocked pool) stayed green. The explicit "AnA, file this" path must file
+     under a project or say plainly that it cannot; a vault document belonging
+     to no project is exactly the orphaned capture this platform must not
+     produce. */
+  const projectId =
+    typeof ctx.projectId === 'number' && Number.isFinite(ctx.projectId) && ctx.projectId > 0
+      ? ctx.projectId
+      : null;
+  if (!projectId) {
+    return JSON.stringify({
+      error:
+        'save_document_to_vault needs an open project — every vault document is filed under one. Open or select a project, then ask again.',
+    });
+  }
   try {
     const { getPool } = await import('../../db.js');
     const { createHash, randomUUID } = await import('crypto');
@@ -18287,12 +18315,12 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
       await setTenantContextTx(client, ctx.organizationId);
       const ins = await client.query<{ id: number }>(
         `INSERT INTO concept2cure_artifacts (
-           artifact_id, organization_id, type, category, title, content, content_hash,
+           artifact_id, organization_id, project_id, type, category, title, content, content_hash,
            ctd_section, status, version, created_by_id, metadata
-         ) VALUES ($1, $2, 'document', $3, $4, $5, $6, $7, 'draft', 1, $8,
-           jsonb_build_object('source', 'ana_tool', 'reason', $9::text))
+         ) VALUES ($1, $2, $3, 'document', $4, $5, $6, $7, $8, 'draft', 1, $9,
+           jsonb_build_object('source', 'ana_tool', 'reason', $10::text))
          RETURNING id`,
-        [externalId, ctx.organizationId, category, title, content, hash, ctd, ctx.userId, reason],
+        [externalId, ctx.organizationId, projectId, category, title, content, hash, ctd, ctx.userId, reason],
       );
       await client.query(
         `INSERT INTO concept2cure_artifact_versions

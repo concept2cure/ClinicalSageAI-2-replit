@@ -99,6 +99,7 @@ export const RAIL_CORE = [
 ];
 /** Specialist science apps promoted to the rail (also in the Apps catalog) */
 export const RAIL_SPECIALIST = [
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
   { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
 ];
@@ -146,7 +147,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'haq-manager',
   'global-ri',
   'safety-narrative',
-  'cmc',
   'labeling',
   'risk',
   'design-controls',
@@ -191,31 +191,29 @@ export const SEGMENTS = [
     ana: 'IVD & companion diagnostics — IVDR classification, analytical & clinical performance, CDx co-development.',
   },
   {
-    id: 'biotech',
-    label: 'Biotech',
+    /* BP-W2-1 (decision: MERGE). 'biotech' and 'pharma' were two navigation
+       entries over one experience — SEGMENT_MODULES held the same 57 surfaces
+       in both, differing only by an accidental ordering swap. The company
+       label was the wrong axis: review centre, pathway, fee programme and CMC
+       core are functions of MODALITY (shared/regulatory/modality.ts, BP-W2-2),
+       which now lives on the program. The retired ids keep resolving via
+       SEGMENT_ALIASES below. */
+    id: 'biopharma',
+    label: 'Biotech & Pharma',
     primary: true,
     icon: 'atom',
-    pathways: ['IND', 'BLA', 'MAA', 'J-NDA'],
+    pathways: ['IND', 'NDA', 'BLA', 'MAA', 'J-NDA', 'Lifecycle'],
     defaultSurface: 'ind-checklist',
-    focus: ['ind-checklist', 'cmc', 'document-authoring', 'pdev', 'biostatistics'],
-    ana: 'Biologics IND→BLA, CTD assembly, comparability & immunogenicity.',
-  },
-  {
-    id: 'pharma',
-    label: 'Pharma',
-    primary: true,
-    icon: 'beaker',
-    pathways: ['IND', 'NDA', 'MAA', 'J-NDA', 'Lifecycle'],
-    defaultSurface: 'nda-cockpit',
     focus: [
-      'nda-cockpit',
       'ind-checklist',
+      'nda-cockpit',
       'cmc',
       'document-authoring',
+      'pdev',
       'biostatistics',
       'safety-narrative',
     ],
-    ana: 'Small-molecule IND→NDA/MAA, pediatric plans.',
+    ana: 'Small-molecule and biologic programs, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
   },
   {
     id: 'cro',
@@ -284,7 +282,15 @@ export const SEGMENTS = [
   },
 ];
 export const PRIMARY_SEGMENTS = SEGMENTS.filter((s) => s.primary);
-export const getSegment = (id: string) => SEGMENTS.find((s) => s.id === id);
+/** BP-W2-1: the retired lane ids keep resolving — stored prefs, bookmarks and
+ *  deep links carrying 'biotech' or 'pharma' land on the merged lane instead
+ *  of silently falling back to the first segment. */
+export const SEGMENT_ALIASES: Record<string, string> = {
+  biotech: 'biopharma',
+  pharma: 'biopharma',
+};
+export const resolveSegmentId = (id: string) => SEGMENT_ALIASES[id] ?? id;
+export const getSegment = (id: string) => SEGMENTS.find((s) => s.id === resolveSegmentId(id));
 
 /**
  * Client-category selector at the top of the rail — the client-type axis of the
@@ -299,9 +305,8 @@ export const getSegment = (id: string) => SEGMENTS.find((s) => s.id === id);
  */
 const RAIL_CATEGORY_META: Record<string, { label: string; icon: string }> = {
   medtech: { label: 'Medical Device & IVD', icon: 'stethoscope' },
-  biotech: { label: 'Biotech', icon: 'atom' },
+  biopharma: { label: 'Biotech & Pharma', icon: 'atom' },
   diagnostics: { label: 'Diagnostics', icon: 'microscope' },
-  pharma: { label: 'Pharma', icon: 'beaker' },
   cro: { label: 'CRO / Research', icon: 'network' },
   health: { label: 'Health Systems', icon: 'building' },
 };
@@ -328,26 +333,67 @@ export const READINESS_META = {
   },
   planned: { label: 'Planned', tone: 'idle', blurb: 'Routes exist; surface not yet prioritized.' },
 };
-/** Entitlements sample: module ids this org is NOT licensed for (fixture until /api/module-subscriptions wiring in Phase 6; rail shows lock + upgrade CTA, never a dead button) */
-export const LICENSE_UNLICENSED: string[] = ['labeling', 'risk', 'pdev'];
-export const isLicensed = (id: string) => !LICENSE_UNLICENSED.includes(id);
+/* Entitlements are NOT declared here.
+ *
+ * This slot used to hold `LICENSE_UNLICENSED = ['labeling', 'risk', 'pdev']`
+ * and an `isLicensed()` built from it — three module ids named in client
+ * source, applied identically to every tenant, under a comment promising real
+ * wiring "in Phase 6". Nothing ever called `isLicensed`, so the fixture gated
+ * nothing while making the file look like it carried a tenant's licence state.
+ *
+ * The real answer is per-organization and lives on the server:
+ *   server/services/entitlements/navigation-entitlements.ts
+ *   GET /api/module-subscriptions/navigation
+ *   client/src/concept2cure/v2/navEntitlements.tsx (the rail's consumer)
+ *
+ * Per this file's own header rule — "nothing in this file may describe a
+ * particular organization's programmes" — a licence verdict may never come
+ * back here.
+ */
 
 /** AnA modes (intent → engine label, resolved server-side; no vendor names on screen) */
-export const ANA_MODES = [
-  { id: 'standard', label: 'Standard', model: 'Balanced', desc: 'Chat, reasoning, quick answers' },
+/**
+ * The modes the composer offers, each carrying the effort it actually buys.
+ *
+ * `effort` is not decoration. It is sent as `effort_level` and decides how many
+ * agentic rounds AnA gets — `fast` 4, `balanced` 6+2, `thorough` 10+4 — plus her
+ * output budget and model tier. Before it existed the picker was inert: the mode
+ * was stored, shown next to the send button as "Ask · Maximum", and never
+ * reached the request, so a reviewer choosing Deep research for a regulatory
+ * question silently got the server default instead of the 14 rounds the label
+ * promised — and Quick ask cost more than it claimed rather than less.
+ *
+ * Keep every entry's `effort` set: a mode without one falls back to the
+ * server default, which is the defect this field exists to end.
+ */
+export const ANA_MODES: Array<{
+  id: string;
+  label: string;
+  model: string;
+  desc: string;
+  effort: 'fast' | 'balanced' | 'thorough';
+}> = [
+  { id: 'standard', label: 'Standard', model: 'Balanced', desc: 'Chat, reasoning, quick answers', effort: 'balanced' },
   {
     id: 'deep-research',
     label: 'Deep research',
     model: 'Maximum',
     desc: 'Drafting, multi-step analysis, long-form',
+    effort: 'thorough',
   },
   {
     id: 'quick-ask',
     label: 'Quick ask',
     model: 'Instant',
     desc: 'Autocomplete, inline, classification',
+    effort: 'fast',
   },
 ];
+
+/** The effort a mode id buys, or null when the id is unknown. */
+export function effortForMode(modeId: string): 'fast' | 'balanced' | 'thorough' | null {
+  return ANA_MODES.find((m) => m.id === modeId)?.effort ?? null;
+}
 /** Governed AI actions (POST /api/ai-actions/execute); governed:true requires the §11.50 e-sign gate */
 export const AI_ACTIONS = [
   {
@@ -551,7 +597,10 @@ export const SEGMENT_MODULES = {
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
-  biotech: [
+  /* BP-W2-1 (merge): one list. `pharma` was byte-identical apart from an
+     accidental ordering swap (labeling-pi moved from position 10 to 7);
+     deleting the duplicate removes the divergence as a side effect. */
+  biopharma: [
     { label: 'Program journey', items: ['program-journey'] },
     {
       label: 'Author & assemble',
@@ -566,89 +615,6 @@ export const SEGMENT_MODULES = {
         'nonclinical',
         'csr-workflow',
         'labeling-pi',
-        'doc-journey',
-        'ectd-coauthor',
-        'ectd-compile',
-        'template-library',
-      ],
-    },
-    {
-      label: 'Evidence & data',
-      items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage', 'insights'],
-    },
-    {
-      label: 'Applications & filing',
-      items: [
-        'filings-catalog',
-        'nda-cockpit',
-        'maa-cockpit',
-        'ind-checklist',
-        'submission-center',
-        'communication-center',
-        'pyramid',
-        'dossier-map',
-        'pdev',
-        'haq-manager',
-      ],
-    },
-    {
-      label: 'Review & govern',
-      items: [
-        'orchestration',
-        'review',
-        'shadow-review',
-        'dispatch-readiness',
-        'tasks',
-        'agency-meetings',
-        'audit-trail',
-        'quality',
-      ],
-    },
-    {
-      label: 'Science & intelligence',
-      items: [
-        'biostatistics',
-        'biostat-workbench',
-        'rbm',
-        'clinical-ops',
-        'safety-narrative',
-        'pharmacovigilance',
-        'pv-cockpit',
-        'precedent-intelligence',
-        'crl-library',
-        'global-ri',
-        'intelligence-catalog',
-        'deep-research',
-      ],
-    },
-    {
-      label: 'Lifecycle & access',
-      items: [
-        'lifecycle-mgmt',
-        'pediatric',
-        'orphan',
-        'registrations',
-        'market-access',
-        'change-assessment',
-        'reg-change',
-      ],
-    },
-  ],
-  pharma: [
-    { label: 'Program journey', items: ['program-journey'] },
-    {
-      label: 'Author & assemble',
-      items: [
-        'authoring-engine',
-        'batch-draft',
-        'inconsistency',
-        'source-tracer',
-        'dossier',
-        'document-authoring',
-        'labeling-pi',
-        'cmc',
-        'nonclinical',
-        'csr-workflow',
         'doc-journey',
         'ectd-coauthor',
         'ectd-compile',
@@ -785,7 +751,7 @@ export const SEGMENT_MODULES = {
  * identical for every tenant, and the actions are prompt text.
  */
 export const ANA_COAUTHOR_BY_SEG = {
-  biotech: {
+  biopharma: {
     section: '2.5 Clinical Overview',
     actions: [
       {
@@ -817,6 +783,14 @@ export const ANA_COAUTHOR_BY_SEG = {
         label: 'Compare to approved version',
         icon: 'gitBranch',
         prompt: 'Compare the current §2.5 draft to the last approved version and summarize the deltas.',
+      },
+      /* Folded in from the retired pharma lane — the one hero action it had
+         that the biotech set did not (BP-W2-1). */
+      {
+        id: 'label',
+        label: 'Draft USPI label',
+        icon: 'fileText',
+        prompt: 'Draft the USPI per PLLR / 21 CFR 201.57 from the clinical summary.',
       },
     ],
   },
@@ -875,35 +849,6 @@ export const ANA_COAUTHOR_BY_SEG = {
         label: 'Compare to precedent',
         icon: 'gitBranch',
         prompt: 'Compare this performance dossier to the two IVDR precedents.',
-      },
-    ],
-  },
-  pharma: {
-    section: '2.7.1 Biopharmaceutic Summary',
-    actions: [
-      {
-        id: 'label',
-        label: 'Draft USPI label',
-        icon: 'fileText',
-        prompt: 'Draft the USPI per PLLR / 21 CFR 201.57 from the clinical summary.',
-      },
-      {
-        id: 'harmonize',
-        label: 'Harmonize with ISS',
-        icon: 'gitCompare',
-        prompt: 'Harmonize the biopharmaceutic summary with the ISS/ISE.',
-      },
-      {
-        id: 'explain',
-        label: 'Explain PLLR gap',
-        icon: 'alertTriangle',
-        prompt: 'Explain the PLLR labeling gap and what is needed to close it.',
-      },
-      {
-        id: 'compare',
-        label: 'Compare to approved label',
-        icon: 'gitBranch',
-        prompt: 'Compare the draft USPI to the approved reference label.',
       },
     ],
   },
@@ -966,9 +911,9 @@ export const ANA_COAUTHOR_BY_SEG = {
     ],
   },
 };
-export const ANA_COAUTHOR = ANA_COAUTHOR_BY_SEG.biotech;
+export const ANA_COAUTHOR = ANA_COAUTHOR_BY_SEG.biopharma;
 export const getCoauthor = (segment: string) =>
-  (ANA_COAUTHOR_BY_SEG as Record<string, typeof ANA_COAUTHOR>)[segment] ?? ANA_COAUTHOR;
+  (ANA_COAUTHOR_BY_SEG as Record<string, typeof ANA_COAUTHOR>)[resolveSegmentId(segment)] ?? ANA_COAUTHOR;
 
 /**
  * Per-client-category REFERENCE CONFIG: the category label, its regulatory
@@ -1002,16 +947,18 @@ export const SEGMENT_CONTEXT = {
       { id: 'cer', label: 'CER generator', icon: 'microscope', surface: 'device-cer' },
     ],
   },
-  biotech: {
-    label: 'Biotech',
-    tagline: 'IND · BLA · MAA · J-NDA',
-    pathways: ['IND', 'BLA', 'MAA', 'J-NDA'],
-    ana: 'Biologics IND→BLA. CTD assembly, comparability & immunogenicity.',
+  biopharma: {
+    label: 'Biotech & Pharma',
+    tagline: 'IND · NDA · BLA · MAA · Lifecycle',
+    pathways: ['IND', 'NDA', '505(b)(2)', 'BLA', 'MAA', 'J-NDA', 'Lifecycle'],
+    ana: 'Small-molecule and biologic programs, IND through NDA/BLA and lifecycle; modality sets centre, pathway and CMC frame.',
     actions: [
       { id: 'journey', label: 'Program journey', icon: 'workflow', surface: 'program-journey' },
       { id: 'author', label: 'Draft Clinical Overview', icon: 'penLine', surface: 'document-authoring' },
       { id: 'cmc', label: 'CMC Module 3', icon: 'beaker', surface: 'cmc' },
-      { id: 'submit', label: 'BLA readiness', icon: 'rocket', surface: 'submission-center' },
+      /* 'BLA readiness' assumed the biologic; the merged lane says what the
+         control is, and the pathway comes from the program's modality. */
+      { id: 'submit', label: 'Submission readiness', icon: 'rocket', surface: 'submission-center' },
     ],
   },
   diagnostics: {
@@ -1024,18 +971,6 @@ export const SEGMENT_CONTEXT = {
       { id: 'gspr', label: 'IVDR GSPR checklist', icon: 'fileCheck', surface: 'device-cer' },
       { id: 'evidence', label: 'Analytical validation', icon: 'search', surface: 'evidence-search' },
       { id: 'predicate', label: 'Precedent search', icon: 'scale', surface: 'precedent-intelligence' },
-    ],
-  },
-  pharma: {
-    label: 'Pharma',
-    tagline: 'IND · NDA · 505(b)(2) · MAA · Lifecycle',
-    pathways: ['IND', 'NDA', '505(b)(2)', 'MAA', 'Lifecycle'],
-    ana: 'Small-molecule IND→NDA/MAA. ISS/ISE, labeling (PLLR), pediatric plans.',
-    actions: [
-      { id: 'journey', label: 'Program journey', icon: 'workflow', surface: 'program-journey' },
-      { id: 'author', label: 'Author with AnA Engine', icon: 'sparkles', surface: 'authoring-engine' },
-      { id: 'submit', label: 'NDA readiness', icon: 'rocket', surface: 'nda-cockpit' },
-      { id: 'label', label: 'Draft USPI label', icon: 'fileText', surface: 'labeling-pi' },
     ],
   },
   cro: {
@@ -1064,9 +999,11 @@ export const SEGMENT_CONTEXT = {
   },
 };
 export const getSegmentContext = (id: string) =>
-  (SEGMENT_CONTEXT as Record<string, (typeof SEGMENT_CONTEXT)['biotech']>)[id] ?? SEGMENT_CONTEXT.biotech;
+  (SEGMENT_CONTEXT as Record<string, (typeof SEGMENT_CONTEXT)['biopharma']>)[resolveSegmentId(id)] ??
+  SEGMENT_CONTEXT.biopharma;
 export const getSegmentModules = (id: string) =>
-  (SEGMENT_MODULES as Record<string, (typeof SEGMENT_MODULES)['biotech']>)[id] ?? SEGMENT_MODULES.biotech;
+  (SEGMENT_MODULES as Record<string, (typeof SEGMENT_MODULES)['biopharma']>)[resolveSegmentId(id)] ??
+  SEGMENT_MODULES.biopharma;
 
 /** Per-surface AnA context (here · focus · actions · suggestions); absent ids
  * derive from registry meta. Imported above from the companion module and
@@ -1103,6 +1040,24 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   // resolves to the kit's entry surface rather than silently falling through to
   // home. `pdev` needs no alias — it is a real registered surface id now.
   mdx: 'device-workstream',
+  /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
+     the precondition for AnA Live Drive): these ten registry ids are what AnA
+     navigates by — `navigate_to` refuses everything else — but they predate
+     the v2 surface ids, so without an alias each one landed on the
+     KitSurfaceScaffold fallback: AnA saying "taking you to Intelligence" and
+     the person arriving at a scaffold. Each maps to the surface that IS that
+     capability today. Guarded by __tests__/navigationReachability.test.ts,
+     which fails the moment a registry id and this table drift apart again. */
+  biopharma: 'program-journey',
+  documents: 'vault',
+  submissions: 'submission-center',
+  'section-workspace': 'document-authoring',
+  'review-readiness': 'review',
+  tasking: 'tasks',
+  'submission-gateway': 'gateway-transmittals',
+  intelligence: 'global-ri',
+  authoring: 'document-authoring',
+  safety: 'pv-cockpit',
 };
 
 /** Registry meta lookup with the kit's fallback shape. */
@@ -1155,7 +1110,7 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   'submission-center': ['Validate the OR-902 package', 'What gates transmit?', 'Compare ESG vs eSTAR export'],
   'document-authoring': ['Draft §2.5 from the predicate', 'Check claims against evidence', 'Rewrite for FDA tone'],
   projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
-  vault: ['Find the latest biocompat report', 'Surface unsigned documents', 'Search by SHA-256'],
+  vault: ['Find the latest biocompat report', 'What is still unfiled in the cabinet?', 'Search by SHA-256'],
   tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
   'crl-library': [
     'Findings on this endpoint class',

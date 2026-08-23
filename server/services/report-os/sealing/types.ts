@@ -28,6 +28,15 @@ export interface ProvenanceAtom {
  */
 export interface SealedRecord {
   algorithm: 'sha256';
+  /**
+   * Which canonicalization produced `contentHash` — see
+   * `shared/versioned-digest.ts`. Absent on records sealed before the field
+   * existed; those verify under version 1, which is what makes this a
+   * compatibility marker rather than a breaking change. `algorithm` records the
+   * hash function and never recorded the serializer that fed it, which is the
+   * gap ledger L46 is about.
+   */
+  canonVersion?: 1 | 2;
   /** Hex-encoded SHA-256 of the canonicalized report. */
   contentHash: string;
   atoms: ProvenanceAtom[];

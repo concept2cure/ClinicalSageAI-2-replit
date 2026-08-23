@@ -175,6 +175,15 @@ async function startServer() {
   {
     const { runStartupInvariants } = await import('./lib/startup-invariants');
     const invariantReport = await runStartupInvariants();
+
+    // AnA's verdict gets its own banner, immediately, before any of the
+    // remaining startup noise. The invariant panel already recorded it — but
+    // the whole reason AnA was once found completely dead on a "healthy" boot
+    // is that her failure looked exactly like every other log line. It does
+    // not any more. See startup/ana-readiness-state.ts.
+    const { logAnaReadinessBanner } = await import('./startup/ana-readiness-state');
+    logAnaReadinessBanner();
+
     if (
       invariantReport.criticalFailures > 0 &&
       process.env.STRICT_STARTUP_INVARIANTS === 'true'

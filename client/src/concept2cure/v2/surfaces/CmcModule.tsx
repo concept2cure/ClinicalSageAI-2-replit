@@ -58,6 +58,7 @@ import {
   cmcWriteFailed,
   cmcWriteThrew,
 } from './cmcShared';
+import { openProgramAction } from '../programAction';
 import { C2CToast, useToast } from '../toast';
 import { useAuth } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
@@ -223,7 +224,7 @@ const CMC_MARKETS: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda'
    what actually happens. */
 function signForm(target: string): C2CFormConfig {
   return {
-    eyebrow: '21 CFR §11.50 -- e-signature', title: 'Sign to approve', sub: target, submitLabel: 'Sign & approve',
+    eyebrow: '21 CFR §11.50 — e-signature', title: 'Sign to approve', sub: target, submitLabel: 'Sign & approve',
     governed: 'Your credentials are verified before this is written, and the signature, its meaning and your reason are recorded to the hash-chained audit trail against your account.',
     fields: [
       /* The values are the tokens the approve endpoints record, not display
@@ -258,18 +259,24 @@ function CmConnectBar({ nav }: { nav?: (id: string) => void }) {
       <button onClick={() => cmcNav(nav, 'document-authoring')}>{I.penLine} Document editor</button>
       <button onClick={() => cmcNav(nav, 'vault')}>{I.vault} Vault</button>
       <button onClick={() => cmcNav(nav, 'projects')}>{I.folder} Project</button>
-      <button onClick={() => cmcTask('CMC -- Module 3')}>{I.checkSquare} Tasking</button>
-      <button onClick={() => cmcCollab('CMC -- Module 3')}>{I.messageSquare} Collaborate</button>
+      <button onClick={() => cmcTask('CMC — Module 3')}>{I.checkSquare} Tasking</button>
+      <button onClick={() => cmcCollab('CMC — Module 3')}>{I.messageSquare} Collaborate</button>
     </div>
   );
 }
 
+/* "Open in", not "Push to": these buttons navigate with context — they write
+   nothing. The data itself flows without them: every register save
+   write-throughs to the canonical §3.2 source layer, and each compile files a
+   governed artifact the Vault's "Module 3 (CMC)" branch lists. A button
+   claiming to "save to Vault" while saving nothing was the dishonest copy the
+   relabel removes. */
 function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void; bar?: boolean }) {
   return (
     <span className={bar ? 'cm-push cm-pushbar' : 'cm-push'}>
-      <span className="lbl">Push to</span>
-      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Push into Module 3 documentation">{I.gitBranch} Module 3 doc</button>
-      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Save to Vault">{I.vault} Vault</button>
+      <span className="lbl">Open in</span>
+      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Open the Module 3 dossier with this in context">{I.gitBranch} Module 3 doc</button>
+      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Open the Vault — compiled §3.2 artifacts are filed there automatically">{I.vault} Vault</button>
       <button onClick={() => cmcTask(label)} title="Create a task">{I.checkSquare} Task</button>
       <button onClick={() => cmcCollab(label)} title="Collaborate">{I.messageSquare} Discuss</button>
     </span>
@@ -287,7 +294,7 @@ function CmHead({ title, meta, ask, suggest, actions }: CmHeadProps) {
   return (
     <>
       <div className="cm-head">
-        <div><div className="cm-kicker">CMC -- Module 3 operating system</div><h1 className="cm-title">{title}</h1><div className="cm-meta">{meta}</div></div>
+        <div><div className="cm-kicker">CMC — Module 3 operating system</div><h1 className="cm-title">{title}</h1><div className="cm-meta">{meta}</div></div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>{actions}{ask && <button className="reg-cta" onClick={() => ask((suggest && suggest[0]) || 'Help me with Module 3')}>{I.sparkles} Ask AnA</button>}</div>
       </div>
       {suggest && <div className="sp-starters" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>{suggest.map((s, i) => (<button key={i} className="sp-starter" onClick={() => ask && ask(s)}><span className="sk">{I.sparkles}</span><span>{s}</span></button>))}</div>}
@@ -350,8 +357,9 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   // backend blocks on unresolved critical contradictions (409), snapshots a new
   // approved version, sets approval_state, and writes a cmc_provenance_events
   // audit entry keyed to the authenticated user. The reason + reauth captured by
-  // the sign form are forwarded (the endpoint records the reason; server-side
-  // re-auth verification is the documented follow-up — see the wiring roadmap).
+  // the sign form are forwarded, and the server VERIFIES the re-auth before any
+  // write (verifyReauth, module3OperatingSystemRoutes.ts — fail closed, same as
+  // spec-approve and batch-release).
   // Only reflects approval on a real 2xx; nothing is fabricated on failure.
   const doSign = async (v: Record<string, string>) => {
     if (!sign) return;
@@ -454,13 +462,13 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
               ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}). {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
-                : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move -- clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
+                : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move — clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
       /* "You're building steadily" is a claim about work in progress, so it
          requires evidence that work is in progress. mayReassure gates it on the
          assessed-clear state and on a non-zero readiness percentage; every
          other state renders no reassurance rather than a softened one. */
       reassure={irOverdue
-        ? "Answer the IRs first -- they're time-boxed. I'll draft the responses and route the sign-offs with you."
+        ? "Answer the IRs first — they're time-boxed. I'll draft the responses and route the sign-offs with you."
         : mayReassure(cmcState, readyPct)
           ? "You're building steadily. I'll help you move the next section to approved."
           : undefined}
@@ -474,7 +482,7 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   );
   return (
     <div className="cm-body">
-      <CmHead title="Module 3 overview" meta={`${port.length} submissions -- RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
+      <CmHead title="Module 3 overview" meta={`${port.length} submissions — RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
       {board.loading ? (
         <EmptyState icon={I.beaker} title="Loading the Module 3 board…" busy testId="cmc-board-loading" />
       ) : board.error ? (
@@ -497,7 +505,7 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
               are reference material, and reference material does not go
               above the thing you came here to do. */}
           <div className="pj-card">
-            <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed -- 21 CFR §11</span></div>
+            <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed — 21 CFR §11</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {liveSections === null ? (
                 <div style={{ padding: 12 }}>
@@ -599,7 +607,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   const [toast, fireToast] = useToast();
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : s === 'reject' ? 'err' : 'dim';
   const FORM = (row: CmcSpecRow | null): C2CFormConfig => ({
-    eyebrow: 'CMC -- 3.2.S.4.1', title: row ? 'Edit specification' : 'New specification', sub: 'Release and shelf-life limits for a drug substance or drug product',
+    eyebrow: 'CMC — 3.2.S.4.1', title: row ? 'Edit specification' : 'New specification', sub: 'Release and shelf-life limits for a drug substance or drug product',
     submitLabel: row ? 'Save changes' : 'Create specification', fields: [
       { key: 'attr', label: 'Quality attribute', type: 'text', required: true, default: row ? row.attr : '', placeholder: 'e.g. Charge variants' },
       { key: 'material', label: 'Material', type: 'select', options: ['Drug substance', 'Drug product'], required: true, default: row ? row.material : 'Drug substance', half: true },
@@ -672,7 +680,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
   const noMethodCount = rows.filter((r) => r.noMethod).length;
   return (
     <div className="cm-body">
-      <CmHead title="Specifications" meta="Release and shelf-life limits -- drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
+      <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
         actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a program to record specifications' : ''}>{I.plus} New specification</button>} />
       {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
       <div className="pj-card">
@@ -1087,7 +1095,7 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     <div className="cm-body">
       <CmHead
         title="Stability program"
-        meta="ICH Q1A(R2) / Q1E -- long-term, intermediate, accelerated and stress studies"
+        meta="ICH Q1A(R2) / Q1E — long-term, intermediate, accelerated and stress studies"
         ask={ask}
         suggest={CMC_SUGGEST.stability}
         actions={<button className="nda-open" onClick={() => setRegistering(true)}>{I.plus} Register study</button>}
@@ -1115,7 +1123,21 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         </div>
       )}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Stability register</span><span className="s">{rows.length} studies -- ICH Q1A(R2)</span></div>
+        <div className="pj-card-h">
+          <span className="t">Stability register</span>
+          {/* The register table carries no project column — it is the
+              ORGANIZATION's study register by design, while §3.2.S.7/P.8
+              compose from the project-scoped canonical layer the write-through
+              feeds. Say which scope this list is, so this tab and the build
+              tab cannot appear to disagree about what "this project's
+              stability" contains. */}
+          <span className="s">
+            {rows.length} studies — ICH Q1A(R2) · organization-wide register
+            {projectId
+              ? ' — new results are linked to the open program'
+              : ' — open a program to link new results to its Module 3'}
+          </span>
+        </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
@@ -1569,7 +1591,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
       {/* Batch records are the process as run; process validation is the
           evidence that the process is capable of running that way. */}
       <CmProcessValidation />
-      {form && <C2CForm config={{ eyebrow: 'Batch -- new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this program', submitLabel: 'Log batch', fields: [
+      {form && <C2CForm config={{ eyebrow: 'Batch — new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this program', submitLabel: 'Log batch', fields: [
         { key: 'id', label: 'Batch number', type: 'text', placeholder: 'e.g. BX204-DP-2407', required: true },
         { key: 'stage', label: 'Stage', type: 'select', options: ['Drug substance', 'Drug product'], required: true, half: true },
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
@@ -1662,7 +1684,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
 
   return (
     <div className="cm-body">
-      <CmHead title="Change control" meta="Model a CMC change -> filing path across markets -- SUPAC / ICH Q12" ask={ask} suggest={CMC_SUGGEST.change} />
+      <CmHead title="Change control" meta="Model a CMC change -> filing path across markets — SUPAC / ICH Q12" ask={ask} suggest={CMC_SUGGEST.change} />
       <div className="pj-card">
         <div className="pj-card-b">
           <div className="de-field"><label className="de-label">Change type</label>
@@ -1688,7 +1710,7 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
         <div className="cm-change-out">
           <div className="cm-doc">
             <div className="cm-doc-bar">
-              <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC -- ICH Q12 -- draft</span></div>
+              <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC — ICH Q12 — draft</span></div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="bs-da" onClick={() => ask('Refine the change-control assessment and draft the comparability protocol for: ' + result.desc)}>{I.sparkles} Refine with AnA</button>
                 <button className="bs-da primary" onClick={() => void openEditor(result)} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
@@ -1726,7 +1748,7 @@ function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
     <div className="cm-body">
       <CmHead
         title="Substance & product"
-        meta="CTD §3.2.S / §3.2.P -- the active substance and the finished product, their manufacture and control"
+        meta="CTD §3.2.S / §3.2.P — the active substance and the finished product, their manufacture and control"
         ask={ask}
         suggest={CMC_SUGGEST.materials}
       />
@@ -1942,7 +1964,9 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
             <EmptyState
               icon={I.scroll}
               title="Open a program to see its records"
-              hint="The Module 3 audit chain and the contradiction history are recorded per project. Select a program to load them."
+              hint="The Module 3 audit chain and the contradiction history are recorded per project."
+              action={openProgramAction(nav)}
+              regulation="Serves the per-program audit history (21 CFR Part 11 §11.10(e))"
             />
           </div>
         </div>

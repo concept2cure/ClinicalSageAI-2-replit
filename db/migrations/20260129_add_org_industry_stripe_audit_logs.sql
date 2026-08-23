@@ -25,7 +25,11 @@ ALTER TABLE audit_logs
 -- Backfill core columns if audit_logs exists with a reduced schema
 ALTER TABLE audit_logs
   ADD COLUMN IF NOT EXISTS table_name TEXT,
-  ADD COLUMN IF NOT EXISTS record_id TEXT;
+  ADD COLUMN IF NOT EXISTS record_id TEXT,
+  ADD COLUMN IF NOT EXISTS old_values JSONB,
+  ADD COLUMN IF NOT EXISTS new_values JSONB,
+  ADD COLUMN IF NOT EXISTS sha256_chain TEXT,
+  ADD COLUMN IF NOT EXISTS hmac_seal TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_id ON audit_logs (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at);

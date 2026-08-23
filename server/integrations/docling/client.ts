@@ -1,6 +1,7 @@
 import { createScopedLogger } from '../../utils/logger';
 import type { ParsedDocument } from '../../services/documentIntelligence/contracts';
 
+import { toBinaryBody } from '../../utils/binary-body.js';
 const logger = createScopedLogger('docling-client');
 
 export class DoclingClient {
@@ -21,7 +22,7 @@ export class DoclingClient {
           'Content-Type': 'application/octet-stream',
           'X-File-Name': filename,
         },
-        body: input,
+        body: toBinaryBody(input),
         signal: controller.signal,
       });
 

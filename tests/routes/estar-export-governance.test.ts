@@ -231,6 +231,67 @@ describe('510(k) eSTAR governed export', () => {
     );
   });
 
+  it('places the export in the registry when the program HAS a C1 project anchor', async () => {
+    // Document Identity Contract slice C1 gives a uuid program a numeric
+    // `projects` row via `projects.regulatory_program_id`. Two queries now run
+    // for a program ident: the program lookup, then the anchor lookup.
+    mockResolveRows
+      .mockReturnValueOnce([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }])
+      .mockReturnValueOnce([{ id: 4242 }]);
+
+    const req = makeReq({
+      body: {
+        meta: { id: 'BX-204', ident: PROGRAM_UUID, title: 'BX-204 draft package' },
+        content: { sections: [] },
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    // The anchor exists, so this is a GOVERNED export placed against the
+    // anchored project — not the audited-unplaced degradation. Before C1 was
+    // wired in, a uuid program could never reach this branch.
+    expect(mockGovernedConsequence).toHaveBeenCalledWith(
+      expect.objectContaining({ projectId: 4242, organizationId: 2 })
+    );
+    // And it must NOT also file the "not registry-placed" audit claim.
+    expect(mockLogAction).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        details: expect.objectContaining({
+          artifactRegistry: 'unplaced_pending_document_identity_contract',
+        }),
+      })
+    );
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ governed: true, artifact_id: 'artifact_estar_1' })
+    );
+  });
+
+  it('keeps the unplaced path when the program resolves but has NO anchor', async () => {
+    // The distinction that matters: a program with no anchored project row is
+    // a fact about the data (created before C1, or intake skipped it for a
+    // stated reason), NOT a failure to try. It must degrade exactly as before.
+    mockResolveRows
+      .mockReturnValueOnce([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }])
+      .mockReturnValueOnce([]);
+
+    const req = makeReq({
+      body: {
+        meta: { id: 'BX-204', ident: PROGRAM_UUID, title: 'BX-204 draft package' },
+        content: { sections: [] },
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ governed: false, audited: true, artifact_id: null })
+    );
+  });
+
   it('assembles content server-side from authored sections with useProjectContent', async () => {
     mockLoadAuthoredSections.mockResolvedValueOnce([
       { title: 'Device Description', content: 'A continuous glucose monitor.' },

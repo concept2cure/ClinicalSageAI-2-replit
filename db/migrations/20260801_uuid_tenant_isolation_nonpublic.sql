@@ -40,6 +40,22 @@
 -- (org_id / organization_id / tenant_id) and because the exemptions are
 -- deliberate, not accidental.
 --
+-- THE GUC IS EXTRACTED, NOT CAST. The convention this copies wrote
+-- `current_setting('app.current_org_id')::uuid`, and that GUC is set to the
+-- EMPTY STRING on the scopes the app uses most — systemSessionVars() (the
+-- cross-tenant super-admin scope), tenantSessionVars() when `orgUuid` is null,
+-- and the reset paths in lazyRequestDbClient / withTenantConnection /
+-- poolInstrumentation. `''::uuid` raises rather than yielding NULL, so those
+-- reads died with `invalid input syntax for type uuid: ""`.
+-- `substring(… from '<uuid pattern>')` yields NULL for '' and for any non-uuid,
+-- which the COALESCE then treats as "no tenant context" — exactly what an unset
+-- GUC already did. The expression is INLINE rather than a call to
+-- identity.current_org_id() (which carries the same guard) deliberately: that
+-- function lives in the governed-content tree, this file runs on the deploy
+-- path where that tree is not applied, and the whole design of this migration is
+-- to skip what is not provisioned rather than fail on it. Depending on another
+-- schema's function would make it fail closed on a database that never had one.
+--
 -- POLICY SHAPE — copied from the dominant existing non-public convention
 -- (cortex.*, innovation.* : `<col> = COALESCE(current_setting('app.current_org_id')
 -- ::uuid, <col>) OR <col> IS NULL`). Two properties matter and are why this shape
@@ -157,11 +173,11 @@ BEGIN
         CREATE POLICY tenant_isolation_policy ON %I.%I
           FOR ALL
           USING (
-            %I = COALESCE(NULLIF(current_setting('app.current_org_id', TRUE), '')::uuid, %I)
+            %I = COALESCE(substring(current_setting('app.current_org_id', TRUE) from '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')::uuid, %I)
             OR %I IS NULL
           )
           WITH CHECK (
-            %I = COALESCE(NULLIF(current_setting('app.current_org_id', TRUE), '')::uuid, %I)
+            %I = COALESCE(substring(current_setting('app.current_org_id', TRUE) from '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')::uuid, %I)
             OR %I IS NULL
           )
       $pol$, rec.sch, rec.tbl,

@@ -43,8 +43,17 @@ function loadManifest() {
   }
 }
 
-async function runDatabaseChecks(client) {
-  const checks = [];
+/**
+ * Live database checks.
+ *
+ * `sink` is the caller's results array. Every check is appended to it as it is
+ * produced, so a throw part-way through does not discard the checks that
+ * already succeeded — the operator still sees them, and main() can name the
+ * check that died instead of reporting a connection failure that did not
+ * happen.
+ */
+async function runDatabaseChecks(client, sink = []) {
+  const checks = sink;
 
   // Document identity convergence gate. The active workflow model expects an
   // integer-keyed unified_documents table, while the legacy ingestion writer
@@ -128,29 +137,64 @@ async function runDatabaseChecks(client) {
     checks.push(pass('optional_extension_vector', 'pgvector extension is installed.'));
   }
 
+  // Migration bookkeeping — this repository's ledgers, not drizzle's.
+  //
+  // This check used to look ONLY for `drizzle_migrations` / `schema_migrations`.
+  // Neither is ever created here: drizzle's journaled migrate() is not the
+  // provisioning path (see scripts/db/install-fresh.mjs), and the ledgers this
+  // repo actually keeps are `c2c_migration_journal` (the content-hashed applied
+  // ledger, scripts/db/migration-journal.mjs) and `_install_applied_migrations`
+  // (the installer's RLS-file ledger). So a CORRECTLY provisioned database
+  // failed this check every single time, and the "fix" told the operator to
+  // create a table nothing reads. A check that fails on the good state is not
+  // a check.
+  //
+  // c2c_migration_journal is the canonical one — it is the only ledger that
+  // records WHICH bytes were applied, so it is the only one that can detect an
+  // edited-after-apply migration. Its absence is still a FAIL. The installer
+  // ledger alone is a WARN: the database was provisioned, but nothing on it can
+  // detect drift.
+  const CANONICAL_JOURNAL = 'c2c_migration_journal';
   const migrationTableRows = (
     await client.query(`
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'public'
-        AND table_name IN ('drizzle_migrations', 'schema_migrations')
+        AND table_name IN (
+          'c2c_migration_journal',
+          '_install_applied_migrations',
+          'drizzle_migrations',
+          'schema_migrations'
+        )
+      ORDER BY table_name
     `)
-  ).rows;
+  ).rows.map(row => row.table_name);
 
   if (migrationTableRows.length === 0) {
     checks.push(
       fail(
         'migration_bookkeeping',
-        'No migration bookkeeping table found (drizzle_migrations/schema_migrations).',
-        'Create a migration table and enforce migration-only schema changes in deploy pipeline.'
+        'No migration bookkeeping table found ' +
+          '(c2c_migration_journal, _install_applied_migrations, drizzle_migrations, schema_migrations).',
+        'Provision with scripts/db/install-fresh.mjs and apply the ordered set with ' +
+          'scripts/db/apply-c2c-migrations.mjs — both write their ledgers. A database with no ' +
+          'ledger cannot tell you what has been applied to it.'
+      )
+    );
+  } else if (!migrationTableRows.includes(CANONICAL_JOURNAL)) {
+    checks.push(
+      warn(
+        'migration_bookkeeping',
+        `Migration tracking tables found: ${migrationTableRows.join(', ')} — but the canonical ` +
+          `content-hashed ledger ${CANONICAL_JOURNAL} is absent, so migration DRIFT ` +
+          '(a migration edited after it was applied) cannot be detected on this database.',
+        'Run APPLY_C2C_MIGRATIONS=true node scripts/db/apply-c2c-migrations.mjs to create and ' +
+          'populate the journal.'
       )
     );
   } else {
     checks.push(
-      pass(
-        'migration_bookkeeping',
-        `Migration tracking tables found: ${migrationTableRows.map(row => row.table_name).join(', ')}.`
-      )
+      pass('migration_bookkeeping', `Migration tracking tables found: ${migrationTableRows.join(', ')}.`)
     );
   }
 
@@ -161,7 +205,7 @@ async function runDatabaseChecks(client) {
           con.conname,
           ns.nspname AS schema_name,
           rel.relname AS table_name,
-          ARRAY_AGG(att.attname ORDER BY u.attposition) AS fk_cols
+          ARRAY_AGG(att.attname::text ORDER BY u.attposition) AS fk_cols
         FROM pg_constraint con
         JOIN pg_class rel ON rel.oid = con.conrelid
         JOIN pg_namespace ns ON ns.oid = rel.relnamespace
@@ -179,7 +223,7 @@ async function runDatabaseChecks(client) {
         JOIN pg_class rel ON rel.oid = idx.indrelid
         JOIN pg_namespace ns ON ns.oid = rel.relnamespace
         JOIN LATERAL (
-          SELECT ARRAY_AGG(att.attname ORDER BY ord.ordinality) AS idx_cols
+          SELECT ARRAY_AGG(att.attname::text ORDER BY ord.ordinality) AS idx_cols
           FROM unnest(idx.indkey) WITH ORDINALITY AS ord(attnum, ordinality)
           JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = ord.attnum
         ) ic ON true
@@ -510,17 +554,44 @@ async function main() {
     const client = new Client({ connectionString: databaseUrl, ssl });
 
     try {
-      await client.connect();
+      try {
+        await client.connect();
+      } catch (error) {
+        // A genuine connectivity failure — and the ONLY thing that may be
+        // reported as one. It used to also swallow every error thrown by the
+        // live checks below, so a defect inside a check (e.g. formatting a
+        // pg `name[]` that node-postgres hands back as a string, which made
+        // `row.fk_cols.join` throw) surfaced as "Database connection failed"
+        // with a "validate credentials/network" fix hint pointing nowhere.
+        throw Object.assign(error, { __connectFailure: true });
+      }
       checks.push(pass('db_connectivity', 'Connected to PostgreSQL instance successfully.'));
-      checks.push(...(await runDatabaseChecks(client)));
+      // Checks are appended to `checks` as they are produced, so everything
+      // completed before a throw is still reported.
+      await runDatabaseChecks(client, checks);
     } catch (error) {
-      checks.push(
-        fail(
-          'db_connectivity',
-          `Database connection failed: ${error.message}`,
-          'Validate credentials/network and rerun readiness audit.'
-        )
-      );
+      if (error.__connectFailure) {
+        checks.push(
+          fail(
+            'db_connectivity',
+            `Database connection failed: ${error.message}`,
+            'Validate credentials/network and rerun readiness audit.'
+          )
+        );
+      } else {
+        // The audit itself failed after connecting. Name the audit, not the
+        // connection, and say which check it died after — a crash mid-audit is
+        // a defect in this script, not a verdict about the database.
+        const last = checks[checks.length - 1]?.name ?? 'db_connectivity';
+        checks.push(
+          fail(
+            'live_database_checks',
+            `Readiness audit aborted after '${last}': ${error.message}`,
+            'This is a defect in scripts/db/readiness-audit.mjs, not necessarily in the database. ' +
+              'Fix the failing check and rerun; the checks reported above already completed.'
+          )
+        );
+      }
     } finally {
       await client.end().catch(() => {});
     }

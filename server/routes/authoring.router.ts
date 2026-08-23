@@ -11,7 +11,9 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { enforceOrgMembership } from '../middleware/orgMembership';
 import { getPool } from '../db';
-import auditService from '../services/auditService';
+import auditService, { writeChainedAuditRow } from '../services/auditService';
+import { isSigningAuthorized } from '../services/part11/signing-authority.js';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
 // c2c_documents is the system of record for a filing; this router is the
@@ -27,10 +29,21 @@ import {
 // (interactive save AND section create) applies the identical rule.
 // See server/services/clinical-regulatory-evidence/lineage-gate.ts.
 import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
+import {
+  computeChainHash,
+  sha256Hex,
+  verifyLedger,
+  type RevisionOrigin,
+} from '../services/authoring/revision-ledger';
+import {
+  checkSectionWritable,
+  LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
+} from '../services/authoring/document-lock';
 
 const logger = createScopedLogger('authoring-router');
 
 const router = Router();
+
 
 // REQUIRED JWT verification middleware for 21 CFR Part 11 compliance.
 //
@@ -173,7 +186,11 @@ type Queryable = { query: (text: string, params?: any[]) => Promise<any> };
  * `'APPROVED'` in upper case. A case-sensitive comparison would silently miss a
  * locked record.
  */
-const LOCKED_DOCUMENT_STATUSES = new Set(['FROZEN', 'APPROVED']);
+/* Re-exported from the canonical lock service rather than redeclared: the set
+   is also read by the write gate below and by the client's frozen affordance,
+   and three copies of "which statuses seal a record" is three chances for them
+   to disagree about a Part 11 guarantee. */
+const LOCKED_DOCUMENT_STATUSES = LOCKED_STATUSES;
 
 /**
  * Is the fine-grained per-user section-permission matrix enforced?
@@ -373,6 +390,42 @@ const requireAny = (roles: string[]) => {
 router.use('/sections/:sectionId', async (req: Request, res: Response, next: any) => {
   try {
     if (['PATCH', 'POST', 'DELETE'].includes(req.method)) {
+      /* ── Say WHICH refusal this is (MDX UAT item A4) ──────────────────────
+         `canEditSection` already refuses a FROZEN or APPROVED document — that
+         part of Part 11 §11.10(c)/(e) has been enforced here all along, on the
+         editor save, the history revert and the AnA draft accept alike (this
+         middleware is a prefix match, so all three are covered).
+
+         What it could not do is say WHY, because it returns a boolean: a
+         sealed record and a missing grant both came back as
+         403 "No edit permission for this section". Those are different facts
+         with different remedies — one is "ask an administrator", the other is
+         "this content is signed; create a new version" — and the author who
+         typed a paragraph into a frozen section was told the wrong one.
+
+         Reading the lock first names the seal in the payload. It is the same
+         query `canEditSection` runs, through the canonical helper, so the two
+         cannot drift; `canEditSection` keeps its own lock check as the
+         fail-closed backstop this middleware is documented to be.
+
+         The STATUS stays 403. A sealed record is arguably a 409, and the
+         contract test that pins this says in its own words that "the record
+         itself is what matters, not the status code" — but 403 is the answer
+         this endpoint has always given, and changing a status is a change to
+         every client that branches on it, which is not this fix's to make. The
+         distinction the UI needs travels in `error` and `message`, which
+         nothing was reading before because nothing was sent. */
+      const tenantId = authedOrgId(req);
+      if (tenantId != null && typeof req.params.sectionId === 'string') {
+        const lock = await checkSectionWritable(pool, req.params.sectionId, tenantId);
+        if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+          return res.status(403).json({
+            error: 'DOCUMENT_FROZEN',
+            message: lock.reason,
+          });
+        }
+      }
+
       const ok = await canEditSection(req, req.params.sectionId);
       if (!ok) return res.status(403).json({ error: 'No edit permission for this section' });
     }
@@ -497,6 +550,69 @@ const computeDocHash = async (
   const content = sections.rows.map(s => `${s.code}:${s.content}`).join('|||');
   return crypto.createHash('sha256').update(content).digest('hex');
 };
+
+/**
+ * 21 CFR Part 11 §11.10(g) — may this signer apply a signature at all?
+ *
+ * "Use of ... controls to ensure that persons who ... electronically sign
+ * records ... have the authority to do so." Identity is NOT authority: this
+ * router verified a PIN (§11.200 second component) and a token, and then let
+ * any authenticated member sign — including `meaning: 'APPROVER'`, which flips
+ * the document to APPROVED and inserts a frozen_documents row. A viewer with a
+ * PIN could approve and seal a regulated record.
+ *
+ * The policy already existed and this router simply never asked it.
+ * signing-authority.ts is the single source of truth (its own header names the
+ * surfaces that consult it — /api/esignature/sign, sign-release, the AnA
+ * verified-seal route — and this file was not among them), and the role comes
+ * from resolveSignerOrgRole, which reads `organization_users` rather than
+ * `req.user.role`: the resolver's header is explicit that the request-borne
+ * role "is not reliably populated on every signing route".
+ *
+ * Fails closed — no membership row, or a role outside the allowlist, is not
+ * authorized. Deployments tune the allowlist with ESIGNATURE_SIGNING_ROLES.
+ *
+ * @compliance 21 CFR Part 11 §11.10(d), §11.10(g)
+ */
+async function assertSigningAuthority(
+  req: Request,
+  res: Response,
+): Promise<boolean> {
+  const actorId = Number(getActorId(req));
+  const orgId = getTenantId(req);
+  const role = await resolveSignerOrgRole(actorId, orgId);
+  if (!isSigningAuthorized(role)) {
+    res.status(403).json({
+      error:
+        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+      code: 'ESIGNATURE_NO_AUTHORITY',
+    });
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Does this document exist for this tenant?
+ *
+ * computeDocHash hashes the section rows and returns sha256("") when there are
+ * none — which is indistinguishable from an unknown or cross-tenant docId. So a
+ * signature could be written, an approval flip attempted against zero rows, and
+ * a frozen_documents row inserted, all bound to the hash of the empty string,
+ * and the caller told the document was signed and approved. §11.70 requires a
+ * signature to be linked to its record; a signature bound to no record is not.
+ */
+async function documentExistsForTenant(
+  docId: string | string[] | undefined,
+  tenantId: number,
+  executor: Queryable = pool,
+): Promise<boolean> {
+  const r = await executor.query(
+    'SELECT 1 FROM authoring_documents WHERE id = $1 AND tenant_id = $2 LIMIT 1',
+    [docId, tenantId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
 
 // Comprehensive audit logging for 21 CFR Part 11 compliance
 const createAuditTrail = async (
@@ -852,6 +968,12 @@ async function readSignaturesForExport(docId: string, tenantId: number): Promise
 
 const resolveSignerName = async (email: string): Promise<string | null> => {
   try {
+    // Both call sites (the /e-sign PIN path and the /sign path) pass
+    // getActorEmail(req) — the AUTHENTICATED actor's own address, never a body
+    // or header value. That was the point of the earlier fix noting
+    // "x-user-email here meant anyone could sign as anyone".
+    //
+    // tenant-isolation-safe: self-lookup of the caller's own §11.50(a)(1) printed name; `users` is the global identity table (membership lives in organization_users) so it has no tenant column to filter on, and getActorEmail(req) makes the caller's own row the only one reachable.
     const r = await pool.query<{ name: string | null }>(
       'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
       [email]
@@ -887,7 +1009,18 @@ const createUserPin = async (email: string, pin: string, tenantId: number): Prom
   }
 };
 
-// Helper function to create revision automatically
+// Helper function to create revision automatically.
+//
+// LEDGER (see server/services/authoring/revision-ledger.ts and the
+// 20260817_doc_revisions_immutable_ledger migration): every revision row is a
+// link in a per-section hash chain — content hash, link to the previous
+// revision's chain head, the write path that produced it (`origin`), and a
+// frozen snapshot of the citation inputs in force at the moment of the save.
+// UPDATE/DELETE on the table are refused by a database trigger, so the history
+// this writes is append-only by engine rule, and
+// GET /sections/:sectionId/history/verify recomputes the whole chain on
+// demand. Transactional callers hold the section row lock from their own
+// UPDATE, which serializes same-section chain extension.
 const createRevision = async (
   sectionId: string | string[] | undefined,
   content: string,
@@ -896,14 +1029,46 @@ const createRevision = async (
   // When part of a lifecycle transaction, the caller passes its BEGIN'd client
   // so the revision commits atomically with the section update. Defaults to the
   // pool for standalone callers.
-  executor: Queryable = pool
+  executor: Queryable = pool,
+  origin: RevisionOrigin = 'human-edit'
 ) => {
   try {
     const revisionId = crypto.randomUUID();
+
+    // The chain head this revision extends — the section's latest revision.
+    const prev = await executor.query(
+      `SELECT chain_sha256 FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = $2
+        ORDER BY created_at DESC, id DESC LIMIT 1`,
+      [sectionId, tenantId]
+    );
+    const prevChain: string | null = prev.rows[0]?.chain_sha256 ?? null;
+    const contentSha = sha256Hex(content ?? '');
+    const chain = computeChainHash({
+      prevChain,
+      contentSha256: contentSha,
+      createdBy: updatedBy,
+      origin,
+    });
+
+    // The documentary inputs this state was drafted against: the section's
+    // citation set with the checksums recorded at cite time, frozen with the
+    // revision. Lineage of every input, per revision, immutable.
+    const cites = await executor.query(
+      `SELECT id AS citation_id, source, reference_id, payload_sha256, created_at
+         FROM authoring_citations
+        WHERE section_id = $1 AND tenant_id = $2
+        ORDER BY created_at ASC`,
+      [sectionId, tenantId]
+    );
+    const inputs = JSON.stringify({ citations: cites.rows });
+
     await executor.query(
-      `INSERT INTO doc_revisions (id, section_id, content, created_by, created_at, tenant_id)
-       VALUES ($1, $2, $3, $4, NOW(), $5)`,
-      [revisionId, sectionId, content, updatedBy, tenantId]
+      `INSERT INTO doc_revisions
+         (id, section_id, content, created_by, created_at, tenant_id,
+          content_sha256, prev_chain_sha256, chain_sha256, origin, inputs)
+       VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, $8, $9, $10)`,
+      [revisionId, sectionId, content, updatedBy, tenantId, contentSha, prevChain, chain, origin, inputs]
     );
     return revisionId;
   } catch (error) {
@@ -1193,10 +1358,12 @@ router.post('/templates/apply/:id', async (req: Request, res: Response) => {
 
     const template = templateResult.rows[0];
 
-    // Update usage count
-    await pool.query(`UPDATE authoring_templates SET usage_count = usage_count + 1 WHERE id = $1`, [
-      id,
-    ]);
+    // Update usage count — same tenant predicate as the SELECT above; without
+    // it this was the one write in the handler that crossed tenants.
+    await pool.query(
+      `UPDATE authoring_templates SET usage_count = usage_count + 1 WHERE id = $1 AND tenant_id = $2`,
+      [id, tenantId]
+    );
 
     // Track usage
     await pool.query(
@@ -1620,7 +1787,7 @@ router.post('/docs', async (req: Request, res: Response) => {
       // at the top of this handler — not re-derived, so a seeded section is
       // attributed to exactly the principal the document is.
       for (const row of seeded.rows) {
-        await createRevision(row.id, row.content ?? '', createdBy, tenantId);
+        await createRevision(row.id, row.content ?? '', createdBy, tenantId, pool, 'genesis');
         await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
           template_id,
           section_code: row.code,
@@ -1664,9 +1831,12 @@ router.get('/docs/:docId', async (req: Request, res: Response) => {
         COUNT(DISTINCT c.id) as comment_count,
         COUNT(DISTINCT r.id) as revision_count
        FROM authoring_documents d
-       LEFT JOIN authoring_sections s ON s.doc_id = d.id
-       LEFT JOIN authoring_comments c ON c.doc_id = d.id
-       LEFT JOIN doc_revisions r ON r.section_id = s.id
+       -- Same defect, same fix as the per-section counters below: only the
+       -- document was tenant-scoped, so its own section / comment / revision
+       -- counts included rows belonging to other tenants.
+       LEFT JOIN authoring_sections s ON s.doc_id     = d.id AND s.tenant_id = d.tenant_id
+       LEFT JOIN authoring_comments c ON c.doc_id     = d.id AND c.tenant_id = d.tenant_id
+       LEFT JOIN doc_revisions r      ON r.section_id = s.id AND r.tenant_id = s.tenant_id
        WHERE d.id = $1 AND d.tenant_id = $2
        GROUP BY d.id`,
       [docId, tenantId]
@@ -1706,9 +1876,23 @@ router.get('/docs/:docId/sections', async (req: Request, res: Response) => {
         COUNT(DISTINCT r.id) as revision_count,
         COUNT(DISTINCT ct.id) as citation_count
        FROM authoring_sections s
-       LEFT JOIN authoring_comments c ON c.section_id = s.id
-       LEFT JOIN doc_revisions r ON r.section_id = s.id
-       LEFT JOIN authoring_citations ct ON ct.section_id = s.id
+       -- The counters must count what the panels list (MDX UAT item A5).
+       -- Reported as an off-by-one: the toolbar read "History 2" / "2 revisions"
+       -- while the history panel said "No prior revisions". It is not an
+       -- off-by-one -- the two sides ran differently-scoped queries. Only the
+       -- section carried a tenant predicate, so these joins counted every row in
+       -- the three child tables that matched on id ALONE, across tenants, while
+       -- every panel that LISTS them is tenant-scoped (history, comments and
+       -- citations all filter their own tenant_id). Any row whose tenant_id did
+       -- not match the section's -- another tenant's, or a null one -- was
+       -- counted and then not shown.
+       --
+       -- Scoping the joins makes the label and the list the same question. It
+       -- also closes a cross-tenant count leak: the old form disclosed the
+       -- existence of other tenants' rows through a number on the toolbar.
+       LEFT JOIN authoring_comments c  ON c.section_id  = s.id AND c.tenant_id  = s.tenant_id
+       LEFT JOIN doc_revisions r       ON r.section_id  = s.id AND r.tenant_id  = s.tenant_id
+       LEFT JOIN authoring_citations ct ON ct.section_id = s.id AND ct.tenant_id = s.tenant_id
        WHERE s.doc_id = $1 AND s.tenant_id = $2
        GROUP BY s.id
        ORDER BY s.order_index, s.created_at`,
@@ -1817,7 +2001,7 @@ router.post('/sections', async (req: Request, res: Response) => {
     }
 
     // Genesis revision: this content, by this author.
-    await createRevision(sectionId, content, createdBy, tenantId);
+    await createRevision(sectionId, content, createdBy, tenantId, pool, 'genesis');
     await createAuditTrail(req, doc_id, sectionId, 'CREATE', null, content ?? null, req.body?.changeReason ?? null, {
       code,
       title,
@@ -1930,7 +2114,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
       // edit path agree with it. The prior content is not lost — it is the
       // preceding row. Only when content changed.
       if (recordRevision) {
-        await createRevision(sectionId, content, updatedByUser, tenantId, client);
+        await createRevision(sectionId, content, updatedByUser, tenantId, client, 'human-edit');
       }
 
       result = await client.query(updateQuery, values);
@@ -2042,6 +2226,7 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
     const result = await pool.query(
       `SELECT
         r.id, r.section_id, r.content, r.created_by, r.created_at, r.tenant_id,
+        r.content_sha256, r.chain_sha256, r.origin,
         u.name as created_by_name,
         u.email as created_by_email
        FROM doc_revisions r
@@ -2078,6 +2263,32 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
   }
 });
 
+// GET /api/authoring/sections/:sectionId/history/verify — recompute the
+// revision ledger. Every verdict is recomputed from stored content; the hash
+// columns are treated as claims to check, never as answers. An intact chain
+// means: no revision's content was altered after it was written, no link was
+// re-pointed, and nothing was appended unchained since the ledger was adopted.
+// Rows predating the ledger are reported as pre-ledger, honestly, rather than
+// backfilled into an integrity history nobody recorded at the time.
+router.get('/sections/:sectionId/history/verify', async (req: Request, res: Response) => {
+  try {
+    const { sectionId } = req.params;
+    const tenantId = getTenantId(req);
+    const { rows } = await pool.query(
+      `SELECT id, content, created_by, origin, content_sha256, prev_chain_sha256, chain_sha256
+         FROM doc_revisions
+        WHERE section_id = $1 AND tenant_id = $2
+        ORDER BY created_at ASC, id ASC`,
+      [sectionId, tenantId]
+    );
+    const verdict = verifyLedger(rows);
+    res.json({ success: true, revisionCount: rows.length, ...verdict });
+  } catch (error) {
+    console.error('Error verifying revision ledger:', error);
+    res.status(500).json({ success: false, error: 'Failed to verify the revision ledger' });
+  }
+});
+
 // POST /api/authoring/sections/:sectionId/revert - Revert to specific revision
 router.post('/sections/:sectionId/revert', async (req: Request, res: Response) => {
   try {
@@ -2111,28 +2322,52 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
 
     const revision = revResult.rows[0];
 
-    // Create new revision for current state before reverting
     const currentSection = await pool.query(
       'SELECT content FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
       [sectionId, tenantId]
     );
+    if (((currentSection.rowCount ?? 0) === 0)) {
+      return res.status(404).json({ success: false, error: 'Section not found' });
+    }
 
-    // Update section with revision content
-    const result = await pool.query(
-      `UPDATE authoring_sections
-       SET content = $1, updated_at = NOW()
-       WHERE id = $2 AND tenant_id = $3
-       RETURNING *`,
-      [revision.content, sectionId, tenantId]
-    );
-
-    // The revert is itself an authored state: this content, restored by this
-    // actor, now. Written AFTER the update for the same reason as the edit
-    // path, and it replaces a pre-update createRevision that stored the
-    // content being replaced under the reverter's name — the same
-    // misattribution the edit path had.
-    if (currentSection.rowCount && ((currentSection.rowCount ?? 0) > 0)) {
-      await createRevision(sectionId, revision.content, revertedBy, tenantId);
+    /* Content, its lineage and its ledger entry commit together or not at all
+       — the identical rule the interactive save and the AI accept follow.
+       Revert was the one content writer left non-transactional AND outside
+       the lineage gate, so a reverted section's provenance quietly went stale.
+       The restorer IS asserting this content now: author lineage records
+       exactly that, and the revision's `origin: 'revert'` records that it was
+       a restoration rather than fresh authorship. The section-row lock the
+       UPDATE takes also serializes the ledger chain extension. */
+    const client = await pool.connect();
+    let result: { rows: any[] };
+    try {
+      await client.query('BEGIN');
+      result = await client.query(
+        `UPDATE authoring_sections
+         SET content = $1, updated_at = NOW()
+         WHERE id = $2 AND tenant_id = $3
+         RETURNING *`,
+        [revision.content, sectionId, tenantId]
+      );
+      await enforceAuthorLineage(
+        client,
+        tenantId,
+        { documentTable: 'authoring_sections', documentId: String(sectionId) },
+        revision.content ?? '',
+        revertedBy,
+      );
+      // The revert is itself an authored state: this content, restored by this
+      // actor, now. Written AFTER the update for the same reason as the edit
+      // path, and it replaces a pre-update createRevision that stored the
+      // content being replaced under the reverter's name — the same
+      // misattribution the edit path had.
+      await createRevision(sectionId, revision.content, revertedBy, tenantId, client, 'revert');
+      await client.query('COMMIT');
+    } catch (txErr) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      client.release();
     }
 
     await createAuditTrail(
@@ -2197,6 +2432,18 @@ router.post('/sections/:sectionId/comment', async (req: Request, res: Response) 
         success: false,
         error: 'Comment body is required',
       });
+    }
+
+    // The section must belong to this tenant before anything is attached to
+    // it. The comment row itself always carried the caller's tenant_id (reads
+    // stayed scoped), but without this check a comment could be pinned to a
+    // foreign section UUID — and 201-vs-500 confirmed foreign ids.
+    const sectionOwned = await pool.query(
+      'SELECT id FROM authoring_sections WHERE id = $1 AND tenant_id = $2',
+      [sectionId, tenantId]
+    );
+    if (((sectionOwned.rowCount ?? 0) === 0)) {
+      return res.status(404).json({ success: false, error: 'Section not found' });
     }
 
     const result = await pool.query(
@@ -2529,9 +2776,9 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
               COALESCE(c.user_name, c.created_by) as author_name,
               c.user_email as author_email
              FROM authoring_comments c
-             WHERE c.parent_comment_id = $1
+             WHERE c.parent_comment_id = $1 AND c.tenant_id = $2
              ORDER BY c.created_at ASC`,
-            [comment.id]
+            [comment.id, tenantId]
           );
           comment.replies = repliesResult.rows;
         }
@@ -3250,6 +3497,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     if ((sectionResult.rowCount ?? 0) === 0) {
       return res.status(404).json({ success: false, error: 'Section not found' });
     }
+
     const priorContent: string | null = sectionResult.rows[0].content ?? null;
 
     const { consumeDraftCandidate } = await import(
@@ -3271,6 +3519,8 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
        DELETE … RETURNING, so this is the last moment the generator exists
        anywhere — after the transaction it lives only in what we record. */
     let generator: Record<string, unknown> | null = null;
+    /* Whether the caller's accepted text still IS the generated draft. */
+    let draftModifiedOnAccept = false;
     try {
       await client.query('BEGIN');
 
@@ -3290,8 +3540,12 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
 
       // The author may have edited the draft before accepting; attribute what they
       // actually save. Fall back to the draft as generated when no edit is sent.
+      // Whether the accepted text still IS the generated draft is recorded on
+      // the audit row (draft_modified_on_accept below): "accepted AI draft"
+      // must not vouch for words the model never produced.
       acceptedContent =
         typeof req.body?.content === 'string' ? req.body.content : candidate.content;
+      draftModifiedOnAccept = acceptedContent !== candidate.content;
 
       saved = await client.query(
         `UPDATE authoring_sections SET content = $1, updated_at = NOW()
@@ -3339,7 +3593,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     // edit already landed; failing here would report failure for a change that
     // succeeded).
     try {
-      await createRevision(String(sectionId), acceptedContent, actor, tenantId);
+      await createRevision(String(sectionId), acceptedContent, actor, tenantId, pool, 'ai-draft-accept');
     } catch (revErr: any) {
       console.warn('[Authoring] AI draft accept: revision write failed (non-fatal):', revErr?.message);
     }
@@ -3356,7 +3610,12 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
          this text?" was answerable for about as long as the tab stayed open —
          the first question an assessor asks about AI-assisted content, and the
          one piece of provenance being collected and then discarded. */
-      { source: 'ai-draft-accept', generator },
+      /* draft_modified_on_accept: the accept endpoint allows the author to
+         hand-edit the draft before accepting, so "Accepted AI draft" on its
+         own could vouch for words the model never produced. True here means
+         the saved text differs from the generated candidate — the generator
+         metadata describes the draft's origin, not the final wording. */
+      { source: 'ai-draft-accept', generator, draft_modified_on_accept: draftModifiedOnAccept },
     );
 
     res.json({
@@ -3540,9 +3799,13 @@ router.get('/stats', async (req: Request, res: Response) => {
       `
       SELECT
         COUNT(DISTINCT d.id) as total_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'draft' THEN d.id END) as draft_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'review' THEN d.id END) as review_documents,
-        COUNT(DISTINCT CASE WHEN d.status = 'approved' THEN d.id END) as approved_documents,
+        -- The store holds MIXED-case statuses: create writes 'draft', the
+        -- workflow writes 'IN_REVIEW'/'APPROVED', freeze writes 'FROZEN'. The
+        -- old literals ('draft'/'review'/'approved') matched only the first,
+        -- so every counter past draft sat at 0 forever (BP-W0-7 defect class).
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'DRAFT' THEN d.id END) as draft_documents,
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'IN_REVIEW' THEN d.id END) as review_documents,
+        COUNT(DISTINCT CASE WHEN upper(d.status) = 'APPROVED' THEN d.id END) as approved_documents,
         COUNT(DISTINCT s.id) as total_sections,
         COUNT(DISTINCT c.id) as total_comments,
         COUNT(DISTINCT CASE WHEN c.status = 'open' THEN c.id END) as open_comments,
@@ -3680,8 +3943,10 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
 
     const doc = docResult.rows[0];
 
-    // Check if already frozen
-    if (doc.status === 'FROZEN' || doc.status === 'APPROVED') {
+    // Check if already frozen. Case-insensitive on purpose: the store holds
+    // mixed-case statuses, and an idempotency guard that only recognises one
+    // casing lets the same document be frozen twice.
+    if (['FROZEN', 'APPROVED'].includes(String(doc.status ?? '').toUpperCase())) {
       return res.status(400).json({ error: 'Document is already frozen' });
     }
 
@@ -3738,6 +4003,30 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
         client,
       );
 
+      /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
+         `createAuditTrail` above writes authoring_audit_trail, which carries no
+         chain and no HMAC, and its mirror into the chained `audit_logs` runs
+         ONLY when the executor is the pool (see the guard at its foot). Every
+         governed handler here passes its own transaction client — correctly, so
+         the record commits with the mutation — which meant the mirror was
+         skipped and these events never reached the chain at all. So
+         verifyAuditChain had nothing to verify for the three actions that most
+         need it, and the document's own audit view read an unchained table.
+         writeChainedAuditRow is the primitive built for this case and is what
+         /api/esignature/sign already uses: on the caller's client, so if the
+         audit row cannot be written the whole transaction rolls back and the
+         signature never exists either. */
+      await writeChainedAuditRow(client, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action: 'authoring.document.freeze',
+        resourceType: 'authoring_document',
+        resourceId: String(docId ?? ''),
+        ipAddress: (req.ip ?? undefined) as string | undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { contentHash, version: versionNumber, reason: reason ?? null },
+      });
+
       await client.query('COMMIT');
     } catch (txError) {
       try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
@@ -3773,6 +4062,11 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // §11.10(g) authority, checked BEFORE the PIN. Order matters: an
+    // unauthorized caller must not learn whether a PIN is correct, and must not
+    // be able to use this endpoint as a PIN oracle.
+    if (!(await assertSigningAuthority(req, res))) return;
+
     if (!pin) {
       return res.status(400).json({ error: 'PIN required for signature' });
     }
@@ -3783,6 +4077,12 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
 
     if (!intent) {
       return res.status(400).json({ error: 'Signature intent is required' });
+    }
+
+    // §11.70 — a signature must be linked to the record it signs. Without this
+    // an unknown or cross-tenant docId produced a signature bound to sha256("").
+    if (!(await documentExistsForTenant(docId, tenantId))) {
+      return res.status(404).json({ error: 'Document not found' });
     }
 
     // §11.50(a)(1) printed name, from the user record — never `req.user.name`,
@@ -3882,6 +4182,30 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         );
       }
 
+      /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
+         `createAuditTrail` above writes authoring_audit_trail, which carries no
+         chain and no HMAC, and its mirror into the chained `audit_logs` runs
+         ONLY when the executor is the pool (see the guard at its foot). Every
+         governed handler here passes its own transaction client — correctly, so
+         the record commits with the mutation — which meant the mirror was
+         skipped and these events never reached the chain at all. So
+         verifyAuditChain had nothing to verify for the three actions that most
+         need it, and the document's own audit view read an unchained table.
+         writeChainedAuditRow is the primitive built for this case and is what
+         /api/esignature/sign already uses: on the caller's client, so if the
+         audit row cannot be written the whole transaction rolls back and the
+         signature never exists either. */
+      await writeChainedAuditRow(client, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action: 'authoring.document.e-sign',
+        resourceType: 'authoring_document',
+        resourceId: String(docId ?? ''),
+        ipAddress: (req.ip ?? undefined) as string | undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { meaning, intent, documentHash: docHash, signer: email },
+      });
+
       await client.query('COMMIT');
     } catch (txError) {
       try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
@@ -3963,15 +4287,20 @@ router.get('/docs/:docId/frozen', async (req: Request, res: Response) => {
 // GET all citations by doc (grouped)
 router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
   try {
+    // Tenant-scoped like every other read in this router. This query carried
+    // tenant_id in its SELECT list and nowhere in its WHERE, so any
+    // authenticated user could enumerate another organization's citations —
+    // source names, citation text, checksums — by guessing document UUIDs.
+    const tenantId = getTenantId(req);
     const { rows } = await pool.query(
       `
       SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code, s.title
       FROM authoring_citations c
       JOIN authoring_sections s ON s.id=c.section_id
-      WHERE s.doc_id=$1
+      WHERE s.doc_id=$1 AND c.tenant_id=$2 AND s.tenant_id=$2
       ORDER BY c.created_at ASC
     `,
-      [req.params.docId]
+      [req.params.docId, tenantId]
     );
     res.json(rows);
   } catch (e) {
@@ -3986,15 +4315,34 @@ router.post('/docs/:docId/send-to-packager', async (req: Request, res: Response)
       return res.status(400).json({ error: 'seqId and path are required' });
     }
 
+    /* This bridge re-enters the platform's own HTTP routes, and as written it
+       could never have worked:
+         - it sent NO Authorization header, so the export route's own JWT
+           middleware answered 401 on every call;
+         - it passed `?fmt=` while the export handler reads `req.body.format`,
+           so even authenticated it would always have exported DOCX;
+         - it never checked the export response, so that 401 JSON body was
+           base64-encoded and shipped to the packager as the "document".
+       The caller's verified credentials are forwarded to both hops (the export
+       and the packager enforce their own authorization with them), and every
+       hop is checked before its output is used. */
+    const authHeaders: Record<string, string> = {};
+    if (req.headers.authorization) authHeaders.Authorization = String(req.headers.authorization);
+
     // 1) Export DOCX (or PDF if requested)
     const exp = await fetch(
-      `${req.protocol}://${req.get('host')}/api/authoring/docs/${req.params.docId}/export?fmt=${
-        fmt || 'docx'
-      }`,
+      `${req.protocol}://${req.get('host')}/api/authoring/docs/${req.params.docId}/export`,
       {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ format: fmt || 'docx' }),
       }
     );
+    if (!exp.ok) {
+      return res
+        .status(502)
+        .json({ error: `Export failed (HTTP ${exp.status}) — nothing was sent to the packager` });
+    }
     const buf = Buffer.from(await exp.arrayBuffer());
     const base64 = buf.toString('base64');
 
@@ -4003,7 +4351,7 @@ router.post('/docs/:docId/send-to-packager', async (req: Request, res: Response)
       `${req.protocol}://${req.get('host')}/api/regulatory/ectd/${seqId}/leaf`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         body: JSON.stringify({
           module: 3,
           path: relPath,
@@ -4451,10 +4799,14 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
       return res.status(400).json({ error: 'templateKey required' });
     }
 
-    // Get document locale
-    const docResult = await pool.query('SELECT locale FROM authoring_documents WHERE id = $1', [
-      req.params.docId,
-    ]);
+    // Get document locale — tenant-scoped. The section writes below were
+    // already scoped; this read was the one predicate-free query left in the
+    // handler, and 404-vs-200 on it confirmed whether a guessed document UUID
+    // exists in another organization (plus that document's locale).
+    const docResult = await pool.query(
+      'SELECT locale FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+      [req.params.docId, tenantId]
+    );
 
     if (((docResult.rowCount ?? 0) === 0)) {
       return res.status(404).json({ error: 'Document not found' });
@@ -4496,6 +4848,16 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
 
     let upserts = 0;
 
+    /* Every content write below passes the lineage gate and lands a ledger
+       revision, inside ONE transaction — the identical rule the interactive
+       save, the AI accept and the revert follow. Template apply was the last
+       content writer outside it: it wrote sections with no lineage and (for
+       the insert branch) no revision at all, so a template-applied section
+       had provenance for neither its words nor its arrival. */
+    const applyActor = getActorId(req) ?? 'template';
+    const txClient = await pool.connect();
+    try {
+    await txClient.query('BEGIN');
     // Apply template sections
     for (const section of template.sections || []) {
       const existing = existingMap.get(section.code);
@@ -4523,11 +4885,12 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
         // Snapshot before the UPDATE, not after: the point is to preserve the
         // superseded text.
         if (existing?.content) {
-          await createRevision(existingId, existing.content, getActorId(req) ?? 'template', tenantId);
+          await createRevision(existingId, existing.content, applyActor, tenantId, txClient, 'pre-template-snapshot');
         }
 
         // Update existing section
-        await pool.query(
+        const templContent = JSON.stringify(section.content || {});
+        await txClient.query(
           `UPDATE authoring_sections
               SET title = $2, order_index = $3, content = $4, updated_at = NOW()
             WHERE id = $1 AND tenant_id = $5`,
@@ -4535,28 +4898,53 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
             existingId,
             section.title || '',
             section.order_idx || 0,
-            JSON.stringify(section.content || {}),
+            templContent,
             tenantId,
           ]
         );
+        await enforceAuthorLineage(
+          txClient,
+          tenantId,
+          { documentTable: 'authoring_sections', documentId: String(existingId) },
+          templContent,
+          applyActor,
+        );
+        await createRevision(existingId, templContent, applyActor, tenantId, txClient, 'template-apply');
         upserts++;
       } else {
         // Insert new section
-        await pool.query(
+        const newSectionId = crypto.randomUUID();
+        const templContent = JSON.stringify(section.content || {});
+        await txClient.query(
           `INSERT INTO authoring_sections (id, doc_id, code, title, order_index, content, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
-            crypto.randomUUID(),
+            newSectionId,
             req.params.docId,
             section.code,
             section.title || '',
             section.order_idx || 0,
-            JSON.stringify(section.content || {}),
+            templContent,
             tenantId,
           ]
         );
+        await enforceAuthorLineage(
+          txClient,
+          tenantId,
+          { documentTable: 'authoring_sections', documentId: newSectionId },
+          templContent,
+          applyActor,
+        );
+        await createRevision(newSectionId, templContent, applyActor, tenantId, txClient, 'template-apply');
         upserts++;
       }
+    }
+    await txClient.query('COMMIT');
+    } catch (txErr) {
+      await txClient.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      txClient.release();
     }
 
     res.json({ ok: true, upserts });
@@ -4976,19 +5364,57 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
          `await import(...)`, and the XML branch imports nothing. Only this
          branch used CommonJS, so only this branch was unreachable. Nothing was
          wrong with the docx generation below it — it had simply never run. */
-      const { Document, Packer, Paragraph, HeadingLevel } = await import('docx');
+      const docxNs = await import('docx');
+      const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docxNs;
+      const { blocksToDocx, orderedListNumbering } = await import(
+        '../export/authoring-blocks-to-docx.js'
+      );
+      const { sectionContentToBlocks, countPendingSuggestions } = await import(
+        '../export/authoring-section-content.js'
+      );
 
       const children = [];
       children.push(new Paragraph({ text: doc.title, heading: HeadingLevel.TITLE }));
 
-      for (const section of sectionsResult.rows) {
+      /* Section content is an opaque string holding plain text or editor HTML
+         (which can carry ins/del track-changes marks). It used to be written
+         into one paragraph verbatim, so markup rendered literally in a filed
+         Word document. It is parsed to typed runs now; an unresolved
+         suggestion exports AS redline (insertion underlined, deletion struck)
+         with an up-front notice — settling it silently either way at export
+         time would fabricate a decision nobody made. */
+      let pendingIns = 0;
+      let pendingDel = 0;
+      const sectionBlocks = sectionsResult.rows.map((section: any) => {
+        const blocks = sectionContentToBlocks(section.content);
+        const pending = countPendingSuggestions(blocks);
+        pendingIns += pending.insertions;
+        pendingDel += pending.deletions;
+        return { section, blocks };
+      });
+      if (pendingIns + pendingDel > 0) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text:
+                  `This document contains unresolved tracked changes ` +
+                  `(${pendingIns} proposed insertion(s), ${pendingDel} proposed deletion(s)), ` +
+                  `rendered below as redline.`,
+                italics: true,
+              }),
+            ],
+          })
+        );
+      }
+      for (const { section, blocks } of sectionBlocks) {
         children.push(
           new Paragraph({
             text: `${section.code} - ${section.title}`,
             heading: HeadingLevel.HEADING_1,
           })
         );
-        children.push(new Paragraph({ text: section.content || '' }));
+        children.push(...blocksToDocx(docxNs, blocks));
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
@@ -5005,7 +5431,13 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
         }
       }
 
-      const docxDoc = new Document({ sections: [{ children }] });
+      const docxDoc = new Document({
+        /* Without a declared numbering definition the ordered-list reference is
+           inert and numbered steps silently render unnumbered — which is the
+           shape of the bug this replaced. */
+        numbering: orderedListNumbering(docxNs),
+        sections: [{ children }],
+      });
       fileContent = await Packer.toBuffer(docxDoc);
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
       contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -5014,20 +5446,45 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
       // template render path uses). The previous implementation returned DOCX
       // bytes under a PDF label — a mislabeled file is worse than no file.
       const { renderHtmlToPdf } = await import('../export/renderers');
-      const esc = (s: string) =>
-        String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const { sectionContentToBlocks, countPendingSuggestions } = await import(
+        '../export/authoring-section-content.js'
+      );
+      const { blocksToHtml, escapeHtml: esc, PRINT_STYLES } = await import(
+        '../export/authoring-blocks-to-html.js'
+      );
+      /* Section content parsed to typed runs and re-emitted as a WHITELISTED
+         structure with every text node escaped — stored markup never reaches
+         the renderer raw (the previous escape-everything approach printed
+         editor HTML as literal tags in a filed PDF). Unresolved suggestions
+         render as redline with an up-front notice, same as the DOCX branch. */
+      let pdfPendingIns = 0;
+      let pdfPendingDel = 0;
+      const pdfSections = sectionsResult.rows.map(
+        (s: { code: string; title: string; content: string | null }) => {
+          const blocks = sectionContentToBlocks(s.content);
+          const pending = countPendingSuggestions(blocks);
+          pdfPendingIns += pending.insertions;
+          pdfPendingDel += pending.deletions;
+          const body = blocksToHtml(blocks);
+          return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
+        }
+      );
       const html = `<!doctype html><html><head><meta charset="utf-8"><style>
           body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
-          h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; }
-          p { white-space: pre-wrap; }
+          h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; } h3 { font-size: 12.5pt; margin-top: 1em; }
+          p { white-space: pre-wrap; } p.li { margin: 0 0 0 1.2em; }
+          ${PRINT_STYLES}
+          ins { color: #067647; text-decoration: underline; }
+          del { color: #b42318; text-decoration: line-through; }
+          .redline-note { font-style: italic; }
         </style></head><body>
         <h1>${esc(doc.title)}</h1>
-        ${sectionsResult.rows
-          .map(
-            (s: { code: string; title: string; content: string | null }) =>
-              `<h2>${esc(s.code)} — ${esc(s.title)}</h2><p>${esc(s.content || '')}</p>`
-          )
-          .join('\n')}
+        ${
+          pdfPendingIns + pdfPendingDel > 0
+            ? `<p class="redline-note">This document contains unresolved tracked changes (${pdfPendingIns} proposed insertion(s), ${pdfPendingDel} proposed deletion(s)), rendered below as redline.</p>`
+            : ''
+        }
+        ${pdfSections.join('\n')}
         <h2>Electronic signatures</h2>
         ${manifest.length === 0
           ? '<p>No electronic signatures are recorded against this document.</p>'
@@ -5057,10 +5514,13 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.send(fileContent);
   } catch (error) {
+    // The raw error goes to the LOG only. This body feeds the client's export
+    // toast verbatim, and a library/DB message here was the one remaining path
+    // for exception text to reach the UI (BP-W0-5).
     console.error('Export error:', error);
     res.status(500).json({
       error: 'Export failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'The export could not be rendered. No file was produced; the document is unchanged.',
     });
   }
 });
@@ -5248,6 +5708,12 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // address as a printed name.
     const signerName = await resolveSignerName(signerEmail as string);
 
+    // §11.10(g) authority, before the PIN — same reasoning as /e-sign. This
+    // path also advances a workflow step, and it already consulted the caller's
+    // roles to decide THAT (below); it never consulted them to decide whether
+    // the signature itself could be applied.
+    if (!(await assertSigningAuthority(req, res))) return;
+
     // Validate required fields
     if (!pin || !reason) {
       return res.status(400).json({ error: 'PIN and reason are required for signing' });
@@ -5260,6 +5726,11 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // attestation and would render verbatim in any manifestation of it.
     if (!SIGNATURE_MEANINGS.includes(meaning)) {
       return res.status(400).json({ error: 'Invalid signature meaning' });
+    }
+
+    // §11.70 — the signature must be linked to a real record in this tenant.
+    if (!(await documentExistsForTenant(docId, tenantId))) {
+      return res.status(404).json({ error: 'Document not found' });
     }
 
     // Verify PIN
@@ -5360,6 +5831,30 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         tenantId,
         client
       );
+
+      /* §11.10(e) — the HASH-CHAINED ledger, on this transaction.
+         `createAuditTrail` above writes authoring_audit_trail, which carries no
+         chain and no HMAC, and its mirror into the chained `audit_logs` runs
+         ONLY when the executor is the pool (see the guard at its foot). Every
+         governed handler here passes its own transaction client — correctly, so
+         the record commits with the mutation — which meant the mirror was
+         skipped and these events never reached the chain at all. So
+         verifyAuditChain had nothing to verify for the three actions that most
+         need it, and the document's own audit view read an unchained table.
+         writeChainedAuditRow is the primitive built for this case and is what
+         /api/esignature/sign already uses: on the caller's client, so if the
+         audit row cannot be written the whole transaction rolls back and the
+         signature never exists either. */
+      await writeChainedAuditRow(client, {
+        tenantId,
+        userId: getActorId(req) ?? undefined,
+        action: 'authoring.document.sign',
+        resourceType: 'authoring_document',
+        resourceId: String(docId ?? ''),
+        ipAddress: (req.ip ?? undefined) as string | undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: { signatureId, meaning, reason, contentHash, signer: signerEmail },
+      });
 
       await client.query('COMMIT');
     } catch (txError) {
@@ -5474,10 +5969,33 @@ router.post('/users/pin', async (req: Request, res: Response) => {
   try {
     const { pin, old_pin } = req.body;
     const tenantId = getTenantId(req);
-    const email = req.headers['x-user-email'] || req.body.email;
 
-    if (!email || !pin) {
-      return res.status(400).json({ error: 'Email and PIN are required' });
+    /* SECURITY (21 CFR Part 11 §11.200 / §11.10(d)) — the PIN is the credential
+       that gates EVERY electronic signature in this router. Two holes were open
+       on the endpoint that manages it.
+
+       IDENTITY came from `req.headers['x-user-email'] || req.body.email`. The
+       router's middleware clears any client-supplied x-user-email and re-derives
+       it from the JWT, so the header is safe — but only when the token carries
+       an email claim. Without one it fell through to `req.body.email`, which the
+       caller controls, so a request could set ANOTHER user's signing PIN. This
+       is the same fallback that was closed at export (see the comment there);
+       the PIN endpoint was missed, and it is the worst place to miss it.
+
+       OLD-PIN verification was conditional — `if (old_pin)`. An existing PIN
+       could therefore be overwritten by simply omitting the field. Possession of
+       a session became possession of the signing credential, which is precisely
+       what §11.200(a)(1) requires two distinct components to prevent.
+
+       No caller anywhere sets another user's PIN (grep: the endpoint has no
+       client callers at all), so scoping it to the authenticated actor breaks
+       nothing and closes both. */
+    const email = getActorEmail(req);
+    if (!email) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    if (!pin) {
+      return res.status(400).json({ error: 'PIN is required' });
     }
 
     // Check if PIN exists
@@ -5486,13 +6004,14 @@ router.post('/users/pin', async (req: Request, res: Response) => {
       [email, tenantId]
     );
 
-    if (((existing.rowCount ?? 0) > 0)) {
-      // Verify old PIN if updating
-      if (old_pin) {
-        const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
-        if (!valid) {
-          return res.status(401).json({ error: 'Invalid old PIN' });
-        }
+    const isUpdate = (existing.rowCount ?? 0) > 0;
+    if (isUpdate) {
+      if (!old_pin) {
+        return res.status(400).json({ error: 'Current PIN is required to change it' });
+      }
+      const valid = await bcrypt.compare(old_pin, existing.rows[0].pin_hash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid old PIN' });
       }
     }
 
@@ -5513,6 +6032,20 @@ router.post('/users/pin', async (req: Request, res: Response) => {
         [pinHash, email, tenantId]
       );
     }
+
+    /* A change to the signing credential is itself a governed event: §11.10(e)
+       wants the record of who did what and when, and this endpoint wrote none.
+       The PIN never appears in the trail — only that it was set or rotated. */
+    await createAuditTrail(
+      req,
+      undefined,
+      null,
+      isUpdate ? 'SIGNING_PIN_ROTATED' : 'SIGNING_PIN_CREATED',
+      null,
+      null,
+      isUpdate ? 'Signing PIN rotated by its owner' : 'Signing PIN created',
+      { email },
+    );
 
     res.json({ success: true, message: 'PIN set successfully' });
   } catch (error) {

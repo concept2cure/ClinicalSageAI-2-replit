@@ -51,6 +51,26 @@ const HELP = [
 ].join('\n');
 
 /**
+ * Pull the `chromium` launcher off a module namespace, whichever entry point
+ * resolution landed on.
+ *
+ * `playwright-core`'s package main is CommonJS (`index.js`), and its ESM
+ * exports are a re-export of that object rather than named bindings the
+ * CJS lexer can see. So `await import()` on the main entry gives a namespace
+ * whose `chromium` is undefined and whose `default` holds everything, while
+ * `index.mjs` gives real named exports. Reading only `mod.chromium` therefore
+ * failed for the exact command this file's own help text tells you to run —
+ * `npm i --no-save playwright-core` installs it and the loader still reported
+ * "Playwright is not installed".
+ *
+ * @param {Record<string, unknown>} mod
+ * @returns {unknown} the launcher, or undefined if this module has none.
+ */
+function pickChromium(mod) {
+  return mod?.chromium ?? mod?.default?.chromium;
+}
+
+/**
  * Load Playwright's `chromium` launcher.
  *
  * @returns {Promise<import('playwright-core').BrowserType>}
@@ -63,7 +83,11 @@ export async function loadChromium() {
       throw new Error(`PLAYWRIGHT_CORE points at a path that does not exist: ${explicit}`);
     }
     const mod = await import(pathToFileURL(explicit).href);
-    return mod.chromium;
+    const chromium = pickChromium(mod);
+    if (!chromium) {
+      throw new Error(`PLAYWRIGHT_CORE resolved but exports no \`chromium\`: ${explicit}`);
+    }
+    return chromium;
   }
 
   const require = createRequire(import.meta.url);
@@ -75,7 +99,8 @@ export async function loadChromium() {
       continue; // not installed here — try the next candidate
     }
     const mod = await import(pathToFileURL(entry).href);
-    if (mod.chromium) return mod.chromium;
+    const chromium = pickChromium(mod);
+    if (chromium) return chromium;
   }
 
   throw new Error(HELP);

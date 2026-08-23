@@ -92,6 +92,57 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
   const [form, setForm] = useState<ConnectorState | null>(null);
   const [depth, setDepth] = useState<ResearchDepth>('standard');
   const [toast, fireToast] = useToast();
+
+  /* ── "Export brief" asked the assistant for a PDF ─────────────────────────
+     `onClick={() => ask('Export this deep-research brief as a PDF.')}` — a
+     download icon that opened a chat turn. The renderer exists:
+     POST /api/concept2cure/artifacts/export-pdf takes { title, content },
+     renders with pdf-lib and responds with the file.
+
+     The brief that gets rendered is the synthesis plus its citation list,
+     assembled from the SAME `job.results` the source table above renders — so
+     what downloads is what is on screen, not a re-derivation. */
+  const [exporting, setExporting] = useState(false);
+
+  const exportBrief = async () => {
+    if (!job?.synthesis || exporting) return;
+    setExporting(true);
+    try {
+      const cited = (job.results || [])
+        .map((r, i) => `[SRC-${i + 1}] ${r.title || r.source || 'Source'}${r.url ? ` — ${r.url}` : ''}`)
+        .join('\n');
+      const content =
+        `${job.synthesis}\n\n` +
+        (cited ? `Sources\n${cited}\n` : 'Sources\nNo sources were returned for this run.\n');
+      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pdf', {
+        title: 'Deep research brief',
+        content,
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        fireToast(
+          'Brief not exported — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
+        );
+        return;
+      }
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'deep-research-brief.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      fireToast(
+        'Brief not exported — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error',
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
   const [jobId, setJobId] = useState<number | null>(null);
   const [job, setJob] = useState<DrRunJob | null>(null);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -331,7 +382,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
     <div className="sp" style={{ maxWidth: 1060 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Intelligence -- connectors & deep research</div>
+          <div className="sp-eyebrow">Intelligence — connectors & deep research</div>
           <h1 className="sp-title">Deep Research & Connectors</h1>
           <p className="sp-state">
             Fan out one question across your connected sources and get a grounded synthesis with
@@ -361,12 +412,12 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
             connectorsReady ? (
               <>
                 Ask one question and I fan it out across{' '}
-                <b>{conn.filter((c) => c.configured).length}</b> connected sources -- then hand you
+                <b>{conn.filter((c) => c.configured).length}</b> connected sources — then hand you
                 a synthesis with <b>every claim traced to source</b>.
               </>
             ) : (
               <>
-                Ask one question and I fan it out across your connected sources -- then hand you a
+                Ask one question and I fan it out across your connected sources — then hand you a
                 synthesis with <b>every claim traced to source</b>.
               </>
             )
@@ -387,7 +438,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
               )}
             </>
           }
-          reassure="Nothing is fabricated -- if a source can't support a claim, I say so and cite what I did find."
+          reassure="Nothing is fabricated — if a source can't support a claim, I say so and cite what I did find."
           action={{ label: 'Launch this research', onClick: launch }}
           secondary="Or refine the question and connectors below."
         />
@@ -531,7 +582,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                   </button>
                 )}
                 <span className="sp-q-s">
-                  Parallel fan-out -- grounded synthesis
+                  Parallel fan-out — grounded synthesis
                   {credits ? ` -- ${credits.remaining < 0 ? 'unlimited' : credits.remaining + '/' + credits.limit} credits` : ''}
                 </span>
               </div>
@@ -590,12 +641,28 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                             {[r.conn || r.source, r.meta, r.date].filter(Boolean).join(' -- ')}
                           </span>
                         </span>
-                        <button
-                          className="sp-go"
-                          onClick={() => ask('Open source SRC-' + (i + 1) + ': ' + (r.title || r.url || ''))}
-                        >
-                          {I.externalLink}
-                        </button>
+                        {/* Was a chat prompt: "Open source SRC-1: <title>",
+                            which asked the assistant to talk about a source the
+                            user was pointing at. The URL is on the record — the
+                            row above renders from it — so the link opens it. A
+                            record that arrived without one renders no link
+                            rather than a control that cannot go anywhere. */}
+                        {r.url ? (
+                          <a
+                            className="sp-go"
+                            href={r.url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            aria-label={'Open ' + (r.title || r.source || 'source ' + (i + 1)) + ' in a new tab'}
+                            title={r.url}
+                          >
+                            {I.externalLink}
+                          </a>
+                        ) : (
+                          <span className="sp-go" aria-hidden="true" style={{ opacity: 0.35 }} title="This source arrived without a link">
+                            {I.externalLink}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -641,9 +708,12 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                     </button>
                     <button
                       className="sp-ask"
-                      onClick={() => ask('Export this deep-research brief as a PDF.')}
+                      onClick={() => void exportBrief()}
+                      disabled={exporting || !job?.synthesis}
+                      title={job?.synthesis ? 'Download the synthesis and its citations as a PDF' : 'No synthesis to export yet'}
+                      data-testid="dr-export-brief"
                     >
-                      {I.download} Export brief
+                      {I.download} {exporting ? 'Exporting…' : 'Export brief'}
                     </button>
                   </div>
                 </div>

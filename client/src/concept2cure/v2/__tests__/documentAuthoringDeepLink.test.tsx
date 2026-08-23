@@ -25,11 +25,31 @@ vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
 }));
 
+
+/* jsdom implements no layout: ProseMirror's scroll-into-view (scheduled by
+   insertContent and selection changes) asks Ranges, Elements and text nodes
+   for client rects and crashes the worker when a node type lacks the method.
+   Stub the geometry to empty — scrolling is meaningless in jsdom anyway. */
+const emptyRects = function () { return [] as unknown as DOMRectList; };
+for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
+  if (typeof proto.getClientRects !== 'function') proto.getClientRects = emptyRects;
+  if (typeof proto.getBoundingClientRect !== 'function') {
+    proto.getBoundingClientRect = function () {
+      return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 } as DOMRect;
+    };
+  }
+}
+
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 
 function ok(payload: unknown) {
   return { ok: true, status: 200, json: async () => payload } as Response;
+}
+
+/** Text of the canonical canvas (RichSectionEditor's ProseMirror mount). */
+function canvasText(): string {
+  return (document.querySelector('.rse-body .tiptap')?.textContent ?? '').trim();
 }
 
 /* Two draft documents in scope. D1 is the editor's default (first row); the
@@ -87,8 +107,7 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     // The named section — in D2, NOT the default document — is open in the
     // canvas with its real content.
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('SE discussion body.');
+      expect(canvasText()).toBe('SE discussion body.');
     });
     // …and the masthead shows the section identity the click named.
     expect(screen.getByRole('heading', { name: 'Substantial Equivalence Discussion' })).toBeTruthy();
@@ -113,8 +132,7 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     expect(notice.textContent).toMatch(/default view/i);
     // …over the DEFAULT view, which still works (D1's first section).
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('Default document content.');
+      expect(canvasText()).toBe('Default document content.');
     });
   });
 
@@ -135,16 +153,14 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     const notice = await screen.findByText(/OR-801 Orthopedic Screw System/);
     expect(notice.textContent).toMatch(/Couldn’t open/);
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('Default document content.');
+      expect(canvasText()).toBe('Default document content.');
     });
   });
 
   it('a mount with no pending target behaves exactly as before — default view, no notice', async () => {
     render(<DocumentAuthoring {...props()} />);
     await waitFor(() => {
-      const ta = screen.getByRole('textbox') as HTMLTextAreaElement;
-      expect(ta.value).toBe('Default document content.');
+      expect(canvasText()).toBe('Default document content.');
     });
     expect(screen.queryByText(/Couldn’t (find|open)/)).toBeNull();
   });

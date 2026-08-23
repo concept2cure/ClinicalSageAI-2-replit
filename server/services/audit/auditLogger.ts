@@ -94,8 +94,9 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
   // caller (an audit-trail outage must not break the user action it records).
   // resourceType is required there; fall back to the event category when a
   // resource is not named.
+  let canonical: { persisted?: boolean; error?: string } | undefined;
   try {
-    await auditService.logAction({
+    canonical = await auditService.logAction({
       action: `${event.category}.${event.action}`,
       resourceType: event.resourceType ?? event.category,
       resourceId: event.resourceId,
@@ -114,8 +115,34 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'id' | 'timestamp'>)
       },
     });
   } catch (err) {
-    logger.error('Failed to persist audit event to canonical store', err);
+    /* logAction is documented never to throw, and the general call sites rely on
+       that. "Documented" is not "guaranteed": a bug below it, or a store that
+       rejects before its own guard runs, still lands here. An audit-trail outage
+       must not crash the user action it records, so the throw stops at this
+       boundary — and it stops as a KNOWN failure, not a silent one. */
+    canonical = { persisted: false, error: err instanceof Error ? err.message : String(err) };
   }
+
+  /* This was `try { await logAction } catch { logger.error(...) }` — a DOUBLE
+     swallow, and the outer half could never fire, because logAction resolves
+     normally on a persistence failure. So a discarded audit event produced no
+     error line at all, and the caller still received a plausible
+     `audit_<ts>_<rand>` id with no way to tell it apart from a persisted one.
+
+     The check below actually runs. The returned id is deliberately unchanged:
+     25 call sites consume it as a string, and narrowing the contract to
+     `string | null` is a larger decision than this fix. What is fixed is that a
+     lost §11.10(e) record now says so, loudly, with the reason — and the
+     in-memory event carries the outcome so the store is not claiming a
+     durability it does not have. */
+  if (!canonical?.persisted) {
+    logger.error('Audit event NOT persisted to the canonical store', {
+      auditEventId: auditEvent.id,
+      action: `${event.category}.${event.action}`,
+      reason: canonical?.error ?? 'the canonical store returned no write result',
+    });
+  }
+  (auditEvent as { persisted?: boolean }).persisted = canonical?.persisted === true;
 
   return auditEvent.id;
 }
@@ -195,7 +222,9 @@ export async function queryAuditEvents(filters: {
       toDate: filters.endDate,
       // category is a prefix of the stored `action`, so it can't be pushed into
       // the SQL filter; over-fetch a bounded window and filter in memory.
-      limit: filters.category ? PERSISTENT_QUERY_WINDOW : Math.min(offset + limit, PERSISTENT_QUERY_WINDOW),
+      limit: filters.category
+        ? PERSISTENT_QUERY_WINDOW
+        : Math.min(offset + limit, PERSISTENT_QUERY_WINDOW),
     });
     if (Array.isArray(rows)) {
       results = rows.map(rowToAuditEvent);
@@ -205,16 +234,21 @@ export async function queryAuditEvents(filters: {
       }
     }
   } catch (err) {
-    logger.error('queryAuditEvents: durable store query failed; falling back to in-memory cache', err);
+    logger.error(
+      'queryAuditEvents: durable store query failed; falling back to in-memory cache',
+      err
+    );
   }
 
   // --- Fallback: in-memory cache (DB unavailable) ---
   if (results == null) {
     results = [...auditStore];
-    if (filters.organizationId) results = results.filter(e => e.organizationId === filters.organizationId);
+    if (filters.organizationId)
+      results = results.filter(e => e.organizationId === filters.organizationId);
     if (filters.userId) results = results.filter(e => e.userId === filters.userId);
     if (filters.category) results = results.filter(e => e.category === filters.category);
-    if (filters.resourceType) results = results.filter(e => e.resourceType === filters.resourceType);
+    if (filters.resourceType)
+      results = results.filter(e => e.resourceType === filters.resourceType);
     if (filters.resourceId) results = results.filter(e => e.resourceId === filters.resourceId);
     if (filters.startDate) results = results.filter(e => e.timestamp >= filters.startDate!);
     if (filters.endDate) results = results.filter(e => e.timestamp <= filters.endDate!);

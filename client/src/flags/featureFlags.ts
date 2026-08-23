@@ -50,27 +50,32 @@ export const featureFlags: Record<string, FeatureFlag> = {
     defaultValue: false,
     enabled: false,
   },
-  // AnA Document Studio — split-pane authoring (chat left, live document
-  // preview + verification trust-panel right). Ships dark; enable per-org.
-  ENABLE_ANA_DOCUMENT_STUDIO: {
-    id: 'ENABLE_ANA_DOCUMENT_STUDIO',
-    name: 'AnA Document Studio',
+  // ENABLE_ANA_DOCUMENT_STUDIO — DELETED. The flag gated nothing: the
+  // split-pane DocumentStudioPane was removed as unreachable code, and the
+  // flag survived it with zero call sites. A flag that controls no behavior is
+  // documentation pretending to be a control.
+  //
+  // ENABLE_RICH_SECTION_EDITOR — DELETED, superseded. The one canonical
+  // editor (v2/editor/RichSectionEditor, TipTap) replaced BOTH paths this flag
+  // chose between: the plain <textarea> and the execCommand DocCanvas are
+  // gone, so there is nothing left to flag. The round-trip precondition the
+  // flag's description demanded is enforced structurally instead — a
+  // fail-closed per-section fidelity gate (v2/editor/roundTrip.ts, tested in
+  // tests/concept2cure/rich-section-editor-roundtrip.test.tsx) drops any
+  // section whose stored text a rich parse would alter into raw source mode.
+
+  // Live co-editing — Yjs CRDT sync over the server's Hocuspocus /collab
+  // socket, inside the canonical section editor. Ships dark. The server side
+  // is separately gated by ENABLE_COLLAB_CRDT (env, off by default) with JWT +
+  // membership + resource authorization on the socket; BOTH must be on for a
+  // session to sync. Flag off — and equally, socket refused or absent — the
+  // editor reports "editing solo" and the governed PATCH save path is
+  // unaffected. Enable per-deploy after a real multi-client soak.
+  ENABLE_LIVE_COEDITING: {
+    id: 'ENABLE_LIVE_COEDITING',
+    name: 'Live co-editing (Yjs over /collab)',
     description:
-      'Enables the in-AnA split-pane document preview with Download-as-DOCX and the "verified against your source" trust-panel.',
-    defaultValue: false,
-    enabled: false,
-  },
-  // Rich section editor — swaps the plain <textarea> in the Document Authoring
-  // surface for the DocCanvas WYSIWYG editor (formatting ribbon, inline AnA
-  // draft, real auto-saving PATCH). Ships DARK: default off keeps the textarea
-  // path exactly as the shipping default. Preview flag pending runtime
-  // verification of the HTML content round-trip against the Part 11 governed
-  // authoring store — do not enable in production until that is confirmed.
-  ENABLE_RICH_SECTION_EDITOR: {
-    id: 'ENABLE_RICH_SECTION_EDITOR',
-    name: 'Rich section editor (DocCanvas)',
-    description:
-      'Swaps the Document Authoring textarea for the DocCanvas WYSIWYG editor. Off by default; the textarea is the shipping default until the HTML round-trip is verified.',
+      'Connects the section editor to the Hocuspocus CRDT socket for real-time co-editing. Requires the server flag ENABLE_COLLAB_CRDT; degrades to solo editing when the socket is unavailable.',
     defaultValue: false,
     enabled: false,
   },

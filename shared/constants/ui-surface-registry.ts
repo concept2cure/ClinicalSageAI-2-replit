@@ -225,13 +225,13 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'vault',
     group: 'evidence',
     uiKit: 'mdx',
-    apiPrefixes: ['/api/corpus', '/api/device-data-center', '/api/evidence'],
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE, PART11],
-    notes: 'Drag-drop upload, chunking/embedding progress, semantic search, version history, evidence linking.',
+    notes: 'The program dossier tree (rule-pack builds) plus the filing cabinet: uploads are virus-scanned, SHA-256 hashed, auto-classified to a suggested dossier folder per the program\'s client-type taxonomy (CTD modules / device submission folders / TMF zones), and confirmed or moved via the governed, audited /file route. Includes the data room lane — every captured source with its derived captured→classified→filed stage.',
   },
   {
     id: 'review',
@@ -391,7 +391,10 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Module 3 operating system: blueprint, specifications, stability, batch records, convergence.',
+    notes:
+      'Module 3 operating system: registers, specifications, stability, batch records, build/compile, ' +
+      'contradictions, Part 11 approval, export gate, and placement into the IND submission spine. ' +
+      'Promoted to the rail (RAIL_SPECIALIST) 2026-08-23; entitlement-gated via the cmc catalog row.',
   },
   {
     id: 'ind-checklist',
@@ -596,47 +599,6 @@ export const UI_SURFACES: UiSurface[] = [
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.',
-  },
-  {
-    id: 'mission-control',
-    label: 'Mission Control',
-    navTier: 'specialist',
-    layoutMode: 'default',
-    icon: 'route',
-    group: 'governance',
-    uiKit: null,
-    apiPrefixes: ['/api/mission-control'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes:
-      'The regulatory program engine — programs, server-computed readiness across nine ' +
-      'dimensions, and the artifacts, risks, decisions and stale dependencies behind that ' +
-      'score. Distinct from `projects` (/api/c2c/projects), which models the workspace a ' +
-      'team works inside rather than the regulatory program.',
-  },
-  {
-    id: 'filing-strategy',
-    label: 'Global filing strategy',
-    navTier: 'specialist',
-    layoutMode: 'default',
-    icon: 'route',
-    group: 'regulatory',
-    uiKit: null,
-    apiPrefixes: ['/api/regulatory-precedent-intelligence'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes:
-      'Filing sequence across agencies, requirement divergence between any agency pair, ' +
-      'and the confidence-calibration report. Reads the cross-jurisdictional and ' +
-      'confidence families only — the CRL/RTF/EMA/advisory-committee endpoints on the ' +
-      'same router are NOT authoritative (see docs/adr/0013). The record starts empty ' +
-      'and the surface says so.',
   },
   // 'rbm-operations' is retired. It was a second, thinner RBM destination
   // holding the write/compute layer (KRI value capture, site-risk recompute,

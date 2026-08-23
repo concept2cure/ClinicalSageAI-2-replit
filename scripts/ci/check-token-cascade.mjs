@@ -29,6 +29,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -46,6 +47,8 @@ const SCAN_DIRS = [
   'client/src/concept2cure',
   'client/src/styles',
 ];
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:token-cascade]', SCAN_DIRS.map(d => path.join(ROOT, d)));
 const ALWAYS_SKIP = [
   'client/src/components/canvas',
   'client/src/components/dashboard',
@@ -130,10 +133,45 @@ function isSkipped(rel) {
   return ALWAYS_SKIP.some(p => rel === p || rel.startsWith(p + '/') || rel.startsWith(p + path.sep));
 }
 
+/**
+ * Custom properties a stylesheet declares on ordinary selectors, not in a
+ * `:root`-equivalent block.
+ *
+ * `.ed-doc-h{--ed-crumbs-floor:180px; …}` is a component-local token: declared
+ * on the element whose subtree reads it, deliberately NOT global, because a
+ * breadcrumb's minimum width has no business in the brand palette. That is
+ * ordinary CSS and it resolves at runtime — but this gate only ever collected
+ * `:root`-equivalent blocks, so it reported two such properties as unresolved
+ * and failed a stylesheet that was correct.
+ *
+ * The gate exists to catch a var() that resolves to NOTHING, which renders the
+ * brand grey. A locally-declared property resolves. Accepting it closes a
+ * false-positive class without opening the one that matters.
+ *
+ * The narrower hole this does leave, stated rather than hidden: a property
+ * declared on `.a` and read on `.b`, where `.b` is not inside `.a`, resolves
+ * here but not in a browser. That is a scoping mistake within one file, which
+ * a reader can see; a missing global alias is invisible, which is why the gate
+ * was written.
+ */
+function extractLocalProperties(css) {
+  const out = {};
+  const withoutRoot = stripComments(css).replace(
+    /(?::global\(\s*:root\s*\)|:global\(\s*\.dark\s*\)|:root|\.dark|\[data-theme=[^\]]*\])\s*\{[\s\S]*?\}/g,
+    '',
+  );
+  const re = /(--[a-zA-Z0-9-]+)\s*:\s*([^;}]+)[;}]/g;
+  let m;
+  // Same shape the resolver expects from extractRoot: { val, from }.
+  while ((m = re.exec(withoutRoot)) !== null) out[m[1]] = { val: m[2].trim().replace(/\s+/g, ' '), from: 'component-local' };
+  return out;
+}
+
 function auditFile(file, globalCascade) {
   const css = fs.readFileSync(file, 'utf8');
   const local = extractRoot(css, 'local');
-  const cascade = { ...globalCascade, ...local };
+  const scoped = extractLocalProperties(css);
+  const cascade = { ...globalCascade, ...scoped, ...local };
   const resolve = makeResolver(cascade);
 
   // Strip own :root-equivalent blocks before scanning so self-aliases don't count.

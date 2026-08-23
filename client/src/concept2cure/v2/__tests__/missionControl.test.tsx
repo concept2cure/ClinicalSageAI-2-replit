@@ -45,7 +45,7 @@ function fail(status: number, error?: string) {
 }
 
 const PROGRAMS = [
-  { id: 7, name: 'C2C-101', code: 'IND-2201', customerTrack: 'biotech', indication: 'NSCLC' },
+  { id: 7, name: 'C2C-101', code: 'IND-2201', customerTrack: 'biotech', modality: 'mab', indication: 'NSCLC' },
   { id: 8, name: 'C2C-202', customerTrack: 'pharma' },
 ];
 
@@ -201,6 +201,56 @@ describe('Mission Control — reads the real program engine', () => {
     expect(toast.getAttribute('role')).toBe('alert');
     expect(toast.getAttribute('data-tone')).toBe('error');
     expect(apiRequest.mock.calls.some(c => c[0] === 'POST')).toBe(false);
+  });
+
+  // ── BP-W2-2: modality and the regulatory frame ────────────────────────────
+
+  it('the selected program states its regulatory frame, derived from modality', async () => {
+    render(<MissionControl {...props()} />);
+    await screen.findByText(/61% overall confidence/);
+    // The chip is the stored fact; the line is DERIVED by
+    // shared/regulatory/modality.ts — CDER (not CBER: mAbs transferred in
+    // 2003), the 351(a) default pathway with its PDUFA fee, and the CMC core.
+    expect(screen.getByText('Monoclonal antibody')).toBeTruthy();
+    expect(screen.getByText('CDER · BLA 351(a) (PDUFA) · ICH Q5 family')).toBeTruthy();
+  });
+
+  it('a program with no modality renders no frame rather than a guessed one', async () => {
+    render(<MissionControl {...props()} />);
+    await screen.findByText(/61% overall confidence/);
+    fireEvent.click(screen.getByRole('button', { name: /C2C-202/ }));
+    await waitFor(() => {
+      expect(screen.queryByText('Monoclonal antibody')).toBeNull();
+      expect(screen.queryByText(/BLA 351\(a\)/)).toBeNull();
+    });
+  });
+
+  it('creates a program with the canonical modality on the wire, and omits "Not set"', async () => {
+    render(<MissionControl {...props()} />);
+    await screen.findByRole('button', { name: /C2C-101/ });
+    fireEvent.click(screen.getByRole('button', { name: /New program/ }));
+    fireEvent.change(screen.getByLabelText(/Program name/), { target: { value: 'C2C-404' } });
+    fireEvent.change(screen.getByLabelText(/Modality/), { target: { value: 'gene_therapy' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Create$/ }));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/mission-control/programs');
+      expect(call).toBeTruthy();
+      // The wire carries the canonical member, never the display label.
+      expect(call![2]).toMatchObject({ name: 'C2C-404', modality: 'gene_therapy' });
+    });
+  });
+
+  it('an unset modality is omitted from the create body, not sent as an empty string', async () => {
+    render(<MissionControl {...props()} />);
+    await screen.findByRole('button', { name: /C2C-101/ });
+    fireEvent.click(screen.getByRole('button', { name: /New program/ }));
+    fireEvent.change(screen.getByLabelText(/Program name/), { target: { value: 'C2C-505' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Create$/ }));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find(c => c[0] === 'POST' && c[1] === '/api/mission-control/programs');
+      expect(call).toBeTruthy();
+      expect('modality' in call![2]).toBe(false);
+    });
   });
 
   it('gives its tables explicit column headers', () => {

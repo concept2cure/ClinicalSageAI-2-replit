@@ -15,30 +15,26 @@
 
 import { createHash } from 'crypto';
 import { Pool } from 'pg';
+import { stableStringify as sharedStableStringify } from '../../shared/canonical-json.js';
 
 // ── Stable stringify (deterministic JSON) ───────────────────────────────────
 
+/**
+ * Deterministic serialization for the pack's manifest and snapshot hashes.
+ *
+ * Delegates to the one canonicalizer (ledger L46). This module and
+ * `ivdr-pack-worker.ts` carried byte-identical private copies of it and hash
+ * the SAME manifest from the service and the worker, so they are re-pointed in
+ * one commit — a split migration would make the two halves of one pack disagree,
+ * which is the failure the row is about.
+ *
+ * Free to re-point: `manifest_sha256` is written and read back for display, and
+ * nothing recomputes it to compare. A regenerated pack gets a different hash
+ * than it would have before, which is a discontinuity in a displayed value, not
+ * a broken check.
+ */
 function stableStringify(value: unknown): string {
-  if (value === null || value === undefined) return 'null';
-  if (typeof value === 'boolean' || typeof value === 'number') {
-    if (typeof value === 'number' && !isFinite(value)) return 'null';
-    return String(value);
-  }
-  if (typeof value === 'string') return JSON.stringify(value);
-  if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']';
-  if (typeof value === 'object') {
-    if (typeof (value as any).toJSON === 'function')
-      return stableStringify((value as any).toJSON());
-    const keys = Object.keys(value as Record<string, unknown>).sort();
-    const pairs: string[] = [];
-    for (const key of keys) {
-      const v = (value as Record<string, unknown>)[key];
-      if (v === undefined) continue;
-      pairs.push(JSON.stringify(key) + ':' + stableStringify(v));
-    }
-    return '{' + pairs.join(',') + '}';
-  }
-  return 'null';
+  return sharedStableStringify(value);
 }
 
 function sha256(input: string): string {

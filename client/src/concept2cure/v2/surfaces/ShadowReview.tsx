@@ -86,7 +86,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     ? {
         tone: 'urgent' as const,
         h: <>{criticals} finding{criticals > 1 ? 's' : ''} would <b>stop your {lens.agency} filing at the {worst === 'rtf' ? lens.gates.rtf : lens.gates.crl}</b>. I ran the {lens.label} over your submission and this is what they would raise first.</>,
-        b: <>A single critical saturates the gate -- fix these before you dispatch. Everything a reviewer flags here is cheaper to close now than in a {lens.gates.crl}.</>,
+        b: <>A single critical saturates the gate — fix these before you dispatch. Everything a reviewer flags here is cheaper to close now than in a {lens.gates.crl}.</>,
       }
     : majors > 0
       ? {
@@ -97,7 +97,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
       : {
           tone: 'good' as const,
           h: <>The {lens.label} recorded no blocking findings on your connected sequence. RTF risk {Math.round(rtf * 100)}%, {lens.gates.crl.split(' ')[0]} risk {Math.round(crl * 100)}%.</>,
-          b: <>This is a clean simulated review. It is not a guarantee -- but a reviewer opening this sequence would not hit an administrative or substantive wall.</>,
+          b: <>This is a clean simulated review. It is not a guarantee — but a reviewer opening this sequence would not hit an administrative or substantive wall.</>,
         };
 
   const showResults = !live.loading && !live.error && !live.empty && lensRan;
@@ -106,10 +106,10 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     <div className="sr">
       <div className="sr-head">
         <div className="sr-eyebrow">
-          <span className="sr-kicker">AnA -- shadow review -- simulated {lens.agency} reviewer</span>
+          <span className="sr-kicker">AnA — shadow review — simulated {lens.agency} reviewer</span>
         </div>
         <h1 className="sr-title">What would a reviewer flag before you file?</h1>
-        <div className="sr-sub">Agencies run AI on their side of the desk -- this runs the reviewer's lens on yours, before they do.</div>
+        <div className="sr-sub">Agencies run AI on their side of the desk — this runs the reviewer's lens on yours, before they do.</div>
       </div>
 
       {/* Lens selector -- the 5 real reviewer lenses (canonical catalog) */}
@@ -162,8 +162,8 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
             {/* The two gates that kill a filing */}
             <div className="sr-gates">
               {([
-                { k: 'rtf', v: rtf, name: lens.gates.rtf, sub: 'Administrative gate -- will they accept the filing?', dims: 'rtf + format findings' },
-                { k: 'crl', v: crl, name: lens.gates.crl, sub: 'Substantive gate -- will they approve after review?', dims: 'crl + nb findings' },
+                { k: 'rtf', v: rtf, name: lens.gates.rtf, sub: 'Administrative gate — will they accept the filing?', dims: 'rtf + format findings' },
+                { k: 'crl', v: crl, name: lens.gates.crl, sub: 'Substantive gate — will they approve after review?', dims: 'crl + nb findings' },
               ] as const).map((g) => (
                 <div key={g.k} className={'sr-gate band-' + riskBand(g.v)}>
                   <div className="sr-gate-top">
@@ -181,7 +181,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
             <div className="sr-findings">
               <div className="sr-findings-hd">
                 <span className="sr-findings-t">{findings.length} finding{findings.length === 1 ? '' : 's'}</span>
-                <span className="sr-findings-s">critical to info -- what the reviewer raises, and how to close it</span>
+                <span className="sr-findings-s">critical to info — what the reviewer raises, and how to close it</span>
               </div>
               {findings.map((f, i) => {
                 const sev: SeverityMeta = SR_SEV[f.severity] || SR_SEV.info;
@@ -213,7 +213,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         <div className="sr-foot">
           <PedigreeBadge level="model_assisted" />
           <PedigreeBadge level="deterministic_registry" />
-          <span className="sr-foot-note">Findings are model-assisted -- produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL risk aggregation is deterministic (a single critical saturates the gate). Connect a sequence to run the live reviewer against it.</span>
+          <span className="sr-foot-note">Findings are model-assisted — produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL risk aggregation is deterministic (a single critical saturates the gate). Connect a sequence to run the live reviewer against it.</span>
           <div className="sr-actions">
             {/* FLAG (mock action): asks AnA to run the reviewer rather than calling
                 POST /sequences/:seqId/shadow-review directly — the real endpoint

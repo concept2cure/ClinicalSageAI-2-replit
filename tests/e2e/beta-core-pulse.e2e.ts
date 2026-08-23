@@ -13,7 +13,12 @@ async function loginToCore(page: Page): Promise<void> {
     'button:has-text("Quick Demo Access"), button:has-text("Demo Access")'
   );
 
-  if (await demoAccess.first().isVisible({ timeout: 3000 }).catch(() => false)) {
+  if (
+    await demoAccess
+      .first()
+      .isVisible({ timeout: 3000 })
+      .catch(() => false)
+  ) {
     await demoAccess.first().click();
     const persona = page
       .locator(
@@ -25,7 +30,7 @@ async function loginToCore(page: Page): Promise<void> {
     }
   } else {
     await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jm.smith@concept2cure.pro' },
+      data: { email: 'jonmichaelpsmith@gmail.com' },
     });
   }
 
@@ -45,7 +50,7 @@ async function loginToCore(page: Page): Promise<void> {
 
   if (!redirected) {
     const devLogin = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
-      data: { email: 'jm.smith@concept2cure.pro' },
+      data: { email: 'jonmichaelpsmith@gmail.com' },
     });
     const payload = await devLogin.json();
 
@@ -67,7 +72,9 @@ async function loginToCore(page: Page): Promise<void> {
 }
 
 async function openProjectFromSidebar(page: Page): Promise<void> {
-  const sidebar = page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first();
+  const sidebar = page
+    .locator('aside[aria-label="Main sidebar"], aside[role="navigation"]')
+    .first();
   await expect(sidebar).toBeVisible({ timeout: 12000 });
 
   const existingProject = sidebar.locator('[data-testid="project-select"]').first();
@@ -97,7 +104,9 @@ async function openProjectFromSidebar(page: Page): Promise<void> {
   });
 
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect(sidebar.locator('[data-testid="project-row"]').first()).toBeVisible({ timeout: 10000 });
+  await expect(sidebar.locator('[data-testid="project-row"]').first()).toBeVisible({
+    timeout: 10000,
+  });
   await sidebar.locator('[data-testid="project-select"]').first().click();
 }
 
@@ -112,7 +121,9 @@ test.describe('Beta core pulse', () => {
 
     // 2) Login redirect behavior should preserve concept2cure target.
     await page.goto(
-      `${BASE_URL}/concept2cure/login?returnTo=${encodeURIComponent('/concept2cure/project/beta-pulse-seeded-project')}`,
+      `${BASE_URL}/concept2cure/login?returnTo=${encodeURIComponent(
+        '/concept2cure/project/beta-pulse-seeded-project'
+      )}`,
       { waitUntil: 'domcontentloaded' }
     );
     await loginToCore(page);
@@ -120,7 +131,10 @@ test.describe('Beta core pulse', () => {
     // 3) /client-portal/* compatibility fence should not dead-end.
     await page.goto(`${BASE_URL}/client-portal/ectd-coauthor`, { waitUntil: 'domcontentloaded' });
     const portalUrl = new URL(page.url());
-    expect(portalUrl.pathname.startsWith('/client-portal') || portalUrl.pathname.startsWith('/concept2cure')).toBeTruthy();
+    expect(
+      portalUrl.pathname.startsWith('/client-portal') ||
+        portalUrl.pathname.startsWith('/concept2cure')
+    ).toBeTruthy();
 
     // 4) Authenticated /concept2cure/project/:projectId.
     await page.goto(`${BASE_URL}/concept2cure/project/beta-pulse-seeded-project`, {
@@ -128,13 +142,19 @@ test.describe('Beta core pulse', () => {
     });
 
     // 5) Project shell load.
-    await expect(page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first()).toBeVisible({
+    await expect(
+      page.locator('aside[aria-label="Main sidebar"], aside[role="navigation"]').first()
+    ).toBeVisible({
       timeout: 15000,
     });
 
     // 6) Governed workspace shell visible.
-    const workspaceShell = page.locator('[data-testid="workspace-shell"], [data-testid="project-workspace-shell"]').first();
-    const workspaceShellVisible = await workspaceShell.isVisible({ timeout: 4000 }).catch(() => false);
+    const workspaceShell = page
+      .locator('[data-testid="workspace-shell"], [data-testid="project-workspace-shell"]')
+      .first();
+    const workspaceShellVisible = await workspaceShell
+      .isVisible({ timeout: 4000 })
+      .catch(() => false);
 
     // Fallback check for current shell variants.
     if (!workspaceShellVisible) {
@@ -154,13 +174,17 @@ test.describe('Beta core pulse', () => {
       await page.waitForTimeout(500);
     }
 
-    const overviewButton = page.locator('button:has-text("Overview"), a:has-text("Overview")').first();
+    const overviewButton = page
+      .locator('button:has-text("Overview"), a:has-text("Overview")')
+      .first();
     if (await overviewButton.isVisible({ timeout: 3000 }).catch(() => false)) {
       await overviewButton.click();
       await page.waitForTimeout(500);
     }
 
-    const mainContent = page.locator('main, [role="main"], [data-testid="workspace-content"]').first();
+    const mainContent = page
+      .locator('main, [role="main"], [data-testid="workspace-content"]')
+      .first();
     await expect(mainContent).toBeVisible({ timeout: 10000 });
     const mainText = (await mainContent.textContent()) || '';
     expect(mainText.trim().length).toBeGreaterThan(20);
@@ -172,7 +196,9 @@ test.describe('Beta core pulse', () => {
 
     // 10) No primary beta CTA lands in unmapped/dead route.
     const ctaCandidates = page
-      .locator('a:has-text("Open"), button:has-text("Open"), a:has-text("Launch"), button:has-text("Launch")')
+      .locator(
+        'a:has-text("Open"), button:has-text("Open"), a:has-text("Launch"), button:has-text("Launch")'
+      )
       .first();
     if (await ctaCandidates.isVisible({ timeout: 2000 }).catch(() => false)) {
       await ctaCandidates.click();

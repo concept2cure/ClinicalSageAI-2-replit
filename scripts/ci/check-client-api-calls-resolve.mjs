@@ -41,6 +41,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { requireScanRoots } from './lib/scan-roots.mjs';
 
 const ROOT = process.cwd();
 
@@ -116,6 +117,9 @@ const prefix = (p, n = 2) => '/' + p.split('/').filter(Boolean).slice(0, n).join
 
 // ── server: every /api prefix that is mounted or declared ────────────────────
 const serverPrefixes = new Set();
+// A missing root is a broken scan, not a clean one. See lib/scan-roots.mjs.
+requireScanRoots('[ci:client-api-calls]', [path.join(ROOT, 'server'), path.join(ROOT, 'client/src')]);
+
 for (const f of walk(path.join(ROOT, 'server'), ['.ts', '.js'])) {
   if (f.includes('__tests__')) continue;
   const src = stripComments(fs.readFileSync(f, 'utf8'));

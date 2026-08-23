@@ -59,7 +59,10 @@ const baselinePath = path.join(repoRoot, 'docs', 'reports', 'requestdb-coverage-
 const ALLOWLIST_FILES = new Set([
   'server/routes/auth.ts',
   'server/routes/authEnterprise.ts',
-  'server/routes/admin.ts',
+  // ('server/routes/admin.ts' removed — never existed in this repo's history.
+  //  An allowlisted-but-absent path is a pre-approval waiting to be claimed;
+  //  an allowlisted file is excluded from onSharedPool entirely, so a future
+  //  file at that name would not even appear in the RLS migration backlog.)
   // Master Administration — platform-owner + support console. Intentionally
   // cross-tenant (estate-wide monitoring of every client), gated by
   // requirePlatformAdmin. requestDb(req) would RLS-scope it to the caller's own

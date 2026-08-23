@@ -116,7 +116,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
   };
 
   const FORM: C2CFormConfig = {
-    eyebrow: 'Use-related risk -- IEC 62366-1',
+    eyebrow: 'Use-related risk — IEC 62366-1',
     title: 'Add use scenario',
     sub: 'Each scenario is a task where a use error could cause harm. Serious or critical harm makes it a critical task that must be mitigated before summative testing.',
     governed: 'Use scenarios feed the use-related risk analysis and the HFE/UE report; changes are audit-logged.',
@@ -125,7 +125,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       { key: 'task', label: 'Task / use step', type: 'text', placeholder: 'e.g. Result interpretation (positive call)', required: true },
       { key: 'useError', label: 'Potential use error', type: 'text', placeholder: 'e.g. Misreading a borderline result', required: true },
       { key: 'potentialHarmSeverity', label: 'Potential harm severity', type: 'select', options: HF_SEV.map(s => ({ value: s[0], label: s[1] })), required: true },
-      { key: 'mitigated', label: 'Mitigation in place?', type: 'select', options: [{ value: 'no', label: 'No -- not yet mitigated' }, { value: 'yes', label: 'Yes -- risk control documented' }], required: true },
+      { key: 'mitigated', label: 'Mitigation in place?', type: 'select', options: [{ value: 'no', label: 'No — not yet mitigated' }, { value: 'yes', label: 'Yes — risk control documented' }], required: true },
     ],
   };
 
@@ -140,13 +140,13 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         task: v.task, useError: v.useError, potentialHarmSeverity: sev, mitigated: mit,
       });
       if (!res.ok) {
-        fire('Could not add scenario -- the organization needs an HFE/UE file');
+        fire('Could not add scenario — the organization needs an HFE/UE file');
         return;
       }
       const body = await res.json().catch(() => null);
       const row = body?.data;
       if (!row || !row.task) {
-        fire('Could not add scenario -- unexpected response');
+        fire('Could not add scenario — unexpected response');
         return;
       }
       const ns: HfScenario = { task: row.task, useError: row.useError || '', potentialHarmSeverity: row.potentialHarmSeverity || 'minor', mitigated: row.mitigated === true, _new: true };
@@ -200,10 +200,10 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         tone={risk.unmitigatedCriticalTasks > 0 ? 'urgent' : 'calm'}
         eyebrow="Whether you can run the summative usability study yet"
         headline={risk.unmitigatedCriticalTasks > 0
-          ? <><b>{risk.unmitigatedCriticalTasks}</b> critical task{risk.unmitigatedCriticalTasks === 1 ? '' : 's'} still {risk.unmitigatedCriticalTasks === 1 ? 'has' : 'have'} no mitigation -- summative testing shouldn't start until {risk.unmitigatedCriticalTasks === 1 ? 'it is' : 'they are'} controlled.</>
-          : <>Every critical task has a documented mitigation -- residual use-related risk is acceptable and you're clear to run summative.</>}
+          ? <><b>{risk.unmitigatedCriticalTasks}</b> critical task{risk.unmitigatedCriticalTasks === 1 ? '' : 's'} still {risk.unmitigatedCriticalTasks === 1 ? 'has' : 'have'} no mitigation — summative testing shouldn't start until {risk.unmitigatedCriticalTasks === 1 ? 'it is' : 'they are'} controlled.</>
+          : <>Every critical task has a documented mitigation — residual use-related risk is acceptable and you're clear to run summative.</>}
         body={<>You've analysed <b>{risk.totalScenarios}</b> use scenarios; <b>{risk.criticalTaskCount}</b> {risk.criticalTaskCount === 1 ? 'is a' : 'are'} critical task{risk.criticalTaskCount === 1 ? '' : 's'} (serious or critical harm). The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` -- ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}.</>}
-        reassure="I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report -- you approve each one."
+        reassure="I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one."
         action={firstUnmit
           ? { label: 'Mitigate ' + firstUnmit.task, onClick: () => ask('Draft a risk-control mitigation for the critical task: ' + firstUnmit.task + ' (' + firstUnmit.useError + ')') }
           : { label: 'Draft the HFE/UE report', onClick: () => ask('Assemble the HFE/UE report from the completed elements') }}
@@ -217,12 +217,12 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="hf-gate-t">{risk.residualRiskAcceptable ? 'Residual use-related risk acceptable' : 'Residual use-related risk not acceptable'}</div>
           <div className="hf-gate-s">{risk.residualRiskAcceptable
-            ? 'All critical tasks are mitigated -- summative usability testing may proceed.'
+            ? 'All critical tasks are mitigated — summative usability testing may proceed.'
             : risk.unmitigatedCriticalTasks + ' critical task' + (risk.unmitigatedCriticalTasks === 1 ? '' : 's') + ' must be mitigated before summative testing (IEC 62366-1 S5.9).'}</div>
         </div>
       </div>
       {scenarios.length === 0 ? (
-        <p className="dv-mini-note">No use-related scenarios recorded yet -- add one to start the use-related risk analysis.</p>
+        <p className="dv-mini-note">No use-related scenarios recorded yet — add one to start the use-related risk analysis.</p>
       ) : (
       <div className="hf-scen">
         {scenarios.map((s, i) => {

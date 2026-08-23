@@ -52,6 +52,26 @@ import { ensureJournal, recordApplied } from './migration-journal.mjs';
 // The wider problem stands: merged and applied have diverged silently across
 // 358 migrations because the manifest is not authoritative for anything. Making
 // something consume it is a separate change to how schema ships.
+/**
+ * The two tenant-isolation steps, named once.
+ *
+ * Both are POSITIONAL invariants, not just membership ones: the integer sweep
+ * must be the LAST entry so it sees every table the set creates (ledger C-33),
+ * and the uuid non-public step must sit immediately before it so the pair is
+ * the final two. A file appended after either one is never swept, which is a
+ * tenant-keyed table shipping with no policy — silent, and only visible once
+ * somebody reads across tenants.
+ *
+ * They are exported because four separate places used to hardcode these
+ * strings — three contract tests and the list itself — so the invariant had
+ * four copies and no single definition. scripts/ci/check-migration-set-order.mjs
+ * and the contract tests now import them from here, next to the list they
+ * constrain.
+ */
+export const TENANT_ISOLATION_SWEEP = 'db/migrations/20260801_tenant_isolation_sweep.sql';
+export const UUID_TENANT_ISOLATION_NONPUBLIC =
+  'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql';
+
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
   // Seven migrations that tests/golden-journeys provision and depend on, and
@@ -82,6 +102,34 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260604_shadow_review.sql',
   'migrations/20260609_audit_hmac_seal.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
+
+  // ── The canonical submission core ───────────────────────────────────────────
+  // Creates submissions / submission_regions / ectd_sequences / submission_leaves
+  // — the region-agnostic core `server/routes/submissions.ts` serves and
+  // `submission-service.ts` reads through Drizzle.
+  //
+  // It reached NO durable applier. Nothing in this repository referenced the
+  // file except an audit document: it is not in this list, carries no `_gcc_`
+  // infix, and `shared/schema/submissions.ts` is re-exported from
+  // shared/schema.ts but these tables are not in the drizzle journal either, so
+  // only install-fresh's root-tree overlay created them — fresh databases only.
+  // Any database provisioned before 2026-06-04 and kept current with
+  // deploy-migrate has never had them.
+  //
+  // That is the MDX UAT's item A2: GET /api/submissions returned 500 while
+  // GET /api/510k/estar/submissions returned 200. Not two services disagreeing
+  // — two STORES, one of which was never created, so `listSubmissions`' first
+  // statement raised 42P01. The device eSTAR path has its own tables (see
+  // 20260730_estar_submission.sql below, which IS in this list) and was
+  // unaffected.
+  //
+  // Placed after the audit/program block and before everything else that runs:
+  // its only prerequisites are organizations and users (drizzle-push base
+  // tables), and later entries reference submissions rather than the reverse.
+  // The file is CREATE TABLE IF NOT EXISTS throughout, so it is a no-op on the
+  // fresh installs that already have it.
+  'migrations/20260604_submission_core_canonical.sql',
+
   'migrations/20260603_ai_capability_governance.sql',
   'migrations/20260603_pv_operational.sql',
   'migrations/20260603_commitments.sql',
@@ -207,6 +255,28 @@ export const C2C_MIGRATION_FILES = [
   //
   // MUST precede the re-key below, which indexes the tables this creates.
   'db/migrations/20260401_cmc_convergence_os.sql',
+
+  // ── project_workflows (added 2026-08-23) ─────────────────────────────────
+  // The CMC workflow store. `server/api/cmc/routes.ts` and
+  // `server/api/cmc/workflowRoutes.ts` query `project_workflows`; this file is
+  // its ONLY creator, and it was on no applier — so the table existed on no
+  // real database and both routes 500'd.
+  //
+  // It was invisible to ci:migration-reachability because that guard treated
+  // any `pgTable(...)` under shared/ as the drizzle push surface, and
+  // shared/cmc-schema.ts declares this table. drizzle.config.ts scopes push to
+  // shared/schema.ts alone, which does not re-export cmc-schema, so drizzle
+  // never created it either. The guard is corrected in the same change and now
+  // reports exactly this one finding.
+  //
+  // Meets the wiring bar (scripts/db/verify-migration-set.mjs): applied against
+  // a real PostgreSQL 16 with the full install present, creates
+  // project_workflows, and is CREATE TABLE IF NOT EXISTS throughout — its
+  // second pass reported "relation already exists, skipping" rather than
+  // failing, so the deploy's every-time re-run is safe. Placed after
+  // 20260401_cmc_convergence_os.sql, which provisions the CMC tables it sits
+  // beside.
+  'db/migrations/20260402_cmc_runtime_ddl_to_migration.sql',
   // ── Schedule of events tenant-scoped uniqueness (added 2026-07-28) ────────
   // SECURITY. project_schedule_of_events had a unique constraint on (project_id)
   // alone — org-blind. generateProjectSchedule() upserted with
@@ -789,8 +859,10 @@ export const C2C_MIGRATION_FILES = [
   //     by server code at all. It is dead schema, not a live gap; the "missing
   //     regulatory.submissions creator" C-34 recorded here was an artifact of the
   //     guard bug C-35 fixed. Left unwired because nothing needs it.
-  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and wired above; its
-  //     UUID-vs-serial atom-key conflict was the defect, not an ordering gap.
+  //   • 20260125_enhanced_cortex_schema — RESOLVED by C-36 and intentionally
+  //     excluded; its UUID-vs-serial atom-key conflict cannot be replayed
+  //     against the canonical integer atom schema. The reconciliation path
+  //     above owns those tables now.
 
   // ── Performance indexes on hot-path tables (added 2026-08-10) ────────────────
   // Indexes on the 30 most-queried tables targeting organization_id (tenant
@@ -820,7 +892,27 @@ export const C2C_MIGRATION_FILES = [
   // SET NOT NULL no-ops once set, and every row has a NOT-NULL FK parent so the
   // backfill leaves none behind). MUST precede the tenant-isolation sweep so the
   // new integer-org tables come under RLS.
+  // ── regulatory_twin_simulations (runtime DDL → durable path) ────────────────
+  // Was created by CREATE TABLE IF NOT EXISTS at module load inside
+  // server/routes/regulatory-digital-twin.ts, inside a try/catch that warned and
+  // continued — so it existed only where the app had booted, never on a
+  // provisioning-only database, and ci:tables-live-schema flagged the route's
+  // queries as reading a table nothing creates. The runtime DDL is removed in the
+  // same change; this list is now its only creator.
+  'migrations/20260821_regulatory_twin_simulations.sql',
+
   'migrations/20260729_unified_documents_provision.sql',
+  // The same trio's remaining three tables — module_documents,
+  // document_audit_logs, document_attachments — for the same reason. They are
+  // defined only in shared/schema/unified_workflow.ts, so push does not create
+  // them on a fresh install and no other raw file creates them at all. They were
+  // simply absent everywhere, which is why 0004_workflow_performance_indexes.sql
+  // (needs document_audit_logs) and 0007_tenant_isolation_fixes.sql (needs
+  // module_documents) were carried as expected install-time skips. Sorted 'b' so
+  // it follows _provision, whose unified_documents every table here references,
+  // and still precedes the tenant sweep — module_documents is integer-org-keyed
+  // and must come under RLS.
+  'migrations/20260729b_unified_workflow_companion_tables.sql',
   'migrations/20260730_workflow_doc_versions_org_id.sql',
   'migrations/20260731_workflow_doc_versions_org_not_null.sql',
 
@@ -998,6 +1090,23 @@ export const C2C_MIGRATION_FILES = [
   // locally-provisioned database looked healthy while every deployed one did
   // not. That divergence between "what a human ran" and "what a deploy runs" is
   // the failure mode this array exists to close.
+  // …and the same asymmetry one level up: 20260507 declares
+  // `q_submission_id uuid NOT NULL REFERENCES q_submissions(id)`, but the
+  // migration that CREATES q_submissions was itself never listed. The child was
+  // added to this set without its parent, so applying the set to a database
+  // that has not had the root-tree overlay run against it fails outright with
+  // `relation "q_submissions" does not exist` — exactly the divergence the note
+  // above describes, one dependency deeper.
+  //
+  // install-fresh hides it because readdirSync applies the whole root tree and
+  // 20260501 sorts before 20260507. Only deploy-migrate, which applies this
+  // array alone, sees the gap — which is why the C-33 sweep contract (the one
+  // test that replays this set against a blank database) is where it surfaced.
+  //
+  // Fully idempotent: every CREATE in it is IF NOT EXISTS, so it is a no-op on
+  // any database the overlay already provisioned. The db/migrations/ copy is
+  // byte-identical; the root-tree one is listed to match its dependent.
+  'migrations/20260501_q_sub.sql',
   'migrations/20260507_mdx_beta_surfaces.sql',
   'migrations/001_create_ivdr_tables.sql',
 
@@ -1067,6 +1176,12 @@ export const C2C_MIGRATION_FILES = [
   // lineages / reach no durable applier respectively).
   'migrations/20260814b_literature_screening_decisions.sql',
 
+  // ── GSPR catalog + post-market authoring, MDR/IVDR Annex I ───────────────
+  // The route and Drizzle schema already exist in the application, but this
+  // migration was never on a durable apply path. Keep it before PMCF
+  // enrollment, whose records point to post-market documents by convention.
+  'migrations/20260429_gspr_postmarket.sql',
+
   // ── PMCF enrolment progress, GA ledger L5 (added 2026-08-14) ─────────────
   // pmcf_enrollment_records — the EU MDR Annex XIV Part B §6.2 / MDCG 2020-7
   // execution evidence behind the CER's post-market section. The PMCF PLAN was
@@ -1117,6 +1232,17 @@ export const C2C_MIGRATION_FILES = [
   // even if every target table were present on every database.
   'migrations/20260814d_document_alias_map.sql',
 
+  // ── cerv2_section_versions.updated_at (added 2026-08-17) ────────────────────
+  // Reconciles the SQL lineage with shared/schema.ts, which declares this
+  // column while no migration created it. section-version.ts enumerates
+  // `updated_at` in its INSERT, so on a migration-provisioned database every
+  // POST /api/cerv2-sections answered 500 (42703 at PLAN time) while a
+  // drizzle-push database worked — the two provisioning paths disagreed, and
+  // only one of them is what deployment runs. ADD COLUMN IF NOT EXISTS,
+  // nullable with a default, guarded on the table existing so an environment
+  // without the CERV2 bundle no-ops instead of aborting a stopOnFirstFailure run.
+  'migrations/20260817_reconcile_declared_updated_at_columns.sql',
+
   // ── Submission leaf source pin, GA ledger L23 (added 2026-08-14) ─────────
   // Two nullable columns on submission_leaves recording the SHA-256 of the
   // source document's content at the moment a leaf was filed, and when that was
@@ -1162,7 +1288,6 @@ export const C2C_MIGRATION_FILES = [
   // table, no column, no data, and existing placeholder rows are left alone
   // because they truthfully record that nothing was captured.
   'migrations/20260814g_section_version_reason_required.sql',
-
 
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
@@ -1247,7 +1372,155 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260222_audit_events_immutability.sql',
   'db/migrations/20260617_audit_logs_immutability.sql',
 
-  'db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql',
+  // ── AnA's own memory: the tables her selfhood writes to (added 2026-08-20) ──
+  // All three sat in the root migrations/ tree on NO durable apply path: not
+  // journaled, not `_gcc_`, not in this set — so install-fresh's overlay was the
+  // only thing that ever created them, i.e. fresh installs only. On every
+  // database maintained by deploy-migrate:
+  //   * ana_relational_profiles (20260612) did not exist. Both halves of
+  //     relational-profile-service swallow the resulting 42P01, so AnA's
+  //     per-user/per-project relational memory — the RELATIONAL CONTEXT block
+  //     her personality core promises — was silently dead, along with the
+  //     external_intelligence_findings/runs tables the nightly sweep writes.
+  //   * conversation_working_memory.embedding (20260602) did not exist, so
+  //     ENABLE_SEMANTIC_WORKING_MEMORY could never actually embed (the writer
+  //     probes the column and quietly falls back to recency-only).
+  //   * 20260820 is new with this change: project attribution on thread-keyed
+  //     working memory, which is what makes the live AnA chat path's rows
+  //     eligible for nightly consolidation into project_memory_entries at all.
+  //     It also owns the CREATE TABLE IF NOT EXISTS for conversation_working_
+  //     memory (a push-surface table no journal file creates), so it runs
+  //     FIRST — 20260602's ALTER needs the table to exist on a set-only
+  //     database. 20260602 stays pgvector-dependent (vector(1536) column):
+  //     PGlite harnesses must name it alongside the C-37 trio; real-cluster
+  //     coverage is verify-migration-set.mjs, same as those.
+  // Ordered before the tenant-isolation sweeps so ana_relational_profiles and
+  // conversation_working_memory get tenant policies from the same run that
+  // creates them. The external-intel tables are global by design (no
+  // organization_id) and are skipped by the sweep. All three files are
+  // IF NOT EXISTS-idempotent and safe on databases where install-fresh
+  // already applied them.
+  'migrations/20260820_working_memory_project_id.sql',
+  'migrations/20260602_working_memory_embeddings.sql',
+  'migrations/20260612_ana_relational_external_intel.sql',
+
+  // ── RIM learned patterns get real tables (added 2026-08-20, ledger L70→) ──
+  // Graduates the learning loop's persistence from a JSON blob in
+  // project_memory_entries (the documented stopgap) to per-pattern rows with an
+  // append-only observation trail — the shape a Part 11 reviewer can actually
+  // inspect. The loader lazily imports any blob the stopgap wrote, so nothing
+  // learned in the interim is lost. Ordered before the sweep so both tables are
+  // policied in the deploy that creates them.
+  'migrations/20260820b_rim_learned_patterns.sql',
+
+  // ── AnA outcome log + capability registry (added 2026-08-20, ledger L77) ──
+  // ana_outcome_log is READ by session bootstrap ("AnA's past lessons") and
+  // now WRITTEN by the feedback interceptor — and the whole 0013 family sat on
+  // no durable apply path (fresh-install overlay only), so on deploy-migrated
+  // databases the reader queried a missing table and the writer would have
+  // too. Fully IF NOT EXISTS-idempotent; its trailing DO block is guarded on
+  // project_intelligence_profiles actually existing, so it is safe on a
+  // set-only database where that push-surface table never appears. Ordered
+  // before the sweep so the org-scoped tables get tenant policies.
+  'migrations/0013_ana_intelligence_system.sql',
+
+  // ── The v2 module-catalog seed joins the durable path (found via BP-W1-5) ──
+  // db/migrations/20260810_reconcile_module_catalog.sql seeds/reconciles the
+  // v2 Apps catalog (available_modules) — including the maa-cockpit row the
+  // update below edits — and sat on NO apply path: not in this set, not in
+  // install-fresh's overlay, not gcc-named. Merged ≠ applied, the exact drift
+  // this list exists to close. Idempotent (ON CONFLICT (module_id) DO UPDATE).
+  'db/migrations/20260810_reconcile_module_catalog.sql',
+
+  // ── provision_org_modules() repair (added 2026-08-23) ──────────────────────
+  // Two defects, each of which masks the other. The function called
+  // jsonb_array_elements_text() on available_modules.metadata, which is `json`
+  // — no implicit cast exists, so it raised on EVERY call and
+  // POST /api/module-subscriptions/provision has never written a row. And its
+  // tier test was `=` rather than `>=`, so with the cast fixed a professional
+  // org would receive professional modules but NOT standard ones — an inverted
+  // ladder, disagreeing with provisionModulesForTier, getModuleCatalog and
+  // canAccessModule, all three of which are inclusive.
+  //
+  // Ordered after the catalog reconcile above (it reads available_modules) and
+  // after 20260220_user_intelligence_platform.sql, which first defines the
+  // function. Function bodies only — no DDL, nothing for the sweep to policy.
+  'db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql',
+
+  // ── Commercial packaging applied to the catalog (added 2026-08-23) ────────
+  // 20260810 seeded all 84 modules unrestricted and said the tiering was "a
+  // business decision ... deliberately left to be applied later". This applies
+  // it: one min_tier per module, derived from boundaries already committed in
+  // billing.ts PRICING[].features, license-manager.ts FEATURE_TIER_MAP and
+  // entitlements/mdx-entitlements.ts. Data-only, no DDL. MUST come after the
+  // provision_org_modules repair above — before it, a non-empty `tiers` is what
+  // the broken function chokes on.
+  'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+
+  // ── Catalog descriptions become customer copy (added 2026-08-23) ──────────
+  // The 20260810 seed copied each surface's registry `notes` verbatim into
+  // `description`, which the Apps catalog renders to CUSTOMERS — so 33 of 84
+  // cards told a prospect the product was unfinished ("In progress.",
+  // "Partially built in ui_kits/home") or leaked repository internals.
+  // Display text only; nothing keys on it. scripts/ci/check-catalog-copy.mjs
+  // stops it recurring.
+  'db/migrations/20260823_module_catalog_customer_copy.sql',
+
+  // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
+  // Name + description only (adds Swissmedic to the modeled-agency list); no
+  // entitlement change. Idempotent UPDATE keyed on module_id.
+  'migrations/20260820c_catalog_maa_module1_regional.sql',
+
+  // Moved here from AFTER the sweep, where it was appended upstream. C-33 and
+  // three contract tests require the two isolation steps to be the final pair;
+  // a file that ALTERs tables after the sweep has run is never swept. This one
+  // reshapes vault.documents, so it has to precede them like everything else.
+  // ── W0-6: vault.documents had two definitions and the wrong one won ───────
+  // 044c_gcc_vault_schema.sql creates an 11-column table with CREATE TABLE IF
+  // NOT EXISTS; shared/schema/vault.ts declares the 28-column shape the product
+  // is written against. The migration runs first, so the model's version is a
+  // silent no-op and POST /api/vault/ingest — the only endpoint that persists
+  // bytes + a SHA-256 — INSERTs sixteen columns that do not exist. Every
+  // document upload 500s. This reconciles the table additively; it must run
+  // AFTER 044c, which the overlay applies.
+  'migrations/20260821_vault_documents_canonical_shape.sql',
+
+  // ── Vault filing: dossier placement on vault.documents ─────────────────────
+  // Adds folder_id / evidence_kind / ctd_section / placement_status (+
+  // confidence, rationale, placed_by/placed_at) so every ingested document
+  // carries a dossier placement: the classifier proposes ('suggested'), a
+  // person confirms or moves ('confirmed', audited), and the unplaceable stay
+  // visibly 'unfiled'. Additive, guarded on to_regclass('vault.documents');
+  // must run AFTER the canonical-shape reconciliation above.
+  'migrations/20260823_vault_document_placement.sql',
+
+  // ── Both entries below must precede the two isolation steps ────────────────
+  // The last two entries of this list are, and must remain, the uuid non-public
+  // step and the integer sweep — C-33 requires the sweep to see everything the
+  // set creates, and uuid-tenant-isolation.contract.test.ts pins both into the
+  // final pair. The tenant column added below has to come under the sweep, and
+  // the cast heal has to establish the guarded identity.current_org_id() before
+  // the uuid step creates policies that call it. So they sit immediately before
+  // the pair, never inside it.
+  // ── regulatory_twin_simulations gets a tenant key ───────────────────────────
+  // The table had none, and the route listed from it with no predicate, so every
+  // tenant's stored submission_profile was visible to every tenant. Adds
+  // organization_id (+FK, +index) and tightens it to NOT NULL when no row is left
+  // unattributed. Ordered before the sweep so the new integer tenant column comes
+  // under tenant_isolation_policy in the same run.
+  'db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql',
+
+  // ── uuid org-GUC cast heal (must precede the sweep's own run) ───────────────
+  // Repoints every policy that casts app.current_org_id straight to UUID at the
+  // guarded identity.current_org_id(), and re-asserts that function's guarded
+  // body. Needed on the deploy path specifically: the fixed definitions live in
+  // the governed-content tree, which deploy-migrate does not apply, so an
+  // existing database would keep raising `invalid input syntax for type uuid: ""`
+  // on every super-admin / null-orgUuid scope. Idempotent — it matches nothing
+  // once the inline casts are gone.
+  'db/migrations/20260821_uuid_org_guc_cast_heal.sql',
+
+  UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and
@@ -1258,11 +1531,12 @@ export const C2C_MIGRATION_FILES = [
   // and deploy-safe: it only ADDS a policy where none exists (never clobbering a
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
-  'db/migrations/20260801_tenant_isolation_sweep.sql',
+  TENANT_ISOLATION_SWEEP,
+
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
-const selfTransacting = (sql) => /^\s*BEGIN\s*;/im.test(sql);
+const selfTransacting = sql => /^\s*BEGIN\s*;/im.test(sql);
 
 /**
  * Apply `files` (repo-relative) against `pool`, one transaction per file.
@@ -1280,7 +1554,7 @@ export async function applyMigrationFiles(
   pool,
   repoRoot,
   files,
-  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {},
+  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {}
 ) {
   const applied = [];
   const failures = [];

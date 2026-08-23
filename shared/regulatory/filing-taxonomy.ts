@@ -3,18 +3,24 @@
  * system. This is the SECOND organizing axis of the registry (the first being
  * region/agency, see region-profiles.ts).
  *
- * Mirrors the Concept2Cure "Regulatory Filing & Document Taxonomy" reference:
- *   4 segments  ·  18 categories  ·  99+ filing types
+ * Extends the Concept2Cure "Regulatory Filing & Document Taxonomy" reference
+ * (4 segments · 18 categories) with three categories absorbed from the retired
+ * client-side registry mirror during the BP-W1-2 catalog unification:
+ * device_clinical, ivd_market_auth_intl, regulatory_intelligence.
  *
  *   Pharma & Biotech      → preclinical_pre_ind, investigational,
  *                            marketing_authorization, post_approval_lifecycle,
  *                            cmc_quality
  *   Medical Devices       → device_classification_pre_sub, device_market_auth_us,
- *                            device_market_auth_eu_intl, device_post_market,
- *                            device_samd_ai
+ *                            device_market_auth_eu_intl, device_clinical,
+ *                            device_post_market, device_samd_ai
  *   Diagnostics & IVD     → ivd_classification_pre_sub, ivd_market_auth_us,
- *                            ivd_companion_dx, ivd_market_auth_eu, ivd_post_market
- *   Cross-Cutting         → ctd_ectd, qms, safety_pv
+ *                            ivd_companion_dx, ivd_market_auth_eu,
+ *                            ivd_market_auth_intl, ivd_post_market
+ *   Cross-Cutting         → ctd_ectd, qms, safety_pv, regulatory_intelligence
+ *
+ * Segment/category counts are always DERIVED from the registry
+ * (getTaxonomyTree / getCountBySegment) — never hardcoded in a surface.
  *
  * @module shared/regulatory/filing-taxonomy
  */
@@ -124,18 +130,25 @@ export const FILING_CATEGORY_METADATA: FilingCategoryMetadata[] = [
     order: 3,
   },
   {
+    id: 'device_clinical',
+    segment: 'medical_devices',
+    title: 'Device Clinical Investigations',
+    description: 'Applications and plans for clinical investigations of medical devices (IDE-class trials, EU MDR investigations, ISO 14155 plans)',
+    order: 4,
+  },
+  {
     id: 'device_post_market',
     segment: 'medical_devices',
     title: 'Post-Market & Lifecycle',
     description: 'Ongoing regulatory obligations after device market authorization',
-    order: 4,
+    order: 5,
   },
   {
     id: 'device_samd_ai',
     segment: 'medical_devices',
     title: 'Software as Medical Device (SaMD) / AI',
     description: 'Regulatory filings specific to software-based and AI/ML-enabled medical devices',
-    order: 5,
+    order: 6,
   },
 
   // ── Diagnostics & IVD ──
@@ -168,11 +181,18 @@ export const FILING_CATEGORY_METADATA: FilingCategoryMetadata[] = [
     order: 4,
   },
   {
+    id: 'ivd_market_auth_intl',
+    segment: 'diagnostics_ivd',
+    title: 'Market Authorization (International IVD)',
+    description: 'Ex-US/EU IVD registrations and licences (PMDA, NMPA, TGA, Health Canada)',
+    order: 5,
+  },
+  {
     id: 'ivd_post_market',
     segment: 'diagnostics_ivd',
     title: 'Post-Market & Lifecycle (IVD)',
     description: 'Ongoing regulatory obligations specific to IVD products',
-    order: 5,
+    order: 6,
   },
 
   // ── Cross-Cutting ──
@@ -196,6 +216,13 @@ export const FILING_CATEGORY_METADATA: FilingCategoryMetadata[] = [
     title: 'Safety & Pharmacovigilance (Global)',
     description: 'Global pharmacovigilance and safety reporting obligations',
     order: 3,
+  },
+  {
+    id: 'regulatory_intelligence',
+    segment: 'cross_cutting',
+    title: 'Regulatory Intelligence & Strategy',
+    description: 'Strategy documents, gap analyses, competitive landscape, and health-authority meeting records — governed work products rather than agency submissions',
+    order: 4,
   },
 ];
 
