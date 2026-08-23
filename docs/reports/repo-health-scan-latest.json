@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:23:12.048Z",
+  "generatedAt": "2026-08-23T22:24:46.775Z",
   "git": {
-    "sha": "03d35dc2929a6f102b0a3d14c447869aa28c5c27",
+    "sha": "bad8a05f5ddac931a4ddb9ba2786f73d8941a536",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2645,12 +2645,12 @@
         "lines": 1534
       },
       {
-        "file": "server/routes/cortex-unified.ts",
+        "file": "client/src/concept2cure/v2/Shell.tsx",
         "lines": 1533
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1529
+        "file": "server/routes/cortex-unified.ts",
+        "lines": 1533
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
