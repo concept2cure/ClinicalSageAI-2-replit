@@ -1,0 +1,210 @@
+#!/usr/bin/env node
+/**
+ * CI Guard: a server error response may not carry the underlying failure text.
+ *
+ * ── THE INCIDENT ─────────────────────────────────────────────────────────────
+ * `serverError()` in server/lib/api-response.ts copied `err.message` into the
+ * response body while its own docstring claimed the envelope was "sanitized".
+ * A route whose relation was missing answered the browser with
+ *
+ *     500 {"error":"relation \"software_lifecycle_items\" does not exist"}
+ *
+ * — verbatim the string MDX_WORK_ORDER's W0-3 verification step says must never
+ * appear, delivered to whoever holds the session. That helper was fixed: the
+ * detail now goes to the log, keyed by the request id echoed as X-Request-Id,
+ * and the client gets a code, a sentence and that id.
+ *
+ * Fixing the helper was not enough. 346 sites across 72 files answer a 5xx with
+ * `err.message` WITHOUT going through it — mostly a `fail()` helper that was
+ * copy-pasted per route file. Each copy is individually reasonable. The set of
+ * them is why fixing one function did not close the finding.
+ *
+ * ── WHY THIS IS A CONTROL, NOT A TIDINESS RULE ───────────────────────────────
+ * The reader of these bodies is a regulatory director, and in a regulated
+ * product the internal shape of a governed store — relation names, driver text,
+ * constraint names, a host and port from ECONNREFUSED — is an
+ * information-disclosure finding. Client-side redaction does not help: it
+ * scrubs at render time and leaves the API still shipping the string to a proxy
+ * log, a devtools panel or a saved HAR.
+ *
+ * ── THE RULE ─────────────────────────────────────────────────────────────────
+ * One way to answer a server error: `serverError(res, log, where, err)`, which
+ * logs the detail and returns { error: CODE, message, correlationId }. A 5xx
+ * body that reads `.message` off the caught error is a bypass.
+ *
+ * This gate fails on a NEW bypass. It does not fail on the ones already in the
+ * baseline, so it can be adopted today and the list is worked down over time.
+ * The list MAY SHRINK, NEVER GROW.
+ *
+ * ── WHAT IS NOT A VIOLATION ──────────────────────────────────────────────────
+ *   - `serverError(...)` — the canonical helper. It does not inline a 5xx body.
+ *   - `pendingStore(...)` (server/routes/c2c/projects.ts) — builds its object in
+ *     a function that logs the relation and returns a sentence; no inline read.
+ *   - A 5xx whose body is a literal string, or reads `.message` off something
+ *     that is not the caught error (a validation result, a job record).
+ *   - 4xx responses. A 400 echoing a validation message is the intended
+ *     behaviour and a different question entirely.
+ *
+ * Usage:
+ *   node scripts/ci/check-server-error-leaks.mjs                 # fail on new
+ *   node scripts/ci/check-server-error-leaks.mjs --list          # show all
+ *   node scripts/ci/check-server-error-leaks.mjs --write-baseline
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const SCAN_ROOTS = ['server'].map((d) => path.join(repoRoot, d));
+const BASELINE_FILE = path.join(repoRoot, 'scripts/ci/server-error-leaks-baseline.json');
+
+/** A 5xx status being sent. Captures the code so 4xx never enters the scan. */
+const STATUS_5XX = /\.status\(\s*(5\d\d)\s*\)/g;
+
+/**
+ * The caught-error bindings this codebase actually uses. Keying on the binding
+ * is what keeps the gate precise: `.message` alone cannot be judged — a job
+ * record, a validation result and a Zod issue all have one — but `err.message`
+ * inside a 5xx body is the failure text by construction.
+ */
+const ERR_BINDING = '(?:err|error|e|ex|cause|reason|dbErr|dbError|pgErr)';
+
+/** `.message` read off a caught error, in any of the observed spellings. */
+const LEAK_PATTERNS = [
+  // err.message / error?.message / e.message
+  new RegExp(`\\b${ERR_BINDING}\\s*\\??\\.\\s*message\\b`),
+  // (error as Error).message  /  (err as any).message
+  new RegExp(`\\(\\s*${ERR_BINDING}\\s+as\\s+[\\w.<>\\[\\] ]+\\s*\\)\\s*\\??\\.\\s*message\\b`),
+  // String(err) — the same disclosure by another route
+  new RegExp(`\\bString\\(\\s*${ERR_BINDING}\\s*\\)`),
+  // err.stack — strictly worse than a message
+  new RegExp(`\\b${ERR_BINDING}\\s*\\??\\.\\s*stack\\b`),
+  // err.detail / err.hint / err.constraint — the Postgres driver's own fields
+  new RegExp(`\\b${ERR_BINDING}\\s*\\??\\.\\s*(?:detail|hint|constraint|table|column|routine)\\b`),
+];
+
+/**
+ * How far past `.status(5xx)` to read. A response body is written as one
+ * expression; 600 characters covers every multi-line form in this tree with
+ * room to spare, and stopping there keeps an unrelated later statement out of
+ * the window.
+ */
+const WINDOW = 600;
+
+function walk(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (['node_modules', 'dist', 'build', '__tests__', '__mocks__'].includes(entry.name)) continue;
+      walk(full, out);
+    } else if (/\.(ts|js|mts|mjs)$/.test(entry.name) && !/\.(test|spec|d)\.(ts|js)$/.test(entry.name)) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+/** Strip comments so prose about this very rule does not trip it. */
+function stripComments(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' ')).replace(/\/\/[^\n]*/g, '');
+}
+
+const findings = [];
+for (const root of SCAN_ROOTS) {
+  for (const file of walk(root)) {
+    const rel = path.relative(repoRoot, file).split(path.sep).join('/');
+    const raw = fs.readFileSync(file, 'utf8');
+    const src = stripComments(raw);
+    STATUS_5XX.lastIndex = 0;
+    let m;
+    while ((m = STATUS_5XX.exec(src)) !== null) {
+      const window = src.slice(m.index, m.index + WINDOW);
+      // Only the body that is actually being sent: stop at the end of this
+      // statement so a later, unrelated line cannot be attributed here.
+      const body = window.slice(0, window.indexOf('\n\n') === -1 ? WINDOW : window.indexOf('\n\n'));
+      if (!/\.json\s*\(|\.send\s*\(/.test(body)) continue;
+      const hit = LEAK_PATTERNS.find((re) => re.test(body));
+      if (!hit) continue;
+      const line = src.slice(0, m.index).split('\n').length;
+      findings.push({ site: `${rel}:${line}`, status: m[1] });
+    }
+  }
+}
+
+findings.sort((a, b) => a.site.localeCompare(b.site));
+
+if (process.argv.includes('--list')) {
+  for (const f of findings) console.log(`${f.site}  [${f.status}]`);
+  console.log(`\n${findings.length} server-error leak site(s).`);
+  process.exit(0);
+}
+
+if (process.argv.includes('--write-baseline')) {
+  const byFile = {};
+  for (const f of findings) {
+    const file = f.site.split(':')[0];
+    byFile[file] = (byFile[file] || 0) + 1;
+  }
+  fs.writeFileSync(
+    BASELINE_FILE,
+    JSON.stringify(
+      {
+        note:
+          'Server 5xx responses that put the caught error text in the body instead of the log. ' +
+          'The canonical answer is serverError(res, log, where, err) in server/lib/api-response.ts, ' +
+          'which logs the detail against the request id and returns { error: CODE, message, correlationId }. ' +
+          'Migrate a site onto it and re-run with --write-baseline to shrink this list. It must never grow.',
+        rule: 'MDX_WORK_ORDER W0-3 acceptance criterion 3; BIOPHARMA_WORK_ORDER hard guardrail 3.',
+        generatedBy: 'scripts/ci/check-server-error-leaks.mjs --write-baseline',
+        totalSites: findings.length,
+        totalFiles: Object.keys(byFile).length,
+        sites: findings.map((f) => f.site),
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  console.log(
+    `[ci:server-error-leaks] baseline written — ${findings.length} site(s) across ${Object.keys(byFile).length} file(s).`,
+  );
+  process.exit(0);
+}
+
+if (!fs.existsSync(BASELINE_FILE)) {
+  console.error(
+    '[ci:server-error-leaks] FAIL — baseline missing. Generate it with:\n' +
+      '  node scripts/ci/check-server-error-leaks.mjs --write-baseline',
+  );
+  process.exit(1);
+}
+
+const baselineDoc = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8'));
+const baseline = new Set(baselineDoc.sites);
+const current = new Set(findings.map((f) => f.site));
+const introduced = findings.filter((f) => !baseline.has(f.site));
+const fixed = [...baseline].filter((s) => !current.has(s));
+
+if (introduced.length) {
+  console.error('\n❌ A server error response carries the underlying failure text.\n');
+  for (const f of introduced) console.error(`   ${f.site}  [${f.status}]`);
+  console.error(
+    '\n   The reader of this body is a regulatory director, and the internal shape of a\n' +
+      '   governed store is an information-disclosure finding, not a formatting nicety.\n' +
+      '   Client-side redaction does not close it — the API still ships the string.\n\n' +
+      '   Send through the canonical helper instead:\n' +
+      "     import { serverError } from '../lib/api-response';\n" +
+      "     } catch (err) { return serverError(res, log, 'listing the register', err); }\n\n" +
+      '   It logs the detail against the request id and answers with a code, a sentence\n' +
+      '   and that id — so the operator can still find the real error.\n',
+  );
+  process.exit(1);
+}
+
+console.log(
+  `[ci:server-error-leaks] OK — ${findings.length} baselined site(s), none new.` +
+    (fixed.length
+      ? `\n[ci:server-error-leaks] ${fixed.length} site(s) fixed since the baseline — shrink it with --write-baseline.`
+      : ''),
+);
