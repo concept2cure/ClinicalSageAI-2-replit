@@ -7,7 +7,19 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
 import { consumeNavParams } from '../navParams';
-import { LIC_ROLES } from '../fixtures/licensing';
+// LIC_TIER_LEVEL is the client's one ascending tier ordering (free < standard <
+// professional < enterprise), mirroring TIER_LEVELS in license-manager.ts. The
+// Apps catalog needs it to tell a tier gap from an industry-mode mismatch, and
+// a private copy here would be a seventh place that ordering is written down.
+import { LIC_ROLES, LIC_TIER_LEVEL } from '../fixtures/licensing';
+// The shell's lock vocabulary, not a second one. A customer who is told on the
+// rail that an app is "turned off for this workspace" must not be told on the
+// catalog card that it is "not included in your plan"; both screens read these.
+import {
+  lockNotice,
+  lockShortReason,
+  type NavSurfaceEntitlement,
+} from '../navEntitlements';
 // Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
 // filter taxonomy the server's deriveKind() mirrors; PLATFORM_SERVICES is the
 // static platform-capability catalog; ARTIFACT_FMT is the format→label display
@@ -1447,7 +1459,17 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
    Fixture-free: the surface renders the real catalog + license, an honest empty
    state, or an honest error state — no APPS_CATALOG / APP_LICENSE fallback and no
    Sample-data pill. Fields the backend cannot truthfully supply (renewsAt — no
-   renewal column is read anywhere server-side) are left empty, never invented. */
+   renewal column is read anywhere server-side) are left empty, never invented.
+
+   ENTITLEMENT HONESTY. Every card states one of five things, and they are not
+   interchangeable: the module is on; it is in the plan and simply not switched
+   on; an administrator switched it off; the plan does not include it; it is not
+   offered for this workspace's industry. The reason and the remedy travel
+   together — the last one has no remedy on this screen and is given none,
+   rather than a plans button that would resolve nothing. The wording is the
+   shell's own (lockNotice / lockShortReason in navEntitlements.tsx), so the
+   rail's explanation for a lock and this catalog's explanation for the same
+   lock are the same sentence. */
 
 /** One live catalog row (ModuleCatalogEntry, server/services/license-manager.ts). */
 interface LiveModuleEntry {
@@ -1456,13 +1478,40 @@ interface LiveModuleEntry {
   description: string | null;
   category: string | null;
   isEnabled: boolean;
+  /* The subscription row's OWN state (ModuleSubscriptionState). `isEnabled`
+     collapses "an administrator switched this off" and "this organization never
+     had a row written" into one `false` — the right answer for "may they use
+     it", the wrong answer for "why not". The server keeps the two apart for
+     exactly that reason; this surface used to drop the field on the floor and
+     told the owner of EVERY off module that "an admin can re-enable it", which
+     invents an administrator's decision for modules nobody has ever touched.
+
+     Optional because a deployment whose server predates the field still returns
+     rows without it. `moduleVerdict` then falls back to 'none', which is the
+     branch that makes no accusation and claims no lock — see rule 1. */
+  subscriptionState?: 'enabled' | 'disabled' | 'none';
   isAvailable: boolean;
   requiredTier: string | null;
   sortOrder: number;
 }
 
-/** Display row — the fixture shape plus the live module's own name. */
-type AppRow = AppsCatalogApp & { name?: string };
+/**
+ * Display row — the fixture shape, plus the live module's name and the two
+ * entitlement facts the card has to keep apart.
+ *
+ * `lock` and `toggleable` are separate on purpose. A module an administrator
+ * switched OFF is locked (nobody can open it) AND toggleable (an admin turning
+ * it back on is precisely the remedy). A module above the org's tier is locked
+ * and NOT toggleable. Folding either into the other produces a card that either
+ * hides the fix or offers a button whose only outcome is a 403.
+ */
+type AppRow = AppsCatalogApp & {
+  name?: string;
+  /** Why this organization cannot open the module, or null when it can. */
+  lock: NavSurfaceEntitlement | null;
+  /** Whether PUT /:moduleId/toggle would be accepted — mirrors canAccessModule. */
+  toggleable: boolean;
+};
 type AppGroup = Omit<AppsCatalogGroup, 'apps'> & { apps: AppRow[] };
 
 function isLiveModuleEntry(m: unknown): m is LiveModuleEntry {
@@ -1476,24 +1525,99 @@ function isLiveModuleEntry(m: unknown): m is LiveModuleEntry {
   );
 }
 
-/** Truthful tier chip for a live module: within-plan modules show the lowest
-    tier that includes them ('Included' when unrestricted); modules the org's
-    tier does NOT include map to 'Add-on' — the same upgrade-path semantics the
-    fixture uses (and the same rule the server enforces on toggle). */
-function liveTierLabel(m: LiveModuleEntry): string {
-  if (!m.isAvailable) return 'Add-on';
+/**
+ * The payload is the catalog contract — `{ modules: [...] }` with a real array.
+ *
+ * Passed to `useLiveData` so a 200 that is NOT the catalog (an envelope change,
+ * a proxy's HTML login page, `{ data: [] }`) reaches the surface's error branch
+ * instead of its empty branch. Before this, `mapLiveCatalog` returned null for
+ * both a malformed body and an empty list, and the surface rendered "No apps
+ * enabled yet" — an error presented to a paying customer as the finding that
+ * their organization has no applications, and published to AnA as the same
+ * claim. Written inline rather than with `hasKeys('modules')` because the whole
+ * point is that `modules` must be an ARRAY, which a key check does not assert.
+ */
+function isCatalogPayload(v: unknown): v is { modules: LiveModuleEntry[] } {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
+  return Array.isArray((v as { modules?: unknown }).modules);
+}
+
+/**
+ * The plan band a module sits in — the lowest tier that includes it, or
+ * 'Included' when the catalog attaches no tier requirement at all.
+ *
+ * This replaces `liveTierLabel`, which mapped `!isAvailable` to 'Add-on' BEFORE
+ * looking at `requiredTier`. That was defensible while every catalog row had an
+ * empty `tiers` array; since 20260823_module_catalog_commercial_packaging.sql
+ * gave all 84 rows a real band it is two separate lies. It threw away the one
+ * number a customer needs ("which plan do I need?") in favour of 'Add-on', a
+ * word that promises something purchasable — and it said that word just as
+ * loudly for a module withheld by INDUSTRY MODE, which no plan on the price
+ * list will ever unlock. What is not available and why is now `lock`'s job; the
+ * chip states the packaging fact and nothing else.
+ */
+function tierBandLabel(m: LiveModuleEntry): string {
   if (!m.requiredTier) return 'Included';
   return m.requiredTier.charAt(0).toUpperCase() + m.requiredTier.slice(1);
 }
 
-/** Map GET /catalog into the grouped display, or null when the payload does
-    not carry the display contract (→ fail closed to the fixture). */
-function mapLiveCatalog(payload: unknown): AppGroup[] | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const modules = (payload as { modules?: unknown }).modules;
-  if (!Array.isArray(modules)) return null;
-  const rows = modules.filter(isLiveModuleEntry);
-  if (rows.length === 0) return null;
+/**
+ * Why this organization cannot open a module, as the shell's own lock verdict —
+ * or null when it can.
+ *
+ * The branch order mirrors `decideNavEntitlement`
+ * (server/services/entitlements/navigation-entitlements.ts) deliberately, down
+ * to its tier/industry tie-break, so the rail and this catalog never give one
+ * customer two different reasons for one lock. Two differences, both required:
+ *
+ *   - No `master_admin` branch. That grant answers "may this VIEWER open it",
+ *     and the platform owner may open everything. This screen answers "what has
+ *     this ORGANIZATION subscribed to", which is the state the toggle writes;
+ *     collapsing it to `entitled` would show a master admin every module as
+ *     available while the org's switches are off, and hide the switch that is
+ *     the entire purpose of the page.
+ *   - Read from GET /catalog, not from `useNavEntitlements()`. The nav payload
+ *     carries no verdict for the Apps catalog's own destinations by design
+ *     (rule 2: an unknown id is not licensable), and it is resolved once per
+ *     session, so it would not see the write this page just made.
+ *
+ * The tie-break inherits the server's bias on purpose: with the org's tier
+ * unknown (the licence read failed independently of the catalog read), it
+ * reports 'industry' rather than 'tier'. Being wrongly told to ask an
+ * administrator costs a conversation; being wrongly told to upgrade sells
+ * somebody a plan that changes nothing.
+ */
+function moduleVerdict(m: LiveModuleEntry, orgTier: string | null): NavSurfaceEntitlement | null {
+  const base = { id: m.moduleId, label: m.name, requiredTier: m.requiredTier };
+  const state = m.subscriptionState ?? (m.isEnabled ? 'enabled' : 'none');
+  if (state === 'enabled') return null; // 'subscribed'
+  if (state === 'disabled') return { ...base, entitled: false, source: 'disabled' };
+  if (m.isAvailable) return null; // 'included' — in the plan, no row written yet
+  const orgRank = orgTier != null ? LIC_TIER_LEVEL[orgTier] : undefined;
+  const needRank = m.requiredTier != null ? LIC_TIER_LEVEL[m.requiredTier] : undefined;
+  const belowTier = orgRank !== undefined && needRank !== undefined && orgRank < needRank;
+  return { ...base, entitled: false, source: belowTier ? 'tier' : 'industry' };
+}
+
+/**
+ * The `opts` lockNotice requires, for the fields that do not read it.
+ *
+ * Named rather than inlined so the constraint is visible at the call site: the
+ * Apps card renders `status` and the tier branch's CTA, and no branch of
+ * lockNotice consults `isOrgAdmin` to produce either. Reading `body`, or the
+ * 'disabled' / 'industry' CTAs, from this value WOULD be a fabricated claim
+ * about the viewer's role — see the comment where it is used.
+ */
+const ROLE_AGNOSTIC = { isOrgAdmin: false } as const;
+
+/**
+ * Map GET /catalog into the grouped display. Always an array: `isCatalogPayload`
+ * has already rejected anything that is not the contract, so `[]` here means
+ * the catalog is genuinely empty — the honest empty state, never a failure.
+ */
+function mapLiveCatalog(payload: unknown, orgTier: string | null): AppGroup[] {
+  if (!isCatalogPayload(payload)) return [];
+  const rows = payload.modules.filter(isLiveModuleEntry);
   const byCat = new Map<string, LiveModuleEntry[]>();
   for (const m of rows) {
     const cat = m.category || 'other';
@@ -1512,9 +1636,15 @@ function mapLiveCatalog(payload: unknown): AppGroup[] | null {
       apps: mods.map((m) => ({
         id: m.moduleId,
         name: m.name,
-        tier: liveTierLabel(m),
+        tier: tierBandLabel(m),
         on: m.isEnabled,
         desc: m.description || m.name,
+        lock: moduleVerdict(m, orgTier),
+        /* canAccessModule() allows the write when the module is already in the
+           org's enabled set OR its tier and industry match — so an org that
+           downgraded can still switch OFF a module it is currently running,
+           and nothing else outside the plan can be switched at all. */
+        toggleable: m.isAvailable || m.isEnabled,
       })),
     };
   });
@@ -1552,24 +1682,40 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
   // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
   // so useLiveData yields the payload directly ({ modules } / the license object).
-  const catState = useLiveData<{ modules: LiveModuleEntry[] }>('/api/module-subscriptions/catalog');
+  const catState = useLiveData<{ modules: LiveModuleEntry[] }>(
+    '/api/module-subscriptions/catalog',
+    ['/api/module-subscriptions/catalog'],
+    // A 200 that is not the catalog contract belongs in the error branch below,
+    // not in the empty one — see isCatalogPayload.
+    isCatalogPayload,
+  );
   const licState = useLiveData<Record<string, unknown>>('/api/module-subscriptions/license');
-  const liveGroups = useMemo(() => mapLiveCatalog(catState.data), [catState.data]);
   const lic = useMemo(() => mapLiveLicense(licState.data), [licState.data]);
-  // Editable copy for optimistic toggles, seeded once when the live catalog
-  // resolves. liveGroups is a stable reference until the fetch re-runs (useMemo
-  // over the resolved payload), so the seed effect fires once and never loops.
+  // The org's plan tier decides whether an unavailable module is a tier gap or
+  // an industry-mode mismatch, so the catalog mapping depends on the licence
+  // read as well as its own. Keyed on the tier STRING rather than the licence
+  // object so a re-fetch that returns the same tier does not re-seed below.
+  const orgTier = lic?.tier || null;
+  const liveGroups = useMemo(
+    () => mapLiveCatalog(catState.data, orgTier),
+    [catState.data, orgTier],
+  );
+  // Editable copy for optimistic toggles, re-seeded whenever the live mapping
+  // resolves to a new reference — once when the catalog lands, and once more if
+  // the licence lands after it and changes a tier/industry verdict. Both are
+  // one-shot per resolved input (useMemo over resolved payloads), so this
+  // settles rather than looping.
   const [cat, setCat] = useState<AppGroup[]>([]);
   const seededRef = useRef<AppGroup[] | null>(null);
   useEffect(() => {
-    if (liveGroups && seededRef.current !== liveGroups) {
+    if (liveGroups.length > 0 && seededRef.current !== liveGroups) {
       seededRef.current = liveGroups;
       setCat(liveGroups);
     }
   }, [liveGroups]);
   // Render from the optimistic copy once seeded, else straight from the live map
   // (avoids a one-frame blank between the fetch resolving and the seed effect).
-  const groups = cat.length > 0 ? cat : liveGroups ?? [];
+  const groups = cat.length > 0 ? cat : liveGroups;
   const [admin, setAdmin] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -1579,13 +1725,40 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
 
   const setOn = (groupIdx: number, appId: string, on: boolean) =>
     setCat((prev) => {
-      const base = prev.length > 0 ? prev : liveGroups ?? [];
+      const base = prev.length > 0 ? prev : liveGroups;
       return base.map((g, gi) =>
         gi !== groupIdx
           ? g
           : {
               ...g,
-              apps: g.apps.map((a) => (a.id === appId ? { ...a, on } : a)),
+              apps: g.apps.map((a) =>
+                a.id === appId
+                  ? {
+                      ...a,
+                      on,
+                      /* The optimistic row carries the REASON the write
+                         implies, not just the switch position. Setting `on`
+                         alone left `lock` at null, so a module an administrator
+                         had just switched off went on reading "Included in your
+                         plan. Not switched on for this organization" until a
+                         reload replaced it with the workspace decision that
+                         administrator had in fact just made. Only the 'disabled'
+                         source is reachable here — the toggle is never rendered
+                         for a tier or industry lock — and both directions revert
+                         cleanly, because the failure path calls this again with
+                         the previous value. */
+                      lock: on
+                        ? null
+                        : {
+                            id: a.id,
+                            label: a.name || a.id,
+                            requiredTier: a.lock?.requiredTier ?? null,
+                            entitled: false,
+                            source: 'disabled' as const,
+                          },
+                    }
+                  : a,
+              ),
             },
       );
     });
@@ -1669,7 +1842,24 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         enabledApps: on.length,
         groups: groups.map((g) => ({
           group: g.group,
-          apps: (g.apps ?? []).map((a) => ({ id: a.id, name: a.name ?? null, tier: a.tier, enabled: a.on })),
+          apps: (g.apps ?? []).map((a) => ({
+            id: a.id,
+            name: a.name ?? null,
+            tier: a.tier,
+            enabled: a.on,
+            /* "Why can't I open X?" is the question this surface exists to
+               answer, and until now AnA could see only that X was off. The
+               reason comes from the same helper the rail and the card use, so
+               she cannot answer with a fifth phrasing — or, worse, reach for
+               "not included in your plan" when the real cause was an
+               administrator switching it off. Null means nothing is blocking
+               it beyond the switch itself. */
+            unavailableBecause: a.lock ? lockShortReason(a.lock) : null,
+            /* Whether the enable/disable write would be accepted. She must not
+               tell someone to ask an administrator to switch on a module the
+               server would refuse with MODULE_NOT_AVAILABLE. */
+            anAdminCanSwitchItOn: a.toggleable && !a.on,
+          })),
         })),
       },
       availableActions: [
@@ -1686,7 +1876,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Workspace -- /api/module-subscriptions"
         title="Apps catalog"
-        sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
+        sub="Every application — the destinations you open and work in — entitlement-aware. Active apps launch; anything you cannot open states which of the reasons applies and the step that resolves it, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
           <button
             className="btn ghost"
@@ -1797,8 +1987,8 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       ) : groups.length === 0 ? (
         <EmptyState
           icon={I.grid}
-          title="No apps enabled yet"
-          hint="Modules auto-provision by tier. Once provisioned, your apps appear here entitlement-aware — active apps launch and add-ons show an upgrade path."
+          title="No apps in the catalog"
+          hint="The module catalog for this organization is empty. Modules auto-provision by tier; once the catalog is seeded, your apps appear here with their entitlement state."
         />
       ) : (
         groups.map((g, gi) => (
@@ -1811,13 +2001,31 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             {g.apps.map((a) => {
               const surf = getSurfaceMeta(a.id);
               const label = a.name || surf.label || a.id;
-              const isCore = a.tier === 'Core';
-              const isAddOn = a.tier === 'Add-on';
-              /* Mirrors the server gate (canAccessModule): a within-plan module
-                 toggles freely; an out-of-plan module ('Add-on') can only be
-                 switched OFF -- re-enabling it would 403, so the card shows the
-                 upgrade path instead. */
-              const showToggle = admin && !isCore && (isAddOn ? a.on : true);
+              /* The lock's own words, from the shell's lock vocabulary.
+
+                 Only the role-INVARIANT parts of lockNotice are read here:
+                 `status` for the chip, and the 'tier' branch's CTA. Neither
+                 reads `opts`. The parts that DO fork on it — every `body`, and
+                 the CTAs on the 'disabled' and 'industry' branches — are
+                 deliberately unused, for two reasons. This surface holds no
+                 auth dependency and cannot answer "is the viewer an org admin"
+                 without adding one (the server is the real gate and already
+                 reports its refusal on the write). And lockNotice's 'disabled'
+                 CTA is "Open Apps catalog", which is this screen: the remedy
+                 for that lock is the switch a few pixels away, not a link back
+                 to where the reader already is. The sentence therefore comes
+                 from lockShortReason, which is documented to stand alone
+                 precisely because the rail appends it to a button with no
+                 context around it. */
+              const notice = a.lock ? lockNotice(a.lock, ROLE_AGNOSTIC) : null;
+              /* Mirrors canAccessModule() rather than the chip's LABEL. The
+                 previous gate was `a.tier === 'Add-on'`, so the question "would
+                 the server accept this write" was answered by string-matching
+                 display copy — one wording change away from putting a switch on
+                 a module whose only possible response is 403
+                 MODULE_NOT_AVAILABLE. `toggleable` is computed from isAvailable
+                 / isEnabled, the same two facts the server decides on. */
+              const showToggle = admin && a.toggleable;
               return (
                 <div key={a.id} className="launch" data-locked={!a.on || undefined}>
                   {!a.on && <span className="launch-lock">{I.lock}</span>}
@@ -1828,17 +2036,26 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                   <div className="launch-title">{label}</div>
                   <div className="launch-desc">
-                    {!a.on
-                      ? isAddOn
-                        ? `Upgrade your plan to unlock ${label}.`
-                        : `Disabled for this organization — an admin can re-enable it.`
-                      : a.desc}
+                    {/* Three different facts, three different sentences. An
+                        upsell, a workspace decision and an unprovisioned module
+                        used to share two strings between them, so an org was
+                        told to buy a plan for a module their administrator had
+                        switched off — and told an administrator had switched
+                        off a module nobody had ever touched. */}
+                    {a.lock
+                      ? `${label} is ${lockShortReason(a.lock)}.`
+                      : a.on
+                        ? a.desc
+                        : 'Included in your plan. Not switched on for this organization.'}
                   </div>
                   <div className="launch-foot">
                     <span
-                      className={`rd-chip tone-${isCore ? 'ok' : isAddOn && !a.on ? 'idle' : 'ai'}`}
+                      className={`rd-chip rd-chip-sentence tone-${a.lock ? 'idle' : a.on ? 'ai' : 'ok'}`}
                     >
-                      {a.tier}
+                      {/* Locked: the reason, which for a tier gap names the
+                          plan that includes it ("Included from Professional").
+                          Otherwise the packaging band the module sits in. */}
+                      {notice ? notice.status : a.tier}
                     </span>
                     {showToggle ? (
                       <button
@@ -1860,20 +2077,10 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                       >
                         Open
                       </button>
-                    ) : isAddOn ? (
-                      /* Same broken href as "Manage plan" above: a full
-                         reload to a non-route, landing back on the app home.
-                         Goes to the licensing surface in-app instead. */
-                      <button
-                        className="btn primary"
-                        style={{ height: 26, marginLeft: 'auto' }}
-                        onClick={() => open('licensing')}
-                        title={`Upgrade your plan to unlock ${label}`}
-                        data-testid="admin-upgrade-plan"
-                      >
-                        Upgrade plan
-                      </button>
-                    ) : (
+                    ) : a.toggleable ? (
+                      /* Off and switchable — either an administrator turned it
+                         off or it was never provisioned. Both are resolved by
+                         the switch above, which needs admin controls showing. */
                       <button
                         className="btn ghost"
                         style={{ height: 26, marginLeft: 'auto' }}
@@ -1882,7 +2089,23 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                       >
                         Admin controls
                       </button>
-                    )}
+                    ) : notice?.ctaLabel && notice.ctaTarget ? (
+                      /* Only the tier branch reaches here with a CTA, and its
+                         target is the licensing surface. It is a button, not
+                         the old <a href="/settings/subscription">: that path
+                         matched no route, so the browser did a full reload and
+                         the SPA router landed the admin back on the app home. */
+                      <button
+                        className="btn primary"
+                        style={{ height: 26, marginLeft: 'auto' }}
+                        onClick={() => open(notice.ctaTarget as string)}
+                        data-testid="admin-upgrade-plan"
+                      >
+                        {notice.ctaLabel}
+                      </button>
+                    ) : null /* Industry mismatch: no plan and no switch on this
+                                screen changes it, so the card offers no step
+                                rather than a button that resolves nothing. */}
                   </div>
                 </div>
               );
