@@ -78,6 +78,7 @@ import {
   looksLikeHtml,
   plainTextToHtml,
 } from './roundTrip';
+import { I } from '../icons';
 
 /* ── Public contract ──────────────────────────────────────────── */
 
@@ -237,6 +238,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSavedRef = useRef<string>(value ?? '');
     const editorHostRef = useRef<HTMLDivElement>(null);
+    /** Content a debounced autosave has been armed for but not yet written.
+     *  Held so an unmount inside the debounce window flushes it instead of
+     *  dropping it — see the unmount effect below. */
+    const pendingAutosaveRef = useRef<string | null>(null);
+    /** `onSave` as of the last render, readable from the unmount cleanup
+     *  (which closes over the first render's props otherwise). */
+    const onSaveRef = useRef(onSave);
+    useEffect(() => {
+      onSaveRef.current = onSave;
+    });
 
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
@@ -352,6 +363,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+            pendingAutosaveRef.current = serialized;
             autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
           }
         },
@@ -456,6 +468,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       const serialized =
         boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
       if (serialized == null) return false;
+      // Whatever a debounce was armed for, this write supersedes it.
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      pendingAutosaveRef.current = null;
       if (serialized === lastSavedRef.current) return true;
       setSaveState('saving');
       try {
@@ -483,6 +501,58 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       onDirtyChange?.(dirty);
     }, [dirty, onDirtyChange]);
+
+    /* ── Leaving the page over unsaved work ──
+       The device crash cache above survives a reload, but it is device-local:
+       it is not the record, it does not travel to another machine, and a
+       colleague opening the section sees the last SAVED text. Closing the tab
+       on an unsaved paragraph therefore loses it from everywhere that matters,
+       silently. The browser's own discard prompt is the only guard that fires
+       before the decision is irreversible, so it is armed here — in the one
+       component that knows whether there is unsaved work — rather than in each
+       host surface. Armed only while genuinely dirty: a page that always
+       refuses to close teaches people to click through the dialog. */
+    useEffect(() => {
+      if (!dirty || readOnly) return;
+      const onBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        // Older engines show the prompt only when returnValue is set; the
+        // string itself has been ignored by every browser for years.
+        e.returnValue = '';
+        return '';
+      };
+      window.addEventListener('beforeunload', onBeforeUnload);
+      return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    }, [dirty, readOnly]);
+
+    /* ── A pending autosave must not die with the mount ──
+       Hosts that pass `autosaveMs` (the MDX dossier drawer) debounce their
+       write. Unmounting inside that window — closing the drawer, switching
+       what is open — used to clear nothing and fire nothing: the timer was
+       dropped with the component and the last edits never reached the server.
+       Flush it directly instead of through `doSave`, which sets state on a
+       component that is going away. A rejection is not swallowed silently: the
+       device cache still holds the text and the next mount offers it back. */
+    useEffect(
+      () => () => {
+        if (autosaveTimer.current) {
+          clearTimeout(autosaveTimer.current);
+          autosaveTimer.current = null;
+        }
+        const pending = pendingAutosaveRef.current;
+        pendingAutosaveRef.current = null;
+        if (pending != null && pending !== lastSavedRef.current) {
+          void (async () => {
+            try {
+              await onSaveRef.current(pending);
+            } catch {
+              /* kept on this device; offered back on the next mount */
+            }
+          })();
+        }
+      },
+      [],
+    );
 
     /* ── Track changes toggle (server column first, then the plugin) ── */
     const toggleTrack = useCallback(async () => {
@@ -683,10 +753,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             </RB>
             <span className="rse-sep" />
             <RB title="Bullet list" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
-              {'☰'}
+              {I.listBullet}
             </RB>
             <RB title="Numbered list" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
-              1.
+              {I.listOrdered}
             </RB>
             <span className="rse-sep" />
             {/* A CTD dossier is a tabular document — Module 3 most of all. The
@@ -697,7 +767,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 title="Insert table (3 columns × 3 rows, header row)"
                 onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
               >
-                {'⊞'} Table
+                {I.table} Table
               </RB>
             ) : (
               <>
@@ -717,7 +787,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                   Hdr
                 </RB>
                 <RB title="Delete table" onClick={() => editor?.chain().focus().deleteTable().run()}>
-                  {'⊟'}
+                  {I.close}
                 </RB>
               </>
             )}
@@ -741,10 +811,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             </select>
             <span className="rse-sep" />
             <RB title="Undo" onClick={() => editor?.chain().focus().undo().run()}>
-              {'↩'}
+              {I.undo}
             </RB>
             <RB title="Redo" onClick={() => editor?.chain().focus().redo().run()}>
-              {'↪'}
+              {I.redo}
             </RB>
             {onAsk && (
               <>
@@ -835,6 +905,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 }
                 if (autosaveMs != null && isDirty) {
                   if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+                  pendingAutosaveRef.current = e.target.value;
                   autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
                 }
               }}
@@ -928,7 +999,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-link { font-size:11px; border:none; background:none; color:var(--accent-100,#2563eb); cursor:pointer; padding:2px 4px; }
         .rse-link:disabled { color:var(--text-400,#667085); cursor:default; }
         .rse-body { flex:1; min-height:0; overflow-y:auto; }
-        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:Georgia,"Times New Roman",serif; }
+        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
+        /* Measure lives on the prose blocks, not the canvas: a CTD table must be
+           free to use the full column while paragraphs keep a readable line. */
+        .rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
         .rse-body .tiptap p { margin:0 0 12px; }
         .rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
         .rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }
