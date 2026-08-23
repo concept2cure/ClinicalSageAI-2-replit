@@ -194,24 +194,34 @@ router.get('/analytical-methods', async (req, res) => {
 /* Timestamp-bearing variants of the generated insert schemas — see the
    `requiredDate` / `optionalDate` note above. Each names exactly the timestamp
    columns its table carries, so a schema change that adds one is a compile-time
-   prompt to decide how it crosses the JSON boundary rather than a silent 500. */
-const analyticalMethodBody = insertAnalyticalMethodSchema.extend({
+   prompt to decide how it crosses the JSON boundary rather than a silent 500.
+
+   organizationId is OMITTED from every request body: the generated insert
+   schemas require it (the column is NOT NULL with no default), but tenancy is
+   the SESSION's fact — each handler stamps `organizationId: orgId` from the
+   authenticated context after parse. Requiring it in the body meant every
+   create from the product's own register surfaces (which rightly never send
+   it) answered 400 "organizationId Required" — and accepting it would have
+   invited a caller-supplied tenant, which is worse. */
+const analyticalMethodBody = insertAnalyticalMethodSchema.omit({ organizationId: true }).extend({
   validationDate: optionalDate,
 });
-const processValidationBody = insertProcessValidationSchema.extend({
+const processValidationBody = insertProcessValidationSchema.omit({ organizationId: true }).extend({
   approvalDate: optionalDate,
 });
-const stabilityStudyBody = insertStabilityStudySchema.extend({
+const stabilityStudyBody = insertStabilityStudySchema.omit({ organizationId: true }).extend({
   startDate: requiredDate,
   plannedEndDate: optionalDate,
 });
-const qcTestingBody = insertQcTestingSchema.extend({
+const qcTestingBody = insertQcTestingSchema.omit({ organizationId: true }).extend({
   testDate: requiredDate,
   releaseDate: optionalDate,
 });
-const changeControlBody = insertCmcChangeControlSchema.extend({
+const changeControlBody = insertCmcChangeControlSchema.omit({ organizationId: true }).extend({
   implementationDate: optionalDate,
 });
+const drugSubstanceBody = insertDrugSubstanceSchema.omit({ organizationId: true });
+const drugProductBody = insertDrugProductSchema.omit({ organizationId: true });
 
 router.post('/analytical-methods', async (req, res) => {
   try {
@@ -573,7 +583,7 @@ router.get('/drug-substances', async (req, res) => {
 router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertDrugSubstanceSchema.parse(req.body);
+    const validatedData = drugSubstanceBody.parse(req.body);
     const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId } as typeof drugSubstances.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
@@ -593,7 +603,7 @@ router.put('/drug-substances/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
-    const validatedData = insertDrugSubstanceSchema.partial().parse(req.body);
+    const validatedData = drugSubstanceBody.partial().parse(req.body);
     const [substance] = await db
       .update(drugSubstances)
       .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
@@ -643,7 +653,7 @@ router.get('/drug-products', async (req, res) => {
 router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertDrugProductSchema.parse(req.body);
+    const validatedData = drugProductBody.parse(req.body);
     const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId } as typeof drugProducts.$inferInsert).returning();
     // Write-through: upsert canonical source object for Module 3
     const projectId = (req.body as { projectId?: string }).projectId;
@@ -663,7 +673,7 @@ router.put('/drug-products/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
-    const validatedData = insertDrugProductSchema.partial().parse(req.body);
+    const validatedData = drugProductBody.partial().parse(req.body);
     const [product] = await db
       .update(drugProducts)
       .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })

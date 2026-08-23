@@ -191,7 +191,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
-      });
+      }, { createdById: Number((req as any).user?.id) || null });
       if (bridged.bridged) {
         bridgedArtifact = { artifactId: bridged.artifactId, isNew: bridged.isNew };
       } else {
