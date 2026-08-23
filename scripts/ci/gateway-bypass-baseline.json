@@ -13,9 +13,6 @@
     "server/services/ai/LiteLLMAdapter.ts": {
       "reason": "WIDEST BYPASS. Posts to `${this.baseUrl}/chat/completions` — an OpenAI-compatible proxy — and server/services/aiProviderRouter.ts makes the gateway the ELSE branch: `if (this.liteLLMAdapter.isEnabled()) { ... } else { executeViaGateway(...) }`. One env flag (LITELLM_ENABLED) therefore diverts EVERY routed call away from policy evaluation, the PII/PHI fail-closed screen, the provider-placement/residency check and the ai.gateway_audit_log row; the router writes its own ai_provider_audit_log row with no prompt hash, resolved model or residency. .env.example defaults it false and nothing in helm/terraform/compose sets it, so this is latent rather than live — and nothing announces at boot that the gateway has been bypassed."
     },
-    "server/routes/ana-ri-inline-routes.ts": {
-      "reason": "POST /api/ask-ana-ri — the primary AnA conversational endpoint — constructs `new GoogleGenerativeAI(process.env.GOOGLE_API_KEY)` and sends user documentContent to gemini-2.0-flash-exp. Gemini is not a provider the gateway models at all, so there is no residency decision, no zero-retention posture, no PII screen and no audit row. Mounted via register-inline-routes.ts."
-    },
     "server/api/ai/routes.ts": {
       "reason": "POST /api/ai/regulatory-guidance fetches https://api.openai.com/v1/chat/completions directly with model 'gpt-4o' and temperature 0.7. 'gpt-4o' is a floating alias and nothing records which model actually answered; no prompt hash over a system prompt that interpolates caller context; no fallback chain, so one non-200 becomes a 503. Mounted at /api/ai."
     },
