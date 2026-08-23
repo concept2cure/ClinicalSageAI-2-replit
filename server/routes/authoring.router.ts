@@ -42,6 +42,7 @@ const logger = createScopedLogger('authoring-router');
 
 const router = Router();
 
+
 // REQUIRED JWT verification middleware for 21 CFR Part 11 compliance.
 //
 // This composes the CANONICAL auth primitives so the authoring surface enforces
