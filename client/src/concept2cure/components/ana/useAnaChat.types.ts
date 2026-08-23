@@ -406,7 +406,34 @@ export interface UseAnaChatOptions {
    * against the tenant's enabled models and drops it silently when invalid.
    */
   modelOverride?: string | null;
+  /**
+   * AnA Live Drive: while true, every turn is sent with `live_drive: true`, so
+   * validated navigate_to directives stream back as `drive_navigation` events
+   * for immediate application instead of waiting as chips. The server gates
+   * this per turn on the `ana_live_drive` entitlement and answers honestly
+   * with a `drive_state` event either way.
+   */
+  liveDrive?: boolean;
+  /**
+   * Receives Live Drive events (`drive_state` / `drive_navigation`) as they
+   * stream. The hook stays dumb here on purpose — validation against the
+   * shared navigation registry and the apply/take-over state machine live in
+   * v2/liveDrive.ts, next to the shell that owns navigation.
+   */
+  onDriveEvent?: (event: DriveSseEvent) => void;
 }
+/**
+ * Live Drive SSE events, forwarded verbatim to `onDriveEvent` as they stream.
+ * `drive_state` arrives once per opted-in turn (an honest enable, or an honest
+ * lock carrying the real required tier); `drive_navigation` arrives per
+ * directive the server emitted for immediate application. The `directive` is
+ * typed unknown on purpose: the shell re-validates it against the shared
+ * navigation registry (v2/liveDrive.ts) before any screen moves.
+ */
+export type DriveSseEvent =
+  | { type: 'drive_state'; enabled: boolean; reason?: string; requiredTier?: string | null }
+  | { type: 'drive_navigation'; round?: number; directive: unknown };
+
 /** Control status of an in-flight AnA run (null when no run is active). */
 export type RunControlStatus = 'running' | 'paused' | 'cancelled' | null;
 export interface UseAnaChatReturn {
