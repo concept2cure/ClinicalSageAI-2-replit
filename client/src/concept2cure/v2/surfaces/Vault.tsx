@@ -13,6 +13,7 @@ import {
   type VaultDoc,
   type VaultFolder,
 } from '../fixtures/vault-data';
+import { apiRequest, redactInternals } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -29,6 +30,30 @@ import '../styles/project-home-v2.css';
    folders (Agency correspondence, Templates, Working drafts, Sources & evidence,
    Audit) and the previously client-synthesized corpus-indexing / chunk counts
    have NO backing store and are intentionally NOT part of this contract. */
+/** One Data Room source with its DERIVED pipeline stage (server-computed:
+ *  'filed' = checksum matches a vault document in this program). */
+interface DataRoomRow {
+  id: number;
+  title: string;
+  kind: string;
+  sizeLabel: string;
+  addedAt: string;
+  stage: 'captured' | 'classified' | 'filed';
+  readState: string;
+  suggestedFolder: string | null;
+  suggestedFolderLabel: string;
+  evidenceKind: string | null;
+  confidence: string | null;
+  needsReview: boolean;
+}
+
+interface DataRoomBlock {
+  captured: number;
+  classified: number;
+  filed: number;
+  sources: DataRoomRow[];
+}
+
 interface VaultDisplayShape {
   program: string;
   spine: string;
@@ -36,6 +61,15 @@ interface VaultDisplayShape {
   documentCount: number;
   tree: VaultFolder[];
   pendingStore?: boolean;
+  /** Uploads awaiting a person's filing decision (visible queue, not a black hole). */
+  unfiledCount?: number;
+  /** The uploads store is not provisioned in this env. */
+  uploadStorePending?: boolean;
+  /** The uploads read FAILED — an error, distinct from an empty cabinet. */
+  uploadsUnavailable?: boolean;
+  dataRoom?: DataRoomBlock;
+  dataRoomPending?: boolean;
+  dataRoomUnavailable?: boolean;
 }
 
 /* Stable empty tree while the live vault is loading / absent — `useLiveData`
@@ -84,7 +118,9 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
         const docs = flattenDocs(folder.children);
         const isOpen = expanded[folder.id] !== false;
         const ready = docs.filter((d) =>
-          ['final', 'approved', 'reviewed'].includes(d.status),
+          // 'confirmed' = an upload a person filed; it counts as settled the
+          // way an approved authored section does.
+          ['final', 'approved', 'reviewed', 'confirmed'].includes(d.status),
         ).length;
         return (
           <div key={folder.id}>
@@ -125,6 +161,106 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* ── Data Room lane — the capture → classify → file pipeline ──
+   Every file captured for this project (AnA paperclip, Project Home drop-zone,
+   Vault upload) passes through the Data Room: it lands as a source
+   ('captured'), the classifier stamps what it is and where it likely belongs
+   ('classified'), and it is 'filed' once its exact bytes exist as a vault
+   document in this program — a checksum join computed server-side, never a
+   stored guess. Four honest states: pending store, failed read (an ERROR, not
+   an empty room), empty, and real rows. */
+function DataRoomLane({
+  block,
+  pending,
+  unavailable,
+}: {
+  block?: DataRoomBlock;
+  pending?: boolean;
+  unavailable?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  if (unavailable) {
+    return (
+      <div className="vd-dr" data-testid="vault-data-room">
+        <div className="vd-dr-head">
+          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+        </div>
+        <div className="vd-dr-err" role="alert">
+          {I.alertTriangle} The data room could not be read — showing nothing because the
+          read failed, not because it is empty.
+        </div>
+      </div>
+    );
+  }
+  if (pending || !block) {
+    return (
+      <div className="vd-dr" data-testid="vault-data-room">
+        <div className="vd-dr-head">
+          <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+          <span className="vd-dr-meta">
+            {pending
+              ? 'The data room store is not provisioned in this environment yet.'
+              : 'No data room information for this project.'}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  // Collapsed, the stage strip is the summary; expanding lists the sources.
+  const rows = open ? block.sources : [];
+  return (
+    <div className="vd-dr" data-testid="vault-data-room">
+      <div className="vd-dr-head">
+        <span className="vd-dr-title">{I.inbox || I.folder} Data room</span>
+        <span className="vd-dr-stages">
+          <span className="vd-dr-stage">Captured <b>{block.captured}</b></span>
+          <span className="vd-dr-arrow">›</span>
+          <span className="vd-dr-stage">Classified <b>{block.classified}</b></span>
+          <span className="vd-dr-arrow">›</span>
+          <span className="vd-dr-stage">Filed to vault <b>{block.filed}</b></span>
+        </span>
+        {block.sources.length > 0 && (
+          <button className="vd-dr-toggle" onClick={() => setOpen((o) => !o)}>
+            {open ? 'Hide sources' : `Show ${block.sources.length} source${block.sources.length === 1 ? '' : 's'}`}
+          </button>
+        )}
+      </div>
+      {block.sources.length === 0 && (
+        <div className="vd-dr-empty">
+          Nothing captured for this project yet. Files attached in AnA chat, dropped on
+          Project home, or uploaded here all pass through the data room.
+        </div>
+      )}
+      {rows.length > 0 && (
+        <div className="vd-dr-rows">
+          {rows.map((s) => (
+            <div key={s.id} className="vd-dr-row">
+              <span className="vd-dr-kind">{s.kind}</span>
+              <span className="vd-dr-name" title={s.title}>{s.title}</span>
+              <span className="vd-dr-detail">
+                {s.sizeLabel !== '—' ? `${s.sizeLabel} · ` : ''}{s.addedAt} · {s.readState}
+              </span>
+              {s.stage === 'classified' && s.suggestedFolderLabel ? (
+                <span className="vd-dr-suggest" title={s.evidenceKind ? `Looks like: ${s.evidenceKind}` : undefined}>
+                  → {s.suggestedFolderLabel}
+                </span>
+              ) : null}
+              <span
+                className={
+                  'rd-chip tone-' +
+                  (s.stage === 'filed' ? 'ok' : s.stage === 'classified' ? 'ai' : 'idle')
+                }
+              >
+                {s.stage === 'filed' ? 'Filed' : s.stage === 'classified' ? 'Classified' : 'Captured'}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -183,6 +319,63 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  /* ── Filing decisions (confirm / move / unfile) ────────────────────────────
+     POST /api/c2c/project-vault/:id/file — the governed, audited commit of a
+     placement. The classifier only ever SUGGESTS a folder; this is where a
+     person decides. On success the tree is re-read rather than patched
+     locally: what the Vault shows is what the Vault stored. */
+  const [filing, setFiling] = useState(false);
+  const [filingNote, setFilingNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const fileDocument = async (
+    docId: string,
+    body: { confirm?: boolean; folderId?: string | null; note?: string },
+  ) => {
+    if (!projectId || filing) return;
+    setFiling(true);
+    setFilingNote(null);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/c2c/project-vault/' + encodeURIComponent(projectId) + '/file',
+        { documentId: docId, ...body },
+      );
+      const payload = (await res.json().catch(() => null)) as
+        | { filing?: { folderId: string | null; folderLabel?: string } }
+        | null;
+      const f = payload?.filing;
+      setFilingNote({
+        tone: 'ok',
+        text: f?.folderId
+          ? `Filed to ${f.folderLabel || f.folderId}. Recorded in the audit trail.`
+          : 'Moved to Unfiled — awaiting a filing decision.',
+      });
+      setVaultEpoch((n) => n + 1);
+    } catch (e) {
+      /* A refusal is reported as a refusal — the placement on screen stays
+         what the server last stored, never what the click hoped for. */
+      setFilingNote({
+        tone: 'error',
+        text: redactInternals(
+          e instanceof Error ? e.message : String(e),
+          'The filing decision was not recorded.',
+        ),
+      });
+    } finally {
+      setFiling(false);
+    }
+  };
+
+  /* Folder options for "Move to…" — derived from the server's cabinet (the
+     program's real view taxonomy), never a client-side folder list. */
+  const cabinetFolders = useMemo(() => {
+    const cab = tree.find((f) => f.id === 'cabinet');
+    if (!cab) return [] as Array<{ id: string; label: string }>;
+    return cab.children
+      .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
+      .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
+  }, [tree]);
+  const [moveTarget, setMoveTarget] = useState('');
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -252,11 +445,22 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     return {
       summary:
         `Document vault: ${allDocs.length} document(s) in the tree` +
+        (vault?.unfiledCount ? `, ${vault.unfiledCount} upload(s) unfiled` : '') +
         (folder ? `, folder "${folder.label}" open` : '') +
         (searching ? `, filtered to ${shown} by the search "${q.trim()}"` : '') +
         (sel ? `, "${sel.title}" selected` : ''),
       facts: {
         totalDocuments: allDocs.length,
+        unfiledUploads: vault?.unfiledCount ?? 0,
+        dataRoom: vault?.dataRoom
+          ? {
+              captured: vault.dataRoom.captured,
+              classified: vault.dataRoom.classified,
+              filed: vault.dataRoom.filed,
+            }
+          : vault?.dataRoomUnavailable
+            ? 'read failed — counts unknown, not zero'
+            : null,
         shownInList: shown,
         searchQuery: searching ? q.trim() : null,
         openFolder: folder ? { id: folder.id, code: folder.code, label: folder.label } : null,
@@ -266,6 +470,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               status: sel.status, version: sel.ver, owner: sel.owner,
               updated: sel.updated, percentComplete: sel.pct,
               blocker: sel.blocker ?? false, flag: sel.flag ?? null,
+              filing: sel.filing ?? null,
             }
           : null,
       },
@@ -273,10 +478,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         'Open a document to see its detail, version and status',
         'Search the vault by title, number, type or preview text',
         'Browse a folder in the document tree',
-        'Upload a file into the vault (multipart ingest, virus-scanned, one row per file)',
+        'Upload a file into the vault (multipart ingest, virus-scanned, auto-classified to a suggested dossier folder)',
+        'Confirm or move an upload’s suggested filing (governed, audited)',
       ],
     };
-  }, [vaultState.loading, vaultState.error, allDocs, results.length, folder, searching, q, sel]);
+  }, [vaultState.loading, vaultState.error, allDocs, results.length, folder, searching, q, sel, vault]);
   usePublishSurfaceContext('vault', anaContext);
 
   const st = (s: string) => vaultStatus(s);
@@ -295,6 +501,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             <span className="vd-sub-x">
               {vault && vault.spine ? <>{vault.spine} {I.dot} </> : null}
               {allDocs.length} document{allDocs.length === 1 ? '' : 's'}
+              {vault && (vault.unfiledCount ?? 0) > 0 ? (
+                <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
+              ) : null}
             </span>
           </div>
         </div>
@@ -403,17 +612,39 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           title="Couldn't load the project vault"
           hint="The governed document store didn't respond. This is the project's real CTD / eSTAR / IVDR / TMF document tree — sign in and retry, or check the service is reachable."
         />
-      ) : allDocs.length === 0 ? (
-        <EmptyState
-          icon={I.fileText}
-          title="No documents in this project's vault yet"
-          hint={
-            vault?.pendingStore
-              ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
-              : "Nothing has been filed into this project's vault yet. As documents are created they organize by build type into the submission spine, each classified and version-tracked."
-          }
-        />
       ) : (
+        <>
+          <DataRoomLane
+            block={vault?.dataRoom}
+            pending={vault?.dataRoomPending}
+            unavailable={vault?.dataRoomUnavailable}
+          />
+          {vault?.uploadsUnavailable && (
+            <div className="vd-dr-err vd-dr-err-strip" role="alert" data-testid="vault-uploads-error">
+              {I.alertTriangle} Uploaded documents could not be read — the filing cabinet is
+              hidden because the read failed, not because it is empty.
+            </div>
+          )}
+          {filingNote && (
+            <div
+              className="scaf-note"
+              role="status"
+              style={{ margin: '8px 24px 0', color: filingNote.tone === 'error' ? 'var(--error)' : undefined }}
+            >
+              {filingNote.text}
+            </div>
+          )}
+          {allDocs.length === 0 ? (
+            <EmptyState
+              icon={I.fileText}
+              title="No documents in this project's vault yet"
+              hint={
+                vault?.pendingStore
+                  ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
+                  : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
+              }
+            />
+          ) : (
         <div className="vd-grid">
           <aside className="vd-tree">
             <div className="vd-tree-lbl">Document structure</div>
@@ -532,53 +763,169 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 )}
 
-                {/* Corpus indexing / chunk counts are NOT part of the
-                    project-vault read model — there is no backing store for
-                    per-document embedding status (server/routes/c2c/project-vault.ts
-                    omits it deliberately). Honest note instead of a synthesized
-                    "Indexed — N chunks — semantic-search ready" claim. */}
-                <div className="vd-d-seclbl">Corpus indexing</div>
-                <div className="vd-d-idx">
-                  <span className="vd-idx-dot" />
-                  <span>Indexing status isn't reported for this document yet.</span>
-                </div>
+                {sel.src === 'upload' && sel.filing ? (
+                  <>
+                    {/* ── Dossier filing — the placement lifecycle ──
+                        Everything here is a stored column: the classifier's
+                        suggestion (with its confidence + rationale), or the
+                        person's confirmed decision. Committing a change posts
+                        to /file — governed, audited — and the tree re-reads. */}
+                    <div className="vd-d-seclbl">Dossier filing</div>
+                    <div className="vd-d-filing" data-testid="vault-filing-block">
+                      <div className="vd-d-filing-row">
+                        <span className="k">Folder</span>
+                        <span className="v">
+                          {sel.filing.folderId
+                            ? sel.filing.folderLabel || sel.filing.folderId
+                            : 'Unfiled'}
+                        </span>
+                      </div>
+                      {sel.filing.evidenceKind && (
+                        <div className="vd-d-filing-row">
+                          <span className="k">Looks like</span>
+                          <span className="v">{sel.filing.evidenceKind}</span>
+                        </div>
+                      )}
+                      {sel.filing.ctdSection && (
+                        <div className="vd-d-filing-row">
+                          <span className="k">CTD section</span>
+                          <span className="v mono">{sel.filing.ctdSection}</span>
+                        </div>
+                      )}
+                      {sel.filing.rationale && (
+                        <div className="vd-d-filing-why">
+                          {sel.filing.placementStatus === 'suggested'
+                            ? `Classifier${sel.filing.confidence ? ` (${sel.filing.confidence} confidence)` : ''}: `
+                            : ''}
+                          {sel.filing.rationale}
+                        </div>
+                      )}
+                      <div className="vd-d-filing-acts">
+                        {sel.filing.placementStatus === 'suggested' && sel.docId && (
+                          <button
+                            className="sp-primary"
+                            style={{ padding: '7px 11px' }}
+                            disabled={filing}
+                            onClick={() => void fileDocument(sel.docId!, { confirm: true })}
+                            data-testid="vault-confirm-filing"
+                          >
+                            {I.check || I.fileText} Confirm filing
+                          </button>
+                        )}
+                        {sel.docId && cabinetFolders.length > 0 && (
+                          <span className="vd-d-move">
+                            <select
+                              className="vd-d-move-sel"
+                              value={moveTarget}
+                              onChange={(e) => setMoveTarget(e.target.value)}
+                              aria-label="Move this document to a dossier folder"
+                            >
+                              <option value="">Move to…</option>
+                              {cabinetFolders.map((f) => (
+                                <option key={f.id} value={f.id}>{f.label}</option>
+                              ))}
+                            </select>
+                            <button
+                              className="sp-ask"
+                              disabled={filing || !moveTarget}
+                              onClick={() => {
+                                if (moveTarget) {
+                                  void fileDocument(sel.docId!, { folderId: moveTarget });
+                                  setMoveTarget('');
+                                }
+                              }}
+                            >
+                              Move
+                            </button>
+                          </span>
+                        )}
+                        {sel.filing.placementStatus === 'confirmed' && sel.docId && (
+                          <button
+                            className="sp-ask"
+                            disabled={filing}
+                            onClick={() => void fileDocument(sel.docId!, { folderId: null })}
+                          >
+                            Unfile
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-                {/* No version-history endpoint backs this surface: the read model
-                    returns each section's CURRENT version only, not a history
-                    list. Show the real current version honestly — don't
-                    synthesize a "history". */}
-                <div className="vd-d-seclbl">Version</div>
-                <div className="vd-vers">
-                  <div className="vd-ver">
-                    <span className="vd-ver-v">
-                      {sel.ver && sel.ver !== '—' ? sel.ver : '—'}
-                    </span>
-                    <span className="vd-ver-m">
-                      {sel.updated}
-                      {sel.owner && sel.owner !== '—' ? ' - ' + sel.owner : ''} - current version
-                    </span>
-                  </div>
-                </div>
+                    <div className="vd-d-seclbl">File</div>
+                    <div className="vd-d-filing">
+                      {sel.sizeLabel && (
+                        <div className="vd-d-filing-row">
+                          <span className="k">Size</span>
+                          <span className="v">{sel.sizeLabel}</span>
+                        </div>
+                      )}
+                      <div className="vd-d-filing-row">
+                        <span className="k">Version</span>
+                        <span className="v mono">{sel.ver && sel.ver !== '—' ? sel.ver : '—'}</span>
+                      </div>
+                      {sel.hash && (
+                        <div className="vd-d-filing-row">
+                          <span className="k">SHA-256</span>
+                          <span className="v mono vd-d-hash" title={sel.hash}>
+                            {sel.hash.slice(0, 16)}…
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Corpus indexing / chunk counts are NOT part of the
+                        project-vault read model — there is no backing store for
+                        per-document embedding status (server/routes/c2c/project-vault.ts
+                        omits it deliberately). Honest note instead of a synthesized
+                        "Indexed — N chunks — semantic-search ready" claim. */}
+                    <div className="vd-d-seclbl">Corpus indexing</div>
+                    <div className="vd-d-idx">
+                      <span className="vd-idx-dot" />
+                      <span>Indexing status isn't reported for this document yet.</span>
+                    </div>
 
-                {/* Linked-evidence relationships (datasets / precedents / RIM
-                    matches) have no backing store in this read model. Honest
-                    empty, not a fabricated list. FOLLOW-UP: wire an
-                    evidence-links endpoint before restoring this panel. */}
-                <div className="vd-d-seclbl">Linked evidence</div>
-                <div className="vd-ev">
-                  <div className="vd-ev-row" style={{ opacity: 0.7 }}>
-                    No linked evidence recorded for this document yet.
-                  </div>
-                </div>
+                    {/* No version-history endpoint backs this surface: the read model
+                        returns each section's CURRENT version only, not a history
+                        list. Show the real current version honestly — don't
+                        synthesize a "history". */}
+                    <div className="vd-d-seclbl">Version</div>
+                    <div className="vd-vers">
+                      <div className="vd-ver">
+                        <span className="vd-ver-v">
+                          {sel.ver && sel.ver !== '—' ? sel.ver : '—'}
+                        </span>
+                        <span className="vd-ver-m">
+                          {sel.updated}
+                          {sel.owner && sel.owner !== '—' ? ' - ' + sel.owner : ''} - current version
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Linked-evidence relationships (datasets / precedents / RIM
+                        matches) have no backing store in this read model. Honest
+                        empty, not a fabricated list. FOLLOW-UP: wire an
+                        evidence-links endpoint before restoring this panel. */}
+                    <div className="vd-d-seclbl">Linked evidence</div>
+                    <div className="vd-ev">
+                      <div className="vd-ev-row" style={{ opacity: 0.7 }}>
+                        No linked evidence recorded for this document yet.
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="vd-d-actions">
-                  <button
-                    className="sp-primary"
-                    style={{ padding: '8px 12px' }}
-                    onClick={openDoc}
-                  >
-                    {I.penLine || I.fileText} Open in editor
-                  </button>
+                  {sel.src !== 'upload' && (
+                    <button
+                      className="sp-primary"
+                      style={{ padding: '8px 12px' }}
+                      onClick={openDoc}
+                    >
+                      {I.penLine || I.fileText} Open in editor
+                    </button>
+                  )}
                   <button
                     className="sp-ask"
                     onClick={() =>
@@ -602,6 +949,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
             )}
           </aside>
         </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -9,6 +9,18 @@
 
 /* ── Vault document node (leaf in the folder tree) ── */
 
+/** The placement block for an uploaded document — projected by
+ *  server/routes/c2c/project-vault.ts from real vault.documents columns. */
+export interface VaultDocFiling {
+  folderId: string | null;
+  folderLabel: string;
+  evidenceKind: string | null;
+  ctdSection: string | null;
+  placementStatus: string;
+  confidence: string | null;
+  rationale: string | null;
+}
+
 export interface VaultDoc {
   id: string;
   num: string;
@@ -22,6 +34,13 @@ export interface VaultDoc {
   preview: string;
   blocker?: boolean;
   flag?: string;
+  /** 'authored' (rule-pack section) vs 'upload' (vault.documents row). */
+  src?: 'authored' | 'upload';
+  /** Upload-only extras, all projected from real columns. */
+  docId?: string;
+  sizeLabel?: string;
+  hash?: string;
+  filing?: VaultDocFiling;
 }
 
 export interface VaultFolder {
@@ -47,6 +66,13 @@ export const VAULT_STATUS: Record<string, VaultStatus> = {
   draft: { label: 'Draft', tone: 'warn' },
   not_started: { label: 'Not started', tone: 'idle' },
   rejected: { label: 'Rejected', tone: 'warn' },
+  /* Upload filing states — the placement lifecycle, not an authoring one.
+     'suggested' = the classifier proposed a folder and a person has not yet
+     confirmed it; 'confirmed' = filed by a person (audited); 'unfiled' = the
+     rules could not place it and it sits in the visible review queue. */
+  suggested: { label: 'Auto-filed · confirm', tone: 'ai' },
+  confirmed: { label: 'Filed', tone: 'ok' },
+  unfiled: { label: 'Unfiled', tone: 'warn' },
 };
 
 export function vaultStatus(s: string): VaultStatus {

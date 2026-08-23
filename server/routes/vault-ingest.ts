@@ -40,6 +40,12 @@ import { runWithTenantScope } from '../db/tenantStore';
 import { createScopedLogger } from '../utils/logger';
 import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { writeChainedAuditRow } from '../services/auditService';
+import {
+  classifyForFiling,
+  resolveVaultView,
+  isFolderInView,
+  folderLabel,
+} from '../services/vault/vault-filing.service';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -75,6 +81,13 @@ const IngestBodySchema = z.object({
   retentionPolicy: z.string().optional(),
   parentDocumentId: z.string().uuid().optional(),
   supersedesId: z.string().uuid().optional(),
+  /* Explicit dossier target, when the uploader already knows where the file
+     goes. Validated against the program's vault-view taxonomy — an invalid
+     folder is a 400, never a silent unfile. Omitted → the filing classifier
+     proposes a placement ('suggested') or the file lands visibly Unfiled. */
+  folderId: z.string().min(1).optional(),
+  evidenceKind: z.string().min(1).optional(),
+  ctdSection: z.string().min(1).optional(),
 });
 
 function sha256Bytes(buf: Buffer): string {
@@ -264,6 +277,67 @@ export default function createVaultIngestRoutes(): Router {
       logger.warn('Vault ingest text extraction failed (non-fatal)', { err: extractErr?.message });
     }
 
+    /* ── Dossier filing ──────────────────────────────────────────────────────
+       Every ingested document gets a PLACEMENT against the program's vault
+       folder taxonomy (the auto-filing pipeline: capture → classify → file).
+       When the uploader named an explicit folder it is validated against the
+       program's view and recorded as 'confirmed' — a person chose it. When
+       not, the deterministic classifier proposes ('suggested', with confidence
+       and rationale), and a file the rules cannot place stays visibly
+       'unfiled'. The proposal never overwrites documentType — a filename is
+       not grounds to change a regulatory type field (see useVaultUpload). */
+    // runScoped: this read runs after multer destroyed the tenant scope (see
+    // the module header) — same re-entry the ownership check above uses.
+    const vaultView = await runScoped(() => resolveVaultView(data.programId, orgId));
+    let placement: {
+      folderId: string | null;
+      evidenceKind: string | null;
+      ctdSection: string | null;
+      status: 'unfiled' | 'suggested' | 'confirmed';
+      confidence: string | null;
+      rationale: string;
+      placedBy: number | null;
+      needsReview: boolean;
+    };
+    if (data.folderId) {
+      if (!isFolderInView(vaultView, data.folderId)) {
+        return res.status(400).json({
+          error: {
+            code: 'INVALID_FOLDER',
+            message: `Folder '${data.folderId}' does not exist in this program's ${vaultView} vault taxonomy.`,
+          },
+        });
+      }
+      placement = {
+        folderId: data.folderId,
+        evidenceKind: data.evidenceKind ?? null,
+        ctdSection: data.ctdSection ?? null,
+        status: 'confirmed',
+        confidence: null,
+        rationale: 'Filed by the uploader at ingest.',
+        placedBy: userId,
+        needsReview: false,
+      };
+    } else {
+      const classified = classifyForFiling({
+        fileName,
+        title: data.documentTitle,
+        mimeType,
+        extractedText,
+        view: vaultView,
+      });
+      placement = {
+        folderId: classified.folderId,
+        evidenceKind: classified.evidenceKind,
+        ctdSection: classified.ctdSection,
+        status: classified.folderId ? 'suggested' : 'unfiled',
+        confidence: classified.confidence,
+        rationale: classified.rationale,
+        placedBy: null,
+        needsReview: classified.needsReview,
+      };
+    }
+
     /* INSERT into vault.documents, and the Part 11 audit row, in ONE transaction.
        The route previously ran a bare autocommit INSERT on this client and wrote
        no audit row at all — on the ingestion path for a vault whose own surface
@@ -287,6 +361,9 @@ export default function createVaultIngestRoutes(): Router {
           content_hash, classification, retention_policy,
           parent_document_id, supersedes_id,
           extracted_text, page_count, word_count,
+          folder_id, evidence_kind, ctd_section,
+          placement_status, placement_confidence, placement_rationale,
+          placed_by, placed_at,
           processing_status, created_by
         ) VALUES (
           $1, $2, $3, $4,
@@ -294,7 +371,10 @@ export default function createVaultIngestRoutes(): Router {
           $11, $12, $13,
           $14, $15,
           $16, $17, $18,
-          'PENDING', $19
+          $19, $20, $21,
+          $22, $23, $24,
+          $25, CASE WHEN $25::integer IS NULL THEN NULL ELSE NOW() END,
+          'PENDING', $26
         )
         ON CONFLICT (program_id, document_code, version) DO UPDATE SET
           document_title = EXCLUDED.document_title,
@@ -312,9 +392,30 @@ export default function createVaultIngestRoutes(): Router {
           extracted_text = EXCLUDED.extracted_text,
           page_count = EXCLUDED.page_count,
           word_count = EXCLUDED.word_count,
+          -- A re-upload of the same (program, code, version) re-proposes ONLY
+          -- when nobody has confirmed a placement: a person's filing decision
+          -- is never overwritten by a machine suggestion.
+          folder_id = CASE WHEN vault.documents.placement_status = 'confirmed'
+                           THEN vault.documents.folder_id ELSE EXCLUDED.folder_id END,
+          evidence_kind = CASE WHEN vault.documents.placement_status = 'confirmed'
+                               THEN vault.documents.evidence_kind ELSE EXCLUDED.evidence_kind END,
+          ctd_section = CASE WHEN vault.documents.placement_status = 'confirmed'
+                             THEN vault.documents.ctd_section ELSE EXCLUDED.ctd_section END,
+          placement_status = CASE WHEN vault.documents.placement_status = 'confirmed'
+                                  THEN 'confirmed' ELSE EXCLUDED.placement_status END,
+          placement_confidence = CASE WHEN vault.documents.placement_status = 'confirmed'
+                                      THEN vault.documents.placement_confidence ELSE EXCLUDED.placement_confidence END,
+          placement_rationale = CASE WHEN vault.documents.placement_status = 'confirmed'
+                                     THEN vault.documents.placement_rationale ELSE EXCLUDED.placement_rationale END,
+          placed_by = CASE WHEN vault.documents.placement_status = 'confirmed'
+                           THEN vault.documents.placed_by ELSE EXCLUDED.placed_by END,
+          placed_at = CASE WHEN vault.documents.placement_status = 'confirmed'
+                           THEN vault.documents.placed_at ELSE EXCLUDED.placed_at END,
           processing_status = 'PENDING',
           updated_at = NOW()
-        RETURNING id, processing_status, created_at, updated_at`,
+        RETURNING id, processing_status, created_at, updated_at,
+                  folder_id, evidence_kind, ctd_section, placement_status,
+                  placement_confidence, placement_rationale`,
         [
           data.programId,
           data.documentCode,
@@ -334,6 +435,13 @@ export default function createVaultIngestRoutes(): Router {
           extractedText,
           pageCount,
           wordCount,
+          placement.folderId,
+          placement.evidenceKind,
+          placement.ctdSection,
+          placement.status,
+          placement.confidence,
+          placement.rationale,
+          placement.placedBy,
           userId,
         ],
       );
@@ -368,6 +476,19 @@ export default function createVaultIngestRoutes(): Router {
           contentHash,
           classification: data.classification ?? 'INTERNAL',
           storageKey: s3Key,
+          /* WHERE the document was filed and WHO/WHAT decided — the audit
+             trail records the placement decision, not merely that an upload
+             happened. A 'suggested' placement is attributed to the classifier
+             (with its confidence), a 'confirmed' one to the uploader. */
+          filing: {
+            view: vaultView,
+            folderId: doc.folder_id ?? null,
+            evidenceKind: doc.evidence_kind ?? null,
+            ctdSection: doc.ctd_section ?? null,
+            placementStatus: doc.placement_status,
+            confidence: doc.placement_confidence ?? null,
+            rationale: doc.placement_rationale ?? null,
+          },
         },
       });
 
@@ -399,6 +520,20 @@ export default function createVaultIngestRoutes(): Router {
           wordCount,
           createdAt: doc.created_at,
           updatedAt: doc.updated_at,
+        },
+        /* The filing outcome, as stored — the caller renders this so the
+           uploader sees WHERE the file landed (or that it needs filing),
+           not just that bytes arrived. */
+        filing: {
+          view: vaultView,
+          folderId: doc.folder_id ?? null,
+          folderLabel: folderLabel(vaultView, doc.folder_id ?? null),
+          evidenceKind: doc.evidence_kind ?? null,
+          ctdSection: doc.ctd_section ?? null,
+          placementStatus: doc.placement_status,
+          confidence: doc.placement_confidence ?? null,
+          rationale: doc.placement_rationale ?? null,
+          needsReview: doc.placement_status === 'unfiled',
         },
       });
     } catch (err: any) {
