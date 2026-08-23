@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T17:50:01.772Z",
+  "generatedAt": "2026-08-23T18:04:39.972Z",
   "git": {
-    "sha": "24f6431f5a0119dca768d442dc01ae8dacb69207",
+    "sha": "36910d4f5043cdba483f2552b8005abb26c1857a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2308,7 +2308,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 100546
+        "bytes": 100961
       }
     ],
     "largeFilesByLines": [
@@ -2409,12 +2409,12 @@
         "lines": 2504
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2419
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 2427
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 2418
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "lines": 2419
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
