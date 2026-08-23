@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:27:13.287Z",
+  "generatedAt": "2026-08-23T23:27:41.997Z",
   "git": {
-    "sha": "c00539b1fe0d7581dfa6f6002fe52299c9c5303c",
+    "sha": "3fba9b9237e2655e083c3d7b882e63ceea837563",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2172,7 +2172,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 260888
+        "bytes": 262187
       },
       {
         "file": "server/statistics-service.ts",
@@ -2224,7 +2224,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 133419
+        "bytes": 133930
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6550
+        "lines": 6580
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2358,7 +2358,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3183
+        "lines": 3190
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2637,6 +2637,10 @@
         "lines": 1582
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1553
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
@@ -2651,10 +2655,6 @@
       {
         "file": "server/routes/cortex-unified.ts",
         "lines": 1533
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1532
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
