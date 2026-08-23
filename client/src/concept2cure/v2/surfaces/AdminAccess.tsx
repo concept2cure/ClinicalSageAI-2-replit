@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { useAuth } from '@/services/portal/authService';
+import { C2CForm, type C2CFormConfig } from '../C2CForm';
+import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/admin-access.css';
 
@@ -78,7 +82,73 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      /api/mdx/admin (org-scoped, org-admin gated). A failed fetch (network,
      401/403, 500) is an honest error; a successful load with no members is an
      honest empty — never a codebase fixture, never a "Sample data" pill. */
-  const { data, loading, error } = useLiveData<AdminData>('/api/mdx/admin');
+  const [adminEpoch, setAdminEpoch] = useState(0);
+  const { data, loading, error } = useLiveData<AdminData>('/api/mdx/admin', ['/api/mdx/admin', adminEpoch]);
+
+  /* ── "Invite member" opened nothing ───────────────────────────────────────
+     The page's primary CTA ran ask('Invite a new member. Confirm name, email,
+     role…') — a sentence typed into the AnA panel. No form appeared, no invite
+     was created, and no request was made, on the one screen whose job is
+     managing who has access.
+
+     POST /api/tenant-users exists, is org-admin gated (authorizeOrgAccess with
+     requireAdmin), enforces the seat-licensing gate and audits the create. The
+     roster is re-read afterwards so the new member appears because the server
+     stored them. */
+  const { user } = useAuth();
+  const [toast, fireToast] = useToast();
+  const [inviting, setInviting] = useState(false);
+
+  const INVITE_FORM: C2CFormConfig = {
+    eyebrow: 'Admin and access · new member',
+    title: 'Invite a member',
+    governed:
+      'Creating a member consumes a licensed seat and emits a 21 CFR Part 11 audit entry naming you as the actor.',
+    submitLabel: 'Send invite',
+    fields: [
+      { key: 'name', label: 'Full name', type: 'text', required: true },
+      { key: 'email', label: 'Email', type: 'text', required: true, half: true },
+      {
+        key: 'role', label: 'Role', type: 'select',
+        options: ['member', 'manager', 'admin', 'viewer'],
+        required: true, half: true,
+      },
+      { key: 'title', label: 'Job title', type: 'text', half: true },
+      { key: 'department', label: 'Department', type: 'text', half: true },
+    ],
+  };
+
+  const invite = async (v: Record<string, string>) => {
+    setInviting(false);
+    const orgId = Number((user as { organizationId?: unknown } | null)?.organizationId);
+    try {
+      const res = await apiRequest('POST', '/api/tenant-users', {
+        name: (v.name || '').trim(),
+        email: (v.email || '').trim(),
+        role: v.role,
+        title: (v.title || '').trim() || undefined,
+        department: (v.department || '').trim() || undefined,
+        // Optional server-side; sent when the session carries one so the route
+        // does not have to infer the tenant.
+        ...(Number.isInteger(orgId) && orgId > 0 ? { organizationId: orgId } : {}),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        fireToast(
+          'Member not invited — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
+        );
+        return;
+      }
+      fireToast(`${(v.name || '').trim()} invited as ${v.role}.`);
+      setAdminEpoch((n) => n + 1);
+    } catch (e) {
+      fireToast(
+        'Member not invited — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was created.',
+        'error',
+      );
+    }
+  };
 
   const [tab, setTab] = useState<TabId>('members');
   const [selected, setSelected] = useState<string>('');
@@ -133,7 +203,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         </div>
         <div className="page-actions">
           <button className="btn ghost small" onClick={() => ask('Audit a member — every action, signing, and program touched this week. Export as a Part 11 PDF.')}>{I.eye} Audit a member</button>
-          <button className="btn primary small" onClick={() => ask('Invite a new member. Confirm name, email, role, group memberships, and which programs they should be granted access to.')}>{I.plus} Invite member</button>
+          {/* Was a chat prompt: the page's primary CTA typed a sentence into
+              the AnA panel and no invite form, no invite and no POST happened.
+              POST /api/tenant-users exists, is org-admin gated and enforces the
+              seat-licensing gate. */}
+          <button
+            className="btn primary small"
+            onClick={() => setInviting(true)}
+            data-testid="admin-invite-member"
+          >
+            {I.plus} Invite member
+          </button>
         </div>
       </div>
 
@@ -347,6 +427,15 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
           </section>
         </>
       )}
+
+      {inviting && (
+        <C2CForm
+          config={INVITE_FORM}
+          onCancel={() => setInviting(false)}
+          onSubmit={invite}
+        />
+      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

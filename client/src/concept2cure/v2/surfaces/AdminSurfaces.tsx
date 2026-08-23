@@ -1566,13 +1566,19 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
         </div>
         <div className="lic-band-spacer"></div>
         {lic.renewsAt && <div className="lic-renew">Renews {lic.renewsAt}</div>}
-        <a
+        {/* Was <a href="/settings/subscription">. That path matches no route,
+            so the browser did a FULL page reload and the SPA router landed the
+            admin back on the app home — a hard reload, a lost place in the
+            product, and no billing screen. `licensing` is a real registered
+            surface and `onNav` is already in scope here. */}
+        <button
           className="btn ghost"
-          style={{ height: 28, textDecoration: 'none' }}
-          href="/settings/subscription"
+          style={{ height: 28 }}
+          onClick={() => open('licensing')}
+          data-testid="admin-manage-plan"
         >
           {I.creditCard || I.zap} Manage plan
-        </a>
+        </button>
       </div>
       ) : (
         <div
@@ -1584,13 +1590,14 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             License &amp; entitlement details are unavailable right now
             {licState.error ? " -- the billing service didn't respond" : ''}.
           </span>
-          <a
+          <button
             className="btn ghost"
-            style={{ height: 28, textDecoration: 'none', marginLeft: 'auto' }}
-            href="/settings/subscription"
+            style={{ height: 28, marginLeft: 'auto' }}
+            onClick={() => open('licensing')}
+            data-testid="admin-manage-plan-fallback"
           >
             {I.creditCard || I.zap} Manage plan
-          </a>
+          </button>
         </div>
       )}
 
@@ -1672,14 +1679,18 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                         Open
                       </button>
                     ) : isAddOn ? (
-                      <a
+                      /* Same broken href as "Manage plan" above: a full
+                         reload to a non-route, landing back on the app home.
+                         Goes to the licensing surface in-app instead. */
+                      <button
                         className="btn primary"
-                        style={{ height: 26, marginLeft: 'auto', textDecoration: 'none' }}
-                        href="/settings/subscription"
+                        style={{ height: 26, marginLeft: 'auto' }}
+                        onClick={() => open('licensing')}
                         title={`Upgrade your plan to unlock ${label}`}
+                        data-testid="admin-upgrade-plan"
                       >
                         Upgrade plan
-                      </a>
+                      </button>
                     ) : (
                       <button
                         className="btn ghost"
