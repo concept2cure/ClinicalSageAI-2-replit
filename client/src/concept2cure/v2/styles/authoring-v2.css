@@ -28,7 +28,7 @@
     min-width: 0;
   }
   .ed[data-comments='true'] {
-    grid-template-columns: 220px minmax(420px, 1fr) 300px;
+    grid-template-columns: 220px minmax(420px, 1fr) clamp(300px, 24vw, 460px);
   }
   .ed[data-no-comments] {
     grid-template-columns: 260px 1fr;
@@ -241,7 +241,7 @@
     overflow-y: auto;
   }
   .ed-doc-inner {
-    max-width: 760px;
+    max-width: min(1180px, 100%);
     margin: 0 auto;
     padding: 36px 44px 80px;
   }
