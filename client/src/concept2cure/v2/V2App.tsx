@@ -260,9 +260,14 @@ export function V2App() {
     },
     [setLocation]
   );
+  /* True from a drive_state{enabled} until the person takes over — read by the
+     follow-the-work effect below, which fires AFTER turn_end has already
+     released the reducer's `active` (drafts persist post-`done`). */
+  const droveThisTurnRef = React.useRef(false);
   const onDriveEvent = React.useCallback(
     (ev: DriveSseEvent) => {
       if (ev.type === 'drive_state') {
+        droveThisTurnRef.current = ev.enabled;
         dispatchDrive({
           kind: 'drive_state',
           enabled: ev.enabled,
@@ -359,9 +364,37 @@ export function V2App() {
      rest of the turn AND drop the toggle, so the next turn does not re-engage
      until they deliberately switch it back on. AnA keeps answering. */
   const takeOverDrive = () => {
+    droveThisTurnRef.current = false;
     dispatchDrive({ kind: 'take_over' });
     set('liveDrive', false);
   };
+  /* ── Follow the work ──────────────────────────────────────────────────
+     The point of Live Drive is WATCHING AnA work — and her biggest work
+     product is a persisted draft (`artifact_version_saved` → the message's
+     generatedDraft.artifactId). When a driven turn lands one, take the
+     subscriber to the Artifacts Center with that artifact focused, so the
+     document appears in front of them instead of behind a nav item. Gated on
+     the turn having genuinely driven (droveThisTurnRef — drafts persist after
+     `done`, when the reducer has already released), killed by take-over, and
+     deduped per artifact so a re-render can never re-hijack the screen. */
+  const followedArtifactsRef = React.useRef<Set<string>>(new Set());
+  const lastMsg = anaChat.messages[anaChat.messages.length - 1];
+  const savedArtifactId =
+    lastMsg?.role === 'assistant' ? lastMsg.generatedDraft?.artifactId ?? null : null;
+  React.useEffect(() => {
+    if (!savedArtifactId || !droveThisTurnRef.current || !prefs.liveDrive) return;
+    if (followedArtifactsRef.current.has(savedArtifactId)) return;
+    followedArtifactsRef.current.add(savedArtifactId);
+    stashNavParamsForTarget('artifacts-center', { artifactId: savedArtifactId });
+    nav('artifacts-center');
+  }, [savedArtifactId, prefs.liveDrive, nav]);
+  /* What AnA is doing right now, for the drive strip — only ever a label the
+     stream genuinely reported (the running tool's label, else the phase). */
+  const driveActivity =
+    lastMsg?.role === 'assistant' && lastMsg.streaming
+      ? (lastMsg.toolCalls?.filter((t) => t.status === 'running').slice(-1)[0]?.label ??
+        lastMsg.statusPhase)
+      : undefined;
   /* The bridge for surfaces that run their own conversation (see
      SurfaceViewProps.liveDrive) — same toggle, same reducer, one machine. */
   const liveDriveBridge = React.useMemo(
@@ -651,7 +684,12 @@ export function V2App() {
       <CollabLayer onNav={nav} />
       {/* Fixed strip, above every surface, while AnA is actually driving —
           who is driving, where she just went, take-over one keypress away. */}
-      <LiveDriveOverlay state={drive} onTakeOver={takeOverDrive} onStop={() => anaChat.stop()} />
+      <LiveDriveOverlay
+        state={drive}
+        activity={driveActivity}
+        onTakeOver={takeOverDrive}
+        onStop={() => anaChat.stop()}
+      />
     </div>
     </NavEntitlementsProvider>
   );

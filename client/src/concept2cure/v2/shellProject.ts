@@ -37,12 +37,23 @@ export interface ShellProject {
 
 const KEY = 'c2c.shell-project';
 
-type ShellWindow = Window & { C2C_PROJECT?: ShellProject };
+/* The global is already declared app-wide as `Record<string, string>`
+   (ProjectHome.tsx's declare-global block, which every existing reader types
+   against). Re-declaring it here as ShellProject intersects the two and makes
+   the property unassignable from either side — so this module casts at its own
+   boundary instead: writers hand in a ShellProject, readers get one back, and
+   the historical loose global type stays what the 14+ readers compiled
+   against. */
+const readGlobal = (): ShellProject | undefined =>
+  window.C2C_PROJECT as unknown as ShellProject | undefined;
+const writeGlobal = (p: ShellProject): void => {
+  window.C2C_PROJECT = p as unknown as typeof window.C2C_PROJECT;
+};
 
 /** Set the open program: the live global plus its per-tab mirror. */
 export function publishShellProject(project: ShellProject): void {
   try {
-    (window as unknown as ShellWindow).C2C_PROJECT = project;
+    writeGlobal(project);
   } catch {
     /* no window (SSR/test teardown) — nothing to publish to */
   }
@@ -61,8 +72,7 @@ export function publishShellProject(project: ShellProject): void {
  */
 export function restoreShellProject(): ShellProject | null {
   try {
-    const w = window as unknown as ShellWindow;
-    const live = w.C2C_PROJECT;
+    const live = readGlobal();
     if (live && live.id != null && String(live.id).trim() !== '') return live;
 
     const raw = sessionStorage.getItem(KEY);
@@ -75,7 +85,7 @@ export function restoreShellProject(): ShellProject | null {
       (parsed as ShellProject).id != null &&
       String((parsed as ShellProject).id).trim() !== ''
     ) {
-      w.C2C_PROJECT = parsed as ShellProject;
+      writeGlobal(parsed as ShellProject);
       return parsed as ShellProject;
     }
     return null;
