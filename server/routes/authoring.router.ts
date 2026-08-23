@@ -6422,6 +6422,104 @@ router.get('/documents/:id/tracked-change-decisions', async (req: Request, res: 
   }
 });
 
+/* ════ Section order ═════════════════════════════════════════════════════════
+ *
+ * Every reader of a document — the tree, the export assembler, the PDF and
+ * DOCX branches — orders sections by `order_index`, and nothing could ever
+ * change it: POST /sections defaulted it and PATCH does not accept it, so a
+ * document whose sections were created out of order ASSEMBLED out of order,
+ * permanently. Order is part of the filed record, so the write is governed
+ * like one: refused on FROZEN/APPROVED (the sealed assembly is what the
+ * signatures attest to), the submitted list must be an exact permutation of
+ * the document's sections (a partial or foreign list is refused, never
+ * partially applied), the renumbering commits in one transaction, and the
+ * audit trail records the new order under the actor.
+ */
+router.post('/docs/:docId/sections/reorder', async (req: Request, res: Response) => {
+  try {
+    const { docId } = req.params;
+    const tenantId = getTenantId(req);
+    const actor = getActorEmail(req);
+    if (!actor) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const ids: unknown = (req.body ?? {}).section_ids;
+    if (
+      !Array.isArray(ids) ||
+      ids.length === 0 ||
+      !ids.every((x): x is string => typeof x === 'string' && x.length > 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: 'section_ids must be a non-empty array of section ids in the desired order.',
+      });
+    }
+
+    const parentDoc = await pool.query(
+      `SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2`,
+      [docId, tenantId]
+    );
+    if ((parentDoc.rowCount ?? 0) === 0) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+    const parentStatus = String(
+      (parentDoc.rows[0] as { status?: string | null }).status ?? ''
+    ).toUpperCase();
+    if (LOCKED_DOCUMENT_STATUSES.has(parentStatus)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Document is FROZEN/APPROVED; its section order is part of the sealed record.',
+      });
+    }
+
+    const current = await pool.query(
+      `SELECT id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2`,
+      [docId, tenantId]
+    );
+    const currentIds = new Set<string>(current.rows.map((r: { id: string }) => String(r.id)));
+    const submitted = new Set(ids);
+    const isPermutation =
+      submitted.size === ids.length && // no duplicates
+      submitted.size === currentIds.size &&
+      ids.every((id) => currentIds.has(id));
+    if (!isPermutation) {
+      return res.status(409).json({
+        success: false,
+        error:
+          'section_ids must list exactly this document’s sections, each once. ' +
+          'The document’s sections changed since you loaded them — reload and retry. Nothing was reordered.',
+      });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (let i = 0; i < ids.length; i++) {
+        await client.query(
+          `UPDATE authoring_sections SET order_index = $1, updated_at = NOW()
+             WHERE id = $2 AND doc_id = $3 AND tenant_id = $4`,
+          [i, ids[i], docId, tenantId]
+        );
+      }
+      await createAuditEvent(docId, 'REORDER_SECTIONS', actor, { order: ids }, tenantId, client);
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    return res.json({ success: true, order: ids });
+  } catch (error) {
+    logger.error('section reorder failed', { error });
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to reorder sections. The previous order is unchanged.',
+    });
+  }
+});
+
 /* ════ Section images — the governed figure store ═══════════════════════════
  *
  * Section HTML stores a figure as a REFERENCE (`/api/authoring/images/<id>`),
