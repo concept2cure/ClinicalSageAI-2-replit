@@ -242,4 +242,30 @@ describe('Rail licence gating', () => {
     fireEvent.click(btn);
     expect(onNav).toHaveBeenCalledWith('ana-command');
   });
+
+  /* CONTRACT 6 — THE REASON IN THE ACCESSIBLE NAME IS THE REAL ONE.
+     The rail used to append "not included in your plan" to every locked entry.
+     That is true only of a `tier` verdict. A module an administrator switched
+     off needs nothing bought, and one outside the workspace's industry mode is
+     not fixed by any plan — so hover and screen-reader users were told a
+     different, and wrong, reason from the one the panel gives them on
+     activation. Each source must reach the accessible name as itself. */
+  it.each([
+    ['tier' as const, 'not included in your plan'],
+    ['disabled' as const, 'turned off for this workspace'],
+    ['industry' as const, 'not offered for this workspace'],
+  ])('states the real reason for a %s lock in the accessible name', async (source, reason) => {
+    mockNav(async () =>
+      ok(payload({ surfaces: [{ ...LOCKED_SUBMISSION, source }] })),
+    );
+    await mountRail();
+
+    expect(lockedButtons()).toHaveLength(1);
+    const btn = screen.getByRole('button', {
+      name: new RegExp(`^Submission Center — ${reason}$`),
+    });
+    // The tooltip is the same sentence — a sighted hover and a screen reader
+    // must not be told two different things about one button.
+    expect(btn.getAttribute('title')).toBe(`Submission Center — ${reason}`);
+  });
 });

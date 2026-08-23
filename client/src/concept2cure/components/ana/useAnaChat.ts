@@ -349,8 +349,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         }
       );
       if (!res.ok) {
+        // Resolving here made the caller's error branch unreachable, so a 401
+        // or a 500 on a real conversation rendered as the "Talk to AnA" empty
+        // state: the user was told their conversation was empty when the read
+        // had failed. An error is never an empty result.
         console.warn('[useAnaChat] loadThread non-ok:', res.status);
-        return;
+        throw new Error(`loadThread ${res.status}`);
       }
       const body = (await res.json()) as {
         messages?: Array<{
@@ -386,6 +390,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       setMessages(hydrated);
     } catch (err: any) {
       console.warn('[useAnaChat] loadThread failed:', err?.message);
+      throw err;
     } finally {
       setIsLoadingThread(false);
     }
