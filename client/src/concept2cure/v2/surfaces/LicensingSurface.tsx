@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, liveMutateOrNull, type DataResult } from '../dataConnect';
+import { takeUnlockIntent, type UnlockIntent } from '../unlockIntent';
 import type { SurfaceViewProps } from '../surfaceViews';
 // Canonical price list, NOT fabricated per-tenant data: LIC_DTC / LIC_PRICING /
 // LIC_ARCHETYPES / licBundle are the product's fixed pricing catalog — the same
@@ -79,6 +80,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   // reads the organizations row (server getSubscriptionStatus) and reconciles
   // live Stripe state. Real object -> honest error -> no fixture. useLiveData
   // unwraps the success envelope; this route returns the status object directly.
+  /* What the customer was trying to open, when they arrived from a lock.
+     Read ONCE on mount and cleared in the same step — the intent is a fact
+     about one navigation, and a customer who comes back here later from the
+     account menu must not be told they were unlocking something they stopped
+     thinking about. Null on every other route into this page, which is the
+     common case. */
+  const [unlock] = useState<UnlockIntent | null>(() => takeUnlockIntent());
+
   const statusState = useLiveData<BillingStatus>('/api/billing/status');
   const status = statusState.data;
 
@@ -144,6 +153,26 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
           </button>
         )}
       </div>
+
+      {unlock && (
+        /* Says the thing the customer came here to find out. Every value is the
+           server's own verdict, carried across the navigation — the module's
+           real name and the real minimum tier. When requiredTier is null the
+           lock has no plan remedy (an administrator disabled it, or it is
+           outside this workspace's industry mode) and this must NOT offer a plan
+           that would change nothing. */
+        <div className="lic-unlock" role="note">
+          <span className="lic-unlock-ic" aria-hidden="true">{I.lock}</span>
+          <div className="lic-unlock-mid">
+            <div className="lic-unlock-t">{unlock.label}</div>
+            <div className="lic-unlock-b">
+              {unlock.requiredTier
+                ? `Included from the ${unlock.requiredTier.charAt(0).toUpperCase()}${unlock.requiredTier.slice(1)} plan upward. Your current plan does not include it.`
+                : 'Not included in your plan. Changing plan may not resolve this on its own — check with your administrator.'}
+            </div>
+          </div>
+        </div>
+      )}
 
       {statusState.loading ? (
         <div className="scaf-note" style={{ marginBottom: 16 }}>
