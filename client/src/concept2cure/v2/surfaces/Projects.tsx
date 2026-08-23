@@ -8,6 +8,7 @@ import {
   workstreamForFilingType,
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { publishShellProject } from '../shellProject';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -280,14 +281,14 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
 
       const created = (j?.data ?? {}) as Partial<ProjPortfolioEntry> & { id?: string };
       try {
-        window.C2C_PROJECT = {
+        publishShellProject({
           id: created.id || 'new',
           title: created.title || body.name,
           product: body.productName,
           code: created.code || '',
           ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
           status: created.status || 'active',
-        };
+        });
       } catch { /* noop */ }
       onClose();
       onNav('project-home');
@@ -597,7 +598,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
 
   const openProj = (pr: ProjPortfolioEntry) => {
     try {
-      window.C2C_PROJECT = { id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status };
+      publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
     } catch (_) { /* noop */ }
     onNav('project-home');

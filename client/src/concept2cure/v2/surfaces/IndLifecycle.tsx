@@ -164,6 +164,37 @@ const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 const EMPTY_FORMS: IndlForm[] = [];
 const EMPTY_SECTIONS: IndlSection[] = [];
 
+/* ── The open program, and which checklist row is really its IND ──
+   The checklist endpoint is org-scoped and this surface used to render rows[0]
+   unconditionally — so with two INDs in the org, the CMC build tab could be on
+   one program while this screen silently showed the other's readiness. The
+   program ↔ submission linkage is identity matching (product/title, the same
+   convention ensureSubmissionSpine and the checklist assembler use), applied
+   here so the screens agree. rows[0] remains the fallback when no program is
+   open or no row matches — WITH the mismatch said out loud, never silently. */
+interface ShellProjectRead {
+  id?: unknown;
+  title?: string;
+  product?: string;
+  code?: string;
+}
+
+function readShellProject(): ShellProjectRead | null {
+  try {
+    const p = (window as unknown as { C2C_PROJECT?: ShellProjectRead }).C2C_PROJECT;
+    return p && p.id != null ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+function rowMatchesProgram(row: IndlChecklist, p: ShellProjectRead): boolean {
+  const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();
+  const programKeys = [p.title, p.product, p.code].map(norm).filter(Boolean);
+  const rowKeys = [row.productName, row.drugName, row.code].map(norm).filter(Boolean);
+  return programKeys.some((k) => rowKeys.includes(k));
+}
+
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
 
 export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
@@ -175,7 +206,23 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      state, or an honest failed-load state — never a fixture. Readiness and the
      30-day clock are computed deterministically from the loaded forms/sections. */
   const { rows, loading, error } = useLiveRows<IndlChecklist>('/api/ind-checklist');
-  const checklist = rows[0] ?? null;
+  /* Prefer the row that IS the open program's IND; fall back to the first row
+     with the mismatch stated (scopeNote), never silently. */
+  const shellProject = readShellProject();
+  const matched = shellProject ? rows.find((r) => rowMatchesProgram(r, shellProject)) ?? null : null;
+  const checklist = matched ?? rows[0] ?? null;
+  const scopeNote =
+    checklist == null
+      ? null
+      : matched
+        ? rows.length > 1
+          ? `Showing the open program's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
+          : null
+        : shellProject
+          ? `The open program (${shellProject.title ?? shellProject.id}) has no IND checklist yet — showing ${checklist.productName ?? checklist.code}, the organization's first.`
+          : rows.length > 1
+            ? `Showing ${checklist.productName ?? checklist.code} — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization. Open a program to scope this screen to it.`
+            : null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
   // Status note from the Module-1 forms panel (build/QC/render outcomes).
   const [formsNote, setFormsNote] = useToast();
@@ -709,6 +756,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               .filter(Boolean)
               .join(' -- ')}
           </p>
+          {/* Which IND this screen is scoped to, and why — stated whenever the
+              answer is not trivially "the only one". The CMC build tab and this
+              screen must never appear to describe the same program while
+              reading two different submissions. */}
+          {scopeNote && (
+            <p className="surface-sub" data-testid="indl-scope-note">
+              {scopeNote}
+            </p>
+          )}
         </div>
         <div className="surface-head-actions">
           <button

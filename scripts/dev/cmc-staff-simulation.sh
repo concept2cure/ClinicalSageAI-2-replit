@@ -137,10 +137,21 @@ PSKIP=$(cat "$OUT/place2.json" | JQ '.data.skipped | length')
 [ "$CODE" = 200 ] && [ "${PLACED:-0}" -gt 0 ] && ok "$PLACED section(s) placed as leaves ($PSKIP skipped with reasons)" || bad "placement failed ($CODE): $(head -c400 "$OUT/place2.json")"
 echo "   placed: $(cat "$OUT/place2.json" | jq -r '.data.placements[].leafSectionCode' 2>/dev/null | tr '\n' ' ')"
 
+step "19b. The REAL eCTD generator materializes the placed Module 3"
+CODE=$(req ectd POST "/api/ectd-compile/$PROGRAM/compile" '{}')
+RENDERED=$(cat "$OUT/ectd.json" | JQ '.leafFilesRendered // .data.leafFilesRendered // 0')
+UNRENDERED=$(cat "$OUT/ectd.json" | jq -r '.xmlBackbone // .data.xmlBackbone // ""' 2>/dev/null | grep -c 'rendered="false"')
+STATUS=$(cat "$OUT/ectd.json" | JQ '.status // .data.status // empty')
+if [ "$CODE" = 200 ] && [ "$STATUS" = "completed" ] && [ "${RENDERED:-0}" -ge 17 ] && [ "${UNRENDERED:-1}" = 0 ]; then
+  ok "eCTD compile completed — $RENDERED real PDF leaves, zero placeholder leaves"
+else
+  bad "eCTD compile: code=$CODE status=$STATUS rendered=$RENDERED placeholders=$UNRENDERED"
+fi
+
 step "20. The IND checklist sees the M3 leaves"
 CODE=$(req checklist GET /api/ind-checklist)
-M3=$(cat "$OUT/checklist.json" | jq '[.. | objects | select(has("sectionCode")) | select(.sectionCode | tostring | startswith("m3"))] | length' 2>/dev/null)
-[ "$CODE" = 200 ] && ok "checklist served; m3-coded entries visible=$M3" || bad "checklist failed ($CODE)"
+M3=$(cat "$OUT/checklist.json" | jq '[.data[0].sections[]? | select(.code | tostring | startswith("m3"))] | length' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${M3:-0}" -ge 17 ] && ok "checklist shows $M3 Module 3 sections" || bad "checklist m3 sections=$M3 ($CODE)"
 
 step "21. The data room lists the Module 3 branch + an upload"
 echo 'stability summary placeholder' > /tmp/stab-summary.txt
@@ -149,7 +160,10 @@ UPCODE=$(curl -sS -X POST "$BASE/api/vault/ingest" -H "Authorization: Bearer $TO
   -F "documentTitle=Stability summary" -F "documentType=MODULE_3" -o "$OUT/upload.json" -w '%{http_code}')
 CODE=$(req vault GET "/api/c2c/project-vault/$PROGRAM")
 M3BRANCH=$(cat "$OUT/vault.json" | jq -r '.data.tree[] | select(.id=="m3-cmc") | .children | length' 2>/dev/null)
-UPBRANCH=$(cat "$OUT/vault.json" | jq -r '.data.tree[] | select(.id=="vault-uploads") | .children | length' 2>/dev/null)
+# The uploads branch is evolving into the filing cabinet (id 'cabinet', per
+# the vault workstream); accept either shape so this check tracks the intent —
+# "the ingested file is listed" — not one workstream's branch id.
+UPBRANCH=$(cat "$OUT/vault.json" | jq -r '[.data.tree[] | select(.id=="vault-uploads" or .id=="cabinet")] | map(.. | objects | select(has("title"))) | length' 2>/dev/null)
 [ "$CODE" = 200 ] && ok "vault read-model 200" || bad "vault failed ($CODE)"
 [ -n "$M3BRANCH" ] && [ "${M3BRANCH:-0}" -gt 0 ] && ok "Module 3 (CMC) branch lists $M3BRANCH artifacts" || bad "Module 3 branch missing: unavailable=$(cat "$OUT/vault.json" | JQ '.data.unavailable')"
 [ "$UPCODE" = 200 -o "$UPCODE" = 201 ] && [ -n "$UPBRANCH" ] && [ "${UPBRANCH:-0}" -gt 0 ] && ok "upload ($UPCODE) appears in Uploaded files branch ($UPBRANCH)" || bad "upload branch: ingest=$UPCODE listed=$UPBRANCH $(head -c200 "$OUT/upload.json")"
