@@ -91,10 +91,13 @@ simulation-driven fixes in this commit.
   but program context still does not travel across that seam.
 - `window.C2C_PROJECT` does not survive a page reload (shell-level,
   pre-existing).
-- Browser-level responsive verification of the rail entry was not run in
-  this pass; the rail markup path is the existing `navItem` renderer with no
-  new layout, and the registry/entitlement tests cover the logic. Screenshot
-  verification remains open.
+- ~~Browser verification~~ **Done** (headless Chromium against the live dev
+  server, real credential sign-in): the expanded rail lists "CMC / Module 3"
+  under Science & intelligence; clicking it navigates to `/concept2cure/cmc`
+  and renders the nine-tab module with honest empty states and zero page
+  errors; screenshots taken at 1440 / 1280 / 768 / 430. At 430 the expanded
+  rail overlays most of the viewport — pre-existing rail behavior, not
+  specific to the new entry, noted for the responsive backlog.
 - `ENTITLEMENTS_ENFORCE` ships `off` and the `cmc` catalog row is
   unrestricted (`tiers: []`), so every org resolves entitled — deliberate
   (commercial gating = set tiers on the catalog row; per-tenant off = the
