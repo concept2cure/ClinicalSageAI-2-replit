@@ -1425,8 +1425,15 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!activeSection) throw new Error('No section open');
       setSaving(true);
       try {
+        /* Authors whose insertions this reviewer accepted since the last save.
+           Accepting a suggestion strips the mark that named its author, so
+           without this the revision would attribute an AnA draft entirely to
+           whoever pressed accept. Read-and-clear: an author counts once, for
+           the save that carried their text in. */
+        const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
         const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           content: serialized,
+          ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
         });
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
