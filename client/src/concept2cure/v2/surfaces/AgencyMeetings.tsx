@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { liveGetOrNull, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -259,6 +260,74 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
   );
   const ready = !loading && !error;
   const kv = (n: number | string) => (ready ? String(n) : '--');
+
+  /* What AnA can see of this screen. "Prepare with AnA" sits in this header and
+     asks her to draft a Pre-IND request — until now with no knowledge of which
+     meetings exist, which are granted, or what the open commitments are.
+
+     A FAILED read publishes the failure: `meetings` is [] on error as well as
+     when the org tracks none, and telling a sponsor they have no regulator
+     interactions because a fetch failed is a claim about their agency record. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'Agency meetings are still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The agency-meetings store could not be read, so this screen is showing no regulator ' +
+          'interactions because of a failure, not because none are tracked.',
+        availableActions: ['Retry the agency-meetings read'],
+      };
+    }
+    return {
+      summary:
+        `Agency meetings and briefing books: ${meetings.length} regulator interaction(s), ` +
+        `${openQuestions} question(s) to agencies across the briefing books, ${openCommitments} open ` +
+        `commitment(s)` +
+        (nextMtg ? `. Next up is the ${nextMtg.x.type} with ${nextMtg.x.agency} on ${nextVal}` : '') +
+        (m ? `. "${m.type} — ${m.agency}" (${m.program}) is selected.` : '.'),
+      facts: {
+        meetingCount: meetings.length,
+        openQuestions,
+        openCommitments,
+        nextMeeting: nextMtg
+          ? { id: nextMtg.x.id, type: nextMtg.x.type, agency: nextMtg.x.agency, program: nextMtg.x.program, meets: nextMtg.x.meets }
+          : null,
+        meetings: meetings.slice(0, 12).map((x) => ({
+          id: x.id, type: x.type, agency: x.agency, category: x.cat, program: x.program,
+          status: x.status, requested: x.requested, granted: x.granted, meets: x.meets,
+          clock: x.clock, format: x.format,
+        })),
+        selected: m
+          ? {
+              id: m.id, type: m.type, agency: m.agency, program: m.program, status: m.status,
+              goal: m.goal, clock: m.clock, format: m.format,
+              briefingBook: bb
+                ? {
+                    title: bb.title, state: bb.state, version: bb.ver, owner: bb.owner,
+                    sections: (bb.sections ?? []).map((sn) => ({ number: sn.n, label: sn.label, state: sn.st })),
+                    questions: (bb.questions ?? []).map((qq) => ({ question: qq.q, area: qq.area, position: qq.pos })),
+                  }
+                : null,
+              minutes: min
+                ? {
+                    received: min.received,
+                    agreements: min.agree ?? [],
+                    commitments: (min.commitments ?? []).map((c) => ({ commitment: c.c, document: c.doc, due: c.due, state: c.st })),
+                  }
+                : null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Select a meeting to read its briefing book, minutes and commitments',
+        'Request a new agency meeting (a governed interaction — the request is audit-logged)',
+        'Read the open questions to agencies and the open post-meeting commitments',
+      ],
+    };
+  }, [loading, error, meetings, openQuestions, openCommitments, nextMtg, nextVal, m, bb, min]);
+  usePublishSurfaceContext('agency-meetings', anaContext);
 
   return (
     <div className="page-inner reg">

@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import { IndFormsPanel } from './IndFormsPanel';
 import {
@@ -204,6 +205,93 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     () => (clock ? new Date(clock.thirtyDayDate) : null),
     [clock],
   );
+
+  /* What AnA can see of this screen.
+     `R.assessed` is the fact that must not be flattened. A checklist with
+     nothing in it produces `assessed: false, ready: false, 0%` — and reporting
+     that as "0% ready" would let AnA discuss an IND that was never evaluated as
+     one that was evaluated and found wanting. `ready` is only ever true when
+     `assessed` is, and both travel.
+
+     The 30-day clock is null when the org has recorded no target submission
+     date, and that is published as itself rather than as a clock at zero: the
+     FDA 30-day review clock is a regulatory date, not a default. */
+  const anaContext = useMemo(() => {
+    /* `forms` / `sections` come off a live row, so they are only arrays when the
+       column arrived as one. Same degrade-don't-crash rule the render obeys. */
+    const formList = Array.isArray(forms) ? forms : [];
+    const sectionList = Array.isArray(sections) ? sections : [];
+    if (loading) {
+      return { summary: 'The IND checklist is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The IND checklist could not be read, so this screen is showing no filing readiness because of ' +
+          'a failure, not because nothing is assembled.',
+        availableActions: ['Retry the IND checklist read'],
+      };
+    }
+    if (!checklist) {
+      return {
+        summary: 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
+      };
+    }
+    return {
+      summary:
+        `IND lifecycle for ${checklist.code}` +
+        (checklist.drugName ? ` (${checklist.drugName})` : '') +
+        `, "${tab === 'file' ? 'File the IND' : 'Lifecycle'}" tab. ` +
+        (R.assessed
+          ? `Readiness ${R.overallPercentage}% — ${R.requiredSections.completed} of ${R.requiredSections.total} ` +
+            `required section(s) complete, ${formList.filter((f) => f.done).length} of ${formList.length} Module 1 ` +
+            `form(s) done. ${R.ready ? 'Assessed READY to file.' : 'NOT yet ready to file.'}`
+          : 'The checklist held nothing to evaluate, so filing readiness has NOT been assessed — this is not a zero-percent verdict.') +
+        (clock
+          ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
+            `${clock.safeToProceed ? 'safe to proceed' : clock.onHold ? 'ON HOLD' : 'not yet cleared'}.`
+          : ' No target submission date is recorded, so no 30-day clock is projected.'),
+      facts: {
+        openTab: tab,
+        submissionId: checklist.submissionId ?? null,
+        code: checklist.code,
+        drugName: checklist.drugName,
+        productName: checklist.productName,
+        indication: checklist.indication,
+        sponsor: checklist.sponsorName,
+        submissionType: checklist.submissionType,
+        readinessAssessed: R.assessed,
+        readyToFile: R.ready,
+        readinessPercent: R.assessed ? R.overallPercentage : null,
+        requiredSections: R.assessed
+          ? {
+              total: R.requiredSections.total,
+              completed: R.requiredSections.completed,
+              incomplete: R.requiredSections.incomplete,
+            }
+          : null,
+        module1Forms: formList.map((f) => ({ id: f.id, title: f.title, reference: f.ref, done: f.done })),
+        sections: sectionList.slice(0, 24).map((sec) => ({
+          code: sec.code, title: sec.title, module: sec.module, status: sec.status,
+        })),
+        thirtyDayClock: clock
+          ? {
+              status: clock.status, thirtyDayDate: clock.thirtyDayDate,
+              daysUntil: clock.daysUntilThirtyDay, safeToProceed: clock.safeToProceed,
+              onHold: clock.onHold, rationale: clock.rationale,
+            }
+          : null,
+        targetSubmissionDateRecorded: Boolean(targetReceiptDate),
+      },
+      availableActions: [
+        'Build, QC and render the Module 1 forms',
+        'Generate an IND deliverable (cover letter and the other wired cards) and download its PDF',
+        'File a sequence against the real submission record',
+        'Switch between the file-the-IND and lifecycle tabs',
+      ],
+    };
+  }, [loading, error, checklist, tab, R, forms, sections, clock, targetReceiptDate]);
+  usePublishSurfaceContext('ind-checklist', anaContext);
 
   /* Cover-letter exemplar — the first deliverable wired end-to-end (POST
      /api/ind-lifecycle/cover-letter + /pdf). The other cards mirror it via the

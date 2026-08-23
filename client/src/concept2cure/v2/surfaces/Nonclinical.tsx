@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, isRowsWith, useLiveData, useLiveRows, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -362,6 +363,79 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
     c ? (
       <span className={'rd-chip tone-' + (c === 'adverse' ? 'warn' : c === 'pending' ? 'idle' : 'ok')}>{c}</span>
     ) : null;
+
+  /* What AnA can see of this screen. All four starters this surface offers her
+     — draft §2.6.6, fix the SEND reject, classify a finding, show the Module 4
+     gap — are questions about the registry and the projection below.
+
+     The two live reads fail independently and are published independently. A
+     Module 2.6 completeness figure derived from a failed projection read would
+     be a filing-readiness claim nobody computed, and `provisioned: false` is a
+     third state again: the projection ran and says the store is not there. */
+  const anaContext = useMemo(() => {
+    const studiesUnavailable = liveStudies.error ? 'the nonclinical study registry read failed' : null;
+    const base = {
+      studyCount: liveStudies.loading || liveStudies.error ? null : studies.length,
+      studiesUnavailable,
+      studies: liveStudies.loading || liveStudies.error
+        ? null
+        : studies.slice(0, 12).map((st) => ({
+            studyId: st.id, type: st.type, species: st.species,
+            duration: st.dur, keyFinding: st.finding,
+            findingClass: st.cls, sendStatus: st.send,
+          })),
+    };
+    if (summaryState.loading || liveStudies.loading) {
+      return { summary: 'The nonclinical registry and its Module 2.6 / Module 4 projection are still loading; nothing on screen is final yet.' };
+    }
+    if (summaryState.error || !summary) {
+      return {
+        summary:
+          'Nonclinical (CTD Module 4): the Module 2.6 / Module 4 / SEND projection could not be read, so no ' +
+          'completeness or SEND readiness figure is on screen — that is a failure, not a zero.' +
+          (studiesUnavailable ? ' The study registry did not load either.' : ` ${studies.length} GLP study(ies) are in the registry.`),
+        facts: { ...base, projectionUnavailable: 'the /api/nonclinical-summary projection read failed' },
+        availableActions: ['Retry the Module 2.6 / Module 4 projection read'],
+      };
+    }
+    if (!summary.provisioned) {
+      return {
+        summary:
+          'Nonclinical (CTD Module 4): the projection reports that the governed nonclinical store is not ' +
+          'provisioned in this environment, so there is no Module 2.6 completeness or SEND rollup to show.',
+        facts: { ...base, provisioned: false },
+      };
+    }
+    return {
+      summary:
+        `Nonclinical (CTD Module 4): ${studies.length} GLP study(ies) in the governed registry. ` +
+        `Module 2.6 is ${summary.completeness}% complete with ${(summary.gaps ?? []).length} gap(s). ` +
+        `SEND — ${summary.send.validated} of ${summary.send.inScope} in-scope dataset(s) validated, ` +
+        `${(summary.send.missingDomains ?? []).length} domain(s) missing, conformance risk "${summary.send.risk}" ` +
+        '(SEND is mandatory for FDA nonclinical data; "none" means no conformance risk was flagged, not out of scope).',
+      facts: {
+        ...base,
+        provisioned: true,
+        module26Completeness: summary.completeness,
+        module26Gaps: summary.gaps ?? [],
+        module26Sections: (summary.m26 ?? []).map((sec) => ({ number: sec.n, label: sec.l, state: sec.st, note: sec.note ?? null })),
+        module4Placements: (summary.m4 ?? []).map((pl) => ({ code: pl.code, label: pl.l, percent: pl.pct })),
+        send: {
+          inScope: summary.send.inScope,
+          validated: summary.send.validated,
+          missingDomains: summary.send.missingDomains ?? [],
+          conformanceRisk: summary.send.risk,
+        },
+      },
+      availableActions: [
+        'Add a GLP study (a governed record — the report is classified, SEND queued, audit entry written)',
+        'Open a Module 4 placement to work its section',
+        'Read the Module 2.6 written-summary section states and their gaps',
+        'Read the SEND conformance rollup and its missing domains',
+      ],
+    };
+  }, [liveStudies.loading, liveStudies.error, studies, summaryState.loading, summaryState.error, summary]);
+  usePublishSurfaceContext('nonclinical', anaContext);
 
   return (
     <BpComposer

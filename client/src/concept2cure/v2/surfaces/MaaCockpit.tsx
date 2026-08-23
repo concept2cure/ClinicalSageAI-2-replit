@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { MAA_MARKETS, type Module1Component } from '../fixtures/maa-module1-data';
 import '../styles/project-home-v2.css';
 
@@ -57,6 +58,60 @@ export function MaaCockpit({ onAsk }: SurfaceViewProps) {
   );
   const assembledCount = ordered.filter((r) => provided.has(r.code)).length;
   const ready = ordered.length > 0 && assembledCount === ordered.length;
+
+  /* What AnA can see of this screen.
+     `ready` is the claim a user acts on — "the Module 1 administrative set is
+     complete" — and it is only meaningful once the market has actually
+     resolved. `ordered.length === 0` is an unresolved market or a failed read,
+     never a complete set, which is why `ready` is guarded on it here as it is
+     on screen; the same guard has to reach AnA or she would report an empty
+     requirement list as a finished one. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: `The ${market} Module 1 requirement set is still loading; nothing on screen is final yet.` };
+    }
+    if (error) {
+      return {
+        summary:
+          `The ${market} Module 1 requirement set could not be read, so this screen is showing no ` +
+          'components because of a failure, not because none are required.',
+        availableActions: ['Retry the Module 1 read', 'Switch market'],
+      };
+    }
+    if (empty || ordered.length === 0) {
+      return {
+        summary:
+          `Marketing-application Module 1 for ${active.label}: no requirement set resolved for this market, ` +
+          'so there is nothing assembled or outstanding to report — this is not a complete Module 1.',
+        facts: { market, agency: active.agency, procedure: active.procedure },
+        availableActions: ['Switch to another market'],
+      };
+    }
+    return {
+      summary:
+        `Marketing-application Module 1 — ${active.label} (${active.agency}, ${active.procedure}): ` +
+        `${assembledCount} of ${ordered.length} required component(s) assembled. ` +
+        (ready
+          ? 'The Module 1 administrative set is complete.'
+          : `${ordered.length - assembledCount} component(s) outstanding.`),
+      facts: {
+        market,
+        agency: active.agency,
+        procedure: active.procedure,
+        requiredComponents: ordered.length,
+        assembledComponents: assembledCount,
+        administrativeSetComplete: ready,
+        components: ordered.slice(0, 30).map((r) => ({
+          code: r.code, section: r.section, label: r.label, assembled: provided.has(r.code),
+        })),
+      },
+      availableActions: [
+        'Mark a Module 1 component assembled or not assembled (a persisted write)',
+        'Switch market to see another authority\u2019s Module 1 requirement set',
+      ],
+    };
+  }, [loading, error, empty, market, active, ordered, provided, assembledCount, ready]);
+  usePublishSurfaceContext('maa-cockpit', anaContext);
 
   async function toggle(code: string, nowAssembled: boolean) {
     if (!data) return; // nothing loaded to persist against

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
@@ -393,6 +394,71 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
     ['preview', 'Live preview'], ['spec', 'Specification'], ['fields', 'Form fields'],
     ['styles', 'Named styles'], ['extract', 'Extraction'],
   ];
+
+  /* What AnA can see of this screen. The "Adjust this template" box below sends
+     her a free-text instruction about `sel` — which she could not identify.
+
+     The VERIFIED flag and the extraction confidence travel together on purpose:
+     an unverified, machine-extracted spec is a draft of a template, and an
+     assistant that discusses it as the organisation's approved house style
+     would launder a confidence score into an approval. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The template library is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The template store could not be read, so this screen is showing no templates because of a ' +
+          'failure, not because none are saved.',
+        availableActions: ['Retry the template read'],
+      };
+    }
+    return {
+      summary:
+        `Template library: ${rows.length} template(s), ${rows.filter((t) => t.verified).length} verified. ` +
+        (sel
+          ? `"${sel.name}" is selected and its "${(TABS.find((t) => t[0] === tab) ?? [])[1] ?? tab}" tab is open; ` +
+            `it is ${sel.verified ? 'verified' : 'NOT verified'}` +
+            (sel.extractionConfidence != null ? `, extraction confidence ${sel.extractionConfidence}` : '') +
+            ((sel.extractionWarnings ?? []).length ? `, ${(sel.extractionWarnings ?? []).length} extraction warning(s)` : '') +
+            '.'
+          : 'No template is selected.') +
+        (extract ? ` A preview extraction of "${extract.name}" is on screen and has not been saved.` : ''),
+      facts: {
+        totalTemplates: rows.length,
+        verifiedTemplates: rows.filter((t) => t.verified).length,
+        openTab: tab,
+        templates: rows.slice(0, 12).map((t) => ({
+          id: t.id, name: t.name, verified: t.verified,
+          sourceFile: t.sourceFileName, sourceType: t.sourceFileType,
+          extractionConfidence: t.extractionConfidence,
+          extractionWarnings: (t.extractionWarnings ?? []).length,
+          docTypes: t.docTypes, updatedAt: t.updatedAt,
+        })),
+        selected: sel
+          ? {
+              id: sel.id, name: sel.name, description: sel.description,
+              verified: sel.verified, sourceFile: sel.sourceFileName,
+              extractionConfidence: sel.extractionConfidence,
+              extractionWarnings: sel.extractionWarnings ?? [],
+              docTypes: sel.docTypes, updatedAt: sel.updatedAt,
+            }
+          : null,
+        unsavedExtractionPreview: extract
+          ? { name: extract.name, confidence: extract.confidence, warnings: extract.warnings }
+          : null,
+        uploading,
+      },
+      availableActions: [
+        'Upload a DOCX or PDF and extract a template specification from it (preview first, then save)',
+        'Mark a template verified or unverified (a persisted write)',
+        'Render a labelled specimen document in DOCX or PDF to proof the template',
+        'Describe an adjustment to the selected template in words',
+      ],
+    };
+  }, [live.loading, live.error, rows, sel, tab, TABS, extract, uploading]);
+  usePublishSurfaceContext('template-library', anaContext);
 
   return (
     <div className="sp" style={{ maxWidth: 1180 }}>

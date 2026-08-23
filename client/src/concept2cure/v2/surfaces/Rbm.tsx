@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
@@ -105,7 +105,62 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
      canned cards from fixture constants is gone: the dock now shows the real
      turn (streamed text, executed actions, and the real Part 11 sign-off for a
      governed command). */
-  const anaChat = useAnaChat({ screenName: 'rbm', projectId: study ?? undefined });
+  /* What AnA can see of this screen — through this surface's OWN conversation.
+     RBM owns the rail's column, so `usePublishSurfaceContext` is the wrong
+     channel here: nothing in this shell reads it, because the shell's rail is
+     not drawn. The grounding channel for an owned conversation is the
+     `moduleContext` its own `useAnaChat` forwards, exactly as
+     `document-authoring` and `ectd-coauthor` already do.
+
+     This hook passed none. So the dock ran the real assistant, on the real
+     endpoint, with the real study id — and could still not name a single KRI,
+     QTL breach or flagged site on the screen beside it, on a surface whose only
+     subject is those readings.
+
+     A NOT-READY board publishes as not ready. `boardReady` is false while a
+     study switch is in flight, and `bd` still holds the PREVIOUS study's risk
+     data in that window; grounding on it would have AnA discuss one study's
+     KRIs under another study's name. */
+  const anaModuleContext = useMemo(() => {
+    if (!study) {
+      return { surface: 'rbm', studySelected: false, note: 'No study is selected, so no RBM board is on screen.' };
+    }
+    if (board.loading || !boardReady) {
+      return { surface: 'rbm', studyId: study, studyLabel, boardReady: false, note: 'The RBM board for this study is still loading.' };
+    }
+    if (board.error) {
+      return {
+        surface: 'rbm', studyId: study, studyLabel, boardReady: false,
+        note: 'The RBM board could not be read, so no risk readings are on screen — a failure, not a clean board.',
+      };
+    }
+    if (!hasData || !bd) {
+      return {
+        surface: 'rbm', studyId: study, studyLabel, boardReady: true, boardSeeded: false,
+        note: 'This study has no RBM data seeded yet, so the board is genuinely empty.',
+      };
+    }
+    return {
+      surface: 'rbm',
+      studyId: study,
+      studyLabel,
+      openTab: tab,
+      boardReady: true,
+      boardSeeded: true,
+      asOf: bd.asOf,
+      summary: bd.summary,
+      /* The punch-list the overview leads with, capped — enough for AnA to name
+         an item back to the user, not the whole board. */
+      attention: (bd.attention ?? []).slice(0, 8).map(a => ({ severity: a.sev, kind: a.kind, tab: a.nav, title: a.t, detail: a.d })),
+      reportApproved: bd.report ? bd.report.approved : null,
+      storeProvisioned: bd.pendingStore ? false : true,
+    };
+  }, [study, studyLabel, tab, board.loading, board.error, boardReady, hasData, bd]);
+  const anaChat = useAnaChat({
+    screenName: 'rbm',
+    projectId: study ?? undefined,
+    moduleContext: anaModuleContext,
+  });
   const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
     role: m.role,
     text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
