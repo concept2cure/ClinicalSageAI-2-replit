@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:24:46.775Z",
+  "generatedAt": "2026-08-23T22:33:38.013Z",
   "git": {
-    "sha": "bad8a05f5ddac931a4ddb9ba2786f73d8941a536",
+    "sha": "c09056543155f9f16a10a2fec5d3520d7c12a5b8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2243,16 +2243,16 @@
         "bytes": 120988
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 117833
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 117471
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 115207
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2378,7 +2378,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2768
+        "lines": 2827
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",

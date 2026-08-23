@@ -96,7 +96,7 @@ router.post('/auto-draft/:projectId', async (req, res) => {
             completeness: section.completeness,
             missingInputs: section.missingInputs,
             lineage: section.lineage,
-          });
+          }, { createdById: Number((req as any).user?.id) || null });
           if (bridged.bridged) {
             persistedArtifacts.push({
               sectionKey: section.sectionKey,
