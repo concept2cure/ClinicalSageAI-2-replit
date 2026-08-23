@@ -2253,6 +2253,19 @@
 .c2c-v2 .ct-composer textarea{flex:1;border:none;background:none;resize:none;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--text-100);padding:7px 2px;max-height:160px;outline:none;}
 .c2c-v2 .ct-comp-send{flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--accent-100);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .ct-comp-send:disabled{background:var(--bg-200);color:var(--text-500);cursor:default;}.c2c-v2 .ct-comp-send svg{width:16px;height:16px;}
+/* Attachment chips under the conversation composer. Status is carried by
+   colour AND by the text after the middot, never by colour alone — a reviewer
+   using a monochrome display must still be able to tell a file that was read
+   from one that failed. */
+.c2c-v2 .ct-comp-atts{max-width:768px;margin:8px auto 0;display:flex;flex-wrap:wrap;gap:6px;}
+.c2c-v2 .ct-att-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 6px 3px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-050);font-size:11.5px;color:var(--text-200);}
+.c2c-v2 .ct-att-chip svg{width:12px;height:12px;flex-shrink:0;}
+.c2c-v2 .ct-att-chip em{font-style:normal;color:var(--text-400);}
+.c2c-v2 .ct-att-chip[data-status="error"]{border-color:var(--error);}
+.c2c-v2 .ct-att-chip[data-status="error"] em{color:var(--error);}
+.c2c-v2 .ct-att-chip[data-status="uploading"] em{color:var(--text-500);}
+.c2c-v2 .ct-att-x{border:none;background:none;color:var(--text-400);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
+.c2c-v2 .ct-att-x:hover{color:var(--text-100);}
 .c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-500);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
 .c2c-v2 .ct-comp-foot svg{width:11px;height:11px;flex-shrink:0;}
 
