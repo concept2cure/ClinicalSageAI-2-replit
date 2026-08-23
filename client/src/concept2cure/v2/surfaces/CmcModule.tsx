@@ -265,12 +265,18 @@ function CmConnectBar({ nav }: { nav?: (id: string) => void }) {
   );
 }
 
+/* "Open in", not "Push to": these buttons navigate with context — they write
+   nothing. The data itself flows without them: every register save
+   write-throughs to the canonical §3.2 source layer, and each compile files a
+   governed artifact the Vault's "Module 3 (CMC)" branch lists. A button
+   claiming to "save to Vault" while saving nothing was the dishonest copy the
+   relabel removes. */
 function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void; bar?: boolean }) {
   return (
     <span className={bar ? 'cm-push cm-pushbar' : 'cm-push'}>
-      <span className="lbl">Push to</span>
-      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Push into Module 3 documentation">{I.gitBranch} Module 3 doc</button>
-      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Save to Vault">{I.vault} Vault</button>
+      <span className="lbl">Open in</span>
+      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'dossier'); }} title="Open the Module 3 dossier with this in context">{I.gitBranch} Module 3 doc</button>
+      <button onClick={() => { cmcCtx(label); cmcNav(nav, 'vault'); }} title="Open the Vault — compiled §3.2 artifacts are filed there automatically">{I.vault} Vault</button>
       <button onClick={() => cmcTask(label)} title="Create a task">{I.checkSquare} Task</button>
       <button onClick={() => cmcCollab(label)} title="Collaborate">{I.messageSquare} Discuss</button>
     </span>
@@ -351,8 +357,9 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   // backend blocks on unresolved critical contradictions (409), snapshots a new
   // approved version, sets approval_state, and writes a cmc_provenance_events
   // audit entry keyed to the authenticated user. The reason + reauth captured by
-  // the sign form are forwarded (the endpoint records the reason; server-side
-  // re-auth verification is the documented follow-up — see the wiring roadmap).
+  // the sign form are forwarded, and the server VERIFIES the re-auth before any
+  // write (verifyReauth, module3OperatingSystemRoutes.ts — fail closed, same as
+  // spec-approve and batch-release).
   // Only reflects approval on a real 2xx; nothing is fabricated on failure.
   const doSign = async (v: Record<string, string>) => {
     if (!sign) return;
@@ -1116,7 +1123,21 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
         </div>
       )}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Stability register</span><span className="s">{rows.length} studies — ICH Q1A(R2)</span></div>
+        <div className="pj-card-h">
+          <span className="t">Stability register</span>
+          {/* The register table carries no project column — it is the
+              ORGANIZATION's study register by design, while §3.2.S.7/P.8
+              compose from the project-scoped canonical layer the write-through
+              feeds. Say which scope this list is, so this tab and the build
+              tab cannot appear to disagree about what "this project's
+              stability" contains. */}
+          <span className="s">
+            {rows.length} studies — ICH Q1A(R2) · organization-wide register
+            {projectId
+              ? ' — new results are linked to the open program'
+              : ' — open a program to link new results to its Module 3'}
+          </span>
+        </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
