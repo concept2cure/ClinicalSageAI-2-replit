@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:27:41.997Z",
+  "generatedAt": "2026-08-23T23:28:34.098Z",
   "git": {
-    "sha": "3fba9b9237e2655e083c3d7b882e63ceea837563",
+    "sha": "ef8948e4273ca9c968e6085f86e115231acd09dc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2593,12 +2593,12 @@
         "lines": 1704
       },
       {
-        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
-        "lines": 1678
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1683
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1659
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
