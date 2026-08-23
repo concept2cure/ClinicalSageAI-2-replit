@@ -1410,6 +1410,21 @@ export const C2C_MIGRATION_FILES = [
   // this list exists to close. Idempotent (ON CONFLICT (module_id) DO UPDATE).
   'db/migrations/20260810_reconcile_module_catalog.sql',
 
+  // ── provision_org_modules() repair (added 2026-08-23) ──────────────────────
+  // Two defects, each of which masks the other. The function called
+  // jsonb_array_elements_text() on available_modules.metadata, which is `json`
+  // — no implicit cast exists, so it raised on EVERY call and
+  // POST /api/module-subscriptions/provision has never written a row. And its
+  // tier test was `=` rather than `>=`, so with the cast fixed a professional
+  // org would receive professional modules but NOT standard ones — an inverted
+  // ladder, disagreeing with provisionModulesForTier, getModuleCatalog and
+  // canAccessModule, all three of which are inclusive.
+  //
+  // Ordered after the catalog reconcile above (it reads available_modules) and
+  // after 20260220_user_intelligence_platform.sql, which first defines the
+  // function. Function bodies only — no DDL, nothing for the sweep to policy.
+  'db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql',
+
   // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
   // Name + description only (adds Swissmedic to the modeled-agency list); no
   // entitlement change. Idempotent UPDATE keyed on module_id.
