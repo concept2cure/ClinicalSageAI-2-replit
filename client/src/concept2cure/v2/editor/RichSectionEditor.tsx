@@ -238,6 +238,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSavedRef = useRef<string>(value ?? '');
     const editorHostRef = useRef<HTMLDivElement>(null);
+    /** Content a debounced autosave has been armed for but not yet written.
+     *  Held so an unmount inside the debounce window flushes it instead of
+     *  dropping it — see the unmount effect below. */
+    const pendingAutosaveRef = useRef<string | null>(null);
+    /** `onSave` as of the last render, readable from the unmount cleanup
+     *  (which closes over the first render's props otherwise). */
+    const onSaveRef = useRef(onSave);
+    useEffect(() => {
+      onSaveRef.current = onSave;
+    });
 
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
@@ -353,6 +363,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+            pendingAutosaveRef.current = serialized;
             autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
           }
         },
@@ -457,6 +468,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       const serialized =
         boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
       if (serialized == null) return false;
+      // Whatever a debounce was armed for, this write supersedes it.
+      if (autosaveTimer.current) {
+        clearTimeout(autosaveTimer.current);
+        autosaveTimer.current = null;
+      }
+      pendingAutosaveRef.current = null;
       if (serialized === lastSavedRef.current) return true;
       setSaveState('saving');
       try {
@@ -484,6 +501,58 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       onDirtyChange?.(dirty);
     }, [dirty, onDirtyChange]);
+
+    /* ── Leaving the page over unsaved work ──
+       The device crash cache above survives a reload, but it is device-local:
+       it is not the record, it does not travel to another machine, and a
+       colleague opening the section sees the last SAVED text. Closing the tab
+       on an unsaved paragraph therefore loses it from everywhere that matters,
+       silently. The browser's own discard prompt is the only guard that fires
+       before the decision is irreversible, so it is armed here — in the one
+       component that knows whether there is unsaved work — rather than in each
+       host surface. Armed only while genuinely dirty: a page that always
+       refuses to close teaches people to click through the dialog. */
+    useEffect(() => {
+      if (!dirty || readOnly) return;
+      const onBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        // Older engines show the prompt only when returnValue is set; the
+        // string itself has been ignored by every browser for years.
+        e.returnValue = '';
+        return '';
+      };
+      window.addEventListener('beforeunload', onBeforeUnload);
+      return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    }, [dirty, readOnly]);
+
+    /* ── A pending autosave must not die with the mount ──
+       Hosts that pass `autosaveMs` (the MDX dossier drawer) debounce their
+       write. Unmounting inside that window — closing the drawer, switching
+       what is open — used to clear nothing and fire nothing: the timer was
+       dropped with the component and the last edits never reached the server.
+       Flush it directly instead of through `doSave`, which sets state on a
+       component that is going away. A rejection is not swallowed silently: the
+       device cache still holds the text and the next mount offers it back. */
+    useEffect(
+      () => () => {
+        if (autosaveTimer.current) {
+          clearTimeout(autosaveTimer.current);
+          autosaveTimer.current = null;
+        }
+        const pending = pendingAutosaveRef.current;
+        pendingAutosaveRef.current = null;
+        if (pending != null && pending !== lastSavedRef.current) {
+          void (async () => {
+            try {
+              await onSaveRef.current(pending);
+            } catch {
+              /* kept on this device; offered back on the next mount */
+            }
+          })();
+        }
+      },
+      [],
+    );
 
     /* ── Track changes toggle (server column first, then the plugin) ── */
     const toggleTrack = useCallback(async () => {
@@ -836,6 +905,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 }
                 if (autosaveMs != null && isDirty) {
                   if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+                  pendingAutosaveRef.current = e.target.value;
                   autosaveTimer.current = setTimeout(() => void doSave(), autosaveMs);
                 }
               }}

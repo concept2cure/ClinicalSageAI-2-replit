@@ -98,6 +98,8 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from './AuthoringSignatures';
+import { useDialog } from '../useDialog';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -178,6 +180,138 @@ function asTextRangeAnchor(v: unknown): CommentAnchorPayload | null {
   return a.kind === 'text-range' && typeof a.quote === 'string'
     ? (a as unknown as CommentAnchorPayload)
     : null;
+}
+
+/* ── AnA's answer, rendered as prose ──────────────────────────────────────
+   The pane used to render `m.text` under `white-space: pre-wrap`, so on the
+   one surface whose entire job is producing formatted regulatory prose, the
+   assistant's prose was the only unformatted text on screen: `## Drug
+   Substance`, `**must**` and `| Attribute | Limit |` reached the author as
+   their own source.
+
+   TWO STAGES, on purpose.
+
+   Stage 1 is `renderSafeMarkdown` — the codebase's ONE audited markdown path
+   (marked → DOMPurify tag/attribute allowlist, covered by its own tests). It is
+   reused rather than reimplemented: this repo already deleted three hand-rolled
+   `mdToHtml` regexes feeding three injection sinks, and adding a fourth markdown
+   parser here would reintroduce exactly that (CLAUDE.md: zero duplication).
+
+   Stage 2 walks the sanitized fragment into REACT ELEMENTS. No
+   `dangerouslySetInnerHTML` anywhere on this path, so a model-authored string
+   never becomes markup React did not construct — and the render map below is a
+   second, independent allowlist: a tag DOMPurify let through that this map does
+   not name is dropped to its text. Two allowlists have to fail together before
+   anything reaches the DOM, and only `href` survives as an attribute, http(s)
+   and mailto only.
+
+   Deliberately NOT rendered as markdown: the author's own turn. Those are their
+   words as typed, not a document, and formatting them would rewrite what they
+   said back at them. */
+
+const MD_TAGS: Record<string, keyof React.JSX.IntrinsicElements> = {
+  P: 'p',
+  BR: 'br',
+  STRONG: 'strong',
+  B: 'strong',
+  EM: 'em',
+  I: 'em',
+  U: 'u',
+  CODE: 'code',
+  PRE: 'pre',
+  UL: 'ul',
+  OL: 'ol',
+  LI: 'li',
+  H1: 'h3',
+  H2: 'h4',
+  // AnA's "# heading" is a heading INSIDE a rail whose own header is the
+  // document's h-level; demoting keeps the page outline honest for a screen
+  // reader instead of scattering h1s through a log.
+  H3: 'h5',
+  H4: 'h5',
+  H5: 'h6',
+  H6: 'h6',
+  BLOCKQUOTE: 'blockquote',
+  HR: 'hr',
+  TABLE: 'table',
+  THEAD: 'thead',
+  TBODY: 'tbody',
+  TR: 'tr',
+  TH: 'th',
+  TD: 'td',
+  A: 'a',
+  SUP: 'sup',
+  SUB: 'sub',
+  SPAN: 'span',
+  DIV: 'div',
+};
+/** Elements that must not be given children (React throws otherwise). */
+const MD_VOID = new Set(['br', 'hr']);
+
+/** Only a link that goes somewhere a link may go. */
+function safeHref(raw: string | null): string | undefined {
+  if (!raw) return undefined;
+  const v = raw.trim();
+  return /^(https?:|mailto:)/i.test(v) ? v : undefined;
+}
+
+function mdChildren(parent: Node, keyPrefix: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  parent.childNodes.forEach((node, i) => {
+    const key = `${keyPrefix}.${i}`;
+    if (node.nodeType === 3) {
+      if (node.nodeValue) out.push(node.nodeValue);
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const el = node as Element;
+    const tag = MD_TAGS[el.tagName];
+    if (!tag) {
+      // Not in the render allowlist: keep the words, drop the element.
+      const text = el.textContent;
+      if (text) out.push(<React.Fragment key={key}>{text}</React.Fragment>);
+      return;
+    }
+    if (MD_VOID.has(tag)) {
+      out.push(React.createElement(tag, { key }));
+      return;
+    }
+    const props: Record<string, unknown> = { key };
+    if (tag === 'a') {
+      const href = safeHref(el.getAttribute('href'));
+      if (!href) {
+        // A link with nowhere legitimate to go is text, not a link.
+        out.push(<React.Fragment key={key}>{el.textContent}</React.Fragment>);
+        return;
+      }
+      props.href = href;
+      props.target = '_blank';
+      props.rel = 'noopener noreferrer';
+    }
+    out.push(React.createElement(tag, props, ...mdChildren(el, key)));
+  });
+  return out;
+}
+
+/** Markdown → React nodes. Returns plain text if anything in the chain fails —
+ *  the author sees the answer either way, never a blank where prose was. */
+function AnaMarkdown({ text }: { text: string }): React.ReactElement {
+  const nodes = useMemo(() => {
+    if (!text) return null;
+    try {
+      const html = renderSafeMarkdown(text);
+      if (!html) return null;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      return mdChildren(doc.body, 'md');
+    } catch {
+      return null;
+    }
+  }, [text]);
+  return (
+    <div className="cmt-body ana-md">
+      {nodes ?? <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>}
+    </div>
+  );
 }
 
 /**
@@ -608,10 +742,82 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
   const dirty = activeSection != null && editorDirty && !docSealed;
   const docScrollRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const pane = docScrollRef.current;
     if (pane) pane.scrollTop = 0;
   }, [activeSectionId, activeDocId, contentEpoch]);
+
+  /* ── Navigating away from unsaved work ────────────────────────────────────
+     Clicking another section used to call setActiveSectionId directly. The
+     canvas is keyed on the section id, so that unmounted it — and with it the
+     only copy of everything typed since the last save. Nothing asked, nothing
+     said; the work was simply not there on return unless the author happened
+     to notice the device-cache restore offer.
+
+     It is NOT fixed by saving on the way out. This surface's save is
+     PATCH /api/authoring/sections/:id, which mints a doc_revisions row, writes
+     a Part 11 audit record and commits the text into the filing. A save the
+     author did not ask for is an attributable act they did not perform — the
+     same defect as losing the text, pointed the other way. So the navigation is
+     HELD and the author decides: save (deliberate, attributable), leave it on
+     this device, or stay. */
+  type LeaveTarget =
+    | { kind: 'section'; id: string; module?: string }
+    | { kind: 'document'; id: string; module?: string };
+  const [pendingLeave, setPendingLeave] = useState<LeaveTarget | null>(null);
+  const [leaving, setLeaving] = useState(false);
+
+  const applyNav = useCallback((target: LeaveTarget) => {
+    // The editor's dirty flag belongs to the mount that is going away; clear
+    // it first so the guard cannot re-fire against the section just left.
+    setEditorDirty(false);
+    // The create/export module follows where the author actually IS, so it
+    // moves with the navigation and not with the click that proposed one.
+    if (target.module) setModule(target.module);
+    if (target.kind === 'section') setActiveSectionId(target.id);
+    else setActiveDocId(target.id);
+  }, []);
+
+  /** Every in-surface navigation that unmounts the canvas goes through here. */
+  const requestLeave = useCallback(
+    (target: LeaveTarget) => {
+      const alreadyThere =
+        target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
+      if (alreadyThere) return;
+      if (!dirty) {
+        applyNav(target);
+        return;
+      }
+      setPendingLeave(target);
+    },
+    [dirty, activeSectionId, activeDocId, applyNav]
+  );
+
+  /** Save through the editor's one save path, then move. A refused save keeps
+   *  the author here with the text intact — the toast says why. */
+  const saveAndLeave = useCallback(async () => {
+    const target = pendingLeave;
+    if (!target) return;
+    setLeaving(true);
+    try {
+      const saved = await editorRef.current?.save();
+      if (!saved) return; // stay put; the failure has already been reported
+      setPendingLeave(null);
+      applyNav(target);
+    } finally {
+      setLeaving(false);
+    }
+  }, [pendingLeave, applyNav]);
+
+  /** Leave it unsaved. The editor's device cache (`dc::<sectionId>`) still
+   *  holds the text and offers it back explicitly on return. */
+  const leaveUnsaved = useCallback(() => {
+    const target = pendingLeave;
+    if (!target) return;
+    setPendingLeave(null);
+    applyNav(target);
+  }, [pendingLeave, applyNav]);
 
   /* ── The editor's own conversation ──
      Grounded on what is open: `authoringContext` is the contract the server's
@@ -1403,11 +1609,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                   }
                   onClick={() => {
                     if (bound) {
-                      setActiveSectionId(bound.id);
-                      // Keep the create/export module in step with where the
-                      // author actually is, instead of a stale dropdown value.
+                      // The module rides with the navigation: a nav the guard
+                      // holds must not move the create/export default to a
+                      // section the author never opened.
                       const m = /^(\d)/.exec(node.key)?.[1];
-                      if (m) setModule(`M${m}`);
+                      requestLeave({
+                        kind: 'section',
+                        id: bound.id,
+                        module: m ? `M${m}` : undefined,
+                      });
                     } else {
                       fireToast(
                         `${node.key} ${node.label} — no draft yet in this document.`,
@@ -1482,7 +1692,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                   <button
                     className="ed-tree-row"
                     data-active={open || undefined}
-                    onClick={() => setActiveDocId(d.id)}
+                    onClick={() => requestLeave({ kind: 'document', id: d.id })}
                     style={{ fontWeight: 600 }}
                   >
                     <span className="ed-num">{d.module ?? '—'}</span>
@@ -1513,7 +1723,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                           key={s.id}
                           className="ed-tree-row"
                           data-active={activeSectionId === s.id || undefined}
-                          onClick={() => setActiveSectionId(s.id)}
+                          onClick={() => requestLeave({ kind: 'section', id: s.id })}
                           style={{ paddingLeft: 22 }}
                         >
                           <span className="ed-num">{s.code}</span>
@@ -1559,11 +1769,16 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               fireToast={fireToast}
               onDocCreated={d => {
                 // Adopt the server's document: refetch the tree and open it.
-                void loadDocs().then(() => setActiveDocId(d.id));
+                // Through the leave guard — creating a document is a deliberate
+                // act, but it must not be the thing that discards the paragraph
+                // the author had half-written in the section they were in.
+                void loadDocs().then(() => requestLeave({ kind: 'document', id: d.id }));
               }}
               onSectionCreated={s => {
                 if (activeDocId)
-                  void loadSections(activeDocId).then(() => setActiveSectionId(s.id));
+                  void loadSections(activeDocId).then(() =>
+                    requestLeave({ kind: 'section', id: s.id })
+                  );
               }}
             />
             <button
@@ -1727,8 +1942,12 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     {num(activeSection.citation_count) > 0
                       ? ` · ${num(activeSection.citation_count)} citations`
                       : ''}
+                    {/* "unsaved changes" alone reads as "the app will get to
+                        it". It will not — nothing on this surface leaves the
+                        device until the author saves, because a save here mints
+                        a Part 11 revision. Say which of the two it is. */}
                     {dirty
-                      ? ' · unsaved changes'
+                      ? ' · unsaved changes — on this device only'
                       : activeSection.updated_at
                       ? ` · saved ${relTime(activeSection.updated_at)}`
                       : ''}
@@ -1761,6 +1980,44 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     value={activeSection.content ?? ''}
                     format="html"
                     onSave={saveSectionContent}
+                    /* ── Why there is no timed autosave here ──────────────
+                       RichSectionEditor supports one, and the MDX dossier
+                       drawer uses it (600ms). This surface must not.
+
+                       `saveSectionContent` PATCHes /api/authoring/sections/:id,
+                       and that handler is not a content write — it is a
+                       governed transaction. In one BEGIN/COMMIT it appends a
+                       `doc_revisions` row to a per-section hash chain whose
+                       UPDATE/DELETE the database refuses outright, records the
+                       Part 11 audit row (before/after with a SHA-256 of each
+                       side, actor, IP, session), asserts author lineage per
+                       clause, and commits the working copy into `c2c_documents`
+                       — the filing itself.
+
+                       A debounce against that would append a chain link per
+                       typing pause, so a section's history would read as
+                       hundreds of "edits" by one author within a minute, none
+                       of them an act that author performed; and half-typed
+                       sentences would be committed into the filing between
+                       them. Under §11.10(e) a record entry has to be traceable
+                       to a deliberate, attributable act. A debounce timer is
+                       not one.
+
+                       Coalescing into an open revision instead (updating the
+                       latest row within a time window) is not available and
+                       should not be: the ledger's immutability trigger refuses
+                       UPDATE by engine rule, and `…/history/verify` recomputes
+                       the whole chain — a revision that could be rewritten
+                       after the fact is the thing that check exists to prove
+                       impossible.
+
+                       So continuous protection is provided WITHOUT a server
+                       write: the editor caches every keystroke to
+                       `dc::<sectionId>` on this device and offers it back
+                       explicitly on return, arms the browser's discard prompt
+                       while dirty, and this surface holds any navigation that
+                       would unmount unsaved work (see `requestLeave`). The
+                       author saves; the ledger records authors, not timers. */
                     autosaveMs={null}
                     showSaveButton={false}
                     onDirtyChange={setEditorDirty}
@@ -1877,10 +2134,16 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                       <b>AnA</b>
                     </div>
                     {/* Until the first token lands the server's status phase
-                        stands in — never an invented sentence. */}
-                    <div className="cmt-body" style={{ whiteSpace: 'pre-wrap' }}>
-                      {m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}
-                    </div>
+                        stands in — never an invented sentence. The phase is a
+                        server-authored label, not a document, so it is not put
+                        through the markdown path. */}
+                    {m.text ? (
+                      <AnaMarkdown text={m.text} />
+                    ) : (
+                      <div className="cmt-body">
+                        {m.streaming ? m.statusPhase || 'Thinking…' : ''}
+                      </div>
+                    )}
                     <AnaActivity message={m} onSuggestedAction={askAna} />
                     {/* AI output enters the record ONLY as an attributed
                         in-text suggestion — struck-in green, pending until a
@@ -2420,7 +2683,92 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
         </aside>
       )}
 
+      {pendingLeave && activeSection && (
+        <UnsavedWorkGuard
+          sectionCode={activeSection.code}
+          sectionTitle={activeSection.title}
+          destination={
+            pendingLeave.kind === 'document'
+              ? docs.find(d => d.id === pendingLeave.id)?.title ?? 'another document'
+              : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
+          }
+          saving={leaving}
+          onSave={() => void saveAndLeave()}
+          onLeave={leaveUnsaved}
+          onCancel={() => setPendingLeave(null)}
+        />
+      )}
+
       <C2CToast msg={toast} />
+    </div>
+  );
+}
+
+/* ── The unsaved-work decision ────────────────────────────────────────────
+   Three outcomes, all of them stated. The one thing this dialog must never do
+   is decide for the author: saving mints an attributable Part 11 revision, and
+   discarding loses text. Both are the author's call, so both are a button and
+   neither is the default action of walking away. */
+function UnsavedWorkGuard({
+  sectionCode,
+  sectionTitle,
+  destination,
+  saving,
+  onSave,
+  onLeave,
+  onCancel,
+}: {
+  sectionCode: string;
+  sectionTitle: string;
+  destination: string;
+  saving: boolean;
+  onSave: () => void;
+  onLeave: () => void;
+  onCancel: () => void;
+}) {
+  // Escape cancels (the safe outcome — it changes nothing either way) and
+  // focus returns to the tree row that was clicked.
+  const ref = useDialog(onCancel);
+  return (
+    <div
+      className="ed-guard-bd"
+      onMouseDown={e => {
+        if (e.target === e.currentTarget && !saving) onCancel();
+      }}
+    >
+      <div
+        className="ed-guard"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="ed-guard-t"
+        aria-describedby="ed-guard-d"
+        tabIndex={-1}
+        ref={ref}
+      >
+        <h2 className="ed-guard-t" id="ed-guard-t">
+          Unsaved changes in {sectionCode}
+        </h2>
+        <p className="ed-guard-d" id="ed-guard-d">
+          Your edits to {sectionCode} {sectionTitle} are cached on this device and are not in the
+          record. Opening {destination} closes this section.
+        </p>
+        <p className="ed-guard-d">
+          Saving records an auditable revision attributed to you. Leaving keeps the edits on this
+          device only — this browser, on this machine — and offers them back when you return to the
+          section.
+        </p>
+        <div className="ed-guard-acts">
+          <button className="btn ghost" onClick={onCancel} disabled={saving}>
+            Cancel
+          </button>
+          <button className="btn ghost" onClick={onLeave} disabled={saving}>
+            Leave without saving
+          </button>
+          <button className="btn primary" onClick={onSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save and continue'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
