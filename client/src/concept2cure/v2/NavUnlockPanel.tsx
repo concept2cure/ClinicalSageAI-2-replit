@@ -23,6 +23,7 @@ import React from 'react';
 import { I } from './icons';
 import { useDialog } from './useDialog';
 import { lockNotice, type NavSurfaceEntitlement } from './navEntitlements';
+import { setUnlockIntent } from './unlockIntent';
 
 export function NavUnlockPanel({
   verdict,
@@ -77,6 +78,17 @@ export function NavUnlockPanel({
               className="btn primary"
               onClick={() => {
                 const target = notice.ctaTarget as string;
+                /* Carry WHAT the customer was trying to open across the
+                   navigation. Without this they land on a generic price list
+                   that has never heard of the module they just clicked, and are
+                   left to work out which column applies — at exactly the moment
+                   an upgrade either happens or does not. Both facts come from
+                   the server's verdict; neither is invented here. */
+                setUnlockIntent({
+                  moduleId: verdict.id,
+                  label: verdict.label,
+                  requiredTier: verdict.requiredTier,
+                });
                 onClose();
                 onNav(target);
               }}

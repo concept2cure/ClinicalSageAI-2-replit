@@ -13,9 +13,36 @@
  * holds the namespace should not load a second copy.
  */
 import type { ContentBlock, InlineRun } from './authoring-section-content.js';
+import type { ResolvedImage } from './authoring-images.js';
 
 /** The slice of the `docx` module namespace this renderer needs. */
 export type DocxNs = typeof import('docx');
+
+/** Word page content width at 96dpi (Letter, 1" margins) — images larger than
+ *  this are scaled down proportionally so a full-resolution chromatogram does
+ *  not blow out the page. */
+const DOCX_MAX_IMAGE_WIDTH = 620;
+
+/** Fallback box when the header dimensions could not be read: the figure still
+ *  ships (a distorted figure beats a silently missing one), at a size that
+ *  cannot break the page. */
+const DOCX_FALLBACK_SIZE = { width: 480, height: 360 };
+
+function docxImageSize(img: ResolvedImage): { width: number; height: number } {
+  if (!img.width || !img.height) return DOCX_FALLBACK_SIZE;
+  if (img.width <= DOCX_MAX_IMAGE_WIDTH) return { width: img.width, height: img.height };
+  const scale = DOCX_MAX_IMAGE_WIDTH / img.width;
+  return {
+    width: DOCX_MAX_IMAGE_WIDTH,
+    height: Math.max(1, Math.round(img.height * scale)),
+  };
+}
+
+const DOCX_IMAGE_TYPE: Record<string, 'png' | 'jpg' | 'gif'> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+};
 
 /** Numbering definition the ordered lists reference. Declare it on the Document. */
 export const ORDERED_LIST_REFERENCE = 'authoring-ordered';
@@ -95,10 +122,59 @@ function tableOf(D: DocxNs, block: ContentBlock) {
   return new D.Table({ rows, width: { size: 100, type: D.WidthType.PERCENTAGE } });
 }
 
-/** Render parsed section blocks to DOCX paragraphs and tables, in order. */
-export function blocksToDocx(D: DocxNs, blocks: ContentBlock[]): (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] {
+/** Render parsed section blocks to DOCX paragraphs and tables, in order.
+ *  `images` maps a block's `src` to resolved bytes; an image block whose src
+ *  is not in the map renders as a stated placeholder, never as silence. */
+export function blocksToDocx(
+  D: DocxNs,
+  blocks: ContentBlock[],
+  images?: Map<string, ResolvedImage>,
+): (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] {
   const out: (InstanceType<DocxNs['Paragraph']> | InstanceType<DocxNs['Table']>)[] = [];
   for (const block of blocks) {
+    if (block.kind === 'image') {
+      const resolved = block.src ? images?.get(block.src) : undefined;
+      const type = resolved ? DOCX_IMAGE_TYPE[resolved.mimeType] : undefined;
+      if (resolved && type) {
+        out.push(
+          new D.Paragraph({
+            alignment: D.AlignmentType.CENTER,
+            children: [
+              new D.ImageRun({
+                type,
+                data: resolved.buffer,
+                transformation: docxImageSize(resolved),
+              }),
+            ],
+          })
+        );
+        if (block.alt) {
+          out.push(
+            new D.Paragraph({
+              alignment: D.AlignmentType.CENTER,
+              children: [new D.TextRun({ text: block.alt, italics: true, size: 18 })],
+            })
+          );
+        }
+      } else {
+        /* The section shows a figure this export could not resolve (bytes
+           gone, foreign reference, external URL never fetched server-side).
+           The filed record must SAY that — a document quietly missing a
+           figure the editor displays is a different document. */
+        out.push(
+          new D.Paragraph({
+            children: [
+              new D.TextRun({
+                text: `[Figure not exported: ${block.alt || block.src || 'unresolved image reference'}]`,
+                italics: true,
+                color: '8A8F98',
+              }),
+            ],
+          })
+        );
+      }
+      continue;
+    }
     if (block.kind === 'table') {
       out.push(tableOf(D, block));
       if (block.caption) {
