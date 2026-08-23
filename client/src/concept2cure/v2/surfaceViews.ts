@@ -48,6 +48,7 @@
  */
 import React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
+import type { DriveSseEvent } from '../components/ana/useAnaChat.types';
 /*
  * The three bindings that stay static, each because splitting it would buy
  * nothing:
@@ -73,6 +74,16 @@ export interface SurfaceViewProps {
   onAsk: (text: string) => void;
   onNav: (id: string) => void;
   segment: string;
+  /**
+   * AnA Live Drive bridge, for surfaces that run their OWN useAnaChat instance
+   * (ownsConversation — e.g. ConversationThread). The shell owns the drive
+   * state machine and this hands its two ends down: `on` is the person's
+   * toggle (sent per turn as `live_drive`), `onDriveEvent` routes the turn's
+   * drive_state/drive_navigation events back into the shell's single
+   * apply/take-over reducer. Optional: a surface that ignores it simply
+   * cannot originate driving turns — the rail still can everywhere.
+   */
+  liveDrive?: { on: boolean; onDriveEvent: (event: DriveSseEvent) => void };
 }
 
 /**

@@ -299,7 +299,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
+export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
   // conversation; the default is a fresh conversation.
   const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
@@ -310,7 +310,15 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
   // messages stream token-by-token, and every turn is DB-persisted. Nothing is
   // simulated — the previous canned run510k/ctRespond composer and its
   // Math.random()-"audited" fabricated artifacts are gone.
-  const anaChat = useAnaChat({ initialThreadId: isNew ? null : sel.id, screenName: 'conversation-thread' });
+  // Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
+  // surface owns its own chat instance, so its turns carry the same opt-in and
+  // feed the same shell-level apply/take-over machine as the rail's turns.
+  const anaChat = useAnaChat({
+    initialThreadId: isNew ? null : sel.id,
+    screenName: 'conversation-thread',
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+  });
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
