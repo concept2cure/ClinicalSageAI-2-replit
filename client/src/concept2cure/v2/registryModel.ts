@@ -333,9 +333,23 @@ export const READINESS_META = {
   },
   planned: { label: 'Planned', tone: 'idle', blurb: 'Routes exist; surface not yet prioritized.' },
 };
-/** Entitlements sample: module ids this org is NOT licensed for (fixture until /api/module-subscriptions wiring in Phase 6; rail shows lock + upgrade CTA, never a dead button) */
-export const LICENSE_UNLICENSED: string[] = ['labeling', 'risk', 'pdev'];
-export const isLicensed = (id: string) => !LICENSE_UNLICENSED.includes(id);
+/* Entitlements are NOT declared here.
+ *
+ * This slot used to hold `LICENSE_UNLICENSED = ['labeling', 'risk', 'pdev']`
+ * and an `isLicensed()` built from it — three module ids named in client
+ * source, applied identically to every tenant, under a comment promising real
+ * wiring "in Phase 6". Nothing ever called `isLicensed`, so the fixture gated
+ * nothing while making the file look like it carried a tenant's licence state.
+ *
+ * The real answer is per-organization and lives on the server:
+ *   server/services/entitlements/navigation-entitlements.ts
+ *   GET /api/module-subscriptions/navigation
+ *   client/src/concept2cure/v2/navEntitlements.tsx (the rail's consumer)
+ *
+ * Per this file's own header rule — "nothing in this file may describe a
+ * particular organization's programmes" — a licence verdict may never come
+ * back here.
+ */
 
 /** AnA modes (intent → engine label, resolved server-side; no vendor names on screen) */
 /**

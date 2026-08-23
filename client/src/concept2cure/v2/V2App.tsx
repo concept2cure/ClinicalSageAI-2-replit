@@ -26,6 +26,7 @@ import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
 import { getJwtOrgId } from '@/utils/authToken';
 import { useLiveData } from './dataConnect';
+import { NavEntitlementsProvider } from './navEntitlements';
 import { welcomeFor } from './onboardingWelcome';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
@@ -436,6 +437,10 @@ export function V2App() {
       : null;
 
   return (
+    /* Licence verdicts are fetched once, above the rail, so the rail and the
+       panel that explains a locked destination read the same answer. The
+       provider renders no DOM of its own, so the shell's grid is untouched. */
+    <NavEntitlementsProvider>
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
       data-collapsed={prefs.railCollapsed}
@@ -511,6 +516,7 @@ export function V2App() {
       />
       <CollabLayer onNav={nav} />
     </div>
+    </NavEntitlementsProvider>
   );
 }
 

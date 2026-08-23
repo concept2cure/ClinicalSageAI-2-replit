@@ -10,6 +10,7 @@
  * Endpoints:
  * GET  /catalog          — Full module catalog with availability status
  * GET  /enabled          — Only enabled modules for the org
+ * GET  /navigation       — Per-destination entitlement verdicts for the nav rail
  * GET  /license          — Org license info (tier, quotas)
  * POST /provision        — Auto-provision modules based on tier (admin only)
  * PUT  /:moduleId/toggle — Enable/disable a module (admin only)
@@ -34,6 +35,9 @@ import {
   generateWorkRecommendations,
   addToWorkQueue,
 } from '../services/user-intelligence.js';
+import { resolveNavEntitlements } from '../services/entitlements/navigation-entitlements.js';
+import { isMasterAdmin } from '../services/entitlements/master-admin.js';
+import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -85,6 +89,33 @@ router.get('/enabled', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('enabled error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load enabled modules' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /navigation — Per-destination entitlement verdicts for the nav rail
+//
+// The rail asks one question on load ("which of these may this organization
+// open, and if not, why not") and gets one answer, resolved from persisted
+// state rather than a client-side constant. `authenticateToken` is explicit
+// here — unlike /catalog and /license, this handler reads the identity (email
+// and roles) to decide the platform-owner grant, so the request must have been
+// through real authentication rather than merely carrying a tenant context.
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/navigation', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    return res.json(
+      await resolveNavEntitlements(Number(orgId), { masterAdmin: isMasterAdmin(req) }),
+    );
+  } catch (error) {
+    logger.error('navigation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to resolve navigation entitlements' });
   }
 });
 

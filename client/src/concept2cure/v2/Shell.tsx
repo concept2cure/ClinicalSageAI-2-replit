@@ -52,6 +52,8 @@ import {
   type AnaContext,
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
+import { isLocked, useNavEntitlements, type NavSurfaceEntitlement } from './navEntitlements';
+import { NavUnlockPanel } from './NavUnlockPanel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
 export interface ShellSurfaceRef {
@@ -122,6 +124,14 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const [acct, setAcct] = React.useState(false);
+  /* Live licence verdicts for this organization. Until the server answers —
+     and permanently if it cannot — `verdictFor` returns null for everything and
+     the rail renders exactly as it did before: a lock badge is a claim about a
+     customer's contract, and inventing one from a failed fetch is the failure
+     mode worth avoiding here, not an unlocked rail. */
+  const { verdictFor } = useNavEntitlements();
+  /** The locked destination the human just activated, if any. */
+  const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
   const name = user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
@@ -158,18 +168,38 @@ export function Rail({
     s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
+    /* Entitlement is keyed on the DESTINATION, not the rail entry: "Recent
+       Documents" and "Starred Items" are shortcuts onto document-authoring and
+       projects, so they inherit those modules' verdicts rather than looking up
+       ids the catalog has never heard of. */
+    const verdict = verdictFor(target);
+    const locked = isLocked(verdict);
     return (
       <button
         key={s.id}
         type="button"
         className="nav-item"
         data-on={activeId === target || undefined}
+        /* Locked is a data attribute, not `disabled`. A disabled control is
+           unreachable by keyboard and explains nothing — the entitlements spec
+           requires a locked destination to stay an activatable, labelled
+           affordance that opens an honest panel. */
+        data-locked={locked || undefined}
         aria-current={activeId === target ? 'page' : undefined}
-        onClick={() => onNav(target)}
-        title={s.label}
+        onClick={() => (locked && verdict ? setLockedFor(verdict) : onNav(target))}
+        /* The lock reaches assistive tech through the accessible name, not the
+           icon: the icon is decorative and the colour shift is never the only
+           channel. */
+        aria-label={locked ? `${s.label} — not included in your plan` : undefined}
+        title={locked ? `${s.label} — not included in your plan` : s.label}
       >
         <span className="ico">{I[s.icon] ?? I.grid}</span>
         <span className="lbl">{s.label}</span>
+        {locked && (
+          <span className="nav-lic" data-lic="off" aria-hidden="true">
+            {I.lock}
+          </span>
+        )}
         {s.badge && <span className="nav-badge">{s.badge}</span>}
         {s.count != null && <span className="nav-count">{s.count}</span>}
       </button>
@@ -282,6 +312,14 @@ export function Rail({
           </>
         )}
       </div>
+      {lockedFor && (
+        <NavUnlockPanel
+          verdict={lockedFor}
+          isOrgAdmin={isOrgAdmin}
+          onClose={() => setLockedFor(null)}
+          onNav={onNav}
+        />
+      )}
     </nav>
   );
 }
