@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:16:51.675Z",
+  "generatedAt": "2026-08-23T23:24:15.184Z",
   "git": {
-    "sha": "197700024ab57d92e06c754fb4585bdedd019d26",
+    "sha": "fe8ab05905012656825a335af97124f7ab15d19b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2220,7 +2220,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 133374
+        "bytes": 133419
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2358,7 +2358,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3182
+        "lines": 3183
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
