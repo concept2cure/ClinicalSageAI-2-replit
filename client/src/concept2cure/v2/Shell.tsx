@@ -563,6 +563,10 @@ export function AnaRail({
     on: boolean;
     locked: { reason: string; requiredTier?: string | null } | null;
     setOn: (v: boolean) => void;
+    /** One-click guided tour: enables Live Drive and (once the toggle has
+     *  actually committed) sends the tour ask. Owned by the shell — see the
+     *  race note at the menu button. */
+    onStartTour?: () => void;
   };
 }) {
   const [draft, setDraft] = React.useState('');
@@ -1296,6 +1300,26 @@ export function AnaRail({
                         : 'Not available for this workspace'
                       : 'AnA navigates the screens; you watch and can take over'}
                   </span>
+                </button>
+              )}
+              {liveDrive && !liveDrive.locked && liveDrive.onStartTour && (
+                <button
+                  type="button"
+                  className="ana-menu-item"
+                  onClick={() => {
+                    /* The one-click support story: consent (the toggle turns
+                       on, visibly — same switch, same take-over rights) and
+                       the ask in one gesture. The shell owns the sequencing
+                       (onStartTour) because sending in the same tick as the
+                       toggle flip would race the state commit and the tour
+                       turn would stream without live_drive — the exact trap
+                       useAnaChat documents for toolsOverride. */
+                    setModeOpen(false);
+                    liveDrive.onStartTour?.();
+                  }}
+                >
+                  <span className="ico">{I.rocket}</span>Show me around
+                  <span className="mh">AnA gives a live tour, driving the screens</span>
                 </button>
               )}
               <div className="ana-menu-sec">Engine</div>

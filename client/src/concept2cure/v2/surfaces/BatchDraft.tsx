@@ -316,6 +316,11 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
 
   const [phase, setPhase] = useState<'pick' | 'drafting' | 'review'>('pick');
   const [cards, setCards] = useState<Record<string, CardState>>({});
+  /* Which card is open for editing, if any. "Edit" used to navigate away to
+     document-authoring, which abandoned the draft on the card: the text lives
+     in `cards[id].html` until Accept POSTs it, and that surface has no idea it
+     exists. So the edit happens where the text is. */
+  const [editingCard, setEditingCard] = useState<string | null>(null);
   const startRef = useRef<Record<string, number>>({});
 
   /**
@@ -859,12 +864,29 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                   // same DOMPurify allowlist the chat surface uses — the
                   // allowlist keeps h3/p/span.stream-cite, so sample and live
                   // drafts render unchanged.
-                  <div
-                    className="bd-card-body"
-                    dangerouslySetInnerHTML={{
-                      __html: sanitizeChatHtml(c.html) || '<p class="bd-ph">Waiting to start...</p>',
-                    }}
-                  />
+                  editingCard === s.id ? (
+                    /* Edited as the HTML it is. Accept already sends
+                       `card.html` verbatim, so what is typed here is exactly
+                       what gets POSTed and snapshotted into
+                       coauthor_document_versions — no separate edit path, no
+                       second store, nothing lost between here and the write. */
+                    <textarea
+                      className="bd-card-body bd-card-edit"
+                      value={c.html}
+                      onChange={(e) =>
+                        setCards((prev) => ({ ...prev, [s.id]: { ...prev[s.id], html: e.target.value } }))
+                      }
+                      aria-label={`Edit the draft for ${s.title || s.num || s.id}`}
+                      data-testid="bd-card-edit"
+                    />
+                  ) : (
+                    <div
+                      className="bd-card-body"
+                      dangerouslySetInnerHTML={{
+                        __html: sanitizeChatHtml(c.html) || '<p class="bd-ph">Waiting to start...</p>',
+                      }}
+                    />
+                  )
                 )}
 
                 {c.state === 'done' && (
@@ -878,7 +900,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                       <div className="bd-card-acts">
                         {c.saveError && <span className="bd-accepted-note err">Not saved — {c.saveError}</span>}
                         <button className="bd-ghost sm" disabled={c.saving} onClick={() => { discard(s.id); }}>Discard</button>
-                        <button className="bd-ghost sm" onClick={() => { onNav && onNav('document-authoring'); }}>Edit</button>
+                        <button
+                          className="bd-ghost sm"
+                          onClick={() => setEditingCard((cur) => (cur === s.id ? null : s.id))}
+                          data-testid="bd-card-edit-toggle"
+                        >
+                          {editingCard === s.id ? 'Done editing' : 'Edit'}
+                        </button>
                         <button
                           className="bd-primary sm"
                           disabled={c.saving}

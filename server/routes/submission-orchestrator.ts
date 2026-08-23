@@ -64,24 +64,24 @@ async function auditOrchestratorAccess(
     | 'orchestrator_validated_hardened',
   details: Record<string, unknown> = {},
 ): Promise<void> {
-  try {
-    const user = (req as any).user;
-    await auditService.logAction({
-      tenantId: organizationId,
-      userId: user?.id ?? user?.userId,
-      action,
-      resourceType: 'submission_orchestrator',
-      // Standalone routes are not bound to a numeric orchestrator runId; a
-      // 'standalone' sentinel keeps these rows distinct from per-run rows
-      // when grouping by (resourceType, resourceId).
-      resourceId: 'standalone',
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details,
-    });
-  } catch (err) {
+  const user = (req as any).user;
+
+  const orchestratorAudit = await auditService.logAction({
+    tenantId: organizationId,
+    userId: user?.id ?? user?.userId,
+    action,
+    resourceType: 'submission_orchestrator',
+    // Standalone routes are not bound to a numeric orchestrator runId; a
+    // 'standalone' sentinel keeps these rows distinct from per-run rows
+    // when grouping by (resourceType, resourceId).
+    resourceId: 'standalone',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details,
+  });
+  if (!orchestratorAudit.persisted) {
     log.warn('orchestrator audit write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: orchestratorAudit.error ?? 'no durable store accepted the row',
       action,
       organizationId,
     });

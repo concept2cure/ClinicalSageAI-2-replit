@@ -544,20 +544,27 @@ router.get('/reports/:id', async (req, res) => {
 
     // Audit BEFORE serving content. Even if the response stream
     // later fails, the user-requested access is the §11.10(e) event.
-    try {
-      const user = (req as any).user;
-      await auditService.logAction({
-        tenantId: guard.orgId,
-        userId: user?.id ?? user?.userId,
-        action: 'cer_report_view',
-        resourceType: 'cer_report',
-        resourceId: id,
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'] as string | undefined,
-        details: { route: req.path },
+
+    const user = (req as any).user;
+
+    const cerViewAudit = await auditService.logAction({
+      tenantId: guard.orgId,
+      userId: user?.id ?? user?.userId,
+      action: 'cer_report_view',
+      resourceType: 'cer_report',
+      resourceId: id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { route: req.path },
+    });
+    if (!cerViewAudit.persisted) {
+      // A CER report read is an access event on a regulated record. Losing it
+      // must not fail the read, but it must not be silent either — the catch
+      // this replaced was unreachable, so it never was recorded as lost.
+      cerLog.warn('CER report-view audit row was not persisted', {
+        reportId: id,
+        reason: cerViewAudit.error ?? 'no durable store accepted the row',
       });
-    } catch {
-      /* audit failure is non-fatal */
     }
 
     res.json(reportData);

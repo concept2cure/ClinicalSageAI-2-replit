@@ -25,12 +25,6 @@ vi.mock('@/services/portal/authService', () => ({
 
 import { IndLifecycle } from '../surfaces/IndLifecycle';
 
-/* SurfaceViewProps requires the surface identity and segment the shell always
-   provides; this suite mounts the surface directly, so it provides them too
-   (same shape as ectdCoauthorNoFixtures.test.tsx). */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const viewProps = { surface: { id: 'ind-lifecycle', label: 'IND Lifecycle' } as any, segment: 'biopharma' };
-
 function res(payload: unknown, status = 200) {
   return { ok: status < 400, status, json: async () => payload } as Response;
 }
@@ -61,6 +55,17 @@ function wire(rows: unknown[]) {
   });
 }
 
+/* IndLifecycle destructures only onAsk/onNav, but it DECLARES the full
+   SurfaceViewProps — so the render site owes the whole contract. */
+function surfaceProps() {
+  return {
+    surface: { id: 'ind-checklist', label: 'IND Checklist' } as never,
+    segment: 'biopharma',
+    onAsk: () => {},
+    onNav: () => {},
+  };
+}
+
 beforeEach(() => {
   apiRequest.mockReset();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
@@ -78,7 +83,7 @@ describe('IndLifecycle — program scoping', () => {
       product: 'BX-701',
     };
     wire(TWO_ROWS);
-    render(<IndLifecycle {...viewProps} onAsk={() => {}} onNav={() => {}} />);
+    render(<IndLifecycle {...surfaceProps()} />);
 
     expect(await screen.findByRole('heading', { name: /BX-701 -- Initial IND/ })).toBeTruthy();
     const note = screen.getByTestId('indl-scope-note');
@@ -93,7 +98,7 @@ describe('IndLifecycle — program scoping', () => {
       product: 'CX-900',
     };
     wire(TWO_ROWS);
-    render(<IndLifecycle {...viewProps} onAsk={() => {}} onNav={() => {}} />);
+    render(<IndLifecycle {...surfaceProps()} />);
 
     expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(
@@ -103,7 +108,7 @@ describe('IndLifecycle — program scoping', () => {
 
   it('with no program open and several INDs, says which one is shown and how to scope', async () => {
     wire(TWO_ROWS);
-    render(<IndLifecycle {...viewProps} onAsk={() => {}} onNav={() => {}} />);
+    render(<IndLifecycle {...surfaceProps()} />);
 
     expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/Open a program to scope/);
@@ -111,7 +116,7 @@ describe('IndLifecycle — program scoping', () => {
 
   it('a single IND with no program open needs no note — nothing to disambiguate', async () => {
     wire([TWO_ROWS[0]]);
-    render(<IndLifecycle {...viewProps} onAsk={() => {}} onNav={() => {}} />);
+    render(<IndLifecycle {...surfaceProps()} />);
 
     expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
     expect(screen.queryByTestId('indl-scope-note')).toBeNull();

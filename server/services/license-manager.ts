@@ -425,18 +425,28 @@ export function requireModule(moduleId: string) {
       // a row that sits IN audit_logs but OUTSIDE the hash chain, invisible to
       // the chain verifier and so not tamper-evident. auditService computes
       // the chain link and seal (§11.10(e), §11.70).
-      try {
-        await auditService.logAction({
+      // Non-critical: an audit-trail outage must not change the access
+      // decision itself, which has already been made above. But the catch that
+      // used to say so could never run — `logAction` resolves normally on a
+      // persistence failure and is documented never to reject — so a denied
+      // module access that went unrecorded left no trace at all. The decision
+      // still stands regardless; what changes is that losing its record is now
+      // visible.
+      const denialAudit = await auditService.logAction({
+        organizationId: orgId,
+        userId: (req as any).user?.id || (req as any).userId,
+        action: 'module_access_denied',
+        resourceType: 'module_subscriptions',
+        resourceId: moduleId,
+        details: { reason, tier: (req as any).licenseInfo?.tier },
+      });
+      if (!denialAudit.persisted) {
+        logger.warn('Module access-denial audit row was not persisted', {
           organizationId: orgId,
-          userId: (req as any).user?.id || (req as any).userId,
-          action: 'module_access_denied',
-          resourceType: 'module_subscriptions',
-          resourceId: moduleId,
-          details: { reason, tier: (req as any).licenseInfo?.tier },
+          moduleId,
+          reason,
+          auditError: denialAudit.error ?? 'no durable store accepted the row',
         });
-      } catch {
-        // Non-critical: an audit-trail outage must not change the access
-        // decision itself, which has already been made above.
       }
 
       return res.status(403).json({

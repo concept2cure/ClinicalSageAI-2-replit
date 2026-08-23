@@ -6,6 +6,7 @@ import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
+import { consumeNavParams } from '../navParams';
 import { LIC_ROLES } from '../fixtures/licensing';
 // Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
 // filter taxonomy the server's deriveKind() mirrors; PLATFORM_SERVICES is the
@@ -1958,6 +1959,19 @@ function csvCell(v: unknown): string {
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   // Real cross-project artifact gallery, unwrapped from { success, data }.
   const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
+  /* Follow-the-work hand-off (Live Drive): a driven turn that just persisted a
+     draft lands here with its artifactId, and the gallery brings that row into
+     view, highlighted — the subscriber watches the document ARRIVE. Consumed
+     once; a stale or absent hand-off changes nothing. */
+  const [focusId] = useState<string | null>(
+    () => consumeNavParams('artifacts-center')?.artifactId ?? null,
+  );
+  const focusRowRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (focusId && focusRowRef.current) {
+      focusRowRef.current.scrollIntoView({ block: 'center' });
+    }
+  }, [focusId, rows.length]);
 
   /* What AnA can see of this screen.
      This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and
@@ -2019,6 +2033,37 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
      button fix. What this surface HAS is the index, and an index is a real,
      useful thing to hand someone — so the button now delivers exactly that and
      its label no longer promises the files. */
+  const downloadArtifact = async (a: ArtifactRow) => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(
+        `/api/artifacts-center/${encodeURIComponent(a.id)}/export?format=docx`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+      );
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        const why = (b as { message?: string; error?: string } | null);
+        // eslint-disable-next-line no-alert
+        window.alert(
+          'Not downloaded — ' +
+            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`) + '.',
+        );
+        return;
+      }
+      const url = URL.createObjectURL(await res.blob());
+      const el = document.createElement('a');
+      el.href = url;
+      el.download = `${a.name.replace(/[^\w.-]+/g, '_').slice(0, 80) || 'artifact'}.docx`;
+      document.body.appendChild(el);
+      el.click();
+      el.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      // eslint-disable-next-line no-alert
+      window.alert('Not downloaded — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
+
   const exportManifest = () => {
     const cols: Array<[string, (r: ArtifactRow) => unknown]> = [
       ['Name', (r) => r.name],
@@ -2110,7 +2155,8 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
           return (
             <div
               key={a.id}
-              className="ct-row art-row"
+              ref={a.id === focusId ? focusRowRef : undefined}
+              className={`ct-row art-row${a.id === focusId ? ' is-focus' : ''}`}
               style={{ gridTemplateColumns: '1.7fr 78px 90px 96px 84px 60px 132px' }}
             >
               <div className="vn">
@@ -2147,13 +2193,17 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
                 )}
               </div>
               <div className="art-acts">
+                {/* The non-docx branch used to run
+                    onAsk('Download <name> (PDF, 24 KB)') — it typed the file's
+                    name into the chat rail. No file was produced, and none
+                    could be: the gallery read returns octet_length(a.content),
+                    not the content, and there was no per-artifact endpoint to
+                    ask for it. GET /api/artifacts-center/:id/export now exists
+                    and renders the stored content behind the same
+                    export-review gate the other exporters use. */}
                 <button
                   className="art-act pri"
-                  onClick={() =>
-                    isDoc
-                      ? onNav('document-authoring')
-                      : onAsk(`Download ${a.name} (${f.label}, ${a.size})`)
-                  }
+                  onClick={() => (isDoc ? onNav('document-authoring') : void downloadArtifact(a))}
                 >
                   {isDoc ? I.penLine : I.download}
                   {f.action}
@@ -2797,7 +2847,27 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             )}
 
             {sec === 'sso' && (
-              <div className="ac-cards">
+              <>
+                {/* ── This section had no field, button or link ──────────────
+                    Three static description cards and nothing to act on, so SSO
+                    and SCIM could not be configured anywhere in the product —
+                    on the screen named for them. Two of the three DO have real,
+                    mounted admin APIs (/api/admin/scim-tenants and
+                    /api/admin/scim-ip-allowlist, both admin-gated), and SAML/OIDC
+                    runs through authEnterprise.
+
+                    Building three configuration UIs is its own piece of work and
+                    is not smuggled in here. What is fixed now is the dishonesty:
+                    the section says where each control actually lives and stops
+                    presenting itself as a settings page that simply has no
+                    settings. */}
+                <div className="scaf-note" style={{ marginBottom: 10 }}>
+                  SSO and SCIM are configured through the platform admin APIs, not from this
+                  page — SAML/OIDC via authEnterprise, and SCIM provisioning and its IP
+                  allowlist via the admin SCIM endpoints. The cards below describe what each
+                  one covers.
+                </div>
+                <div className="ac-cards">
                 {(
                   [
                     [
@@ -2823,7 +2893,8 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="ac-card-tag">{tag}</span>
                   </div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
 
             {sec === 'security' && (

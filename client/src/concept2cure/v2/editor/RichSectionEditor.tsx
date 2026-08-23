@@ -93,6 +93,16 @@ export interface RichSectionEditorHandle {
   insertSuggestion: (text: string, author: SuggestionAuthor) => boolean;
   /** Current serialized content (unsaved included). */
   getContent: () => string;
+  /**
+   * Authors whose insertions were ACCEPTED since the last call, then cleared.
+   *
+   * Accepting an insertion strips the mark that named its author, so after the
+   * click nothing in the content says an AI drafted the words. The host reads
+   * this at save time and sends it with the write, so the revision records who
+   * the accepted text came from instead of attributing it to whoever pressed
+   * accept.
+   */
+  takeAcceptedAuthors: () => SuggestionAuthor[];
   /** Select + scroll to a comment's anchored range. False when the annotated
    *  text no longer exists in the current draft. */
   selectCommentAnchor: (commentId: string) => boolean;
@@ -673,6 +683,17 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           editor ? editor.chain().focus().insertSuggestedContent(text, author).run() : false,
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
+        takeAcceptedAuthors: () => {
+          /* TipTap types `storage` as a closed map of the extensions it ships
+             with, so a custom extension's slot is reached through the record
+             shape rather than by property access. */
+          const store = (editor?.storage as unknown as
+            | Record<string, { acceptedAuthors?: SuggestionAuthor[] } | undefined>
+            | undefined)?.c2cTrackChanges;
+          const taken = store?.acceptedAuthors ?? [];
+          if (store?.acceptedAuthors) store.acceptedAuthors = [];
+          return taken;
+        },
         selectCommentAnchor: (commentId: string) => {
           if (!editor) return false;
           const range = collectCommentAnchors(editor.state.doc).get(commentId);

@@ -304,6 +304,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
     screenName: 'conversation-thread',
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);

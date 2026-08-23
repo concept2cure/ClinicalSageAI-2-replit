@@ -599,7 +599,22 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         </div>
       )}
       <div className="cl-foot">
-        
+        {/* `onGoToBoard` was passed in by the parent (onNav('tasks') — real,
+            working navigation to the task board) and this component never
+            rendered a control for it, so the prop terminated nowhere. An author
+            who had just created a task had no way from here to the board it
+            landed on. */}
+        {onGoToBoard && (
+          <button
+            className="btn ghost"
+            style={{ marginRight: 'auto' }}
+            onClick={onGoToBoard}
+            title="Open the task board"
+            data-testid="collab-go-to-board"
+          >
+            {I.grid || I.arrowRight} Go to board
+          </button>
+        )}
         <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || saving}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
         <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || saving}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
       </div>
