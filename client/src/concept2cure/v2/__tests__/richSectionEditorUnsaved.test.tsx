@@ -106,13 +106,9 @@ describe('the browser is asked to confirm before unsaved work is discarded', () 
 describe('a debounced autosave survives the unmount that interrupts it', () => {
   it('flushes work still inside the debounce window', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-<<<<<<< HEAD
-    const onSave = vi.fn(async (_serialized: string) => undefined);
-=======
     // Typed with the content param the editor actually passes, so
     // mock.calls[0][0] below is a string, not an index into an empty tuple.
     const onSave = vi.fn(async (_content: string) => undefined);
->>>>>>> origin/concept2cure-v2
     const { unmount } = render(
       <RichSectionEditor
         value="Interim dossier note."

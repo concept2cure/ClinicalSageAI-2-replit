@@ -1948,7 +1948,6 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   // Real cross-project artifact gallery, unwrapped from { success, data }.
   const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
 
-<<<<<<< HEAD
   /* What AnA can see of this screen.
      This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and
      "has that memo been signed?" are the questions it exists to answer — and
@@ -1995,7 +1994,6 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   }, [loading, error, rows]);
   usePublishSurfaceContext('artifacts-center', anaContext);
 
-=======
   /* ── "Export all" was inert, and the code said so ──────────────────────────
      The two lines above it read: "MOCK ACTION (flagged): 'Export all' has no
      handler and no bulk-export endpoint exists — inert button, left for a later
@@ -2035,7 +2033,6 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
->>>>>>> origin/concept2cure-v2
   return (
     <div className="page-inner">
       <AdminHeader
