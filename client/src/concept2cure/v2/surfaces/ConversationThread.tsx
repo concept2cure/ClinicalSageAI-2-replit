@@ -338,8 +338,24 @@ export function ConversationThread({ onNav }: OwnedSurfaceViewProps) {
       setLoadErr(false);
       Promise.resolve(anaChat.loadThread(sel.id)).catch(() => setLoadErr(true));
     } else if (sel.seed) {
-      void anaChat.send(sel.seed);
+      // Deferred by one task ON PURPOSE. Sending synchronously here opened a
+      // fetch during StrictMode's first mount pass; the cleanup at the top of
+      // useAnaChat aborted it, and the second pass was swallowed by the
+      // isStreaming guard because the abort's finally had not run yet. The
+      // result was exactly one aborted turn — the question visible, the answer
+      // a permanently blank bubble. This is the front door: Home's composer
+      // lands here. A timeout lets pass 1's cleanup cancel before any fetch
+      // exists, so only pass 2 actually sends.
+      const seed = sel.seed;
+      let cancelled = false;
+      const t = setTimeout(() => {
+        if (!cancelled) void anaChat.send(seed);
+      }, 0);
       (window as any).C2C_CONVO = { ...sel, seed: null };
+      return () => {
+        cancelled = true;
+        clearTimeout(t);
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
