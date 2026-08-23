@@ -213,12 +213,20 @@ describe('Vault — the data room lane', () => {
     expect(screen.getAllByText('Captured').length).toBeGreaterThan(0);
   });
 
-  it('a failed data room read renders as a failure, never an empty room', async () => {
-    mockApi(() => ok(vaultPayload({ dataRoomUnavailable: true })));
+  it('an unavailable data room renders as a failure, never an empty room', async () => {
+    mockApi(() =>
+      ok(
+        vaultPayload({
+          unavailable: [
+            { branch: 'Data room', reason: 'The data room store (cre_evidence_sources) is not provisioned in this environment.' },
+          ],
+        }),
+      ),
+    );
     render(<Vault {...props()} />);
 
     const lane = await screen.findByTestId('vault-data-room');
-    expect(lane.textContent).toMatch(/could not be read/);
+    expect(lane.textContent).toMatch(/could not be served/);
     expect(lane.textContent).toMatch(/not because it is empty/);
     expect(screen.queryByText(/Nothing captured for this project yet/)).toBeNull();
   });
@@ -231,11 +239,22 @@ describe('Vault — the data room lane', () => {
     expect(await screen.findByText(/Nothing captured for this project yet/)).toBeTruthy();
   });
 
-  it('a failed uploads read shows the cabinet error strip', async () => {
-    mockApi(() => ok(vaultPayload({ tree: [], uploadsUnavailable: true, documentCount: 0 })));
+  it('an unavailable branch is said, never silently omitted from the tree', async () => {
+    mockApi(() =>
+      ok(
+        vaultPayload({
+          tree: [],
+          documentCount: 0,
+          unavailable: [
+            { branch: 'Uploaded files', reason: 'The vault document store (vault.documents) is not provisioned in this environment.' },
+          ],
+        }),
+      ),
+    );
     render(<Vault {...props()} />);
-    const strip = await screen.findByTestId('vault-uploads-error');
-    expect(strip.textContent).toMatch(/read failed, not because it is empty/);
+    expect(
+      await screen.findByText(/Uploaded files: The vault document store/),
+    ).toBeTruthy();
   });
 });
 

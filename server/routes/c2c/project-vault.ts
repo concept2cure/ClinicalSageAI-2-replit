@@ -5,11 +5,16 @@
  * renders (its `Spine` of VaultFolder / VaultDoc), populated from REAL,
  * org-scoped data:
  *
- *   regulatory_programs   → project name + product modality (→ vault view)
- *   c2c_documents         → one top-level folder per active document build
- *   c2c_rule_packs        → the required-section spec tree for each build
- *   c2c_document_sections → LIVE section status / version / owner / timestamp
- *   users                 → real owner attribution (section & document owner_id)
+ *   regulatory_programs      → project name + product modality (→ vault view)
+ *   c2c_documents            → one top-level folder per active document build
+ *   c2c_rule_packs           → the required-section spec tree for each build
+ *   c2c_document_sections    → LIVE section status / version / owner / timestamp
+ *   users                    → real owner attribution (section & document owner_id)
+ *   concept2cure_artifacts   → the "Module 3 (CMC)" branch: governed §3.x
+ *                              artifacts the CMC compile bridge files, via the
+ *                              program→project anchor
+ *   vault.documents          → the "Uploaded files" branch: what this surface's
+ *                              own Upload button ingests
  *
  * This is the same document/section data the existing
  * `GET /api/c2c/projects/:id/vault-structure` endpoint reads, but mapped
@@ -40,6 +45,7 @@ import { Router, type Request, type Response } from 'express';
 
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
   filingTypesForView,
   foldersForView,
@@ -49,6 +55,7 @@ import {
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
   resolveVaultView,
+  resolveOrgVaultView,
   isFolderInView,
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
@@ -136,17 +143,17 @@ interface VaultDisplayShape {
   pendingStore?: boolean;
   /** Uploaded documents awaiting a person's filing decision. */
   unfiledCount?: number;
-  /** The uploads store (vault.documents) is not provisioned in this env. */
-  uploadStorePending?: boolean;
-  /** The uploads read FAILED (distinct from empty — the surface must render
-   *  an error, not an empty cabinet). */
-  uploadsUnavailable?: boolean;
   /** The capture→classify→file pipeline over the project's Data Room. */
   dataRoom?: DataRoomBlock;
-  /** The Data Room store is not provisioned in this env. */
-  dataRoomPending?: boolean;
-  /** The Data Room read FAILED (error ≠ empty). */
-  dataRoomUnavailable?: boolean;
+  /**
+   * Branches that could not be served, with why. A vault that silently omits
+   * "Uploaded files" because its store is unprovisioned reads exactly like a
+   * vault with no uploads — this field is the difference. The ONE degradation
+   * contract for every derived branch (Module 3, the filing cabinet, the data
+   * room); a real failure — anything but a missing store — is a 500, never a
+   * silent degrade.
+   */
+  unavailable?: Array<{ branch: string; reason: string }>;
 }
 
 // ─── Row shapes (what the SQL projects) ────────────────────────────────────────
@@ -474,6 +481,71 @@ function countDocs(nodes: Array<VaultFolder | VaultDoc>): number {
   return n;
 }
 
+/** Missing table (42P01) / missing column (42703) — a store this environment
+ *  has not provisioned. The branch degrades honestly instead of 500ing. */
+function isMissingStore(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  return code === '42P01' || code === '42703';
+}
+
+interface M3ArtifactRow {
+  id: string | number;
+  artifact_id: string;
+  title: string | null;
+  ctd_section: string;
+  status: string | null;
+  version: number | null;
+  updated_at: string | Date | null;
+}
+
+/**
+ * The Module 3 (CMC) branch: governed §3.x artifacts the CMC compile bridge
+ * files into concept2cure_artifacts, reached through the program→project
+ * anchor (the same EXISTS idiom mdx-vault.ts uses — org predicate repeated on
+ * projects so a mis-anchored row can never pull another tenant's data in).
+ * These rows were invisible in this surface even though the CMC module's
+ * "vault" affordances pointed here — the data room now lists what the
+ * pipeline files, organized by CTD section.
+ */
+async function module3Branch(programId: string, orgId: number): Promise<VaultFolder | null> {
+  const artRes = await pool.query(
+    `SELECT a.id, a.artifact_id, a.title, a.ctd_section, a.status, a.version, a.updated_at
+       FROM concept2cure_artifacts a
+      WHERE a.organization_id = $2
+        AND a.status != 'archived'
+        AND a.ctd_section LIKE '3.%'
+        AND EXISTS (SELECT 1 FROM projects p
+                     WHERE p.id = a.project_id
+                       AND p.organization_id = a.organization_id
+                       AND p.regulatory_program_id = $1::uuid)
+      ORDER BY a.ctd_section, a.version DESC`,
+    [programId, orgId],
+  );
+  if (artRes.rows.length === 0) return null;
+  const children: VaultDoc[] = (artRes.rows as M3ArtifactRow[]).map((a) => ({
+    id: `m3art-${a.id}`,
+    num: a.ctd_section,
+    title: a.title || a.ctd_section,
+    type: 'Governed artifact',
+    // The same status vocabulary the artifact registry stores, mapped through
+    // the one normalizer; completion is the section-approval definition the
+    // rest of this read-model uses (approved/locked = 100, else 0).
+    status: normalizeStatus(a.status === 'draft' ? 'drafted' : a.status, true),
+    pct: sectionCompletionPct(a.status),
+    owner: '—',
+    ver: a.version != null ? `v${a.version}` : '—',
+    updated: relativeTime(a.updated_at),
+    preview: `${a.title || a.ctd_section} · CTD §${a.ctd_section} · compiled from CMC canonical sources`,
+  }));
+  return { id: 'm3-cmc', code: 'M3', label: 'Module 3 (CMC)', children };
+}
+
+/* The Uploaded-files branch is the filing cabinet (uploadLeaf / filingCabinet
+   above): the same vault.documents rows the flat "Uploaded files" list showed,
+   carrying their dossier PLACEMENT — the classifier's suggested folder, the
+   person-confirmed filing, or the visible Unfiled queue — instead of a single
+   undifferentiated bucket. One uploads branch; two never merged. */
+
 // ─── Router factory ─────────────────────────────────────────────────────────────
 
 export default function createProjectVaultRoutes(): Router {
@@ -504,11 +576,12 @@ export default function createProjectVaultRoutes(): Router {
       const project = projRes.rows[0] as ProjectRow;
 
       // 2) Derive the vault view (project product_type → segment; else the org
-      //    union; else the cross-sponsor service view). One derivation shared
-      //    with the ingest path — vault-filing.service.resolveVaultView — so a
-      //    file cannot be classified against one view and rendered under
-      //    another.
-      const view: VaultViewId = await resolveVaultView(id, orgId);
+      //    union; else the cross-sponsor service view). Same mapping the
+      //    ingest path uses (vault-filing.service), so a file cannot be
+      //    classified against one view and rendered under another — computed
+      //    from the project row already fetched, not a second read.
+      const projSegs = project.product_type ? productTypesToSegments([project.product_type]) : [];
+      const view: VaultViewId = projSegs[0] ?? (await resolveOrgVaultView(orgId));
 
       // 3) The project's active document builds + their rule-pack section specs.
       const docsRes = await pool.query(
@@ -550,15 +623,28 @@ export default function createProjectVaultRoutes(): Router {
         tree.push(documentFolder(doc, live));
       }
 
-      // 5) Uploaded documents (vault.documents) → the filing cabinet. This is
-      //    the seam that was open: uploads were written by /api/vault/ingest
-      //    and never read back into the tree they were uploaded into. Guarded
-      //    separately from the c2c store — a missing uploads store is a
-      //    provisioning state, a failed read is an ERROR the surface must
-      //    show as one (never as an empty cabinet).
+      // 5) Derived branches: what the pipelines file for this program. ONE
+      //    degradation contract for all of them — a store this environment has
+      //    not provisioned is REPORTED in `unavailable`, never rendered as an
+      //    empty branch (which would read as "no documents"); any other
+      //    failure is a real error and 500s.
+      const unavailable: Array<{ branch: string; reason: string }> = [];
+      try {
+        const m3 = await module3Branch(id, orgId);
+        if (m3) tree.push(m3);
+      } catch (err) {
+        if (!isMissingStore(err)) throw err;
+        unavailable.push({
+          branch: 'Module 3 (CMC)',
+          reason: 'The governed artifact registry (or its program anchor) is not provisioned in this environment.',
+        });
+      }
+
+      // 6) Uploaded files → the filing cabinet: the same vault.documents rows
+      //    the Upload button ingests, placed where their (suggested or
+      //    confirmed) filing says, plus the always-visible Unfiled queue.
       let uploads: UploadRow[] = [];
-      let uploadStorePending = false;
-      let uploadsUnavailable = false;
+      let uploadsStoreMissing = false;
       try {
         const upRes = await pool.query(
           `SELECT d.id, d.document_code, d.document_title, d.document_type,
@@ -574,35 +660,33 @@ export default function createProjectVaultRoutes(): Router {
           [id],
         );
         uploads = upRes.rows as UploadRow[];
-      } catch (upErr: unknown) {
-        const code = (upErr as { code?: string })?.code;
-        if (code === '42P01' || code === '42703') {
-          uploadStorePending = true;
-        } else {
-          uploadsUnavailable = true;
-          logger.error('project vault uploads read error', {
-            err: upErr instanceof Error ? upErr.message : String(upErr),
-          });
-        }
-      }
-      if (!uploadsUnavailable) {
         tree.push(filingCabinet(view, uploads));
+      } catch (err) {
+        if (!isMissingStore(err)) throw err;
+        uploadsStoreMissing = true;
+        unavailable.push({
+          branch: 'Uploaded files',
+          reason: 'The vault document store (vault.documents) is not provisioned in this environment.',
+        });
       }
       const unfiledCount = uploads.filter(
         u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled',
       ).length;
 
-      // 6) The Data Room pipeline: every captured source with its DERIVED
-      //    stage. 'filed' is a checksum join against this program's vault
-      //    documents — computed, not stored, so it cannot go stale.
+      // 7) The Data Room pipeline: every captured source with its DERIVED
+      //    stage — 'filed' is a checksum join against the uploads, computed
+      //    not stored, so it cannot go stale. With the uploads store missing
+      //    that join cannot be derived, and a room whose Filed count silently
+      //    read zero would be the error-as-empty lie — so the room is
+      //    reported unavailable alongside it.
       let dataRoom: DataRoomBlock | undefined;
-      let dataRoomPending = false;
-      // The 'filed' stage is a checksum join against the uploads; with the
-      // uploads read failed it cannot be derived, and a room whose Filed count
-      // silently reads zero during an outage would be the error-as-empty lie.
-      let dataRoomUnavailable = uploadsUnavailable;
-      try {
-        if (!dataRoomUnavailable) {
+      if (uploadsStoreMissing) {
+        unavailable.push({
+          branch: 'Data room',
+          reason: "The 'filed' stage joins captured sources against the uploads store, which is not provisioned — pipeline stages cannot be derived.",
+        });
+      } else {
+        try {
           const sources = await listClientDocuments(orgId, { programId: id });
           const vaultHashes = new Set(
             uploads.map(u => u.content_hash).filter((h): h is string => Boolean(h)),
@@ -649,15 +733,11 @@ export default function createProjectVaultRoutes(): Router {
             filed: rows.filter(r => r.stage === 'filed').length,
             sources: rows,
           };
-        }
-      } catch (drErr: unknown) {
-        const code = (drErr as { code?: string })?.code;
-        if (code === '42P01' || code === '42703') {
-          dataRoomPending = true;
-        } else {
-          dataRoomUnavailable = true;
-          logger.error('project vault data-room read error', {
-            err: drErr instanceof Error ? drErr.message : String(drErr),
+        } catch (err) {
+          if (!isMissingStore(err)) throw err;
+          unavailable.push({
+            branch: 'Data room',
+            reason: 'The data room store (cre_evidence_sources) is not provisioned in this environment.',
           });
         }
       }
@@ -669,11 +749,8 @@ export default function createProjectVaultRoutes(): Router {
         documentCount: countDocs(tree),
         tree,
         unfiledCount,
-        ...(uploadStorePending ? { uploadStorePending: true } : {}),
-        ...(uploadsUnavailable ? { uploadsUnavailable: true } : {}),
         ...(dataRoom ? { dataRoom } : {}),
-        ...(dataRoomPending ? { dataRoomPending: true } : {}),
-        ...(dataRoomUnavailable ? { dataRoomUnavailable: true } : {}),
+        ...(unavailable.length ? { unavailable } : {}),
       };
       return res.json({ success: true, data });
     } catch (err: unknown) {

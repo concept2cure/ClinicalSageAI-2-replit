@@ -99,6 +99,7 @@ export const RAIL_CORE = [
 ];
 /** Specialist science apps promoted to the rail (also in the Apps catalog) */
 export const RAIL_SPECIALIST = [
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
   { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
 ];
@@ -146,7 +147,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'haq-manager',
   'global-ri',
   'safety-narrative',
-  'cmc',
   'labeling',
   'risk',
   'design-controls',

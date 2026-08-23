@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { getPool } from '../../db';
 import {
   markStaleSections,
-  canFinalizeExport,
   summarizeSectionDiff,
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
@@ -11,6 +10,8 @@ import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } fro
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
+import { evaluateFinalExportGate } from '../../services/cmc/final-export-gate';
+import { placeModule3IntoSubmission } from '../../services/cmc/place-module3-into-submission';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
 import {
@@ -238,6 +239,10 @@ router.post('/compile/:projectId', async (req, res) => {
     // ── AUTO-BRIDGE: Create/update governed artifacts for each compiled section ──
     // Phase 5 — Module 3 Workflow Convergence: compile results must become governed artifacts
     const bridgedArtifacts: Array<{ sectionKey: string; artifactId: string; isNew: boolean }> = [];
+    // A bridge that could not run is reported, not swallowed: this loop's old
+    // catch-and-warn hid the integer/uuid spine break, so every wizard-created
+    // program "compiled successfully" while creating zero governed artifacts.
+    const bridgeSkips: Array<{ sectionKey: string; reason: string; detail: string }> = [];
     for (const section of compiled) {
       try {
         const bridged = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
@@ -247,14 +252,25 @@ router.post('/compile/:projectId', async (req, res) => {
           missingInputs: section.missingInputs,
           lineage: section.lineage,
         });
-        bridgedArtifacts.push({ sectionKey: section.sectionKey, ...bridged });
+        if (bridged.bridged) {
+          bridgedArtifacts.push({
+            sectionKey: section.sectionKey,
+            artifactId: bridged.artifactId,
+            isNew: bridged.isNew,
+          });
+        } else {
+          bridgeSkips.push({ sectionKey: section.sectionKey, reason: bridged.reason, detail: bridged.detail });
+        }
       } catch (bridgeErr) {
-        // Non-fatal: log but don't fail the compile
-        console.warn(`Bridge to artifact failed for ${section.sectionKey}:`, bridgeErr);
+        bridgeSkips.push({
+          sectionKey: section.sectionKey,
+          reason: 'error',
+          detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+        });
       }
     }
 
-    res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts });
+    res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts, bridgeSkips });
   } catch (error) {
     await client.query('ROLLBACK');
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
@@ -819,107 +835,84 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
-    const pool = getPool();
-    const [sectionsRes, contradictionsRes] = await Promise.all([
-      pool.query(
-        `SELECT approval_state, stale FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
-        [orgId, projectId]
-      ),
-      pool.query(
-        `SELECT severity, status FROM cmc_contradictions WHERE organization_id = $1 AND project_id = $2`,
-        [orgId, projectId]
-      ),
-    ]);
-
-    const sections = sectionsRes.rows;
-    // A section that went stale AFTER approval (source changed since sign-off) must
-    // not ship: its approval no longer matches its content. Mirror the readiness
-    // endpoint, which requires staleSections === 0 before export.
-    const staleSections = sections.filter((s: any) => Boolean(s.stale)).length;
-    const allApproved = sections.length > 0 && sections.every((s: any) => s.approval_state === 'approved');
-    const allowed = canFinalizeExport({
-      approvalState: allApproved ? 'approved' : 'draft',
-      contradictions: contradictionsRes.rows || [],
+    // The verdict lives in evaluateFinalExportGate so the placement path
+    // (place-into-submission below) refuses on exactly the same answer.
+    const verdict = await evaluateFinalExportGate({
+      orgId,
+      projectId,
+      actorId: (req as any).user?.id || 'system',
     });
-
-    // Governed Document Decision Fabric evaluation
-    const approvedCount = sections.filter((s: any) => s.approval_state === 'approved').length;
-    const openCritical = (contradictionsRes.rows || []).filter((c: any) => c.severity === 'critical' && c.status !== 'resolved').length;
-    const unresolvedCount = (contradictionsRes.rows || []).filter((c: any) => c.status !== 'resolved').length;
-
-    let canonicalGovernedState: Record<string, any> | null = null;
-    let fabricBlocks = false;
-    try {
-      canonicalGovernedState = await buildCanonicalGovernedState({
-        context: {
-          organizationId: String(orgId),
-          projectId: String(projectId),
-          actorId: (req as any).user?.id || 'system',
-          intendedAction: 'export',
-          documentType: 'cmc_module3',
-          ctdSection: '3',
-        },
-        documentState: {
-          hasContent: sections.length > 0,
-          hasEvidence: sections.length > 0,
-          hasBeenReviewed: approvedCount > 0,
-          hasApproval: allApproved,
-          hasPlacement: true,
-          placementValid: true,
-          hasProvenance: true,
-          unresolvedContradictionCount: unresolvedCount,
-          criticalContradictionCount: openCritical,
-          isStale: staleSections > 0,
-          completenessScore: sections.length > 0 ? approvedCount / sections.length : 0,
-        },
-        exportState: {
-          humanReviewApproved: allApproved,
-          aiGenerated: false,
-          provenanceComplete: true,
-        },
-      });
-      fabricBlocks =
-        canonicalGovernedState.derivedFlags?.isBlocked === true ||
-        canonicalGovernedState.derivedFlags?.hasUnresolvedGovernedDecisions === true;
-    } catch (fabricErr) {
-      fabricBlocks = true;
-      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true, blocked: true };
+    if (!verdict.allowed) {
+      return res.status(409).json({ success: false, error: verdict.error, data: verdict.data });
     }
-
-    const governedDecisionsBlock =
-      canonicalGovernedState &&
-      typeof canonicalGovernedState === 'object' &&
-      (canonicalGovernedState as any).derivedFlags?.hasUnresolvedGovernedDecisions === true;
-
-    // Fail-closed convergence: block if the existing check OR the fabric blocks OR
-    // governed decisions are unresolved OR any section went stale after approval.
-    if (!allowed || fabricBlocks || governedDecisionsBlock || staleSections > 0) {
-      const errorMsg = staleSections > 0
-        ? `${staleSections} section(s) went stale after approval and must be re-approved before final export`
-        : governedDecisionsBlock && allowed && !fabricBlocks
-        ? `Unresolved governed decisions block final export (${(canonicalGovernedState as any).decisionLifecycle?.unresolvedCount || 0} unresolved, ${(canonicalGovernedState as any).decisionLifecycle?.escalatedCount || 0} escalated)`
-        : fabricBlocks && allowed
-          ? 'Governed document fabric blocked final export'
-          : 'Critical contradictions or missing approvals block final export';
-      return res.status(409).json({
-        success: false,
-        error: errorMsg,
-        data: {
-          totalSections: sections.length,
-          approvedSections: approvedCount,
-          staleSections,
-          openCriticalContradictions: openCritical,
-          canonicalGovernedState,
-        },
-      });
-    }
-
-    return res.json({ success: true, message: 'Final export gate passed', canonicalGovernedState });
+    return res.json({
+      success: true,
+      message: 'Final export gate passed',
+      canonicalGovernedState: verdict.data.canonicalGovernedState,
+    });
   } catch (error) {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return res.status(500).json({ success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed final export guard check' });
+  }
+});
+
+/**
+ * POST /place-into-submission/:projectId — the CMC → IND seam.
+ *
+ * Places every approved §3.2 section into a sequence of the canonical
+ * submission core: a point-in-time snapshot into coauthor_documents (the
+ * canonical renderable leaf source) and a real submission_leaves row at the
+ * m-prefixed section code. Refuses outright — before any write — unless the
+ * final-export gate passes; the refusal body carries the gate's own verdict.
+ */
+router.post('/place-into-submission/:projectId', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
+
+    const actorId = resolveActorUserId(req);
+    if (!actorId) {
+      return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    }
+
+    const parsed = z
+      .object({ submissionId: z.number().int().positive(), sequenceId: z.number().int().positive() })
+      .safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'submissionId and sequenceId are required (the target sequence for the Module 3 leaves).',
+      });
+    }
+
+    const result = await placeModule3IntoSubmission({
+      orgId,
+      userId: Number(actorId),
+      cmcProjectId: projectId,
+      submissionId: parsed.data.submissionId,
+      sequenceId: parsed.data.sequenceId,
+    });
+
+    if (!result.placed) {
+      // The gate's verdict is the useful answer — surface it verbatim, as the
+      // guard endpoint would have.
+      return res.status(409).json({ success: false, error: result.error, data: result.data });
+    }
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('Organization context required')) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+    if (msg.includes('INVALID_STATE') || msg.includes('immutable')) {
+      return res.status(409).json({ success: false, error: msg });
+    }
+    if (msg.includes('NOT_FOUND') || msg.includes('FORBIDDEN')) {
+      return res.status(404).json({ success: false, error: msg });
+    }
+    return res.status(500).json({ success: false, error: msg || 'Placement failed' });
   }
 });
 

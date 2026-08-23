@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T18:47:02.299Z",
+  "generatedAt": "2026-08-23T19:10:13.148Z",
   "git": {
-    "sha": "1c15c7d8b36e4aa3ca47b8b2037dced9dfda4f77",
+    "sha": "8f47d7b7933d4a08cd519729e906709f8829d567",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 223,
+    "duplicateBasenames": 222,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
@@ -125,12 +125,11 @@
       },
       {
         "basename": "types",
-        "count": 49,
+        "count": 48,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/mdx/types.ts",
           "client/src/concept2cure/pdev/data/types.ts",
-          "server/api/cmc/types.js",
           "server/bootstrap/types.ts",
           "server/config/types.ts",
           "server/services/ai-gateway/types.ts",
@@ -2076,14 +2075,6 @@
         ]
       },
       {
-        "basename": "templateservice",
-        "count": 2,
-        "paths": [
-          "server/api/cmc/templateService.ts",
-          "server/services/templateService.ts"
-        ]
-      },
-      {
         "basename": "test-assembly.routes.test",
         "count": 2,
         "paths": [
@@ -2235,12 +2226,12 @@
         "bytes": 129044
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 127662
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 127933
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126752
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 127662
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2442,7 +2433,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2188
+        "lines": 2209
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2666,7 +2657,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 404,
+      "duplicateGroups": 401,
       "largeByBytes": 30,
       "largeByLines": 73
     },

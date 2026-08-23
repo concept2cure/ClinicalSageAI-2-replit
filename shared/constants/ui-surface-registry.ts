@@ -391,7 +391,10 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Module 3 operating system: blueprint, specifications, stability, batch records, convergence.',
+    notes:
+      'Module 3 operating system: registers, specifications, stability, batch records, build/compile, ' +
+      'contradictions, Part 11 approval, export gate, and placement into the IND submission spine. ' +
+      'Promoted to the rail (RAIL_SPECIALIST) 2026-08-23; entitlement-gated via the cmc catalog row.',
   },
   {
     id: 'ind-checklist',

@@ -35,6 +35,7 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
+import { VAULT_INGEST_DOCUMENT_TYPES } from '../../shared/constants/domain/vault-taxonomy';
 import { pool } from '../db';
 import { runWithTenantScope } from '../db/tenantStore';
 import { createScopedLogger } from '../utils/logger';
@@ -71,11 +72,7 @@ const IngestBodySchema = z.object({
   programId: z.string().uuid('programId must be a UUID'),
   documentCode: z.string().min(1, 'documentCode is required'),
   documentTitle: z.string().min(1, 'documentTitle is required'),
-  documentType: z.enum([
-    'CSR', 'PROTOCOL', 'CER', 'IB', 'DSUR', 'PSUR',
-    'SAP', 'SAR', 'MODULE_2', 'MODULE_3', 'MODULE_4', 'MODULE_5',
-    'SOP', 'REPORT', 'CORRESPONDENCE', 'OTHER',
-  ]),
+  documentType: z.enum(VAULT_INGEST_DOCUMENT_TYPES),
   version: z.string().optional(),
   classification: z.enum(['CONFIDENTIAL', 'INTERNAL', 'CONTROLLED', 'PUBLIC']).optional(),
   retentionPolicy: z.string().optional(),

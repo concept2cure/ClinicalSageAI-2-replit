@@ -66,6 +66,10 @@ export const VAULT_STATUS: Record<string, VaultStatus> = {
   draft: { label: 'Draft', tone: 'warn' },
   not_started: { label: 'Not started', tone: 'idle' },
   rejected: { label: 'Rejected', tone: 'warn' },
+  /* An ingested file is complete AS a file — it has no drafting lifecycle, so
+     neither "Draft" (the unknown-status fallback) nor "Final" (an approval
+     claim) would be true of it. */
+  uploaded: { label: 'Uploaded', tone: 'ok' },
   /* Upload filing states — the placement lifecycle, not an authoring one.
      'suggested' = the classifier proposed a folder and a person has not yet
      confirmed it; 'confirmed' = filed by a person (audited); 'unfiled' = the

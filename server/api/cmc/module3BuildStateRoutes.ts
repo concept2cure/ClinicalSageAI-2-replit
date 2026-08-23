@@ -14,6 +14,7 @@
 
 import express from 'express';
 import { getPool } from '../../db';
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 
 const router = express.Router();
 
@@ -99,6 +100,15 @@ router.get('/build-state/:projectId', async (req, res) => {
     const { projectId } = req.params;
     const pool = getPool();
 
+    /* The CMC tables key project_id as TEXT (the shell passes the program
+       uuid); concept2cure_artifacts keys the INTEGER projects.id. Querying the
+       integer column with the raw uuid aborts the statement (22P02) and took
+       this whole Promise.all — and the endpoint — down for every
+       wizard-created program. Resolve the spine first; when it cannot be
+       resolved, the artifact queries are skipped and the response says so. */
+    const spine = await resolveCmcArtifactProject(orgId, projectId);
+    const noArtifacts = Promise.resolve({ rows: [] as any[] });
+
     // Parallel queries for all data sources
     const [sourceObjectsRes, compiledSectionsRes, contradictionsRes, artifactsRes, uploadedSourcesRes] =
       await Promise.all([
@@ -130,25 +140,29 @@ router.get('/build-state/:projectId', async (req, res) => {
           [orgId, projectId]
         ),
         // 4. Governed artifacts placed in Module 3 sections
-        pool.query(
-          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
-                  status, title, updated_at as "updatedAt"
-           FROM concept2cure_artifacts
-           WHERE organization_id = $1 AND project_id = $2
-                 AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
-          [orgId, projectId]
-        ),
+        spine.state === 'linked'
+          ? pool.query(
+              `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
+                      status, title, updated_at as "updatedAt"
+               FROM concept2cure_artifacts
+               WHERE organization_id = $1 AND project_id = $2
+                     AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
+              [orgId, spine.artifactProjectId]
+            )
+          : noArtifacts,
         // 5. Uploaded source documents classified for Module 3
-        pool.query(
-          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
-                  metadata, title
-           FROM concept2cure_artifacts
-           WHERE organization_id = $1 AND project_id = $2
-                 AND category = 'source'
-                 AND (metadata->>'dossierClassification' IS NOT NULL)
-                 AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'`,
-          [orgId, projectId]
-        ),
+        spine.state === 'linked'
+          ? pool.query(
+              `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
+                      metadata, title
+               FROM concept2cure_artifacts
+               WHERE organization_id = $1 AND project_id = $2
+                     AND category = 'source'
+                     AND (metadata->>'dossierClassification' IS NOT NULL)
+                     AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'`,
+              [orgId, spine.artifactProjectId]
+            )
+          : noArtifacts,
       ]);
 
     // Build lookup maps
@@ -294,6 +308,13 @@ router.get('/build-state/:projectId', async (req, res) => {
       success: true,
       data: {
         sections,
+        /* Honest-state contract: when the registry could not be addressed,
+           every artifactId above is null BECAUSE of that — not because the
+           project has no artifacts. The client must render the distinction. */
+        artifactRegistry:
+          spine.state === 'linked'
+            ? { state: 'linked' }
+            : { state: spine.state, detail: spine.detail },
         summary: {
           totalSections,
           readySections,
@@ -332,6 +353,17 @@ router.get('/uploaded-sources/:projectId', async (req, res) => {
     const { projectId } = req.params;
     const pool = getPool();
 
+    // Same spine translation as build-state: the registry keys integer
+    // projects.id; the raw TEXT id aborts the query for uuid programs.
+    const spine = await resolveCmcArtifactProject(orgId, projectId);
+    if (spine.state !== 'linked') {
+      return res.json({
+        success: true,
+        data: [],
+        artifactRegistry: { state: spine.state, detail: spine.detail },
+      });
+    }
+
     const { rows } = await pool.query(
       `SELECT id, artifact_id as "artifactId", title, ctd_section as "ctdSection",
               status, metadata, created_at as "createdAt"
@@ -340,11 +372,12 @@ router.get('/uploaded-sources/:projectId', async (req, res) => {
              AND category = 'source'
              AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'
        ORDER BY created_at DESC`,
-      [orgId, projectId]
+      [orgId, spine.artifactProjectId]
     );
 
     return res.json({
       success: true,
+      artifactRegistry: { state: 'linked' },
       data: rows.map((r: any) => ({
         id: r.id,
         artifactId: r.artifactId,
