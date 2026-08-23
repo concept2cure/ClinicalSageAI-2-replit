@@ -1373,6 +1373,34 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     [activeSection, rail, loadHistory, fireToast]
   );
 
+  /* ── Upload a figure into the governed image store ──
+     Multipart, because apiRequest is JSON-only, with the Bearer attached
+     explicitly — cookies alone never authenticate /api/authoring. The editor
+     inserts the returned REFERENCE; section HTML never carries image bytes,
+     so the revision ledger stays lean and the device cache stays inside its
+     quota. Thrown reasons surface in the editor's own notice bar. */
+  const uploadSectionImage = useCallback(async (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const token = getAuthToken();
+    const res = await fetch('/api/authoring/images', {
+      method: 'POST',
+      body: form,
+      credentials: 'include',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    const json = (await res.json().catch(() => null)) as {
+      image?: { id?: unknown; url?: unknown };
+      error?: unknown;
+    } | null;
+    if (!res.ok || typeof json?.image?.url !== 'string') {
+      throw new Error(
+        typeof json?.error === 'string' ? json.error : `the image store returned HTTP ${res.status}`
+      );
+    }
+    return { id: String(json.image.id), url: json.image.url };
+  }, []);
+
   /* ── Track changes: the store's own column drives the suggestion engine ──
      The server column is flipped FIRST; the editor enables suggestion capture
      only after the PATCH confirms, so the canvas never claims a mode the
@@ -2227,6 +2255,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                       onCreate: requestAnchoredComment,
                       onOpen: openCommentFromAnchor,
                     }}
+                    imagesApi={{ upload: uploadSectionImage }}
                     collab={
                       liveCoedit && activeDoc
                         ? {
