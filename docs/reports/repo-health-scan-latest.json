@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T19:10:13.148Z",
+  "generatedAt": "2026-08-23T22:12:55.221Z",
   "git": {
-    "sha": "8f47d7b7933d4a08cd519729e906709f8829d567",
+    "sha": "115a13c98913f93245b21643acbf3ab39433b79c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 87
+    "largeFilesByLines": 88
   },
   "findings": {
     "duplicateBasenames": [
@@ -2151,7 +2151,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 969063
+        "bytes": 969992
       },
       {
         "file": "shared/schema.ts",
@@ -2309,7 +2309,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18865
+        "lines": 18877
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2600,6 +2600,10 @@
         "lines": 1650
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1635
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2628,10 +2632,6 @@
         "lines": 1582
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1578
-      },
-      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
@@ -2646,6 +2646,10 @@
       {
         "file": "server/routes/cortex-unified.ts",
         "lines": 1533
+      },
+      {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1529
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2677,7 +2681,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 3,
-      "largeByLines": 4
+      "largeByLines": 5
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
