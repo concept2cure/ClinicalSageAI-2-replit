@@ -26,10 +26,24 @@ vi.mock('../../server/services/commitments/commitments-service.js', () => ({
   checkOutboundContradictions: mockCheckContradictions,
 }));
 
-// No DB / audit chain in route tests — pool null makes the best-effort audit a no-op.
-vi.mock('../../server/db.js', () => ({ pool: null }));
+// The Part 11 audit write is exercised against an in-memory client, so the happy
+// path asserts the fully-audited response. A failing writer is a separate,
+// explicit case below — never the accidental default. Stubbing the pool to null
+// (as this file used to) makes EVERY status change report auditWriteFailed, which
+// would freeze production's alarm state in as the expected result.
+const { mockAuditQuery } = vi.hoisted(() => ({
+  mockAuditQuery: vi.fn(async () => ({ rows: [], rowCount: 0 })),
+}));
+vi.mock('../../server/db.js', () => ({
+  pool: { connect: async () => ({ query: mockAuditQuery, release: () => {} }) },
+}));
+// Must mirror what the route actually imports. The route uses
+// computeAuditChainSealed; mocking only the older computeAuditChain left the
+// sealed function undefined, so the audit throw-and-catch path ran every time.
 vi.mock('../../server/services/audit/chain.js', () => ({
-  computeAuditChain: vi.fn(async () => 'hash'),
+  computeAuditChainSealed: vi.fn(async () => ({
+    sha256Chain: 'chain', previousHash: 'prev', hmacSeal: null,
+  })),
   hashPayload: vi.fn(() => 'ph'),
 }));
 
@@ -49,7 +63,11 @@ function req(overrides: Record<string, unknown> = {}, withOrg = true) {
   return r;
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  // clearAllMocks wipes the hoisted implementation — restore the succeeding writer.
+  mockAuditQuery.mockImplementation(async () => ({ rows: [], rowCount: 0 }));
+});
 
 describe('GET /', () => {
   it('401 without org context', async () => {
@@ -110,11 +128,38 @@ describe('PATCH /:id/status', () => {
     await handler('patch', '/:id/status')(req({ params: { id: 'cmt_1' }, body: { status: 'open', reason: 'reviewed by RA lead' } }), res);
     expect(res.status).toHaveBeenCalledWith(404);
   });
-  it('updates status when found', async () => {
+  it('updates status when found, and commits the Part 11 audit row', async () => {
     mockUpdateStatus.mockResolvedValue({ id: 'cmt_1', status: 'open' });
     const res = createMockResponse();
     await handler('patch', '/:id/status')(req({ params: { id: 'cmt_1' }, body: { status: 'open', reason: 'reviewed by RA lead' } }), res);
     expect(res.json).toHaveBeenCalledWith({ success: true, data: { id: 'cmt_1', status: 'open' } });
+    // The clean response is only correct BECAUSE the audit landed. Assert the
+    // commit, so a regression that silently swallows the audit cannot pass by
+    // simply producing the same body.
+    expect(mockAuditQuery).toHaveBeenCalledWith('COMMIT');
+  });
+
+  it('still succeeds but flags the gap when the Part 11 audit row cannot be written', async () => {
+    mockUpdateStatus.mockResolvedValue({ id: 'cmt_1', status: 'open' });
+    mockAuditQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === 'string' && sql.includes('INSERT INTO audit_logs')) {
+        throw new Error('audit_logs unavailable');
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = createMockResponse();
+    await handler('patch', '/:id/status')(req({ params: { id: 'cmt_1' }, body: { status: 'open', reason: 'reviewed by RA lead' } }), res);
+
+    // The status change itself is real and must be reported as such...
+    const payload = (res.json as any).mock.calls[0][0];
+    expect(payload.success).toBe(true);
+    expect(payload.data).toEqual({ id: 'cmt_1', status: 'open' });
+    // ...but the missing ledger row must be surfaced, not swallowed. This is the
+    // behaviour cde5a7b4f added; if it ever regresses to a silent success this
+    // assertion is what catches it.
+    expect(payload.auditWriteFailed).toBe(true);
+    expect(payload.auditWarning).toMatch(/audit/i);
+    expect(mockAuditQuery).toHaveBeenCalledWith('ROLLBACK');
   });
 });
 
