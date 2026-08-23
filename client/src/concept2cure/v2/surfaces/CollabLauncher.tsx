@@ -424,6 +424,25 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
     if (f.dueDays > 0) {
       body.dueDate = new Date(Date.now() + f.dueDays * 86400000).toISOString();
     }
+    /* ── The three governance toggles were dropped on submit ─────────────────
+       "Critical path", "Regulatory impact" and "Approval gate" set local state
+       and never reached the wire, so a task a user explicitly marked as
+       approval-gated persisted as an ordinary one — and the board, which
+       renders those flags and gates completion on approvalRequired, had no way
+       to know. The user's answer to a governance question was discarded.
+
+       They are not new fields. `createTaskSchema` (taskManagement.routes.ts)
+       already declares them, with a comment saying exactly why: "Governance
+       flags collected by the ui-v2 create form — real unified_tasks columns, so
+       the form's inputs persist instead of being silently dropped." The form
+       collected them; only the POST body did not carry them.
+
+       Sent unconditionally rather than only when true: `false` is an answer,
+       and omitting it would let a server-side default contradict what the user
+       chose. */
+    body.criticalPath = f.criticalPath;
+    body.regulatoryImpact = f.regulatoryImpact;
+    body.approvalRequired = f.approvalRequired;
 
     try {
       const res = await apiRequest('POST', '/api/tasks/tasks', body);

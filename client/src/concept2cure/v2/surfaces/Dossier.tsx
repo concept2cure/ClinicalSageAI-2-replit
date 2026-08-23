@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
@@ -73,6 +74,63 @@ export function Dossier({ onNav }: SurfaceViewProps) {
     })();
     return () => { cancelled = true; };
   }, [projectId]);
+
+  /* What AnA can see of this screen.
+     Each of the five states is published as itself. "No program open", "the
+     artifact store is not provisioned in this environment" and "the read
+     failed" are three different reasons for an empty screen, and collapsing
+     them into "0 sections ready" would have AnA report a filing readiness
+     figure that nothing computed. */
+  const anaContext = useMemo(() => {
+    if (projectId == null) {
+      return {
+        summary:
+          'Dossier readiness is scoped to one program and no program with a numeric project id is open, ' +
+          'so there is no section readiness on screen — this is not an empty dossier.',
+        availableActions: ['Open a program, then its per-CTD-section readiness appears here'],
+      };
+    }
+    if (state === 'loading' || state === 'idle') {
+      return { summary: 'Dossier section readiness is still loading; nothing on screen is final yet.' };
+    }
+    if (state === 'unprovisioned') {
+      return {
+        summary:
+          'The governed artifact store is not provisioned in this environment, so no CTD-section readiness ' +
+          'can be rolled up — the screen is empty for that reason, not because the program has no artifacts.',
+      };
+    }
+    if (state === 'error' || !payload) {
+      return {
+        summary:
+          'Dossier readiness could not be read, so this screen is showing no CTD sections because of a ' +
+          'failure, not because the program has none.',
+        availableActions: ['Retry the dossier-readiness read'],
+      };
+    }
+    return {
+      summary:
+        `Dossier readiness for project ${payload.projectId}: ${payload.summary.totalSections} CTD section(s) — ` +
+        `${payload.summary.readySections} ready, ${payload.summary.inProgressSections} in progress, ` +
+        `${payload.summary.draftSections} still draft.`,
+      facts: {
+        projectId: payload.projectId,
+        summary: payload.summary,
+        // Enough to name a section back to the user, not every artifact count.
+        sections: payload.sections.slice(0, 20).map((sec) => ({
+          ctdSection: sec.ctdSection, status: sec.status, artifacts: sec.artifactCount,
+          draft: sec.draftCount, inReview: sec.reviewCount,
+          approved: sec.approvedCount, locked: sec.lockedCount,
+          lastUpdated: sec.lastUpdated,
+        })),
+      },
+      availableActions: [
+        'Read per-CTD-section readiness rolled up from the program\u2019s governed artifacts',
+        'Open a section to work on its artifacts',
+      ],
+    };
+  }, [projectId, state, payload]);
+  usePublishSurfaceContext('dossier', anaContext);
 
   return (
     <div className="dsr">

@@ -396,13 +396,33 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
 
             <p className="pj-what">{stage.what}</p>
 
+            {/* ── The tick marks were a constant, not this programme's state ──
+                Each row rendered a green check or a clock from `d[1]`, a
+                hardcoded 1/0 in the PJ_STAGES catalog — e.g. 'IND initial
+                (Forms 1571/1572/3674)', 1. Every tenant on every programme saw
+                the same deliverables reported complete, and a regulatory lead
+                reading "Safe-to-proceed clearance ✓" was reading a literal in
+                this file, not their filing.
+
+                PJ_STAGES is deliberately definitional — the header above says
+                so — and the per-programme status arrives in `rec.overlay`,
+                which is real and IS applied to the stage itself (st/pct). There
+                is no per-DELIVERABLE status in the record, so there is nothing
+                to overlay here.
+
+                So the list says what the stage requires, which is true and
+                useful, and claims nothing about whether this programme has done
+                it. The stage's own progress above remains the live signal. */}
             <div className="pj-seclbl">Key deliverables</div>
             <div className="pj-deliv">
               {stage.deliv.map((d, i) => (
-                <div key={i} className="pj-deliv-row" data-done={d[1] ? true : undefined}>
-                  <span className="dot">{d[1] ? I.checkCircle : I.clock}</span>{d[0]}
+                <div key={i} className="pj-deliv-row">
+                  <span className="dot">{I.circle || I.clock}</span>{d[0]}
                 </div>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              What this stage requires. Per-deliverable status is not tracked on the programme record — the stage progress above is the live signal.
             </div>
 
             <div className="pj-seclbl">Capabilities that serve this stage</div>

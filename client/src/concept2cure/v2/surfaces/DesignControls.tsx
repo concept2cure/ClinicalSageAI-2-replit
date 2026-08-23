@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
@@ -179,6 +180,62 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
 
   const hasRows = inputs.length > 0;
   const isLive = !live.loading && !live.error;
+
+  /* What AnA can see of this screen. A DHF question is always about a specific
+     gap — "what is untraced?", "does 820.30(g) hold?" — and until now she had
+     the surface name and none of the matrix.
+
+     A FAILED read publishes the failure. `inputs` is [] on error as well as on
+     an empty file, and reporting 0% traceability over an outage would be a
+     confident claim about a device maker's design history file. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The design history file is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The design history file could not be read, so this screen is showing no design inputs because ' +
+          'of a failure, not because none are recorded.',
+        availableActions: ['Retry the design-input read'],
+      };
+    }
+    return {
+      summary:
+        `Design controls (21 CFR 820.30 DHF): ${trace.total} design input(s), ${trace.fullyTraced} fully traced ` +
+        `(${trace.pct}%). ${trace.noOutput} have no linked output, ${trace.noVer} are unverified, ` +
+        `${trace.noVal} unvalidated. 820.30 completeness ${elPct}% over ${assessable.length} assessable ` +
+        `element(s), ${untracked} element(s) not tracked by any store.`,
+      facts: {
+        totalInputs: trace.total,
+        fullyTraced: trace.fullyTraced,
+        traceabilityPercent: trace.pct,
+        missingOutput: trace.noOutput,
+        unverified: trace.noVer,
+        unvalidated: trace.noVal,
+        completeness820_30: {
+          percent: elPct,
+          assessableElements: assessable.length,
+          presentElements: present,
+          untrackedElements: untracked,
+          elements: checklist.map((e) => ({ element: e.el, label: e.label, ref: e.ref, state: e.state })),
+        },
+        firstGap: firstGap
+          ? {
+              id: firstGap.id, requirement: firstGap.req, category: catLabel(firstGap.cat),
+              outputs: (firstGap.outputs ?? []).length,
+              verification: firstGap.ver, validation: firstGap.val,
+            }
+          : null,
+      },
+      availableActions: [
+        'Add a design input (a controlled record; the write is audit-logged under 21 CFR 820.30)',
+        'Read the traceability matrix — inputs to outputs to verification to validation',
+        'Read the 820.30 completeness checklist, including the elements no store evidences',
+      ],
+    };
+  }, [live.loading, live.error, trace, checklist, assessable.length, present, untracked, elPct, firstGap]);
+  usePublishSurfaceContext('design-controls', anaContext);
 
   return (
     <div className="dc" style={{ maxWidth: 1200 }}>

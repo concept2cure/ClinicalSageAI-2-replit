@@ -33,7 +33,7 @@ import { assertAuthoringAuthorizationReady } from './authoringAuthorizationInvar
 import { assertAiProvenanceLedgerForProduction } from './aiProvenanceLedgerInvariant';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
-import { moduleEntitlementGate } from '../middleware/moduleEntitlementGate';
+import { registerEntitlementGate } from '../bootstrap/register-entitlement-gate.js';
 
 import { registerCoreRoutes } from '../bootstrap/register-core-routes';
 import { registerConcept2CureRoutes } from '../bootstrap/register-concept2cure-routes';
@@ -101,7 +101,7 @@ export async function registerPreStartRoutes(
   // and serves the request, 'enforce' denies. Default 'off'. Turning hard
   // enforcement on as a first act would deny real requests nobody has measured
   // yet — see the module header.
-  app.use(moduleEntitlementGate());
+  registerEntitlementGate({ app });
 
   // Slot 1 — Device-Project CRUD.
   registerInlineEarlyRoutes(inlineCtx);

@@ -466,7 +466,18 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      "task-board" and nothing more, so "what should I do next?" had to be
      answered from the message text — on the one surface whose entire purpose is
      answering that question. Published as the nouns and numbers a user would
-     point at, never raw API bodies and never anything the screen is hiding. */
+     point at, never raw API bodies and never anything the screen is hiding.
+
+     PUBLISHED AS 'tasks', NOT 'task-board'. This board is registered under both
+     ids, but `DEEP_LINK_ALIASES['task-board'] === 'tasks'` and
+     `surfaceIdFromLocation` applies that rewrite BEFORE the shell has an
+     `activeId` — so `activeId` is always 'tasks' here, and
+     `useActiveSurfaceContext` compares keys exactly. Publishing under
+     'task-board' therefore matched nothing on every single render since this
+     call was written: the context above was built, stored, and read past. It
+     cost nothing and was indistinguishable from working, which is why
+     scripts/ci/check-ana-surface-context.mjs now resolves aliases and fails a
+     publish into an alias source rather than merely checking membership. */
   const anaContext = useMemo(() => {
     // `t.due` is server data, not a local invariant: a task row without it is a
     // plausible response and must not crash the board. Same class as the
@@ -509,7 +520,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [list, stats, sel, view]);
-  usePublishSurfaceContext('task-board', anaContext);
+  usePublishSurfaceContext('tasks', anaContext);
 
   /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
   const critChain = useMemo(() => {

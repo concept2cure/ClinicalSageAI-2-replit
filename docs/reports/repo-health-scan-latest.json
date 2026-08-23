@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:41:26.428Z",
+  "generatedAt": "2026-08-23T22:55:45.017Z",
   "git": {
-    "sha": "c208bafd5c9a76697d1ccc175a41f9cb3b1b1939",
+    "sha": "66843ef396cb6d625461293e22c41c6d884b7c58",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2223,6 +2223,10 @@
         "bytes": 132966
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 131221
+      },
+      {
         "file": "shared/regulatory/global-document-registry.ts",
         "bytes": 129044
       },
@@ -2241,10 +2245,6 @@
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 120988
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 117833
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2361,6 +2361,10 @@
         "lines": 3113
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3088
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
       },
@@ -2375,10 +2379,6 @@
       {
         "file": "server/src/routes/stability.router.ts",
         "lines": 2832
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2827
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2654,7 +2654,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1516
+        "lines": 1527
       }
     ]
   },

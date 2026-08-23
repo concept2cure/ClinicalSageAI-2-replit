@@ -14,6 +14,7 @@
  *   GET   /licensing/tenants/:id         one tenant's effective verdict for every module
  *   PATCH /licensing/modules/:moduleId   move a module to a different tier (or unrestricted)
  *   PATCH /licensing/tenants/:id/tier    change one tenant's plan
+ *   POST  /licensing/tenants/:id/provision  apply that plan — grant what it includes
  *
  * The per-tenant module override already existed as
  * `PATCH /tenants/:id/modules` in ./master-admin and is deliberately not
@@ -332,6 +333,132 @@ router.patch('/licensing/modules/:moduleId', async (req: Request, res: Response)
   }
 });
 
+// ─── POST /licensing/tenants/:id/provision — apply the plan ─────────────────
+//
+// The endpoint that makes a tier change mean something.
+//
+// Changing `organizations.tier` writes no subscription rows. Provisioning is a
+// separate act, and the only paths that performed it were
+// `provisionModulesForTier` (billing.ts, fired by Stripe checkout and the
+// subscription webhook) and `POST /api/module-subscriptions/provision` — which
+// requires `userRole === 'admin'`, an ORG admin acting on their OWN
+// organization. So a platform admin who moved a tenant to Professional in the
+// licensing console had no way to apply it: the tier field changed and the
+// tenant's entitlements did not. The console said "re-provision the tenant" and
+// offered nothing that could.
+//
+// WHAT IT REPORTS, AND WHY THAT MATTERS MORE THAN WHAT IT DOES.
+// provision_org_modules() inserts ON CONFLICT DO NOTHING: it GRANTS what the
+// new tier includes and revokes nothing. That is the correct default — see
+// invariant 1 — but it means a DOWNGRADE provisions zero rows and removes zero,
+// so an operator who downgrades a tenant, sees "provisioned", and assumes
+// capability was withdrawn would be wrong in the most expensive direction.
+// This returns `granted` (rows actually added) AND `retainedAboveTier` (grants
+// the tenant still holds that the new plan does not include), so the gap is
+// stated rather than left to be discovered. Removing those is a deliberate,
+// per-module act through the module toggle — never a side effect of a plan
+// change.
+router.post('/licensing/tenants/:id/provision', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
+
+    const reason = normalizeReason((req.body ?? {}).reason);
+    if (!reason) {
+      return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
+    }
+
+    const orgRes = await query(
+      `SELECT id, name, tier, industry_mode FROM organizations WHERE id = $1`,
+      [id],
+    );
+    if (!orgRes.rows.length) return res.status(404).json({ error: 'Tenant not found.' });
+    const org = orgRes.rows[0];
+
+    const before = await query(
+      `SELECT COUNT(*)::int AS n FROM module_subscriptions
+        WHERE organization_id = $1 AND enabled IS TRUE`,
+      [id],
+    );
+
+    // The repaired function (20260823_fix_provision_org_modules_tier_ladder).
+    // Before that migration this call raised on every invocation, so an older
+    // database reaches the catch below rather than silently doing nothing.
+    await query(`SELECT provision_org_modules($1)`, [id]);
+
+    const after = await query(
+      `SELECT COUNT(*)::int AS n FROM module_subscriptions
+        WHERE organization_id = $1 AND enabled IS TRUE`,
+      [id],
+    );
+
+    // Grants the tenant holds that its CURRENT tier does not include. Computed
+    // in SQL against the same ladder provisioning uses, so the two cannot
+    // disagree about what "above tier" means.
+    const retained = await query(
+      `SELECT ms.module_id, am.name
+         FROM module_subscriptions ms
+         JOIN available_modules am ON am.module_id = ms.module_id
+        WHERE ms.organization_id = $1
+          AND ms.enabled IS TRUE
+          AND jsonb_typeof(COALESCE(am.metadata::jsonb, '{}'::jsonb)->'tiers') = 'array'
+          AND jsonb_array_length(COALESCE(am.metadata::jsonb, '{}'::jsonb)->'tiers') > 0
+          AND NOT EXISTS (
+                SELECT 1
+                  FROM jsonb_array_elements_text(COALESCE(am.metadata::jsonb, '{}'::jsonb)->'tiers') AS t
+                 WHERE module_tier_level(t) IS NOT NULL
+                   AND module_tier_level($2) >= module_tier_level(t)
+              )
+        ORDER BY am.name`,
+      [id, org.tier ?? 'standard'],
+    );
+
+    const granted = (after.rows[0]?.n ?? 0) - (before.rows[0]?.n ?? 0);
+
+    await auditService.logAction({
+      tenantId: id,
+      userId: req.userId,
+      action: 'data_modify',
+      resourceType: 'organization',
+      resourceId: String(id),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: {
+        masterAdminAction: 'tenant.provision',
+        tier: org.tier ?? null,
+        industryMode: org.industry_mode ?? null,
+        granted,
+        retainedAboveTier: retained.rows.map((r: any) => r.module_id),
+        reason,
+      },
+    });
+
+    return res.json({
+      id,
+      name: org.name,
+      tier: org.tier ?? null,
+      /** Modules newly granted by this run. */
+      granted,
+      enabledTotal: after.rows[0]?.n ?? 0,
+      /**
+       * Grants the tenant KEEPS that this plan does not include. Provisioning
+       * never revokes; these are removed one at a time through the module
+       * toggle, deliberately.
+       */
+      retainedAboveTier: retained.rows.map((r: any) => ({
+        moduleId: r.module_id,
+        name: r.name,
+      })),
+    });
+  } catch (err) {
+    logger.error('tenant provisioning failed', err as Record<string, unknown>);
+    return res.status(500).json({
+      error:
+        'Provisioning failed. If this database predates the provision_org_modules repair, apply the pending migrations first.',
+    });
+  }
+});
+
 // ─── PATCH /licensing/tenants/:id/tier — change one tenant's plan ────────────
 
 router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) => {
@@ -386,7 +513,8 @@ router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) 
        * design (invariant 1). Said in the response so nobody assumes a plan
        * change silently repossessed anything.
        */
-      note: 'Existing module grants are unchanged. Re-provision the tenant to apply the new plan.',
+      note: 'Existing module grants are unchanged. Provision the tenant to apply the new plan.',
+      provisionPath: `/api/admin/master/licensing/tenants/${id}/provision`,
     });
   } catch (err) {
     logger.error('tenant tier change failed', err as Record<string, unknown>);

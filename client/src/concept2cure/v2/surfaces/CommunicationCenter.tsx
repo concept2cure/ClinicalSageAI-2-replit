@@ -39,6 +39,7 @@ import {
   CC_CLOSURE,
 } from '../fixtures/commcenter';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/commcenter-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -232,6 +233,100 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     ? '/api/concept2cure/projects/' + encodeURIComponent(projectId) + '/authority-profiles'
     : null;
   const profState = useLiveRows<AuthProfileRow>(profPath);
+
+  /* What AnA can see of this screen.
+     Four independent reads, two of them project-scoped. NO PROJECT is its own
+     state and is published as itself: the agency inbox and the authority
+     profiles are empty for want of a project id, not because the regulator has
+     sent nothing — and "you have no open agency correspondence" is a claim a
+     user would act on.
+
+     `responseRequired` with a due date is the fact worth carrying: it is what
+     turns this screen from a list into a clock. */
+  const anaContext = React.useMemo(() => {
+    const inbox = !commsPath
+      ? { state: 'no-project' as const }
+      : liveComms.loading
+        ? { state: 'loading' as const }
+        : liveComms.error
+          ? { state: 'unreadable' as const }
+          : { state: 'ready' as const };
+    const inboxLine =
+      inbox.state === 'no-project'
+        ? 'no project is selected, so the agency inbox is not scoped to anything'
+        : inbox.state === 'loading'
+          ? 'the agency inbox is still loading'
+          : inbox.state === 'unreadable'
+            ? 'the agency inbox could not be read'
+            : `${comms.length} agency communication(s), ${open.length} open, ${responseDue.length} awaiting a response, ${critical.length} critical`;
+    return {
+      summary:
+        `Communication centre, "${tab}" tab (${owner === 'mine' ? 'my items' : 'all owners'}): ${inboxLine}.` +
+        (inbox.state === 'ready' && soonest
+          ? ` The soonest response is due ${soonest.dueDate}.`
+          : '') +
+        ' ' +
+        (interState.loading
+          ? 'Health-authority interactions are still loading.'
+          : interState.error
+            ? 'Health-authority interactions could not be read.'
+            : `${interState.rows.length} health-authority interaction(s).`) +
+        ' ' +
+        (commitState.loading
+          ? 'Commitments are still loading.'
+          : commitState.error
+            ? 'Commitments could not be read.'
+            : `${commitments.length} commitment(s).`),
+      facts: {
+        openTab: tab,
+        ownerFilter: owner,
+        projectScoped: Boolean(projectId),
+        agencyInboxState: inbox.state,
+        agencyInbox: inbox.state === 'ready'
+          ? {
+              total: comms.length,
+              open: open.length,
+              awaitingResponse: responseDue.length,
+              critical: critical.length,
+              soonestDue: soonest ? { id: soonest.id, type: soonest.communicationType, due: soonest.dueDate, urgency: soonest.urgency } : null,
+              items: comms.slice(0, 10).map((c) => ({
+                id: c.id, type: c.communicationType, channel: c.sourceChannel,
+                received: c.receivedDate, due: c.dueDate ?? null, urgency: c.urgency,
+                responseRequired: c.responseRequired, issues: c.extractedIssues,
+                reviewStatus: c.humanReviewStatus, closureStatus: c.closureStatus,
+              })),
+            }
+          : null,
+        interactions: interState.loading || interState.error
+          ? null
+          : interState.rows.slice(0, 10).map((r) => ({
+              id: r.id, type: r.interaction_type, agency: r.agency, title: r.title,
+              status: r.status, requested: r.requested_date, scheduled: r.scheduled_date, held: r.held_date,
+            })),
+        commitments: commitState.loading || commitState.error
+          ? null
+          : commitments.slice(0, 10).map((c) => ({
+              id: c.id, type: c.commitment_type, description: c.description,
+              regulatoryBasis: c.regulatory_basis, due: c.due_date,
+              status: c.status, effectiveStatus: c.effectiveStatus, fulfilled: c.fulfilled_date,
+            })),
+        authorityProfiles: profState.loading || profState.error
+          ? null
+          : profState.rows.map((pr) => ({
+              authority: pr.authority, centerOrDivision: pr.centerOrDivision,
+              channel: pr.channelType, transport: pr.submissionTransport,
+              acceptedFormats: pr.acceptedFormats ?? [],
+            })),
+      },
+      availableActions: [
+        'Log an agency communication (a governed write — persists the event, auto-creates a response task when one is required, and writes the audit entry)',
+        'Switch tab between the inbox, interactions, commitments and authority profiles',
+        'Filter to my items or all owners',
+        'Read a communication\u2019s extracted issues, urgency and response due date',
+      ],
+    };
+  }, [commsPath, liveComms.loading, liveComms.error, comms, open.length, responseDue.length, critical.length, soonest, tab, owner, projectId, interState.loading, interState.error, interState.rows, commitState.loading, commitState.error, commitments, profState.loading, profState.error, profState.rows]);
+  usePublishSurfaceContext('communication-center', anaContext);
 
   // logComm — REAL, audited write. POSTs to
   // /api/concept2cure/projects/:pid/agency-communications, which persists the

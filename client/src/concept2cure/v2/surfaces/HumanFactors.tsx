@@ -4,6 +4,7 @@ import { EmptyState, useLiveData } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -159,6 +160,69 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
   };
 
   const mitigate = (idx: number) => setScenarioEdit(scenarios.map((sc, i) => i === idx ? { ...sc, mitigated: true } : sc));
+
+  /* What AnA can see of this screen.
+     Published BEFORE the loading / error / empty early returns below — a
+     publisher that only runs on the success path goes silent exactly when the
+     user asks what happened, and React would reject the conditional call.
+
+     Each not-ready state is published as itself: "no HFE/UE file yet" is a
+     different fact from "the store did not answer", and an unmitigated critical
+     task count derived from a failed read would be a safety claim nobody made. */
+  const anaContext = useMemo(() => {
+    if (hf.loading) {
+      return { summary: 'The HFE/UE file is still loading; nothing on screen is final yet.' };
+    }
+    if (hf.error) {
+      return {
+        summary:
+          'The human-factors store could not be read, so this screen is showing no HFE/UE file because of ' +
+          'a failure, not because none exists.',
+        availableActions: ['Retry the HFE/UE file read'],
+      };
+    }
+    if (hf.empty || !file) {
+      return {
+        summary:
+          'Human factors (IEC 62366-1): this organisation has no HFE/UE file yet, so there is no ' +
+          'completeness score or use-related risk analysis on screen.',
+        availableActions: ['Create the HFE/UE file for this device'],
+      };
+    }
+    return {
+      summary:
+        `Human factors (IEC 62366-1) for ${device || 'this device'}: HFE/UE file ${compPct}% complete ` +
+        `(${hfe.gaps.length} element(s) still open). ${risk.totalScenarios} use scenario(s), ` +
+        `${risk.criticalTaskCount} critical task(s), ${risk.unmitigatedCriticalTasks} unmitigated — ` +
+        `residual risk ${risk.residualRiskAcceptable ? 'acceptable' : 'NOT acceptable for summative testing'}.`,
+      facts: {
+        device: device || null,
+        completenessPercent: compPct,
+        presentElements: hfe.present,
+        openElements: hfe.gaps,
+        totalScenarios: risk.totalScenarios,
+        criticalTaskCount: risk.criticalTaskCount,
+        unmitigatedCriticalTasks: risk.unmitigatedCriticalTasks,
+        residualRiskAcceptable: risk.residualRiskAcceptable,
+        firstUnmitigatedCriticalTask: firstUnmit
+          ? {
+              task: firstUnmit.task, useError: firstUnmit.useError,
+              severity: sevLabel(firstUnmit.potentialHarmSeverity),
+            }
+          : null,
+        scenarios: scenarios.slice(0, 12).map((sc) => ({
+          task: sc.task, useError: sc.useError,
+          severity: sevLabel(sc.potentialHarmSeverity), mitigated: sc.mitigated,
+        })),
+      },
+      availableActions: [
+        'Add a use scenario (feeds the use-related risk analysis; the write is audit-logged)',
+        'Record a mitigation against a critical task',
+        'Toggle an HFE/UE file element present or absent',
+      ],
+    };
+  }, [hf.loading, hf.error, hf.empty, file, device, compPct, hfe, risk, firstUnmit, scenarios]);
+  usePublishSurfaceContext('human-factors', anaContext);
 
   /* ── Honest states: loading / error / empty (no fixture fallback) ── */
   if (hf.loading) {
