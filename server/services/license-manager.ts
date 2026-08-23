@@ -40,6 +40,20 @@ export interface LicenseInfo {
   maxStorageGB: number;
 }
 
+/**
+ * Whether this organization has a `module_subscriptions` row for a module, and
+ * what it says.
+ *
+ * `isEnabled` collapses 'disabled' and 'none' into one `false`, which is the
+ * right answer for "may they use it" but the wrong answer for "why not": an
+ * admin who deliberately switched a module OFF for their workspace is a
+ * different fact from an organization that simply never had a row written.
+ * The first is a workspace decision to explain; the second is the normal state
+ * of every module the org's plan already includes. Anything that has to tell a
+ * human WHY something is locked needs the two kept apart.
+ */
+export type ModuleSubscriptionState = 'enabled' | 'disabled' | 'none';
+
 export interface ModuleCatalogEntry {
   moduleId: string;
   name: string;
@@ -48,6 +62,8 @@ export interface ModuleCatalogEntry {
   icon: string | null;
   path: string | null;
   isEnabled: boolean; // true if org has active subscription
+  /** The subscription row's own state — see {@link ModuleSubscriptionState}. */
+  subscriptionState: ModuleSubscriptionState;
   isAvailable: boolean; // true if tier + industry match
   requiredTier: string | null; // lowest tier that includes this module
   sortOrder: number;
@@ -161,6 +177,10 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
         icon: m.icon,
         path: m.path,
         isEnabled: m.is_subscribed === true,
+        // LEFT JOIN: null means no subscription row at all, which is NOT the
+        // same as a row that says false. See ModuleSubscriptionState.
+        subscriptionState:
+          m.is_subscribed === true ? 'enabled' : m.is_subscribed === false ? 'disabled' : 'none',
         isAvailable: tierMatch && industryMatch,
         requiredTier: lowestTier,
         sortOrder: m.sort_order || 0,

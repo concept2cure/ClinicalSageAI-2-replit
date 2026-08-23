@@ -1238,6 +1238,37 @@
 .c2c-v2 .nav-lic[data-lic="off"]{font-size:13px;color:var(--text-400);}
 .c2c-v2 .nav-item:hover .nav-lic[data-lic="off"]{color:var(--warning);}
 .c2c-v2.shell[data-collapsed="true"] .nav-lic{display:none;}
+
+/* ── Locked destinations ───────────────────────────────────────────────────
+   A destination the organization has not licensed stays a real, focusable,
+   activatable button (the entitlements spec forbids a disabled, reasonless
+   control) — it just reads as unavailable and opens the explanation panel
+   instead of the surface.
+
+   The state is carried by THREE channels, never colour alone: the muted label,
+   the lock glyph, and the accessible name the button carries ("… — not
+   included in your plan"). Hover restores full contrast so the entry never
+   becomes unreadable while a human is aiming at it. */
+.c2c-v2 .nav-item[data-locked]{color:var(--text-400);}
+.c2c-v2 .nav-item[data-locked] .lbl{color:var(--text-400);}
+.c2c-v2 .nav-item[data-locked]:hover{background:var(--bg-200);color:var(--text-200);}
+.c2c-v2 .nav-item[data-locked]:hover .lbl{color:var(--text-200);}
+.c2c-v2 .nav-item[data-locked] .nav-lic[data-lic="off"] svg{width:13px;height:13px;}
+/* Collapsed rail hides labels, so the lock is the only visible channel there
+   and must not be hidden with the rest of the licence indicators. */
+.c2c-v2.shell[data-collapsed="true"] .nav-item[data-locked] .nav-lic{display:flex;position:absolute;right:3px;bottom:3px;}
+
+/* ── Locked-destination panel (NavUnlockPanel) ───────────────────────────── */
+.c2c-v2 .nav-unlock-bd{position:fixed;inset:0;background:rgba(20,20,19,.3);display:flex;align-items:center;justify-content:center;padding:24px;z-index:60;}
+.c2c-v2 .nav-unlock{width:100%;max-width:440px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--v2-shadow-lg);padding:18px;}
+.c2c-v2 .nav-unlock-hd{display:flex;align-items:flex-start;gap:11px;}
+.c2c-v2 .nav-unlock-ic{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-md);background:var(--bg-200);color:var(--text-200);}
+.c2c-v2 .nav-unlock-ic svg{width:15px;height:15px;}
+.c2c-v2 .nav-unlock-hd-mid{flex:1;min-width:0;}
+.c2c-v2 .nav-unlock-t{font-size:14.5px;font-weight:600;letter-spacing:-.01em;}
+.c2c-v2 .nav-unlock-status{margin-top:2px;font-size:11.5px;font-weight:500;color:var(--text-400);}
+.c2c-v2 .nav-unlock-body{margin:12px 0 0;font-size:13px;line-height:1.55;color:var(--text-300);}
+.c2c-v2 .nav-unlock-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 .c2c-v2 .nav-badge{margin-left:auto;flex-shrink:0;font-size:9.5px;font-weight:700;letter-spacing:.02em;color:#fff;background:var(--accent-100);border-radius:999px;padding:1px 6px;}
 .c2c-v2 .nav-count{margin-left:auto;flex-shrink:0;font-size:10.5px;font-weight:600;color:var(--text-400);background:var(--bg-200);border-radius:999px;padding:1px 7px;min-width:20px;text-align:center;}
 .c2c-v2 .nav-item[aria-current="true"] .nav-count{color:var(--accent-200);background:var(--accent-muted);}

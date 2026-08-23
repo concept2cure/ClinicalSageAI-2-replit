@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-22T22:22:10.771Z",
+  "generatedAt": "2026-08-23T17:50:01.772Z",
   "git": {
-    "sha": "7dbcd9dd5604d01faa0fb150f8666731b51da91c",
+    "sha": "24f6431f5a0119dca768d442dc01ae8dacb69207",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 221,
+    "duplicateBasenames": 223,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
@@ -1628,6 +1628,22 @@
         ]
       },
       {
+        "basename": "master-admin",
+        "count": 2,
+        "paths": [
+          "server/routes/admin/master-admin.ts",
+          "server/services/entitlements/master-admin.ts"
+        ]
+      },
+      {
+        "basename": "master-admin.test",
+        "count": 2,
+        "paths": [
+          "server/routes/admin/__tests__/master-admin.test.ts",
+          "server/services/entitlements/__tests__/master-admin.test.ts"
+        ]
+      },
+      {
         "basename": "mdx",
         "count": 2,
         "paths": [
@@ -2650,7 +2666,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 400,
+      "duplicateGroups": 404,
       "largeByBytes": 30,
       "largeByLines": 73
     },
