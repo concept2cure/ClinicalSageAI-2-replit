@@ -392,10 +392,16 @@ export default function createCmcModule3BoardRoutes(): Router {
         ? Math.round(rpiValues.reduce((a, b) => a + b, 0) / rpiValues.length)
         : null;
 
-      const irValues = portfolio.rows
-        .map((r) => r.ir)
-        .filter((v): v is number => typeof v === 'number');
-      const irOverdue = irValues.reduce((a, b) => a + b, 0);
+      /* One source for 'overdue IRs': the same org-wide reg_questions read
+         the correspondence card renders — the KPI and the tab can no longer
+         disagree. The legacy per-submission sum remains only the fallback for
+         environments where that read is unprovisioned. */
+      const irOverdue = correspondence.provisioned
+        ? correspondence.rows.filter((r) => r.overdue).length
+        : portfolio.rows
+            .map((r) => r.ir)
+            .filter((v): v is number => typeof v === 'number')
+            .reduce((a, b) => a + b, 0);
 
       const sectionsTotal = sections ? sections.rows.length : null;
       const sectionsApproved = sections
