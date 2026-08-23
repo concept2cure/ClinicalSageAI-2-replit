@@ -17,6 +17,13 @@
  *   GET   /system-health       Process / DB pool / uptime snapshot
  *   GET   /audit               Platform-wide audit-log explorer (paginated)
  *
+ * Licensing control lives in ./master-licensing and mounts on this router
+ * (inside the same guard):
+ *   GET   /licensing                    Modules x tiers, plus every tenant
+ *   GET   /licensing/tenants/:id        One tenant's effective verdict per module
+ *   PATCH /licensing/modules/:moduleId  Move a module between tiers
+ *   PATCH /licensing/tenants/:id/tier   Change one tenant's plan
+ *
  * Reads use the raw `query()` helper (same precedent as routes/admin/scim-*).
  * The two mutations are written through `auditService` so the 21 CFR Part 11
  * tamper-evident chain records every governed support action.
@@ -28,6 +35,7 @@ import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { query, getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import auditService from '../../services/auditService';
+import masterLicensingRoutes from './master-licensing';
 
 const logger = createScopedLogger('admin-master');
 const router = Router();
@@ -35,6 +43,12 @@ const router = Router();
 // Auth first, then the strict platform-admin gate, for every route below.
 router.use(authMiddleware);
 router.use(requirePlatformAdmin);
+
+// Licensing control (./master-licensing) mounts INSIDE that gate rather than
+// beside it, so its endpoints inherit exactly this authorization and cannot
+// drift from it. Editing the commercial model is at least as sensitive as
+// anything else on this router.
+router.use(masterLicensingRoutes);
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
