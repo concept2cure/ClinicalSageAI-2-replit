@@ -33,12 +33,34 @@
  * the AnswerLead carrying the control renders on mount from the default design
  * inputs. No API fixture is involved in any assertion below — these drive the
  * real handler and read the real toast.
+ *
+ * ── UPDATE: the control now files for real, so the contract got stronger ─────
+ * The original fix made the claim honest while leaving the control inert — it
+ * said "attachment requested" and nothing was filed, because this surface had
+ * no artifactId and no dossier-section picker. It now calls `saveToAuthoring`,
+ * the same path the "Open in document editor" button beside it already used,
+ * which POSTs /api/authoring/docs with window.C2C_PROJECT.id as
+ * client_program_id — the binding that files the document against the project.
+ *
+ * So these cases no longer assert "states a request". They assert the harder
+ * property the original was protecting: NO SUCCESS IS REPORTED THAT THE SERVER
+ * DID NOT CONFIRM. Success only after `r.ok`; a refusal reported as a refusal;
+ * a thrown transport reported as a failure and never as a result.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent } from '@testing-library/react';
 
-const apiRequest = vi.hoisted(() => vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ success: true, data: [] }) })));
+/* Loosely typed on purpose: individual cases swap in refusals and throws with
+   different body shapes, and a narrow inferred signature makes each of those a
+   type error rather than a test. */
+const apiRequest = vi.hoisted(() =>
+  vi.fn(async (..._a: unknown[]): Promise<any> => ({
+    ok: true,
+    status: 200,
+    json: async () => ({ success: true, data: [] }),
+  })),
+);
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -46,7 +68,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 
 import { Biostatistics } from '../surfaces/Biostatistics';
 
-const ATTACH = /Ask AnA to attach it to the dossier/i;
+const ATTACH = /File it to the dossier/i;
 
 function mount(onAsk = vi.fn()) {
   render(<Biostatistics {...({ surface: { id: 'biostatistics' }, onAsk, onNav: vi.fn() } as any)} />);
@@ -56,51 +78,58 @@ function mount(onAsk = vi.fn()) {
 afterEach(() => cleanup());
 beforeEach(() => apiRequest.mockClear());
 
-describe('Biostatistics — the attach control states a request, not a result', () => {
-  it('never claims the document was attached', () => {
-    const onAsk = mount();
+/** Resolve after the click's awaits settle, so the toast has been written. */
+const settle = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+describe('Biostatistics — the attach control reports only what the server confirmed', () => {
+  it('files the document through the real authoring path', async () => {
+    mount();
     fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+    await settle();
+
+    // The binding write, not a sentence into the conversation.
+    const urls = apiRequest.mock.calls.map((c: unknown[]) => String(c[1]));
+    expect(urls.some((u) => u.includes('/api/authoring/docs'))).toBe(true);
+  });
+
+  it('does not report a filing when the server refuses it', async () => {
+    apiRequest.mockImplementation(async (..._a: unknown[]) =>
+      String(_a[1]).includes('/api/authoring/docs')
+        ? { ok: false, status: 403, json: async () => ({ error: 'FORBIDDEN', message: 'Not permitted.' }) }
+        : { ok: true, status: 200, json: async () => ({ success: true, data: [] }) },
+    );
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+    await settle();
 
     const body = document.body.textContent ?? '';
-    // The exact claim that was false. Any tense of "attached to dossier" is a
-    // completed-action report and nothing here completes an action.
-    expect(/attached to (the )?dossier/i.test(body), 'must not report an attachment').toBe(false);
-    // And it must still say something — silence would be its own defect.
-    expect(/attachment requested/i.test(body)).toBe(true);
-    expect(/nothing is attached until/i.test(body)).toBe(true);
+    // The exact class of claim this file exists to prevent: a completed-action
+    // report for an action that did not complete.
+    expect(/filed to the dossier/i.test(body), 'a refused write must not report a filing').toBe(false);
   });
 
-  it('still sends the request — the fix is the claim, not the feature', () => {
-    const onAsk = mount();
-    fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+  it('does not report a filing when the transport throws', async () => {
+    // Scoped to the filing write only. Throwing for EVERY apiRequest also
+    // breaks the surface's mount reads, which is a different failure and would
+    // pass this assertion for the wrong reason.
+    apiRequest.mockImplementation(async (..._a: unknown[]) => {
+      if (String(_a[1]).includes('/api/authoring/docs')) throw new Error('transport down');
+      return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) };
+    });
+    mount();
 
-    expect(onAsk).toHaveBeenCalledTimes(1);
-    expect(String(onAsk.mock.calls[0]?.[0])).toMatch(/attach .* to the submission dossier/i);
-  });
-
-  /**
-   * The ordering proof, and the one that pins the specific defect.
-   *
-   * The original fired the toast BEFORE `ask`, so a request that never left
-   * still painted a success tick. Making `ask` throw separates the two orders
-   * behaviourally: toast-first still shows the message, toast-after cannot.
-   */
-  it('does not announce anything when the request itself fails', () => {
-    const onAsk = vi.fn(() => { throw new Error('ana transport down'); });
-    mount(onAsk as never);
-
-    // React re-raises a handler throw as a global error event; the throw is the
-    // point of the test, so it is contained here rather than left to surface as
-    // an unhandled rejection in CI.
     const swallow = (e: ErrorEvent) => e.preventDefault();
     window.addEventListener('error', swallow);
     const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
-    try { fireEvent.click(screen.getByRole('button', { name: ATTACH })); } catch { /* thrown by design */ }
-    finally { window.removeEventListener('error', swallow); quiet.mockRestore(); }
+    try {
+      fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+      await settle();
+    } finally {
+      window.removeEventListener('error', swallow);
+      quiet.mockRestore();
+    }
 
-    expect(onAsk).toHaveBeenCalled();
     const body = document.body.textContent ?? '';
-    expect(/attached to (the )?dossier/i.test(body), 'a failed request must not report success').toBe(false);
-    expect(/attachment requested/i.test(body), 'nor report that a request was made').toBe(false);
+    expect(/filed to the dossier/i.test(body), 'a thrown write must not report a filing').toBe(false);
   });
 });
