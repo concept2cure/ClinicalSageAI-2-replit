@@ -603,10 +603,64 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
   const [body, setBody] = useState('');
   const [makeTask, setMakeTask] = useState(false);
 
-  const send = () => {
-    if (!body.trim()) return;
-    // MOCK ACTION (flagged): does NOT call POST /api/collaboration/messages; at
-    // most it captures an optimistic in-session task below. Wire in actions pass.
+  /* Set while the POST is in flight, or holding the reason it failed. The
+     message must never be reported as sent until the server says it stored it. */
+  const [sending, setSending] = useState(false);
+  const [sendErr, setSendErr] = useState('');
+
+  /* ── "Send" composed a message and threw it away ───────────────────────────
+     The handler's own comment said so: "MOCK ACTION (flagged): does NOT call
+     POST /api/collaboration/messages". The drawer closed, the user watched
+     their message disappear into what looked like a sent state, and nothing
+     was ever delivered. A banner below the composer admitted it in small text,
+     which is not the same as the button not lying.
+
+     The endpoint exists and was BUILT FOR THIS BUTTON — the comment above
+     POST /api/tasks/messages (taskManagement.routes.ts) reads: "Backs the
+     universal launcher's Collaborate tab, which previously composed a message
+     and threw it away." It persists the message as a notification in the
+     recipient's inbox and refuses a recipient outside the caller's org.
+
+     `C2C.team` is keyed by the real user id from
+     GET /api/task-management/assignees (see the loader above, `team[String(r.id)]`),
+     so the picked key IS `recipientUserId`. */
+  const send = async () => {
+    if (!body.trim() || sending) return;
+    const recipientUserId = Number(to);
+    if (!Number.isInteger(recipientUserId) || recipientUserId <= 0) {
+      setSendErr('Pick who this goes to — a message with no recipient cannot be delivered.');
+      return;
+    }
+    setSending(true);
+    setSendErr('');
+    try {
+      const res = await apiRequest('POST', '/api/tasks/messages', {
+        recipientUserId,
+        message: body.trim(),
+        about: (surfaceCtx.entityLabel || surfaceCtx.surfaceLabel || '').slice(0, 300) || undefined,
+        sourceEntityType: surfaceCtx.entityType || undefined,
+        sourceEntityId: (surfaceCtx.entityId || surfaceCtx.surfaceId || '').slice(0, 200) || undefined,
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        setSending(false);
+        setSendErr(
+          'Not sent — ' + (serverMessage(b) ?? `the server refused the message (HTTP ${res.status})`) +
+            '. Nothing was delivered.',
+        );
+        return;
+      }
+    } catch (e) {
+      setSending(false);
+      setSendErr(
+        'Not sent — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was delivered.',
+      );
+      return;
+    }
+
+    /* The task is created only AFTER the message is confirmed stored. The old
+       order created the task first, so a failed send still left a task behind
+       referencing a message nobody received. */
     if (makeTask) {
       C2C.addTask({
         title: body.trim().slice(0, 90), project: surfaceCtx.project,
@@ -620,6 +674,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       });
       onCreated?.();
     }
+    setSending(false);
     onClose();
   };
 
@@ -657,13 +712,23 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         <span className="cl-check">{makeTask ? I.check : ''}</span>
         <span><b>Also create a task</b>{C2C.team[to] ? <> and assign it to {C2C.team[to].n}</> : <>, unassigned</>}</span>
       </button>
-      <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread is not yet wired here — the message is not persisted, and real-time delivery is not yet enabled.
-      </div>
+      {sendErr && (
+        <div className="cl-warn" role="alert">
+          <span className="ico">{I.alertTriangle}</span>{sendErr}
+        </div>
+      )}
       <div className="cl-foot">
         
         <button className="btn ghost" onClick={onClose}>Cancel</button>
-        <button className="btn primary" onClick={send} disabled={!body.trim()}>{I.arrowRight} {makeTask ? 'Send & assign' : 'Send'}</button>
+        <button
+          className="btn primary"
+          onClick={() => void send()}
+          disabled={!body.trim() || !to || sending}
+          title={!to ? 'Pick a recipient first' : undefined}
+          data-testid="collab-send"
+        >
+          {I.arrowRight} {sending ? 'Sending…' : makeTask ? 'Send & assign' : 'Send'}
+        </button>
       </div>
     </div>
   );

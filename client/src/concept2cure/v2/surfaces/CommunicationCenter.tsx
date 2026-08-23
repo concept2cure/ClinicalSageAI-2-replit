@@ -295,24 +295,60 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  // triage — FLAG (deferred): there is no mounted PATCH for agency-communication
-  // review/closure status, so this only flips the row in the CURRENT view. The
-  // toast states that plainly; the change is not persisted and reverts on reload
-  // once the live read re-seeds. No false claim of a saved status transition.
-  const triage = (id: string) => {
-    setComms((cs) =>
-      cs.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              humanReviewStatus:
-                c.humanReviewStatus === 'pending_review' ? 'triaged' : 'actioned',
-              closureStatus: c.closureStatus === 'open' ? 'in_progress' : 'closed',
-            }
-          : c,
-      ),
-    );
-    fire('Updated in this view only — status changes aren’t persisted yet (no server endpoint).');
+  /* ── Triage now persists ──────────────────────────────────────────────────
+     This flipped the row in React state and told the user so in a toast:
+     "status changes aren't persisted yet (no server endpoint)". Honest, but it
+     meant the only action on this surface did nothing durable — a triage
+     vanished on reload, and a second reviewer opening the same queue saw it
+     untouched. On a screen whose whole job is tracking what the agency asked
+     and whether anyone answered, that is a record-keeping failure.
+
+     PATCH .../agency-communications/:eventId/advance now exists (added in this
+     change, beside the GET and POST that already read and wrote these columns).
+     The server computes the transition from the STORED status, so a card cannot
+     skip triage on its way to actioned, and it writes an audit entry naming the
+     from/to. The row is adopted from the server's response rather than guessed,
+     so what the screen shows is what was stored. */
+  const triage = async (id: string) => {
+    if (!projectId) return;
+    try {
+      const res = await apiRequest(
+        'PATCH',
+        `/api/concept2cure/projects/${encodeURIComponent(projectId)}/agency-communications/${encodeURIComponent(id)}/advance`,
+      );
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        fire(
+          'Not advanced — ' +
+            (serverMessage(body) ?? `the server refused the change (HTTP ${res.status})`) +
+            '. Nothing was stored.',
+          'error',
+        );
+        return;
+      }
+      const row = (body as { data?: { humanReviewStatus?: string; closureStatus?: string } } | null)?.data;
+      if (!row?.humanReviewStatus) {
+        fire('Not advanced — the server did not confirm the new status.', 'error');
+        return;
+      }
+      setComms((cs) =>
+        cs.map((c) =>
+          c.id === id
+            ? {
+                ...c,
+                humanReviewStatus: row.humanReviewStatus as typeof c.humanReviewStatus,
+                closureStatus: (row.closureStatus ?? c.closureStatus) as typeof c.closureStatus,
+              }
+            : c,
+        ),
+      );
+      fire(`Advanced to ${String(row.humanReviewStatus).replace('_', ' ')} — recorded with an audit entry.`);
+    } catch (e) {
+      fire(
+        'Not advanced — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was stored.',
+        'error',
+      );
+    }
   };
 
   const shown = owner === 'mine' ? open.filter((c) => c.responseRequired) : comms;
@@ -579,7 +615,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                         </button>
                       )}
                       {c.closureStatus !== 'closed' && (
-                        <button className="cc-btn sm" onClick={() => triage(c.id)}>
+                        <button className="cc-btn sm" onClick={() => void triage(c.id)}>
                           {c.humanReviewStatus === 'pending_review' ? 'Triage' : 'Advance'}
                         </button>
                       )}
