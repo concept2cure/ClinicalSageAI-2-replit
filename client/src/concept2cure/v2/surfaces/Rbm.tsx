@@ -71,7 +71,7 @@ const LINK_ICONS: Record<string, string> = {
    destructured here and never read, which is exactly the shape the union
    exists to forbid: a surface that hides the rail while still holding the
    handle that writes into it. */
-export function Rbm({ onNav }: OwnedSurfaceViewProps) {
+export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
@@ -160,6 +160,9 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
     screenName: 'rbm',
     projectId: study ?? undefined,
     moduleContext: anaModuleContext,
+    // Live Drive bridge — same opt-in and shell-level apply machine as the rail.
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
   });
   const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
     role: m.role,

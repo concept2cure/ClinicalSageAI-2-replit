@@ -31,6 +31,7 @@
 
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
+import type { VaultIngestDocumentType } from '@shared/constants/domain/vault-taxonomy';
 
 export interface VaultUploadOutcome {
   /** Files the server accepted and recorded. */
@@ -39,30 +40,42 @@ export interface VaultUploadOutcome {
   failed: Array<{ name: string; reason: string }>;
 }
 
+export interface VaultUploadOptions {
+  /**
+   * What the user says the file IS — one of the ingest schema's types
+   * (VAULT_INGEST_DOCUMENT_TYPES). When the caller offers no choice, the type
+   * is recorded as OTHER rather than guessed from the extension: a file named
+   * like a CSR is not grounds to FILE it as a CSR, and document type drives
+   * downstream regulatory handling.
+   */
+  documentType?: VaultIngestDocumentType;
+}
+
 export interface VaultUploadState {
   uploading: boolean;
   /** The last outcome, as copy a surface can render directly. */
   note: { tone: 'ok' | 'error'; text: string } | null;
   clearNote: () => void;
-  upload: (files: FileList | File[] | null) => Promise<VaultUploadOutcome>;
+  upload: (files: FileList | File[] | null, opts?: VaultUploadOptions) => Promise<VaultUploadOutcome>;
 }
 
 /** The default document type. See the note in `uploadOne`. */
-const DEFAULT_DOCUMENT_TYPE = 'OTHER';
+const DEFAULT_DOCUMENT_TYPE: VaultIngestDocumentType = 'OTHER';
 
-async function uploadOne(programId: string, file: File): Promise<{ ok: true } | { ok: false; reason: string }> {
+async function uploadOne(
+  programId: string,
+  file: File,
+  documentType: VaultIngestDocumentType,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
   const form = new FormData();
   form.append('file', file);
   form.append('programId', programId);
   /* The ingest schema requires a code, a title and a type. The filename is the
      only thing the user has actually told us, so it supplies the first two
-     verbatim and the type is recorded as OTHER rather than guessed from the
-     extension — a file named like a CSR is not grounds to FILE it as a CSR, and
-     document type drives downstream regulatory handling. Both are editable on
-     the document once it lands. */
+     verbatim; the type is the caller's stated choice, defaulting to OTHER. */
   form.append('documentCode', file.name);
   form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
-  form.append('documentType', DEFAULT_DOCUMENT_TYPE);
+  form.append('documentType', documentType);
 
   let res: Response;
   try {
@@ -107,7 +120,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
   const [note, setNote] = React.useState<VaultUploadState['note']>(null);
 
   const upload = React.useCallback(
-    async (files: FileList | File[] | null): Promise<VaultUploadOutcome> => {
+    async (files: FileList | File[] | null, opts?: VaultUploadOptions): Promise<VaultUploadOutcome> => {
       const list = files ? Array.from(files as ArrayLike<File>) : [];
       const empty: VaultUploadOutcome = { succeeded: [], failed: [] };
       if (list.length === 0) return empty;
@@ -127,7 +140,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
            run a virus scan and a text extraction server-side; firing a whole
            drop-zone's worth in parallel is how one user stalls the pool. */
         for (const file of list) {
-          const r = await uploadOne(programId, file);
+          const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE);
           if (r.ok) outcome.succeeded.push(file.name);
           else outcome.failed.push({ name: file.name, reason: r.reason });
         }

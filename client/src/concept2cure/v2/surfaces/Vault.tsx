@@ -4,6 +4,10 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
+import {
+  VAULT_INGEST_DOCUMENT_TYPES,
+  type VaultIngestDocumentType,
+} from '@shared/constants/domain/vault-taxonomy';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   vaultStatus,
@@ -36,6 +40,9 @@ interface VaultDisplayShape {
   documentCount: number;
   tree: VaultFolder[];
   pendingStore?: boolean;
+  /** Branches the server could not serve, with why — rendered, not swallowed:
+   *  a vault silently missing "Uploaded files" reads as a vault with no uploads. */
+  unavailable?: Array<{ branch: string; reason: string }>;
 }
 
 /* Stable empty tree while the live vault is loading / absent — `useLiveData`
@@ -177,8 +184,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     projectId ? String(projectId) : null,
   );
 
+  /* What the user says the file is; travels with every file in the batch. */
+  const [docType, setDocType] = useState<VaultIngestDocumentType>('OTHER');
+
   const uploadFiles = async (files: FileList | null) => {
-    const outcome = await upload(files);
+    const outcome = await upload(files, { documentType: docType });
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -312,6 +322,25 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         >
           {I.shieldCheck} Inspection readiness
         </button>
+        {/* What the file IS — the ingest schema's own vocabulary, so the
+            picker can never offer a type the server refuses. MODULE_3 is how
+            an uploaded CMC document declares itself and gets handled as one
+            downstream; the default stays OTHER rather than a guess from the
+            filename. */}
+        <select
+          className="c2c-input"
+          aria-label="Document type for uploaded files"
+          value={docType}
+          onChange={(e) => setDocType(e.target.value as VaultIngestDocumentType)}
+          disabled={uploading}
+          data-testid="vault-upload-type"
+        >
+          {VAULT_INGEST_DOCUMENT_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t.replace(/_/g, ' ')}
+            </option>
+          ))}
+        </select>
         {/* The picker itself. Accepts exactly what POST /api/vault/ingest
             accepts, so the OS dialog does not offer files the server will
             refuse. */}
@@ -366,6 +395,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           {uploadNote.text}
         </div>
       )}
+
+      {/* A branch the server could not serve is said, not silently omitted —
+          otherwise "no Uploaded files folder" and "no uploads" look identical. */}
+      {vault?.unavailable?.map((u) => (
+        <div key={u.branch} className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+          {u.branch}: {u.reason}
+        </div>
+      ))}
 
       <div className="vd-coexist">
         <span className="vd-coexist-txt">

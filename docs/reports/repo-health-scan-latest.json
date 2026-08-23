@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T18:47:02.299Z",
+  "generatedAt": "2026-08-23T22:36:36.211Z",
   "git": {
-    "sha": "1c15c7d8b36e4aa3ca47b8b2037dced9dfda4f77",
+    "sha": "cad411a199144a2eacdc935e14caa14554bc62a2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,11 +14,11 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 223,
+    "duplicateBasenames": 222,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 87
+    "largeFilesByLines": 88
   },
   "findings": {
     "duplicateBasenames": [
@@ -2076,14 +2076,6 @@
         ]
       },
       {
-        "basename": "templateservice",
-        "count": 2,
-        "paths": [
-          "server/api/cmc/templateService.ts",
-          "server/services/templateService.ts"
-        ]
-      },
-      {
         "basename": "test-assembly.routes.test",
         "count": 2,
         "paths": [
@@ -2160,7 +2152,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 969063
+        "bytes": 969992
       },
       {
         "file": "shared/schema.ts",
@@ -2180,7 +2172,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 253129
+        "bytes": 253130
       },
       {
         "file": "server/statistics-service.ts",
@@ -2235,16 +2227,24 @@
         "bytes": 129044
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 127933
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126752
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 125184
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 120988
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 117833
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2253,14 +2253,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 115393
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 115207
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2318,7 +2310,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18865
+        "lines": 18877
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2330,7 +2322,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6380
+        "lines": 6381
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2377,16 +2369,16 @@
         "lines": 3060
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 3012
+      },
+      {
         "file": "server/src/routes/stability.router.ts",
         "lines": 2832
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 2775
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2768
+        "lines": 2827
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2442,7 +2434,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2188
+        "lines": 2209
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2609,6 +2601,10 @@
         "lines": 1650
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1635
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2637,16 +2633,16 @@
         "lines": 1582
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1578
-      },
-      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
         "lines": 1549
+      },
+      {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1541
       },
       {
         "file": "server/services/submission-twin-service.ts",
@@ -2666,7 +2662,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 404,
+      "duplicateGroups": 402,
       "largeByBytes": 30,
       "largeByLines": 73
     },
@@ -2686,7 +2682,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 3,
-      "largeByLines": 4
+      "largeByLines": 5
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

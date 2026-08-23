@@ -27,6 +27,7 @@ import {
   getSurfaceMeta,
 } from '../registryModel';
 import type { GlobalRiCatalog, EnrichedGlobalRiCapability } from '@shared/types/global-ri-api';
+import { consumeNavParams } from '../navParams';
 import '../styles/surfaces-v2.css';
 
 /* ════════════ Home — AnA-first landing (centered composer) ════════════ */
@@ -398,6 +399,28 @@ async function griRun(
   }
 }
 
+/**
+ * Match a navigation directive's `intelligenceTab` param against the LIVE
+ * catalog's group ids/labels. The registry enum ('protocol'|'cmc'|'biostat'|
+ * 'reports') predates the catalog-driven groups, so the match is tolerant —
+ * id equality, then id/label containment — and an honest null when nothing
+ * matches (the browser opens on its default group; no fabricated tab).
+ * Exported for its own test.
+ */
+export function matchIntelligenceGroup(
+  groups: ReadonlyArray<{ id: string; label: string }>,
+  tab: string | null | undefined,
+): string | null {
+  const want = (tab ?? '').trim().toLowerCase();
+  if (!want) return null;
+  const exact = groups.find((g) => g.id.toLowerCase() === want);
+  if (exact) return exact.id;
+  const contains = groups.find(
+    (g) => g.id.toLowerCase().includes(want) || g.label.toLowerCase().includes(want),
+  );
+  return contains ? contains.id : null;
+}
+
 export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
   // Live catalog from GET /api/global-ri/catalog (real getGlobalRiCatalog service,
   // auth'd regulatory-author, tested). Real data → honest empty → honest error;
@@ -405,6 +428,12 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
   const { data: catalog, isLoading, isError } = useGlobalRiCatalog();
   const [group, setGroup] = React.useState<string | undefined>(undefined);
   const [capId, setCapId] = React.useState<string | null>(null);
+  /* A navigation directive's `intelligenceTab` param (AnA navigate_to / chip —
+     consumed once on mount, before the catalog resolves). Applied below as a
+     default only: an explicit group click always wins. */
+  const [navTab] = React.useState<string | null>(
+    () => consumeNavParams('global-ri')?.intelligenceTab ?? null,
+  );
 
   if (isLoading) {
     return (
@@ -440,7 +469,8 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
   const cap = capId ? catalog.capabilities.find((c) => c.id === capId) : null;
   if (cap) return <GlobalRiCapability cap={cap} catalog={catalog} onBack={() => setCapId(null)} onAsk={onAsk} />;
 
-  const activeGroup = group ?? catalog.groups[0]?.id;
+  const activeGroup =
+    group ?? matchIntelligenceGroup(catalog.groups, navTab) ?? catalog.groups[0]?.id;
   const groupMeta = catalog.groups.find((g) => g.id === activeGroup);
   const caps = catalog.capabilities.filter((c) => c.group === activeGroup);
   return (

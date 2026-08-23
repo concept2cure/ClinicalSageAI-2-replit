@@ -597,6 +597,54 @@ async function step(label, fn) {
   await fn();
 }
 
+/**
+ * Every table name drizzle-kit will create from `shared/schema.ts`.
+ *
+ * Scoped exactly the way drizzle scopes it: `drizzle.config.ts` sets
+ * `schema: './shared/schema.ts'`, so drizzle sees that ONE file plus whatever
+ * it re-exports (`export * from './schema/…'`) — and nothing else under
+ * `shared/`. Several modules there declare `pgTable(...)` without being
+ * re-exported (shared/cmc-schema.ts is one), and drizzle neither knows nor
+ * creates those. Counting them here would make this gate fail an install that
+ * is in fact complete, which is worse than the silence it replaces.
+ *
+ * Read from source text rather than by importing: this runs against a database
+ * that may not exist yet, and importing pulls in the whole Drizzle graph. The
+ * declaration form is uniform — `pgTable('name', …)` — so a regex over the
+ * reachable files is sufficient and cannot be broken by the module failing to
+ * load. Views are excluded (`pgView`/`pgMaterializedView`): push does not
+ * create them.
+ */
+function declaredTableNames() {
+  const sharedRoot = path.resolve(__dirname, '..', '..', 'shared');
+  const entry = path.join(sharedRoot, 'schema.ts');
+  const files = [entry];
+
+  // One level of `export * from './rel'` — the form schema.ts actually uses.
+  const entrySrc = fs.readFileSync(entry, 'utf8');
+  for (const m of entrySrc.matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
+    const rel = m[1];
+    for (const ext of ['.ts', '/index.ts']) {
+      const candidate = path.resolve(sharedRoot, `${rel}${ext}`);
+      if (fs.existsSync(candidate)) {
+        files.push(candidate);
+        break;
+      }
+    }
+  }
+
+  const names = new Set();
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/\bpgTable\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g)) {
+      names.add(m[1]);
+    }
+  }
+  return [...names].sort();
+}
+
+
+
 async function main() {
   await step('1/8 Prerequisites — schemas + extensions', async () => {
     await pool.query(`
@@ -672,7 +720,45 @@ async function main() {
         console.error(res.stderr || '');
         throw new Error(`drizzle-kit push failed (exit ${res.status})`);
       }
-      console.log('  ✓ schema pushed from shared/schema.ts');
+      /* ── The exit code is not evidence ────────────────────────────────────
+         The degraded branch below already records why: drizzle-kit push applies
+         its statements in ONE sequential loop, stops at the first error, and
+         EXITS 0 while doing so. That hazard is not specific to pgvector — any
+         failing statement (an introspection error, a type it cannot round-trip,
+         a policy-bound column) ends the loop the same way — so a status check
+         here proves nothing at all.
+
+         Observed: on a database with pgvector present, push aborted partway
+         with a validation error, exited 0, and this step printed
+         "✓ schema pushed from shared/schema.ts". `project_memory_entries`,
+         `coauthor_documents` and `conversation_working_memory` were never
+         created; step 8's checks (a table COUNT, five named route tables, the
+         authoring subsystem) all passed, and the install reported success. The
+         first sign was /api/haq-manager/rounds and /api/coauthor/documents
+         returning 500 in the running product.
+
+         So the push is verified against the thing it claims to have done:
+         every table shared/schema.ts declares must now exist. That cannot be
+         satisfied by an exit code. */
+      const declared = declaredTableNames();
+      const { rows: existing } = await pool.query(
+        `SELECT table_name FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+      );
+      const have = new Set(existing.map((r) => r.table_name));
+      const missing = declared.filter((t) => !have.has(t));
+      if (missing.length > 0) {
+        console.error(res.stdout || '');
+        console.error(res.stderr || '');
+        throw new Error(
+          `drizzle-kit push exited 0 but did NOT create ${missing.length} of ` +
+            `${declared.length} table(s) declared in shared/schema.ts. push stops at ` +
+            `the first failing statement and still exits 0, so its exit code cannot be ` +
+            `trusted. Missing: ${missing.slice(0, 25).join(', ')}` +
+            `${missing.length > 25 ? `, …and ${missing.length - 25} more` : ''}`,
+        );
+      }
+      console.log(`  ✓ schema pushed from shared/schema.ts (${declared.length} declared tables verified present)`);
       return;
     }
 

@@ -84,55 +84,81 @@ interface StoreProbe {
   name: string;
   /** Argument to `to_regclass` (schema-qualified where needed). */
   regclass: string;
-  /** EXISTS-probe body (no wrapping EXISTS) filtered to the org via $1. */
-  where: string;
+  /** The tenant column on this store. Its TYPE is read from the catalog at
+   *  probe time, never assumed — see `deriveAvailability`. */
+  orgColumn: string;
+  /** Extra predicate ANDed after the tenant filter, or null. Must not
+   *  reference $1: the tenant comparison is built from the catalog. */
+  extra?: string;
 }
 
 /**
  * The IB domain → real store map. Ordered so the first-listed store for a domain is
- * the canonical/primary one. `$1` binds the org id (int); text-keyed stores cast it.
- * `name` doubles as the FROM-clause table reference (schema-qualified names are valid
- * in both the `to_regclass` argument and the FROM position).
+ * the canonical/primary one. `name` doubles as the FROM-clause table reference
+ * (schema-qualified names are valid in both the `to_regclass` argument and the
+ * FROM position).
+ *
+ * ── Why the tenant cast is NOT written here ──────────────────────────────────
+ * It used to be. Each probe carried a full `where` string with the cast baked
+ * in — `organization_id = $1::int` for some stores, `$1::text` for others — and
+ * two of them were simply wrong: `adverse_events.organization_id` and
+ * `risk_management_plans.organization_id` are INTEGER in the schema, and both
+ * probes cast the parameter to text. Postgres has no `integer = text` operator,
+ * so the UNION below failed to plan and `GET /api/investigator-brochure`
+ * returned 500 on EVERY call, for every tenant, however much evidence the org
+ * had. Nothing degraded; the whole surface was simply down.
+ *
+ * A cast written next to a table name is an assertion about that table's schema
+ * held in a different file from the schema, so it drifts silently and is only
+ * discovered by the endpoint falling over. The type is now read from the
+ * catalog in the same round trip that checks the table exists, so the probe
+ * cannot disagree with the database it is probing.
  */
 const STORE_PROBES: StoreProbe[] = [
   {
     domain: 'nonclinical',
     name: 'nonclinical_studies',
     regclass: 'public.nonclinical_studies',
-    where: 'organization_id = $1::int AND deleted_at IS NULL',
+    orgColumn: 'organization_id',
+    extra: 'deleted_at IS NULL',
   },
   {
     domain: 'clinical',
     name: 'clinical_ops.studies',
     regclass: 'clinical_ops.studies',
-    where: 'org_id = $1::text',
+    orgColumn: 'org_id',
   },
   {
     domain: 'clinical',
     name: 'clinical_studies',
     regclass: 'public.clinical_studies',
-    where: 'organization_id = $1::int AND deleted_at IS NULL',
+    orgColumn: 'organization_id',
+    extra: 'deleted_at IS NULL',
   },
   {
     domain: 'safety',
     name: 'adverse_events',
     regclass: 'public.adverse_events',
-    where: 'organization_id = $1::text',
+    orgColumn: 'organization_id',
   },
   {
     domain: 'safety',
     name: 'risk_management_plans',
     regclass: 'public.risk_management_plans',
-    where:
-      "organization_id = $1::text AND (COALESCE(identified_risks, '[]') <> '[]' OR COALESCE(potential_risks, '[]') <> '[]')",
+    orgColumn: 'organization_id',
+    extra: "(COALESCE(identified_risks, '[]') <> '[]' OR COALESCE(potential_risks, '[]') <> '[]')",
   },
   {
     domain: 'product',
     name: 'cmc_module3_sections',
     regclass: 'public.cmc_module3_sections',
-    where: 'organization_id = $1::int',
+    orgColumn: 'organization_id',
   },
 ];
+
+/** information_schema.data_type values that compare against $1::int.
+ *  Anything else (text, varchar, uuid, citext) is compared as text. */
+const INTEGER_TYPES = new Set(['integer', 'bigint', 'smallint']);
 
 const ALL_DOMAINS: IBDataDomain[] = ['product', 'nonclinical', 'clinical', 'safety'];
 
@@ -180,23 +206,55 @@ async function deriveAvailability(orgId: number): Promise<{
     safety: false,
   };
 
-  // 1. Which candidate stores actually exist in this database?
-  const regSelects = STORE_PROBES.map(
-    (p, i) => `to_regclass('${p.regclass}') AS r${i}`,
-  ).join(', ');
-  const regRes = await pool.query(`SELECT ${regSelects}`);
+  // 1. Which candidate stores exist here, and what TYPE is each one's tenant
+  //    column? Both answers come from the catalog in one round trip, so the
+  //    probe below is built against the schema that is actually installed
+  //    rather than against an assumption recorded in this file.
+  //
+  //    `to_regclass` answers existence (and tolerates a missing schema, which a
+  //    join against information_schema would not). The type lookup is a
+  //    separate correlated scalar per probe, matched on the same schema and
+  //    table the regclass names.
+  const catalogSelects = STORE_PROBES.map((p, i) => {
+    const [schema, table] = p.regclass.includes('.')
+      ? p.regclass.split('.')
+      : ['public', p.regclass];
+    return (
+      `to_regclass('${p.regclass}') AS r${i}, ` +
+      `(SELECT data_type FROM information_schema.columns ` +
+      `WHERE table_schema = '${schema}' AND table_name = '${table}' ` +
+      `AND column_name = '${p.orgColumn}') AS t${i}`
+    );
+  }).join(', ');
+  const regRes = await pool.query(`SELECT ${catalogSelects}`);
   const regRow = (regRes.rows[0] ?? {}) as Record<string, unknown>;
-  const present = STORE_PROBES.filter((_, i) => regRow[`r${i}`] != null);
+
+  /* A store is probe-able only if it EXISTS and its tenant column exists. A
+     table present without the column it is supposed to be scoped by is not a
+     store we can read safely — skipping it degrades one domain, where guessing
+     would either crash the endpoint or, worse, probe unscoped. */
+  const present = STORE_PROBES
+    .map((p, i) => ({ probe: p, type: regRow[`t${i}`] as string | null | undefined, exists: regRow[`r${i}`] != null }))
+    .filter((x) => x.exists && typeof x.type === 'string' && x.type.length > 0);
   if (present.length === 0) return { availability, sources: [] };
 
-  // 2. One bulk probe: which present stores hold org-scoped rows? (Table names are
-  //    fixed constants from STORE_PROBES — never user input — so the interpolation
-  //    is injection-safe; the org id is the sole bound parameter.)
+  // 2. One bulk probe: which present stores hold org-scoped rows? (Table and
+  //    column names are fixed constants from STORE_PROBES — never user input —
+  //    so the interpolation is injection-safe; the org id is the sole bound
+  //    parameter.)
+  //
+  //    The cast is derived, not declared: an integer-keyed column compares
+  //    against $1::int and a text-keyed one against $1::text. Casting the
+  //    parameter (rather than the column) keeps any index on the column usable.
   const union = present
-    .map((p) => `SELECT '${p.domain}' AS domain, '${p.name}' AS store WHERE EXISTS (SELECT 1 FROM ${p.name} WHERE ${p.where})`)
+    .map(({ probe, type }) => {
+      const cast = INTEGER_TYPES.has(String(type)) ? '$1::int' : '$1::text';
+      const where = [`${probe.orgColumn} = ${cast}`, probe.extra].filter(Boolean).join(' AND ');
+      return `SELECT '${probe.domain}' AS domain, '${probe.name}' AS store WHERE EXISTS (SELECT 1 FROM ${probe.name} WHERE ${where})`;
+    })
     .join(' UNION ALL ');
-  // $1 is bound as text and cast per-column ($1::int / $1::text) so the parameter
-  // type is unambiguous regardless of which stores are present in this database.
+  // Bound as text and cast per-column above, so the parameter type is
+  // unambiguous whichever stores this database happens to have.
   const hitRes = await pool.query(union, [String(orgId)]);
   const sources = new Set<string>();
   for (const row of hitRes.rows as Array<{ domain: IBDataDomain; store: string }>) {

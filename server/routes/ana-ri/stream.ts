@@ -53,6 +53,15 @@ import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import { directiveFromToolResult } from '../../services/ana-ri/navigation-actions.js';
+import {
+  resolveDriveState,
+  buildDriveStateEvent,
+  buildDriveNavigationEvent,
+  buildLiveDrivePromptBlock,
+  auditDriveNavigation,
+  MAX_DRIVE_NAVIGATIONS,
+} from '../../services/ana-ri/live-drive.js';
+import auditService from '../../services/auditService.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
 import {
   runAgenticToolLoop,
@@ -144,6 +153,7 @@ export function mountStreamRoute(router: Router): void {
         language,
         model_override,
         effort_level,
+        live_drive,
       } = req.body;
 
       if (!message || typeof message !== 'string') {
@@ -257,6 +267,16 @@ export function mountStreamRoute(router: Router): void {
       const toolPolicyPromise = orgId
         ? loadAnaToolPolicy(getPool(), Number(orgId))
         : Promise.resolve({});
+
+      // ── Live Drive (opt-in screen driving) ─────────────────────────────
+      // The client sends `live_drive: true` only while the person has the
+      // toggle on. Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes)
+      // is resolved in parallel with context assembly; a deny is an honest
+      // `drive_state` event, never a dead turn. No request → zero queries.
+      const driveStatePromise = resolveDriveState(
+        live_drive === true,
+        orgId != null ? Number(orgId) : null,
+      );
 
       // ── Intelligence answer fast-path ──────────────────────────────────
       // When the client submits a structured intelligence flow answer, skip
@@ -475,8 +495,15 @@ export function mountStreamRoute(router: Router): void {
       // Split into stable prefix (cached) + volatile suffix (per-turn) — see /chat
       // handler for rationale. The Claude gateway marks the stable block with
       // cache_control so subsequent turns on the same screen/project hit cache.
+      // Live Drive rides the VOLATILE suffix: the mode is per-turn, so putting
+      // it in the cached prefix would poison the cache across toggle flips.
+      const driveState = await driveStatePromise;
+      if (driveState.requested) {
+        res.write(`data: ${JSON.stringify(buildDriveStateEvent(driveState))}\n\n`);
+      }
       const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
-      const streamVolatileSuffix = memoryBlock + enrichment.block;
+      const streamVolatileSuffix =
+        memoryBlock + enrichment.block + (driveState.enabled ? buildLiveDrivePromptBlock() : '');
 
       // Thread resolution (before message building so we can load server history)
       let threadId = thread_id;
@@ -822,6 +849,10 @@ export function mountStreamRoute(router: Router): void {
       // services/ana-ri/navigation-actions.ts for why it is tool-driven and offered
       // rather than performed.
       const collectedNavigation: NavigationDirective[] = [];
+      // Live Drive: how many directives were emitted for immediate application
+      // this turn. Shares the chips' budget (MAX_DRIVE_NAVIGATIONS) so driving
+      // can never move a person more times than offering would have offered.
+      let driveNavigationsApplied = 0;
       // Document drafts emitted this turn — persisted to the governed artifact
       // version history (concept2cure_artifacts / _artifact_versions) by
       // post-processing so Document Studio version history survives the session.
@@ -1030,6 +1061,9 @@ export function mountStreamRoute(router: Router): void {
                     organizationId: orgId,
                     userId: userId || null,
                     projectId: streamProjectId ? Number(streamProjectId) || null : null,
+                    // Lets navigate_to tell the model the truth about what its
+                    // directive does this turn (applied live vs offered chip).
+                    liveDrive: driveState.enabled,
                   });
                 } catch (toolErr: any) {
                   resultStr = JSON.stringify({
@@ -1116,7 +1150,30 @@ export function mountStreamRoute(router: Router): void {
                 // here, offered as a chip by post-processing; a refused target
                 // (unknown id, missing param) yields null and never becomes one.
                 const directive = directiveFromToolResult(toolUse.name, resultStr);
-                if (directive) collectedNavigation.push(directive);
+                if (directive) {
+                  collectedNavigation.push(directive);
+                  // Live Drive: the person opted in and is entitled, so the
+                  // directive is ALSO emitted now for immediate application —
+                  // capped, audited, and re-validated client-side against the
+                  // same shared registry before the screen moves.
+                  if (driveState.enabled && driveNavigationsApplied < MAX_DRIVE_NAVIGATIONS) {
+                    driveNavigationsApplied += 1;
+                    res.write(
+                      `data: ${JSON.stringify(buildDriveNavigationEvent(directive, round))}\n\n`
+                    );
+                    auditDriveNavigation(
+                      {
+                        organizationId: orgId,
+                        userId: userId ?? null,
+                        threadId,
+                        runId,
+                        round,
+                        directive,
+                      },
+                      entry => auditService.logAction(entry)
+                    );
+                  }
+                }
                 if (parsed?.status === 'intelligence_question' && parsed.question) {
                   res.write(
                     `data: ${JSON.stringify({

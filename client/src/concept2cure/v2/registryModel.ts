@@ -99,6 +99,7 @@ export const RAIL_CORE = [
 ];
 /** Specialist science apps promoted to the rail (also in the Apps catalog) */
 export const RAIL_SPECIALIST = [
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker' },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
   { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
 ];
@@ -146,7 +147,6 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'haq-manager',
   'global-ri',
   'safety-narrative',
-  'cmc',
   'labeling',
   'risk',
   'design-controls',
@@ -1040,6 +1040,24 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   // resolves to the kit's entry surface rather than silently falling through to
   // home. `pdev` needs no alias — it is a real registered surface id now.
   mdx: 'device-workstream',
+  /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
+     the precondition for AnA Live Drive): these ten registry ids are what AnA
+     navigates by — `navigate_to` refuses everything else — but they predate
+     the v2 surface ids, so without an alias each one landed on the
+     KitSurfaceScaffold fallback: AnA saying "taking you to Intelligence" and
+     the person arriving at a scaffold. Each maps to the surface that IS that
+     capability today. Guarded by __tests__/navigationReachability.test.ts,
+     which fails the moment a registry id and this table drift apart again. */
+  biopharma: 'program-journey',
+  documents: 'vault',
+  submissions: 'submission-center',
+  'section-workspace': 'document-authoring',
+  'review-readiness': 'review',
+  tasking: 'tasks',
+  'submission-gateway': 'gateway-transmittals',
+  intelligence: 'global-ri',
+  authoring: 'document-authoring',
+  safety: 'pv-cockpit',
 };
 
 /** Registry meta lookup with the kit's fallback shape. */

@@ -94,6 +94,7 @@ import {
   peekEditorTarget,
   type EditorTarget,
 } from '../editorTarget';
+import { consumeNavParams } from '../navParams';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -631,7 +632,7 @@ function AnaActivity({
   );
 }
 
-export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
+export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // `module` is no longer a filter the user drives — the filing outline is. It
   // survives only as the value AuthoringCreateExport needs when creating a new
   // document, and it now follows the selected section instead of a dropdown
@@ -723,6 +724,33 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
      CLEARED on mount: the channel is one-shot, so a target that isn't honoured
      now can never ambush a later, unrelated visit to the editor. */
   const [editorTarget] = useState<EditorTarget | null>(() => peekEditorTarget());
+  /* ── Navigation-directive target (window.C2C_NAV_PARAMS) ──
+     AnA's navigate_to (Live Drive or a chip click) can name a sectionCode
+     ('section-workspace' / 'authoring' registry targets, e.g. "3.2.P.8").
+     Consumed once on mount; resolved through the SAME bounded search and
+     honest-miss notices as an editor-target hand-off — one resolution flow,
+     two senders. Carries no docType/program claim, so those guards below
+     simply don't apply to it. */
+  const [navSectionCode] = useState<string | null>(() => {
+    const code = consumeNavParams('document-authoring')?.sectionCode?.trim();
+    return code && code.length > 0 ? code : null;
+  });
+  /** Unified open-on-mount target: a workbench editor-target wins (it carries
+   *  the stronger claim); otherwise the navigation directive's section. */
+  const sectionOpenTarget = useMemo(
+    () =>
+      editorTarget ??
+      (navSectionCode
+        ? {
+            docType: null,
+            sectionCode: navSectionCode,
+            sectionLabel: null,
+            programId: null,
+            programTitle: null,
+          }
+        : null),
+    [editorTarget, navSectionCode],
+  );
   /** The honest miss: why the deep-link did not open what it named. Rendered
    *  as a dismissible notice over the DEFAULT view — never a silent
    *  wrong-document open. */
@@ -866,6 +894,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     projectId: projectIdForOutline,
     authoringContext,
     moduleContext,
+    /* Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
+       dock's turns carry the same opt-in and feed the same shell-level
+       apply/take-over machine as the rail's turns. */
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
   });
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -1052,13 +1085,15 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
-    if (!editorTarget || docsState === 'loading' || filing.loading) return;
+    if (!sectionOpenTarget || docsState === 'loading' || filing.loading) return;
     targetAttemptedRef.current = true;
-    const t = editorTarget;
+    const t = sectionOpenTarget;
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
     if (!t.sectionCode && !t.sectionLabel) return;
-    const family = EDITOR_TARGET_DOC_LABELS[t.docType];
+    // A navigation-directive target claims no document family; the guards and
+    // notices below only speak of one when the sender actually named it.
+    const family = t.docType ? EDITOR_TARGET_DOC_LABELS[t.docType] : null;
     const wanted = describeEditorTarget(t);
     if (docsState === 'error') {
       // The tree pane already reports the failed read; this says what it cost.
@@ -1076,7 +1111,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       );
       return;
     }
-    if (filing.document && filing.document.doc_type !== t.docType) {
+    if (t.docType && filing.document && filing.document.doc_type !== t.docType) {
       setTargetNotice(
         `Couldn’t open ${wanted} — this project’s governed dossier is ` +
           `${filing.document.doc_type.toUpperCase()}, not ${family}. ` +
@@ -1107,19 +1142,22 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
           if (d.id === activeDocId) void loadSections(d.id);
           else setActiveDocId(d.id);
           setTreeScrollNonce(n => n + 1);
-          fireToast(`Opened ${match.code} · ${match.title} — from the ${family} workspace.`);
+          fireToast(
+            `Opened ${match.code} · ${match.title}` +
+              (family ? ` — from the ${family} workspace.` : ' — as requested in chat.')
+          );
           return;
         }
       }
       if (!aliveRef.current) return;
       setTargetNotice(
-        `Couldn’t find ${wanted} in the ${family} documents in scope ` +
+        `Couldn’t find ${wanted} in the ${family ? `${family} ` : ''}documents in scope ` +
           `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
           'the section may not be drafted here yet, or may sit under another status.'
       );
     })();
   }, [
-    editorTarget,
+    sectionOpenTarget,
     docsState,
     docs,
     filing.loading,
@@ -1516,6 +1554,121 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
       );
     }
   }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
+
+  /* ── Resolve / reopen a comment thread ──
+     PATCH /api/authoring/comments/:id has recorded status changes with resolver
+     attribution (JWT actor, resolved_at) since the store shipped — and no
+     surface ever called it, so review threads could only accumulate. The row
+     is never deleted by this: a resolved comment stays in the record with who
+     resolved it; reopen is the honest undo. */
+  const setCommentStatus = useCallback(
+    async (commentId: string, statusTo: 'resolved' | 'open') => {
+      if (!activeDocId) return;
+      try {
+        const res = await apiRequest(
+          'PATCH',
+          `/api/authoring/comments/${encodeURIComponent(commentId)}`,
+          { status: statusTo }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not changed — your session isn’t authenticated.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t update the comment — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              '. Its status is unchanged.',
+            'error'
+          );
+          return;
+        }
+        fireToast(
+          statusTo === 'resolved'
+            ? 'Comment resolved — recorded under your name. The thread stays in the record.'
+            : 'Comment reopened.'
+        );
+        void loadComments(activeDocId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t update the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeDocId, fireToast, loadComments]
+  );
+
+  /* ── Rename the open section (code and title) ──
+     PATCH /sections/:id has accepted `title` and `code` since the route was
+     written; only `content` ever had UI. A mistyped section title was
+     permanent unless someone edited the database. Renaming is metadata — the
+     server records no content revision for it — and it is held to the same
+     honesty contract: awaited, adopted from the server's row, nothing local
+     mutated on failure. */
+  const [renaming, setRenaming] = useState(false);
+  const [renameCode, setRenameCode] = useState('');
+  const [renameTitle, setRenameTitle] = useState('');
+  const [renameBusy, setRenameBusy] = useState(false);
+  useEffect(() => {
+    setRenaming(false);
+  }, [activeSectionId]);
+
+  const openRename = useCallback(() => {
+    if (!activeSection) return;
+    setRenameCode(activeSection.code);
+    setRenameTitle(activeSection.title);
+    setRenaming(true);
+  }, [activeSection]);
+
+  const saveRename = useCallback(async () => {
+    if (!activeSection) return;
+    const code = renameCode.trim();
+    const title = renameTitle.trim();
+    if (!code || !title) {
+      fireToast('Both the section code and the title are required.', 'error');
+      return;
+    }
+    if (code === activeSection.code && title === activeSection.title) {
+      setRenaming(false);
+      return;
+    }
+    setRenameBusy(true);
+    try {
+      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+        code,
+        title,
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated.', 'error');
+        return;
+      }
+      if (!res.ok) {
+        fireToast(
+          'Couldn’t rename the section — ' +
+            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            '. Nothing was changed.',
+          'error'
+        );
+        return;
+      }
+      const adopted = (json as { section?: AuthSection })?.section;
+      setSections(ss =>
+        ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? { code, title }) } : s))
+      );
+      setRenaming(false);
+      fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
+    } catch (e) {
+      fireToast(
+        'Couldn’t rename the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
+    } finally {
+      setRenameBusy(false);
+    }
+  }, [activeSection, renameCode, renameTitle, fireToast]);
 
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
@@ -1932,8 +2085,71 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             ) : (
               <>
                 <div className="ed-mast">
-                  <div className="ed-mast-num">{activeSection.code}</div>
-                  <h1 className="ed-mast-t">{activeSection.title}</h1>
+                  {renaming ? (
+                    <div
+                      role="group"
+                      aria-label={`Rename section ${activeSection.code}`}
+                      style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+                      onKeyDown={e => {
+                        if (e.key === 'Escape') {
+                          e.preventDefault();
+                          setRenaming(false);
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          void saveRename();
+                        }
+                      }}
+                    >
+                      <input
+                        className="c2c-input"
+                        style={{ width: 110, height: 30 }}
+                        aria-label="Section code"
+                        value={renameCode}
+                        autoFocus
+                        onChange={e => setRenameCode(e.target.value)}
+                      />
+                      <input
+                        className="c2c-input"
+                        style={{ flex: 1, minWidth: 200, height: 30 }}
+                        aria-label="Section title"
+                        value={renameTitle}
+                        onChange={e => setRenameTitle(e.target.value)}
+                      />
+                      <button
+                        className="btn primary"
+                        style={{ height: 30 }}
+                        disabled={renameBusy || !renameCode.trim() || !renameTitle.trim()}
+                        onClick={() => void saveRename()}
+                      >
+                        {renameBusy ? 'Renaming…' : 'Rename'}
+                      </button>
+                      <button
+                        className="btn ghost"
+                        style={{ height: 30 }}
+                        disabled={renameBusy}
+                        onClick={() => setRenaming(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="ed-mast-num">{activeSection.code}</div>
+                      <h1 className="ed-mast-t" style={{ display: 'inline' }}>
+                        {activeSection.title}
+                      </h1>
+                      {!docSealed && (
+                        <button
+                          className="nda-open"
+                          style={{ marginLeft: 8, verticalAlign: 'middle' }}
+                          title="Rename this section's code and title — its content and history are unchanged"
+                          onClick={openRename}
+                        >
+                          {I.penLine} Rename
+                        </button>
+                      )}
+                    </>
+                  )}
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
@@ -2624,10 +2840,31 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                     <b>{c.author_name ?? 'Unknown'}</b>
                     {c.section_code && <span className="cmt-role">{c.section_code}</span>}
                     <span className="cmt-when">· {relTime(c.created_at)}</span>
-                    {c.status && c.status !== 'open' && (
-                      <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>
-                        {c.status}
-                      </span>
+                    {/* The thread's lifecycle. Resolving records the resolver
+                        and keeps the row; reopen is the honest undo. Neither
+                        deletes anything. */}
+                    {c.status && c.status !== 'open' ? (
+                      <>
+                        <span className="rd-chip tone-ok" style={{ marginLeft: 'auto' }}>
+                          {c.status}
+                        </span>
+                        <button
+                          className="nda-open"
+                          title="Reopen this comment thread"
+                          onClick={() => void setCommentStatus(c.id, 'open')}
+                        >
+                          Reopen
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="nda-open"
+                        style={{ marginLeft: 'auto' }}
+                        title="Mark this comment resolved — recorded under your name; the thread stays in the record"
+                        onClick={() => void setCommentStatus(c.id, 'resolved')}
+                      >
+                        Resolve
+                      </button>
                     )}
                   </div>
                   {/* The quoted range this thread is anchored to, with a jump

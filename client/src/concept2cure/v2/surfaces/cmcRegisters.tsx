@@ -228,7 +228,16 @@ export function RegisterCard<T>({
       setRows((rs) => [row, ...rs]);
       onWrite?.(row);
       setCreating(false);
-      fireToast(`${create.subject.charAt(0).toUpperCase() + create.subject.slice(1)} saved.`);
+      /* A record created with no program in context persists org-wide but the
+         Module 3 write-through never fires for it (the server skips canonical
+         propagation without a projectId) — a fact the person filing it needs
+         at the moment of filing, not one to discover at compile time. */
+      fireToast(
+        `${create.subject.charAt(0).toUpperCase() + create.subject.slice(1)} saved.` +
+          (projectId
+            ? ''
+            : ' Not linked to a program — it will not feed a Module 3 build until a program links it.'),
+      );
     } catch (e) {
       fireToast(cmcWriteThrew(create.subject, e), 'error');
     }

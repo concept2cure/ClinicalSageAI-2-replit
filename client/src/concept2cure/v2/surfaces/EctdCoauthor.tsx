@@ -42,6 +42,7 @@ import { I } from '../icons';
 import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 import { useAnaChat } from '../../components/ana/useAnaChat';
+import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
@@ -189,7 +190,7 @@ function readProjectId(): string | undefined {
 
 /* ---- Component ---- */
 
-export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
+export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
   const live = connected();
 
   const [docs, setDocs] = useState<CoauthorDoc[]>([]);
@@ -264,6 +265,10 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     screenName: 'ectd-coauthor',
     projectId: readProjectId(),
     moduleContext,
+    /* Live Drive bridge — same opt-in and shell-level apply machine as the
+       rail's turns (see SurfaceViewProps.liveDrive). */
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
   });
   const turns = anaChat.messages;
 
@@ -343,14 +348,44 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     });
   };
 
+  /* ── "Sources" was a paperclip that could not be clicked ──────────────────
+     It rendered as `<span className="ec-chip">{I.paperclip} Sources</span>` —
+     a paperclip icon and an action word, in a composer, with no handler and no
+     file input anywhere on the surface. On the eCTD co-authoring screen, where
+     citing a source document is the entire job.
+
+     Wired to `useChatUpload`, the same /api/chat/upload path the shell composer
+     and ProjectHome use: the file is OCR'd and its text written into this
+     project's memory, so AnA can cite from it rather than being told a filename
+     it cannot open. */
+  const attachRef = useRef<HTMLInputElement>(null);
+  const {
+    attachments: ecAttachments,
+    addFiles: ecAddFiles,
+    removeAttachment: ecRemoveAttachment,
+    clear: ecClearAttachments,
+    statusMessage: ecStatusMessage,
+  } = useChatUpload({ projectId: readProjectId() ?? null });
+  const ecReady = ecAttachments.filter((a) => a.status === 'ready');
+  const ecUploading = ecAttachments.filter((a) => a.status === 'uploading');
+
   const send = () => {
     const q = draft.trim();
-    if (!q || anaChat.isStreaming) return;
+    // An attachment alone is a legitimate turn ("read this"), and an in-flight
+    // upload must block send or AnA answers about bytes the server has not
+    // finished reading.
+    if (anaChat.isStreaming || ecUploading.length > 0) return;
+    if (!q && ecReady.length === 0) return;
     // Answered HERE, in the pane it was typed into. The turn streams from
     // /api/ana-ri/stream with this document as module context; nothing is
     // manufactured locally and no completed tool chip is invented.
+    const names = ecReady.map((a) => a.name);
+    const line = names.length ? `Attached: ${names.join(', ')}` : '';
+    const scoped = q ? q + (activeRef ? ' (eCTD §' + activeRef + ')' : '') : '';
+    const body = scoped && line ? `${scoped}\n\n${line}` : scoped || line;
     setDraft('');
-    void anaChat.send(q + (activeRef ? ' (eCTD §' + activeRef + ')' : ''));
+    ecClearAttachments();
+    void anaChat.send(body);
   };
 
   /* Keep the newest turn in view as tokens arrive. */
@@ -467,12 +502,52 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
         </div>
         <div className="ec-intel-foot">
           <div className="ec-composer">
-            <textarea rows={1} aria-label="Filter capabilities" placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
+            {/* Was aria-label="Filter capabilities" — a copy-paste from another
+                pane. A screen-reader user was told this composer was a filter. */}
+            <textarea rows={1} aria-label="Ask AnA about this section" placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
               onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
+            {ecAttachments.length > 0 && (
+              <div className="ec-atts">
+                {ecAttachments.map((a) => (
+                  <span key={a.id} className="ec-att-chip" data-status={a.status}>
+                    {I.paperclip} {a.name}
+                    {a.status === 'uploading' && <em> · reading…</em>}
+                    {a.status === 'ready' && <em> · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}</em>}
+                    {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
+                    <button type="button" className="ec-att-x" aria-label={`Remove ${a.name}`} onClick={() => ecRemoveAttachment(a.id)}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="ec-composer-row">
-              <span className="ec-chip">{I.paperclip || I.plus} Sources</span>
-              <button className="ec-send" aria-label="Send message to AnA" disabled={!draft.trim() || anaChat.isStreaming} onClick={send}>{I.arrowUp || I.arrowRight || '→'}</button>
+              <input
+                ref={attachRef}
+                type="file"
+                multiple
+                className="ana-hidden-input"
+                aria-label="Attach a source document for AnA to cite"
+                onChange={(e) => { ecAddFiles(e.target.files); if (attachRef.current) attachRef.current.value = ''; }}
+                data-testid="ec-attach-input"
+              />
+              <button
+                type="button"
+                className="ec-chip"
+                onClick={() => attachRef.current?.click()}
+                title="Attach a source document for AnA to read and cite"
+                data-testid="ec-attach-button"
+              >
+                {I.paperclip || I.plus} Sources
+              </button>
+              <button
+                className="ec-send"
+                aria-label="Send message to AnA"
+                disabled={anaChat.isStreaming || ecUploading.length > 0 || (!draft.trim() && ecReady.length === 0)}
+                onClick={send}
+              >
+                {I.arrowUp || I.arrowRight || '→'}
+              </button>
             </div>
+            <span className="sr-only" aria-live="polite">{ecStatusMessage}</span>
           </div>
         </div>
       </section>

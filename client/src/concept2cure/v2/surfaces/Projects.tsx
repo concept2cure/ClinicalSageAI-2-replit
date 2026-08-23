@@ -659,7 +659,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   };
 
   return (
-    <div className="page-inner">
+    /* `.page-full` on the shell sets `display:flex; padding:0`, so this is the
+       flex child that has to claim the row and carry its own padding. Using
+       `.page-inner` here is what capped the workspace index at a 1160px reading
+       measure — see the note beside `projects:` in surfaceViews.ts. */
+    <div className="pj-index">
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Workspace</div>

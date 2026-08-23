@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
+import { C2CForm, type C2CFormConfig } from '../C2CForm';
+import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
@@ -76,11 +79,80 @@ interface CroSponsor {
 
 /* ── CRO Sponsor Portfolio ── */
 
-export function CroPortfolio({ onAsk }: SurfaceViewProps) {
+export function CroPortfolio({ onAsk, onNav }: SurfaceViewProps) {
   /* Fixture-free (real-data standard): the org's real sponsor roster, an honest
      empty state, or an honest error — no codebase fixture, no "Sample data". */
-  const live = useLiveRows<CroSponsor>('/api/cro-portfolio');
+  const [rosterEpoch, setRosterEpoch] = useState(0);
+  const live = useLiveRows<CroSponsor>('/api/cro-portfolio', ['/api/cro-portfolio', rosterEpoch]);
   const sponsors = live.rows;
+
+  /* ── "Onboard sponsor" opened nothing ─────────────────────────────────────
+     `<button className="btn primary">{I.plus} Onboard sponsor</button>` — the
+     primary call to action on the CRO's own portfolio, with no onClick. A CRO
+     could not add a sponsor anywhere in the product.
+
+     POST /api/cro/clients exists and is mounted (server/routes/cro.ts:209,
+     register-advanced-platform-routes.ts). It requires `name` and
+     `companyType`; the rest of cro_clients is optional, so the form asks for
+     the two the route validates plus the contact fields a sponsor record is
+     useless without. The roster is re-read from the server afterwards rather
+     than patched locally — the row appears because it was stored. */
+  const [toast, fireToast] = useToast();
+  const [onboarding, setOnboarding] = useState(false);
+
+  const SPONSOR_FORM: C2CFormConfig = {
+    eyebrow: 'CRO portfolio · new sponsor',
+    title: 'Onboard a sponsor',
+    governed:
+      'A sponsor is an org-isolated workspace. The record is created under your organization and is visible only to it.',
+    submitLabel: 'Create sponsor',
+    fields: [
+      { key: 'name', label: 'Sponsor name', type: 'text', required: true },
+      {
+        key: 'companyType',
+        label: 'Company type',
+        type: 'select',
+        options: ['biotech', 'pharma', 'medical_device', 'diagnostic'],
+        required: true,
+        half: true,
+      },
+      { key: 'industrySegment', label: 'Industry segment', type: 'text', placeholder: 'e.g. oncology', half: true },
+      { key: 'primaryContact', label: 'Primary contact', type: 'text', half: true },
+      { key: 'contactEmail', label: 'Contact email', type: 'text', half: true },
+      { key: 'regulatoryContact', label: 'Regulatory contact', type: 'text', half: true },
+      { key: 'regulatoryEmail', label: 'Regulatory email', type: 'text', half: true },
+    ],
+  };
+
+  const createSponsor = async (v: Record<string, string>) => {
+    setOnboarding(false);
+    try {
+      const res = await apiRequest('POST', '/api/cro/clients', {
+        name: (v.name || '').trim(),
+        companyType: v.companyType,
+        industrySegment: (v.industrySegment || '').trim() || undefined,
+        primaryContact: (v.primaryContact || '').trim() || undefined,
+        contactEmail: (v.contactEmail || '').trim() || undefined,
+        regulatoryContact: (v.regulatoryContact || '').trim() || undefined,
+        regulatoryEmail: (v.regulatoryEmail || '').trim() || undefined,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        fireToast(
+          'Sponsor not created — ' + ((body as { error?: string } | null)?.error ?? `HTTP ${res.status}`) + '.',
+          'error',
+        );
+        return;
+      }
+      fireToast(`Sponsor "${(v.name || '').trim()}" created.`);
+      setRosterEpoch((n) => n + 1);
+    } catch (e) {
+      fireToast(
+        'Sponsor not created — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was stored.',
+        'error',
+      );
+    }
+  };
   const [selId, setSel] = useState<string | null>(null);
 
   const sel = sponsors.find((s) => s.id === selId) ?? sponsors[0];
@@ -186,7 +258,13 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
           >
             {I.sparkles} Ask AnA
           </button>
-          <button className="btn primary">{I.plus} Onboard sponsor</button>
+          <button
+            className="btn primary"
+            onClick={() => setOnboarding(true)}
+            data-testid="cro-onboard-sponsor"
+          >
+            {I.plus} Onboard sponsor
+          </button>
         </div>
       </div>
 
@@ -325,8 +403,18 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
                     Engagement lead {sel.lead ?? '—'} - org-isolated workspace
                   </div>
                 </div>
-                <button className="btn ghost">
-                  Open programs {I.arrowRight}
+                {/* Was a dead button labelled "Open programs", implying a
+                    view scoped to this sponsor. No route can serve that:
+                    GET /api/c2c/projects has no sponsor filter. It goes to the
+                    real programme index and says so, rather than promising a
+                    sponsor-scoped screen that does not exist. */}
+                <button
+                  className="btn ghost"
+                  onClick={() => onNav && onNav('projects')}
+                  title="Open the organisation's programme portfolio"
+                  data-testid="cro-open-programs"
+                >
+                  Open programme portfolio {I.arrowRight}
                 </button>
               </div>
 
@@ -515,6 +603,15 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
           </div>
         </>
       )}
+
+      {onboarding && (
+        <C2CForm
+          config={SPONSOR_FORM}
+          onCancel={() => setOnboarding(false)}
+          onSubmit={createSponsor}
+        />
+      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }
