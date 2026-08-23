@@ -159,6 +159,35 @@ export interface LockNotice {
   ctaTarget: string | null;
 }
 
+/**
+ * The reason a destination is locked, as a phrase that stands ALONE.
+ *
+ * Separate from {@link LockNotice.status} on purpose, and the difference is the
+ * whole point. `status` is a pill inside the panel, read next to a lock glyph
+ * and a paragraph that explains it — "Included from Professional" is clear
+ * there. This is appended to a rail button's accessible name, where there is no
+ * surrounding context at all, so it has to say what is TRUE about the state on
+ * its own.
+ *
+ * It exists because the rail previously hard-coded "not included in your plan"
+ * for every locked entry. That is only true of the `tier` verdict: a module an
+ * administrator switched off needs nothing bought, and one outside the
+ * workspace's industry mode is not fixed by any plan. So a screen-reader user,
+ * and anyone hovering, were told a different — and wrong — reason from the one
+ * the panel gave them on activation.
+ */
+export function lockShortReason(verdict: NavSurfaceEntitlement): string {
+  switch (verdict.source) {
+    case 'disabled':
+      return 'turned off for this workspace';
+    case 'industry':
+      return 'not offered for this workspace';
+    case 'tier':
+    default:
+      return 'not included in your plan';
+  }
+}
+
 const TIER_LABEL: Record<string, string> = {
   free: 'Free',
   standard: 'Standard',

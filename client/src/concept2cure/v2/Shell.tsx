@@ -52,7 +52,12 @@ import {
   type AnaContext,
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
-import { isLocked, useNavEntitlements, type NavSurfaceEntitlement } from './navEntitlements';
+import {
+  isLocked,
+  lockShortReason,
+  useNavEntitlements,
+  type NavSurfaceEntitlement,
+} from './navEntitlements';
 import { NavUnlockPanel } from './NavUnlockPanel';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
@@ -189,9 +194,14 @@ export function Rail({
         onClick={() => (locked && verdict ? setLockedFor(verdict) : onNav(target))}
         /* The lock reaches assistive tech through the accessible name, not the
            icon: the icon is decorative and the colour shift is never the only
-           channel. */
-        aria-label={locked ? `${s.label} — not included in your plan` : undefined}
-        title={locked ? `${s.label} — not included in your plan` : s.label}
+           channel. The reason is the SERVER'S reason, per verdict — this used
+           to hard-code "not included in your plan" for all three, which is only
+           true of a tier gap: a module an admin switched off needs nothing
+           bought, and one outside the workspace's industry mode is not fixed by
+           any plan. Hover and screen-reader users were getting a different, and
+           wrong, reason from the one the panel gave them on activation. */
+        aria-label={locked && verdict ? `${s.label} — ${lockShortReason(verdict)}` : undefined}
+        title={locked && verdict ? `${s.label} — ${lockShortReason(verdict)}` : s.label}
       >
         <span className="ico">{I[s.icon] ?? I.grid}</span>
         <span className="lbl">{s.label}</span>
