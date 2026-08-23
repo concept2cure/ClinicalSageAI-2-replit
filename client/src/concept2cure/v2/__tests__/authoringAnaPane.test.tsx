@@ -130,8 +130,12 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     render(<DocumentAuthoring {...p} />);
     await screen.findAllByText('General Information');
 
-    // No pane before the ask — this is not a rail that was already open.
-    expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
+    // The pane ships OPEN. `ownsConversation: true` suppresses the shell's
+    // 32px AnA seam on this surface, so a closed local rail left the one
+    // screen where AnA and the author co-write as the only screen in the
+    // product with no AnA on it at all. ectd-coauthor renders its composer
+    // unconditionally and was never reported; this is parity with that.
+    expect(screen.getByLabelText(/AnA — document authoring/)).toBeTruthy();
 
     // Two controls carry this name once a section is genuinely empty: this
     // surface's toolbar button (the one under test — it prompts with the
@@ -198,7 +202,6 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     render(<DocumentAuthoring {...p} />);
     await screen.findAllByText('General Information');
 
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
     const box = await screen.findByPlaceholderText(/Ask about 3\.2\.S\.1/);
     fireEvent.change(box, { target: { value: 'Is this claim supported by the linked evidence?' } });
     fireEvent.click(screen.getByRole('button', { name: /Send/ }));
@@ -228,7 +231,6 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
 
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('General Information');
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
     const composer = await screen.findByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
     fireEvent.change(composer, { target: { value: 'Check the citation chain.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -245,14 +247,24 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
   it('shows an honest empty pane rather than pretending a conversation exists', async () => {
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('General Information');
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
-
     const pane = await screen.findByLabelText(/AnA — document authoring/);
     expect(pane.textContent).toMatch(/Ask AnA about this section/);
     expect(within(pane).getByRole('log', { name: 'AnA conversation' })).toBeTruthy();
     const composer = within(pane).getByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
-    await waitFor(() => expect(document.activeElement).toBe(composer));
-    fireEvent.keyDown(pane, { key: 'Escape' });
+
+    // Shipping the pane open must NOT take the caret out of the document on
+    // first paint — the author came here to write, not to chat.
+    expect(document.activeElement).not.toBe(composer);
+
+    // A deliberate open still runs the whole focus contract: composer on open,
+    // trigger restored on Escape.
+    fireEvent.click(screen.getByRole('button', { name: /Close AnA panel/ }));
+    await waitFor(() => expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull());
+    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    const reopened = await screen.findByLabelText(/AnA — document authoring/);
+    const composer2 = within(reopened).getByRole('textbox', { name: 'Ask AnA about 3.2.S.1' });
+    await waitFor(() => expect(document.activeElement).toBe(composer2));
+    fireEvent.keyDown(reopened, { key: 'Escape' });
     await waitFor(() => {
       expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
       expect(document.activeElement).toBe(screen.getByRole('button', { name: /^AnA/ }));

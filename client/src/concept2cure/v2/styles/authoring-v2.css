@@ -241,7 +241,7 @@
     overflow-y: auto;
   }
   .ed-doc-inner {
-    max-width: min(1180px, 100%);
+    max-width: min(1440px, 100%);
     margin: 0 auto;
     padding: 36px 44px 80px;
   }

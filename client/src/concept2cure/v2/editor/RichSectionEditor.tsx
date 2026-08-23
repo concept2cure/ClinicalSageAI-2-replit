@@ -78,6 +78,7 @@ import {
   looksLikeHtml,
   plainTextToHtml,
 } from './roundTrip';
+import { I } from '../icons';
 
 /* ── Public contract ──────────────────────────────────────────── */
 
@@ -683,10 +684,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             </RB>
             <span className="rse-sep" />
             <RB title="Bullet list" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
-              {'☰'}
+              {I.listBullet}
             </RB>
             <RB title="Numbered list" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
-              1.
+              {I.listOrdered}
             </RB>
             <span className="rse-sep" />
             {/* A CTD dossier is a tabular document — Module 3 most of all. The
@@ -697,7 +698,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 title="Insert table (3 columns × 3 rows, header row)"
                 onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
               >
-                {'⊞'} Table
+                {I.table} Table
               </RB>
             ) : (
               <>
@@ -717,7 +718,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                   Hdr
                 </RB>
                 <RB title="Delete table" onClick={() => editor?.chain().focus().deleteTable().run()}>
-                  {'⊟'}
+                  {I.close}
                 </RB>
               </>
             )}
@@ -741,10 +742,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             </select>
             <span className="rse-sep" />
             <RB title="Undo" onClick={() => editor?.chain().focus().undo().run()}>
-              {'↩'}
+              {I.undo}
             </RB>
             <RB title="Redo" onClick={() => editor?.chain().focus().redo().run()}>
-              {'↪'}
+              {I.redo}
             </RB>
             {onAsk && (
               <>
@@ -928,7 +929,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-link { font-size:11px; border:none; background:none; color:var(--accent-100,#2563eb); cursor:pointer; padding:2px 4px; }
         .rse-link:disabled { color:var(--text-400,#667085); cursor:default; }
         .rse-body { flex:1; min-height:0; overflow-y:auto; }
-        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:Georgia,"Times New Roman",serif; }
+        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
+        /* Measure lives on the prose blocks, not the canvas: a CTD table must be
+           free to use the full column while paragraphs keep a readable line. */
+        .rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
         .rse-body .tiptap p { margin:0 0 12px; }
         .rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
         .rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }

@@ -561,7 +561,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
     'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null
-  >(null);
+  >('ana');
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -664,6 +664,10 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
+  /* The pane ships open, so the first paint is not an "open" the user asked
+     for: moving focus there would take the caret out of the document before
+     they have typed a word. Every later open still focuses the composer. */
+  const anaFirstPaintRef = useRef(true);
 
   const rememberAnaTrigger = useCallback(() => {
     const active = document.activeElement;
@@ -722,6 +726,11 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   }, [closeAna, rail]);
 
   useEffect(() => {
+    if (anaFirstPaintRef.current) {
+      anaFirstPaintRef.current = false;
+      anaWasOpenRef.current = rail === 'ana';
+      return;
+    }
     if (rail === 'ana') {
       anaComposerRef.current?.focus({ preventScroll: true });
     } else if (anaWasOpenRef.current) {
