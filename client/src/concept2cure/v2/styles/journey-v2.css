@@ -85,7 +85,9 @@
 .c2c-v2 .pj-deliv-row{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-200);}
 .c2c-v2 .pj-deliv-row .dot{width:15px;height:15px;flex-shrink:0;color:var(--text-400);}
 .c2c-v2 .pj-deliv-row .dot svg{width:15px;height:15px;}
-.c2c-v2 .pj-deliv-row[data-done] .dot{color:var(--success);}
+/* The [data-done] rule is gone with the hardcoded tick it coloured — see the
+   note beside 'Key deliverables' in BiopharmaJourney.tsx. */
+.c2c-v2 .pj-deliv-note{margin-top:8px;font-size:11px;line-height:1.5;color:var(--text-400);}
 .c2c-v2 .pj-caps{display:flex;flex-wrap:wrap;gap:7px;}
 .c2c-v2 .pj-cap{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--bg-000);border-radius:99px;padding:6px 12px 6px 10px;font-size:12px;font-weight:500;color:var(--text-200);transition:all var(--dur) var(--ease);}
 .c2c-v2 .pj-cap svg{width:14px;height:14px;color:var(--text-400);}
