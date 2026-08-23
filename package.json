@@ -253,6 +253,7 @@
     "ci:empty-state-honesty:self-test": "node scripts/ci/check-empty-state-honesty.mjs --self-test",
     "ci:empty-state-honesty:write-baseline": "node scripts/ci/check-empty-state-honesty.mjs --write-baseline",
     "ci:dead-audit-catch": "node scripts/ci/check-dead-audit-catch.mjs",
+    "ci:dead-audit-catch:self-test": "node scripts/ci/check-dead-audit-catch.mjs --self-test",
     "ci:dead-audit-catch:list": "node scripts/ci/check-dead-audit-catch.mjs --list",
     "ci:dead-audit-catch:write-baseline": "node scripts/ci/check-dead-audit-catch.mjs --write-baseline"
   },

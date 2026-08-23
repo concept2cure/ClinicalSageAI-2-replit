@@ -33,21 +33,21 @@ async function auditDocumentAccess(
   documentId: string,
   action: 'document_download' | 'document_view',
 ): Promise<void> {
-  try {
-    const user = (req as any).user;
-    await auditService.logAction({
-      tenantId: orgId,
-      userId: user?.id ?? user?.userId,
-      action,
-      resourceType: 'document',
-      resourceId: documentId,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details: { route: req.path },
-    });
-  } catch (err) {
+  const user = (req as any).user;
+
+  const documentAccessAudit = await auditService.logAction({
+    tenantId: orgId,
+    userId: user?.id ?? user?.userId,
+    action,
+    resourceType: 'document',
+    resourceId: documentId,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details: { route: req.path },
+  });
+  if (!documentAccessAudit.persisted) {
     logger.warn('Document-access audit write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: documentAccessAudit.error ?? 'no durable store accepted the row',
       action,
       documentId,
     });

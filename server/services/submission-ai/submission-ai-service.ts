@@ -41,17 +41,27 @@ export class SubmissionAiError extends Error {
 
 /** Audit an AI invocation outcome (best-effort; never masks the real error). */
 async function auditAiOutcome(task: string, ctx: AiTaskCtx, outcome: 'success' | 'failed', extra?: Record<string, unknown>) {
-  try {
-    await auditService.logAction({
+  // Audit must never block the response — and it does not. The try/catch this
+  // replaced enforced nothing, because `logAction` resolves normally on a
+  // persistence failure rather than rejecting; the catch was dead code. An
+  // AI_GENERATE event on a submission is provenance for text that may reach a
+  // regulator, so a lost row is worth a line even though it is not fatal here.
+  const generateAudit = await auditService.logAction({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    action: 'AI_GENERATE',
+    resourceType: 'submission',
+    resourceId: ctx.submissionId,
+    details: { task, promptVersion: `${task}@v1.0`, outcome, ...extra },
+  });
+  if (!generateAudit.persisted) {
+    logger.warn('AI_GENERATE audit row was not persisted', {
+      submissionId: ctx.submissionId,
       organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action: 'AI_GENERATE',
-      resourceType: 'submission',
-      resourceId: ctx.submissionId,
-      details: { task, promptVersion: `${task}@v1.0`, outcome, ...extra },
+      task,
+      outcome,
+      auditError: generateAudit.error ?? 'no durable store accepted the row',
     });
-  } catch {
-    /* audit must never block the response */
   }
 }
 
