@@ -191,34 +191,48 @@ async function step(label, fn) {
 }
 
 /**
- * Every table name `shared/schema.ts` (and the modules it re-exports) declares.
+ * Every table name drizzle-kit will create from `shared/schema.ts`.
  *
- * Read from the source text rather than by importing it: this script runs on a
- * database that may not yet exist, and importing the schema module pulls in the
- * whole Drizzle graph. The declaration form is uniform and machine-checkable —
- * `pgTable('name', …)` — so a regex over the schema tree is both sufficient and
- * immune to the module failing to load.
+ * Scoped exactly the way drizzle scopes it: `drizzle.config.ts` sets
+ * `schema: './shared/schema.ts'`, so drizzle sees that ONE file plus whatever
+ * it re-exports (`export * from './schema/…'`) — and nothing else under
+ * `shared/`. Several modules there declare `pgTable(...)` without being
+ * re-exported (shared/cmc-schema.ts is one), and drizzle neither knows nor
+ * creates those. Counting them here would make this gate fail an install that
+ * is in fact complete, which is worse than the silence it replaces.
  *
- * Views are deliberately excluded (`pgView`/`pgMaterializedView`): push does not
- * create them and step 3's overlay owns them.
+ * Read from source text rather than by importing: this runs against a database
+ * that may not exist yet, and importing pulls in the whole Drizzle graph. The
+ * declaration form is uniform — `pgTable('name', …)` — so a regex over the
+ * reachable files is sufficient and cannot be broken by the module failing to
+ * load. Views are excluded (`pgView`/`pgMaterializedView`): push does not
+ * create them.
  */
 function declaredTableNames() {
-  const schemaRoot = path.resolve(__dirname, '..', '..', 'shared');
-  const names = new Set();
-  const walk = (dir) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, e.name);
-      if (e.isDirectory()) {
-        walk(full);
-      } else if (e.name.endsWith('.ts')) {
-        const src = fs.readFileSync(full, 'utf8');
-        for (const m of src.matchAll(/\bpgTable\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g)) {
-          names.add(m[1]);
-        }
+  const sharedRoot = path.resolve(__dirname, '..', '..', 'shared');
+  const entry = path.join(sharedRoot, 'schema.ts');
+  const files = [entry];
+
+  // One level of `export * from './rel'` — the form schema.ts actually uses.
+  const entrySrc = fs.readFileSync(entry, 'utf8');
+  for (const m of entrySrc.matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
+    const rel = m[1];
+    for (const ext of ['.ts', '/index.ts']) {
+      const candidate = path.resolve(sharedRoot, `${rel}${ext}`);
+      if (fs.existsSync(candidate)) {
+        files.push(candidate);
+        break;
       }
     }
-  };
-  walk(schemaRoot);
+  }
+
+  const names = new Set();
+  for (const f of files) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/\bpgTable\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g)) {
+      names.add(m[1]);
+    }
+  }
   return [...names].sort();
 }
 

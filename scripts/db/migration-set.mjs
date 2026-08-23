@@ -235,6 +235,28 @@ export const C2C_MIGRATION_FILES = [
   //
   // MUST precede the re-key below, which indexes the tables this creates.
   'db/migrations/20260401_cmc_convergence_os.sql',
+
+  // ── project_workflows (added 2026-08-23) ─────────────────────────────────
+  // The CMC workflow store. `server/api/cmc/routes.ts` and
+  // `server/api/cmc/workflowRoutes.ts` query `project_workflows`; this file is
+  // its ONLY creator, and it was on no applier — so the table existed on no
+  // real database and both routes 500'd.
+  //
+  // It was invisible to ci:migration-reachability because that guard treated
+  // any `pgTable(...)` under shared/ as the drizzle push surface, and
+  // shared/cmc-schema.ts declares this table. drizzle.config.ts scopes push to
+  // shared/schema.ts alone, which does not re-export cmc-schema, so drizzle
+  // never created it either. The guard is corrected in the same change and now
+  // reports exactly this one finding.
+  //
+  // Meets the wiring bar (scripts/db/verify-migration-set.mjs): applied against
+  // a real PostgreSQL 16 with the full install present, creates
+  // project_workflows, and is CREATE TABLE IF NOT EXISTS throughout — its
+  // second pass reported "relation already exists, skipping" rather than
+  // failing, so the deploy's every-time re-run is safe. Placed after
+  // 20260401_cmc_convergence_os.sql, which provisions the CMC tables it sits
+  // beside.
+  'db/migrations/20260402_cmc_runtime_ddl_to_migration.sql',
   // ── Schedule of events tenant-scoped uniqueness (added 2026-07-28) ────────
   // SECURITY. project_schedule_of_events had a unique constraint on (project_id)
   // alone — org-blind. generateProjectSchedule() upserted with
