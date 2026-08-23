@@ -100,7 +100,7 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from './AuthoringSignatures';
 import { useDialog } from '../useDialog';
-import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
+import { renderSafeMarkdown, sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -693,6 +693,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   /** The comment whose anchored range was last clicked in the canvas. */
   const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null);
 
+  /* Section view edits ONE section in a box. Document view assembles every
+     section into one continuous read, which is the thing an author is actually
+     building and the thing a reviewer receives. Editing stays section-scoped —
+     clicking a section in the document takes you to it. */
+  const [viewMode, setViewMode] = useState<'section' | 'document'>('section');
+
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
     'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null
@@ -731,10 +737,16 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      honest-miss notices as an editor-target hand-off — one resolution flow,
      two senders. Carries no docType/program claim, so those guards below
      simply don't apply to it. */
-  const [navSectionCode] = useState<string | null>(() => {
-    const code = consumeNavParams('document-authoring')?.sectionCode?.trim();
-    return code && code.length > 0 ? code : null;
+  const [navHandOff] = useState<{ sectionCode: string | null; docQuery: string | null }>(() => {
+    const p = consumeNavParams('document-authoring');
+    const code = p?.sectionCode?.trim();
+    const doc = p?.authoringDocType?.trim();
+    return {
+      sectionCode: code && code.length > 0 ? code : null,
+      docQuery: doc && doc.length > 0 ? doc : null,
+    };
   });
+  const navSectionCode = navHandOff.sectionCode;
   /** Unified open-on-mount target: a workbench editor-target wins (it carries
    *  the stronger claim); otherwise the navigation directive's section. */
   const sectionOpenTarget = useMemo(
@@ -1168,6 +1180,42 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     loadSections,
     fireToast,
   ]);
+
+  /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
+     "AnA, open the Clinical Overview for authoring" → the directive names a
+     document, not a section. Matched against the REAL documents in scope by
+     title (normalized exact first, then containment) — never a fabricated
+     document, and an honest notice on a miss. A section hand-off wins when
+     both were named: its bounded search already spans every document. */
+  const docQueryAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (docQueryAttemptedRef.current) return;
+    if (!navHandOff.docQuery || sectionOpenTarget || docsState === 'loading') return;
+    docQueryAttemptedRef.current = true;
+    const wanted = navHandOff.docQuery;
+    if (docsState === 'error') {
+      setTargetNotice(
+        `Couldn’t open “${wanted}” — the document list failed to load, so nothing was resolved. ` +
+          'Retry once documents load.'
+      );
+      return;
+    }
+    const norm = (s: string) => s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const want = norm(wanted);
+    const match =
+      docs.find(d => norm(d.title) === want) ?? docs.find(d => norm(d.title).includes(want));
+    if (match) {
+      if (match.id !== activeDocId) setActiveDocId(match.id);
+      setTreeScrollNonce(n => n + 1);
+      fireToast(`Opened “${match.title}” — as requested in chat.`);
+      return;
+    }
+    setTargetNotice(
+      `Couldn’t find a document matching “${wanted}” in scope ` +
+        `(status filter: ${status.replace('_', ' ')}). Showing the editor’s default view — ` +
+        'it may not be drafted here yet, or may sit under another status.'
+    );
+  }, [navHandOff.docQuery, sectionOpenTarget, docsState, docs, activeDocId, status, fireToast]);
 
   /* Bring the deep-linked section's tree row into view once it is active.
      Re-runs as the tree fills in; a no-op when nothing is active yet. */
@@ -1934,6 +1982,32 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                   );
               }}
             />
+            {/* Section / Document. An author writes a section but SHIPS a
+                document, and until now the whole document was never on screen
+                at any point in the workflow. */}
+            <div className="ed-viewtoggle" role="group" aria-label="Editor view">
+              <button
+                className="btn ghost"
+                style={{ height: 30 }}
+                onClick={() => setViewMode('section')}
+                data-active={viewMode === 'section' || undefined}
+                aria-pressed={viewMode === 'section'}
+                title="Edit one section"
+              >
+                {I.penLine} Section
+              </button>
+              <button
+                className="btn ghost"
+                style={{ height: 30 }}
+                onClick={() => setViewMode('document')}
+                data-active={viewMode === 'document' || undefined}
+                aria-pressed={viewMode === 'document'}
+                title="Read the whole document"
+                disabled={!activeDocId}
+              >
+                {I.fileText} Document
+              </button>
+            </div>
             <button
               className="btn ghost"
               style={{ height: 30 }}
@@ -2070,7 +2144,74 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
-            {!activeSection ? (
+            {viewMode === 'document' && activeDoc ? (
+              /* The whole document, in order, as one read. Sections are shown,
+                 not edited: editing is section-scoped because a revision, a
+                 signature and a lock are all section-scoped, and a view that
+                 let you type across all of them would be lying about what a
+                 save records. Click a section to go and edit it. */
+              <div className="ed-full" aria-label={`${activeDoc.title} — full document`}>
+                <div className="ed-full-mast">
+                  <div className="ed-mast-num">{activeDoc.module}</div>
+                  <h1 className="ed-mast-t">{activeDoc.title}</h1>
+                  <div className="ed-mast-meta">
+                    {sections.length} section{sections.length === 1 ? '' : 's'}
+                    {docSealed ? ' · frozen' : ''}
+                  </div>
+                </div>
+                {sectionsState === 'error' ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn’t read this document’s sections"
+                    hint="The document is not empty — the read failed. Retry from the tree."
+                  />
+                ) : sections.length === 0 ? (
+                  <EmptyState
+                    icon={I.fileText}
+                    title="This document has no sections yet"
+                    hint="Add a section to begin drafting."
+                  />
+                ) : (
+                  sections.map(sec => {
+                    const html = (sec.content ?? '').trim();
+                    return (
+                      <section
+                        key={sec.id}
+                        className="ed-full-sec"
+                        data-active={sec.id === activeSectionId || undefined}
+                        aria-label={`${sec.code} ${sec.title}`}
+                      >
+                        <div className="ed-full-sec-h">
+                          <span className="ed-full-sec-num">{sec.code}</span>
+                          <h2 className="ed-full-sec-t">{sec.title}</h2>
+                          <button
+                            className="btn ghost ed-full-edit"
+                            style={{ height: 26 }}
+                            onClick={() => {
+                              setViewMode('section');
+                              requestLeave({ kind: 'section', id: sec.id });
+                            }}
+                          >
+                            {I.penLine} Edit
+                          </button>
+                        </div>
+                        {html ? (
+                          <div
+                            className="ed-full-sec-body"
+                            dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(html) }}
+                          />
+                        ) : (
+                          /* Not "empty" as a finding — nothing has been written
+                             here yet, and the document view says which. */
+                          <p className="ed-full-sec-empty">Not drafted yet.</p>
+                        )}
+                      </section>
+                    );
+                  })
+                )}
+              </div>
+            ) : !activeSection ? (
               <div style={{ paddingTop: 48 }}>
                 <EmptyState
                   icon={I.fileText}

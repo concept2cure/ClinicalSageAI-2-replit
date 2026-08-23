@@ -2058,6 +2058,13 @@
 .c2c-v2 .cmdk-item[data-locked].on .hint{color:var(--text-200);}
 .c2c-v2 .cmdk-item[data-locked].on .nav-lic[data-lic="off"]{color:var(--warning);}
 .c2c-v2 .cmdk-item .nav-lic[data-lic="off"] svg{width:13px;height:13px;}
+/* The palette is rendered inside `.c2c-v2.shell`, so the collapsed-rail rule at
+   the top of this file — `[data-collapsed="true"] .nav-lic{display:none}`, which
+   exists because the rail's licence dots have no room in a 56px column — reaches
+   these rows too. A ⌘K row is full width whatever the rail is doing, and losing
+   the glyph there would quietly drop one of the three channels the locked state
+   is carried on for anyone who works with the rail collapsed. */
+.c2c-v2.shell[data-collapsed="true"] .cmdk-item[data-locked] .nav-lic[data-lic="off"]{display:flex;}
 
 /* ── Tweaks ── */
 .c2c-v2 .tweaks-toggle{position:fixed;right:16px;bottom:16px;width:38px;height:38px;border-radius:50%;background:var(--text-100);color:var(--bg-000);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--v2-shadow-md);z-index:40;}

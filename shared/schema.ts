@@ -116,7 +116,16 @@ function createInsertSchemaOmit<
   TOmit extends OmitConfig<z.infer<ReturnType<typeof createInsertSchema<TTable>>>>,
 >(table: TTable, omitFields: TOmit) {
   const schema = createInsertSchema(table);
-  return schema.omit(omitFields as any);
+  /* The runtime cast stays (drizzle-zod's BuildSchema mask typing), but the
+     RETURN must not: `.omit(mask as any)` resolved zod's Mask generic to
+     `any`, so the returned object's TS shape collapsed to `{}` — and the
+     first caller to `.omit()` AGAIN (server/api/cmc/routes.ts, omitting
+     organizationId after this omitted id/timestamps) got every key typed
+     `never`. Assert the true shape instead: the insert schema's shape minus
+     exactly the omitted keys, which is what the runtime object is. */
+  return schema.omit(omitFields as any) as unknown as z.ZodObject<
+    Omit<ReturnType<typeof createInsertSchema<TTable>>['shape'], keyof TOmit & string>
+  >;
 }
 
 // Custom pgvector type definition
