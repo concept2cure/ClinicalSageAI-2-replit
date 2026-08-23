@@ -28,6 +28,7 @@ import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { stashNavParamsForTarget } from './navParams';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
@@ -885,7 +886,14 @@ export function AnaRail({
                           key={i}
                           type="button"
                           className="ana-exec-chip is-nav"
-                          onClick={() => onNav(a.targetId as string)}
+                          onClick={() => {
+                            /* The directive's registry-validated params ride
+                               the navParams channel so the destination opens
+                               on the named tab/section; a param-less chip
+                               clears any stale entry instead of inheriting. */
+                            stashNavParamsForTarget(a.targetId as string, a.params);
+                            onNav(a.targetId as string);
+                          }}
                         >
                           {I.arrowRight} {a.label}
                         </button>

@@ -189,7 +189,7 @@ function readProjectId(): string | undefined {
 
 /* ---- Component ---- */
 
-export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
+export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
   const live = connected();
 
   const [docs, setDocs] = useState<CoauthorDoc[]>([]);
@@ -264,6 +264,10 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     screenName: 'ectd-coauthor',
     projectId: readProjectId(),
     moduleContext,
+    /* Live Drive bridge — same opt-in and shell-level apply machine as the
+       rail's turns (see SurfaceViewProps.liveDrive). */
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
   });
   const turns = anaChat.messages;
 
