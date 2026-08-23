@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:24:15.184Z",
+  "generatedAt": "2026-08-23T23:27:13.287Z",
   "git": {
-    "sha": "fe8ab05905012656825a335af97124f7ab15d19b",
+    "sha": "c00539b1fe0d7581dfa6f6002fe52299c9c5303c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2215,6 +2215,10 @@
         "bytes": 135234
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 135023
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
       },
@@ -2229,10 +2233,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
         "bytes": 132049
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 132009
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2361,12 +2361,12 @@
         "lines": 3183
       },
       {
-        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3113
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3159
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3103
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "lines": 3113
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
