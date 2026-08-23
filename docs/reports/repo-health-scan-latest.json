@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:12:55.221Z",
+  "generatedAt": "2026-08-23T22:21:09.777Z",
   "git": {
-    "sha": "115a13c98913f93245b21643acbf3ab39433b79c",
+    "sha": "a5904eb1ec9ddfa5e90520566a3299127037f4b3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -125,11 +125,12 @@
       },
       {
         "basename": "types",
-        "count": 48,
+        "count": 49,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/mdx/types.ts",
           "client/src/concept2cure/pdev/data/types.ts",
+          "server/api/cmc/types.js",
           "server/bootstrap/types.ts",
           "server/config/types.ts",
           "server/services/ai-gateway/types.ts",
@@ -2661,7 +2662,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 402,
       "largeByBytes": 30,
       "largeByLines": 73
     },
