@@ -81,17 +81,49 @@ permanent gate — written first, shown failing on exactly those 10, then fixed.
 | Client | `client/src/concept2cure/v2/surfaces/ConversationThread.tsx` | drive bridge for the owned conversation surface |
 | Tests | `server/services/ana-ri/__tests__/live-drive.test.ts`, `client/.../liveDrive.test.ts`, `client/.../navigationReachability.test.ts` | decision matrix, fail-closed validation, reachability gate |
 
-## Honest gaps (known, deliberate)
+## Expansion pass (same day, second commit)
 
-- Directive `params` (e.g. `intelligenceTab`) are validated end-to-end but not
-  yet applied inside destination surfaces — the client drops them at `nav(id)`
-  today, exactly as chip clicks always have. Applying them is a per-surface
-  follow-up.
-- The non-streaming `POST /api/ana-ri/chat` has no navigation wiring at all
-  (pre-existing); Live Drive is a streaming-path capability.
-- Owned surfaces other than `ConversationThread` (DocumentAuthoring,
-  EctdCoauthor docks…) don't originate drive turns yet; the `liveDrive` bridge
-  prop is in place for each to adopt.
-- Pre-emptive lock display: the toggle learns it is locked from the first
-  attempted turn's `drive_state` rather than from `/api/billing/capabilities`
-  up front. The copy is honest either way.
+The first three gaps below were closed:
+
+- **Params deep-apply.** A validated directive's params now ride the
+  `navParams` channel (`client/src/concept2cure/v2/navParams.ts` — the
+  editorTarget window-channel idiom: one module owns both ends, resolved
+  surface id, one-shot, TTL). Stashed by BOTH appliers (Live Drive and chip
+  click); consumed by `global-ri` (`intelligenceTab` → tolerant catalog-group
+  preselect, `matchIntelligenceGroup`) and `document-authoring` (`sectionCode`
+  → the SAME bounded section search + honest-miss notices the editor-target
+  hand-off uses; docType/program guards apply only when a sender claims them).
+  So "open 3.2.P.8" now opens section 3.2.P.8.
+- **All owned docks drive.** DocumentAuthoring, EctdCoauthor, and Rbm now pass
+  the shell's `liveDrive` bridge into their own chat instances, alongside
+  ConversationThread — every conversation surface can originate drive turns,
+  and they all feed the one shell-level apply/take-over machine.
+- **Pre-emptive verdict.** `GET /api/ana-ri/live-drive/state` runs the exact
+  per-turn decision (`resolveDriveState`) so the toggle shows its honest lock
+  (with the real required tier) before the first attempted turn. Advisory
+  only — every turn still resolves its own `drive_state`; a failed read
+  annotates nothing.
+
+## Final closure pass (same day, third commit)
+
+- **`authoringDocType` is consumed.** DocumentAuthoring now resolves it
+  against the REAL documents in scope by normalized title (exact, then
+  containment) and opens the match — with the same honest-miss notice
+  discipline as every other hand-off. "Open the Clinical Overview for
+  authoring" opens that document. A `sectionCode` hand-off takes precedence
+  when both are named (its bounded search already spans every document).
+- **The generic chat route stopped dropping directives.** `POST /api/chat`
+  (server/routes/chat/send-message.ts) runs the full agentic loop and used to
+  silently discard `navigate_to` results — AnA would resolve a target, say she
+  could take the user there, and no chip ever reached that client. It now
+  collects directives in `onToolExecution` (`directiveFromToolResult`) and
+  returns them as offer-chips after guidance actions (`toNavigationActions` —
+  same dedup, cap, and offer-only contract as the SSE path).
+
+## Non-gaps (by design, documented)
+
+- `POST /api/ana-ri/chat` (the firecrawl/server-tools-only path) runs NO local
+  tools by design — navigation is tool-driven, so it structurally cannot occur
+  there. Not a gap: the tool paths (SSE stream + /api/chat) both carry it.
+- The `/ana` socket namespace has no client consumer; Live Drive rides the SSE
+  stream. Adding a second live transport would be duplication, not coverage.

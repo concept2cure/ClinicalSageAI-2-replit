@@ -49,6 +49,34 @@ interface PortfolioRow {
   type: string;
   rpi: number | null;
   ir: number | null;
+  /**
+   * Where this row lives: 'spine' = the canonical submission core
+   * (submissions/ectd_sequences/submission_leaves — what the C2C intake
+   * creates and Module 3 placement writes into); 'rpi' = the legacy
+   * reg_submissions store the preparedness engine reads. The board used to
+   * read ONLY the legacy store, which does not even exist on a freshly
+   * provisioned database — so a program with a fully placed Module 3 opened
+   * onto "0 submissions".
+   */
+  source: 'spine' | 'rpi';
+  /** Spine rows: placed Module 3 leaves (lower(section_code) like 'm3%'). */
+  m3Leaves: number | null;
+  /** Spine rows: eCTD sequences on the submission. */
+  sequences: number | null;
+}
+
+/** One open agency question touching Module 3 — straight from reg_questions. */
+interface CorrespondenceRow {
+  id: number | string;
+  question: string;
+  sectionRef: string | null;
+  priority: string | null;
+  severity: string | null;
+  status: string;
+  region: string | null;
+  dueDate: string | null;
+  overdue: boolean;
+  assignedTo: string | null;
 }
 
 /** One governed Module 3 section — matches CmcSection { key, path, st }. */
@@ -71,6 +99,129 @@ function mapApprovalState(state: unknown): SectionRow['st'] {
   if (s === 'approved' || s === 'locked') return 'approved';
   if (s === 'review' || s === 'in_review') return 'review';
   return 'draft';
+}
+
+/**
+ * The canonical half of the portfolio: real `submissions` rows (org-scoped,
+ * soft-delete aware) with the two facts a CMC lead reads first — how many
+ * eCTD sequences exist and how many Module 3 leaves are PLACED. These are the
+ * rows the C2C project intake creates and the Module 3 placement seam writes
+ * into; without them the board's front page was blind to the product's own
+ * submission spine. Fails closed to an empty, unprovisioned list.
+ */
+async function buildSpinePortfolio(
+  tenantId: number,
+): Promise<{ rows: PortfolioRow[]; provisioned: boolean }> {
+  try {
+    const rows = (
+      await q(
+        `select s.title,
+                coalesce(s.product_name, '')     as product,
+                coalesce(s.primary_region, '')   as region,
+                coalesce(s.application_type, '') as type,
+                (select count(*)::int from ectd_sequences e
+                  where e.submission_id = s.id and e.deleted_at is null) as sequences,
+                (select count(*)::int from submission_leaves l
+                   join ectd_sequences e2 on e2.id = l.sequence_id
+                  where e2.submission_id = s.id
+                    and l.deleted_at is null and e2.deleted_at is null
+                    and lower(l.section_code) like 'm3%') as m3_leaves
+           from submissions s
+          where s.organization_id = $1 and s.deleted_at is null
+          order by s.updated_at desc nulls last, s.id desc`,
+        [tenantId],
+      )
+    ).rows as Array<{
+      title: string;
+      product: string;
+      region: string;
+      type: string;
+      sequences: number;
+      m3_leaves: number;
+    }>;
+    return {
+      rows: rows.map((r) => ({
+        sub: r.title,
+        product: r.product,
+        region: r.region.toUpperCase(),
+        type: r.type.toUpperCase(),
+        // The preparedness engine is keyed to the legacy store; no score is
+        // computable for a spine row — null, never a fake number.
+        rpi: null,
+        ir: null,
+        source: 'spine' as const,
+        m3Leaves: r.m3_leaves,
+        sequences: r.sequences,
+      })),
+      provisioned: true,
+    };
+  } catch (err) {
+    logger.warn('submissions spine read failed — spine portfolio unprovisioned', {
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return { rows: [], provisioned: false };
+  }
+}
+
+/**
+ * Open agency questions touching Module 3 — reg_questions is org-scoped and
+ * carries the question text, CTD section reference, priority/severity, status
+ * and due date. The board previously returned correspondence:null and the
+ * Program-records tab rendered a permanent empty state while these rows fed
+ * only an Overview KPI. Filtered to Module 3 references; ordered so the
+ * nearest deadline is first. Fails closed to unprovisioned.
+ */
+async function buildCorrespondence(
+  tenantId: number,
+): Promise<{ rows: CorrespondenceRow[]; provisioned: boolean }> {
+  try {
+    const rows = (
+      await q(
+        `select id, question_text, section_reference, priority, severity, status,
+                region, due_date, assigned_to,
+                (due_date is not null and due_date < now()
+                 and status in ('OPEN','DRAFTED','IN_REVIEW')) as overdue
+           from reg_questions
+          where organization_id = $1
+            and status in ('OPEN','DRAFTED','IN_REVIEW')
+            and (section_reference ilike '3.%' or section_reference ilike 'm3%')
+          order by (due_date is null), due_date asc, id desc
+          limit 50`,
+        [tenantId],
+      )
+    ).rows as Array<{
+      id: number | string;
+      question_text: string;
+      section_reference: string | null;
+      priority: string | null;
+      severity: string | null;
+      status: string;
+      region: string | null;
+      due_date: string | Date | null;
+      assigned_to: string | null;
+      overdue: boolean;
+    }>;
+    return {
+      rows: rows.map((r) => ({
+        id: r.id,
+        question: r.question_text,
+        sectionRef: r.section_reference,
+        priority: r.priority,
+        severity: r.severity,
+        status: r.status,
+        region: r.region,
+        dueDate: r.due_date ? new Date(r.due_date).toISOString() : null,
+        overdue: Boolean(r.overdue),
+        assignedTo: r.assigned_to,
+      })),
+      provisioned: true,
+    };
+  } catch (err) {
+    logger.warn('reg_questions read failed — correspondence unprovisioned', {
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return { rows: [], provisioned: false };
+  }
 }
 
 /**
@@ -143,6 +294,9 @@ async function buildPortfolio(
       type: s.sub_type,
       rpi,
       ir,
+      source: 'rpi',
+      m3Leaves: null,
+      sequences: null,
     });
   }
 
@@ -211,10 +365,25 @@ export default function createCmcModule3BoardRoutes(): Router {
       typeof projectIdRaw === 'string' && projectIdRaw.trim() ? projectIdRaw.trim() : undefined;
 
     try {
-      const [portfolio, sections] = await Promise.all([
+      const [spine, legacy, sections, correspondence] = await Promise.all([
+        buildSpinePortfolio(tenantId),
         buildPortfolio(tenantId),
         buildSections(tenantId, projectId),
+        buildCorrespondence(tenantId),
       ]);
+      // Canonical spine rows first (they are the product's own submissions),
+      // then the legacy preparedness rows, deduplicated on identity so a
+      // submission mirrored in both stores is not counted twice.
+      const spineKeys = new Set(
+        spine.rows.map((r) => `${r.sub}`.trim().toLowerCase()),
+      );
+      const portfolio = {
+        rows: [
+          ...spine.rows,
+          ...legacy.rows.filter((r) => !spineKeys.has(`${r.sub}`.trim().toLowerCase())),
+        ],
+        provisioned: spine.provisioned || legacy.provisioned,
+      };
 
       const rpiValues = portfolio.rows
         .map((r) => r.rpi)
@@ -259,11 +428,16 @@ export default function createCmcModule3BoardRoutes(): Router {
           batches: null,
           blueprint: null,
           global: null,
-          correspondence: null,
+          // Open Module 3 agency questions (reg_questions, org-scoped) — null
+          // ONLY when the store is unprovisioned, so the surface can tell
+          // "no backend here" from "no open questions".
+          correspondence: correspondence.provisioned ? correspondence.rows : null,
           meta: {
             projectId: projectId ?? null,
             portfolioProvisioned: portfolio.provisioned,
+            spinePortfolioProvisioned: spine.provisioned,
             sectionsProvisioned: sections ? sections.provisioned : null,
+            correspondenceProvisioned: correspondence.provisioned,
             generatedAt: new Date().toISOString(),
           },
         },

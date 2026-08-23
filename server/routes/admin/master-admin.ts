@@ -23,6 +23,7 @@
  *   GET   /licensing/tenants/:id        One tenant's effective verdict per module
  *   PATCH /licensing/modules/:moduleId  Move a module between tiers
  *   PATCH /licensing/tenants/:id/tier   Change one tenant's plan
+ *   POST  /licensing/tenants/:id/provision  Apply that plan to the tenant
  *
  * Reads use the raw `query()` helper (same precedent as routes/admin/scim-*).
  * The two mutations are written through `auditService` so the 21 CFR Part 11

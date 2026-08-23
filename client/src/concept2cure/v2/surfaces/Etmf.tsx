@@ -35,6 +35,7 @@ import { EmptyState, useLiveData } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 // tmfArtifactName maps a reference-model code → its human name. It reads the
 // DIA TMF Reference Model catalog (ICH E6(R2) §8) — canonical reference config,
 // not fixture DATA — so a `missing` code the backend returns can be labelled.
@@ -114,6 +115,61 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   const incompleteZones = (R?.zones || []).filter((z) => !z.complete).length;
 
   const reload = () => setReloadKey((k) => k + 1);
+
+  /* What AnA can see of this screen.
+     The four states are published as themselves: no trial named yet is not an
+     empty TMF, and a failed completeness read is not a zero-readiness verdict.
+     Inspection readiness is a claim a sponsor acts on, so it is never inferred
+     from an absent response. */
+  const anaContext = useMemo(() => {
+    if (!tid) {
+      return {
+        summary:
+          'eTMF inspection readiness is computed per trial and no trial is named yet, so there is no ' +
+          'completeness verdict on screen — this is not an empty or unready TMF.',
+        availableActions: ['Name a trial to compute its inspection-readiness completeness'],
+      };
+    }
+    if (completeness.loading) {
+      return { summary: `Inspection completeness for trial ${tid} is still being computed; nothing on screen is final yet.` };
+    }
+    if (completeness.error || !R) {
+      return {
+        summary:
+          `Inspection completeness for trial ${tid} could not be read, so this screen is showing no ` +
+          'readiness verdict because of a failure, not because the TMF is empty.',
+        availableActions: ['Retry the completeness read'],
+      };
+    }
+    return {
+      summary:
+        `eTMF inspection readiness for trial ${tid} (${scope} scope): ` +
+        `${R.ready ? 'ready' : 'NOT ready'} — ${R.summary.zonesComplete} of ${R.summary.zoneCount} zone(s) ` +
+        `complete, ${R.summary.totalMissing} of ${R.summary.totalRequired} required artifact(s) missing, ` +
+        `${incompleteZones} zone(s) still incomplete.`,
+      facts: {
+        trialId: tid,
+        scope,
+        inspectionReady: R.ready,
+        summary: R.summary ?? null,
+        zones: (R.zones ?? []).map((z) => ({
+          number: z.number, name: z.name, complete: z.complete,
+          required: z.required.length, present: z.present.length, missing: z.missing.length,
+        })),
+        // The punch-list, capped — enough to name a document back to the user.
+        missingEssentials: missing.slice(0, 20).map((d) => ({
+          zone: d.zone, zoneName: d.zoneName, code: d.code, name: d.name,
+        })),
+      },
+      availableActions: [
+        'File a missing essential document into the TMF (a real, audited write)',
+        'Bulk-file every open essential for this trial',
+        'Switch the completeness scope between essential documents and all documents',
+        'Generate and download the inspection-readiness package',
+      ],
+    };
+  }, [tid, scope, completeness.loading, completeness.error, R, missing, incompleteZones]);
+  usePublishSurfaceContext('etmf', anaContext);
 
   /* File a missing essential — real POST /artifacts (drizzle-backed, audited),
      via the canonical apiRequest (bearer + x-organization-id auth). Refetches on

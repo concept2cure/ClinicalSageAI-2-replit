@@ -102,7 +102,23 @@ import '../styles/project-home-v2.css';
 /* ── Types ── */
 
 interface CmcNavItem { id: string; label: string; icon: string; }
-interface CmcPortfolio { sub: string; product: string; region: string; type: string; rpi: number | null; ir: number | null; }
+interface CmcPortfolio {
+  sub: string; product: string; region: string; type: string;
+  rpi: number | null; ir: number | null;
+  /** 'spine' = the canonical submission core (real sequences + placed leaves);
+      'rpi' = the legacy preparedness store. Spine rows carry the Module 3
+      facts; legacy rows carry the engine's score. Neither fakes the other's. */
+  source?: 'spine' | 'rpi';
+  m3Leaves?: number | null;
+  sequences?: number | null;
+}
+/** One open agency question touching Module 3 (reg_questions, org-scoped). */
+interface CmcCorrespondence {
+  id: number | string; question: string; sectionRef: string | null;
+  priority: string | null; severity: string | null; status: string;
+  region: string | null; dueDate: string | null; overdue: boolean;
+  assignedTo: string | null;
+}
 interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
 interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
@@ -114,7 +130,15 @@ interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string
    backend cannot measure them; rendered as "—", never fabricated. */
 interface CmcBoardKpis { submissions: number; rpiAverage: number | null; irOverdue: number; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
 interface CmcBoardMeta { projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string; }
-interface CmcBoardData { portfolio?: CmcPortfolio[]; sections?: CmcSection[] | null; kpis?: CmcBoardKpis; meta?: CmcBoardMeta; }
+interface CmcBoardData {
+  portfolio?: CmcPortfolio[];
+  sections?: CmcSection[] | null;
+  kpis?: CmcBoardKpis;
+  /** null = the reg_questions store is unprovisioned (said, not hidden);
+      [] = provisioned and genuinely no open Module 3 questions. */
+  correspondence?: CmcCorrespondence[] | null;
+  meta?: CmcBoardMeta;
+}
 
 /* ── Navigation + AnA prompt starters (UI config / affordances — not data) ── */
 
@@ -534,8 +558,13 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
                   <EmptyState icon={I.fileText} title="No submissions yet" hint="Your regulatory submissions (BLA / MAA / NDA / J-NDA) appear here with their preparedness index and overdue information requests." />
                 </div>
               ) : (
-                <table className="reg-tbl"><thead><tr><th>Submission</th><th>Product</th><th>Region</th><th>Type</th><th>RPI</th><th>IR overdue</th></tr></thead>
-                <tbody>{port.map((r, i) => (<tr key={i}><td style={{ fontWeight: 600 }}>{r.sub}</td><td>{r.product}</td><td>{r.region}</td><td><span className="reg-pill neutral">{r.type}</span></td><td>{r.rpi == null ? '—' : r.rpi}</td><td>{r.ir == null ? '—' : r.ir}</td></tr>))}</tbody></table>
+                <table className="reg-tbl"><thead><tr><th>Submission</th><th>Product</th><th>Region</th><th>Type</th><th>Module 3</th><th>RPI</th><th>IR overdue</th></tr></thead>
+                <tbody>{port.map((r, i) => (<tr key={i}><td style={{ fontWeight: 600 }}>{r.sub}</td><td>{r.product}</td><td>{r.region}</td><td><span className="reg-pill neutral">{r.type}</span></td>
+                  {/* Spine rows carry the facts a CMC lead reads first: placed
+                      Module 3 leaves and sequences from the REAL submission
+                      core. Legacy preparedness rows honestly show none. */}
+                  <td>{r.source === 'spine' ? <span className="cm-meta">{r.m3Leaves ?? 0} placed · {r.sequences ?? 0} seq</span> : <span className="cm-meta">—</span>}</td>
+                  <td>{r.rpi == null ? '—' : r.rpi}</td><td>{r.ir == null ? '—' : r.ir}</td></tr>))}</tbody></table>
               )}
             </div>
           </div>
@@ -1908,6 +1937,12 @@ interface ProvenanceRow {
 
 function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const projectId = cmcProjectId();
+  /* Open Module 3 agency questions — the org-scoped board serves them from
+     reg_questions. This card was a permanent empty state ("once a
+     correspondence source is connected") while the same rows fed an Overview
+     KPI; the source was connected all along. */
+  const board = useLiveData<CmcBoardData>('/api/cmc/module3-board');
+  const corr = board.data?.correspondence;
   const sections = useLiveRows<{ sectionKey: string; sectionPath: string; approvalState: string; stale: boolean; updatedAt: string }>(
     projectId ? '/api/cmc/module3-os/sections/' + encodeURIComponent(projectId) : null,
   );
@@ -1955,9 +1990,73 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
   const resolved = contradictions.rows.filter((c) => c.status === 'resolved');
   const open = contradictions.rows.filter((c) => c.status !== 'resolved');
 
+  /* Org-wide by design: agency questions do not require an open program. */
+  const corrCard = (
+          <div className="pj-card" style={{ marginBottom: 16 }}>
+        <div className="pj-card-h">
+          <span className="t">Open agency correspondence</span>
+          <span className="s">Module 3 questions, organization-wide — triage by deadline</span>
+        </div>
+        <div className="pj-card-b" style={{ padding: 0 }}>
+          {board.loading ? (
+            <div style={{ padding: 12 }}><EmptyState icon={I.globe} title="Loading agency correspondence…" busy /></div>
+          ) : board.error ? (
+            <div style={{ padding: 12 }}>
+          <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load agency correspondence" hint={board.error} />
+            </div>
+          ) : corr == null ? (
+            <div style={{ padding: 12 }}>
+          <EmptyState
+            icon={I.globe}
+            title="Correspondence store not provisioned"
+            hint="The agency-question store (reg_questions) is not provisioned in this environment — nothing is shown because nothing could be read, not because nothing is open."
+          />
+            </div>
+          ) : corr.length === 0 ? (
+            <div style={{ padding: 12 }}>
+          <EmptyState
+            icon={I.shieldCheck}
+            title="No open Module 3 agency questions"
+            hint="Open information requests and LoQs referencing §3.x appear here with their deadline, priority and assignee, nearest deadline first."
+          />
+            </div>
+          ) : (
+            <table className="reg-tbl">
+          <thead><tr><th>Due</th><th>Section</th><th>Question</th><th>Priority</th><th>Status</th><th>Assigned</th></tr></thead>
+          <tbody>
+            {corr.map((c) => (
+              <tr key={c.id}>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  {c.dueDate ? (
+                    <span className={'rd-chip tone-' + (c.overdue ? 'err' : 'dim')}>
+                      {new Date(c.dueDate).toLocaleDateString()}{c.overdue ? ' · overdue' : ''}
+                    </span>
+                  ) : (
+                    <span className="cm-meta">no deadline</span>
+                  )}
+                </td>
+                <td className="mono">{c.sectionRef ?? '—'}</td>
+                <td title={c.question}>{c.question.length > 120 ? c.question.slice(0, 120) + '…' : c.question}</td>
+                <td>
+                  <span className={'rd-chip tone-' + (String(c.priority).toLowerCase() === 'high' || String(c.severity).toLowerCase() === 'critical' ? 'err' : String(c.priority).toLowerCase() === 'medium' ? 'warn' : 'dim')}>
+                    {c.priority ?? c.severity ?? '—'}
+                  </span>
+                </td>
+                <td className="mono">{c.status}</td>
+                <td>{c.assignedTo ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+  );
+
   return (
     <div className="cm-body">
       <CmHead title="Program records" meta="Agency correspondence, approval gates and the audit chain" ask={ask} suggest={CMC_SUGGEST.pathway} />
+      {corrCard}
       {!projectId ? (
         <div className="pj-card">
           <div className="pj-card-b">
@@ -1979,16 +2078,6 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
             <Kpi l="Still open" v={open.length} tone={open.length ? 'warn' : 'ok'} />
           </div>
 
-          <div className="pj-card" style={{ marginBottom: 16 }}>
-            <div className="pj-card-h"><span className="t">Open agency correspondence</span><span className="s">triage by deadline</span></div>
-            <div className="pj-card-b">
-              <EmptyState
-                icon={I.globe}
-                title="No open agency correspondence"
-                hint="Information requests, Day-120 LoQs and consultations appear here once a correspondence source is connected. Overdue information requests currently feed only the Overview KPIs."
-              />
-            </div>
-          </div>
 
           <div className="pj-card" style={{ marginBottom: 16 }}>
             <div className="pj-card-h">

@@ -32,12 +32,16 @@ whose click calls `onNav(targetId)` → `V2App.nav` →
 1. **Directives surface into the stream — tool-driven only.**
    `server/routes/ana-ri/stream.ts` collects `navigate_to` results whose
    `status === 'navigation_ready'` (via `directiveFromToolResult`) and
-   post-processing appends them to `executedActions` as chips. The
-   signal-driven option (`parseNavigationSignals`) is deliberately NOT wired
-   and must stay unwired: fenced prose arrives from retrieved documents and
-   tool output, and steering the screen from prose would let any ingested PDF
-   move the operator — see the header of
-   `server/services/ana-ri/navigation-actions.ts`.
+   post-processing appends them to `executedActions` as chips; the generic
+   chat route (`server/routes/chat/send-message.ts`, the other
+   `executeAgenticLoop` caller) collects and returns the same chips in its
+   JSON response. The signal-driven option (`parseNavigationSignals`) is
+   deliberately NOT wired and must stay unwired: fenced prose arrives from
+   retrieved documents and tool output, and steering the screen from prose
+   would let any ingested PDF move the operator — see the header of
+   `server/services/ana-ri/navigation-actions.ts`. (`POST /api/ana-ri/chat`
+   runs no local tools by design, so navigation structurally cannot occur
+   there.)
 2. **Registry ↔ routes reconciliation.** Registry ids that predate the v2
    surface ids resolve through `DEEP_LINK_ALIASES`
    (`client/src/concept2cure/v2/registryModel.ts`), and

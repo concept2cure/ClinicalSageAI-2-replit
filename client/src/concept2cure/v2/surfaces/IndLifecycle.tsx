@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import { IndFormsPanel } from './IndFormsPanel';
 import {
@@ -164,6 +165,37 @@ const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 const EMPTY_FORMS: IndlForm[] = [];
 const EMPTY_SECTIONS: IndlSection[] = [];
 
+/* ── The open program, and which checklist row is really its IND ──
+   The checklist endpoint is org-scoped and this surface used to render rows[0]
+   unconditionally — so with two INDs in the org, the CMC build tab could be on
+   one program while this screen silently showed the other's readiness. The
+   program ↔ submission linkage is identity matching (product/title, the same
+   convention ensureSubmissionSpine and the checklist assembler use), applied
+   here so the screens agree. rows[0] remains the fallback when no program is
+   open or no row matches — WITH the mismatch said out loud, never silently. */
+interface ShellProjectRead {
+  id?: unknown;
+  title?: string;
+  product?: string;
+  code?: string;
+}
+
+function readShellProject(): ShellProjectRead | null {
+  try {
+    const p = (window as unknown as { C2C_PROJECT?: ShellProjectRead }).C2C_PROJECT;
+    return p && p.id != null ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+function rowMatchesProgram(row: IndlChecklist, p: ShellProjectRead): boolean {
+  const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();
+  const programKeys = [p.title, p.product, p.code].map(norm).filter(Boolean);
+  const rowKeys = [row.productName, row.drugName, row.code].map(norm).filter(Boolean);
+  return programKeys.some((k) => rowKeys.includes(k));
+}
+
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
 
 export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
@@ -175,7 +207,23 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      state, or an honest failed-load state — never a fixture. Readiness and the
      30-day clock are computed deterministically from the loaded forms/sections. */
   const { rows, loading, error } = useLiveRows<IndlChecklist>('/api/ind-checklist');
-  const checklist = rows[0] ?? null;
+  /* Prefer the row that IS the open program's IND; fall back to the first row
+     with the mismatch stated (scopeNote), never silently. */
+  const shellProject = readShellProject();
+  const matched = shellProject ? rows.find((r) => rowMatchesProgram(r, shellProject)) ?? null : null;
+  const checklist = matched ?? rows[0] ?? null;
+  const scopeNote =
+    checklist == null
+      ? null
+      : matched
+        ? rows.length > 1
+          ? `Showing the open program's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
+          : null
+        : shellProject
+          ? `The open program (${shellProject.title ?? shellProject.id}) has no IND checklist yet — showing ${checklist.productName ?? checklist.code}, the organization's first.`
+          : rows.length > 1
+            ? `Showing ${checklist.productName ?? checklist.code} — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization. Open a program to scope this screen to it.`
+            : null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
   // Status note from the Module-1 forms panel (build/QC/render outcomes).
   const [formsNote, setFormsNote] = useToast();
@@ -204,6 +252,93 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     () => (clock ? new Date(clock.thirtyDayDate) : null),
     [clock],
   );
+
+  /* What AnA can see of this screen.
+     `R.assessed` is the fact that must not be flattened. A checklist with
+     nothing in it produces `assessed: false, ready: false, 0%` — and reporting
+     that as "0% ready" would let AnA discuss an IND that was never evaluated as
+     one that was evaluated and found wanting. `ready` is only ever true when
+     `assessed` is, and both travel.
+
+     The 30-day clock is null when the org has recorded no target submission
+     date, and that is published as itself rather than as a clock at zero: the
+     FDA 30-day review clock is a regulatory date, not a default. */
+  const anaContext = useMemo(() => {
+    /* `forms` / `sections` come off a live row, so they are only arrays when the
+       column arrived as one. Same degrade-don't-crash rule the render obeys. */
+    const formList = Array.isArray(forms) ? forms : [];
+    const sectionList = Array.isArray(sections) ? sections : [];
+    if (loading) {
+      return { summary: 'The IND checklist is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The IND checklist could not be read, so this screen is showing no filing readiness because of ' +
+          'a failure, not because nothing is assembled.',
+        availableActions: ['Retry the IND checklist read'],
+      };
+    }
+    if (!checklist) {
+      return {
+        summary: 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
+      };
+    }
+    return {
+      summary:
+        `IND lifecycle for ${checklist.code}` +
+        (checklist.drugName ? ` (${checklist.drugName})` : '') +
+        `, "${tab === 'file' ? 'File the IND' : 'Lifecycle'}" tab. ` +
+        (R.assessed
+          ? `Readiness ${R.overallPercentage}% — ${R.requiredSections.completed} of ${R.requiredSections.total} ` +
+            `required section(s) complete, ${formList.filter((f) => f.done).length} of ${formList.length} Module 1 ` +
+            `form(s) done. ${R.ready ? 'Assessed READY to file.' : 'NOT yet ready to file.'}`
+          : 'The checklist held nothing to evaluate, so filing readiness has NOT been assessed — this is not a zero-percent verdict.') +
+        (clock
+          ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
+            `${clock.safeToProceed ? 'safe to proceed' : clock.onHold ? 'ON HOLD' : 'not yet cleared'}.`
+          : ' No target submission date is recorded, so no 30-day clock is projected.'),
+      facts: {
+        openTab: tab,
+        submissionId: checklist.submissionId ?? null,
+        code: checklist.code,
+        drugName: checklist.drugName,
+        productName: checklist.productName,
+        indication: checklist.indication,
+        sponsor: checklist.sponsorName,
+        submissionType: checklist.submissionType,
+        readinessAssessed: R.assessed,
+        readyToFile: R.ready,
+        readinessPercent: R.assessed ? R.overallPercentage : null,
+        requiredSections: R.assessed
+          ? {
+              total: R.requiredSections.total,
+              completed: R.requiredSections.completed,
+              incomplete: R.requiredSections.incomplete,
+            }
+          : null,
+        module1Forms: formList.map((f) => ({ id: f.id, title: f.title, reference: f.ref, done: f.done })),
+        sections: sectionList.slice(0, 24).map((sec) => ({
+          code: sec.code, title: sec.title, module: sec.module, status: sec.status,
+        })),
+        thirtyDayClock: clock
+          ? {
+              status: clock.status, thirtyDayDate: clock.thirtyDayDate,
+              daysUntil: clock.daysUntilThirtyDay, safeToProceed: clock.safeToProceed,
+              onHold: clock.onHold, rationale: clock.rationale,
+            }
+          : null,
+        targetSubmissionDateRecorded: Boolean(targetReceiptDate),
+      },
+      availableActions: [
+        'Build, QC and render the Module 1 forms',
+        'Generate an IND deliverable (cover letter and the other wired cards) and download its PDF',
+        'File a sequence against the real submission record',
+        'Switch between the file-the-IND and lifecycle tabs',
+      ],
+    };
+  }, [loading, error, checklist, tab, R, forms, sections, clock, targetReceiptDate]);
+  usePublishSurfaceContext('ind-checklist', anaContext);
 
   /* Cover-letter exemplar — the first deliverable wired end-to-end (POST
      /api/ind-lifecycle/cover-letter + /pdf). The other cards mirror it via the
@@ -709,6 +844,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               .filter(Boolean)
               .join(' -- ')}
           </p>
+          {/* Which IND this screen is scoped to, and why — stated whenever the
+              answer is not trivially "the only one". The CMC build tab and this
+              screen must never appear to describe the same program while
+              reading two different submissions. */}
+          {scopeNote && (
+            <p className="surface-sub" data-testid="indl-scope-note">
+              {scopeNote}
+            </p>
+          )}
         </div>
         <div className="surface-head-actions">
           <button

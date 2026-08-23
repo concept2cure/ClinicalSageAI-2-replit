@@ -18,6 +18,7 @@ import {
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
 import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
 import { getAgentActivity } from '../../services/ana/agent-activity.js';
+import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
   requiresPart11Signoff,
@@ -228,6 +229,37 @@ export function mountUtilityRoutes(router: Router): void {
       return sendSuccess(res, summary);
     } catch (error: any) {
       return sendError(res, 500, error?.message || 'Failed to load agent activity', null, 'AGENT_ACTIVITY_FAILED');
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/ana-ri/live-drive/state — the pre-emptive Live Drive verdict, so
+  // the toggle can show an honest lock (with the real required tier) BEFORE
+  // the person burns a turn discovering it. Runs the exact per-turn decision
+  // (resolveDriveState — entitlement + ENTITLEMENTS_ENFORCE mode), so the
+  // toggle and the stream can never disagree. Advisory only: every drive turn
+  // still resolves its own drive_state; this endpoint grants nothing.
+  // ─────────────────────────────────────────────────────────────────────────
+  router.get('/live-drive/state', async (req: Request, res: Response) => {
+    const { numericOrgId } = extractRequestContext(req);
+    if (!numericOrgId) {
+      return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
+    }
+    try {
+      const state = await resolveDriveState(true, numericOrgId);
+      return sendSuccess(res, {
+        enabled: state.enabled,
+        ...(state.reason ? { reason: state.reason } : {}),
+        ...(state.requiredTier !== undefined ? { requiredTier: state.requiredTier } : {}),
+      });
+    } catch (error: any) {
+      return sendError(
+        res,
+        500,
+        error?.message || 'Failed to resolve Live Drive state',
+        null,
+        'LIVE_DRIVE_STATE_FAILED'
+      );
     }
   });
 

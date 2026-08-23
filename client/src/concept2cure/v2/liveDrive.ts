@@ -72,6 +72,13 @@ export type DriveAction =
   | { kind: 'navigation'; directive: NavigationDirective; round?: number }
   | { kind: 'take_over' }
   | { kind: 'turn_end' }
+  /**
+   * Pre-emptive verdict from GET /api/ana-ri/live-drive/state — seeds the
+   * toggle's lock copy BEFORE any turn, WITHOUT engaging the drive (only a
+   * turn's own drive_state may set `active`). Advisory: the per-turn
+   * drive_state remains the enforcement truth and overwrites this.
+   */
+  | { kind: 'lock_info'; lock: DriveLock | null }
   | { kind: 'reset' };
 
 /**
@@ -115,6 +122,9 @@ export function driveReducer(state: LiveDriveState, action: DriveAction): LiveDr
       return { ...state, active: false, takenOver: true };
     case 'turn_end':
       return { ...state, active: false, turnApplied: 0, takenOver: false };
+    case 'lock_info':
+      // Never engages/disengages a live turn — lock copy only.
+      return { ...state, lock: action.lock };
     case 'reset':
       return { ...INITIAL_DRIVE_STATE };
     default:

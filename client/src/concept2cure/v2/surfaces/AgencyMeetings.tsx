@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { liveGetOrNull, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -159,6 +160,110 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     };
   }, []);
 
+  /* ── The briefing-book PDF button was decoration ──────────────────────────
+     `<button className="reg-mini">{I.download} PDF</button>` — a download icon,
+     the word PDF, and no onClick. The renderer has existed the whole time:
+     POST /api/ind-lifecycle/briefing-book/pdf streams a navigable PDF from
+     renderBriefingBookPdf(assembleBriefingBook(b)).
+
+     Two real gaps had to be closed rather than papered over.
+
+     MEETING TYPE. The renderer accepts four FDA types (pre_ind, type_a, type_b,
+     type_c). This surface offers ten, including EMA Scientific Advice and a
+     device Q-Sub, which that renderer does not model. The four that correspond
+     are mapped; the rest are REFUSED by name. Rendering an EMA briefing package
+     through an FDA template would produce a document that looks filed and is
+     wrong, which on this surface is the expensive kind of wrong.
+
+     INDICATION. The renderer requires it and `c2c_agency_meetings` has no such
+     column (server/routes/agency-meetings.routes.ts), so there is nothing to
+     read. It is asked for at download time instead of being guessed from the
+     meeting's free-text `goal` — a briefing book states the indication to the
+     agency, and inferring it from an objective line is exactly the fabrication
+     the house rule forbids. Not persisted, because there is no column to
+     persist it to; adding one is a migration, not this fix. */
+  const FDA_MEETING_TYPES: Record<string, string> = {
+    'pre-ind': 'pre_ind',
+    'type a': 'type_a',
+    'type b': 'type_b',
+    'type c': 'type_c',
+  };
+
+  const [pdfFor, setPdfFor] = useState<{ m: Meeting; bb: BriefingBook } | null>(null);
+
+  const PDF_FORM: C2CFormConfig = {
+    eyebrow: 'Briefing book · render',
+    title: 'Render the briefing book',
+    governed:
+      'The indication is stated to the agency on the briefing book cover. It is not stored on the meeting record, so it is asked for here rather than inferred.',
+    submitLabel: 'Download PDF',
+    fields: [
+      {
+        key: 'indication',
+        label: 'Indication',
+        type: 'text',
+        placeholder: 'The indication as it should read to the agency',
+        required: true,
+      },
+    ],
+  };
+
+  const renderBriefingBookPdf = async (v: Record<string, string>) => {
+    const ctx = pdfFor;
+    setPdfFor(null);
+    if (!ctx) return;
+    const indication = (v.indication || '').trim();
+    if (!indication) return;
+    try {
+      const res = await apiRequest('POST', '/api/ind-lifecycle/briefing-book/pdf', {
+        productName: ctx.m.program,
+        indication,
+        meetingType: FDA_MEETING_TYPES[ctx.m.type.trim().toLowerCase()],
+        // The renderer numbers these itself; it needs the text and its area.
+        questions: ctx.bb.questions.map((q, i) => ({
+          number: i + 1,
+          question: q.q,
+          area: q.area,
+          sponsorPosition: q.pos,
+        })),
+      });
+      if (!res.ok) {
+        fireToast('Could not render the briefing book PDF — the server refused the request.', 'error');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'fda-briefing-book.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      fireToast(
+        'Could not render the briefing book PDF — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error',
+      );
+    }
+  };
+
+  /** Open the render dialog, or say plainly why this meeting cannot use it. */
+  const startBriefingBookPdf = (m: Meeting, bb: BriefingBook) => {
+    if (!FDA_MEETING_TYPES[m.type.trim().toLowerCase()]) {
+      fireToast(
+        `The briefing-book renderer covers FDA Pre-IND and Type A/B/C meetings. "${m.type}" is not one of them, so no PDF is produced rather than an FDA-shaped document for the wrong agency.`,
+        'error',
+      );
+      return;
+    }
+    if (!bb.questions.length) {
+      fireToast('This briefing book has no questions yet — a briefing book without questions has nothing to render.', 'error');
+      return;
+    }
+    setPdfFor({ m, bb });
+  };
+
   const MTG_FORM: C2CFormConfig = {
     eyebrow: 'Agency interaction · new request',
     title: 'Request an agency meeting',
@@ -259,6 +364,74 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
   );
   const ready = !loading && !error;
   const kv = (n: number | string) => (ready ? String(n) : '--');
+
+  /* What AnA can see of this screen. "Prepare with AnA" sits in this header and
+     asks her to draft a Pre-IND request — until now with no knowledge of which
+     meetings exist, which are granted, or what the open commitments are.
+
+     A FAILED read publishes the failure: `meetings` is [] on error as well as
+     when the org tracks none, and telling a sponsor they have no regulator
+     interactions because a fetch failed is a claim about their agency record. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'Agency meetings are still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The agency-meetings store could not be read, so this screen is showing no regulator ' +
+          'interactions because of a failure, not because none are tracked.',
+        availableActions: ['Retry the agency-meetings read'],
+      };
+    }
+    return {
+      summary:
+        `Agency meetings and briefing books: ${meetings.length} regulator interaction(s), ` +
+        `${openQuestions} question(s) to agencies across the briefing books, ${openCommitments} open ` +
+        `commitment(s)` +
+        (nextMtg ? `. Next up is the ${nextMtg.x.type} with ${nextMtg.x.agency} on ${nextVal}` : '') +
+        (m ? `. "${m.type} — ${m.agency}" (${m.program}) is selected.` : '.'),
+      facts: {
+        meetingCount: meetings.length,
+        openQuestions,
+        openCommitments,
+        nextMeeting: nextMtg
+          ? { id: nextMtg.x.id, type: nextMtg.x.type, agency: nextMtg.x.agency, program: nextMtg.x.program, meets: nextMtg.x.meets }
+          : null,
+        meetings: meetings.slice(0, 12).map((x) => ({
+          id: x.id, type: x.type, agency: x.agency, category: x.cat, program: x.program,
+          status: x.status, requested: x.requested, granted: x.granted, meets: x.meets,
+          clock: x.clock, format: x.format,
+        })),
+        selected: m
+          ? {
+              id: m.id, type: m.type, agency: m.agency, program: m.program, status: m.status,
+              goal: m.goal, clock: m.clock, format: m.format,
+              briefingBook: bb
+                ? {
+                    title: bb.title, state: bb.state, version: bb.ver, owner: bb.owner,
+                    sections: (bb.sections ?? []).map((sn) => ({ number: sn.n, label: sn.label, state: sn.st })),
+                    questions: (bb.questions ?? []).map((qq) => ({ question: qq.q, area: qq.area, position: qq.pos })),
+                  }
+                : null,
+              minutes: min
+                ? {
+                    received: min.received,
+                    agreements: min.agree ?? [],
+                    commitments: (min.commitments ?? []).map((c) => ({ commitment: c.c, document: c.doc, due: c.due, state: c.st })),
+                  }
+                : null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Select a meeting to read its briefing book, minutes and commitments',
+        'Request a new agency meeting (a governed interaction — the request is audit-logged)',
+        'Read the open questions to agencies and the open post-meeting commitments',
+      ],
+    };
+  }, [loading, error, meetings, openQuestions, openCommitments, nextMtg, nextVal, m, bb, min]);
+  usePublishSurfaceContext('agency-meetings', anaContext);
 
   return (
     <div className="page-inner reg">
@@ -407,7 +580,14 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
                   >
                     {I.fileText} Open document
                   </button>
-                  <button className="reg-mini">{I.download} PDF</button>
+                  <button
+                    className="reg-mini"
+                    onClick={() => startBriefingBookPdf(m, bb)}
+                    title="Render this briefing book to a navigable PDF"
+                    data-testid="mtg-bb-pdf"
+                  >
+                    {I.download} PDF
+                  </button>
                 </div>
               </div>
               <div className="mtg-bb-secs">
@@ -497,6 +677,13 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
           config={MTG_FORM}
           onCancel={() => setForm(false)}
           onSubmit={submitMtg}
+        />
+      )}
+      {pdfFor && (
+        <C2CForm
+          config={PDF_FORM}
+          onCancel={() => setPdfFor(null)}
+          onSubmit={renderBriefingBookPdf}
         />
       )}
       <C2CToast msg={toast} />

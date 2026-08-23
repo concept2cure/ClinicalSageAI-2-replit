@@ -63,6 +63,7 @@ import './app.css';
 import './pathway-tabs.css';
 import './files-tree.css';
 import './drafter.css';
+import { publishShellProject } from '../v2/shellProject';
 
 /* The id list lives in `./surfaceIds` with no component or stylesheet imports,
    so the v2 registry can read it at module scope without pulling this file —
@@ -136,7 +137,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
         // v2/surfaces/Projects.tsx:389 replaces the whole object; this now
         // matches it, and omits keys it cannot honestly supply rather than
         // inheriting stale ones.
-        window.C2C_PROJECT = { id: String(prog.id), title: prog.title };
+        publishShellProject({ id: String(prog.id), title: prog.title });
       }
       onNav('project-home');
     },
@@ -173,7 +174,7 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
     (section?: EditorSectionRef) => {
       if (typeof window !== 'undefined' && programForContext) {
         // REPLACE, never merge — same rule and same reason as openProgram above.
-        window.C2C_PROJECT = { id: String(programForContext.id), title: programForContext.title };
+        publishShellProject({ id: String(programForContext.id), title: programForContext.title });
       }
       const docType = programForContext?.pathway ?? PATHWAY_ANCHOR[nav] ?? null;
       if (docType && section && (section.code != null || section.label)) {

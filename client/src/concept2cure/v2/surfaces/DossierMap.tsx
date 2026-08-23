@@ -9,6 +9,7 @@ import React from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ── Read contract (rolled up from the real project_sections store) ── */
@@ -80,6 +81,65 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
     projectId ? `/api/dossier-map?projectId=${encodeURIComponent(projectId)}` : null,
     [projectId],
   );
+
+  /* What AnA can see of this screen. "What is the critical path to filing?" is
+     the question this surface's own button sends her, and it is unanswerable
+     without the module map — which she could not see.
+
+     The three not-ready states are published as themselves. No project in
+     context is not the same as an empty map, and neither is a failed read: an
+     assistant that says "M3 is at 0%" because a fetch failed has invented a
+     readiness figure for a filing. */
+  const anaContext = React.useMemo(() => {
+    if (!projectId) {
+      return {
+        summary:
+          'The dossier map is scoped to one program and no project is open, so there is no module map on ' +
+          'screen — this is not an empty dossier.',
+        availableActions: ['Open a project first; its CTD / eCTD module map then appears here'],
+      };
+    }
+    if (loading) {
+      return { summary: 'The dossier map is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The dossier map could not be read, so this screen is showing no module completeness because of ' +
+          'a failure, not because the program has none.',
+        availableActions: ['Retry the dossier-map read'],
+      };
+    }
+    if (empty) {
+      return {
+        summary: `Dossier map for project ${projectId}: the program tracks no CTD sections yet, so the module map is empty.`,
+        facts: { projectId, modules: [] },
+      };
+    }
+    const scored = modules.filter((mm) => typeof mm.pct === 'number');
+    const avg = scored.length
+      ? Math.round(scored.reduce((n, mm) => n + (mm.pct ?? 0), 0) / scored.length)
+      : null;
+    return {
+      summary:
+        `Dossier map for project ${projectId}: ${modules.length} CTD/eCTD module(s)` +
+        (avg !== null ? `, average completeness ${avg}% across the ${scored.length} module(s) that carry a figure` : '') +
+        '.',
+      facts: {
+        projectId,
+        averageCompleteness: avg,
+        modules: modules.map((mm) => ({
+          module: mm.m, label: mm.label, completeness: mm.pct,
+          readiness: mm.tone, sections: mm.sections ?? [],
+        })),
+      },
+      availableActions: [
+        'Read per-module (M1-M5) completeness and its readiness overlay',
+        'Open a module to see which CTD sections it rolls up',
+      ],
+    };
+  }, [projectId, loading, error, empty, modules]);
+  usePublishSurfaceContext('dossier-map', anaContext);
 
   return (
     <div className="page-inner">

@@ -1457,6 +1457,42 @@ export const C2C_MIGRATION_FILES = [
   // the broken function chokes on.
   'db/migrations/20260823_module_catalog_commercial_packaging.sql',
 
+  // ── Catalog descriptions become customer copy (added 2026-08-23) ──────────
+  // The 20260810 seed copied each surface's registry `notes` verbatim into
+  // `description`, which the Apps catalog renders to CUSTOMERS — so 33 of 84
+  // cards told a prospect the product was unfinished ("In progress.",
+  // "Partially built in ui_kits/home") or leaked repository internals.
+  // Display text only; nothing keys on it. scripts/ci/check-catalog-copy.mjs
+  // stops it recurring.
+  'db/migrations/20260823_module_catalog_customer_copy.sql',
+
+  // ── The two MDX design registers finally get catalog rows (2026-08-23) ────
+  // `design-controls` and `human-factors` are built, reachable surfaces with no
+  // row in available_modules, so they were unsellable (no tier can name a module
+  // that is not in the catalog), ungatable (module_subscriptions FKs into it, so
+  // an admin decision about them could not even be written down) and, by the
+  // client's correct "an unknown id is not licensable" rule, silently free on
+  // every tier. The 20260810 seed missed them because it was derived from
+  // SEGMENT_MODULES and both ids sit in NAV_HIDDEN instead.
+  //
+  // POSITION IS LOAD-BEARING — it must stay after BOTH the catalog seed and the
+  // packaging migration, and this is why. 20260810 step 1 stamps
+  // {"deprecated": true} on every catalog row absent from its protected id list,
+  // and these two ids are absent from it, so every re-apply retires them again.
+  // The packaging file then raises 'catalog modules with no tier assigned' for
+  // any LIVE row its fixed 84-id list does not name — which these two are not.
+  // The two cancel only in this order: the seed's retire step hides the rows
+  // from the packaging assertion, and this file, running last, clears the flag
+  // and restores them with their own tier and their own customer copy. Verified
+  // by execution both ways — packaging applies clean with the flag set, and
+  // raises on exactly these two ids when they are live.
+  //
+  // Moving this entry above the packaging migration therefore breaks the next
+  // deploy. The tidier end state is one change to two files that are not this
+  // one: add both ids to 20260810's protected list AND to the packaging file's
+  // module_packaging list. Doing only the first breaks the deploy.
+  'db/migrations/20260823_module_catalog_mdx_registers.sql',
+
   // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
   // Name + description only (adds Swissmedic to the modeled-agency list); no
   // entitlement change. Idempotent UPDATE keyed on module_id.
@@ -1475,6 +1511,15 @@ export const C2C_MIGRATION_FILES = [
   // document upload 500s. This reconciles the table additively; it must run
   // AFTER 044c, which the overlay applies.
   'migrations/20260821_vault_documents_canonical_shape.sql',
+
+  // ── Vault filing: dossier placement on vault.documents ─────────────────────
+  // Adds folder_id / evidence_kind / ctd_section / placement_status (+
+  // confidence, rationale, placed_by/placed_at) so every ingested document
+  // carries a dossier placement: the classifier proposes ('suggested'), a
+  // person confirms or moves ('confirmed', audited), and the unplaceable stay
+  // visibly 'unfiled'. Additive, guarded on to_regclass('vault.documents');
+  // must run AFTER the canonical-shape reconciliation above.
+  'migrations/20260823_vault_document_placement.sql',
 
   // ── Both entries below must precede the two isolation steps ────────────────
   // The last two entries of this list are, and must remain, the uuid non-public

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState, ErrorState } from '../dataConnect';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
@@ -8,6 +8,8 @@ import {
   workstreamForFilingType,
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { publishShellProject } from '../shellProject';
+import { usePublishSurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -280,14 +282,14 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
 
       const created = (j?.data ?? {}) as Partial<ProjPortfolioEntry> & { id?: string };
       try {
-        window.C2C_PROJECT = {
+        publishShellProject({
           id: created.id || 'new',
           title: created.title || body.name,
           product: body.productName,
           code: created.code || '',
           ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
           status: created.status || 'active',
-        };
+        });
       } catch { /* noop */ }
       onClose();
       onNav('project-home');
@@ -595,9 +597,63 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   ];
   const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
 
+  /* What AnA can see of this screen.
+     The portfolio is the screen a user is most likely to ask a general question
+     on — "which programs are at risk?", "what should I do next?" — and until now
+     she was told only that the surface was called "projects". The button in the
+     header literally sends her "Which programs are at risk this week?" with no
+     way to know which programs exist.
+
+     A FAILED read publishes the failure. `projects` is [] both when the org has
+     no programmes and when the read threw, and a summary saying "0 programs"
+     over an outage would make AnA confidently wrong about a customer's whole
+     portfolio. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The project portfolio is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The project portfolio could not be read, so this screen is showing no programs because of a ' +
+          'failure, not because there are none.',
+        availableActions: ['Retry the portfolio read'],
+      };
+    }
+    const blocked = projects.filter(p => p.status === 'blocked');
+    const filtered = ws !== 'all' || status !== 'all';
+    return {
+      summary:
+        `Projects portfolio: ${projects.length} regulatory program(s)` +
+        (filtered ? `, filtered to ${list.length} by workstream "${ws}" and status "${status}"` : '') +
+        `. ${blocked.length} blocked, average readiness ${health[1].n}. Shown as a ${view}.`,
+      facts: {
+        totalPrograms: projects.length,
+        shownInList: list.length,
+        workstreamFilter: ws,
+        statusFilter: status,
+        blockedCount: blocked.length,
+        averageReadiness: health[1].n,
+        // Enough to name a programme back to the user, not the whole row set.
+        programs: list.slice(0, 12).map(p => ({
+          id: p.id, code: p.code, title: p.title, workstream: p.ws, stage: p.stage,
+          status: p.status, readiness: p.readiness, lead: p.lead, due: p.due,
+          blocker: p.blocker ?? null,
+        })),
+      },
+      availableActions: [
+        'Open a program to enter its project home',
+        'Filter the portfolio by workstream (MDX, Biotech, Pharma) or by status',
+        'Switch between the grid and list views',
+        'Create a new project through the new-project wizard',
+      ],
+    };
+  }, [live.loading, live.error, projects, list, ws, status, view, health]);
+  usePublishSurfaceContext('projects', anaContext);
+
   const openProj = (pr: ProjPortfolioEntry) => {
     try {
-      window.C2C_PROJECT = { id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status };
+      publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
     } catch (_) { /* noop */ }
     onNav('project-home');

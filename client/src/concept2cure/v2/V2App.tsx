@@ -28,8 +28,11 @@ import {
   shouldApplyNavigation,
   validateDriveDirective,
   type DriveAction,
+  type DriveLock,
 } from './liveDrive';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
+import { stashNavParamsForTarget } from './navParams';
+import { getAuthHeaders } from '@/utils/authToken';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
 import { getJwtOrgId } from '@/utils/authToken';
@@ -90,6 +93,7 @@ import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
 import './styles/pathway-core-v2.css';
 import './styles/pathway-panels-v2.css';
+import { restoreShellProject } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -197,6 +201,15 @@ function hasReportableWork(m: AnaChatMessage): boolean {
   );
 }
 
+/* Rehydrate the open program BEFORE any surface renders. The selection is a
+   window global set by Projects/MdxSurfaceHost via publishShellProject and
+   mirrored per-tab; without this, a reload or a deep link straight to
+   /concept2cure/cmc (or /vault, /ectd-compile) dropped every project-scoped
+   surface to "Open a program" until the user detoured through Projects.
+   Module scope deliberately: it must run when the shell bundle evaluates,
+   ahead of the first render of any reader. A live selection always wins. */
+restoreShellProject();
+
 /* The shell's grounding for ANA: the project currently in context (set on the
    window by the projects surface, the same source the CMC/board surfaces read).
    Passing it to useAnaChat lets ANA see the open program on every surface's
@@ -266,6 +279,10 @@ export function V2App() {
       const directive = validateDriveDirective(ev.directive);
       if (!directive || !shouldApplyNavigation(driveRef.current)) return;
       dispatchDrive({ kind: 'navigation', directive, round: ev.round });
+      /* Registry-validated params ride the navParams channel so the
+         destination opens on the exact tab/section AnA named — and a
+         param-less drive clears any stale entry rather than inheriting it. */
+      stashNavParamsForTarget(directive.targetId, directive.params);
       nav(directive.targetId);
     },
     [dispatchDrive, nav]
@@ -307,6 +324,37 @@ export function V2App() {
   React.useEffect(() => {
     if (!anaChat.isStreaming) dispatchDrive({ kind: 'turn_end' });
   }, [anaChat.isStreaming, dispatchDrive]);
+  /* Pre-emptive Live Drive verdict — the toggle shows its honest lock (with
+     the real required tier) before the first attempted turn. Advisory only:
+     the same resolveDriveState answers per turn and overwrites this. A failed
+     read changes nothing — unknown is neither locked nor entitled. */
+  React.useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch('/api/ana-ri/live-drive/state', {
+          headers: getAuthHeaders(),
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const body = (await res.json()) as {
+          success?: boolean;
+          data?: { enabled?: boolean; reason?: string; requiredTier?: string | null };
+        };
+        const d = body?.data;
+        if (cancelled || !body?.success || !d || typeof d.enabled !== 'boolean') return;
+        const lock: DriveLock | null = d.enabled
+          ? null
+          : { reason: d.reason ?? 'not_enabled', requiredTier: d.requiredTier ?? null };
+        dispatchDrive({ kind: 'lock_info', lock });
+      } catch {
+        /* verdict unknown — leave the toggle unannotated, never fabricate */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatchDrive]);
   /* Take over = this is the person's screen again, now: stop applying for the
      rest of the turn AND drop the toggle, so the next turn does not re-engage
      until they deliberately switch it back on. AnA keeps answering. */
