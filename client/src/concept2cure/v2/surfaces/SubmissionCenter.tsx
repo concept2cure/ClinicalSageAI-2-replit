@@ -32,6 +32,7 @@
 import React from 'react';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
@@ -327,8 +328,95 @@ export function SubmissionCenter({
     };
   };
 
+
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
+
+  /* What AnA can see of this screen.
+     The Submission Center is eight workspaces over one selected submission and
+     one selected sequence, and every question a user asks here is about THAT
+     pair — "is this ready to dispatch?", "what is blocking 0002?". Until now she
+     was told only that the surface was called "submission-center", so she could
+     not name the submission the user was looking at, let alone its sequences.
+
+     A FAILED read publishes the failure. `list` and `seqs.rows` are both []
+     when the read threw, and reporting "no submissions" over an outage would be
+     a confident claim about a customer's filing portfolio that nobody made. */
+  const anaContext = React.useMemo(() => {
+    if (subs.loading) {
+      return { summary: 'The submission portfolio is still loading; nothing on screen is final yet.' };
+    }
+    if (subs.error) {
+      return {
+        summary:
+          'The submission portfolio could not be read, so this screen is showing no submissions ' +
+          'because of a failure, not because there are none.',
+        availableActions: ['Reload the Submission Center to retry the portfolio read'],
+      };
+    }
+    const seqLine = seqs.loading
+      ? 'its sequences are still loading'
+      : seqs.error
+        ? 'its sequences could not be read'
+        : `${seqs.rows.length} eCTD sequence(s) tracked`;
+    return {
+      summary:
+        `Submission Center, "${SUBMISSION_WORKSPACES.find((w) => w.id === ws)?.label ?? ws}" workspace: ` +
+        `${list.length} submission(s) in the portfolio` +
+        (sub
+          ? `, "${sub.title}" selected — a ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} at the ` +
+            `${sub.lifecycleStage} stage, ${seqLine}` +
+            (seq ? `, working sequence ${seq.sequenceNumber} (${seq.status})` : '')
+          : ', none selected'),
+      facts: {
+        workspace: ws,
+        totalSubmissions: list.length,
+        selectedSubmission: sub
+          ? {
+              id: sub.id, title: sub.title, product: sub.productName,
+              applicationType: sub.applicationType, clientType: sub.clientType,
+              primaryRegion: sub.primaryRegion, status: sub.status,
+              lifecycleStage: sub.lifecycleStage,
+            }
+          : null,
+        sequences: seqs.loading || seqs.error
+          ? null
+          : seqs.rows.slice(0, 12).map((r) => ({
+              id: r.id, number: r.sequenceNumber, type: r.type,
+              status: r.status, region: r.region, validation: r.validationStatus,
+            })),
+        sequencesUnavailable: seqs.error ? 'the sequence read failed' : null,
+        workingSequence: seq
+          ? { id: seq.id, number: seq.sequenceNumber, status: seq.status, validation: seq.validationStatus }
+          : null,
+        deviceFilings: deviceRes.loading
+          ? null
+          : deviceRes.error
+            ? null
+            : deviceFilings.length,
+        deviceFilingsUnavailable: deviceRes.error ? 'the eSTAR tracker read failed' : null,
+        deviceAssemblyVerdict:
+          assembly.state === 'ready'
+            ? { artifactKind: assembly.artifactKind, blockerCount: assembly.blockerCount }
+            : assembly.state === 'error'
+              ? 'unavailable'
+              : 'loading',
+        lastServerNotice: notice ? { tone: notice.tone, text: notice.text } : null,
+      },
+      availableActions: [
+        'Switch workspace — planner, sequences, builder, validation, shadow review, cross-region, dispatch',
+        'Select a different submission from the portfolio picker',
+        'Select the working sequence the build and validation workspaces act on',
+        'Move a sequence through its non-governed lifecycle transitions',
+        'Freeze or dispatch a sequence (each requires a Part 11 e-signature and passes the dispatch gate)',
+        'Open a tracked eSTAR device filing in the 510(k) surface',
+      ],
+    };
+  }, [
+    subs.loading, subs.error, list, sub, ws, seqs.loading, seqs.error, seqs.rows, seq,
+    deviceRes.loading, deviceRes.error, deviceFilings.length, assembly, notice,
+  ]);
+  usePublishSurfaceContext('submission-center', anaContext);
 
   return (
     <div className="sp sc-page">

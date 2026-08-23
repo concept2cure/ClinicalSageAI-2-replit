@@ -48,9 +48,19 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { productTypesToSegments } from '../../services/report-os/segment.js';
 import {
   filingTypesForView,
+  foldersForView,
+  VAULT_DOC_KINDS,
   type VaultViewId,
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
+import {
+  resolveVaultView,
+  resolveOrgVaultView,
+  isFolderInView,
+  folderLabel,
+} from '../../services/vault/vault-filing.service.js';
+import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { writeChainedAuditRow } from '../../services/auditService.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -69,6 +79,24 @@ interface VaultDoc {
   preview: string;
   blocker?: boolean;
   flag?: string;
+  /** Discriminator: an authored section vs an uploaded vault.documents row. */
+  src?: 'authored' | 'upload';
+  /** Upload-only extras (all projected from real columns). */
+  docId?: string;
+  sizeLabel?: string;
+  hash?: string;
+  filing?: UploadFiling;
+}
+
+/** The placement block for an uploaded document — mirrors vault-ingest. */
+interface UploadFiling {
+  folderId: string | null;
+  folderLabel: string;
+  evidenceKind: string | null;
+  ctdSection: string | null;
+  placementStatus: string;
+  confidence: string | null;
+  rationale: string | null;
 }
 
 interface VaultFolder {
@@ -76,6 +104,33 @@ interface VaultFolder {
   code: string;
   label: string;
   children: Array<VaultFolder | VaultDoc>;
+}
+
+/** One Data Room source with its derived pipeline stage. */
+interface DataRoomRow {
+  id: number;
+  title: string;
+  kind: string;
+  sizeLabel: string;
+  addedAt: string;
+  /** captured → classified → filed; DERIVED, never stored guesswork:
+   *  'filed' = its checksum matches a vault document in this program,
+   *  'classified' = the capture path stamped a dossier classification,
+   *  'captured' = neither. */
+  stage: 'captured' | 'classified' | 'filed';
+  readState: string;
+  suggestedFolder: string | null;
+  suggestedFolderLabel: string;
+  evidenceKind: string | null;
+  confidence: string | null;
+  needsReview: boolean;
+}
+
+interface DataRoomBlock {
+  captured: number;
+  classified: number;
+  filed: number;
+  sources: DataRoomRow[];
 }
 
 interface VaultDisplayShape {
@@ -86,10 +141,17 @@ interface VaultDisplayShape {
   tree: VaultFolder[];
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
+  /** Uploaded documents awaiting a person's filing decision. */
+  unfiledCount?: number;
+  /** The capture→classify→file pipeline over the project's Data Room. */
+  dataRoom?: DataRoomBlock;
   /**
    * Branches that could not be served, with why. A vault that silently omits
    * "Uploaded files" because its store is unprovisioned reads exactly like a
-   * vault with no uploads — this field is the difference.
+   * vault with no uploads — this field is the difference. The ONE degradation
+   * contract for every derived branch (Module 3, the filing cabinet, the data
+   * room); a real failure — anything but a missing store — is a 500, never a
+   * silent degrade.
    */
   unavailable?: Array<{ branch: string; reason: string }>;
 }
@@ -198,6 +260,117 @@ function vaultViewLabel(view: VaultViewId): string {
   const refs = (primary as { regulatoryRefs?: string[] }).regulatoryRefs;
   const suffix = refs && refs.length ? ` · ${refs.join(' · ')}` : '';
   return `${primary.label}${suffix}`;
+}
+
+/** Bytes → '3.4 MB' (real size only; null → em dash, never invented). */
+function prettySize(bytes: unknown): string {
+  const n = typeof bytes === 'string' ? Number(bytes) : (bytes as number);
+  if (!Number.isFinite(n) || n < 0) return '—';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} kB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(n / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+const KIND_LABEL = new Map(VAULT_DOC_KINDS.map(k => [k.value as string, k.label]));
+
+export interface UploadRow {
+  id: string;
+  document_code: string | null;
+  document_title: string | null;
+  document_type: string | null;
+  version: string | null;
+  file_name: string | null;
+  file_size: string | number | null;
+  mime_type: string | null;
+  content_hash: string | null;
+  folder_id: string | null;
+  evidence_kind: string | null;
+  ctd_section: string | null;
+  placement_status: string | null;
+  placement_confidence: string | null;
+  placement_rationale: string | null;
+  updated_at: string | Date | null;
+  owner_name: string | null;
+}
+
+/** An uploaded vault.documents row → a VaultDoc leaf (all real columns).
+ *  Exported for the tree-merge regression test. */
+export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
+  const placementStatus = row.placement_status || 'unfiled';
+  const kind = row.evidence_kind ? KIND_LABEL.get(row.evidence_kind) ?? row.evidence_kind : null;
+  const title = row.document_title || row.file_name || 'Document';
+  const size = prettySize(row.file_size);
+  const leaf: VaultDoc = {
+    id: `up-${row.id}`,
+    num: row.ctd_section ?? '—',
+    title,
+    type: kind ?? (row.document_type && row.document_type !== 'OTHER' ? row.document_type : 'File'),
+    status: placementStatus,
+    // Uploads have no authoring completion; 0 rather than a fabricated figure.
+    pct: 0,
+    owner: row.owner_name ?? '—',
+    ver: row.version ? `v${row.version}` : '—',
+    updated: relativeTime(row.updated_at),
+    preview: `${row.file_name ?? title} · ${size}` +
+      (row.content_hash ? ` · SHA-256 ${row.content_hash.slice(0, 12)}…` : ''),
+    src: 'upload',
+    docId: row.id,
+    sizeLabel: size,
+    hash: row.content_hash ?? undefined,
+    filing: {
+      folderId: row.folder_id,
+      folderLabel: folderLabel(view, row.folder_id),
+      evidenceKind: row.evidence_kind,
+      ctdSection: row.ctd_section,
+      placementStatus,
+      confidence: row.placement_confidence,
+      rationale: row.placement_rationale,
+    },
+  };
+  if (placementStatus === 'unfiled') {
+    leaf.flag = row.placement_rationale ?? 'Not filed into the dossier yet.';
+  }
+  return leaf;
+}
+
+/**
+ * The filing cabinet: the program's vault-view folder taxonomy with every
+ * uploaded document placed where its (suggested or confirmed) filing says,
+ * plus an always-visible Unfiled queue. Folders render even when empty — the
+ * cabinet IS the dossier shape a regulatory associate expects to see.
+ * Exported for the tree-merge regression test.
+ */
+export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFolder {
+  const unfiled = uploads.filter(u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled');
+  const byFolder = new Map<string, UploadRow[]>();
+  for (const u of uploads) {
+    if (!u.folder_id || (u.placement_status || 'unfiled') === 'unfiled') continue;
+    const list = byFolder.get(u.folder_id) ?? [];
+    list.push(u);
+    byFolder.set(u.folder_id, list);
+  }
+  const children: Array<VaultFolder | VaultDoc> = [];
+  children.push({
+    id: 'cab-unfiled',
+    code: '',
+    label: 'Unfiled · needs review',
+    children: unfiled.map(u => uploadLeaf(view, u)),
+  });
+  for (const folder of foldersForView(view)) {
+    children.push({
+      id: `cab-${folder.id}`,
+      code: '',
+      label: folder.label,
+      children: (byFolder.get(folder.id) ?? []).map(u => uploadLeaf(view, u)),
+    });
+  }
+  return {
+    id: 'cabinet',
+    code: '',
+    label: 'Source files · filing cabinet',
+    children,
+  };
 }
 
 /** A rule-pack section spec merged with its live row → a VaultDoc leaf. */
@@ -367,52 +540,11 @@ async function module3Branch(programId: string, orgId: number): Promise<VaultFol
   return { id: 'm3-cmc', code: 'M3', label: 'Module 3 (CMC)', children };
 }
 
-interface UploadRow {
-  id: string;
-  document_code: string | null;
-  document_title: string | null;
-  document_type: string | null;
-  version: string | null;
-  file_name: string | null;
-  created_at: string | Date | null;
-  owner_name: string | null;
-}
-
-/**
- * The Uploaded-files branch: vault.documents rows for this program — the rows
- * this surface's own Upload button creates via POST /api/vault/ingest. The
- * tree never read them, so an upload landed in a store the vault never looked
- * at and the surface's "the row appears in the tree" promise was false.
- * Tenancy: the program row was org-verified by the caller before this runs
- * (vault.documents has no org column; program ownership is the boundary, the
- * same posture vault-ingest takes).
- */
-async function uploadsBranch(programId: string): Promise<VaultFolder | null> {
-  const upRes = await pool.query(
-    `SELECT d.id, d.document_code, d.document_title, d.document_type, d.version,
-            d.file_name, d.created_at,
-            COALESCE(u.name, u.email) AS owner_name
-       FROM vault.documents d
-       LEFT JOIN users u ON u.id = d.created_by
-      WHERE d.program_id = $1 AND d.deleted_at IS NULL
-      ORDER BY d.created_at DESC`,
-    [programId],
-  );
-  if (upRes.rows.length === 0) return null;
-  const children: VaultDoc[] = (upRes.rows as UploadRow[]).map((d) => ({
-    id: `vaultup-${d.id}`,
-    num: d.document_code || '—',
-    title: d.document_title || d.file_name || 'Uploaded document',
-    type: d.document_type || 'OTHER',
-    status: 'uploaded',
-    pct: 100,
-    owner: d.owner_name ?? '—',
-    ver: d.version ? `v${d.version}` : '—',
-    updated: relativeTime(d.created_at),
-    preview: `${d.document_title || d.file_name || 'Uploaded document'} · ingested via /api/vault/ingest (virus-scanned, SHA-256 pinned, Part 11 audit row)`,
-  }));
-  return { id: 'vault-uploads', code: 'Uploads', label: 'Uploaded files', children };
-}
+/* The Uploaded-files branch is the filing cabinet (uploadLeaf / filingCabinet
+   above): the same vault.documents rows the flat "Uploaded files" list showed,
+   carrying their dossier PLACEMENT — the classifier's suggested folder, the
+   person-confirmed filing, or the visible Unfiled queue — instead of a single
+   undifferentiated bucket. One uploads branch; two never merged. */
 
 // ─── Router factory ─────────────────────────────────────────────────────────────
 
@@ -443,23 +575,13 @@ export default function createProjectVaultRoutes(): Router {
       if (projRes.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
       const project = projRes.rows[0] as ProjectRow;
 
-      // 2) Derive the vault view: project product_type → segment; else the union
-      //    across the org's programs; else the cross-sponsor service view.
-      let view: VaultViewId;
+      // 2) Derive the vault view (project product_type → segment; else the org
+      //    union; else the cross-sponsor service view). Same mapping the
+      //    ingest path uses (vault-filing.service), so a file cannot be
+      //    classified against one view and rendered under another — computed
+      //    from the project row already fetched, not a second read.
       const projSegs = project.product_type ? productTypesToSegments([project.product_type]) : [];
-      if (projSegs.length > 0) {
-        view = projSegs[0];
-      } else {
-        const orgTypesRes = await pool.query(
-          `SELECT DISTINCT product_type FROM regulatory_programs
-            WHERE organization_id = $1 AND product_type IS NOT NULL`,
-          [orgId],
-        );
-        const orgSegs = productTypesToSegments(
-          orgTypesRes.rows.map((r: { product_type: string }) => r.product_type),
-        );
-        view = orgSegs[0] ?? 'service';
-      }
+      const view: VaultViewId = projSegs[0] ?? (await resolveOrgVaultView(orgId));
 
       // 3) The project's active document builds + their rule-pack section specs.
       const docsRes = await pool.query(
@@ -501,9 +623,11 @@ export default function createProjectVaultRoutes(): Router {
         tree.push(documentFolder(doc, live));
       }
 
-      // 5) Derived branches: what the pipelines file for this program.
-      //    Each degrades independently — a store this environment has not
-      //    provisioned is REPORTED as unavailable, never rendered as empty.
+      // 5) Derived branches: what the pipelines file for this program. ONE
+      //    degradation contract for all of them — a store this environment has
+      //    not provisioned is REPORTED in `unavailable`, never rendered as an
+      //    empty branch (which would read as "no documents"); any other
+      //    failure is a real error and 500s.
       const unavailable: Array<{ branch: string; reason: string }> = [];
       try {
         const m3 = await module3Branch(id, orgId);
@@ -515,15 +639,107 @@ export default function createProjectVaultRoutes(): Router {
           reason: 'The governed artifact registry (or its program anchor) is not provisioned in this environment.',
         });
       }
+
+      // 6) Uploaded files → the filing cabinet: the same vault.documents rows
+      //    the Upload button ingests, placed where their (suggested or
+      //    confirmed) filing says, plus the always-visible Unfiled queue.
+      let uploads: UploadRow[] = [];
+      let uploadsStoreMissing = false;
       try {
-        const uploads = await uploadsBranch(id);
-        if (uploads) tree.push(uploads);
+        const upRes = await pool.query(
+          `SELECT d.id, d.document_code, d.document_title, d.document_type,
+                  d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
+                  d.folder_id, d.evidence_kind, d.ctd_section,
+                  d.placement_status, d.placement_confidence, d.placement_rationale,
+                  d.updated_at,
+                  COALESCE(u.name, u.email) AS owner_name
+             FROM vault.documents d
+             LEFT JOIN users u ON u.id = d.created_by
+            WHERE d.program_id = $1 AND d.deleted_at IS NULL
+            ORDER BY d.updated_at DESC`,
+          [id],
+        );
+        uploads = upRes.rows as UploadRow[];
+        tree.push(filingCabinet(view, uploads));
       } catch (err) {
         if (!isMissingStore(err)) throw err;
+        uploadsStoreMissing = true;
         unavailable.push({
           branch: 'Uploaded files',
           reason: 'The vault document store (vault.documents) is not provisioned in this environment.',
         });
+      }
+      const unfiledCount = uploads.filter(
+        u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled',
+      ).length;
+
+      // 7) The Data Room pipeline: every captured source with its DERIVED
+      //    stage — 'filed' is a checksum join against the uploads, computed
+      //    not stored, so it cannot go stale. With the uploads store missing
+      //    that join cannot be derived, and a room whose Filed count silently
+      //    read zero would be the error-as-empty lie — so the room is
+      //    reported unavailable alongside it.
+      let dataRoom: DataRoomBlock | undefined;
+      if (uploadsStoreMissing) {
+        unavailable.push({
+          branch: 'Data room',
+          reason: "The 'filed' stage joins captured sources against the uploads store, which is not provisioned — pipeline stages cannot be derived.",
+        });
+      } else {
+        try {
+          const sources = await listClientDocuments(orgId, { programId: id });
+          const vaultHashes = new Set(
+            uploads.map(u => u.content_hash).filter((h): h is string => Boolean(h)),
+          );
+          const rows: DataRoomRow[] = sources.map(s => {
+            const meta = (s.metadata ?? {}) as Record<string, unknown>;
+            const dossier = (meta.dossier ?? null) as
+              | { evidenceKind?: string | null; suggestedFolder?: string | null;
+                  confidence?: string | null; needsReview?: boolean }
+              | null;
+            const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
+            const stage: DataRoomRow['stage'] = filed ? 'filed' : dossier ? 'classified' : 'captured';
+            const mime = typeof meta.mimeType === 'string' ? meta.mimeType : '';
+            const kind =
+              /pdf/i.test(mime) ? 'PDF'
+              : /word|docx?/i.test(mime) ? 'Word'
+              : /sheet|excel|csv/i.test(mime) ? 'Sheet'
+              : /image/i.test(mime) ? 'Image'
+              : /text|markdown/i.test(mime) ? 'Text'
+              : 'File';
+            const readState =
+              s.extractionStatus === 'extracted' ? 'Read'
+              : s.extractionStatus === 'failed' ? 'Text not readable'
+              : 'Not processed yet';
+            const suggestedFolder = dossier?.suggestedFolder ?? null;
+            return {
+              id: s.id,
+              title: s.title ?? 'Untitled source',
+              kind,
+              sizeLabel: prettySize(meta.fileSize),
+              addedAt: relativeTime(s.createdAt),
+              stage,
+              readState,
+              suggestedFolder,
+              suggestedFolderLabel: folderLabel(view, suggestedFolder),
+              evidenceKind: dossier?.evidenceKind ?? null,
+              confidence: dossier?.confidence ?? null,
+              needsReview: Boolean(dossier?.needsReview),
+            };
+          });
+          dataRoom = {
+            captured: rows.length,
+            classified: rows.filter(r => r.stage !== 'captured').length,
+            filed: rows.filter(r => r.stage === 'filed').length,
+            sources: rows,
+          };
+        } catch (err) {
+          if (!isMissingStore(err)) throw err;
+          unavailable.push({
+            branch: 'Data room',
+            reason: 'The data room store (cre_evidence_sources) is not provisioned in this environment.',
+          });
+        }
       }
 
       const data: VaultDisplayShape = {
@@ -532,6 +748,8 @@ export default function createProjectVaultRoutes(): Router {
         standard: view,
         documentCount: countDocs(tree),
         tree,
+        unfiledCount,
+        ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
       };
       return res.json({ success: true, data });
@@ -553,6 +771,214 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to build project vault' });
+    }
+  });
+
+  /**
+   * POST /api/c2c/project-vault/:id/file — commit a filing decision.
+   *
+   * The classifier only ever SUGGESTS; this is where a person confirms the
+   * suggestion, moves the document to another folder, or explicitly unfiles
+   * it. The placement change and its hash-chained Part 11 audit row commit in
+   * one transaction — a filing decision is a governed act on a regulated
+   * corpus, not a UI preference.
+   *
+   * Body:
+   *   documentId  vault.documents uuid (required)
+   *   confirm     true → keep the suggested folder, mark it confirmed
+   *   folderId    move to this folder (must exist in the program's view
+   *               taxonomy) · null → unfile
+   *   evidenceKind / ctdSection  optional refinements recorded with the move
+   *   note        optional reason, recorded as the placement rationale
+   */
+  router.post('/:id/file', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const userId: number | null = (req as any).user?.id ?? null;
+
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+
+    const body = (req.body ?? {}) as {
+      documentId?: unknown; confirm?: unknown; folderId?: unknown;
+      evidenceKind?: unknown; ctdSection?: unknown; note?: unknown;
+    };
+    const documentId = typeof body.documentId === 'string' ? body.documentId.trim() : '';
+    if (!UUID_RE.test(documentId)) {
+      return res.status(400).json({ success: false, error: 'documentId (uuid) is required' });
+    }
+    const confirm = body.confirm === true;
+    const folderIdRaw = body.folderId;
+    const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null;
+    const evidenceKind =
+      typeof body.evidenceKind === 'string' && body.evidenceKind.trim() ? body.evidenceKind.trim() : null;
+    const ctdSection =
+      typeof body.ctdSection === 'string' && body.ctdSection.trim() ? body.ctdSection.trim() : null;
+
+    try {
+      // Program ownership — same guard as the read.
+      const projRes = await pool.query(
+        `SELECT id FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [id, orgId],
+      );
+      if (projRes.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      }
+      const view = await resolveVaultView(id, orgId);
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const docRes = await client.query(
+          `SELECT id, document_title, folder_id, evidence_kind, ctd_section,
+                  placement_status, placement_rationale
+             FROM vault.documents
+            WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
+            FOR UPDATE`,
+          [documentId, id],
+        );
+        if (docRes.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ success: false, error: 'DOCUMENT_NOT_FOUND' });
+        }
+        const before = docRes.rows[0] as {
+          id: string; document_title: string | null; folder_id: string | null;
+          evidence_kind: string | null; ctd_section: string | null;
+          placement_status: string | null; placement_rationale: string | null;
+        };
+
+        // Resolve the target placement.
+        let targetFolder: string | null;
+        if (confirm && folderIdRaw === undefined) {
+          if (!before.folder_id) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+              success: false,
+              error: 'NOTHING_TO_CONFIRM',
+              message: 'This document has no suggested folder — choose one to file it.',
+            });
+          }
+          targetFolder = before.folder_id;
+        } else if (folderIdRaw === null) {
+          targetFolder = null; // explicit unfile
+        } else if (typeof folderIdRaw === 'string' && folderIdRaw.trim()) {
+          targetFolder = folderIdRaw.trim();
+          if (!isFolderInView(view, targetFolder)) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+              success: false,
+              error: 'INVALID_FOLDER',
+              message: `Folder '${targetFolder}' does not exist in this program's ${view} vault taxonomy.`,
+            });
+          }
+        } else {
+          await client.query('ROLLBACK');
+          return res.status(400).json({
+            success: false,
+            error: 'NO_TARGET',
+            message: 'Pass confirm:true, a folderId, or folderId:null to unfile.',
+          });
+        }
+
+        const newStatus = targetFolder ? 'confirmed' : 'unfiled';
+        const rationale =
+          note ??
+          (targetFolder
+            ? confirm
+              ? `Suggested filing confirmed${before.placement_rationale ? ` (${before.placement_rationale})` : ''}.`
+              : 'Filed by user.'
+            : 'Unfiled by user — awaiting a filing decision.');
+
+        const upd = await client.query(
+          `UPDATE vault.documents SET
+             folder_id = $1,
+             evidence_kind = COALESCE($2, evidence_kind),
+             ctd_section = $3,
+             placement_status = $4,
+             placement_confidence = NULL,
+             placement_rationale = $5,
+             placed_by = $6,
+             placed_at = NOW(),
+             updated_at = NOW()
+           WHERE id = $7
+           RETURNING folder_id, evidence_kind, ctd_section, placement_status,
+                     placement_confidence, placement_rationale`,
+          [
+            targetFolder,
+            evidenceKind,
+            // An explicit move to a non-CTD folder clears a stale CTD section;
+            // confirming keeps what the classifier read.
+            ctdSection ?? (confirm ? before.ctd_section : null),
+            newStatus,
+            rationale,
+            userId,
+            documentId,
+          ],
+        );
+        const after = upd.rows[0] as {
+          folder_id: string | null; evidence_kind: string | null; ctd_section: string | null;
+          placement_status: string; placement_rationale: string | null;
+        };
+
+        await writeChainedAuditRow(client, {
+          tenantId: orgId,
+          userId: userId ?? undefined,
+          action: 'vault.document.file',
+          resourceType: 'vault_document',
+          resourceId: documentId,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          details: {
+            programId: id,
+            documentTitle: before.document_title,
+            view,
+            from: {
+              folderId: before.folder_id,
+              placementStatus: before.placement_status,
+              ctdSection: before.ctd_section,
+            },
+            to: {
+              folderId: after.folder_id,
+              placementStatus: after.placement_status,
+              ctdSection: after.ctd_section,
+            },
+            rationale,
+          },
+        });
+        await client.query('COMMIT');
+
+        return res.json({
+          success: true,
+          filing: {
+            folderId: after.folder_id,
+            folderLabel: folderLabel(view, after.folder_id),
+            evidenceKind: after.evidence_kind,
+            ctdSection: after.ctd_section,
+            placementStatus: after.placement_status,
+            confidence: null,
+            rationale: after.placement_rationale,
+            needsReview: after.placement_status === 'unfiled',
+          },
+        });
+      } catch (txErr) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === '42P01' || (err as { code?: string })?.code === '42703') {
+        return res.status(409).json({
+          success: false,
+          error: 'STORE_PENDING',
+          message: 'The vault uploads store is not provisioned in this environment.',
+        });
+      }
+      logger.error('project vault file error', {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
     }
   });
 

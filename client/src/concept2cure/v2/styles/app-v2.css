@@ -2028,6 +2028,44 @@
 .c2c-v2 .cmdk-foot{display:flex;gap:14px;padding:9px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--text-400);}
 .c2c-v2 .cmdk-hdr{padding:8px 16px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-400);user-select:none;}
 
+/* ── Locked ⌘K results ──────────────────────────────────────────────────────
+   The palette is the second door onto every destination the rail greys out, so
+   a locked result reads here the way it reads there: it stays a real, focusable
+   row that Enter activates (the entitlements spec forbids a disabled, reasonless
+   control), and it opens the same explanation panel instead of the surface.
+
+   Same three channels as the rail, so colour is never doing the work alone —
+   the muted row, the lock glyph reusing `.nav-lic[data-lic="off"]`, and the
+   REASON as text in both the hint column and the button's accessible name.
+
+   One deliberate difference from `.nav-item[data-locked]`, which mutes to
+   --text-400: that token measures 3.37:1 light / 4.27:1 dark on --bg-000 (the
+   numbers recorded at the top of this file), below the 4.5:1 SC 1.4.3 wants for
+   13px text, and the WCAG exception for it is scoped to "disabled/decorative"
+   uses — which a row a customer is meant to activate and read is not. --text-300
+   is 5.21:1 / 6.82:1, still an unmistakable step down from the unlocked label,
+   and passes in both themes. The reason text gets the same treatment rather than
+   the generic hint's --text-400: it is the only place the palette states WHY,
+   so it is the last string in this component that should be hard to read. */
+.c2c-v2 .cmdk-item[data-locked] .lbl{color:var(--text-300);}
+.c2c-v2 .cmdk-item[data-locked] .ico{color:var(--text-300);}
+.c2c-v2 .cmdk-item[data-locked] .hint{color:var(--text-300);}
+/* `.on` is both the pointer hover and the keyboard cursor in this list (the
+   rows set it on mouseenter), so restoring full contrast on it is the same
+   "never unreadable while a human is aiming at it" behaviour the rail gets from
+   :hover — and it reaches keyboard users, who never produce a hover at all. */
+.c2c-v2 .cmdk-item[data-locked].on .lbl{color:var(--text-100);}
+.c2c-v2 .cmdk-item[data-locked].on .hint{color:var(--text-200);}
+.c2c-v2 .cmdk-item[data-locked].on .nav-lic[data-lic="off"]{color:var(--warning);}
+.c2c-v2 .cmdk-item .nav-lic[data-lic="off"] svg{width:13px;height:13px;}
+/* The palette is rendered inside `.c2c-v2.shell`, so the collapsed-rail rule at
+   the top of this file — `[data-collapsed="true"] .nav-lic{display:none}`, which
+   exists because the rail's licence dots have no room in a 56px column — reaches
+   these rows too. A ⌘K row is full width whatever the rail is doing, and losing
+   the glyph there would quietly drop one of the three channels the locked state
+   is carried on for anyone who works with the rail collapsed. */
+.c2c-v2.shell[data-collapsed="true"] .cmdk-item[data-locked] .nav-lic[data-lic="off"]{display:flex;}
+
 /* ── Tweaks ── */
 .c2c-v2 .tweaks-toggle{position:fixed;right:16px;bottom:16px;width:38px;height:38px;border-radius:50%;background:var(--text-100);color:var(--bg-000);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--v2-shadow-md);z-index:40;}
 .c2c-v2 .tweaks{position:fixed;right:16px;bottom:16px;width:260px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--v2-shadow-lg);z-index:40;overflow:hidden;}

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* -- Display row types (match the backend SELECTed columns) -- */
@@ -32,6 +33,50 @@ export function Training({ onAsk }: SurfaceViewProps) {
   // honest failed-load state, never a fixture.
   const paths = useLiveRows<LearningPath>('/api/enablement/paths');
   const certs = useLiveRows<Certification>('/api/enablement/certifications');
+
+  /* What AnA can see of this screen. The header button asks her for "a guided
+     tour of the workspace" — a request she can only answer usefully if she can
+     see which learning paths this organisation actually has and how far the
+     user is through them.
+
+     The two reads fail independently and are published independently: an empty
+     path list and an unreachable enablement store are different facts, and
+     telling a user their organisation configured no training because a fetch
+     failed is a claim about their admin's setup. */
+  const anaContext = useMemo(() => {
+    const pathsLine = paths.loading
+      ? 'still loading'
+      : paths.error
+        ? 'could not be read'
+        : `${paths.rows.length} path(s)`;
+    const certsLine = certs.loading
+      ? 'still loading'
+      : certs.error
+        ? 'could not be read'
+        : `${certs.rows.length} certification(s)`;
+    return {
+      summary: `Training and enablement: learning paths ${pathsLine}; certifications ${certsLine}.`,
+      facts: {
+        learningPaths: paths.loading || paths.error
+          ? null
+          : paths.rows.map((lp) => ({
+              id: lp.id, title: lp.title, level: lp.level,
+              lessons: lp.lessons, completed: lp.done, minutes: lp.mins,
+            })),
+        learningPathsUnavailable: paths.error ? 'the enablement path read failed' : null,
+        certifications: certs.loading || certs.error
+          ? null
+          : certs.rows.map((c) => ({ id: c.id, name: c.name, status: c.status, when: c.when })),
+        certificationsUnavailable: certs.error ? 'the certification read failed' : null,
+      },
+      availableActions: [
+        'Start a guided tour of the workspace',
+        'Open a role-based learning path and continue it',
+        'Read certification status',
+      ],
+    };
+  }, [paths.loading, paths.error, paths.rows, certs.loading, certs.error, certs.rows]);
+  usePublishSurfaceContext('training', anaContext);
 
   return (
     <div className="page-inner">

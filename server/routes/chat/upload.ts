@@ -433,6 +433,44 @@ export const uploadHandler = async (req: Request, res: Response) => {
           // whichever we actually got rather than assuming one.
           const scope = projectScope;
           const scopedToProject = scope.programId != null || scope.workspaceId != null;
+
+          // ── Dossier classification (capture → classify) ────────────────────
+          // The same deterministic classifier the Vault ingest runs, stamped
+          // into the source's metadata so the Data Room can show WHAT this is
+          // and WHERE it likely belongs the moment it lands — the 'classified'
+          // stage of the capture→classify→file pipeline. A proposal, never a
+          // commitment: filing into the vault stays a governed act. Failure to
+          // classify must never fail the capture.
+          let dossier: Record<string, unknown> | null = null;
+          try {
+            const { classifyForFiling, resolveVaultView, resolveOrgVaultView } = await import(
+              '../../services/vault/vault-filing.service.js'
+            );
+            const view = scope.programId
+              ? await resolveVaultView(scope.programId, numericOrgId)
+              : await resolveOrgVaultView(numericOrgId);
+            const c = classifyForFiling({
+              fileName,
+              title: fileName,
+              mimeType,
+              extractedText: extractionMethod ? extractedText : null,
+              view,
+            });
+            dossier = {
+              view,
+              evidenceKind: c.evidenceKind,
+              suggestedFolder: c.folderId,
+              ctdSection: c.ctdSection,
+              confidence: c.confidence,
+              needsReview: c.needsReview,
+              rationale: c.rationale,
+            };
+          } catch (classifyErr: any) {
+            logger.warn('Upload dossier classification failed (non-fatal)', {
+              err: classifyErr?.message,
+              fileId,
+            });
+          }
           const created = await createSource(numericOrgId, {
             sourceType: 'client_document',
             // Project uploads are scoped to the project; an unscoped chat
@@ -462,6 +500,7 @@ export const uploadHandler = async (req: Request, res: Response) => {
               mimeType,
               fileSize,
               artifactId,
+              ...(dossier ? { dossier } : {}),
             },
           });
           sourceId = created.id;

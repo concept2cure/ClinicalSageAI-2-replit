@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { EmptyState } from '../dataConnect';
+import { EmptyState, useLiveRows, ErrorState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -124,6 +124,10 @@ declare global {
 
 export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = useState('pyramid');
+  /* The org's real learned templates — same org-scoped read the Template
+     Library surface uses. The epoch lets the error state offer a retry. */
+  const [tplEpoch, setTplEpoch] = useState(0);
+  const tpl = useLiveRows<{ id: string; name: string }>('/api/c2c/templates', ['/api/c2c/templates', tplEpoch]);
   const [sel, setSel] = useState('co25');
   const sys = AE_SYSTEMS.find((s) => s.id === sel) || AE_SYSTEMS[0];
   const ask = onAsk;
@@ -255,12 +259,38 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
           <div className="scaf-note" style={{ marginBottom: 16 }}>
             Specify the document type and add your template — AnA learns your terminology, formatting and structure, so drafts arrive in your preferred format from the first pass. Templates render to DOCX and PDF.
           </div>
-          <EmptyState
-            title="No templates learned yet"
-            hint="Add a template and AnA learns your terminology, formatting and structure — drafts then arrive in your house style from the first pass. Manage them in the Template Library."
-            icon={I.fileText}
-          />
-          <button className="btn primary" style={{ marginTop: 8 }} onClick={() => open('template-library')}>{I.plus} Add a template</button>
+          {/* ── "No templates learned yet" was a constant ─────────────────────
+              This tab asserted that the tenant had no templates while making no
+              request at all — a tenant with a full Template Library was told
+              its library was empty, on the screen that exists to tell it
+              otherwise. /api/c2c/templates is the same org-scoped read the
+              Template Library surface uses; this now shares it, and separates
+              the three states it can actually be in: still loading, failed to
+              read, and genuinely none. */}
+          {tpl.loading ? (
+            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
+          ) : tpl.error ? (
+            <ErrorState
+              title="Couldn't load your templates"
+              message={tpl.error}
+              retry={() => setTplEpoch((n) => n + 1)}
+            />
+          ) : tpl.rows.length === 0 ? (
+            <EmptyState
+              title="No templates learned yet"
+              hint="Add a template and AnA learns your terminology, formatting and structure — drafts then arrive in your house style from the first pass. Manage them in the Template Library."
+              icon={I.fileText}
+            />
+          ) : (
+            <div className="scaf-note" style={{ padding: '14px 12px' }}>
+              {tpl.rows.length} template{tpl.rows.length === 1 ? '' : 's'} learned for this
+              organization. AnA drafts in their terminology, formatting and structure.
+              Open the Template Library to review or add to them.
+            </div>
+          )}
+          <button className="btn primary" style={{ marginTop: 8 }} onClick={() => open('template-library')}>
+            {I.plus} {tpl.rows.length > 0 ? 'Manage templates' : 'Add a template'}
+          </button>
         </div>
       )}
 
