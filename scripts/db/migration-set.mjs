@@ -1425,6 +1425,16 @@ export const C2C_MIGRATION_FILES = [
   // function. Function bodies only — no DDL, nothing for the sweep to policy.
   'db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql',
 
+  // ── Commercial packaging applied to the catalog (added 2026-08-23) ────────
+  // 20260810 seeded all 84 modules unrestricted and said the tiering was "a
+  // business decision ... deliberately left to be applied later". This applies
+  // it: one min_tier per module, derived from boundaries already committed in
+  // billing.ts PRICING[].features, license-manager.ts FEATURE_TIER_MAP and
+  // entitlements/mdx-entitlements.ts. Data-only, no DDL. MUST come after the
+  // provision_org_modules repair above — before it, a non-empty `tiers` is what
+  // the broken function chokes on.
+  'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+
   // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
   // Name + description only (adds Swissmedic to the modeled-agency list); no
   // entitlement change. Idempotent UPDATE keyed on module_id.
