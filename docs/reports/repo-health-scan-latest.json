@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T22:58:58.413Z",
+  "generatedAt": "2026-08-23T23:09:02.440Z",
   "git": {
-    "sha": "7975d30d3b0c8a77c8adc93333ffb8ea6e824487",
+    "sha": "49a54b10621458f9430c44fae2887d925f05c85a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 88
+    "largeFilesByLines": 89
   },
   "findings": {
     "duplicateBasenames": [
@@ -2156,7 +2156,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 841652
+        "bytes": 842292
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2172,7 +2172,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 253130
+        "bytes": 260888
       },
       {
         "file": "server/statistics-service.ts",
@@ -2219,8 +2219,16 @@
         "bytes": 134822
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 133374
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 132966
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 132049
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2231,16 +2239,8 @@
         "bytes": 129044
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 127933
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 125184
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2306,7 +2306,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19963
+        "lines": 19972
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6381
+        "lines": 6550
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2357,6 +2357,10 @@
         "lines": 3275
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 3182
+      },
+      {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
         "lines": 3113
       },
@@ -2371,10 +2375,6 @@
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "lines": 3060
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3012
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2425,16 +2425,16 @@
         "lines": 2327
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2298
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2254
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2209
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2653,6 +2653,10 @@
         "lines": 1533
       },
       {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1532
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1527
       }
@@ -2682,7 +2686,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 3,
-      "largeByLines": 5
+      "largeByLines": 6
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

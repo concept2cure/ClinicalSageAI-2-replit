@@ -5297,6 +5297,21 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
     const exportSignatures = await readSignaturesForExport(String(docId), tenantId);
     const manifest = signatureManifestLines(exportSignatures);
 
+    /* Figure references become bytes ONCE, here, under this tenant, before
+       the format branches — DOCX and PDF consume the same map, so the two
+       filed formats cannot disagree about which figures they carry. XML keeps
+       the raw reference inside CDATA and needs no bytes. A reference that
+       does not resolve stays out of the map and the renderers file an honest
+       "[Figure not exported: …]" line instead of dropping it silently. */
+    const { resolveAuthoringImages } = await import('../export/authoring-images.js');
+    const exportImages =
+      format === 'docx' || format === 'pdf'
+        ? await resolveAuthoringImages(
+            sectionsResult.rows.map((s: { content: string | null }) => s.content),
+            tenantId
+          )
+        : new Map();
+
     // Generate export based on format
     let fileContent: Buffer | undefined;
     let fileName: string = 'export';
@@ -5414,7 +5429,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
             heading: HeadingLevel.HEADING_1,
           })
         );
-        children.push(...blocksToDocx(docxNs, blocks));
+        children.push(...blocksToDocx(docxNs, blocks, exportImages));
       }
 
       /* §11.50(b) manifestation. Ordered after the content so the record reads
@@ -5465,7 +5480,7 @@ ${lines.map((l) => `      <line>${xe(l)}</line>`).join('\n')}
           const pending = countPendingSuggestions(blocks);
           pdfPendingIns += pending.insertions;
           pdfPendingDel += pending.deletions;
-          const body = blocksToHtml(blocks);
+          const body = blocksToHtml(blocks, exportImages);
           return `<h2>${esc(s.code)} — ${esc(s.title)}</h2>${body}`;
         }
       );
@@ -6374,6 +6389,160 @@ router.get('/documents/:id/tracked-change-decisions', async (req: Request, res: 
       success: false,
       error: 'Failed to fetch tracked change decisions',
     });
+  }
+});
+
+/* ════ Section images — the governed figure store ═══════════════════════════
+ *
+ * Section HTML stores a figure as a REFERENCE (`/api/authoring/images/<id>`),
+ * never as base64: the append-only revision ledger and the Part 11 audit rows
+ * copy section content on every save, so inlined bytes would multiply every
+ * figure by every revision, and the editor's per-keystroke device cache would
+ * blow the browser's storage quota on the first chromatogram.
+ *
+ * Storage REUSES the canonical upload store (`file_uploads` +
+ * `uploads/org-{id}/{id}` on disk, via saveDerivedUpload/loadUploadedFile in
+ * server/services/ana/uploaded-file-access.ts — the single sanctioned
+ * upload-id→bytes resolver, which enforces tenancy on both the org column and
+ * the path prefix). A second binary store for the same capability is exactly
+ * the parallel path CLAUDE.md rules out.
+ *
+ * The accepted formats are the ones the DOCX exporter can embed (PNG, JPEG,
+ * GIF). WebP is refused at upload rather than dropped at export; SVG is
+ * refused because it is a script container, not a picture.
+ */
+
+const AUTHORING_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+
+const imageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: AUTHORING_IMAGE_MAX_BYTES, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/gif') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PNG, JPEG and GIF images are accepted — they are the formats a Word export can embed.'));
+    }
+  },
+});
+
+/** Multer refusals (size, type) arrive as errors; they are client mistakes,
+ *  not server faults, and must say so as a 400 with the reason. */
+const imageUploadErrors = (err: unknown, _req: Request, res: Response, next: (e?: unknown) => void) => {
+  if (!err) return next();
+  const message =
+    (err as { code?: string })?.code === 'LIMIT_FILE_SIZE'
+      ? 'The image is larger than 8 MB. Nothing was uploaded.'
+      : err instanceof Error
+        ? err.message
+        : 'Upload refused';
+  return res.status(400).json({ success: false, error: message });
+};
+
+router.post(
+  '/images',
+  imageUpload.single('file'),
+  imageUploadErrors as never,
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = getTenantId(req);
+      const actorId = getActorId(req);
+      if (!actorId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
+      const file = (req as { file?: { buffer?: Buffer; mimetype?: string; originalname?: string } }).file;
+      if (!file?.buffer || file.buffer.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Send the image as multipart/form-data under the field name "file".',
+        });
+      }
+
+      // Magic-number check: an executable or HTML payload uploaded under an
+      // image mime is refused on its bytes, not its label.
+      const { verifyFileSignature } = await import('../utils/fileSignature');
+      const sig = verifyFileSignature(file.buffer, file.mimetype ?? '');
+      if (!sig.ok) {
+        return res.status(400).json({
+          success: false,
+          error: 'The file content does not match its declared image type. Nothing was uploaded.',
+        });
+      }
+      const { scanBuffer } = await import('../utils/virusScan');
+      const scan = await scanBuffer(file.buffer);
+      if (!scan.clean) {
+        logger.warn('authoring image rejected by content scan', { tenantId });
+        return res.status(400).json({
+          success: false,
+          error: 'The file was rejected by the content scan. Nothing was uploaded.',
+        });
+      }
+
+      /* Multer's busboy parse breaks the AsyncLocalStorage tenant scope the
+         middleware opened (its stream listeners run in the socket's context),
+         so under RLS enforcement every query from here on would fail closed.
+         Re-enter the exact scope this request was granted — the same repair
+         vault-ingest documents. */
+      const { runWithTenantScope } = await import('../db/tenantStore');
+      const rawUserId = Number((req.user as { id?: unknown; userId?: unknown })?.id ?? (req.user as { userId?: unknown })?.userId);
+      const saved = await runWithTenantScope(
+        {
+          tenantId: String(tenantId),
+          orgUuid: (req as { tenantContext?: { organizationUuid?: string | null } }).tenantContext?.organizationUuid ?? null,
+          role: (req.user as { role?: string | null })?.role ?? null,
+          source: 'request',
+          caller: 'server/routes/authoring.router.ts:images',
+        },
+        async () => {
+          const { saveDerivedUpload } = await import('../services/ana/uploaded-file-access.js');
+          return saveDerivedUpload({
+            buffer: file.buffer!,
+            fileName: file.originalname || 'figure',
+            mimeType: file.mimetype || 'application/octet-stream',
+            organizationId: tenantId,
+            userId: Number.isFinite(rawUserId) ? rawUserId : null,
+          });
+        }
+      );
+
+      return res.status(201).json({
+        success: true,
+        image: {
+          id: saved.fileId,
+          url: `/api/authoring/images/${saved.fileId}`,
+          mimeType: file.mimetype,
+          byteSize: file.buffer.length,
+        },
+      });
+    } catch (error) {
+      logger.error('authoring image upload failed', { error });
+      return res.status(500).json({ success: false, error: 'Failed to store the image. Nothing was saved.' });
+    }
+  }
+);
+
+router.get('/images/:id', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { loadUploadedFile } = await import('../services/ana/uploaded-file-access.js');
+    const { AUTHORING_IMAGE_MIMES } = await import('../export/authoring-images.js');
+    // Throws for an unknown id, a foreign tenant's id, or bytes gone from
+    // disk — all collapse to the same 404 below, confirming nothing.
+    const file = await loadUploadedFile(String(req.params.id), tenantId);
+    if (!AUTHORING_IMAGE_MIMES.has(file.mimeType)) {
+      // This endpoint serves figures, not arbitrary tenant uploads.
+      return res.status(404).json({ success: false, error: 'Image not found' });
+    }
+    // The store is append-only from the editor's side (nothing rewrites an
+    // upload's bytes), so the reference can be cached hard — per user, since
+    // the fetch rides the caller's Authorization header.
+    res.setHeader('Content-Type', file.mimeType);
+    res.setHeader('Content-Length', String(file.buffer.length));
+    res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+    res.setHeader('ETag', `"${file.fileId}"`);
+    return res.end(file.buffer);
+  } catch {
+    return res.status(404).json({ success: false, error: 'Image not found' });
   }
 });
 
