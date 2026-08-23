@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:07:38.136Z",
+  "generatedAt": "2026-08-23T23:08:14.175Z",
   "git": {
-    "sha": "88d7fd1c803002e7f7efe13acad2cf11e332364c",
+    "sha": "5ff622e3edf1ec091620970b7b84f8a6a856484c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2227,16 +2227,16 @@
         "bytes": 132082
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 132049
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
         "bytes": 131221
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
         "bytes": 129044
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 127933
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2425,16 +2425,16 @@
         "lines": 2327
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2298
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2254
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2209
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
