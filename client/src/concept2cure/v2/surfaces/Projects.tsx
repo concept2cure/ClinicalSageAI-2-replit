@@ -714,8 +714,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      over an outage would make AnA confidently wrong about a customer's whole
      portfolio. */
   const anaContext = useMemo(() => {
-<<<<<<< HEAD
-=======
     /* The wizard is a full-canvas view now, so when it is open the portfolio is
        NOT on screen. Publishing "Projects portfolio: 14 programs, 3 blocked"
        while the person is looking at a filing-type catalogue would describe a
@@ -733,7 +731,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         ],
       };
     }
->>>>>>> origin/concept2cure-v2
     if (live.loading) {
       return { summary: 'The project portfolio is still loading; nothing on screen is final yet.' };
     }
@@ -773,11 +770,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         'Create a new project through the new-project wizard',
       ],
     };
-<<<<<<< HEAD
-  }, [live.loading, live.error, projects, list, ws, status, view, health]);
-=======
   }, [wizardOpen, live.loading, live.error, projects, list, ws, status, view, health]);
->>>>>>> origin/concept2cure-v2
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (pr: ProjPortfolioEntry) => {

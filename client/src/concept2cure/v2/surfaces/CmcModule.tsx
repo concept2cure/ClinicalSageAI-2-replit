@@ -1979,8 +1979,6 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
      KPI; the source was connected all along. */
   const board = useLiveData<CmcBoardData>('/api/cmc/module3-board');
   const corr = board.data?.correspondence;
-<<<<<<< HEAD
-=======
   const [toast, fireToast] = useToast();
 
   /* "Draft response" — the same real handoff as the change memo's editor
@@ -2041,7 +2039,6 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
     }
   };
 
->>>>>>> origin/concept2cure-v2
   const sections = useLiveRows<{ sectionKey: string; sectionPath: string; approvalState: string; stale: boolean; updatedAt: string }>(
     projectId ? '/api/cmc/module3-os/sections/' + encodeURIComponent(projectId) : null,
   );
@@ -2121,11 +2118,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
             </div>
           ) : (
             <table className="reg-tbl">
-<<<<<<< HEAD
-          <thead><tr><th>Due</th><th>Section</th><th>Question</th><th>Priority</th><th>Status</th><th>Assigned</th></tr></thead>
-=======
           <thead><tr><th>Due</th><th>Section</th><th>Question</th><th>Priority</th><th>Status</th><th>Assigned</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
->>>>>>> origin/concept2cure-v2
           <tbody>
             {corr.map((c) => (
               <tr key={c.id}>
@@ -2147,8 +2140,6 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
                 </td>
                 <td className="mono">{c.status}</td>
                 <td>{c.assignedTo ?? '—'}</td>
-<<<<<<< HEAD
-=======
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
                     <button
@@ -2175,7 +2166,6 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
                     </button>
                   </div>
                 </td>
->>>>>>> origin/concept2cure-v2
               </tr>
             ))}
           </tbody>
