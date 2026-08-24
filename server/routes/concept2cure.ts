@@ -1797,7 +1797,10 @@ async function getArtifactsFromDb(projectId: number, organizationId: number): Pr
  */
 router.get(
   '/projects',
-  cacheResponse({ ttl: 30_000, keyGenerator: req => `projects:${(req as any).organizationId}` }),
+  // The organization half of the key is supplied by cacheResponse itself.
+  // This read used to be `(req as any).organizationId`, which the global /api
+  // gate never sets, so every tenant keyed to `projects:undefined`.
+  cacheResponse({ ttl: 30_000, keyGenerator: () => 'projects' }),
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
@@ -3480,7 +3483,8 @@ router.get(
   '/projects/:projectId/activity',
   cacheResponse({
     ttl: 30_000,
-    keyGenerator: req => `activity:${(req as any).organizationId}:${req.params.projectId}`,
+    // Organization prefix comes from cacheResponse; see /projects above.
+    keyGenerator: req => `activity:${req.params.projectId}`,
   }),
   async (req: Request, res: Response) => {
     try {
@@ -6924,7 +6928,8 @@ router.delete(
  */
 router.get(
   '/artifacts',
-  cacheResponse({ ttl: 60_000, keyGenerator: req => `artifacts:${(req as any).organizationId}` }),
+  // Organization prefix comes from cacheResponse; see /projects above.
+  cacheResponse({ ttl: 60_000, keyGenerator: () => 'artifacts' }),
   async (req: Request, res: Response) => {
     try {
       const organizationId = getOrganizationId(req);
@@ -7890,7 +7895,8 @@ router.get(
   '/projects/:projectId/dossier-metrics',
   cacheResponse({
     ttl: 90_000,
-    keyGenerator: req => `dossier-metrics:${(req as any).organizationId}:${req.params.projectId}`,
+    // Organization prefix comes from cacheResponse; see /projects above.
+    keyGenerator: req => `dossier-metrics:${req.params.projectId}`,
   }),
   async (req: Request, res: Response) => {
     try {

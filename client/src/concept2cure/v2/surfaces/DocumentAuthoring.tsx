@@ -79,6 +79,8 @@ import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
+import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
+import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { useAuth } from '@/services/portal/authService';
@@ -752,6 +754,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   /** Bumped when the server replaces content out from under the editor
    *  (revert) so the canvas remounts on the new truth. */
   const [contentEpoch, setContentEpoch] = useState(0);
+  /* The RAG-grounded drafting panel. Open state only — the panel owns the
+     draft, because a draft that outlives its own panel is a draft whose
+     section scope nobody is enforcing. */
+  const [aiDraftOpen, setAiDraftOpen] = useState(false);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
   /** The signed-in author, for suggestion attribution and comment anchors. */
   const { user } = useAuth();
@@ -777,8 +783,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
-    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | null
+    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | 'exports' | null
   >('ana');
+  /* Bumped after a save or an export so the Exports rail re-reads. A save
+     changes the live content hash, which is exactly what its verdict compares
+     against — a rail left stale would keep saying "matches the last export"
+     about text that no longer matches it. */
+  const [exportsEpoch, setExportsEpoch] = useState(0);
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -1708,6 +1719,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
         if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
+        /* A save changes the document's content hash, which is precisely what
+           the Exports rail compares against the last export. Unconditional:
+           the rail re-reads on mount, so bumping while it is closed simply
+           means it opens on the truth rather than on a cached verdict. */
+        setExportsEpoch(e => e + 1);
       } finally {
         setSaving(false);
       }
@@ -1830,6 +1846,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         // the canvas on the new truth rather than leaving a stale buffer.
         setContentEpoch(e => e + 1);
         setEditorDirty(false);
+        setExportsEpoch(e => e + 1);
         fireToast('Section reverted to the selected revision.');
         void loadHistory(activeSection.id);
       } catch (e) {
@@ -2159,6 +2176,42 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     }
   }, [activeSection, fireToast]);
 
+  /* ── An accepted AI draft landed ──
+     The server replaced the section content AND recorded span-level source
+     lineage for it in one transaction, so this mirrors `revert`: adopt the
+     returned row as the new truth, remount the canvas on it (a stale editor
+     buffer would silently re-save over text that now has citations behind
+     it), and refresh the rails the write actually touched — history gained a
+     revision, the audit trail gained a row, and sources gained the citations
+     that are the whole point of accepting this way rather than saving. */
+  const onAiDraftAccepted = useCallback(
+    (section: Record<string, unknown>, attribution: AcceptedAttribution | null) => {
+      if (!activeSectionId) return;
+      const content = typeof section.content === 'string' ? section.content : '';
+      setSections(ss =>
+        ss.map(x => (x.id === activeSectionId ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
+      );
+      setContentEpoch(e => e + 1);
+      setEditorDirty(false);
+      setExportsEpoch(e => e + 1);
+      /* The server's own count, not a claim of correctness: how much of the
+         saved text is a verified quote from a source, and how much is recorded
+         as author-original. Both numbers are the record, so both are said —
+         and when the server sent no summary, that is said instead of a zero. */
+      fireToast(
+        attribution
+          ? `Draft accepted and saved. ${attribution.sourceSpans} verified citation(s) across ` +
+            `${attribution.distinctSources} source(s); ${attribution.coverage}% of the content is ` +
+            'quoted from evidence, the rest recorded as author-original.'
+          : 'Draft accepted and saved. The server reported no lineage summary for it — open Sources to see what was recorded.',
+      );
+      void loadHistory(activeSectionId);
+      void loadSources(activeSectionId);
+      if (activeDocId) void loadAudit(activeDocId);
+    },
+    [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+  );
+
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
     : 'Draft this section from the linked section evidence.';
@@ -2422,6 +2475,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     requestLeave({ kind: 'section', id: s.id })
                   );
               }}
+              /* A successful export re-baselines this document, so the Exports
+                 rail's "changed since the last export" verdict is now stale. */
+              onExported={() => setExportsEpoch(e => e + 1)}
             />
             {/* Section / Document. An author writes a section but SHIPS a
                 document, and until now the whole document was never on screen
@@ -2512,6 +2568,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             >
               {I.activity} Audit
             </button>
+            {/* Every export writes an authoring_export_history row — actor,
+                time, format, and the document's content hash at that moment.
+                Three endpoints read that table and none had a caller, so the
+                product could hand someone a Word file and never tell them it
+                had gone out of date. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'exports' ? null : 'exports')}
+              data-active={rail === 'exports' || undefined}
+              data-testid="exports-rail-open"
+            >
+              {I.fileDown} Exports
+            </button>
             <button
               className="btn primary"
               style={{ height: 30 }}
@@ -2533,6 +2603,39 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               }
             >
               {I.sparkles} Draft with AnA
+            </button>
+            {/* Distinct from "Draft with AnA" on purpose, and named for the
+                difference: AnA is a conversation whose text you insert as a
+                tracked suggestion (author lineage). This retrieves the Data
+                Room and accepts through the ONE endpoint that records verified
+                span-level source citations alongside the content, in the same
+                transaction. Same act, different record — so it gets its own
+                control rather than being folded into the other. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => {
+                /* The panel lives in the section view — document view assembles
+                   sections for reading and edits none of them. Toggling open
+                   state from here would be a click with no visible effect, so
+                   it goes to the section it is about to draft instead. */
+                if (viewMode === 'document') {
+                  setViewMode('section');
+                  setAiDraftOpen(true);
+                  return;
+                }
+                setAiDraftOpen(o => !o);
+              }}
+              data-active={(aiDraftOpen && viewMode === 'section') || undefined}
+              disabled={!activeSection || docSealed}
+              data-testid="ai-draft-open"
+              title={
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : 'Draft this section from Data Room evidence and accept it with recorded citations.'
+              }
+            >
+              {I.wand} Draft from sources
             </button>
             {activeDoc && (
               <AuthoringCollab
@@ -2876,6 +2979,25 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}{' '}
                     Create a new version to make further changes.
                   </div>
+                )}
+                {/* Above the canvas, at reading width: the accept decision is
+                    made by reading a full section of regulatory prose, which
+                    is not a thing the 300px rail can carry. Keyed to the
+                    section so switching sections rebuilds it empty — the
+                    panel's own effect discards the draft, and the key makes
+                    that structural rather than dependent on effect ordering. */}
+                {aiDraftOpen && !docSealed && (
+                  <AuthoringAiDraft
+                    key={activeSection.id}
+                    sectionId={activeSection.id}
+                    sectionCode={activeSection.code}
+                    sectionTitle={activeSection.title}
+                    docSealed={docSealed}
+                    editorDirty={dirty}
+                    onAccepted={onAiDraftAccepted}
+                    onClose={() => setAiDraftOpen(false)}
+                    fireToast={fireToast}
+                  />
                 )}
                 <div
                   style={{
@@ -3289,6 +3411,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         <aside className="ed-comments">
           <div className="ed-comments-h">Electronic signatures</div>
           <AuthoringSignatures docId={activeDocId} />
+        </aside>
+      )}
+
+      {/* ── Right: what left this document, and whether it is still current ──
+          Two drifts, reported separately because they answer different
+          questions: the section text against the last export's content hash,
+          and the citations added since that export. A single "out of date"
+          badge would have merged them. */}
+      {rail === 'exports' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h">Exports{activeDoc ? ` · ${activeDoc.title}` : ''}</div>
+          <AuthoringExports docId={activeDocId} refreshKey={exportsEpoch} />
         </aside>
       )}
 

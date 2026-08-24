@@ -40,11 +40,15 @@ export interface AuthoringCreateExportProps {
   /** Called with the server's persisted row after a successful create. */
   onDocCreated: (doc: { id: string; title: string }) => void;
   onSectionCreated: (section: { id: string; code: string }) => void;
+  /** Fired after the server streamed an export. The export wrote an
+   *  `authoring_export_history` row and re-baselined this document, so any
+   *  surface showing "changed since the last export" is now stale. */
+  onExported?: (format: string) => void;
 }
 
 const NONE = '(blank document)';
 
-export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDocCreated, onSectionCreated }: AuthoringCreateExportProps) {
+export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDocCreated, onSectionCreated, onExported }: AuthoringCreateExportProps) {
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
   const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
   // 'unavailable' = the server said the shared reference catalog failed to
@@ -168,6 +172,10 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       }
       downloadBlob(safeFileName(docTitle ?? 'document') + '.' + format, await res.blob());
       fireToast('Published ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
+      /* Only after the stream succeeded. Announcing a new baseline for an
+         export that failed would tell the Exports rail this document is
+         current when no file was produced. */
+      onExported?.(format);
     } catch (e) {
       fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '. No file was produced; the document is unchanged. Check your connection and try again.', 'error');
     }

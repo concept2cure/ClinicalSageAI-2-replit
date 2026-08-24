@@ -4520,6 +4520,16 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
 
+    /* An unknown or cross-tenant docId used to return `exports: []` — the same
+       answer as a real document nobody has exported yet. Those are opposite
+       facts, and the second one is the whole point of the rail. Refuse instead.
+       This also protects the hash below: computeDocHash walks the section rows
+       and hashes the empty string when there are none, so an unguarded call
+       would hand back sha256("") as if it described a document. */
+    if (!(await documentExistsForTenant(req.params.docId, tenantId))) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+
     // Ensure table exists
     await ensureExportHistoryTableExists();
 
@@ -4577,15 +4587,40 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
       [req.params.docId, tenantId]
     );
 
+    /* Is the most recently exported file still the current document?
+       `doc_sha256` on each row is computeDocHash at export time, so the same
+       function now answers it for the live document and the two are directly
+       comparable. Returned as the two hashes AND the derived verdict: the
+       verdict is what a reader acts on, the hashes are what makes it checkable.
+
+       `content_changed_since_last_export` is null — not false — when there is
+       no export to compare against, or when the stored row carried no hash.
+       "Nothing to compare" is not "nothing has changed", and a UI that renders
+       the second for the first tells an author their stale file is current.
+
+       Scope, stated because the verdict is narrower than it sounds: this
+       compares section CODE and CONTENT in order. It says nothing about
+       citations, attachments, or signatures — the citation drift that
+       …/diff-since-export reports is a separate question with a separate
+       answer. */
+    const lastExport = result.rows[0] || null;
+    const currentContentHash = await computeDocHash(req.params.docId, tenantId);
+    const lastHash =
+      typeof lastExport?.doc_sha256 === 'string' && lastExport.doc_sha256.length > 0
+        ? lastExport.doc_sha256
+        : null;
+
     res.json({
       success: true,
       exports: result.rows,
       total: parseInt(countResult.rows[0]?.total || '0'),
-      last_export: result.rows[0] || null,
+      last_export: lastExport,
+      current_content_hash: currentContentHash,
+      content_changed_since_last_export: lastHash === null ? null : lastHash !== currentContentHash,
     });
   } catch (error) {
     console.error('GET /docs/:id/exports', error);
-    res.status(500).json({ error: 'Failed to list exports' });
+    res.status(500).json({ success: false, error: 'Failed to list exports' });
   }
 });
 

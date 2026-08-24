@@ -56,3 +56,31 @@ console) outranks the env var and takes effect within ~30 s, no redeploy.
 `professional`, it is one governed console call:
 `PATCH /api/admin/master/licensing/modules/cmc {tiers:['professional'], reason}` —
 audited, no migration, rail updates immediately, API follows the enforcement mode.
+
+## Decision executed + flip REHEARSED in dev (2026-08-24)
+
+**Band moved to `professional`** — `db/migrations/20260824_cmc_professional_tier.sql`
+(registered after the reconcile/packaging/mdx catalog writers; ordering is
+load-bearing). The migration grandfathers exactly-`standard` orgs with explicit
+`module_subscriptions` grants BEFORE the band moves, engaging — not ignoring —
+the packaging author's "an IND without Module 3 is not an IND" argument: no
+org entitled on flip day loses the filing path; the band governs orgs
+provisioned from here on. `ON CONFLICT DO NOTHING` preserves deliberate
+revocations. Rollback one-liner in the migration header.
+
+**Rehearsal transcript (local estate, org 1 set to `standard` first so the
+grandfather branch was exercised — verify-by-failing applied to packaging):**
+
+| Step | Observed |
+|---|---|
+| Apply migration | band `["standard"]` → `["professional"]`; grandfather grant written (`enabled_by = migration:20260824_cmc_professional_tier`, metadata records the granting tier) |
+| Nav verdict (mode-independent) | `{"id":"cmc","requiredTier":"professional","entitled":true,"source":"subscribed"}` — entitled via the GRANT, not tier |
+| `MODULE_ENFORCEMENT=report` | `/api/cmc/module3-board` 200 — report observes, never blocks |
+| `MODULE_ENFORCEMENT=enforce`, grant enabled | 200 — a reconciled org is untouched |
+| `enforce`, grant disabled (the unreconciled below-tier case) | **403 `{"error":"Module access denied","code":"MODULE_NOT_LICENSED","module":"cmc"}`** |
+| Grant re-enabled | 200 within ~1 s — reconciliation takes effect immediately |
+| Restore (tier `enterprise`, mode off) | full staff simulation **32/32** — nothing regressed under the new band |
+
+The production flip remains the sequence above (verify row → reconcile
+tenants → e-signature banding decision → report → measure per replica →
+enforce), now with each transition's observed behavior on record.

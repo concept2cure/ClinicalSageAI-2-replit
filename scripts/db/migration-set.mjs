@@ -1493,6 +1493,13 @@ export const C2C_MIGRATION_FILES = [
   // module_packaging list. Doing only the first breaks the deploy.
   'db/migrations/20260823_module_catalog_mdx_registers.sql',
 
+  // ── CMC / Module 3 moves to the professional band (pricing decision) ──────
+  // MUST stay after the reconcile (resets tiers to []) and packaging (sets
+  // 'standard') entries above — the professional band is the final catalog
+  // word on cmc. Grandfathers exactly-standard orgs with explicit grants
+  // BEFORE the band moves, so no entitled org loses the filing path.
+  'db/migrations/20260824_cmc_professional_tier.sql',
+
   // ── BP-W1-5: the MAA cockpit catalog row stops calling Module 1 one thing ──
   // Name + description only (adds Swissmedic to the modeled-agency list); no
   // entitlement change. Idempotent UPDATE keyed on module_id.
