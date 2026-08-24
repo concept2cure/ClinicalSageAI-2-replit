@@ -51,6 +51,7 @@ import {
   type StabilityResult,
 } from './cmcRegisterForms';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import {
   cmcProjectId,
   cmcProjectUuid,
@@ -2500,6 +2501,25 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
       delete (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab;
     };
   }, []);
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     cmc.open-tab, identity-resolved). The handler drives the SAME setter the
+     sub-tab buttons and __cmSetTab drive. The tab list is a static constant,
+     so there is deliberately NO loading guard, NO retry, and NO ready signal —
+     a not-ready refusal here would be dishonest. Known limitation, stated in
+     the registry description: a tab switch unmounts the current pane, and any
+     in-progress pane form state is child-local and invisible here (same
+     parity as the human's own tab buttons, which carry no guard either). */
+  useSurfaceActionHandlers('cmc', {
+    'cmc.open-tab': (params) => {
+      const target = (params.tab ?? '').trim();
+      const meta = CMC_NAV.find((n) => n.id === target);
+      if (!meta) return { ok: false, reason: `No CMC tab named "${params.tab}".` };
+      if (tab === target) return { ok: true, detail: `Already on ${meta.label}` };
+      setTab(target);
+      return { ok: true, detail: `Opened ${meta.label}` };
+    },
+  });
 
   /* ── What AnA is told about this screen ──
      `useAnaChat` forwards a surface's published context to the orchestrator as

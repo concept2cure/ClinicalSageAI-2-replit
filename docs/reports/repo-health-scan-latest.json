@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T05:12:24.939Z",
+  "generatedAt": "2026-08-24T05:41:00.956Z",
   "git": {
-    "sha": "ab9309ccedd25368ba773c313905f9395c426abe",
+    "sha": "dba7147c3102d967654c0397881854c15a22b8d6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2182,11 +2182,15 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 162344
+        "bytes": 168841
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "bytes": 150437
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 149277
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2195,10 +2199,6 @@
       {
         "file": "server/storage.ts",
         "bytes": 145402
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 142620
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3811
+        "lines": 3926
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2387,6 +2387,10 @@
         "lines": 2609
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2598
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2582
       },
@@ -2397,10 +2401,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2479
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2603,6 +2603,10 @@
         "lines": 1650
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1649
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2649,10 +2653,6 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1531
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1527
       }
     ]
   },
