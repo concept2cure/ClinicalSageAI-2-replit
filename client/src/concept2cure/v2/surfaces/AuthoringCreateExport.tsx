@@ -47,6 +47,10 @@ const NONE = '(blank document)';
 export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDocCreated, onSectionCreated }: AuthoringCreateExportProps) {
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
   const [templates, setTemplates] = useState<AuthoringTemplate[]>([]);
+  // 'unavailable' = the server said the shared reference catalog failed to
+  // read (its fail-soft still lists the org's own templates). A SHORT list
+  // and a FAILED half are different facts; the dialog states which.
+  const [globalCatalog, setGlobalCatalog] = useState<'ok' | 'unavailable'>('ok');
 
   // Template roster for create-from-template; an unavailable list simply means
   // the picker offers only a blank document — never a fabricated template.
@@ -55,7 +59,12 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       try {
         const res = await apiRequest('GET', '/api/authoring/templates');
         const body = await res.json().catch(() => null);
-        if (res.ok && Array.isArray(body?.templates)) setTemplates(body.templates as AuthoringTemplate[]);
+        if (res.ok && Array.isArray(body?.templates)) {
+          setTemplates(body.templates as AuthoringTemplate[]);
+          if ((body as { globalCatalog?: string })?.globalCatalog === 'unavailable') {
+            setGlobalCatalog('unavailable');
+          }
+        }
       } catch { /* picker stays blank-only */ }
     })();
   }, []);
@@ -65,7 +74,11 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
   const DOC_FORM: C2CFormConfig = {
     eyebrow: 'Authoring · ' + module,
     title: 'New document',
-    sub: 'Creates a governed document in the authoring store. Choosing a template seeds its sections server-side.',
+    sub:
+      'Creates a governed document in the authoring store. Choosing a template seeds its sections server-side.' +
+      (globalCatalog === 'unavailable'
+        ? ' The shared template catalog didn’t load — Start from lists only your organization’s templates right now.'
+        : ''),
     submitLabel: 'Create document',
     fields: [
       { key: 'title', label: 'Document title', type: 'text', required: true, placeholder: 'e.g. 2.6.6 Toxicology Written Summary' },
