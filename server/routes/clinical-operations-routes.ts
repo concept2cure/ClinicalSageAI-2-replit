@@ -308,9 +308,18 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const { status, phase } = req.query;
 
       // Projected to the v2 studies-and-enrollment display contract
-      // ({ id, phase, design, n, target, status, note }). `id` is the human
-      // protocol code; n/target come from enrolled/target_enrollment.
-      let sql = `SELECT protocol           AS id,
+      // ({ studyId, id, phase, design, n, target, status, note }). `id` is the
+      // human protocol code; n/target come from enrolled/target_enrollment.
+      //
+      // `studyId` is the row's real primary key, and it is here because without
+      // it the org-wide clinical-ops board could address no study at all: every
+      // other endpoint in this router that records something — deviations,
+      // sites, monitoring visits, milestones — is study-scoped and takes this
+      // uuid. A board that can only see the protocol CODE can display a study
+      // and never write against it, which is exactly how "Log deviation" came to
+      // mean "add a row to React state".
+      let sql = `SELECT id                  AS "studyId",
+                        protocol            AS id,
                         phase,
                         design,
                         enrolled            AS n,
