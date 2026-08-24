@@ -340,8 +340,26 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
     governed: 'Back-translation QC is expected before a language reaches Approved.',
     submitLabel: 'Add translation',
     fields: [
-      { key: 'language', label: 'Language code', type: 'text', placeholder: 'e.g. pt, sv, cs', required: true },
-      { key: 'name', label: 'Language name', type: 'text', placeholder: 'e.g. Portuguese', required: true },
+      /* ── "Language name" is gone ────────────────────────────────────────
+         It was REQUIRED — the form refused to submit without it — and then
+         `addTrans` never read `v.name`. The typed name was discarded on every
+         submit, silently.
+
+         It could not have been saved: `labeling_translations` keys a
+         translation on its ISO language code and has no name column, and the
+         display name is DERIVED from the code by `languageName()` (Intl
+         DisplayNames). A free-text name beside the code would be a second
+         spelling of one fact — the case where the two disagree has no correct
+         resolution. So the code carries the guidance the name field was
+         giving, and the row is titled from it. */
+      {
+        key: 'language',
+        label: 'Language code',
+        type: 'text',
+        placeholder: 'e.g. pt, sv, cs, pt-BR',
+        desc: 'The ISO 639-1 code (or BCP-47 tag). The language name shown on the board is derived from it.',
+        required: true,
+      },
       { key: 'method', label: 'Translation method', type: 'select', options: EN.method.map(m => ({ value: m[0], label: m[1] })), required: true },
     ],
   };
