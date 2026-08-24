@@ -9,6 +9,7 @@ import type { PdevDoc } from '../fixtures/protocol-data';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CToast, useToast } from '../toast';
 
 const Ic = PG.Ic;
@@ -476,6 +477,76 @@ export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
   // refetches and the register renders the server's row (nothing local).
   const [reloadKey, setReloadKey] = useState(0);
   const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev', ['/api/protocol-dev', reloadKey]);
+
+  /* What AnA can see of this screen. Published from the OUTER component, above
+     the three honest-state early returns, because a hook after an early return
+     is a conditional hook — and because two of those states ("no protocol in
+     development" and "the store did not answer") are exactly what a user would
+     ask about. Its two live asks are "review this protocol for completeness"
+     and "draft <section> from the linked evidence", neither answerable without
+     the section list and the completeness findings. */
+  const protoDoc = rows[0];
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The protocol is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The protocol authoring store could not be read, so no protocol is on screen because of a ' +
+          'failure, not because none is in development.',
+        availableActions: ['Retry the protocol read'],
+      };
+    }
+    if (empty || !protoDoc) {
+      return {
+        summary: 'Protocol development: this organisation has no protocol in development yet, so there is nothing to author here.',
+        availableActions: ['Start a clinical protocol'],
+      };
+    }
+    const secs = Array.isArray(protoDoc.sections) ? protoDoc.sections : [];
+    const objs = Array.isArray(protoDoc.objectives) ? protoDoc.objectives : [];
+    const len = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+    const done = secs.filter((sec) => sec.status === 'complete').length;
+    return {
+      summary:
+        `Protocol development: "${protoDoc.shortTitle}" (${protoDoc.title}) v${protoDoc.version}, status ` +
+        `${protoDoc.status}, ${protoDoc.completeness}% complete — ${done} of ${secs.length} ` +
+        `section(s) complete. ${len(protoDoc.risks)} risk(s), ${len(protoDoc.amendments)} amendment(s), ` +
+        `${len(protoDoc.deviations)} deviation(s), ${len(protoDoc.completenessFindings)} completeness finding(s).`,
+      facts: {
+        protocolId: protoDoc.id,
+        shortTitle: protoDoc.shortTitle,
+        title: protoDoc.title,
+        kind: protoDoc.kind,
+        version: protoDoc.version,
+        status: protoDoc.status,
+        sponsor: protoDoc.sponsor,
+        principalInvestigator: protoDoc.pi,
+        completenessPercent: protoDoc.completeness,
+        openSection: protoDoc.openSection,
+        sections: secs.map((sec) => ({
+          number: sec.num, title: sec.title, status: sec.status, required: sec.required,
+        })),
+        objectives: objs.map((o) => ({ type: o.type, text: o.text, endpoint: o.endpoint })),
+        completenessFindings: Array.isArray(protoDoc.completenessFindings) ? protoDoc.completenessFindings : [],
+        registerCounts: {
+          risks: len(protoDoc.risks),
+          milestones: len(protoDoc.milestones),
+          amendments: len(protoDoc.amendments),
+          deviations: len(protoDoc.deviations),
+          reviews: len(protoDoc.reviews),
+        },
+      },
+      availableActions: [
+        'Open a protocol section to read or draft it',
+        'Add a risk, milestone, amendment or deviation to the governed registers (a real persisted write)',
+        'Review the protocol for completeness against its recorded findings',
+      ],
+    };
+  }, [loading, error, empty, protoDoc]);
+  usePublishSurfaceContext('protocol-dev', anaContext);
+
   if (loading) {
     return <div className="pd-wrap"><div className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
   }

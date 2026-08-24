@@ -396,25 +396,33 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
 
             <p className="pj-what">{stage.what}</p>
 
-            {/* The deliverable NAMES are definitional — a Pre-IND briefing book is
-                what Stage 2 requires of anyone, and that reference value is why
-                this catalog exists. The completion flag beside them was not:
-                `d[1]` is a literal in the stage catalog, identical for every
-                organization, and `createProgramJourney` writes all nine stages as
-                `upcoming/0`. So a newly provisioned journey rendered "Upcoming ·
-                0%" at the top of the panel and green check marks against GLP tox
-                reports and first GMP lots underneath it.
+            {/* ── The tick marks were a constant, not this programme's state ──
+                Each row rendered a green check or a clock from `d[1]`, a
+                hardcoded 1/0 in the PJ_STAGES catalog — e.g. 'IND initial
+                (Forms 1571/1572/3674)', 1. Every tenant on every programme saw
+                the same deliverables reported complete, and a regulatory lead
+                reading "Safe-to-proceed clearance ✓" was reading a literal in
+                this file, not their filing.
 
-                Ticking a regulatory deliverable done is a claim about a specific
-                program's record. There is no per-stage deliverable state to make
-                it from, so the claim is withdrawn rather than guessed. */}
+                PJ_STAGES is deliberately definitional — the header above says
+                so — and the per-programme status arrives in `rec.overlay`,
+                which is real and IS applied to the stage itself (st/pct). There
+                is no per-DELIVERABLE status in the record, so there is nothing
+                to overlay here.
+
+                So the list says what the stage requires, which is true and
+                useful, and claims nothing about whether this programme has done
+                it. The stage's own progress above remains the live signal. */}
             <div className="pj-seclbl">Key deliverables</div>
             <div className="pj-deliv">
               {stage.deliv.map((d, i) => (
                 <div key={i} className="pj-deliv-row">
-                  <span className="dot">{I.clock}</span>{d[0]}
+                  <span className="dot">{I.circle || I.clock}</span>{d[0]}
                 </div>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              What this stage requires. Per-deliverable status is not tracked on the programme record — the stage progress above is the live signal.
             </div>
 
             <div className="pj-seclbl">Capabilities that serve this stage</div>
@@ -429,22 +437,21 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
               })}
             </div>
 
-            {/* Agency interactions: the KIND and the description are definitional
-                (Stage 2 is where a Type B Pre-IND meeting happens); the OUTCOME
-                was not, and the outcome is what this block was really showing.
+            {/* The KIND and the description are definitional — Stage 2 is where a
+                Type B Pre-IND meeting happens, and that is true of anyone. The
+                OUTCOME was not, and the outcome is what this block really showed.
 
-                `PjRecord` has no `interactions` field, so nothing could ever
-                override the literals — every organization was told its Pre-IND
+                `PjRecord` carries no `interactions` field, so nothing could ever
+                override the literals: every organization was told its Pre-IND
                 minutes were filed, its 30-day safe-to-proceed was Complete and a
-                protocol amendment was in drafting, under a header built from its
-                own live program code. One row still named a retired invented
-                study. That is fabricated regulatory history, and it is the
-                single most dangerous thing this surface could say to a customer.
+                DSMB had said continue — under a header built from its own live
+                programme code. That is fabricated regulatory history, and it is
+                the most dangerous sentence this surface could show a customer.
 
-                The interactions are still listed, because knowing Stage 3 turns
-                on a 30-day safe-to-proceed is useful. The status chip is gone
-                until there is a record behind it; Agency meetings owns that and
-                the row still routes there. */}
+                The interactions stay listed, because knowing Stage 3 turns on a
+                30-day safe-to-proceed is genuinely useful. The status chip goes
+                until a record backs it; Agency meetings owns that, and the row
+                still routes there. Same call the deliverables above just got. */}
             <div className="pj-seclbl">Agency interactions at this stage</div>
             <div className="pj-interact">
               {stage.interactions.map((x, i) => (
@@ -454,6 +461,9 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
                   <span className="go">{I.right}</span>
                 </button>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              Which agency interactions this stage involves. Their outcomes are not tracked on the programme record — Agency meetings holds the real history.
             </div>
 
             <button className="pj-ana" onClick={() => ask(stage.ana)}>{I.sparkles} {stage.ana}</button>

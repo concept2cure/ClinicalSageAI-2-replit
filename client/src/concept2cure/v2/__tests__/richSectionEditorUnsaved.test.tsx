@@ -67,7 +67,7 @@ afterEach(() => {
 
 describe('the browser is asked to confirm before unsaved work is discarded', () => {
   it('refuses a silent tab close while dirty, and stops once saved', async () => {
-    const onSave = vi.fn(async () => undefined);
+    const onSave = vi.fn(async (_serialized: string) => undefined);
     const ref = React.createRef<React.ComponentRef<typeof RichSectionEditor>>();
     render(
       <RichSectionEditor ref={ref} value="<p>Stability narrative.</p>" onSave={onSave} storageKey={null} />
@@ -134,7 +134,7 @@ describe('a debounced autosave survives the unmount that interrupts it', () => {
 
   it('writes nothing on unmount when the autosave already landed', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const onSave = vi.fn(async () => undefined);
+    const onSave = vi.fn(async (_serialized: string) => undefined);
     const { unmount } = render(
       <RichSectionEditor
         value="Interim dossier note."
@@ -159,7 +159,7 @@ describe('a debounced autosave survives the unmount that interrupts it', () => {
   });
 
   it('writes nothing on unmount when no autosave was ever armed', async () => {
-    const onSave = vi.fn(async () => undefined);
+    const onSave = vi.fn(async (_serialized: string) => undefined);
     const { unmount } = render(
       <RichSectionEditor value="<p>Stability narrative.</p>" onSave={onSave} storageKey={null} />
     );

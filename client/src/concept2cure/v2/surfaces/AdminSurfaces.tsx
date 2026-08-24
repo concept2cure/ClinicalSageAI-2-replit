@@ -4,6 +4,7 @@ import { SampleTag, useLiveData, useLiveRows, EmptyState, liveMutateOrNull } fro
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
 import { LIC_ROLES } from '../fixtures/licensing';
 // Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
@@ -443,6 +444,62 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
       'targets',
       txw.targets.includes(id) ? txw.targets.filter((x) => x !== id) : [...txw.targets, id],
     );
+
+  /* What AnA can see of this screen.
+     Setup is a governed editor: every control here writes to the organization
+     record under a reason, audited. So the fact that matters most is not what
+     the settings ARE but whether the administrator has UNSAVED changes and
+     whether the reason field is filled — the two things that decide whether the
+     save will be accepted. Publishing the settings without that would let AnA
+     describe as current a value nobody has committed.
+
+     A FAILED load publishes the failure: the working copy falls back to
+     TRANSLATION_DEFAULTS, and presenting a default as this organisation's
+     policy would misstate a governed configuration. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The organization profile and settings are still loading; nothing on screen is final yet.' };
+    }
+    if (loadError) {
+      return {
+        summary:
+          'The organization record could not be read, so the controls on this screen are showing built-in ' +
+          'defaults rather than this organisation\u2019s saved settings, and nothing here can be edited.',
+        facts: { loadFailure: loadError },
+        availableActions: ['Retry the organization profile and settings read'],
+      };
+    }
+    return {
+      summary:
+        `Organization setup: name "${savedName}"` +
+        (clientType ? `, client type "${clientType}"` : '') +
+        `. Translation policy ${savedTxw.enabled ? 'enabled' : 'disabled'} across ` +
+        `${savedTxw.targets.length} target language(s) on ${savedTxw.defaultEngine}. ` +
+        (dirty
+          ? `There are UNSAVED changes (${[nameDirty && 'organization name', txwDirty && 'translation policy'].filter(Boolean).join(' and ')})` +
+            `, and a reason for change is ${reason.trim() ? 'entered' : 'still required before they can be saved'}.`
+          : 'Nothing is unsaved.'),
+      facts: {
+        savedOrganizationName: savedName,
+        editedOrganizationName: nameDirty ? name : null,
+        clientType: clientType || null,
+        clientTypeStatus,
+        savedTranslationPolicy: savedTxw,
+        editedTranslationPolicy: txwDirty ? txw : null,
+        hasUnsavedChanges: dirty,
+        reasonForChangeEntered: reason.trim().length > 0,
+        editable,
+        lastSaveNote: saveNote ? { tone: saveNote.tone, text: saveNote.text } : null,
+      },
+      availableActions: [
+        'Change the organization name or the translation policy, then save under an audited reason for change',
+        'Pick the client type, which is written to the governed org industry profile',
+        'Add or remove target languages and choose the default translation engine',
+        'Set the translation guardrails — back-translation, two-person rule, blocking machine approval',
+      ],
+    };
+  }, [loading, loadError, savedName, name, nameDirty, clientType, clientTypeStatus, savedTxw, txw, txwDirty, dirty, reason, editable, saveNote]);
+  usePublishSurfaceContext('setup', anaContext);
 
   return (
     <div className="page-inner">
@@ -911,6 +968,70 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     }
     return { total: all.length, valid, intact: valid === all.length };
   })();
+
+  /* What AnA can see of this screen.
+     A FAILED read publishes the failure, and on this surface that is not a
+     nicety: the audit trail is the 21 CFR Part 11 §11.10(e) record, and an
+     assistant reporting "no audit events" because the ledger did not respond
+     would be asserting the absence of a regulated record. The surface itself
+     already refuses to render that as an empty state; the same rule applies to
+     what AnA is told.
+
+     The hash-chain verdict travels with it, because "intact" is the claim an
+     inspector acts on and it is computed here from the rows on screen. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The audit trail is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The append-only, hash-chained Part 11 ledger could not be read, so this screen is showing no ' +
+          'audit events because of a failure. That is NOT the same as the trail being empty and must not ' +
+          'be reported as one.',
+        availableActions: ['Retry the audit-trail read'],
+      };
+    }
+    const filtered = kind !== 'all' || term.length > 0;
+    return {
+      summary:
+        `Audit trail: ${entries.length} hash-chained entry(ies)` +
+        (filtered ? `, filtered to ${log.length} by kind "${kind}"${term ? ` and the search "${q}"` : ''}` : '') +
+        `. Hash chain ${chainStatus.intact ? 'verifies intact' : `has ${chainStatus.total - chainStatus.valid} link(s) that do not verify`}` +
+        ` over ${chainStatus.total} entry(ies).` +
+        (entry ? ` Entry ${entry.id} is open.` : ''),
+      facts: {
+        totalEntries: entries.length,
+        shownInList: log.length,
+        kindFilter: kind,
+        searchTerm: term || null,
+        entriesByKind: Object.fromEntries(kindCounts.map((k) => [k.id, k.n])),
+        hashChain: { total: chainStatus.total, verified: chainStatus.valid, intact: chainStatus.intact },
+        hashChainViewOpen: chainView,
+        // Enough to name an event back to the user, not the whole ledger.
+        recentEntries: log.slice(0, 10).map((e) => ({
+          id: e.id, when: e.when, actor: e.actor, event: e.event,
+          target: e.target, kind: e.kind, eSigned: e.sig,
+          reason: e.reason, meaning: e.meaning,
+        })),
+        selectedEntry: entry
+          ? {
+              id: entry.id, when: entry.when, actor: entry.actor, event: entry.event,
+              target: entry.target, kind: entry.kind, eSigned: entry.sig,
+              reason: entry.reason, meaning: entry.meaning,
+            }
+          : null,
+        lastExportFailure: exportErr || null,
+      },
+      availableActions: [
+        'Filter the ledger by event kind, or search actor, event, target or entry id',
+        'Open an entry to read its reason, signature meaning and chain links',
+        'Show the hash-chain view',
+        'Export the signed, inspection-ready audit bundle (data + manifest + HMAC signature)',
+      ],
+    };
+  }, [loading, error, entries, log, kind, term, q, kindCounts, chainStatus, chainView, entry, exportErr]);
+  usePublishSurfaceContext('audit-trail', anaContext);
 
   return (
     <div className="page-inner">
@@ -1499,6 +1620,66 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /* What AnA can see of this screen.
+     The Apps catalog is where a user asks "why can't I open X?" — and the
+     answer is an entitlement fact on this page: the tier, whether the module is
+     available at that tier, and whether it is switched on for the org. Until
+     now AnA was told the surface was called "apps" and had none of it.
+
+     A FAILED read publishes the failure: `groups` is [] both when the catalog
+     is genuinely empty and when it did not load, and an assistant telling a
+     customer they have no apps because a fetch failed is exactly the
+     confidently-wrong answer this channel exists to prevent. */
+  const anaContext = useMemo(() => {
+    if (catState.loading || licState.loading) {
+      return { summary: 'The apps catalog and licence are still loading; nothing on screen is final yet.' };
+    }
+    if (catState.error) {
+      return {
+        summary:
+          'The apps catalog could not be read, so this screen is showing no applications because of a ' +
+          'failure, not because none are entitled.',
+        availableActions: ['Retry the catalog read'],
+      };
+    }
+    const all = groups.flatMap((g) => g.apps);
+    const on = all.filter((a) => a.on);
+    return {
+      summary:
+        `Apps catalog: ${all.length} application(s) across ${groups.length} group(s), ${on.length} enabled for ` +
+        `this organisation` +
+        (lic
+          ? `. Plan "${lic.tier}"${lic.industryMode ? ` (${lic.industryMode} mode)` : ''}, ` +
+            `${pj.current} of ${pj.limit} projects and ${us.current} of ${us.limit} users used`
+          : '. The licence could not be read, so no plan or usage figures are on screen') +
+        (admin ? '. Admin controls are switched on, so the enable/disable toggles are live.' : ''),
+      facts: {
+        adminControlsVisible: admin,
+        licence: lic
+          ? {
+              tier: lic.tier,
+              industryMode: lic.industryMode || null,
+              projects: { used: pj.current, limit: pj.limit },
+              users: { used: us.current, limit: us.limit },
+            }
+          : null,
+        licenceUnavailable: licState.error ? 'the licence read failed' : null,
+        totalApps: all.length,
+        enabledApps: on.length,
+        groups: groups.map((g) => ({
+          group: g.group,
+          apps: (g.apps ?? []).map((a) => ({ id: a.id, name: a.name ?? null, tier: a.tier, enabled: a.on })),
+        })),
+      },
+      availableActions: [
+        'Open an enabled application',
+        'Show the admin controls and enable or disable a module for this organisation (admin only, persisted)',
+        'Read the plan tier and the project / user usage against their limits',
+      ],
+    };
+  }, [catState.loading, catState.error, licState.loading, licState.error, groups, lic, pj, us, admin]);
+  usePublishSurfaceContext('apps', anaContext);
+
   return (
     <div className="page-inner">
       <AdminHeader
@@ -1777,6 +1958,52 @@ function csvCell(v: unknown): string {
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   // Real cross-project artifact gallery, unwrapped from { success, data }.
   const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
+
+  /* What AnA can see of this screen.
+     This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and
+     "has that memo been signed?" are the questions it exists to answer — and
+     until now she could not see a single row of it.
+
+     A FAILED read publishes the failure: an empty gallery and an unreachable
+     one look identical from here, and telling a user they have drafted nothing
+     because a fetch failed is a claim about their evidence record. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The artifact gallery is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The governed artifact gallery could not be read, so this screen is showing no artifacts ' +
+          'because of a failure, not because none exist.',
+        availableActions: ['Retry the artifact gallery read'],
+      };
+    }
+    const signed = rows.filter((a) => a.sig).length;
+    const programs = [...new Set(rows.map((a) => a.prog).filter(Boolean))];
+    return {
+      summary:
+        `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} program(s), ` +
+        `${signed} carrying a Part 11 e-signature.`,
+      facts: {
+        totalArtifacts: rows.length,
+        eSignedArtifacts: signed,
+        programs,
+        // Enough to name an artifact back to the user, not the whole gallery.
+        artifacts: rows.slice(0, 15).map((a) => ({
+          id: a.id, name: a.name, kind: a.kind, format: a.fmt,
+          version: a.ver, program: a.prog, model: a.model,
+          updated: a.when, eSigned: a.sig,
+        })),
+      },
+      availableActions: [
+        'Open a DOCX artifact in the document editor',
+        'Download a rendered artifact',
+        'Read an artifact\u2019s version chain, provenance and signature status',
+      ],
+    };
+  }, [loading, error, rows]);
+  usePublishSurfaceContext('artifacts-center', anaContext);
 
   /* ── "Export all" was inert, and the code said so ──────────────────────────
      The two lines above it read: "MOCK ACTION (flagged): 'Export all' has no
@@ -2600,7 +2827,29 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             )}
 
             {sec === 'security' && (
-              <div className="ac-cards">
+              <>
+                {/* ── These describe controls; they never read this org's config ──
+                    Two of the tags used to assert a posture: "IP allowlist —
+                    Off" and "Session policy — 7-day refresh". Both were string
+                    literals in this array. An admin opening Security &
+                    IP allowlist read them as their organisation's real settings
+                    — and would have reported "our IP allowlist is off" on a
+                    security questionnaire on the strength of a constant.
+
+                    No governed read exists for MFA policy, IP allowlist or
+                    session policy (unlike modules and API keys below, which are
+                    live). Rather than fabricate a posture, the two state-shaped
+                    tags now describe the control like the others do, and the
+                    note says plainly that this is a catalogue. When a read is
+                    wired, this section takes the loading/error/empty shape the
+                    modules section already uses. */}
+                <div className="scaf-note" style={{ marginBottom: 10 }}>
+                  These are the security controls available on this platform, not a readout of
+                  this organization&rsquo;s current configuration — no governed read is wired for
+                  MFA, IP allowlist or session policy yet. Module entitlements and API keys below
+                  are live.
+                </div>
+                <div className="ac-cards">
                 {(
                   [
                     [
@@ -2611,12 +2860,12 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     [
                       'IP allowlist',
                       'Restrict app access to corporate ranges (CIDR)',
-                      'Off',
+                      'CIDR ranges',
                     ],
                     [
                       'Session policy',
-                      'JWT sliding 7-day refresh — idle timeout',
-                      '7-day refresh',
+                      'JWT sliding refresh — idle timeout',
+                      'Refresh + idle timeout',
                     ],
                     [
                       'Audit to SIEM',
@@ -2631,7 +2880,8 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="ac-card-tag">{tag}</span>
                   </div>
                 ))}
-              </div>
+                </div>
+              </>
             )}
 
             {sec === 'modules' && (

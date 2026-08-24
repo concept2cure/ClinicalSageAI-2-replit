@@ -61,20 +61,25 @@ export interface TableCell {
 }
 
 export interface ContentBlock {
-  kind: 'paragraph' | 'heading' | 'list-item' | 'table';
+  kind: 'paragraph' | 'heading' | 'list-item' | 'table' | 'image';
   /** Heading level 1–3 (headings only). */
   level?: 1 | 2 | 3;
   /** List items only: true when the item came from an `ol`. */
   ordered?: boolean;
   /**
    * Inline content. Always present so every consumer can iterate it
-   * unconditionally; empty for a `table`, whose text lives in `rows`.
+   * unconditionally; empty for a `table` (text lives in `rows`) and for an
+   * `image` (a figure has no runs).
    */
   runs: InlineRun[];
   /** Tables only: rows of cells, in document order. */
   rows?: TableCell[][];
   /** Tables only: the `caption` text, when the author gave one. */
   caption?: string;
+  /** Images only: the stored reference (`/api/authoring/images/<id>`, a data
+   *  URI, or a foreign URL) and the author's alt text. */
+  src?: string;
+  alt?: string;
 }
 
 /** Every run in a block, including the ones inside a table's cells. */
@@ -305,6 +310,21 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
       return;
     }
 
+    if (tag === 'img') {
+      /* An <img> is void — the generic recursion below visits zero children,
+         so before this branch existed the figure contributed nothing and the
+         whitespace filter at the bottom then deleted it from every DOCX and
+         PDF export, silently. A filed document missing a figure the editor
+         shows is the exact fabrication this parser exists to prevent. */
+      const src = (node.getAttribute('src') ?? '').trim();
+      if (src) {
+        closeBlock();
+        const alt = (node.getAttribute('alt') ?? '').trim();
+        blocks.push({ kind: 'image', runs: [], src, ...(alt ? { alt } : {}) });
+      }
+      return;
+    }
+
     if (BLOCK_TAGS.has(tag)) {
       closeBlock();
       const heading = /^h([1-6])$/.exec(tag);
@@ -338,9 +358,11 @@ function parseHtmlToBlocks(html: string): ContentBlock[] {
   // Drop blocks that are only whitespace, trim run edges per block. A table
   // keeps its rows untouched — its cells were trimmed as they were read, and
   // its emptiness test is over the cells, not over the (always empty) runs.
+  // An image block is textless BY KIND — testing it for text would delete
+  // every figure here, which is the defect the img branch above closed.
   return blocks
-    .map((b) => (b.kind === 'table' ? b : { ...b, runs: trimRuns(b.runs) }))
-    .filter((b) => blockRuns(b).some((r) => r.text.trim().length > 0));
+    .map((b) => (b.kind === 'table' || b.kind === 'image' ? b : { ...b, runs: trimRuns(b.runs) }))
+    .filter((b) => b.kind === 'image' || blockRuns(b).some((r) => r.text.trim().length > 0));
 }
 
 /** Parse a stored section content string into export blocks. */

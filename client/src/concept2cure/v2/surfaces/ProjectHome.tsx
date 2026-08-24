@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
 import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
@@ -17,7 +18,15 @@ import '../styles/project-home-v2.css';
    (parseInt of a UUID would load a different project in the same org). */
 declare global {
   interface Window {
-    C2C_PROJECT?: Record<string, string>;
+    /* The canonical type, not `Record<string, string>`.
+       That declaration was a lie about the channel — `ShellProject.id` is
+       `string | number` and the rest are structured optional fields, none of
+       which satisfies a string index signature. TypeScript intersects global
+       augmentations, so `shellProject.ts`'s own `Window & { C2C_PROJECT?:
+       ShellProject }` resolved to `Record<string, string> & ShellProject`, an
+       impossible type that made the shell's one writer fail to compile. One
+       declaration, one type. */
+    C2C_PROJECT?: import('../shellProject').ShellProject;
     C2C_CONVO?: Record<string, string>;
     /** cre_evidence_sources ids the user pinned in the data room as AnA context. */
     C2C_SOURCE_PINS?: string[];
@@ -1038,7 +1047,12 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // Selected-project identity handed off from the Projects surface. Its `id` is
   // the C2C regulatory_programs UUID, which keys the /api/c2c/projects/:id
   // read-models. 'new' (wizard transient) has no persisted record → no fetch.
-  const pid = sel?.id && sel.id !== 'new' ? sel.id : null;
+  /* Normalised to a string. `ShellProject.id` is `string | number` — the shell
+     writes whichever the store gave it — and every consumer below takes
+     `string | null`. Coercing once here is the one place that conversion
+     belongs; it used to be hidden by the global being typed
+     `Record<string, string>`, which simply asserted the number away. */
+  const pid = sel?.id && sel.id !== 'new' ? String(sel.id) : null;
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
@@ -1071,6 +1085,97 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
     : (segment || 'biotech');
 
   const noProject = !pid;
+
+  /* What AnA can see of this screen.
+     Project home is where "what should I do next?" is most likely to be asked
+     and least answerable from a screen name — the whole page is one programme's
+     state. Five reads back it, each able to fail alone, so each publishes its
+     own state rather than one merged verdict.
+
+     NO PROJECT SELECTED is published as itself. Every panel below is empty in
+     that case, and reporting that as "this programme has no team, no drafts and
+     no activity" would describe a customer's programme from a missing handoff. */
+  const anaContext = useMemo(() => {
+    if (noProject) {
+      return {
+        summary:
+          'Project home has no project selected, so none of the panels on screen are populated. This is a ' +
+          'missing selection, not an empty programme.',
+        availableActions: ['Open a project from All projects to load its governed workspace'],
+      };
+    }
+    if (progState.error) {
+      return {
+        summary:
+          'This project record could not be read, so the workspace below is empty because of a failure, ' +
+          'not because the programme has nothing in it.',
+        facts: { projectId: pid, stage },
+        availableActions: ['Return to All projects and try again'],
+      };
+    }
+    if (progState.loading) {
+      return { summary: 'The project record is still loading; nothing on screen is final yet.', facts: { projectId: pid, stage } };
+    }
+    const team = teamState.data?.team;
+    const activity = activityState.data?.activity;
+    const workstreams = wsState.data?.workstreams;
+    const drafts = draftsState.data?.drafts;
+    return {
+      summary:
+        `Project home for "${title}"${submissionType ? ` (${submissionType})` : ''}: ` +
+        [status && `status ${status}`, phase && `phase ${phase}`, priority && `priority ${priority}`,
+         region && `primary agency ${region}`, indication && `indication ${indication}`,
+         completion != null && `${completion}% complete`].filter(Boolean).join(', ') +
+        `. The "${stage}" stage is open.`,
+      facts: {
+        projectId: pid,
+        openStage: stage,
+        program: {
+          title, product: productName, code: submissionType, description: desc,
+          clientType, primaryAgency: region, indication, status, priority, phase,
+          progressPercent: completion,
+          targetSubmissionDate: prog?.target_submission_date ?? null,
+        },
+        team: teamState.loading || teamState.error || !Array.isArray(team)
+          ? null
+          : team.slice(0, 12).map((t) => ({ name: t.name, role: t.role })),
+        teamUnavailable: teamState.error ? 'the team read failed' : null,
+        workstreams: wsState.loading || wsState.error || !Array.isArray(workstreams)
+          ? null
+          : workstreams.map((w) => ({
+              module: w.module, total: w.total, todo: w.todo,
+              completionPercent: w.completion_pct, lastUpdated: w.last_updated,
+            })),
+        workstreamsUnavailable: wsState.error ? 'the workstream rollup read failed' : null,
+        recentDrafts: draftsState.loading || draftsState.error || !Array.isArray(drafts)
+          ? null
+          : drafts.slice(0, 10).map((d) => ({
+              id: d.id, section: d.section_key, label: d.label, status: d.status,
+              version: d.version, documentTitle: d.document_title,
+              docType: d.doc_type, updated: d.updated_at,
+            })),
+        draftsUnavailable: draftsState.error ? 'the drafts read failed' : null,
+        recentActivity: activityState.loading || activityState.error || !Array.isArray(activity)
+          ? null
+          : activity.slice(0, 10).map((a) => ({
+              action: a.action, resourceType: a.resource_type, occurredAt: a.occurred_at,
+            })),
+        activityUnavailable: activityState.error ? 'the activity read failed' : null,
+      },
+      availableActions: [
+        'Move through the programme lifecycle stages',
+        'Open a recent draft section in the document editor',
+        'Open this project\u2019s documents in the Vault surface, or its filings in the Submission Center',
+        'Read the per-module completion rollup and the recent audited activity',
+      ],
+    };
+  }, [noProject, pid, stage, progState.loading, progState.error, prog, title, productName, desc, clientType,
+      submissionType, region, indication, status, priority, phase, completion,
+      teamState.loading, teamState.error, teamState.data,
+      activityState.loading, activityState.error, activityState.data,
+      wsState.loading, wsState.error, wsState.data,
+      draftsState.loading, draftsState.error, draftsState.data]);
+  usePublishSurfaceContext('project-home', anaContext);
 
   return (
     <div className="page-inner pj">

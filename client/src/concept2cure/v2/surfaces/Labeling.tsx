@@ -4,6 +4,7 @@ import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect
 import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -255,6 +256,77 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
   };
 
   const tTone: Record<string, string> = { approved: 'ok', review: 'warn', in_progress: 'ai', pending: 'idle', rejected: 'err' };
+
+  /* What AnA can see of this screen.
+     The three reads here are chained — no labeling document means no symbols and
+     no translations — so "there is no document" has to be published as itself.
+     Reported as an empty translation board it would read to AnA as a label with
+     nothing left to translate, which is the opposite claim. */
+  const anaContext = useMemo(() => {
+    if (docsLive.loading) {
+      return { summary: 'The labeling document is still loading; nothing on screen is final yet.' };
+    }
+    if (docsLive.error) {
+      return {
+        summary:
+          'The labeling store could not be read, so this screen is showing no label because of a failure, ' +
+          'not because none exists.',
+        availableActions: ['Retry the labeling document read'],
+      };
+    }
+    if (!docRow) {
+      return {
+        summary:
+          'Labeling: this organisation has no labeling document yet, so there are no symbols or ' +
+          'translations to show — the boards below are empty for that reason.',
+        availableActions: ['Create a labeling document for a device'],
+      };
+    }
+    const byStatus = trans.reduce<Record<string, number>>((acc, t) => {
+      acc[t.status] = (acc[t.status] ?? 0) + 1;
+      return acc;
+    }, {});
+    return {
+      summary:
+        `Labeling: "${docRow.device_name}" ${kindLabel} v${docRow.version} (${docRow.status})` +
+        (docRow.udi_di ? `, UDI-DI ${docRow.udi_di}` : '') +
+        `. ${trans.length} translation(s) — ` +
+        (Object.keys(byStatus).length
+          ? Object.entries(byStatus).map(([k, n]) => `${n} ${k.replace('_', ' ')}`).join(', ')
+          : 'none yet') +
+        '. ' +
+        (symbolsLive.loading
+          ? 'Symbols are still loading.'
+          : symbolsLive.error
+            ? 'The symbol list could not be read.'
+            : `${symbolsLive.rows.length} symbol(s) recorded.`),
+      facts: {
+        document: {
+          id: docRow.id, device: docRow.device_name, kind: kindLabel,
+          version: docRow.version, status: docRow.status, udiDi: docRow.udi_di,
+        },
+        translations: trans.map((t) => ({
+          id: t.id, language: t.language, name: t.name,
+          method: t.method, backTranslationVerified: t.btv, status: t.status,
+        })),
+        translationsByStatus: byStatus,
+        translationsUnavailable: transState.error ? 'the translation read failed' : null,
+        symbols: symbolsLive.loading || symbolsLive.error
+          ? null
+          : symbolsLive.rows.map((sy) => ({
+              code: sy.symbol_code, name: sy.symbol_name,
+              description: sy.description, requiredBy: sy.required_by ?? [],
+            })),
+        symbolsUnavailable: symbolsLive.error ? 'the symbol read failed' : null,
+      },
+      availableActions: [
+        'Add a target-language translation (a real persisted write)',
+        'Advance a translation through pending, in progress, review, approved',
+        'Read the symbol set and what each symbol is required by',
+      ],
+    };
+  }, [docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
+  usePublishSurfaceContext('labeling', anaContext);
 
   const transFormConfig: C2CFormConfig = {
     eyebrow: 'Labeling / translation',

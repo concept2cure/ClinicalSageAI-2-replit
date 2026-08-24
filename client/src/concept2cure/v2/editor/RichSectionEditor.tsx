@@ -81,6 +81,7 @@ import {
   plainTextToHtml,
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
+import { AuthoringImage } from './imageNode';
 import { I } from '../icons';
 
 /* ── Public contract ──────────────────────────────────────────── */
@@ -141,6 +142,14 @@ export interface RichSectionEditorProps {
     /** A click on annotated text — open the thread in the host's rail. */
     onOpen?: (commentId: string) => void;
   } | null;
+  /** Image insertion. The host owns the upload (the governed image store is
+   *  the authoring API's; the MDX drawer's plain-text store has none). Omit
+   *  to hide the capability — existing images still display read-only. */
+  imagesApi?: {
+    /** Upload the file to the tenant's image store; resolve the reference the
+     *  section's HTML will carry. Reject with a reason on refusal. */
+    upload: (file: File) => Promise<{ id: string; url: string }>;
+  } | null;
   /** Live co-editing over the server's /collab Hocuspocus socket. */
   collab?: {
     /** Server grammar: `authoring:<docUuid>` or `authoring:<docUuid>:<sectionUuid>`. */
@@ -163,6 +172,12 @@ const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
 };
 
 const cacheKeyFor = (storageKey: string) => 'dc::' + storageKey;
+
+/** What the image store accepts — the formats a Word export can embed. SVG is
+ *  deliberately absent (a script container, not a picture) and so is WebP
+ *  (DOCX cannot carry it; refusing at upload beats dropping at export). */
+const IMG_MIME = /^image\/(png|jpeg|gif)$/;
+const IMG_MAX_BYTES = 8 * 1024 * 1024;
 
 function wordsOf(text: string): number {
   const t = text.trim();
@@ -216,6 +231,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       lineage = null,
       track = null,
       commentsApi = null,
+      imagesApi = null,
       collab = null,
     },
     ref,
@@ -231,6 +247,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     // authoringAnaPane's test in CI: two buttons named "Draft with AnA" on
     // screen at once, the second of which should not have been there at all.
     const [editorReady, setEditorReady] = useState(false);
+    /** TipTap's own emptiness verdict, not "0 words": a section holding only
+     *  a figure has zero words and is NOT empty — offering "Draft with AnA"
+     *  over it would assert an empty state that is false. */
+    const [docEmpty, setDocEmpty] = useState(false);
     const [trackOn, setTrackOn] = useState<boolean>(track?.enabled ?? false);
     const [suggestions, setSuggestions] = useState<SuggestionRange[]>([]);
     const [reviewOpen, setReviewOpen] = useState(false);
@@ -315,6 +335,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // highlights flattened to plain text on the next save.
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
         Highlight,
+        // The schema can hold a figure now; the fidelity gate stops refusing
+        // rich mode for content that contains one (see `boot` below).
+        AuthoringImage,
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
@@ -339,12 +362,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       }
       const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
       // The fidelity gate below compares TEXT, so markup that carries no text
-      // — an <img>, most of a <figure> — passes the gate, is dropped by the
-      // parse, and is silently rewritten out of the record on the next save.
-      // The schema has no image node yet (image support needs a governed
-      // storage decision), so content holding one is edited in source mode,
-      // where the raw string round-trips byte-for-byte.
-      if (/<(img|figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
+      // passes the gate, is dropped by the parse, and is silently rewritten
+      // out of the record on the next save. <img> is representable now — the
+      // schema holds an image node backed by the governed image store — but
+      // figure/svg/video/embed/object still are not, so content holding one
+      // of those is edited in source mode, where the raw string round-trips
+      // byte-for-byte.
+      if (/<(figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
         return { mode: 'source' as const, html: null, verdict: null };
       }
       try {
@@ -372,6 +396,29 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             'aria-multiline': 'true',
             ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
           },
+          // A pasted or dropped image file goes through the same validated
+          // upload as the ribbon button. When images are not enabled here,
+          // fall through to the default handling instead of swallowing it.
+          handlePaste: (_view, event) => {
+            if (!imagesEnabledRef.current) return false;
+            const file = Array.from(event.clipboardData?.files ?? []).find((f) =>
+              f.type.startsWith('image/'),
+            );
+            if (!file) return false;
+            event.preventDefault();
+            void insertImageFileRef.current(file);
+            return true;
+          },
+          handleDrop: (_view, event) => {
+            if (!imagesEnabledRef.current) return false;
+            const file = Array.from(event.dataTransfer?.files ?? []).find((f) =>
+              f.type.startsWith('image/'),
+            );
+            if (!file) return false;
+            event.preventDefault();
+            void insertImageFileRef.current(file);
+            return true;
+          },
         },
         // With Yjs, content comes from the synced doc (seeded below), never
         // from props — passing it here would duplicate on every join.
@@ -382,6 +429,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           setDirty(isDirty);
           setSaveState((s) => (isDirty ? (s === 'saving' ? s : 'dirty') : 'saved'));
           setWords(wordsOf(ed.getText()));
+          setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
           cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
@@ -400,6 +448,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             lastSavedRef.current = serializeEditor(ed, format);
           }
           setWords(wordsOf(ed.getText()));
+          setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
           setEditorReady(true);
         },
@@ -767,6 +816,60 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       setLinkOpen(false);
     }, [editor]);
 
+    /* ── Image insertion (ribbon button, paste, drop) ──
+       Validation runs client-side for fast refusal and server-side as the
+       authority. FAIL CLOSED: a refused or failed upload inserts nothing and
+       says why in the notice bar; success inserts the store's reference at
+       the caret. The upload itself is the host's (`imagesApi.upload`) — this
+       component never talks to a store directly. */
+    const [imgNotice, setImgNotice] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const insertImageFile = useCallback(
+      async (file: File): Promise<boolean> => {
+        if (!imagesApi || !editor || readOnly) return false;
+        if (!IMG_MIME.test(file.type)) {
+          setImgNotice(
+            `“${file.name}” is ${file.type || 'of unknown type'} — only PNG, JPEG and GIF images can be inserted, because they are the formats a Word export can embed. Nothing was uploaded.`,
+          );
+          return false;
+        }
+        if (file.size > IMG_MAX_BYTES) {
+          setImgNotice(
+            `“${file.name}” is ${(file.size / (1024 * 1024)).toFixed(1)} MB — the image store accepts up to 8 MB. Nothing was uploaded.`,
+          );
+          return false;
+        }
+        setImgNotice(null);
+        try {
+          const { url } = await imagesApi.upload(file);
+          editor
+            .chain()
+            .focus()
+            .insertAuthoringImage({ src: url, alt: file.name.replace(/\.[a-z0-9]+$/i, '') })
+            .run();
+          return true;
+        } catch (e) {
+          setImgNotice(
+            'The image was not uploaded — ' +
+              (e instanceof Error ? e.message : String(e)) +
+              '. Nothing was inserted.',
+          );
+          return false;
+        }
+      },
+      [imagesApi, editor, readOnly],
+    );
+
+    /* Paste/drop handlers are constructed once inside useEditor; these refs
+       keep them reading the current props instead of the first render's. */
+    const insertImageFileRef = useRef(insertImageFile);
+    const imagesEnabledRef = useRef(!!imagesApi && !readOnly);
+    useEffect(() => {
+      insertImageFileRef.current = insertImageFile;
+      imagesEnabledRef.current = !!imagesApi && !readOnly;
+    });
+
     /* ── Suggestion review actions ── */
     const resolveOne = useCallback(
       (r: SuggestionRange, action: 'accept' | 'reject') => {
@@ -788,7 +891,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       [editor],
     );
 
-    const isEmpty = editorReady && words === 0;
+    const isEmpty = editorReady && docEmpty;
     const full = chrome === 'full';
 
     /* ── Ribbon button helper ── */
@@ -840,6 +943,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             Rich editing is off for this section: its stored content could not be
             represented without altering text (the round-trip check failed), so
             you are editing the raw source instead. Nothing was rewritten.
+          </div>
+        )}
+
+        {/* ── Image refusal / failure notice (fail closed, stated) ── */}
+        {imgNotice && (
+          <div className="rse-gate" role="status">
+            <span style={{ flex: 1 }}>{imgNotice}</span>
+            <button type="button" className="rse-link" onClick={() => setImgNotice(null)}>
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -980,6 +1093,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                   {I.close}
                 </RB>
               </>
+            )}
+            {imagesApi && (
+              <RB
+                title="Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {I.image}
+              </RB>
             )}
             <select
               className="rse-sel"
@@ -1324,6 +1445,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
+        {imagesApi && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/gif"
+            style={{ display: 'none' }}
+            aria-hidden="true"
+            tabIndex={-1}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void insertImageFile(f);
+              e.target.value = '';
+            }}
+          />
+        )}
+
         <style>{`
         .rse-root { display:flex; flex-direction:column; min-height:0; background:var(--bg-000,#fff); border-radius:inherit; }
         .rse-gate { display:flex; gap:10px; align-items:baseline; padding:8px 12px; font-size:12px; color:var(--text-300,#475467); background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); }
@@ -1369,6 +1506,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         .rse-body .tiptap th { padding:8px 12px; background:var(--bg-50,#f9fafb); border:1px solid var(--border,#e4e7ec); font-weight:600; text-align:left; }
         .rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border,#e4e7ec); }
         .rse-body .tiptap mark { background:color-mix(in srgb, var(--warning,#b54708) 28%, transparent); padding:0 1px; border-radius:2px; }
+        .rse-img { margin:16px auto; max-width:100%; text-align:center; }
+        .rse-img img { max-width:100%; height:auto; border-radius:4px; }
+        .rse-img img:not([src]) { display:none; }
+        .rse-img-status { display:block; font-size:11px; color:var(--text-400,#667085); padding:16px 12px; background:var(--bg-50,#f9fafb); border:1px dashed var(--border-control,#d0d5dd); border-radius:4px; }
+        .rse-img[data-error="1"] .rse-img-status { color:var(--error,#b42318); border-color:var(--error,#b42318); }
+        .rse-body .tiptap .ProseMirror-selectednode { outline:2px solid var(--accent-100,#2563eb); outline-offset:2px; border-radius:4px; }
         .rse-body .tiptap a { color:var(--accent-100,#2563eb); text-decoration:underline; text-underline-offset:2px; }
         .rse-body .tiptap .selectedCell { outline:2px solid color-mix(in srgb, var(--accent-100,#2563eb) 55%, transparent); outline-offset:-2px; }
         .rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400,#667085); pointer-events:none; height:0; }

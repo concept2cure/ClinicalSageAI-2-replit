@@ -81,16 +81,34 @@ PRs, no side branches): rail promotion `d1d11096`, spine heal + placement
 coherence `bf6a12b6`, docs `efaa2ee3`, `types.js` restore `1228b9f7`, and the
 simulation-driven fixes in this commit.
 
+## 4b. Seam closures (second pass, same day)
+
+- **The eCTD package build is proven end-to-end.** Simulation step 19b runs
+  `POST /api/ectd-compile/:program/compile` through the REAL generator
+  (`assemble-from-core` + regional packager): status `completed`, **17 real
+  PDF leaves materialized** at `m3-2-S-x/…` paths from the placement
+  snapshots, **zero `rendered="false"` placeholders**, zero errors. The one
+  blocker is the honest environment fact that ICH/regional DTDs are not
+  vendored in this container. Final run: **28/28**.
+- **The open program survives reload.** `shellProject.ts` is the one channel:
+  `publishShellProject` (all four writers routed through it) mirrors the
+  selection per-tab; `restoreShellProject` rehydrates at shell boot, live
+  selection always winning. A deep link straight to /concept2cure/cmc after a
+  reload keeps its program. 5 tests.
+- **The IND lifecycle screen honors the open program.** It now selects the
+  checklist row matching the program (the same product/title identity
+  convention the server uses) and states which IND is shown and why whenever
+  that is not trivially "the only one" — a fallback is allowed, a silent one
+  is not. 4 tests.
+- **Type-level fix** for the `organizationId` omit: drizzle-zod's generated
+  types resolve omit-mask keys to `never`; the runtime-correct omit lives
+  behind one confined, documented cast (`withoutTenantKey`).
+
 ## 5. Remaining gaps, honestly stated
 
 - `module3BuildStateRoutes` still duplicates `getModule3BuildStatus`'s
   derivation (pre-existing; both now share the one spine resolver — full
   convergence is follow-up work).
-- The IND lifecycle screen (`IndLifecycle.tsx`) is org-scoped (`rows[0]`)
-  while CMC surfaces are program-scoped; the placed leaves appear correctly,
-  but program context still does not travel across that seam.
-- `window.C2C_PROJECT` does not survive a page reload (shell-level,
-  pre-existing).
 - ~~Browser verification~~ **Done** (headless Chromium against the live dev
   server, real credential sign-in): the expanded rail lists "CMC / Module 3"
   under Science & intelligence; clicking it navigates to `/concept2cure/cmc`

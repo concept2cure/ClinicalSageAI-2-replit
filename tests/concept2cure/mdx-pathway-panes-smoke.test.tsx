@@ -118,21 +118,21 @@ describe('MDX pathway panes smoke', () => {
     });
   });
 
-  it('opens the DossierDrawer from the audit pane (sample mode)', () => {
-    // Fixture audit rows render only behind the explicit sample-mode boundary.
+  it('audit fixtures are unreachable even in sample mode — the pane gates honestly', () => {
+    /* This test used to assert the opposite: that sample mode populated the
+       audit pane from fixtures. Those fixtures were a FABRICATED Part 11
+       hash-chain, and the honesty pass deleted them outright — the audit tab
+       now renders live rows or an honest gate state, never an invented
+       chain, sample mode included. */
     setSampleMode(true);
     try {
       const { getAllByRole, container } = renderWithClient(
         <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
       );
       fireEvent.click(getAllByRole('tab')[1]); // Audit
-      expect(container.querySelector('.audit-pane')).toBeTruthy();
-      // The standing sample banner must accompany the fixture pane.
-      expect(container.querySelector('.data-gate-sample')).toBeTruthy();
-      const openBtn = container.querySelector('.audit-act.primary');
-      if (openBtn) fireEvent.click(openBtn);
-      // Drawer mounts with the 3-tab layout, or the audit pane is still present — either way no crash.
-      expect(container.querySelector('.dd-drawer, .audit-pane')).toBeTruthy();
+      expect(container.querySelector('.audit-pane')).toBeNull();
+      // One of DataGate's honest states stands where fixture rows used to be.
+      expect(container.querySelector('[data-testid^="data-gate-"]')).toBeTruthy();
       assertNoReactErrors();
     } finally {
       setSampleMode(false);
@@ -353,38 +353,64 @@ describe('pathway panes — operational flows', () => {
     fireEvent.change(inputs[1], { target: { value: 'wrong-password' } });
     fireEvent.click(container.querySelector('.ap-sign-confirm') as HTMLButtonElement);
 
-    await waitFor(() => expect(container.querySelector('.ap-sign-error')).toBeTruthy());
-    expect(container.querySelector('.ap-sign-error')!.textContent).toContain('password verification failed');
+    /* The refusal renders through <ErrorState testId="esign-rejected"> now —
+       the server's reason shown verbatim, with the redaction filter over it. */
+    await waitFor(() => expect(container.querySelector('[data-testid="esign-rejected"]')).toBeTruthy());
+    expect(container.querySelector('[data-testid="esign-rejected"]')!.textContent).toContain(
+      'password verification failed',
+    );
     /* The critical assertion: no signed card on a rejected signature. */
     expect(container.querySelector('.ap-card.signed')).toBeNull();
     assertNoReactErrors();
   });
 
-  it('DossierDrawer opens from the audit pane and switches its three tabs', () => {
-    // The audit pane's rows come from fixtures here, so sample mode is the
-    // supported way to populate it (no live backend in this suite).
-    setSampleMode(true);
-    try {
-      const { getAllByRole, container } = renderWithClient(
-        <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
-      );
-      fireEvent.click(getAllByRole('tab')[1]); // Audit
-      const open = container.querySelector('.audit-act.primary') as HTMLElement | null;
-      expect(open).toBeTruthy();
-      fireEvent.click(open!);
-      expect(container.querySelector('.dd-drawer')).toBeTruthy();
-      const ddTabs = container.querySelectorAll('.dd-tab');
-      expect(ddTabs.length).toBe(3); // Document · Attachments · Activity
-      fireEvent.click(ddTabs[1] as HTMLElement);
-      fireEvent.click(ddTabs[2] as HTMLElement);
-      fireEvent.click(ddTabs[0] as HTMLElement);
-      assertNoReactErrors();
-    } finally {
-      setSampleMode(false);
-    }
+  it('DossierDrawer opens from a LIVE audit row and switches its three tabs', async () => {
+    /* The fixture route into this flow is gone (the fabricated audit chain
+       was deleted); the audit pane populates from the backend only. Mock the
+       real feed with one section-scoped event and drive the drawer from it —
+       the same path a reviewer takes in production. */
+    const auditRow = {
+      id: 'live-a1', when: '2026-05-02T10:00:00Z', actor: 'u1', actorName: 'Live Reviewer',
+      role: 'QA', action: 'sign', resource: 'Section', target: '§11.4 Accuracy',
+      resourceId: '11', reason: '', sha: 'deadbeef', prev: 'cafef00d', chain: 'ok',
+    };
+    globalThis.fetch = vi.fn().mockImplementation(async (url: RequestInfo | URL) => {
+      const u = String(url);
+      if (u.includes('/api/mdx/audit')) {
+        return {
+          ok: true, status: 200, text: async () => '',
+          json: async () => ({ data: { events: [auditRow], actions: [], resources: [], kpis: [] } }),
+        };
+      }
+      return { ok: false, status: 404, text: async () => 'Not Found', json: async () => ({ data: null }) };
+    }) as unknown as typeof fetch;
+
+    const { getAllByRole, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+    fireEvent.click(getAllByRole('tab')[1]); // Audit
+    const open = await waitFor(() => {
+      const b = container.querySelector('.audit-act.primary') as HTMLElement | null;
+      if (!b) throw new Error('live audit row not rendered yet');
+      return b;
+    });
+    fireEvent.click(open);
+    expect(container.querySelector('.dd-drawer')).toBeTruthy();
+    const ddTabs = container.querySelectorAll('.dd-tab');
+    expect(ddTabs.length).toBe(3); // Document · Attachments · Activity
+    fireEvent.click(ddTabs[1] as HTMLElement);
+    fireEvent.click(ddTabs[2] as HTMLElement);
+    fireEvent.click(ddTabs[0] as HTMLElement);
+    assertNoReactErrors();
   });
 
-  it('AnaDrafter generates a structured draft from an unstarted item', async () => {
+  it('AnaDrafter fails closed on an unstarted item — it never authors a response itself', async () => {
+    /* This test used to expect a draft to APPEAR here. That draft was
+       fabricated in the browser — templated prose stamped `generated_by:
+       'AnA'` with four invented sign-off reviewers, no request ever made.
+       The fix made Generate adopt a persisted AnA draft or refuse with the
+       reason; for an unstarted letter with no persisted draft, refusal is
+       the only honest outcome. */
     const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
     const { container } = renderWithClient(
       <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
@@ -393,7 +419,23 @@ describe('pathway panes — operational flows', () => {
     const cta = container.querySelector('.du-cta') as HTMLElement | null;
     expect(cta).toBeTruthy();
     fireEvent.click(cta!); // "Generate draft"
-    await waitFor(() => expect(container.querySelector('.dr-body')).toBeTruthy(), { timeout: 2000 });
+    await waitFor(() => expect(container.querySelector('.du-error')).toBeTruthy());
+    expect(container.querySelector('.du-error')!.textContent).toContain('cannot draft one');
+    // Nothing was authored: no drafted body, no invented reviewer roster.
+    expect(container.querySelector('.dr-body')).toBeNull();
+    assertNoReactErrors();
+  });
+
+  it('AnaDrafter renders a persisted AnA draft — adoption, not authorship', () => {
+    /* rta-3 carries a draft AnA actually produced and persisted
+       (`generated_by: 'AnA'`, status drafted). The drafter's job is to
+       present it for review; it mounts straight into the drafted body. */
+    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-3')!;
+    const { container } = renderWithClient(
+      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
+    );
+    expect(container.querySelector('.dr-body')).toBeTruthy();
+    expect(container.querySelector('.drafter-unstarted')).toBeNull();
     assertNoReactErrors();
   });
 });

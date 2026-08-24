@@ -203,25 +203,40 @@ router.get('/analytical-methods', async (req, res) => {
    create from the product's own register surfaces (which rightly never send
    it) answered 400 "organizationId Required" — and accepting it would have
    invited a caller-supplied tenant, which is worse. */
-const analyticalMethodBody = insertAnalyticalMethodSchema.omit({ organizationId: true }).extend({
+
+/**
+ * Drop the tenant key from a generated insert schema. The RUNTIME omit is
+ * plain zod and correct (proven live: scripts/dev/cmc-staff-simulation.sh);
+ * the TYPE-level mask is the problem — drizzle-zod's generated object types
+ * resolve the omit-mask keys to `never`, so a literal
+ * `.omit({ organizationId: true })` fails to compile. One cast, confined
+ * here. The returned type still names organizationId; every handler stamps
+ * the real one from the session immediately after parse, so nothing reads
+ * the phantom.
+ */
+function withoutTenantKey<S extends z.AnyZodObject>(schema: S): S {
+  return schema.omit({ organizationId: true } as never) as unknown as S;
+}
+
+const analyticalMethodBody = withoutTenantKey(insertAnalyticalMethodSchema).extend({
   validationDate: optionalDate,
 });
-const processValidationBody = insertProcessValidationSchema.omit({ organizationId: true }).extend({
+const processValidationBody = withoutTenantKey(insertProcessValidationSchema).extend({
   approvalDate: optionalDate,
 });
-const stabilityStudyBody = insertStabilityStudySchema.omit({ organizationId: true }).extend({
+const stabilityStudyBody = withoutTenantKey(insertStabilityStudySchema).extend({
   startDate: requiredDate,
   plannedEndDate: optionalDate,
 });
-const qcTestingBody = insertQcTestingSchema.omit({ organizationId: true }).extend({
+const qcTestingBody = withoutTenantKey(insertQcTestingSchema).extend({
   testDate: requiredDate,
   releaseDate: optionalDate,
 });
-const changeControlBody = insertCmcChangeControlSchema.omit({ organizationId: true }).extend({
+const changeControlBody = withoutTenantKey(insertCmcChangeControlSchema).extend({
   implementationDate: optionalDate,
 });
-const drugSubstanceBody = insertDrugSubstanceSchema.omit({ organizationId: true });
-const drugProductBody = insertDrugProductSchema.omit({ organizationId: true });
+const drugSubstanceBody = withoutTenantKey(insertDrugSubstanceSchema);
+const drugProductBody = withoutTenantKey(insertDrugProductSchema);
 
 router.post('/analytical-methods', async (req, res) => {
   try {
