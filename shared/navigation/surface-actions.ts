@@ -384,6 +384,21 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     ],
   },
   {
+    id: 'ectd-coauthor.open-tab',
+    surfaceId: 'ectd-coauthor',
+    label: 'Open a co-author tab',
+    description:
+      'On the eCTD co-author, switch between the document, validation, and compliance tabs. View only — unlike the human tab buttons it never starts a validation or compliance run (those issue server checks and stay human clicks); a tab whose report has not been run shows its honest idle state, and the detail says so. Refused while the open document holds unsaved edits — the editor unmounts on a tab switch.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['document', 'validation', 'compliance'],
+      },
+    ],
+  },
+  {
     id: 'ectd-coauthor.open-document',
     surfaceId: 'ectd-coauthor',
     label: 'Open an eCTD document',

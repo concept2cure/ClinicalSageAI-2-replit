@@ -393,6 +393,37 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
       setTreeQuery(query);
       return { ok: true, detail: `Filtering the eCTD tree for "${query}"` };
     },
+    'ectd-coauthor.open-tab': (params) => {
+      const target =
+        params.tab === 'validation'
+          ? ('validation' as const)
+          : params.tab === 'compliance'
+            ? ('compliance' as const)
+            : ('document' as const);
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      if (target !== 'document' && editorDirty && activeDoc) {
+        return {
+          ok: false,
+          reason:
+            `There are unsaved edits in §${activeDoc.moduleNumber || '—'} ${activeDoc.title} — ` +
+            'the editor unmounts on a tab switch; save first (Cmd/Ctrl-S).',
+        };
+      }
+      /* View only, deliberately: the human tab buttons auto-run a missing
+         validation/compliance check on switch — a server check AnA must not
+         start uninvited. She opens the tab; the panel's idle state and the
+         detail say the run is still a human click. */
+      setTab(target);
+      const unrun =
+        activeDoc &&
+        ((target === 'validation' && !validation) || (target === 'compliance' && !compliance));
+      return {
+        ok: true,
+        detail:
+          `Opened the ${target} tab` +
+          (unrun ? ` — no ${target} report has been run yet; running one stays a human click` : ''),
+      };
+    },
     'ectd-coauthor.open-document': (params) => {
       const raw = (params.document ?? '').trim();
       if (!raw) return { ok: false, reason: 'No document named.' };
