@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T00:12:48.232Z",
+  "generatedAt": "2026-08-24T00:14:17.902Z",
   "git": {
-    "sha": "817b3e15b7733f12054feec493fabdbcb17d8b3f",
+    "sha": "5558bff203774892bcdb5102f1ea02f5f6d3460e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2192,11 +2192,15 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 148228
+        "bytes": 150198
       },
       {
         "file": "server/storage.ts",
         "bytes": 145402
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 139207
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2207,12 +2211,8 @@
         "bytes": 138123
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 138092
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 137628
+        "bytes": 137926
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2350,19 +2350,19 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3382
+        "lines": 3428
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
       },
       {
-        "file": "server/routes/authoring-actions.ts",
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
         "lines": 3275
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3272
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3275
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2405,12 +2405,12 @@
         "lines": 2504
       },
       {
-        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
-        "lines": 2419
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2431
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2400
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "lines": 2419
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
