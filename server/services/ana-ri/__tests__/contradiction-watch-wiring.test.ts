@@ -10,8 +10,8 @@
  *
  * The rendering itself is covered by contradiction-watch.test.ts. This suite
  * pins the CARRIAGE: the prefetch fetches and renders the block org-scoped,
- * and the block flows prefetch → orchestrator input → system prompt on both
- * live routes. Carriage is exactly what was missing, so carriage is what the
+ * and the block flows prefetch → orchestrator input → system prompt on the
+ * live route. Carriage is exactly what was missing, so carriage is what the
  * test asserts.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -102,9 +102,13 @@ describe('the block flows through to the system prompt on the live route', () =>
   });
 
   it('the live route hands the prefetched block to the orchestrator', () => {
-    expect(read('server/routes/ana-ri/stream.ts')).toMatch(
-      /_contradictionWatchBlock:\s*prefetched\w*Context\.contradictionWatchBlock/
-    );
+    // Was two routes; /api/ana-ri/chat was deleted (zero callers, degraded
+    // surface) so stream.ts is now the only live AnA RI route.
+    for (const route of ['server/routes/ana-ri/stream.ts']) {
+      expect(read(route), route).toMatch(
+        /_contradictionWatchBlock:\s*prefetched\w*Context\.contradictionWatchBlock/
+      );
+    }
   });
 
   it('the chat-context-builder orchestrator input carries it too', () => {
