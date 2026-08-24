@@ -84,3 +84,19 @@ grandfather branch was exercised — verify-by-failing applied to packaging):**
 The production flip remains the sequence above (verify row → reconcile
 tenants → e-signature banding decision → report → measure per replica →
 enforce), now with each transition's observed behavior on record.
+
+## E-signature banding RESOLVED (2026-08-24)
+
+The packaging migration's flagged defect #1 is closed: `electronic_signatures`
+reads **`standard`** in FEATURE_TIER_MAP (fixed in commit `1232a88e`, with the
+market rationale recorded on the map entry itself — in life sciences, audit
+trail / e-signature / Part 11 are the ENTRY TICKET, not the enterprise upsell;
+the transferable enterprise gates are identity, the API, and autonomous
+agency). The band is now pinned by
+`server/services/__tests__/license-tier-packaging.test.ts` so a silent
+regression re-argues the decision in a failing test, not in production.
+
+**The production flip's remaining precondition is exactly one item:** tenant
+reconciliation against the real estate (runbook step 2) — every live org at a
+qualifying tier or holding an explicit grant — then report → measure per
+replica → enforce.
