@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T03:58:04.141Z",
+  "generatedAt": "2026-08-24T04:04:00.703Z",
   "git": {
-    "sha": "a95b0bba0958e1fc0821c9d182ce5046fe414b7c",
+    "sha": "5aaa05793021df5502dc0a76ba94ba0f9c3b054c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -14,7 +14,7 @@
     "design-system/"
   ],
   "summary": {
-    "duplicateBasenames": 222,
+    "duplicateBasenames": 221,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
@@ -1193,14 +1193,6 @@
         "paths": [
           "server/routes/capa-mdr.ts",
           "shared/schema/capa-mdr.ts"
-        ]
-      },
-      {
-        "basename": "chat",
-        "count": 2,
-        "paths": [
-          "server/routes/ana-ri/chat.ts",
-          "server/routes/chat.ts"
         ]
       },
       {
@@ -2666,7 +2658,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 402,
+      "duplicateGroups": 400,
       "largeByBytes": 30,
       "largeByLines": 73
     },
