@@ -1532,12 +1532,22 @@ export const C2C_MIGRATION_FILES = [
   // missing column and fails every org closed.
   'db/migrations/20260824_module_grant_expiry.sql',
 
-  // ── Access requests from a lock ────────────────────────────────────────────
-  // A member who hits a locked module and cannot buy could do nothing at all.
-  // This records the request so an org admin (or the platform owner) can act on
-  // it. Approval writes through the existing grant path; no second grant
-  // mechanism is introduced.
-  'db/migrations/20260824_module_access_requests.sql',
+  // ── Access requests from a lock — NOT YET WRITTEN ─────────────────────────
+  // `db/migrations/20260824_module_access_requests.sql` was listed here by
+  // 89ce2cd20 and never committed. It exists in no commit, and
+  // `module_access_requests` is referenced nowhere in server/, shared/ or the
+  // schema — the entry described a feature whose migration was not written.
+  //
+  // A listing for a file that is not on disk is not harmless here. This set is
+  // APPLIED in order, and the entry sat AFTER the tenant-isolation sweep in a
+  // reading where it created a tenant-keyed table — which is the exact case
+  // check-migration-set-order.mjs exists to catch, because such a table ships
+  // with no RLS policy and the policy count still goes up. It also blocked
+  // every push to this branch, for every session, from the moment it landed.
+  //
+  // Removed rather than stubbed: an empty migration would satisfy the gate and
+  // teach it to accept a file that creates nothing. When the feature is built,
+  // the entry returns WITH its SQL, in the same change.
 
   // ── Both entries below must precede the two isolation steps ────────────────
   // The last two entries of this list are, and must remain, the uuid non-public
