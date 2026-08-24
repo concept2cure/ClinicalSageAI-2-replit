@@ -307,6 +307,26 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   // board has no studyId handle. Start from an honest empty; rows a user logs
   // are optimistic-only (the form copy below no longer claims persistence).
   const [devs, addDev] = useRows<CoDev>(EMPTY_DEVS);
+
+  /* Studies materially behind their enrollment target — the one queue item this
+     surface can derive honestly from `/api/clinical-operations/studies`. Empty
+     while the read is loading or failed: "no study is behind" and "the study
+     read failed" are different statements, and only one of them belongs in a
+     panel headed "Today". */
+  const enrollmentBehind = useMemo(() => {
+    if (liveStudies.loading || liveStudies.error) return [];
+    return liveStudies.rows
+      .filter((st) => st.target > 0 && st.n < st.target * 0.8 && st.status !== 'completed')
+      .slice(0, 2)
+      .map((st) => ({
+        ico: 'alertTriangle',
+        title: st.id + ' is behind enrollment',
+        sub: st.n + ' of ' + st.target + ' enrolled (' + Math.round((st.n / st.target) * 100) + '%)',
+        tone: 'warn',
+        action: 'Review',
+        cmd: 'Why is ' + st.id + ' behind its enrollment target, and which sites are driving it?',
+      }));
+  }, [liveStudies.loading, liveStudies.error, liveStudies.rows]);
   const [siteForm, setSiteForm] = useState(false);
   const [devForm, setDevForm] = useState(false);
   const [toast, fireToast] = useToast();
@@ -442,8 +462,22 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
         ...(worst.name
           ? [{ ico: 'alertTriangle', title: worst.name + ' -- ' + worst.tier + ' tier', sub: 'composite ' + (worst.composite ?? '—') + (worst.driver ? ' -- ' + worst.driver : ''), tone: 'warn', action: 'Review', cmd: 'Explain the drivers behind the highest-risk site and the monitoring it needs.' }]
           : []),
-        { ico: 'shieldCheck', title: 'Prep the next DSMB data package', sub: 'Assemble the interim safety/efficacy package for the DSMB', tone: 'info', action: 'Prep', cmd: 'Prepare the next DSMB data package for the pivotal study' },
-        { ico: 'clipboardList', title: 'Review open protocol deviations', sub: 'Summarize open deviations and their CAPA status', tone: 'warn', action: 'Open', cmd: 'Summarize the open protocol deviations and their CAPA status' },
+        /* ── Two invented items are gone ──────────────────────────────────
+           "Prep the next DSMB data package" and "Review open protocol
+           deviations" were unconditional literals, so the panel headed
+           "Today · your queue — N items" counted work nobody had, with a
+           warn-toned badge on a deviation review that no deviation data
+           supports (this board has no reachable org-wide deviations read; the
+           endpoint is study-scoped and it has no studyId handle).
+
+           They are not lost: both are already offered as `starters` above,
+           which is what a suggested prompt is. The queue now carries only what
+           the live roster actually says, so an empty queue means an empty
+           queue.
+
+           Enrollment IS live, so a study genuinely behind its target earns a
+           place here. */
+        ...enrollmentBehind,
       ]}
       onAsk={ask}
     >
