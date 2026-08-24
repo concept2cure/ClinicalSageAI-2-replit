@@ -106,30 +106,96 @@ export function checkoutRequestFor(
 ): CheckoutRequest | CheckoutUnavailable {
   const billingCycle = cycle === 'annual' ? 'annual' : 'monthly';
   if (tier === 'enterprise') {
-    // TODO(onboarding): no enterprise onboarding-request endpoint exists yet —
-    // enterprise pricing is custom (perUserMonthly/baseMonthly null), so
-    // POST /api/billing/checkout cannot price it. Do not call checkout here.
+    // Enterprise pricing is custom (perUserMonthly/baseMonthly null), so
+    // POST /api/billing/checkout cannot price it and no plan can be
+    // provisioned from here. The prospect is not left with nothing: the
+    // enterprise path files a real licence request instead (see
+    // `enterpriseRequestBody` and step 3a of activate()).
     return {
       unavailable:
-        'Enterprise plans use custom pricing finalized with our team — there is no self-service enterprise checkout yet, so no plan was provisioned.',
+        'Enterprise plans use custom pricing finalized with our team \u2014 there is no self-service enterprise checkout, so no plan was provisioned by this wizard.',
     };
   }
   if (model === 'dtc') {
-    if (tier === 'free') {
-      // TODO(onboarding): POST /api/billing/dtc-checkout rejects tier "free"
-      // (its schema only accepts standard|professional|enterprise) even though
-      // the billing service can provision the free tier directly. Until the
-      // route accepts it, the free tier cannot be provisioned from here.
-      return {
-        unavailable:
-          'The free tier cannot be provisioned from this wizard yet — the self-service checkout endpoint only accepts paid tiers, so no plan was provisioned.',
-      };
-    }
+    // The free (Researcher) tier IS provisioned by the same endpoint: the
+    // service's free branch sets organizations.tier='free', invalidates the
+    // tenant posture and runs provisionModulesForTier(org,'free') without
+    // touching Stripe (server/services/billing.ts createDTCCheckoutSession).
+    // It returns `sessionId: 'free'` and the success URL rather than a Stripe
+    // Checkout link — activate() reads that and reports the plan as
+    // PROVISIONED instead of redirecting to a checkout that does not exist.
+    // Only the route's request schema had refused the tier; it now accepts it.
     return { path: '/api/billing/dtc-checkout', body: { tier, billingCycle } };
   }
   return {
     path: '/api/billing/checkout',
     body: { tier, billingCycle, seats: Math.max(1, Math.floor(seats) || 1) },
+  };
+}
+
+/** Who the enterprise onboarding request comes from. Collected explicitly on
+ * the review step (prefilled from the signed-in user) rather than scavenged
+ * from the invite list: an invitee is not necessarily the person our team
+ * should reply to, and a request sent to the wrong address is worse than one
+ * the user was asked to confirm. */
+export interface OnboardingContact {
+  name: string;
+  email: string;
+}
+
+/** The signed-in user's own contact details from the session payload the login
+ * flows store (`trialsage_user`), or null when nothing usable is there.
+ * Never throws — a malformed payload just means the fields start empty. */
+export function contactFromStoredUser(raw: string | null): OnboardingContact | null {
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as Record<string, unknown>;
+    const email = typeof u?.email === 'string' ? u.email.trim() : '';
+    if (!email) return null;
+    const name =
+      (typeof u?.name === 'string' && u.name.trim()) ||
+      [u?.firstName, u?.lastName].filter((v) => typeof v === 'string' && v.trim()).join(' ').trim() ||
+      '';
+    return { name, email };
+  } catch {
+    return null;
+  }
+}
+
+/** Enough of an address to be worth sending. The server validates properly
+ * (zod .email()); this only stops the button firing a request that cannot
+ * reach anyone. */
+export function isUsableEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+/** The body POST /api/auth/license-request accepts (licenseRequestSchema in
+ * server/routes/auth.ts): name, email, organization, message. The message
+ * carries the whole wizard selection so the request our team reviews says what
+ * the prospect actually configured, not just that someone asked. */
+export function enterpriseRequestBody(input: {
+  contact: OnboardingContact;
+  organization: string;
+  archetypeLabel: string;
+  model: string;
+  planName: string;
+  cycle: string;
+  seats: number;
+  inviteCount: number;
+}): { name: string; email: string; organization: string; message: string } {
+  const lines = [
+    'Enterprise onboarding requested from the workspace setup wizard.',
+    `Organization type: ${input.archetypeLabel}`,
+    `Pricing model: ${input.model === 'dtc' ? 'Self-service' : 'Enterprise (per-user)'}`,
+    `Plan: ${input.planName} (enterprise tier)`,
+    `Billing: ${input.cycle}${input.model === 'b2b' ? ` \u2014 ${input.seats} seats` : ''}`,
+    `Personnel to invite: ${input.inviteCount}`,
+  ];
+  return {
+    name: input.contact.name.trim() || input.contact.email.trim(),
+    email: input.contact.email.trim(),
+    organization: input.organization.trim() || input.contact.email.trim(),
+    message: lines.join('\n').slice(0, 2000),
   };
 }
 
@@ -142,9 +208,19 @@ export interface ActivationOutcome {
   invitesAttempted: number;
   invitesSent: number;
   invitesFailed: string[];
-  checkout: 'redirecting' | 'unavailable' | 'failed';
+  /** 'provisioned' is the free tier: the plan is live on the organization and
+   *  there is nothing to pay, so there is no checkout to redirect to. It is a
+   *  distinct value from 'redirecting' on purpose — collapsing the two would
+   *  make the summary claim a payment step that never happened. */
+  checkout: 'redirecting' | 'provisioned' | 'unavailable' | 'failed';
   checkoutNote: string | null;
   checkoutUrl: string | null;
+  /** The enterprise onboarding request: 'sent' = a licence_requests row exists
+   *  for our team to review; 'no-contact' = no address was given so nothing was
+   *  sent; 'failed' = the intake refused or was unreachable; 'not-requested' =
+   *  a non-enterprise plan, where no request belongs. */
+  enterpriseRequest: 'sent' | 'failed' | 'no-contact' | 'not-requested';
+  enterpriseNote: string | null;
 }
 
 /* ── Onboarding wizard ──
@@ -177,6 +253,19 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
   const [invites, setInvites] = useState([{ email: '', role: 'owner' }]);
   const [outcome, setOutcome] = useState<ActivationOutcome | null>(null);
   const [activating, setActivating] = useState(false);
+  /* Who our team replies to about an enterprise onboarding request. Prefilled
+     from the signed-in user's own session payload; editable, because the person
+     configuring the workspace is not always the person to contact. */
+  const [contact, setContact] = useState<OnboardingContact>(() => {
+    try {
+      return (
+        contactFromStoredUser(sessionStorage.getItem('trialsage_user')) ??
+        contactFromStoredUser(localStorage.getItem('trialsage_user')) ?? { name: '', email: '' }
+      );
+    } catch {
+      return { name: '', email: '' };
+    }
+  });
 
   const archetypes: Array<{ id: string; label: string; family: string }> = LIC_ARCHETYPES;
   const family =
@@ -351,6 +440,72 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       }
     }
 
+    /* ── 3a. The enterprise onboarding request ─────────────────────────────
+       The review step's primary button says "Request Enterprise onboarding".
+       Its entire effect was `checkoutRequestFor` returning `unavailable` and
+       activate() falling through — a prospect completed six steps, asked for
+       enterprise onboarding, and no request of any kind was created or sent to
+       anybody. The summary then said "no plan was provisioned", which was true
+       and beside the point: nothing had been REQUESTED either.
+
+       POST /api/auth/license-request is the real intake and always was: public,
+       rate-limited (5/hour), zod-validated, and it INSERTS a licence_requests
+       row (status 'pending', created_at) for our team to work. It had no caller
+       anywhere in the client — a documented sales intake with a writer that was
+       never built. This is that writer.
+
+       It is fired only for the enterprise tier, and only with an address: with
+       no contact the request is NOT sent and the summary says so, because a
+       request nobody can reply to is not a request. */
+    let enterpriseRequest: ActivationOutcome['enterpriseRequest'] = 'not-requested';
+    let enterpriseNote: string | null = null;
+    if (tier === 'enterprise') {
+      if (!isUsableEmail(contact.email)) {
+        enterpriseRequest = 'no-contact';
+        enterpriseNote =
+          'No request was sent — no contact email was given, and our team would have had no way to reply. Add one and activate again.';
+      } else {
+        try {
+          const res = await fetch('/api/auth/license-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(
+              enterpriseRequestBody({
+                contact,
+                organization: typedName,
+                archetypeLabel:
+                  (archetypes.find((a) => a.id === org.archetype) || ({} as any)).label ||
+                  org.archetype,
+                model,
+                planName: selTier.name || 'Enterprise',
+                cycle,
+                seats,
+                inviteCount: invites.filter((x) => x.email.trim()).length,
+              }),
+            ),
+          });
+          if (res.ok) {
+            enterpriseRequest = 'sent';
+            enterpriseNote = `Request recorded for ${contact.email.trim()} — our team reviews enterprise onboarding requests and replies to that address.`;
+          } else {
+            enterpriseRequest = 'failed';
+            const body = await res.json().catch(() => null);
+            const why =
+              (body && body.error && (body.error.message || body.error)) ||
+              (res.status === 429
+                ? 'too many requests from here in the last hour'
+                : 'the intake did not say why');
+            enterpriseNote = `The request was NOT recorded — ${why}. Nothing was sent; retry, or email our team directly.`;
+          }
+        } catch (_e) {
+          enterpriseRequest = 'failed';
+          enterpriseNote =
+            'Could not reach the onboarding intake — the request was NOT recorded. Retry, or email our team directly.';
+        }
+      }
+    }
+
     // 3. Billing checkout — last, because success leaves the app for Stripe.
     const checkoutReq = checkoutRequestFor(model, tier, cycle, seats);
     let checkout: ActivationOutcome['checkout'];
@@ -370,7 +525,15 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         // /checkout returns { checkoutUrl }; /dtc-checkout returns { url }.
         const data = res.ok ? await res.json().catch(() => null) : null;
         const url = data && (data.checkoutUrl ?? data.url);
-        if (typeof url === 'string' && url) {
+        // The free tier has nothing to charge: the service provisioned the plan
+        // itself and answers `sessionId: 'free'` with the success URL. Following
+        // that URL would bounce the user to a "checkout=success" screen for a
+        // checkout that never happened, so the wizard reports the plan as live
+        // and stays put — the outcome panel already offers the next step.
+        if (data && data.sessionId === 'free') {
+          checkout = 'provisioned';
+          checkoutNote = null;
+        } else if (typeof url === 'string' && url) {
           checkout = 'redirecting';
           checkoutUrl = url;
         } else {
@@ -394,6 +557,8 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       checkout,
       checkoutNote,
       checkoutUrl,
+      enterpriseRequest,
+      enterpriseNote,
     });
     setActivating(false);
     if (checkoutUrl) window.location.assign(checkoutUrl);
@@ -442,11 +607,14 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                   : (org.name || 'Your workspace') + ' — activation summary'}
               </h2>
               <div className="ob-review" style={{ textAlign: 'left' }}>
+                {/* One row, once. This was rendered twice with two different
+                    wordings for the same fact — a summary that says the same
+                    thing twice invites the reader to look for the difference. */}
                 <div className="ob-rev-row">
                   <span className="k">Organization name</span>
                   <span className="v">
                     {outcome.nameSaved
-                      ? 'Saved to the organization record (audited).'
+                      ? 'Saved — recorded on the organization (audited).'
                       : 'Not saved — set it in Admin → Setup.'}
                   </span>
                 </div>
@@ -473,10 +641,22 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                         '.'}
                   </span>
                 </div>
+                {outcome.enterpriseRequest !== 'not-requested' && (
+                  <div className="ob-rev-row">
+                    <span className="k">Enterprise onboarding</span>
+                    <span className="v">{outcome.enterpriseNote}</span>
+                  </div>
+                )}
                 <div className="ob-rev-row">
                   <span className="k">Plan</span>
                   <span className="v">
-                    {outcome.checkout === 'redirecting'
+                    {outcome.checkout === 'provisioned'
+                      ? 'Provisioned — the ' +
+                        selTier.name +
+                        ' plan is active on this organization and the ' +
+                        tier +
+                        '-tier modules are enabled. Nothing to pay.'
+                      : outcome.checkout === 'redirecting'
                       ? 'Redirecting to secure checkout for the ' +
                         selTier.name +
                         ' plan' +
@@ -490,14 +670,10 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                         'No plan was provisioned.'}
                   </span>
                 </div>
-                <div className="ob-rev-row">
-                  <span className="k">Workspace name</span>
-                  <span className="v">
-                    Not yet persisted — renaming the organization from this
-                    wizard is not available; your organization type was
-                    captured in the industry profile above.
-                  </span>
-                </div>
+                {/* The "Workspace name — not yet persisted" row that used to
+                    sit here contradicted the Organization name row above it
+                    (which reports the audited PATCH that does persist it).
+                    Two rows about one fact, disagreeing, is worse than either. */}
               </div>
               <div
                 className="cm-pushbar"
@@ -844,10 +1020,53 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                       <span className="v">{v}</span>
                     </div>
                   ))}
+                  {/* Enterprise has no self-service checkout, so the button
+                      below files a real licence request instead. It needs an
+                      address to reply to — asked for here rather than guessed
+                      from the invite list, and stated plainly so the prospect
+                      knows what the button will actually do. */}
+                  {tier === 'enterprise' && (
+                    <div style={{ marginTop: 14 }}>
+                      <div className="pj-seclbl" style={{ marginTop: 0 }}>
+                        Who should we contact
+                      </div>
+                      <div className="scaf-note" style={{ marginBottom: 10 }}>
+                        Enterprise pricing is finalized with our team, so this does not
+                        provision a plan. It records an onboarding request — your
+                        selections above included — that our team reviews and replies to.
+                      </div>
+                      <div className="ob-invite">
+                        <input
+                          className="ob-in"
+                          style={{ flex: 1, margin: 0 }}
+                          aria-label="Contact name"
+                          placeholder="Contact name"
+                          value={contact.name}
+                          onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))}
+                        />
+                        <input
+                          className="ob-in"
+                          style={{ flex: 1, margin: 0 }}
+                          aria-label="Contact email"
+                          placeholder="name@org.com"
+                          value={contact.email}
+                          onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                        />
+                      </div>
+                      {!isUsableEmail(contact.email) && (
+                        <div className="scaf-note" style={{ marginTop: 8 }}>
+                          A contact email is required — without one there is nobody for
+                          our team to reply to, so no request would be sent.
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="cm-pushbar" style={{ marginTop: 16 }}>
                     <button
                       className="sp-primary"
-                      disabled={activating}
+                      disabled={
+                        activating || (tier === 'enterprise' && !isUsableEmail(contact.email))
+                      }
                       onClick={() => {
                         void activate();
                       }}

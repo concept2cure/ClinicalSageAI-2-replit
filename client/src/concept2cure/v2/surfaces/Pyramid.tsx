@@ -13,10 +13,15 @@
  *   GET /api/v1/global-pyramids       → international agency configs
  * (server/routes/pyramid.routes.ts). Each renders the full four states —
  * loading → honest error → honest empty → real — with no "Sample data" pill and
- * no codebase fixture. The engine's pyramid STRUCTURE carries no progress, so
- * every task arrives at its honest initial status 'todo'; task status is the
- * ONE client-owned slice (a UI convenience), seeded from the real pyramid and
- * held as local overrides. PY_ROLES/PY_STATUS/PY_RISK and the deterministic
+ * no codebase fixture.
+ *
+ * The engine's pyramid STRUCTURE carries no progress, so every task arrives at
+ * its honest initial status 'todo'. PROGRESS over that structure is per-org and
+ * is read and written through its own pair —
+ *   GET   /api/v1/pyramids/:type/progress
+ *   PATCH /api/v1/pyramids/:type/progress/:taskId
+ * — so the status dropdown is a governed write, not the "one client-owned
+ * slice" this header used to describe. PY_ROLES/PY_STATUS/PY_RISK and the deterministic
  * helpers (pyProgress/pyNextTasks/pyRiskProfile/pyResources/pyCoverage) are the
  * canonical display config/compute layer — they operate over whatever pyramid
  * object they're handed.
@@ -291,6 +296,21 @@ function PyTaskSheet({ pyr, task, tasks, onClose, onTask, onStatus }: {
 
 // ── Small render helpers ───────────────────────────────────────────────────
 
+/**
+ * One sentence for a refused status write, whatever refused it.
+ *
+ * The two failure paths used to word this differently, and the one that had
+ * MORE to say said less: with a server message the banner read "The submission
+ * is locked for filing.. The task is unchanged." — a doubled full stop, and no
+ * statement anywhere that nothing had been saved. The reason a status write is
+ * announced at all is that the dropdown snaps back, and a bare server sentence
+ * beside a reverted control reads as an explanation of the current value
+ * rather than of a write that did not land.
+ */
+function statusRefusal(why: string): string {
+  return 'The status was not saved — ' + why.replace(/[.\s]+$/, '') + '. The task is unchanged.';
+}
+
 const PyLoading = ({ label }: { label: string }) => (
   <div className="scaf-note" style={{ padding: '18px 10px' }}>{label}</div>
 );
@@ -364,15 +384,11 @@ export function PyramidShell(_props: SurfaceViewProps) {
       if (!res.ok) {
         setStatuses(before);
         const j = await res.json().catch(() => null);
-        setStatusErr(
-          (serverMessage(j) ?? `The status was not saved (HTTP ${res.status})`) + '. The task is unchanged.',
-        );
+        setStatusErr(statusRefusal(serverMessage(j) ?? `the server refused it (HTTP ${res.status})`));
       }
     } catch (e) {
       setStatuses(before);
-      setStatusErr(
-        'The status was not saved — ' + (e instanceof Error ? e.message : String(e)) + '. The task is unchanged.',
-      );
+      setStatusErr(statusRefusal(e instanceof Error ? e.message : String(e)));
     }
   };
   const goPhase = (id: string) => { setFocusPhase(id); setTab('wbs'); };

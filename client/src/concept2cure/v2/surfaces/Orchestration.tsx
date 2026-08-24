@@ -283,10 +283,21 @@ function useOrchProgram(): { pid: number; label: string } | null {
 
 /* ── Helpers ── */
 
-/** [label, icon, onClick, primary, busy?, disabledReason?] — a control with a
-    disabledReason is rendered disabled and explains itself on hover, rather
-    than pretending to act. */
-type CtrlTuple = [string, string, () => void, boolean, boolean?, string?];
+/** A run control. `why` is the reason it cannot act: a control that carries one
+ *  is rendered disabled AND visually disabled (`.orch-ctrl:disabled`), and says
+ *  why on hover, rather than looking live and doing nothing on click.
+ *  `busyLabel` is the copy shown while its own write is in flight — every
+ *  control used to share the single string "Cancelling…", so pressing Retry
+ *  told the user their run was being cancelled while a new one was starting. */
+interface RunCtrl {
+  label: string;
+  icon: string;
+  onClick: () => void;
+  primary: boolean;
+  busy?: boolean;
+  busyLabel?: string;
+  why?: string;
+}
 
 /* ════ Orchestration -- workflow runs & readiness ════ */
 
@@ -315,6 +326,13 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     if (Array.isArray(t)) for (const x of t) if (x?.templateId && x?.name) m[x.templateId] = x.name;
     return m;
   }, [tplState.data]);
+  /* `loading` is false for one render after `pid` arrives — useLiveData set it
+     false while the path was null, and only the effect turns it back on. In
+     that window `templates` is empty for the same reason a 500 leaves it empty,
+     and the CTA claimed "No workflow templates are registered in this
+     deployment": a fact about the deployment, asserted from a read that had not
+     happened. Settled means the payload actually came back. */
+  const tplSettled = Boolean(tplState.data) && !tplState.loading && !tplState.error;
   /** The registered templates a new run can be started from, in registry order. */
   const templates = useMemo(() => {
     const t = (tplState.data as { templates?: Array<{ templateId?: string; name?: string; description?: string }> } | null)?.templates;
@@ -478,14 +496,11 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  /* Pause / Resume / Retry / Replay and the approval decisions are NOT wired,
-     and are no longer pretended.
-     - The run controls used to call setRunStatus, relabelling a server-side run
-       locally: "Pause" left it executing, "Resume" un-paused something never
-       paused, and "Replay" silently re-labelled a completed, audited run as
-       running. /api/orchestration exposes execute and cancel only — there is no
-       pause/resume/retry route to call.
-     - `decide` is now WIRED to POST /api/orchestration/checkpoints/:id/decision.
+  /* The run controls used to call setRunStatus, relabelling a server-side run
+     locally: "Pause" left it executing, "Resume" un-paused something never
+     paused, and "Replay" silently re-labelled a completed, audited run as
+     running.
+     - `decide` is WIRED to POST /api/orchestration/checkpoints/:id/decision.
        It used to write the decision into local state with `when: 'just now'`, a
        FABRICATED timestamp, and the row then rendered "✓ Approved" while the
        checkpoint store was read-only — a completed, timestamped approval that
@@ -496,18 +511,20 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
        decision from the same approver refused, decidedAt taken from the database
        clock, and an audit_events row written in the same transaction. It is NOT
        a §11.50 signature and the on-screen copy says so.
-     The RUN controls below stay disabled with a visible reason, rather than
-     removed: the run is real and worth showing, and hiding the control would
-     hide the fact that no pause/resume path exists. */
-  /* Pause and Resume genuinely have no path: workflow-orchestrator runs a
-     template's steps through one loop and keeps no resumable state, so there is
-     nothing for a pause to hold or a resume to pick up. The control stays
-     visible with the specific reason — the run state it belongs to is real, and
-     hiding it would hide that no pause exists.
-
-     "Retry" and "Replay" ARE available, because both mean the same thing the
-     engine can actually do: run the template again. They no longer say
-     "unwired". */
+     - "New run", "Retry" and "Replay" are WIRED, to POST
+       /api/orchestration/execute. All three mean the one thing the engine can
+       actually do: run a template against a project.
+     - Pause and Resume genuinely have no path. executeWorkflow() runs a
+       template's steps through one loop inside a single awaited call and keeps
+       no resumable state — /execute does not even answer until the run has
+       finished — so there is nothing for a pause to hold or a resume to pick
+       up, and /api/orchestration exposes no pause/resume route. Both controls
+       stay VISIBLE (the run state they belong to is real, and hiding them would
+       hide that no pause exists), disabled, carrying that reason on hover, and
+       — the part that was missing — visually disabled: see
+       `.orch-ctrl:disabled` / `.orch-ctrl.pri:disabled` in app-v2.css, without
+       which a permanently-dead control was pixel-identical to a live one, and
+       "Resume" rendered as a full accent-filled primary CTA. */
   const NO_PAUSE = 'The workflow engine has no pause: a run executes its steps in one pass and keeps no resumable state. Cancel it and start a new run instead.';
   const NO_TEMPLATE = 'This run does not record which template it executed, so it cannot be run again from here.';
 
@@ -601,24 +618,33 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const kvRuns = (n: number) => (runsReady ? String(n) : '—');
   const kvGates = (n: number) => (gatesReady ? String(n) : '—');
 
-  /* Only Cancel and "Open gate" do anything real, so only they are enabled.
-     The unwired controls stay visible (the run state they belong to is real)
-     but are disabled and carry the reason on hover, instead of silently
-     relabelling a run that is still executing on the server. */
+  /* Cancel, Retry, Replay and "Open gate" all reach a real endpoint. The two
+     that cannot — Pause and Resume — stay visible (the run state they belong to
+     is real) but are disabled, visually disabled, and carry the reason on
+     hover, instead of silently relabelling a run that is still executing on the
+     server. */
   const noop = () => undefined;
-  const ctrlsFor = (x: OrchRun): CtrlTuple[] => {
-    const cancel: CtrlTuple = ['Cancel', 'close', () => void cancelRun(x.id), false, busyRun === x.id];
+  const ctrlsFor = (x: OrchRun): RunCtrl[] => {
+    const cancel: RunCtrl = {
+      label: 'Cancel', icon: 'close', primary: false,
+      onClick: () => void cancelRun(x.id),
+      busy: busyRun === x.id, busyLabel: 'Cancelling…',
+    };
     /* Retry / Replay = a NEW run of the same template, which is what the engine
        can do and what the label is now understood to mean. Disabled only when
        the run does not record its template, with that stated. */
-    const again = (label: string, primary: boolean): CtrlTuple =>
+    const again = (label: string, primary: boolean): RunCtrl =>
       x.templateId
-        ? [label, 'rotateCw', () => void startRun(x.templateId as string, `${label} of ${x.title}`), primary, busyRun === 'new:' + x.templateId]
-        : [label, 'rotateCw', noop, primary, false, NO_TEMPLATE];
-    if (x.status === 'running') return [['Pause', 'pause', noop, false, false, NO_PAUSE], cancel];
-    if (x.status === 'paused') return [['Resume', 'play', noop, true, false, NO_PAUSE], cancel];
+        ? {
+            label, icon: 'rotateCw', primary,
+            onClick: () => void startRun(x.templateId as string, `${label} of ${x.title}`),
+            busy: busyRun === 'new:' + x.templateId, busyLabel: 'Starting…',
+          }
+        : { label, icon: 'rotateCw', primary, onClick: noop, why: NO_TEMPLATE };
+    if (x.status === 'running') return [{ label: 'Pause', icon: 'pause', primary: false, onClick: noop, why: NO_PAUSE }, cancel];
+    if (x.status === 'paused') return [{ label: 'Resume', icon: 'play', primary: true, onClick: noop, why: NO_PAUSE }, cancel];
     if (x.status === 'failed') return [again('Retry', true)];
-    if (x.status === 'awaiting_approval') return [['Open gate', 'shieldCheck', () => setView('approvals'), true]];
+    if (x.status === 'awaiting_approval') return [{ label: 'Open gate', icon: 'shieldCheck', primary: true, onClick: () => setView('approvals') }];
     if (x.status === 'completed') return [again('Replay', false)];
     if (x.status === 'cancelled') return [again('Retry', true)];
     return [];
@@ -697,11 +723,6 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this program'))}>{I.sparkles} Ask AnA</button>
-          {/* This carried no onClick at all — pressing it did literally nothing,
-              not even local state. POST /api/orchestration/execute is real and
-              mounted, but it requires a templateId AND a projectId, i.e. a
-              template-selection step this surface does not have. Until that
-              exists the button says so rather than silently ignoring the click. */}
           {/* ── The primary CTA of the whole surface was hardcoded disabled ──
               `disabled` with no onClick at all, on the screen whose entire
               purpose is workflow runs. Its title said starting one "needs a
@@ -713,13 +734,20 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
           <button
             className="btn primary"
             onClick={() => setNewRunOpen(true)}
-            disabled={pid == null || templates.length === 0 || Boolean(busyRun)}
+            disabled={pid == null || !tplSettled || templates.length === 0 || Boolean(busyRun)}
             title={
               pid == null
                 ? 'Open a program to start a workflow run against it.'
-                : templates.length === 0
-                  ? 'No workflow templates are registered in this deployment.'
-                  : undefined
+                : tplState.error
+                  // An unreachable registry is NOT an empty registry. Saying
+                  // "none are registered" here would render a failed read as a
+                  // settled fact about the deployment.
+                  ? 'Couldn’t load the workflow templates — the orchestration service didn’t respond.'
+                  : !tplSettled
+                    ? 'Loading the registered workflow templates…'
+                    : templates.length === 0
+                      ? 'No workflow templates are registered in this deployment.'
+                      : undefined
             }
           >
             {I.workflow} New run
@@ -800,15 +828,15 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 <div className="orch-detail-m">{sel.id} {I.dot} {ORCH_SLABEL[sel.status]} {I.dot} started {sel.started} {I.dot} by {sel.by}</div>
               </div>
               <div className="orch-ctrls">
-                {ctrlsFor(sel).map(([lbl, ic, fn, pri, busy, why], i) => (
+                {ctrlsFor(sel).map((c, i) => (
                   <button
                     key={i}
-                    className={'orch-ctrl' + (pri ? ' pri' : '')}
-                    onClick={fn}
-                    disabled={Boolean(why) || Boolean(busy)}
-                    title={why || undefined}
+                    className={'orch-ctrl' + (c.primary ? ' pri' : '')}
+                    onClick={c.onClick}
+                    disabled={Boolean(c.why) || Boolean(c.busy)}
+                    title={c.why || undefined}
                   >
-                    {I[ic]}{busy ? 'Cancelling…' : lbl}
+                    {I[c.icon]}{c.busy ? (c.busyLabel ?? c.label) : c.label}
                   </button>
                 ))}
               </div>

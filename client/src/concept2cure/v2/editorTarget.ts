@@ -34,7 +34,13 @@
  *  each family (server/services/c2c/document-class.ts). One vocabulary on
  *  purpose: the editor compares the target against the project's governed
  *  dossier type before resolving, and a second spelling would break that
- *  check silently. */
+ *  check silently.
+ *
+ *  It is deliberately NOT the whole `PROGRAM_TO_DOC_TYPE` image (ind, nda,
+ *  bla, maa, mdr …): those families have no mdx workspace to send from, and a
+ *  spelling nothing writes is a vocabulary entry that can only ever be wrong.
+ *  A sender that holds a section but cannot name a family in THIS vocabulary
+ *  says so by passing `docType: null` — see below. */
 export const EDITOR_TARGET_DOC_TYPES = ['k510', 'pma', 'cer', 'ivdr'] as const;
 export type EditorTargetDocType = (typeof EDITOR_TARGET_DOC_TYPES)[number];
 
@@ -56,7 +62,17 @@ export interface EditorSectionRef {
 }
 
 export interface EditorTarget {
-  docType: EditorTargetDocType;
+  /** The document family the target belongs to, or null when the sender holds
+   *  a real section but cannot name a family in this vocabulary — the Vault's
+   *  governed dossiers are `ind`/`nda`/`bla`/… as often as they are device
+   *  pathways. null is the HONEST value, not a missing one: the editor skips
+   *  the family guard it cannot evaluate and still resolves the section by
+   *  code/label within the named program, exactly as it already does for a
+   *  navigation-directive hand-off (DocumentAuthoring's `sectionOpenTarget`).
+   *  A target must never invent a family: `filing.document.doc_type !== docType`
+   *  is a REFUSAL, so a guessed family turns a resolvable section into a
+   *  "belongs to a different dossier" miss. */
+  docType: EditorTargetDocType | null;
   sectionCode: string | null;
   sectionLabel: string | null;
   /** regulatory_programs UUID the section belongs to, when the sender had one.
@@ -90,14 +106,14 @@ const str = (v: unknown): string | null => {
 /** Publish a target for the editor's next mount. Replaces, never merges —
  *  the same rule window.C2C_PROJECT writes follow. */
 export function setEditorTarget(
-  target: { docType: EditorTargetDocType } & EditorSectionRef & {
+  target: { docType: EditorTargetDocType | null } & EditorSectionRef & {
     programId?: string | null;
     programTitle?: string | null;
   },
 ): void {
   if (typeof window === 'undefined') return;
   window.C2C_EDITOR_TARGET = {
-    docType: target.docType,
+    docType: target.docType ?? null,
     sectionCode: str(target.code),
     sectionLabel: str(target.label),
     programId: str(target.programId),
@@ -129,10 +145,12 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
   const raw = window.C2C_EDITOR_TARGET;
   if (!raw || typeof raw !== 'object') return null;
   const t = raw as Partial<EditorTarget>;
-  if (
-    typeof t.docType !== 'string' ||
-    !(EDITOR_TARGET_DOC_TYPES as readonly string[]).includes(t.docType)
-  ) {
+  // A named family must be one this vocabulary knows; an ABSENT family (null /
+  // undefined) is a legitimate target that simply claims less. Garbage — a
+  // number, an unknown spelling — is still refused outright.
+  if (t.docType != null &&
+      (typeof t.docType !== 'string' ||
+       !(EDITOR_TARGET_DOC_TYPES as readonly string[]).includes(t.docType))) {
     return null;
   }
   if (typeof t.setAt !== 'number' || !Number.isFinite(t.setAt)) return null;
@@ -140,7 +158,7 @@ export function peekEditorTarget(now: number = Date.now()): EditorTarget | null 
   // clock that cannot be trusted) — either way, no claim is honoured.
   if (now - t.setAt > EDITOR_TARGET_TTL_MS || t.setAt - now > EDITOR_TARGET_TTL_MS) return null;
   return {
-    docType: t.docType as EditorTargetDocType,
+    docType: (t.docType ?? null) as EditorTargetDocType | null,
     sectionCode: str(t.sectionCode),
     sectionLabel: str(t.sectionLabel),
     programId: str(t.programId),

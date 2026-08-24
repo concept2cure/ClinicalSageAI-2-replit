@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import { SignoffList } from '../SignoffList';
+import { apiCall, apiErrorText } from '../apiCall';
+import { downloadBlob, safeFileName } from '../download';
+import { readShellProject } from '../shellProject';
+import { C2CToast, useToast, type FireToast } from '../toast';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import {
@@ -145,23 +150,163 @@ function AnaTurn({ turn, onRefine, onNav }: AnaTurnProps) {
 
 /* ---- Artifact card ---- */
 
+/**
+ * The conversation's governed drafts, from the only real source there is.
+ *
+ * `useAnaChat` records the draft a turn produced on that turn
+ * (`generatedDraft`, from the server's `artifact_draft` SSE event) and then
+ * upgrades it with `artifactId` + `version` when the server writes it to
+ * `concept2cure_artifacts` and emits `artifact_version_saved`
+ * (server/routes/ana-ri/post-processing.ts). Everything below is read from
+ * that record and nothing is invented: `prov.model` and `prov.inputs` are left
+ * unset because the stream does not report them, and `prov.audit` is left unset
+ * because no audit id is issued for a draft write.
+ *
+ * A draft with no `artifactId` is one the server did NOT persist — it says so,
+ * and its workflow control is disabled with the reason, rather than posting a
+ * status change for an artifact that has no row.
+ */
+export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] {
+  const out: CtArtifact[] = [];
+  for (const m of messages) {
+    const d = m.generatedDraft;
+    if (!d || !d.title) continue;
+    out.push({
+      id: d.artifactId || `unsaved:${m.id}`,
+      kind: 'document',
+      type: d.documentType || 'Document draft',
+      title: d.title,
+      status: d.artifactId ? 'draft' : 'unsaved',
+      artifactId: d.artifactId,
+      version: d.version,
+      content: d.content,
+      prov: { by: 'AnA', evidence: m.groundingSources || [] },
+      /* Stated as what is KNOWN, not as a diagnosis. The server withholds
+         `artifact_version_saved` for two different reasons — no project to file
+         under, and a draft whose content hash already matches the stored head —
+         and the client cannot tell them apart. Naming only the first would be
+         wrong every time it was the second. */
+      note: d.artifactId
+        ? undefined
+        : 'No stored version was reported for this draft, so there is nothing to route. '
+          + 'AnA files a draft against the open program, and does not re-file one that is '
+          + 'identical to the version already stored.',
+    });
+  }
+  return out;
+}
+
 interface ArtifactCardProps {
   art: CtArtifact;
   expanded: boolean;
   onToggle: () => void;
   onNav?: (id: string) => void;
+  /** The open program. Null when none is open — the status route is scoped by it. */
+  projectId: string | number | null;
+  fireToast: FireToast;
 }
 
-function ArtifactCard({ art, expanded, onToggle, onNav }: ArtifactCardProps) {
+function ArtifactCard({ art, expanded, onToggle, onNav, projectId, fireToast }: ArtifactCardProps) {
+  /* Seeded from the artifact and then owned here, because a successful
+     transition is a fact the server confirmed and the message that produced
+     the draft will never carry. The card is keyed on the artifact id, so the
+     moment a draft acquires a durable id this state is correctly discarded. */
+  const [status, setStatus] = useState(art.status);
+  const [busy, setBusy] = useState<null | 'docx' | 'review'>(null);
+
+  /* The '.docx' button used to be wired to an `onAdvance` the one mount passed
+     as `() => undefined`, so it downloaded nothing. The endpoint it needed had
+     been there the whole time: POST /api/concept2cure/artifacts/export-docx
+     takes { title, content } and returns the rendered file. The anchor dance is
+     `download.ts`'s, not a seventeenth local copy of it. */
+  const exportDocx = async () => {
+    if (busy) return;
+    if (!art.content) {
+      fireToast('There is no draft text to export for ' + art.title + '.', 'error');
+      return;
+    }
+    setBusy('docx');
+    try {
+      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-docx', {
+        title: art.title,
+        content: art.content,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        fireToast(
+          'The Word file was not produced — '
+            + ((body as { error?: { message?: string } } | null)?.error?.message
+              ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
+        );
+        return;
+      }
+      const ok = downloadBlob(safeFileName(art.title, 'draft') + '.docx', await res.blob());
+      fireToast(
+        ok
+          ? 'Downloaded ' + art.title + '.docx.'
+          : 'The Word file was produced but the browser refused the download.',
+        ok ? 'ok' : 'error',
+      );
+    } catch (e) {
+      fireToast(
+        'The Word file was not produced — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error',
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /* draft → review, through the governed transition route. The server owns the
+     rules — VALID_TRANSITIONS and the per-role permission map — so a refusal is
+     reported verbatim and the status on screen is left where it was. */
+  const routeToReview = async () => {
+    if (busy || !art.artifactId || projectId == null) return;
+    setBusy('review');
+    try {
+      const r = await apiCall(
+        'PUT',
+        `/api/concept2cure/projects/${encodeURIComponent(String(projectId))}`
+          + `/artifacts/${encodeURIComponent(art.artifactId)}/status`,
+        { status: 'review' },
+      );
+      if (!r.ok) {
+        fireToast(
+          apiErrorText(r, 'The review request was refused.')
+            + ' The status is unchanged.',
+          'error',
+        );
+        return;
+      }
+      setStatus('review');
+      fireToast(art.title + ' is now in review.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /* `unsaved` is included so the control is SHOWN and disabled with its reason
+     rather than hidden: a draft that exists on screen and nowhere else is
+     exactly the case a person needs told about, and a control that silently
+     does not appear tells them nothing. */
+  const routable = status === 'draft' || status === 'unsaved';
+  const canRoute = Boolean(art.artifactId) && projectId != null && status === 'draft';
+  const routeBlockedBecause = !art.artifactId
+    ? 'This draft is not in the governed record, so there is nothing to route.'
+    : projectId == null
+      ? 'Open a program first — the review workflow is scoped to one.'
+      : null;
+
   return (
-    <div className="ct-art" data-status={art.status} data-open={expanded || undefined}>
+    <div className="ct-art" data-status={status} data-open={expanded || undefined}>
       <button className="ct-art-head" onClick={onToggle}>
         <span className="ct-art-ic">{(I as any)[CT_ARTIC[art.kind]] || I.fileText}</span>
         <span className="ct-art-head-b">
           <span className="ct-art-type">{art.type}</span>
           <span className="ct-art-title">{art.title}</span>
         </span>
-        <span className={`ct-art-status ${art.status}`}>{CT_STATUS_LABEL[art.status] || art.status}</span>
+        <span className={`ct-art-status ${status}`}>{CT_STATUS_LABEL[status] || status}</span>
         <span className="ct-art-chev">{I.chevDown}</span>
       </button>
       {expanded && (
@@ -218,9 +363,15 @@ function ArtifactCard({ art, expanded, onToggle, onNav }: ArtifactCardProps) {
           <div className="ct-art-prov">
             <div className="ct-art-prov-l">Provenance</div>
             <div className="ct-art-prov-g">
-              <span>Generated by <b>{art.prov.by}</b> / {art.prov.model}</span>
-              <span>From: {art.prov.inputs}</span>
-              <span>Evidence: {art.prov.evidence.join(' / ')}</span>
+              {/* Each line is rendered only when there is something to put in
+                  it. They used to render unconditionally, so an artifact with
+                  no recorded model read "Generated by AnA / undefined" and one
+                  with no evidence read "Evidence:" followed by nothing — a
+                  provenance block that states less than it appears to. */}
+              <span>Generated by <b>{art.prov.by}</b>{art.prov.model ? ' / ' + art.prov.model : ''}</span>
+              {art.prov.inputs && <span>From: {art.prov.inputs}</span>}
+              {art.prov.evidence.length > 0 && <span>Evidence: {art.prov.evidence.join(' / ')}</span>}
+              {art.version != null && <span>Version {art.version}</span>}
               {/* Rendered only when a real, server-issued audit id exists. It
                   used to render unconditionally against a client-fabricated
                   string, putting a padlock next to an identifier that traced to
@@ -230,24 +381,66 @@ function ArtifactCard({ art, expanded, onToggle, onNav }: ArtifactCardProps) {
                 : <span className="ct-art-audit">Not yet written to the governed record</span>}
             </div>
           </div>
-          {/* ── ".docx" and "Route to review" / "Approve" are gone ───────────
-              Both were wired to `onAdvance`, which the one mount of this panel
-              passed as `() => undefined`. Clicking ".docx" downloaded no file;
-              clicking "Route to review" advanced no workflow. They could not
-              have worked: nothing links a conversation artifact to a governed
-              document, so there is no id to render and no workflow to advance.
+          {/* ── The two controls that were wired to `onAdvance` ──────────────
+              `.docx` and `Route to review` were both `onAdvance(...)`, and the
+              one mount of this panel passed `onAdvance={() => undefined}`. The
+              file never downloaded and the workflow never advanced. Both
+              endpoints existed the whole time with no caller:
 
-              They are removed rather than left inert. Governed-artifact
-              generation from the stream is a tracked follow-up, and the day it
-              lands it must bring its own export and its own workflow
-              transition — inheriting two buttons that already look finished is
-              how a dead control survives a feature landing on top of it.
+                POST /api/concept2cure/artifacts/export-docx
+                PUT  /api/concept2cure/projects/:projectId
+                       /artifacts/:artifactId/status   { status: 'review' }
 
-              "Edit" stays because it does what it says: it opens the authoring
-              workspace, which is a real destination. */}
+              `Approve` is deliberately NOT here. It is not a control this
+              surface can honour: the status route's VALID_TRANSITIONS rejects
+              draft → approved outright, and review → approved additionally
+              requires an `attestation { meaning, attestationText }` — a §11.50
+              e-signature. The canonical place that ceremony happens is
+              `GovernedActionSignoff` (rendered above by `SignoffList`), driven
+              by the server's own PART11_SIGNATURE_REQUIRED refusal. Inventing a
+              second, client-initiated signature flow in a side panel is exactly
+              the fabricated governance the house rule forbids, and a button
+              that 400s is the dead control we are here to remove. */}
           <div className="ct-art-actions">
-            <button className="ct-art-edit" onClick={() => onNav && onNav('document-authoring')}>{I.penLine} Edit</button>
+            <button
+              className="ct-art-edit"
+              aria-label={'Edit ' + art.title + ' in the authoring workspace'}
+              onClick={() => onNav && onNav('document-authoring')}
+            >
+              {I.penLine} Edit
+            </button>
+            {/* The visible label is '.docx' because that is what the button
+                means in a row of short actions; the accessible name says the
+                whole thing, since "dot d o c x" on its own names nothing. */}
+            <button
+              className="ct-art-edit"
+              aria-label={'Download ' + art.title + ' as a Word file'}
+              onClick={exportDocx}
+              disabled={busy !== null || !art.content}
+            >
+              {I.download} {busy === 'docx' ? 'Building…' : '.docx'}
+            </button>
+            {routable && (
+              <button
+                /* `ct-art-adv` is the accent/right-aligned style this row was
+                   written with; it had no user since the advance button was
+                   removed. */
+                className="ct-art-edit ct-art-adv"
+                aria-label={'Route ' + art.title + ' for review'}
+                onClick={routeToReview}
+                disabled={busy !== null || !canRoute}
+                title={routeBlockedBecause ?? undefined}
+              >
+                {I.route || I.arrowRight} {busy === 'review' ? 'Routing…' : 'Route to review'}
+              </button>
+            )}
           </div>
+          {/* Not repeated when the artifact's own note already says it — an
+              unsaved draft carries the longer explanation, including what to do
+              about it, a few lines above. */}
+          {routable && routeBlockedBecause && !art.note && (
+            <div className="ct-art-note">{routeBlockedBecause}</div>
+          )}
         </div>
       )}
     </div>
@@ -263,9 +456,11 @@ interface ArtifactPanelProps {
   onNav?: (id: string) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
+  projectId: string | number | null;
+  fireToast: FireToast;
 }
 
-function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setCollapsed }: ArtifactPanelProps) {
+function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setCollapsed, projectId, fireToast }: ArtifactPanelProps) {
   if (collapsed) {
     return (
       <button className="ct-art-rail" onClick={() => setCollapsed(false)} title="Show artifacts">
@@ -281,11 +476,27 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setColl
         <span className="ct-art-panel-t">{I.layers} Artifacts <span className="ct-art-panel-n">{artifacts.length}</span></span>
         <button className="ct-art-panel-x" onClick={() => setCollapsed(true)} title="Collapse">{I.chevronRight || I.right}</button>
       </div>
-      <div className="ct-art-panel-sub">Governed outputs — AnA builds, you approve and e-sign</div>
+      {/* Was "AnA builds, you approve and e-sign". Approving and e-signing do
+          not happen here — the panel drafts, exports and routes for review, and
+          the signature ceremony belongs to the sign-off prompt on the turn. */}
+      <div className="ct-art-panel-sub">Governed outputs — AnA drafts, you export and route for review</div>
       <div className="ct-art-list">
-        {artifacts.length === 0 && <div className="ct-art-empty">Artifacts AnA generates in this conversation appear here — classification reports, predicate analyses, eSTAR sections — each versioned, traceable, and exportable.</div>}
+        {/* The honest empty state. It used to promise "classification reports,
+            predicate analyses, eSTAR sections", which named the three fixture
+            builders rather than anything the conversation can produce, and it
+            did not say that the list covers this session only — reloading a
+            thread rehydrates its messages, not the drafts they carried. */}
+        {artifacts.length === 0 && <div className="ct-art-empty">Documents AnA drafts in this conversation appear here, each one exportable and routable for review. The list covers this session — reopening the thread restores the messages, not the drafts.</div>}
         {artifacts.map(a => (
-          <ArtifactCard key={a.id} art={a} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} onNav={onNav} />
+          <ArtifactCard
+            key={a.id}
+            art={a}
+            expanded={openId === a.id}
+            onToggle={() => setOpenId(openId === a.id ? null : a.id)}
+            onNav={onNav}
+            projectId={projectId}
+            fireToast={fireToast}
+          />
         ))}
       </div>
     </aside>
@@ -308,13 +519,30 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
   // Live Drive rides the shell's bridge (SurfaceViewProps.liveDrive): this
   // surface owns its own chat instance, so its turns carry the same opt-in and
   // feed the same shell-level apply/take-over machine as the rail's turns.
+  /* The open program, read through the canonical reader rather than a local
+     re-read of `window.C2C_PROJECT` (this file had its own copy of that try/catch
+     for uploads; there is one reader now, and both callers use it).
+
+     Passing it to `useAnaChat` is what makes a draft from THIS surface durable.
+     The stream forwards `project_id` to `persistCollectedDrafts`, which is a
+     no-op without one — `project_id` is NOT NULL on `concept2cure_artifacts` —
+     so every draft asked for here was written nowhere and the server said as
+     much in a `warning` the user had to read to find out. The shell rail has
+     passed its project id since it was added; this surface never did. */
+  const shellProjectId = (() => {
+    const p = readShellProject();
+    return p ? p.id : null;
+  })();
+
   const anaChat = useAnaChat({
     initialThreadId: isNew ? null : sel.id,
     screenName: 'conversation-thread',
+    projectId: shellProjectId,
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  const [toast, fireToast] = useToast();
   const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
@@ -336,25 +564,18 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
      memory, exactly as the shell composer and ProjectHome do. Null when no
      project is open, which the hook accepts — the file is still read, it just
      is not filed against a programme. */
-  const uploadProjectId = (() => {
-    try {
-      const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-      return p && (typeof p.id === 'string' || typeof p.id === 'number') ? p.id : null;
-    } catch {
-      return null;
-    }
-  })();
   const { attachments, addFiles, removeAttachment, clear: clearAttachments, statusMessage } =
-    useChatUpload({ projectId: uploadProjectId });
+    useChatUpload({ projectId: shellProjectId });
   const readyAttachments = attachments.filter((a) => a.status === 'ready');
   const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
 
   const turns: CtTurn[] = anaChat.messages.map(toTurn);
   const busy = anaChat.isStreaming;
-  // Governed-artifact generation from the stream (generatedDraft → a versioned,
-  // audited artifact) is a tracked follow-up; until it lands the panel shows its
-  // honest empty state rather than a fabricated artifact.
-  const artifacts: CtArtifact[] = [];
+  /* This was `const artifacts: CtArtifact[] = []` — a literal, so the panel
+     below it, the whole `ArtifactCard` component and every control on it were
+     unreachable code that nonetheless looked finished. The drafts were already
+     on the messages; nothing read them. */
+  const artifacts: CtArtifact[] = conversationArtifacts(anaChat.messages);
 
   const firstUser = turns.find((t) => t.role === 'user');
   const title = isNew
@@ -531,8 +752,10 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
         </div>
 
         <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
-          collapsed={panelCollapsed} setCollapsed={setPanelCollapsed} />
+          collapsed={panelCollapsed} setCollapsed={setPanelCollapsed}
+          projectId={shellProjectId} fireToast={fireToast} />
       </div>
+      <C2CToast msg={toast} />
     </div>
   );
 }

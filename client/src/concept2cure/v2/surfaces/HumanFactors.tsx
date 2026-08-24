@@ -13,6 +13,9 @@ import { C2CToast, useToast } from '../toast';
 /* ── Render contract (GET /api/human-factors → { data: HfFileData | null }) ── */
 
 interface HfScenario {
+  /** The c2c_hf_scenarios row id. A mitigation is a governed write against ONE
+   *  row, so a scenario the client cannot name is a scenario it cannot mitigate. */
+  id: string;
   task: string;
   useError: string;
   potentialHarmSeverity: string;
@@ -74,6 +77,27 @@ function hfAssessCompleteness(present: Record<string, boolean>): HfCompletenessR
   return { completenessScore: P.length / HF_ELEMENTS.length, present: P, gaps: G, complete: G.length === 0, framework: 'IEC 62366-1' };
 }
 
+/** The server's own sentence for a refusal, never its enum token. */
+function hfReason(body: unknown): string {
+  const e = (body as { error?: { message?: unknown } } | null)?.error;
+  return typeof e?.message === 'string' && e.message.trim() ? e.message.trim() : '';
+}
+
+/**
+ * The reason to show for a THROWN request failure.
+ *
+ * `apiRequest` throws `ApiRequestError` for every non-OK status except 401, and
+ * that error's message has already been reduced to the server's sentence (enum
+ * tokens and infrastructure text filtered out). Anything else on this path is a
+ * browser-native throw — "Failed to fetch", "NetworkError" — which must not be
+ * rendered as though the service had said it.
+ */
+function hfThrownReason(e: unknown): string {
+  return (e as { name?: unknown })?.name === 'ApiRequestError' && (e as Error).message
+    ? (e as Error).message
+    : 'the human-factors service could not be reached';
+}
+
 function hfAnalyzeRisk(scenarios: HfScenario[]): HfRiskResult {
   const crit = scenarios.filter(s => HF_SERIOUS.has(s.potentialHarmSeverity));
   const unmit = crit.filter(t => !t.mitigated).length;
@@ -91,19 +115,38 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
   const hf = useLiveData<HfFileData>('/api/human-factors');
   const file = hf.data;
 
-  /* Local working overlay on the real read — element toggles, mitigations, and
-     the optimistic append after a persisted "Add scenario". `null` = untouched,
-     so the real file's value renders directly (no flash, no fixture); the overlay
-     resets whenever a fresh file arrives. */
-  const [presentEdit, setPresentEdit] = useState<Record<string, boolean> | null>(null);
-  const [scenarioEdit, setScenarioEdit] = useState<HfScenario[] | null>(null);
-  useEffect(() => { setPresentEdit(null); setScenarioEdit(null); }, [file]);
+  /* ── The overlay holds ONLY what the server has acknowledged ───────────────
+     This screen renders a SAFETY GATE: the IEC 62366-1 §5.9 summative-evaluation
+     gate reads CLEAR exactly when no critical task is unmitigated. It used to be
+     computed over a free-form React overlay that "Mitigate" and the element tiles
+     wrote to directly, with no request behind either — so a device human-factors
+     reviewer could watch a blocking gate clear on screen while the record still
+     said blocked, and the screen silently reverted on reload.
 
-  const present = presentEdit ?? file?.present ?? {};
-  const scenarios = scenarioEdit ?? (Array.isArray(file?.scenarios) ? (file as HfFileData).scenarios : []);
+     The overlay is now three narrow, write-confirmed things and nothing else:
+       · `presentSaved`  — the element map the server RETURNED from PATCH /elements
+       · `addedScenarios`— rows the server RETURNED from POST /scenarios
+       · `mitigatedIds`  — ids the server ACKNOWLEDGED on PATCH …/mitigate
+     There is no code path that puts an unwritten value into any of them, so
+     everything the gate computes over is the record. The overlay resets whenever
+     a fresh file arrives. */
+  const [presentSaved, setPresentSaved] = useState<Record<string, boolean> | null>(null);
+  const [addedScenarios, setAddedScenarios] = useState<HfScenario[]>([]);
+  const [mitigatedIds, setMitigatedIds] = useState<string[]>([]);
+  useEffect(() => { setPresentSaved(null); setAddedScenarios([]); setMitigatedIds([]); }, [file]);
+
+  const present = presentSaved ?? file?.present ?? {};
+  const scenarios = useMemo(() => {
+    const base = Array.isArray(file?.scenarios) ? (file as HfFileData).scenarios : [];
+    return [...base, ...addedScenarios].map(sc =>
+      sc.id && mitigatedIds.indexOf(sc.id) !== -1 ? { ...sc, mitigated: true } : sc);
+  }, [file, addedScenarios, mitigatedIds]);
   const device = file?.device ?? '';
 
   const [form, setForm] = useState(false);
+  /** The critical task a reason for change is being captured against. */
+  const [mitigating, setMitigating] = useState<HfScenario | null>(null);
+  const [elBusy, setElBusy] = useState<string | null>(null);
   const [toast, fire] = useToast();
   const sevLabel = (s: string) => (HF_SEV.find(x => x[0] === s) || [])[1] || s;
 
@@ -112,8 +155,34 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
   const compPct = Math.round(hfe.completenessScore * 100);
   const firstUnmit = risk.criticalTasks.find(t => !t.mitigated);
 
-  const toggleEl = (k: string) => {
-    setPresentEdit({ ...present, [k]: !present[k] });
+  /* Ticking an HFE/UE element moves the file-completeness percentage this screen
+     prints, so it is a claim about the record and must reach the record. This was
+     `setPresentEdit({...})` and nothing else: every tick was lost on reload while
+     the percentage moved. The server's returned map is adopted rather than the
+     optimistic one, so what is displayed is what was stored. */
+  const toggleEl = async (k: string) => {
+    if (elBusy) return;
+    const next = !present[k];
+    setElBusy(k);
+    try {
+      const res = await apiRequest('PATCH', '/api/human-factors/elements', { element: k, present: next });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        fire('Element not saved -- ' + (hfReason(body) || 'the HFE/UE file did not accept the change') + '. Completeness is unchanged.');
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      const stored = body?.data?.present;
+      if (!stored || typeof stored !== 'object') {
+        fire('Element not saved -- unexpected response. Completeness is unchanged.');
+        return;
+      }
+      setPresentSaved(stored as Record<string, boolean>);
+    } catch (e) {
+      fire('Element not saved -- ' + hfThrownReason(e) + '. Completeness is unchanged.');
+    } finally {
+      setElBusy(null);
+    }
   };
 
   const FORM: C2CFormConfig = {
@@ -150,8 +219,8 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         fire('Could not add scenario — unexpected response');
         return;
       }
-      const ns: HfScenario = { task: row.task, useError: row.useError || '', potentialHarmSeverity: row.potentialHarmSeverity || 'minor', mitigated: row.mitigated === true, _new: true };
-      setScenarioEdit([...scenarios, ns]);
+      const ns: HfScenario = { id: String(row.id ?? ''), task: row.task, useError: row.useError || '', potentialHarmSeverity: row.potentialHarmSeverity || 'minor', mitigated: row.mitigated === true, _new: true };
+      setAddedScenarios(prev => [...prev, ns]);
       setForm(false);
       fire('Use scenario added' + (HF_SERIOUS.has(ns.potentialHarmSeverity) && !ns.mitigated ? ' -- unmitigated critical task' : ''));
     } catch (e) {
@@ -159,7 +228,69 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     }
   };
 
-  const mitigate = (idx: number) => setScenarioEdit(scenarios.map((sc, i) => i === idx ? { ...sc, mitigated: true } : sc));
+  /* ── Recording a mitigation is a governed write, not a setState ────────────
+     `mitigate` was `setScenarioEdit(...)` and nothing else. Because the summative
+     gate is computed from these rows, one click could flip the IEC 62366-1 §5.9
+     gate from BLOCKED to CLEAR with nothing written anywhere — the single most
+     dangerous thing this surface could do.
+
+     It is now the same shape as adopting agency label text: capture a 21 CFR
+     11.10(e) reason for change, PATCH the row, and change what is on screen ONLY
+     on the server's acknowledgement. A refusal leaves the task unmitigated and
+     the gate blocked, and says so. */
+  const MITIGATE_FORM: C2CFormConfig = {
+    eyebrow: 'Use-related risk — IEC 62366-1 §5.9',
+    title: 'Record a mitigation',
+    sub: mitigating
+      ? `${mitigating.task} — ${mitigating.useError || 'use error not stated'} (${sevLabel(mitigating.potentialHarmSeverity)} harm).`
+      : '',
+    governed:
+      'Declaring a critical use-related risk controlled can clear the summative-evaluation gate. ' +
+      'The change is written to the HFE/UE record with your reason, under 21 CFR 11.10(e).',
+    submitLabel: 'Record mitigation',
+    fields: [
+      {
+        key: 'reasonForChange', label: 'Reason for change', type: 'textarea', required: true, rows: 3,
+        placeholder: 'e.g. Alarm escalation redesign verified in formative round 3; risk control RC-14 documented',
+        desc: 'At least 8 characters. This is the audit trail\u2019s answer to "why was this declared controlled".',
+      },
+    ],
+  };
+
+  const recordMitigation = async (v: Record<string, string>) => {
+    const sc = mitigating;
+    if (!sc) return;
+    const reason = (v.reasonForChange || '').trim();
+    if (reason.length < 8) {
+      fire('Mitigation not recorded -- a reason for change of at least 8 characters is required.');
+      return;
+    }
+    if (!sc.id) {
+      fire('Mitigation not recorded -- this scenario has no record id. Reload the HFE/UE file and retry.');
+      return;
+    }
+    try {
+      const res = await apiRequest(
+        'PATCH', '/api/human-factors/scenarios/' + encodeURIComponent(sc.id) + '/mitigate',
+        { reasonForChange: reason },
+      );
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        fire('Mitigation not recorded -- ' + (hfReason(body) || 'the HFE/UE record refused the change') + '. The summative gate is unchanged.');
+        return;
+      }
+      if (body?.data?.mitigated !== true) {
+        fire('Mitigation not recorded -- unexpected response. The summative gate is unchanged.');
+        return;
+      }
+      setMitigatedIds(prev => prev.indexOf(sc.id) === -1 ? [...prev, sc.id] : prev);
+      setMitigating(null);
+      fire('Mitigation recorded against ' + sc.task);
+      ask('Draft a risk-control mitigation for: ' + sc.task + ' (' + sc.useError + ')');
+    } catch (e) {
+      fire('Mitigation not recorded -- ' + hfThrownReason(e) + '. The summative gate is unchanged.');
+    }
+  };
 
   /* What AnA can see of this screen.
      Published BEFORE the loading / error / empty early returns below — a
@@ -217,8 +348,9 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       },
       availableActions: [
         'Add a use scenario (feeds the use-related risk analysis; the write is audit-logged)',
-        'Record a mitigation against a critical task',
-        'Toggle an HFE/UE file element present or absent',
+        'Record a mitigation against a critical task (governed — requires a reason for change, and only a ' +
+          'mitigation the HFE/UE record accepts can move the summative gate)',
+        'Mark an HFE/UE file element present or absent (written to the HFE/UE record and audit-logged)',
       ],
     };
   }, [hf.loading, hf.error, hf.empty, file, device, compPct, hfe, risk, firstUnmit, scenarios]);
@@ -269,7 +401,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         body={<>You've analysed <b>{risk.totalScenarios}</b> use scenarios; <b>{risk.criticalTaskCount}</b> {risk.criticalTaskCount === 1 ? 'is a' : 'are'} critical task{risk.criticalTaskCount === 1 ? '' : 's'} (serious or critical harm). The HFE/UE file is <b>{compPct}%</b> complete against IEC 62366-1{hfe.gaps.length ? ` -- ${hfe.gaps.length} element${hfe.gaps.length === 1 ? '' : 's'} still open` : ''}.</>}
         reassure="I'll draft the mitigation for each critical task, tie it to the risk control, and assemble the HFE/UE report — you approve each one."
         action={firstUnmit
-          ? { label: 'Mitigate ' + firstUnmit.task, onClick: () => ask('Draft a risk-control mitigation for the critical task: ' + firstUnmit.task + ' (' + firstUnmit.useError + ')') }
+          ? { label: 'Mitigate ' + firstUnmit.task, onClick: () => setMitigating(firstUnmit) }
           : { label: 'Draft the HFE/UE report', onClick: () => ask('Assemble the HFE/UE report from the completed elements') }}
         secondary="Or work the use-related risk table and HFE checklist below."
       />
@@ -300,7 +432,9 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
               <span className={'hf-sev tone-' + (s.potentialHarmSeverity === 'critical' ? 'err' : s.potentialHarmSeverity === 'serious' ? 'warn' : 'idle')}>{sevLabel(s.potentialHarmSeverity)}</span>
               <span className={'hf-mit tone-' + (s.mitigated ? 'ok' : isCrit ? 'err' : 'idle')}>{s.mitigated ? <>{I.check} Mitigated</> : 'Unmitigated'}</span>
               {isCrit && !s.mitigated
-                ? <button className="hf-act" onClick={() => { mitigate(i); ask('Draft a risk-control mitigation for: ' + s.task + ' (' + s.useError + ')'); }}>{I.penLine} Mitigate</button>
+                ? <button className="hf-act" onClick={() => setMitigating(s)}
+                    disabled={!s.id}
+                    title={s.id ? 'Record a mitigation against the HFE/UE record' : 'This scenario has no record id — reload the HFE/UE file'}>{I.penLine} Mitigate</button>
                 : <button className="hf-go" title="Provenance" onClick={() => ask('Show the use-related risk provenance for ' + s.task)}>{I.search}</button>}
             </div>
           );
@@ -309,10 +443,12 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       )}
 
       {/* HFE/UE completeness checklist */}
-      <div className="pj-seclbl">HFE/UE file completeness <span className="s">{I.dot} IEC 62366-1 {I.dot} {hfe.present.length}/{HF_ELEMENTS.length} elements {I.dot} toggle as you complete them</span></div>
+      <div className="pj-seclbl">HFE/UE file completeness <span className="s">{I.dot} IEC 62366-1 {I.dot} {hfe.present.length}/{HF_ELEMENTS.length} elements {I.dot} each tick is written to the HFE/UE record</span></div>
       <div className="hf-el-grid">
         {HF_ELEMENTS.map(([k, l]) => (
-          <button key={k} className="hf-el" data-have={present[k] || undefined} onClick={() => toggleEl(k)} title={present[k] ? 'Mark not present' : 'Mark present'}>
+          <button key={k} className="hf-el" data-have={present[k] || undefined} onClick={() => void toggleEl(k)}
+            disabled={elBusy !== null} aria-busy={elBusy === k || undefined}
+            title={present[k] ? 'Mark not present — written to the HFE/UE record' : 'Mark present — written to the HFE/UE record'}>
             <span className={'hf-el-dot tone-' + (present[k] ? 'ok' : 'idle')}>{present[k] ? I.check : ''}</span>
             <span className="hf-el-l">{l}</span>
           </button>
@@ -320,6 +456,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
       </div>
 
       {form && <C2CForm config={FORM} onCancel={() => setForm(false)} onSubmit={addScenario} />}
+      {mitigating && <C2CForm config={MITIGATE_FORM} onCancel={() => setMitigating(null)} onSubmit={recordMitigation} />}
       <C2CToast msg={toast} />
     </div>
   );

@@ -272,6 +272,23 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const docDef = docById(docType);
+  /*
+   * The body is produced by the SELECTED document's own generator.
+   *
+   * This used to end in a two-branch ternary — recommendations, statistical,
+   * else `genIndReadiness(a)` — written when the registry held exactly three
+   * entries. Three more were added behind the clinical-regulatory-graph flag and
+   * the ternary was not touched, so choosing "Evidence chain", "Design risk" or
+   * "Regulatory precedent" relabelled the header and rendered the IND Readiness
+   * memo underneath: a document titled as one thing over the text of another,
+   * which is worse than an empty tab because it reads as a real deliverable.
+   *
+   * Every DocDef already carries the `gen` that belongs to it, so the registry is
+   * the single source of truth here and a seventh document type cannot repeat
+   * this. The live-service override stays where the server genuinely returns
+   * that document's prose (recommendations, statistical insights) and nowhere
+   * else — a server payload must never be printed under another document's name.
+   */
   const md = useMemo(() => {
     if (!analysis || !docDef) return '';
     const a = analysis.protocol_data;
@@ -279,9 +296,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       if (docType === 'recommendations' && analysis.recommendations) return analysis.recommendations;
       if (docType === 'statistical' && analysis.statistical_insights) return analysis.statistical_insights;
     }
-    return docType === 'recommendations' ? genRecommendations(a, analysis.similar_protocols || [])
-      : docType === 'statistical' ? genStatisticalInsights(a)
-        : genIndReadiness(a);
+    return docDef.gen(a, analysis.similar_protocols || []);
   }, [analysis, docType, docDef]);
   const html = useMemo(() => analysis ? renderSafeMarkdown(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;

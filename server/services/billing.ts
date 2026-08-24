@@ -479,6 +479,18 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
 // DTC CHECKOUT — Self-service signup with optional free trial
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * A free-tier activation refused because the organization already holds a paid
+ * plan. A distinct type so the route can answer 409 with the reason instead of
+ * a 500 that says nothing and invites a retry that can never succeed.
+ */
+export class FreeTierNotAvailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FreeTierNotAvailableError';
+  }
+}
+
 export interface DTCCheckoutParams {
   organizationId: number;
   tier: string;
@@ -493,15 +505,44 @@ export interface DTCCheckoutParams {
  * Includes trial period for paid tiers. No per-seat pricing.
  */
 export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promise<{ url: string; sessionId: string }> {
-  const stripe = getStripe();
   const { organizationId, tier, billingCycle, successUrl, cancelUrl, currency } = params;
 
   const dtcTier = DTC_PRICING.find(p => p.tier === tier);
   if (!dtcTier) throw new Error(`Invalid DTC tier: ${tier}`);
   if (dtcTier.baseMonthly === 0 && tier !== 'free') throw new Error('Enterprise tier requires custom pricing');
 
-  // Free tier — no checkout needed
+  // Free tier — no checkout needed.
+  //
+  // This is an ACTIVATION path, not a plan-change path. The route carries no
+  // role check, so without this guard any authenticated member could POST
+  // { tier: 'free' } and rewrite their organization's tier and payment_status —
+  // silently downgrading a paying tenant with one request and no audit of a
+  // decision anyone made. An org that already holds a paid plan (a Stripe
+  // subscription, or a paid tier that is live/trialing) is REFUSED here and
+  // told where the change belongs; downgrading is what the Stripe customer
+  // portal (POST /portal) exists for.
   if (tier === 'free') {
+    const currentRes = await pool.query(
+      `SELECT tier, payment_status, stripe_subscription_id FROM organizations WHERE id = $1`,
+      [organizationId]
+    );
+    if (currentRes.rows.length === 0) throw new Error(`Organization ${organizationId} not found`);
+    const current = currentRes.rows[0] as {
+      tier: string | null;
+      payment_status: string | null;
+      stripe_subscription_id: string | null;
+    };
+    const currentTier = (current.tier ?? '').toLowerCase();
+    const paidTier = ['standard', 'professional', 'enterprise'].includes(currentTier);
+    const liveStatus = ['active', 'trialing', 'past_due'].includes(
+      (current.payment_status ?? '').toLowerCase()
+    );
+    if (current.stripe_subscription_id || (paidTier && liveStatus)) {
+      throw new FreeTierNotAvailableError(
+        `This organization is already on the ${currentTier || 'paid'} plan. ` +
+          'Changing an active plan to Free is a billing change — make it from the billing portal, not from workspace activation.'
+      );
+    }
     await pool.query(
       `UPDATE organizations SET tier = 'free', payment_status = 'active', updated_at = NOW() WHERE id = $1`,
       [organizationId]
@@ -510,6 +551,12 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
     await provisionModulesForTier(organizationId, 'free');
     return { url: successUrl, sessionId: 'free' };
   }
+
+  // Stripe is resolved only once a PAID tier is known to be in play. It used to
+  // be the first line of this function, which made an unconfigured Stripe key
+  // fail the free tier too — a plan with nothing to charge cannot need a
+  // payment processor to be provisioned.
+  const stripe = getStripe();
 
   // Look up org
   const orgResult = await pool.query(

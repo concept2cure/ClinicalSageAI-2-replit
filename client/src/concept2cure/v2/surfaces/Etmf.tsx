@@ -29,10 +29,10 @@
  *   POST /api/etmf/trials/:trialId/artifacts/bulk
  *   GET  /api/etmf/trials/:trialId/inspection-package?scope= (streams ZIP)
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -44,6 +44,7 @@ import type { TmfCompletenessResult } from '../fixtures/etmf';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
+import { getAuthHeaders } from '@/utils/authToken';
 
 type MissingDoc = { zone: number; zoneName: string; code: string; name: string };
 
@@ -160,40 +161,85 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   }, [tid, scope, completeness.loading, completeness.error, R, missing, incompleteZones]);
   usePublishSurfaceContext('etmf', anaContext);
 
-  /* File a missing essential — real POST /artifacts (drizzle-backed, audited),
-     via the canonical apiRequest (bearer + x-organization-id auth). Refetches on
-     success; an auth/network failure is stated honestly and nothing is filed. */
-  const fileArtifact = async (code: string) => {
+  /* ── Filing an essential document now requires an actual document ──────────
+     Both handlers used to MANUFACTURE the reference they filed against:
+
+       documentRef: 'vault://' + tid + '/' + code
+
+     — a path built from the two things the surface already knew. No document
+     was uploaded, none existed, and the TMF recorded the essential document as
+     filed against a location pointing at nothing. "File all N" did it for every
+     outstanding document in ONE click, which is how a trial reached
+     INSPECTION-READY without a single document having been filed. That is a
+     false GCP record: inspection readiness is a verdict a sponsor acts on.
+
+     Filing is now attach-then-file. The picker opens for the artifact the user
+     pressed File on, the document goes to the vault (POST /api/vault/ingest,
+     which hashes it and writes its Part 11 audit row), and the artifact is
+     filed against the id the VAULT returned. If the upload fails, nothing is
+     filed — the gap stays open, which is the truth.
+
+     The store refuses a manufactured reference now too
+     (tmf-artifact-persistence.assertDocumentRefResolves), so no future client
+     can reintroduce this. */
+  const [pendingCode, setPendingCode] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const beginFiling = (code: string) => {
     if (!tid) return;
-    setBusy(true);
-    try {
-      const res = await apiRequest('POST', '/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts', { artifactCode: code, documentRef: 'vault://' + tid + '/' + code });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      fireToast(tmfArtifactName(code) + ' filed to the TMF'); reload();
-    } catch {
-      fireToast('Couldn’t file ' + tmfArtifactName(code) + ' -- not persisted, try again', 'error');
-    } finally {
-      setBusy(false);
-    }
+    setPendingCode(code);
+    fileInputRef.current?.click();
   };
 
-  /* Bulk file all open essentials — real POST /artifacts/bulk (audited), via the
-     canonical apiRequest. Reads the server's filed/total counts from the
-     response ({ data }-unwrapped); an auth/network failure is stated honestly. */
-  const fileBulk = async (codes: string[]) => {
-    if (!tid || !codes || !codes.length) return;
+  const onFilePicked = async (file: File | undefined) => {
+    const code = pendingCode;
+    setPendingCode(null);
+    if (!tid || !code || !file) return;
     setBusy(true);
     try {
-      const res = await apiRequest('POST', '/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts/bulk',
-        { artifacts: codes.map((c) => ({ artifactCode: c, documentRef: 'vault://' + tid + '/' + c })) });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const j = await res.json().catch(() => null);
-      const body = (j && typeof j === 'object' && 'data' in j) ? (j as { data: { filed?: number; total?: number } }).data : j;
-      const n = (body && body.filed != null) ? body.filed : codes.length;
-      const t = (body && body.total != null) ? body.total : codes.length;
-      fireToast(n + ' of ' + t + ' essentials filed to the TMF'); reload();
-    } catch {
-      fireToast('Couldn’t file the essentials — not persisted, try again', 'error');
+      const form = new FormData();
+      form.append('file', file);
+      form.append('documentCode', code);
+      form.append('documentTitle', tmfArtifactName(code));
+      form.append('documentType', 'tmf_essential');
+      const up = await fetch('/api/vault/ingest', {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+        headers: { ...getAuthHeaders() },
+      });
+      const uj = (await up.json().catch(() => null)) as { document?: { id?: string | number } } | null;
+      const docId = uj?.document?.id;
+      if (!up.ok || docId == null) {
+        fireToast(
+          'Not filed — ' + (serverMessage(uj) ?? `the vault refused the upload (HTTP ${up.status})`) +
+            '. ' + tmfArtifactName(code) + ' is still outstanding.',
+          'error',
+        );
+        return;
+      }
+      const res = await apiRequest(
+        'POST',
+        '/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts',
+        { artifactCode: code, documentRef: 'vault://' + String(docId) },
+      );
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        fireToast(
+          'The document is in the vault but was NOT filed to the TMF — ' +
+            (serverMessage(b) ?? `HTTP ${res.status}`) + '. The gap is still open.',
+          'error',
+        );
+        return;
+      }
+      fireToast(tmfArtifactName(code) + ' filed to the TMF against ' + file.name + '.');
+      reload();
+    } catch (e) {
+      fireToast(
+        'Not filed — ' + (e instanceof Error ? e.message : String(e)) + '. ' +
+          tmfArtifactName(code) + ' is still outstanding.',
+        'error',
+      );
     } finally {
       setBusy(false);
     }
@@ -323,9 +369,24 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
           <div className="etmf-body">
             {/* Left -- AnA's punch list: the essentials still to file */}
             <div className="etmf-left">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="ana-hidden-input"
+                aria-label="Choose the essential document to file to the TMF"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  void onFilePicked(f);
+                }}
+              />
               <div className="etmf-panel">
                 <div className="etmf-panel-h">{I.checkSquare} AnA punch-list <span className="x">-- {missing.length} to file before inspection</span>
-                  {missing.length > 1 && <button className="btn ghost sm" style={{ marginLeft: 'auto' }} disabled={busy} onClick={() => fileBulk(missing.map((m) => m.code))}>{I.filePlus || I.plus} File all {missing.length}</button>}
+                  {/* "File all N" is gone. It filed every outstanding essential
+                      document against a manufactured vault path in one click,
+                      flipping the trial to INSPECTION-READY with nothing
+                      uploaded. There is no honest bulk form of this action: N
+                      documents require N documents. Each row files its own. */}
                 </div>
                 {missing.length === 0 ? (
                   <div className="etmf-clean">{I.check} Every {scope === 'all' ? '' : 'essential '}document is filed. The package is inspection-clean.</div>
@@ -337,7 +398,14 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                           <div className="etmf-miss-name">{m.name}</div>
                           <div className="etmf-miss-zone">Zone {m.zone} -- {m.zoneName} -- <span className="mono">{m.code}</span></div>
                         </div>
-                        <button className="btn ghost sm" disabled={busy} onClick={() => fileArtifact(m.code)}>{I.filePlus || I.plus} File</button>
+                        <button
+                          className="btn ghost sm"
+                          disabled={busy}
+                          title={'Attach the ' + m.name + ' document and file it to the TMF'}
+                          onClick={() => beginFiling(m.code)}
+                        >
+                          {I.filePlus || I.plus} {busy && pendingCode === m.code ? 'Filing…' : 'Attach & file'}
+                        </button>
                       </div>
                     ))}
                   </div>
