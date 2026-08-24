@@ -54,6 +54,67 @@ export interface LicenseInfo {
  */
 export type ModuleSubscriptionState = 'enabled' | 'disabled' | 'none';
 
+/**
+ * PURE: has a grant's expiry instant passed?
+ *
+ * `expires_at` bounds the OVERRIDE a `module_subscriptions` row applies, not
+ * the entitlement underneath it. A grant with no expiry is perpetual, which is
+ * every grant that existed before this column did — hence `null` is emphatically
+ * NOT expired.
+ *
+ * Evaluated here, at read time, against one clock. It is deliberately not a
+ * SQL `expires_at > now()` predicate spread across the several queries that
+ * read this table: two of them would then compare against the database clock
+ * and the rest against the process clock, and the two answers would disagree
+ * under skew for exactly the rows where the answer matters most. One function,
+ * one comparison, one place to test.
+ *
+ * AN UNREADABLE INSTANT IS NOT AN EXPIRY. A value that cannot be parsed means
+ * we cannot establish that the date has passed, and silently dropping the
+ * override on that basis would be repossession by data corruption. The grant
+ * stands and the row is visibly wrong to an operator instead.
+ */
+export function isGrantExpired(
+  expiresAt: Date | string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (expiresAt == null) return false; // perpetual — the pre-expiry behaviour
+  const at = expiresAt instanceof Date ? expiresAt.getTime() : Date.parse(String(expiresAt));
+  if (Number.isNaN(at)) return false;
+  return at <= now.getTime();
+}
+
+/**
+ * PURE: the calendar date of an instant (YYYY-MM-DD), or null.
+ *
+ * `canAccessModule`'s reason string is read by a customer, and a full ISO
+ * instant ("ended on 2026-08-24T00:00:00.000Z") is not a sentence anybody
+ * wants at the moment their module stopped working. A trial ends on a DAY;
+ * the instant is what the record stores, the day is what the reason says.
+ *
+ * Deliberately not `toLocaleDateString`: this runs on the server, which has no
+ * idea what locale the reader is in, and a server-guessed "8/24/2026" is
+ * ambiguous to most of the world. ISO calendar dates are not.
+ */
+export function toDateOrNull(value: Date | string | null | undefined): string | null {
+  const iso = toIsoOrNull(value);
+  return iso ? iso.slice(0, 10) : null;
+}
+
+/**
+ * PURE: an instant as an ISO-8601 string, or null when there is none.
+ *
+ * `pg` hands back a Date for timestamptz, but a pooled row can also arrive as
+ * a string (a driver without type parsers, a JSON round trip, a test fixture).
+ * The client renders an absolute date from this, so an unparseable value
+ * becomes null rather than a date-shaped string nobody can trust.
+ */
+export function toIsoOrNull(value: Date | string | null | undefined): string | null {
+  if (value == null) return null;
+  const d = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 export interface ModuleCatalogEntry {
   moduleId: string;
   name: string;
@@ -67,6 +128,23 @@ export interface ModuleCatalogEntry {
   isAvailable: boolean; // true if tier + industry match
   requiredTier: string | null; // lowest tier that includes this module
   sortOrder: number;
+  /**
+   * The grant's expiry instant as an ISO string, or null when the row is
+   * perpetual (or absent). Set for BOTH a live trial and a lapsed one — the
+   * date is what a customer is owed when they ask why something changed, and
+   * suppressing it once it passes is precisely when it becomes useful.
+   */
+  grantExpiresAt: string | null;
+  /**
+   * True when this org held an `enabled` grant whose expiry has passed.
+   *
+   * `subscriptionState` is already collapsed to 'none' for such a row — the
+   * override is gone, and everything downstream resolves tier + industry as if
+   * it had never been written. This flag survives only so the REASON can be the
+   * real one: "the trial ended on <date>" rather than "not included in your
+   * plan", which is a different sentence and, for a lapsed trial, a false one.
+   */
+  grantExpired: boolean;
 }
 
 // Tier hierarchy for comparison
@@ -94,7 +172,10 @@ export async function getLicenseInfo(organizationId: number): Promise<LicenseInf
         [organizationId]
       ),
       pool.query(
-        `SELECT module_id FROM module_subscriptions
+        // expires_at comes back and is filtered in JS by isGrantExpired rather
+        // than by a SQL predicate, so this list and getModuleCatalog below
+        // decide "expired" against the same clock. See isGrantExpired.
+        `SELECT module_id, expires_at FROM module_subscriptions
          WHERE organization_id = $1 AND enabled = true`,
         [organizationId]
       ),
@@ -107,7 +188,13 @@ export async function getLicenseInfo(organizationId: number): Promise<LicenseInf
       organizationId: org.id,
       tier: org.tier || 'standard',
       industryMode: org.industry_mode || 'biotech',
-      enabledModules: modulesResult.rows.map((r: any) => r.module_id),
+      // An expired grant is not an enabled module. It is not a DENIED one
+      // either — dropping it here lets tier + industry answer, which is the
+      // whole point of an expiry bounding the override rather than the
+      // entitlement.
+      enabledModules: modulesResult.rows
+        .filter((r: any) => !isGrantExpired(r.expires_at))
+        .map((r: any) => r.module_id),
       maxUsers: org.max_users || 5,
       maxProjects: org.max_projects || 10,
       maxStorageGB: org.max_storage || 5,
@@ -142,7 +229,7 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
     const result = await pool.query(
       `SELECT am.module_id, am.name, am.description, am.category, am.icon,
               am.path, am.sort_order, am.metadata,
-              ms.enabled as is_subscribed
+              ms.enabled as is_subscribed, ms.expires_at as grant_expires_at
        FROM available_modules am
        LEFT JOIN module_subscriptions ms
          ON ms.module_id = am.module_id AND ms.organization_id = $1
@@ -150,6 +237,8 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
        ORDER BY am.sort_order`,
       [organizationId]
     );
+
+    const now = new Date();
 
     return result.rows.map((m: any) => {
       const meta = m.metadata || {};
@@ -169,6 +258,14 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
       const industryMatch =
         allowedIndustries.length === 0 || allowedIndustries.includes(license.industryMode);
 
+      /**
+       * Expiry only ever bounds a GRANT. A `disabled` row is a revocation, and
+       * a revocation does not lapse — nobody set an end date on "we switched
+       * this off", and honouring one would silently re-grant a module an admin
+       * turned off. So the expiry is read only when `enabled` is true.
+       */
+      const grantExpired = m.is_subscribed === true && isGrantExpired(m.grant_expires_at, now);
+
       return {
         moduleId: m.module_id,
         name: m.name,
@@ -176,14 +273,31 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
         category: m.category,
         icon: m.icon,
         path: m.path,
-        isEnabled: m.is_subscribed === true,
+        // An expired grant no longer enables. Everything downstream that asks
+        // "may they use it" therefore falls through to tier + industry.
+        isEnabled: m.is_subscribed === true && !grantExpired,
         // LEFT JOIN: null means no subscription row at all, which is NOT the
         // same as a row that says false. See ModuleSubscriptionState.
-        subscriptionState:
-          m.is_subscribed === true ? 'enabled' : m.is_subscribed === false ? 'disabled' : 'none',
+        //
+        // An EXPIRED grant collapses to 'none' — deliberately, and this is the
+        // load-bearing line of the whole feature. 'none' is "no override
+        // applies", which is exactly what a lapsed trial leaves behind, and it
+        // routes every existing consumer straight to the tier/industry answer
+        // with no new branch to forget. It must not collapse to 'disabled':
+        // that would deny the module outright and tell the customer an admin
+        // switched it off, which is both a repossession and a lie.
+        subscriptionState: grantExpired
+          ? 'none'
+          : m.is_subscribed === true
+            ? 'enabled'
+            : m.is_subscribed === false
+              ? 'disabled'
+              : 'none',
         isAvailable: tierMatch && industryMatch,
         requiredTier: lowestTier,
         sortOrder: m.sort_order || 0,
+        grantExpiresAt: toIsoOrNull(m.grant_expires_at),
+        grantExpired,
       };
     });
   } catch (error) {
@@ -194,6 +308,21 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
 
 /**
  * Check if a specific module is accessible to an organization.
+ *
+ * ── What a lapsed trial does here ───────────────────────────────────────────
+ *
+ * An expired grant is already absent from `license.enabledModules`, so the
+ * explicit-grant branch below does not fire and resolution CONTINUES to tier +
+ * industry. That is the correct behaviour and it is not a special case: the
+ * expiry removed an override, and what is left is whatever the organization's
+ * plan says. An org on `standard` whose trial of a `standard` module lapses
+ * still passes the tier check and is allowed.
+ *
+ * The expiry does change the REASON when tier or industry then refuses. "This
+ * module requires professional tier" is true but it is not what happened —
+ * what happened is that a trial ended on a particular date, and a customer told
+ * the generic sentence will ask sales why their working module vanished. So the
+ * denial names the trial and its end date when there was one.
  */
 export async function canAccessModule(
   organizationId: number,
@@ -204,25 +333,38 @@ export async function canAccessModule(
     return { allowed: false, reason: 'Organization not found' };
   }
 
-  // Check if explicitly enabled
+  // Check if explicitly enabled. An expired grant is not in this list — see
+  // getLicenseInfo.
   if (license.enabledModules.includes(moduleId)) {
     return { allowed: true };
   }
 
-  // Check tier availability
+  // Catalog metadata plus THIS organization's grant row, in one round trip, so
+  // a denial below can say whether a trial is what ended.
   const moduleResult = await pool.query(
-    `SELECT metadata FROM available_modules WHERE module_id = $1`,
-    [moduleId]
+    `SELECT am.metadata, ms.enabled, ms.expires_at
+       FROM available_modules am
+       LEFT JOIN module_subscriptions ms
+         ON ms.module_id = am.module_id AND ms.organization_id = $2
+      WHERE am.module_id = $1`,
+    [moduleId, organizationId]
   );
 
   if (moduleResult.rows.length === 0) {
     return { allowed: false, reason: `Module '${moduleId}' does not exist` };
   }
 
-  const meta = moduleResult.rows[0].metadata || {};
+  const row = moduleResult.rows[0];
+  const meta = row.metadata || {};
   const requiredTiers: string[] = meta.tiers || [];
   const allowedIndustries: string[] = meta.industries || [];
   const orgTierLevel = TIER_LEVELS[license.tier] ?? 1;
+
+  // Only an `enabled` row can lapse; a `disabled` row is a revocation, not a
+  // trial (see getModuleCatalog).
+  const lapsedOn =
+    row.enabled === true && isGrantExpired(row.expires_at) ? toIsoOrNull(row.expires_at) : null;
+  const trialEnded = lapsedOn ? `Access for '${moduleId}' ended on ${toDateOrNull(lapsedOn)}` : null;
 
   if (
     requiredTiers.length > 0 &&
@@ -233,14 +375,18 @@ export async function canAccessModule(
     }, requiredTiers[0]);
     return {
       allowed: false,
-      reason: `Module '${moduleId}' requires ${minTier} tier or higher (current: ${license.tier})`,
+      reason: trialEnded
+        ? `${trialEnded}; the ${license.tier} plan does not include it (requires ${minTier})`
+        : `Module '${moduleId}' requires ${minTier} tier or higher (current: ${license.tier})`,
     };
   }
 
   if (allowedIndustries.length > 0 && !allowedIndustries.includes(license.industryMode)) {
     return {
       allowed: false,
-      reason: `Module '${moduleId}' is not available for ${license.industryMode} industry`,
+      reason: trialEnded
+        ? `${trialEnded}; it is not offered for the ${license.industryMode} industry`
+        : `Module '${moduleId}' is not available for ${license.industryMode} industry`,
     };
   }
 

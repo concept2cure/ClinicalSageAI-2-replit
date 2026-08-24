@@ -147,6 +147,11 @@ describe('the admin console agrees with the customer rail', () => {
       isAvailable,
       requiredTier: minTier,
       sortOrder: 0,
+      // Perpetual: these cases are about packaging, not about time-limited
+      // grants. A grant with no expiry behaves exactly as it did before the
+      // column existed, which is what makes these comparisons still valid.
+      grantExpiresAt: null,
+      grantExpired: false,
     };
   }
 

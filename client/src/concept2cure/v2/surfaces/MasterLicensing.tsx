@@ -43,6 +43,7 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
+import { TrialsPanel } from './licensing/TrialsPanel';
 import '../styles/misc-surfaces-v2.css';
 
 /* ── The server contract, as this surface reads it ─────────────────────────── */
@@ -199,6 +200,7 @@ type Pending =
 const TABS = [
   { id: 'packaging', label: 'Packaging', icon: 'layers' },
   { id: 'tenants', label: 'Tenants', icon: 'building' },
+  { id: 'trials', label: 'Trials', icon: 'clock' },
   { id: 'flags', label: 'Feature flags', icon: 'sliders' },
   { id: 'enforcement', label: 'Enforcement', icon: 'shieldAlert' },
 ] as const;
@@ -1053,6 +1055,13 @@ export function MasterLicensing() {
           )}
         </section>
       )}
+
+      {/* ══ Trials ═════════════════════════════════════════════════════════
+          A self-contained panel with its own read, its own governed writes and
+          its own toast. It is not folded into this file's shared state on
+          purpose — this surface is already long, and a panel that owns one
+          endpoint end-to-end is the shape the remaining tabs should take too. */}
+      {tab === 'trials' && <TrialsPanel />}
 
       {/* ══ Enforcement ════════════════════════════════════════════════════
           The rollout instrument. Route-level enforcement ships switched off,

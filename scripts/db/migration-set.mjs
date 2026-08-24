@@ -1521,6 +1521,24 @@ export const C2C_MIGRATION_FILES = [
   // must run AFTER the canonical-shape reconciliation above.
   'migrations/20260823_vault_document_placement.sql',
 
+  // ── Time-limited module grants ─────────────────────────────────────────────
+  // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,
+  // so a grant can be opened until a date instead of only on or off. Strictly
+  // additive: every pre-existing grant keeps NULL and stays perpetual.
+  //
+  // Entitlement resolution reads the column at read time — nothing sweeps these
+  // rows — so `server/services/license-manager.ts` SELECTs it and this entry
+  // must be applied before that code is deployed, or getLicenseInfo throws on a
+  // missing column and fails every org closed.
+  'db/migrations/20260824_module_grant_expiry.sql',
+
+  // ── Access requests from a lock ────────────────────────────────────────────
+  // A member who hits a locked module and cannot buy could do nothing at all.
+  // This records the request so an org admin (or the platform owner) can act on
+  // it. Approval writes through the existing grant path; no second grant
+  // mechanism is introduced.
+  'db/migrations/20260824_module_access_requests.sql',
+
   // ── Both entries below must precede the two isolation steps ────────────────
   // The last two entries of this list are, and must remain, the uuid non-public
   // step and the integer sweep — C-33 requires the sweep to see everything the

@@ -36,7 +36,7 @@ import {
   addToWorkQueue,
 } from '../services/user-intelligence.js';
 import { resolveNavEntitlements } from '../services/entitlements/navigation-entitlements.js';
-import { isMasterAdmin } from '../services/entitlements/master-admin.js';
+import { resolveMasterAdmin } from '../services/entitlements/master-admin.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
 
@@ -109,7 +109,12 @@ router.get('/navigation', authenticateToken, async (req: Request, res: Response)
       return res.status(401).json({ error: 'Organization context required' });
     }
     return res.json(
-      await resolveNavEntitlements(Number(orgId), { masterAdmin: isMasterAdmin(req) }),
+      await resolveNavEntitlements(Number(orgId), {
+        // resolveMasterAdmin, not isMasterAdmin: the sync check cannot see a
+        // designation made in the Access Management console, and answering "no"
+        // here would grey the rail for somebody the owner has designated.
+        masterAdmin: await resolveMasterAdmin(req),
+      }),
     );
   } catch (error) {
     logger.error('navigation error', {

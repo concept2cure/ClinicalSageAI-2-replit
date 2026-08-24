@@ -36,7 +36,9 @@ import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { query, getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import auditService from '../../services/auditService';
+import { writeModuleGrant } from '../../services/entitlements/module-grants';
 import masterLicensingRoutes from './master-licensing';
+import licensingTrialsRoutes from './licensing-trials';
 
 const logger = createScopedLogger('admin-master');
 const router = Router();
@@ -50,6 +52,10 @@ router.use(requirePlatformAdmin);
 // drift from it. Editing the commercial model is at least as sensitive as
 // anything else on this router.
 router.use(masterLicensingRoutes);
+// Time-limited grants, same reasoning: opening or ending a trial changes a
+// customer's commercial position, so it inherits this gate rather than
+// declaring its own.
+router.use(licensingTrialsRoutes);
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -596,22 +602,23 @@ router.patch('/tenants/:id/modules', async (req: Request, res: Response) => {
     const mod = await query('SELECT module_id FROM available_modules WHERE module_id = $1', [moduleId]);
     if (!mod.rows.length) return res.status(404).json({ error: 'Unknown module.' });
 
-    const actorEmail = req.userEmail ?? null;
-    const result = await query(
-      `INSERT INTO module_subscriptions
-         (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by, updated_at)
-       VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,
-               CASE WHEN $3 THEN $4 END, CASE WHEN $3 THEN NULL ELSE $4 END, now())
-       ON CONFLICT (organization_id, module_id) DO UPDATE
-         SET enabled = EXCLUDED.enabled,
-             enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,
-             disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,
-             enabled_by = CASE WHEN EXCLUDED.enabled THEN $4 ELSE module_subscriptions.enabled_by END,
-             disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4 END,
-             updated_at = now()
-       RETURNING organization_id, module_id, enabled, updated_at`,
-      [id, moduleId, enabled, actorEmail]
-    );
+    /* One canonical grant writer — see services/entitlements/module-grants.ts.
+       The upsert used to live inline here, and two more callers now need it
+       (opening a trial, approving an access request); three copies of the
+       enabled_at/disabled_by bookkeeping is three places for it to drift.
+
+       `expiresAt: null` is stated, not defaulted: turning a module ON means a
+       perpetual grant. Leaving whatever date was there would re-enable a
+       lapsed trial as instantly-expired and this handler would report success
+       for a change that resolved to nothing. Setting a date is a different,
+       deliberate act with its own endpoint. */
+    const row = await writeModuleGrant({
+      organizationId: id,
+      moduleId,
+      enabled,
+      actorEmail: req.userEmail ?? null,
+      expiresAt: null,
+    });
 
     await auditService.logAction({
       tenantId: id,
@@ -623,7 +630,7 @@ router.patch('/tenants/:id/modules', async (req: Request, res: Response) => {
       userAgent: req.headers['user-agent'] as string,
       details: { masterAdminAction: 'tenant.module_toggle', moduleId, enabled, reason: reason.trim() },
     });
-    return res.json(result.rows[0]);
+    return res.json(row);
   } catch (err) {
     logger.error('Module toggle failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update module entitlement.' });

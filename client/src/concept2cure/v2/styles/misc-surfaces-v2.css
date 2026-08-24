@@ -529,6 +529,7 @@
 .c2c-v2 .ml-table-verdict{ --ml-cols: minmax(210px,2fr) minmax(200px,1.4fr) 130px; min-width:640px; }
 .c2c-v2 .ml-table-flags{ --ml-cols: minmax(260px,2.4fr) 100px 130px; min-width:600px; }
 .c2c-v2 .ml-table-enforce{ --ml-cols: minmax(170px,1.2fr) minmax(230px,1.8fr) 110px 150px; min-width:760px; }
+.c2c-v2 .ml-table-trials{ --ml-cols: minmax(150px,1fr) minmax(150px,1fr) 140px minmax(230px,1.6fr) 160px; min-width:900px; }
 
 .c2c-v2 .ml-thead,
 .c2c-v2 .ml-row{ display:grid; grid-template-columns:var(--ml-cols); gap:14px; align-items:start; }

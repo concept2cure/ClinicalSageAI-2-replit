@@ -60,6 +60,10 @@ function entry(overrides: Partial<ModuleCatalogEntry> = {}): ModuleCatalogEntry 
     isAvailable: true,
     requiredTier: 'standard',
     sortOrder: 10,
+    // Perpetual by default — the ordinary case these defaults describe. A test
+    // about a lapsed trial overrides both.
+    grantExpiresAt: null,
+    grantExpired: false,
     ...overrides,
   };
 }
