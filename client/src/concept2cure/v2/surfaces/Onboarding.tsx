@@ -135,6 +135,9 @@ export function checkoutRequestFor(
 
 /** Honest per-step record of what activate() actually did. */
 export interface ActivationOutcome {
+  /** Whether the typed organization name reached the governed org record.
+   *  It used to be collected, required, and sent nowhere. */
+  nameSaved: boolean;
   profileSaved: boolean;
   invitesAttempted: number;
   invitesSent: number;
@@ -275,6 +278,37 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
       ...getAuthHeaders(),
     };
 
+    /* ── 0. The organization's NAME ─────────────────────────────────────────
+       Step 1 required it — `canNext = org.name.trim().length > 1`, so the
+       wizard could not be advanced without typing it — and then it was sent
+       nowhere. The user named their organization, completed the whole
+       activation, and the record still carried whatever name it was created
+       with. The summary panel at the end even printed the typed name back to
+       them, which is what made the loss invisible.
+
+       PATCH /api/organizations/:id/profile is the governed write (the same one
+       Admin → Setup uses); it audits a reason for change, so this one states
+       what it is. */
+    let nameSaved = false;
+    const typedName = org.name.trim();
+    const orgIdForName = getOrgId();
+    if (typedName && orgIdForName) {
+      try {
+        const res = await fetch(`/api/organizations/${encodeURIComponent(String(orgIdForName))}/profile`, {
+          method: 'PATCH',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            name: typedName,
+            reason: 'Organization name set during workspace activation.',
+          }),
+        });
+        nameSaved = res.ok;
+      } catch (_e) {
+        nameSaved = false;
+      }
+    }
+
     // 1. Governed org industry profile (audited upsert).
     let profileSaved = false;
     try {
@@ -352,6 +386,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
     }
 
     setOutcome({
+      nameSaved,
       profileSaved,
       invitesAttempted: pending.length,
       invitesSent,
@@ -407,6 +442,14 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                   : (org.name || 'Your workspace') + ' — activation summary'}
               </h2>
               <div className="ob-review" style={{ textAlign: 'left' }}>
+                <div className="ob-rev-row">
+                  <span className="k">Organization name</span>
+                  <span className="v">
+                    {outcome.nameSaved
+                      ? 'Saved to the organization record (audited).'
+                      : 'Not saved — set it in Admin → Setup.'}
+                  </span>
+                </div>
                 <div className="ob-rev-row">
                   <span className="k">Industry profile</span>
                   <span className="v">

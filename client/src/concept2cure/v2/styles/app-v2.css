@@ -3375,3 +3375,17 @@
 /* Insights — a programme-level figure stated as one, above the per-market grid
    rather than repeated inside it. */
 .c2c-v2 .ro-dash-progline{margin:0 0 10px;font-size:12.5px;color:var(--text-300);}
+
+/* Home composer — attached files, matching the conversation composer's chips. */
+.c2c-v2 .landing-atts{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0;}
+.c2c-v2 .landing-att{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:4px 8px;border-radius:99px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);}
+.c2c-v2 .landing-att em{font-style:normal;color:var(--text-400);}
+.c2c-v2 .landing-att[data-status="error"]{border-color:color-mix(in srgb, var(--error) 40%, transparent);color:var(--error);}
+.c2c-v2 .landing-att[data-status="error"] em{color:var(--error);}
+.c2c-v2 .landing-att-x{border:0;background:none;color:inherit;cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;}
+.c2c-v2 .landing-att-x:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+
+/* Document journey — the preview's toolbar states what the screen can do
+   instead of offering nine controls that can never act. */
+.c2c-v2 .dj-tb-ro{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-400);line-height:1.5;}
+.c2c-v2 .dj-tb-ro svg{width:13px;height:13px;flex:none;}
