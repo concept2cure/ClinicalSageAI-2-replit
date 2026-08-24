@@ -71,7 +71,10 @@ const ESIGN_FORM = (title: string): C2CFormConfig => ({
       { value: 'AUTHOR', label: 'Authorship' }, { value: 'REVIEWER', label: 'Review' }, { value: 'APPROVER', label: 'Approval' },
     ], required: true, default: 'REVIEWER' },
     { key: 'intent', label: 'Intent / declaration', type: 'textarea', required: true, placeholder: 'e.g. I have reviewed this document and confirm it is complete and accurate.' },
-    { key: 'pin', label: 'Signing PIN', type: 'password', required: true, placeholder: 'Your electronic-signature PIN' },
+    // First-time signers set the PIN in the Signatures rail (SigningPinPanel);
+    // until that shipped this field was unsatisfiable — required, verified
+    // server-side, and creatable nowhere in the product.
+    { key: 'pin', label: 'Signing PIN', type: 'password', required: true, placeholder: 'Your electronic-signature PIN — no PIN yet? Set it in the Signatures rail first' },
   ],
 });
 
