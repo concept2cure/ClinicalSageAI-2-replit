@@ -105,9 +105,14 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       // project's governed filing. Unbound is legitimate; unbound and unsaid is
       // how the two document stores drifted apart, so the reason rides along on
       // the confirmation rather than being dropped.
+      // The server reports how many sections the template actually seeded —
+      // state the count rather than implying a seed that may not have happened.
+      const seeded = typeof (json as { sections_seeded?: unknown }).sections_seeded === 'number'
+        ? (json as { sections_seeded: number }).sections_seeded
+        : null;
       fireToast(
         'Document created · ' + json.document.title +
-        (tpl ? ' (seeded from ' + templateLabel(tpl) + ')' : '') +
+        (tpl && seeded != null ? ` (${seeded} section${seeded === 1 ? '' : 's'} from ${templateLabel(tpl)})` : '') +
         unboundNotice((json as { governance?: unknown }).governance),
       );
       onDocCreated({ id: String(json.document.id), title: String(json.document.title) });
