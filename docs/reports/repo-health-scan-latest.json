@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T04:04:37.789Z",
+  "generatedAt": "2026-08-24T04:12:32.180Z",
   "git": {
-    "sha": "f660a0c4bb102e60a55cdadb68ac374326084730",
+    "sha": "d0292091ce57594e507be6c94bc60b308894d4e1",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2193,6 +2193,10 @@
         "bytes": 145402
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 143258
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 139064
       },
@@ -2203,10 +2207,6 @@
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "bytes": 138123
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 137926
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2343,16 +2343,16 @@
         "lines": 3472
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 3392
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
         "lines": 3389
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3275
       },
       {
         "file": "server/routes/authoring-actions.ts",
