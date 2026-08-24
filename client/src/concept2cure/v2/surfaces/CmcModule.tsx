@@ -2160,8 +2160,31 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       });
       // Navigate only on a clean write — see authoringHandoff.
       if (!res.ok) { fireToast(res.message, 'error'); return; }
+      /* The draft EXISTS now, so the question's lifecycle can say so: OPEN →
+         DRAFTED, the status the board already renders and the open filter
+         keeps. Only an OPEN question is advanced — a reviewer's IN_REVIEW is
+         not downgraded by re-drafting. A failed status write does not undo
+         the draft; it is stated, and we stay here so the statement is seen. */
+      if (c.status === 'OPEN') {
+        const patch = await apiRequest(
+          'PATCH',
+          '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+          { status: 'DRAFTED' },
+        ).catch(() => null);
+        if (!patch?.ok) {
+          fireToast(
+            'The draft was created, but the question could not be marked DRAFTED — it stays OPEN in the file. Open the draft from the Document editor.',
+            'error',
+          );
+          setCorrEpoch((e) => e + 1);
+          return;
+        }
+      }
       if (nav) nav('document-authoring');
-      else fireToast(res.message);
+      else {
+        fireToast(res.message);
+        setCorrEpoch((e) => e + 1);
+      }
     } finally {
       draftingRef.current = false; setDraftingId(null);
     }

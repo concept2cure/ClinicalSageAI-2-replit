@@ -178,5 +178,25 @@ else
   bad "convergence loop: writeThrough=$WT2 gate=$CODE"
 fi
 
+step "23. Regulatory lead logs an agency question (the correspondence WRITE half)"
+CODE=$(req qlog POST /api/cmc/agency-questions '{"questionText":"[SIM] Provide leachables data for the container closure system.","sectionReference":"3.2.P.7","region":"EMA","priority":"high","dueDate":"2027-01-15"}')
+QID=$(cat "$OUT/qlog.json" | JQ '.data.id // empty')
+[ "$CODE" = 201 ] && [ -n "$QID" ] && ok "question logged (id=$QID, OPEN, org-stamped)" || bad "log question: $CODE $(head -c150 "$OUT/qlog.json")"
+
+step "24. The board's correspondence lists it, ordered into the open set"
+CODE=$(req board2 GET /api/cmc/module3-board)
+LISTED=$(cat "$OUT/board2.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${LISTED:-0}" = 1 ] && ok "board correspondence lists question $QID" || bad "board listing: code=$CODE listed=$LISTED"
+
+step "25. Triage: DRAFTED, then CLOSED — the row leaves the open list, stays in the record"
+CODE=$(req qdraft PATCH "/api/cmc/agency-questions/$QID" '{"status":"DRAFTED","assignedTo":"reg.author@sim"}')
+ST=$(cat "$OUT/qdraft.json" | JQ '.data.status // empty')
+[ "$CODE" = 200 ] && [ "$ST" = "DRAFTED" ] && ok "status → DRAFTED with assignee" || bad "draft patch: $CODE $ST"
+CODE=$(req qclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED"}')
+ST=$(cat "$OUT/qclose.json" | JQ '.data.status // empty')
+CODE2=$(req board3 GET /api/cmc/module3-board)
+GONE=$(cat "$OUT/board3.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "$ST" = "CLOSED" ] && [ "${GONE:-1}" = 0 ] && ok "closed: off the open list ($GONE), kept in the store" || bad "close: code=$CODE st=$ST stillListed=$GONE"
+
 echo; echo "════ RESULT: $PASS passed, $FAIL failed ════"
 exit $([ "$FAIL" = 0 ] && echo 0 || echo 1)
