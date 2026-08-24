@@ -42,6 +42,9 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { createHash } from 'node:crypto';
 
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -791,6 +794,122 @@ export default function createProjectVaultRoutes(): Router {
    *   evidenceKind / ctdSection  optional refinements recorded with the move
    *   note        optional reason, recorded as the placement rationale
    */
+  /**
+   * GET /api/c2c/project-vault/:id/documents/:documentId/download
+   *
+   * Hand back the bytes of one uploaded vault document.
+   *
+   * The Vault's own "Download" button did `onAsk('Download ' + sel.title)` —
+   * it typed a sentence into the assistant rail. On a document management
+   * system, on the control labelled Download, next to a download icon. No file
+   * ever left the vault through this surface, and the ingest path had been
+   * writing the bytes to disk all along (vault-ingest.ts stores them at
+   * `s3_key` and treats a write failure as FATAL precisely so a content hash
+   * never describes bytes nobody holds).
+   *
+   * Scoped exactly like every other read here: the program is re-checked
+   * against the caller's organization, and the document against the program.
+   * The row's content_hash is verified against the bytes on disk before they
+   * are sent — a governed document store that serves a file it cannot prove is
+   * the file it recorded is not a governed store, and a silent mismatch is how
+   * a superseded or tampered copy leaves the building.
+   */
+  router.get('/:id/documents/:documentId/download', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    const documentId = String(req.params.documentId ?? '');
+    if (!UUID_RE.test(documentId)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+
+    try {
+      // The program must be this org's before any document of it is served.
+      const prog = await pool.query(
+        `SELECT id FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [id, orgId],
+      );
+      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+
+      const docRes = await pool.query(
+        `SELECT id, file_name, document_title, mime_type, file_size, s3_key, content_hash
+           FROM vault.documents
+          WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
+          LIMIT 1`,
+        [documentId, id],
+      );
+      if (docRes.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      const doc = docRes.rows[0] as {
+        id: string; file_name: string | null; document_title: string | null;
+        mime_type: string | null; file_size: string | number | null;
+        s3_key: string | null; content_hash: string | null;
+      };
+
+      if (!doc.s3_key) {
+        // A row with no storage key describes a document whose bytes were never
+        // kept. Say that rather than 404 — the record exists, the file does not.
+        return res.status(409).json({
+          success: false,
+          error: 'NO_STORED_FILE',
+          message: 'This vault record has no stored file — it was catalogued without content.',
+        });
+      }
+
+      const resolved = path.resolve(process.cwd(), doc.s3_key);
+      // Refuse a key that escapes the storage root. `s3_key` is written by this
+      // codebase today, but a path-traversal read is not a risk worth carrying
+      // on the assumption that it always will be.
+      const root = path.resolve(process.cwd(), 'uploads');
+      if (!resolved.startsWith(root + path.sep)) {
+        logger.error('vault download refused: storage key escapes the uploads root', { documentId });
+        return res.status(409).json({ success: false, error: 'NO_STORED_FILE' });
+      }
+
+      let bytes: Buffer;
+      try {
+        bytes = await fs.readFile(resolved);
+      } catch {
+        logger.error('vault download: stored file missing on disk', { documentId, key: doc.s3_key });
+        return res.status(409).json({
+          success: false,
+          error: 'STORED_FILE_MISSING',
+          message: 'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+        });
+      }
+
+      if (doc.content_hash) {
+        const actual = createHash('sha256').update(bytes).digest('hex');
+        if (actual !== doc.content_hash) {
+          logger.error('vault download refused: content hash mismatch', {
+            documentId, recorded: doc.content_hash.slice(0, 12), actual: actual.slice(0, 12),
+          });
+          return res.status(409).json({
+            success: false,
+            error: 'CONTENT_HASH_MISMATCH',
+            message:
+              'The stored file does not match the hash recorded for it, so it was not served. Report this — the vault copy may have been altered.',
+          });
+        }
+      }
+
+      const name = doc.file_name || doc.document_title || 'document';
+      const safe = name.replace(/[^A-Za-z0-9_.-]+/g, '_').replace(/^_+|_+$/g, '') || 'document';
+      res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${safe}"`);
+      res.setHeader('Content-Length', String(bytes.length));
+      // The recorded hash travels with the file, so a caller can check the copy
+      // it received against the record without a second request.
+      if (doc.content_hash) res.setHeader('X-Content-SHA256', doc.content_hash);
+      return res.send(bytes);
+    } catch (err) {
+      logger.error('vault download failed', {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({ success: false, error: 'DOWNLOAD_FAILED' });
+    }
+  });
+
   router.post('/:id/file', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });

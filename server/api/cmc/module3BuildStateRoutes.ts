@@ -15,32 +15,29 @@
 import express from 'express';
 import { getPool } from '../../db';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
+import { getSectionLabels } from '../../services/module3-convergence-service';
+import { MODULE3_SECTION_RULES } from '../../services/module3Composer';
 
 const router = express.Router();
 
-// ── Section Labels ────────────────────────────────────────────────────────────
+// ── Canonical section constants — imported, never copied ──────────────────────
+//
+// This file used to carry its OWN copies of the section-label map and the
+// section→source-type rules, and the copies drifted: '3.2.S.4' and '3.2.P.5'
+// here lacked `qc_result`, which the composer counts — so the build screen
+// undercounted a section's sources relative to the compile that consumes them.
+// A build board that disagrees with its own compiler about what feeds a
+// section is the duplication Rule "zero duplication" exists to prevent. The
+// labels come from the convergence service and the rules from the composer;
+// there is nothing left here to drift.
 
-const SECTION_LABELS: Record<string, string> = {
-  '3.1': 'Quality — Table of Contents',
-  '3.2.S.1': 'General Information',
-  '3.2.S.2': 'Manufacture (Drug Substance)',
-  '3.2.S.3': 'Characterisation',
-  '3.2.S.4': 'Control of Drug Substance',
-  '3.2.S.5': 'Reference Standards (Drug Substance)',
-  '3.2.S.6': 'Container Closure System (Drug Substance)',
-  '3.2.S.7': 'Stability (Drug Substance)',
-  '3.2.P.1': 'Description & Composition',
-  '3.2.P.2': 'Pharmaceutical Development',
-  '3.2.P.3': 'Manufacture (Drug Product)',
-  '3.2.P.4': 'Control of Excipients',
-  '3.2.P.5': 'Control of Drug Product',
-  '3.2.P.6': 'Reference Standards (Drug Product)',
-  '3.2.P.7': 'Container Closure System (Drug Product)',
-  '3.2.P.8': 'Stability (Drug Product)',
-  '3.3': 'Literature References',
-};
-
+const SECTION_LABELS = getSectionLabels();
 const ALL_SECTION_KEYS = Object.keys(SECTION_LABELS);
+
+/** section → the source types that feed it, straight from the composer. */
+const SECTION_SOURCE_TYPES: Record<string, string[]> = Object.fromEntries(
+  MODULE3_SECTION_RULES.map((r) => [r.sectionKey, [...r.requiredSourceTypes]]),
+);
 
 // ── Build state derivation ────────────────────────────────────────────────────
 
@@ -203,26 +200,8 @@ router.get('/build-state/:projectId', async (req, res) => {
       }
     }
 
-    // Section-to-source-type mapping (must match the composer's rules)
-    const SECTION_SOURCE_TYPES: Record<string, string[]> = {
-      '3.2.S.1': ['drug_substance'],
-      '3.2.S.2': ['drug_substance', 'manufacturing_process', 'process_validation'],
-      '3.2.S.3': ['drug_substance', 'characterization', 'impurity_profile'],
-      '3.2.S.4': ['specification', 'method', 'impurity_profile'],
-      '3.2.S.5': ['drug_substance', 'reference_standard'],
-      '3.2.S.6': ['container_closure'],
-      '3.2.S.7': ['stability'],
-      '3.2.P.1': ['drug_product', 'formulation_record'],
-      '3.2.P.2': ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile'],
-      '3.2.P.3': ['drug_product', 'batch', 'change_control', 'process_validation'],
-      '3.2.P.4': ['excipient', 'raw_material_spec'],
-      '3.2.P.5': ['specification', 'method', 'dissolution_profile', 'impurity_profile'],
-      '3.2.P.6': ['drug_product', 'reference_standard'],
-      '3.2.P.7': ['container_closure'],
-      '3.2.P.8': ['stability', 'comparability'],
-    };
-
-    // Assemble build status for every section
+    // Assemble build status for every section (SECTION_SOURCE_TYPES is the
+    // composer's own rules, imported at module scope — see the note up top)
     const sections = ALL_SECTION_KEYS.map((sectionKey) => {
       const compiled = compiledMap.get(sectionKey);
       const artifact = artifactMap.get(sectionKey);

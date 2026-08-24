@@ -18,7 +18,8 @@ import {
   type VaultDoc,
   type VaultFolder,
 } from '../fixtures/vault-data';
-import { apiRequest, redactInternals } from '@/lib/queryClient';
+import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { downloadBlob, safeFileName } from '../download';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -329,6 +330,54 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      locally: what the Vault shows is what the Vault stored. */
   const [filing, setFiling] = useState(false);
   const [filingNote, setFilingNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  /**
+   * Download one uploaded vault document.
+   *
+   * The server re-checks the program against the caller's org and the document
+   * against the program, then verifies the stored bytes against the hash it
+   * recorded before sending them — so a copy that does not match the record is
+   * refused rather than served. Both refusals are reported here; a governed
+   * store that fails quietly on a download is the worst version of this.
+   */
+  const [downloading, setDownloading] = useState('');
+  /* Reported in the SAME banner the upload path uses, rather than a second
+     notification mechanism on one surface. */
+  const [downloadNote, setDownloadNote] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
+  const downloadVaultDoc = async (docId: string, title: string) => {
+    if (!projectId || downloading) return;
+    setDownloading(docId);
+    setDownloadNote(null);
+    try {
+      const res = await apiRequest(
+        'GET',
+        `/api/c2c/project-vault/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(docId)}/download`,
+      );
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        setDownloadNote({
+          text:
+            `${title} was not downloaded — ` +
+            (serverMessage(j) ?? `the vault refused it (HTTP ${res.status})`),
+          tone: 'error',
+        });
+        return;
+      }
+      const blob = await res.blob();
+      const name = res.headers?.get?.('Content-Disposition')?.match(/filename="?([^";]+)"?/)?.[1];
+      const ok = downloadBlob(name || safeFileName(title, 'document'), blob);
+      setDownloadNote(
+        ok ? null : { text: `${title} was fetched but the browser refused the download.`, tone: 'error' },
+      );
+    } catch (e) {
+      setDownloadNote({
+        text: `${title} was not downloaded — ` + (e instanceof Error ? e.message : String(e)) + '.',
+        tone: 'error',
+      });
+    } finally {
+      setDownloading('');
+    }
+  };
+
   const fileDocument = async (
     docId: string,
     body: { confirm?: boolean; folderId?: string | null; note?: string },
@@ -653,13 +702,17 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         </button>
       </div>
 
-      {uploadNote && (
+      {(uploadNote || downloadNote) && (
         <div
           className="scaf-note"
           role="status"
-          style={{ margin: '0 0 12px', color: uploadNote.tone === 'error' ? 'var(--error)' : undefined }}
+          style={{
+            margin: '0 0 12px',
+            color:
+              (downloadNote ?? uploadNote)!.tone === 'error' ? 'var(--error)' : undefined,
+          }}
         >
-          {uploadNote.text}
+          {(downloadNote ?? uploadNote)!.text}
         </div>
       )}
 
@@ -1028,12 +1081,36 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   >
                     {I.sparkles} Ask AnA
                   </button>
-                  <button
-                    className="sp-ask"
-                    onClick={() => onAsk('Download ' + sel.title)}
-                  >
-                    {I.download} Download
-                  </button>
+                  {/* ── "Download" typed a sentence into the chat rail ────────
+                      `onAsk('Download ' + sel.title)`. On a document management
+                      system, on the control labelled Download, beside a
+                      download icon. No file ever left the vault through this
+                      surface — while the ingest path had been writing the bytes
+                      to disk all along, treating a failed write as FATAL
+                      precisely so a content hash never describes bytes nobody
+                      holds.
+
+                      Only an uploaded document HAS bytes: the other vault nodes
+                      are authored sections and governed artifacts, which are
+                      records rather than files. Those say so instead of
+                      offering a download that could not produce one. */}
+                  {sel.src === 'upload' && sel.docId ? (
+                    <button
+                      className="sp-ask"
+                      onClick={() => void downloadVaultDoc(sel.docId!, sel.title)}
+                      disabled={downloading === sel.docId}
+                    >
+                      {I.download} {downloading === sel.docId ? 'Downloading…' : 'Download'}
+                    </button>
+                  ) : (
+                    <button
+                      className="sp-ask"
+                      disabled
+                      title="This is an authored record rather than an uploaded file, so there is nothing to download. Export it from the surface that owns it."
+                    >
+                      {I.download} No file to download
+                    </button>
+                  )}
                 </div>
               </>
             )}

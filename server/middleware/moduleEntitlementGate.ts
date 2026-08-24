@@ -40,9 +40,11 @@
  * Turning hard enforcement on across a live product as the first act would be
  * reckless: nobody knows today which real, paying, working requests would start
  * failing, because nothing has ever measured it. `report` resolves the verdict
- * and logs every request it WOULD have denied — org, module set, path — and
- * serves it anyway. Run it, read the log, then flip to `enforce` knowing the
- * blast radius instead of discovering it from customers.
+ * and records every request it WOULD have denied — org, module set, path — and
+ * serves it anyway. Run it, read the report in Master Admin -> Licensing ->
+ * Enforcement, then flip to `enforce` knowing the blast radius instead of
+ * discovering it from customers. (See enforcement-observations.ts for why a log
+ * line alone was not a usable answer.)
  *
  * This is deliberately the one place in the stack that is allowed to be
  * permissive, and it is permissive on purpose rather than by omission.
@@ -53,6 +55,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { UI_SURFACES } from '../../shared/constants/ui-surface-registry';
 import { canAccessModule } from '../services/license-manager.js';
+import { recordObservation } from '../services/entitlements/enforcement-observations.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('module-entitlement-gate');
@@ -187,6 +190,17 @@ export function moduleEntitlementGate(
     }
 
     if (entitled) return next();
+
+    // Recorded in BOTH modes. An operator who has already flipped to 'enforce'
+    // still needs to see what is being refused — that is when a wrong packaging
+    // decision surfaces as a support ticket, and the console is where they look.
+    recordObservation({
+      path: pathname,
+      organizationId: Number(orgId),
+      modules: [...modules],
+      reasons,
+      enforced: mode === 'enforce',
+    });
 
     if (mode === 'report') {
       // The measurement this mode exists for: what enforcement WOULD cost.

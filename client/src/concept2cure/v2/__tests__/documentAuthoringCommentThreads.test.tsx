@@ -169,3 +169,64 @@ describe('DocumentAuthoring — comment threads', () => {
     expect(document.querySelectorAll('.cmt-reply')).toHaveLength(1);
   });
 });
+
+describe('DocumentAuthoring — honest comment states and the resolution record', () => {
+  it('a failed comments read says the read failed — never "No comments yet"', async () => {
+    wire((method, url) => {
+      if (method === 'GET' && String(url).startsWith('/api/authoring/documents/D1/comments')) {
+        return fail(500, 'store unavailable');
+      }
+      return null;
+    });
+    render(<DocumentAuthoring {...props()} />);
+    expect((await screen.findAllByText('Nonclinical Overview')).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /Comments/ }));
+
+    await screen.findByText('Couldn’t load this document’s comments');
+    expect(screen.queryByText('No comments yet')).toBeNull();
+  });
+
+  it('Resolve captures an optional reason and the thread shows WHO resolved it', async () => {
+    const patches: Array<{ url: string; body: unknown }> = [];
+    let resolved = false;
+    wire((method, url, body) => {
+      if (method === 'PATCH' && url === '/api/authoring/comments/C1') {
+        patches.push({ url, body });
+        resolved = true;
+        return ok({ success: true, comment: { id: 'C1', status: 'resolved' } });
+      }
+      if (method === 'GET' && String(url).startsWith('/api/authoring/documents/D1/comments')) {
+        if (!resolved) return null; // pre-resolve: default THREAD fixture
+        return ok({
+          success: true,
+          comments: [{
+            ...THREAD.comments[0],
+            status: 'resolved',
+            resolved_by: 'qa.lead@test.co',
+            resolved_at: '2026-08-24T04:00:00Z',
+            resolution_note: 'Batch data accepted; limit justified.',
+          }],
+        });
+      }
+      return null;
+    });
+    await openCommentsRail();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Resolve' }));
+    fireEvent.change(screen.getByLabelText('Reason for resolving'), {
+      target: { value: 'Batch data accepted; limit justified.' },
+    });
+    // The confirm inside the note box (the opener is gone while it is open).
+    const confirms = screen.getAllByRole('button', { name: 'Resolve' });
+    fireEvent.click(confirms[confirms.length - 1]);
+
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({
+      status: 'resolved',
+      resolution_note: 'Batch data accepted; limit justified.',
+    });
+    // The reloaded thread renders the RECORD, not just a chip.
+    await screen.findByText(/Resolved by qa\.lead@test\.co/);
+    await screen.findByText(/Batch data accepted; limit justified\./);
+  });
+});

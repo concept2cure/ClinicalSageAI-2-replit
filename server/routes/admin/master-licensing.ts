@@ -15,6 +15,8 @@
  *   PATCH /licensing/modules/:moduleId   move a module to a different tier (or unrestricted)
  *   PATCH /licensing/tenants/:id/tier    change one tenant's plan
  *   POST  /licensing/tenants/:id/provision  apply that plan — grant what it includes
+ *   GET   /licensing/enforcement        what route enforcement is denying, or would
+ *   DELETE /licensing/enforcement       start a fresh observation window
  *
  * The per-tenant module override already existed as
  * `PATCH /tenants/:id/modules` in ./master-admin and is deliberately not
@@ -48,6 +50,11 @@ import { Router, Request, Response } from 'express';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import auditService from '../../services/auditService';
+import {
+  clearObservations,
+  enforcementReport,
+} from '../../services/entitlements/enforcement-observations';
+import { enforcementMode } from '../../middleware/moduleEntitlementGate';
 
 const logger = createScopedLogger('admin-master-licensing');
 const router = Router();
@@ -520,6 +527,67 @@ router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) 
     logger.error('tenant tier change failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to update the tenant plan.' });
   }
+});
+
+// ─── GET /licensing/enforcement — what enforcement costs ─────────────────────
+
+/**
+ * The rollout instrument for MODULE_ENFORCEMENT.
+ *
+ * The gate ships in 'report' mode: it resolves the real verdict, records every
+ * request it WOULD refuse, and serves it anyway. That measurement had nowhere
+ * to go but `logger.warn`, which made the mode useless in practice — nobody
+ * flips a live product to 'enforce' on the strength of a log grep across
+ * however many processes are running. This is where the measurement is read.
+ *
+ * Two things this response is careful about, because getting either wrong sends
+ * an operator to enable enforcement with false confidence:
+ *
+ *   - `observingSince: null` means NOTHING HAS BEEN OBSERVED YET, which is not
+ *     the same claim as "enforcement would deny nothing". The surface renders
+ *     those differently; the API refuses to collapse them.
+ *   - `perProcess: true` — a multi-process deployment has one buffer per
+ *     process and this is one of them.
+ */
+router.get('/licensing/enforcement', async (_req: Request, res: Response) => {
+  return res.json(enforcementReport(enforcementMode()));
+});
+
+/**
+ * Start a fresh observation window — after fixing packaging, an operator needs
+ * to know whether the denials STOPPED, and a buffer still holding yesterday's
+ * evidence cannot answer that.
+ *
+ * Governed like every other mutation here even though it writes no business
+ * data: discarding the evidence somebody would use to make an enforcement
+ * decision is exactly the kind of act that should leave a trace.
+ */
+router.delete('/licensing/enforcement', async (req: Request, res: Response) => {
+  const reason = normalizeReason((req.body ?? {}).reason);
+  if (!reason) {
+    return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
+  }
+
+  const before = enforcementReport(enforcementMode());
+  clearObservations();
+
+  await auditService.logAction({
+    // No tenantId: clearing the buffer is a platform-wide act, not one tenant's.
+    userId: req.userId,
+    action: 'data_modify',
+    resourceType: 'platform_config',
+    resourceId: 'module-enforcement-observations',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string,
+    details: {
+      masterAdminAction: 'enforcement.observations_cleared',
+      clearedObservations: before.observations.length,
+      clearedObservingSince: before.observingSince,
+      reason,
+    },
+  });
+
+  return res.json(enforcementReport(enforcementMode()));
 });
 
 export default router;

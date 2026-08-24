@@ -76,8 +76,10 @@ describe('AuthoredHtml', () => {
       <AuthoredHtml html={'<p>text</p><img src="/api/authoring/images/file_gone_1" alt="x">'} />,
     );
     await waitFor(() => {
+      // A 404 is a store-side refusal — the line states the actual cause the
+      // resolver reported, not a guess between two.
       expect(container.querySelector('.ed-figure-missing')?.textContent).toMatch(
-        /could not be loaded/,
+        /Couldn’t load this figure — the image store returned an error/,
       );
     });
     // The failed reference is REPLACED by the statement — no img remains.

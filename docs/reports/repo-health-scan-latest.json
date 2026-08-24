@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T04:27:02.982Z",
+  "generatedAt": "2026-08-24T04:41:24.047Z",
   "git": {
-    "sha": "540c5463db2c8cf8f000624cc6aba4279f19b4c2",
+    "sha": "2c24685e8893733a47bf99790a5878a692a1cee2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 90
+    "largeFilesByLines": 89
   },
   "findings": {
     "duplicateBasenames": [
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 270173
+        "bytes": 266371
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 157555
+        "bytes": 162344
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2197,12 +2197,12 @@
         "bytes": 145402
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 139064
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 142620
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 138922
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 139064
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2316,7 +2316,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6742
+        "lines": 6576
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3723
+        "lines": 3811
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2400,7 +2400,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2421
+        "lines": 2479
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2647,10 +2647,6 @@
         "lines": 1534
       },
       {
-        "file": "server/routes/cortex-unified.ts",
-        "lines": 1533
-      },
-      {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1531
       },
@@ -2666,7 +2662,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
       "largeByBytes": 30,
-      "largeByLines": 74
+      "largeByLines": 73
     },
     {
       "owner": "Unassigned (TBD)",
