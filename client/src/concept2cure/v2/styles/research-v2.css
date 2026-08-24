@@ -190,6 +190,16 @@
   .pd-soa-rl{display:block;font-weight:500;color:var(--text-100);}
   .pd-soa-rc{display:block;font-size:9.5px;color:var(--text-400);}
   .pd-soa-cell{cursor:pointer;height:34px;transition:background var(--dur);}
+  /* A cell is only editable once a governed reason for change is entered —
+     say so in the cursor rather than letting a click look available and do
+     nothing. */
+  .pd-soa-cell.ro{cursor:not-allowed;}
+  .pd-soa-cell.ro:hover{background:transparent;}
+  .pd-soa-cell:focus-visible{outline:2px solid var(--accent-100);outline-offset:-2px;}
+  .pd-soa-cell[aria-busy="true"]{opacity:.55;}
+  .pd-soa-reason{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);margin:0 0 12px;}
+  .pd-soa-reason input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
+  .pd-soa-reason input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
   .pd-soa-cell:hover{background:var(--accent-000);}
   .pd-soa-cell.on{background:var(--accent-000);}
   .pd-soa-x{color:var(--accent-200);font-weight:700;font-size:11px;}

@@ -15,7 +15,6 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { EsignModal } from '../../_shared/components/EsignModal';
 
 export interface Finding {
   sev?: string;
@@ -163,7 +162,7 @@ export function AuditTrail({ entries }: { entries?: AuditEntry[] }) {
 }
 
 /* toast (audit-id confirmation) — vanilla DOM, called imperatively outside
-   React's render cycle (e.g. from GovernedActionDialog's onConfirm). */
+   React's render cycle (e.g. from a governed form's submit handler). */
 let toastHost: HTMLDivElement | null = null;
 export function toast(msg: string, audit?: string): void {
   if (typeof document === 'undefined') return;
@@ -202,7 +201,7 @@ export function toast(msg: string, audit?: string): void {
  *     export function nextAudit(): string { return 'AUD-' + auditSeq++; }
  *
  * A client-side counter that minted Part 11 audit identifiers out of thin air.
- * GovernedActionDialog called it on every confirm and toasted
+ * The retired GovernedActionDialog called it on every confirm and toasted
  * "<Action> recorded · AUD-9100" — behind a dialog whose stated basis is
  * "21 CFR Part 11 e-signature", while its caller's onConfirm was a literal
  * no-op. Nothing was recorded and the identifier referred to nothing.
@@ -223,41 +222,18 @@ export interface GovernedActionResult {
   audit?: string;
 }
 
-export interface GovernedActionDialogProps {
-  open: boolean;
-  title?: string;
-  intent?: string;
-  basis?: string;
-  esign?: boolean;
-  onClose: () => void;
-  onConfirm?: (result: GovernedActionResult) => void;
-}
+/* ── GovernedActionDialog is gone ────────────────────────────────────────────
+   It had exactly one mount, in ProtocolDev.tsx, with `onConfirm={() => {}}`.
+   A user completed the whole 21 CFR Part 11 ceremony — meaning, reason for
+   change, password re-auth — the dialog closed, and nothing was written and
+   nothing was audited. Its four callers (add objective, add eligibility
+   criterion, export, finalize) now POST to the governed routers that already
+   existed for each of them, through the same C2CForm the protocol registers
+   use. An e-signature affordance with nothing behind it is worse than no
+   affordance: it teaches people that signing means something here.
 
-/** Governed action dialog — delegates to the shared EsignModal, which supports
-    21 CFR Part 11 compliance (§11.50 meaning + reason-for-change with 8-char
-    floor, §11.100 identity, §11.200 password re-auth). The prior wrapper
-    delegated to a decorative in-repo modal with fabricated hash-chain visuals
-    and 1-char reason acceptance; that modal is retired.
-
-    It still does not toast "<Action> recorded" on confirm — announcing a
-    governed action is the caller's business, because only the caller knows
-    whether it persisted and only the caller has the server-issued audit id
-    to name. `onConfirm` now fires AFTER re-auth succeeds, i.e. it can be
-    trusted as a real intent signal. */
-export function GovernedActionDialog({ open, title, onClose, onConfirm }: GovernedActionDialogProps) {
-  return (
-    <EsignModal
-      open={open}
-      action={title || 'Confirm action'}
-      target={title || 'Governed action'}
-      onClose={onClose}
-      onSign={async ({ meaning, reason }) => {
-        onConfirm?.({ reason, signed: !!meaning });
-        return { meaning, reason, signedAt: new Date().toISOString() };
-      }}
-    />
-  );
-}
+   `GovernedActionResult` above stays — the shared EsignModal's own callers use
+   that shape. */
 
 /** Tiny reusable button used across the protocol / research-admin surfaces. */
 export function Btn({
@@ -279,6 +255,6 @@ export function Btn({
 if (typeof window !== 'undefined') {
   (window as any).PG = {
     Ic, StatusBadge, Citation, FindingsList, CompletenessGate, AuditTrail,
-    GovernedActionDialog, Btn, toast, labelize, SEV_TONE, STATUS_TONE,
+    Btn, toast, labelize, SEV_TONE, STATUS_TONE,
   };
 }
