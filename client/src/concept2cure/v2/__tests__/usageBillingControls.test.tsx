@@ -58,7 +58,7 @@ afterEach(() => cleanup());
 
 /** Credits and auto-reload live on the Billing tab, not the default one. */
 async function mount() {
-  render(<UsageBilling {...(props as never)} />);
+  render(<UsageBilling {...props} />);
   await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/credits'));
   const billingTab = screen
     .getAllByRole('button')
