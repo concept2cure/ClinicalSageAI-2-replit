@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T16:57:41.073Z",
+  "generatedAt": "2026-08-24T17:00:36.100Z",
   "git": {
-    "sha": "4836820c4090f06819f03c23a5ac5dabb80c091f",
+    "sha": "c32d3c532dc41ff744b29d99e52cf4b980664317",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2182,11 +2182,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 176311
+        "bytes": 177360
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 151221
+        "bytes": 152211
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4060
+        "lines": 4082
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3432
+        "lines": 3452
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2636,7 +2636,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1553
+        "lines": 1563
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
