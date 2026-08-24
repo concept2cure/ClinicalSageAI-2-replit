@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T04:25:00.333Z",
+  "generatedAt": "2026-08-24T04:27:02.982Z",
   "git": {
-    "sha": "8aa1ee4554ea3fd707b8c65b02eb5759ceafe97a",
+    "sha": "540c5463db2c8cf8f000624cc6aba4279f19b4c2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 271164
+        "bytes": 270173
       },
       {
         "file": "server/statistics-service.ts",
@@ -2181,6 +2181,10 @@
         "bytes": 179637
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 157555
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "bytes": 150437
       },
@@ -2191,10 +2195,6 @@
       {
         "file": "server/storage.ts",
         "bytes": 145402
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 143258
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2316,7 +2316,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6782
+        "lines": 6742
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2335,16 +2335,16 @@
         "lines": 4444
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 3723
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "lines": 3555
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3472
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3392
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
