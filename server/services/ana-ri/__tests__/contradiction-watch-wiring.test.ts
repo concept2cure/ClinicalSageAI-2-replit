@@ -84,10 +84,13 @@ describe('prefetch carries the contradiction-watch block', () => {
   });
 });
 
-describe('the block flows through to the system prompt on both live routes', () => {
+describe('the block flows through to the system prompt on the live route', () => {
   // Source-contract assertions, in the repo's source-scan gate style: the
-  // orchestrator and both routes are too heavy to boot here, and what broke
+  // orchestrator and the route are too heavy to boot here, and what broke
   // before was precisely a missing hand-off line. Pin each hand-off.
+  // (/api/ana-ri/chat was deleted in 5aaa0579 — a degraded parallel turn
+  // implementation with zero callers — so /stream is the one live route this
+  // tripwire now pins, as that commit's follow-up note promised.)
   const read = (rel: string) => fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
 
   it('the orchestrator injects _contradictionWatchBlock into the system prompt', () => {
@@ -98,12 +101,10 @@ describe('the block flows through to the system prompt on both live routes', () 
     );
   });
 
-  it('both live routes hand the prefetched block to the orchestrator', () => {
-    for (const route of ['server/routes/ana-ri/chat.ts', 'server/routes/ana-ri/stream.ts']) {
-      expect(read(route), route).toMatch(
-        /_contradictionWatchBlock:\s*prefetched\w*Context\.contradictionWatchBlock/
-      );
-    }
+  it('the live route hands the prefetched block to the orchestrator', () => {
+    expect(read('server/routes/ana-ri/stream.ts')).toMatch(
+      /_contradictionWatchBlock:\s*prefetched\w*Context\.contradictionWatchBlock/
+    );
   });
 
   it('the chat-context-builder orchestrator input carries it too', () => {
