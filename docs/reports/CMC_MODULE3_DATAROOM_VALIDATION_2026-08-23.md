@@ -116,7 +116,11 @@ simulation-driven fixes in this commit.
   errors; screenshots taken at 1440 / 1280 / 768 / 430. At 430 the expanded
   rail overlays most of the viewport — pre-existing rail behavior, not
   specific to the new entry, noted for the responsive backlog.
-- `ENTITLEMENTS_ENFORCE` ships `off` and the `cmc` catalog row is
-  unrestricted (`tiers: []`), so every org resolves entitled — deliberate
-  (commercial gating = set tiers on the catalog row; per-tenant off = the
-  existing admin toggle).
+- ~~`ENTITLEMENTS_ENFORCE` ships `off` and the `cmc` catalog row is
+  unrestricted (`tiers: []`)~~ **Superseded 2026-08-24.** Both claims went
+  stale within a day: the flag that governs `/api/cmc/*` is
+  `MODULE_ENFORCEMENT` (not `ENTITLEMENTS_ENFORCE`), and the `cmc` row now
+  carries `tiers: ["professional"]` (packaging 20260823 set `standard`;
+  20260824 moved it to `professional` with grandfathering). Current truth,
+  flip sequence and dev rehearsal transcript:
+  `docs/plans/CMC_COMMERCIAL_FLIP_RUNBOOK_2026-08-24.md`.
