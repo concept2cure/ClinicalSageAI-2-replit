@@ -451,6 +451,14 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                 </div>
                 <div className="ob-rev-row">
+                  <span className="k">Organization name</span>
+                  <span className="v">
+                    {outcome.nameSaved
+                      ? 'Saved — recorded on the organization (audited).'
+                      : 'Not saved — set it in Admin → Setup.'}
+                  </span>
+                </div>
+                <div className="ob-rev-row">
                   <span className="k">Industry profile</span>
                   <span className="v">
                     {outcome.profileSaved
