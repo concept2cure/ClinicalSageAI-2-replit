@@ -111,7 +111,16 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 async function mount() {
-  render(<LabelingPI onAsk={() => {}} />);
+  /* LabelingPI destructures only onAsk, but it DECLARES the full
+     SurfaceViewProps — the render site owes the whole contract. */
+  render(
+    <LabelingPI
+      surface={{ id: 'labeling-pi', label: 'Labeling' } as never}
+      segment="biopharma"
+      onAsk={() => {}}
+      onNav={() => {}}
+    />,
+  );
   await screen.findByText('Warnings and precautions');
 }
 
