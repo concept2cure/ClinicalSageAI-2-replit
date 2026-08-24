@@ -3367,3 +3367,11 @@
    generator to open. Named in the row rather than left as a silent no-op. */
 .c2c-v2 .sp-row:disabled{cursor:default;opacity:.72;}
 .c2c-v2 .sp-row-note{font-size:10.5px;color:var(--text-400);white-space:nowrap;}
+
+/* Market access — the strategy tab states plainly that no sequencing has been
+   generated, rather than printing an invented one. */
+.c2c-v2 .ma-strat-empty{display:flex;gap:8px;align-items:flex-start;padding:12px 14px;border:1px dashed var(--border);border-radius:var(--radius-md,8px);color:var(--text-300);font-size:13px;line-height:1.6;}
+
+/* Insights — a programme-level figure stated as one, above the per-market grid
+   rather than repeated inside it. */
+.c2c-v2 .ro-dash-progline{margin:0 0 10px;font-size:12.5px;color:var(--text-300);}

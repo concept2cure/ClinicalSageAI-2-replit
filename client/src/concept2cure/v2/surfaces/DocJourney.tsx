@@ -72,7 +72,7 @@ type DjSnap = DjBriefLine | DjOutlineSnap | DjQcCheck | DjAssembleSnap | DjDocSn
 
 /* ── Sub-component: snapshot renderer ── */
 
-function DJSnapshot({ snap }: { snap: DjSnap }) {
+function DJSnapshot({ snap, doc }: { snap: DjSnap; doc?: DjDocIdentity | null }) {
   const m = snap.mode;
 
   if (m === 'brief') {
@@ -186,10 +186,28 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
           this preview, and execCommand on a non-editable region is inert. */}
       <div className={'dj-page' + (s.wm ? ' has-wm' : '')} spellCheck={false}>
         {s.wm && <div className="dj-wm" contentEditable={false}>{s.wm}</div>}
+        {/* ── The masthead was three string literals ──────────────────────────
+            "Concept2Cure Biosciences, Inc." / "2.5 Clinical Overview" /
+            "BX-204 (rezatinib) · BLA 761xyz". Every tenant opening any stage of
+            their OWN document read an invented sponsor, product and application
+            number as its header — with real content printed underneath, which
+            is what made it credible.
+
+            The identity now comes from the document record (title, module,
+            product code, version). The SPONSOR line is gone rather than
+            replaced: authoring_documents carries no sponsor, and naming the
+            wrong company on a regulatory document header is the single worst
+            thing this masthead could do. What is absent stays absent. */}
         <div className="dj-doc-mast">
-          <div className="dj-doc-spon">Concept2Cure Biosciences, Inc.</div>
-          <div className="dj-doc-title">2.5 Clinical Overview</div>
-          <div className="dj-doc-meta">BX-204 (rezatinib) · BLA 761xyz · CTD Module 2.5 · ICH M4E(R2) · {s.seal ? 'Final v1.0' : s.wm || 'Draft'}</div>
+          <div className="dj-doc-title">{doc?.title || s.heading || 'Untitled document'}</div>
+          <div className="dj-doc-meta">
+            {[
+              doc?.productCode,
+              doc?.module ? 'CTD ' + doc.module : null,
+              doc?.version ? 'v' + doc.version : null,
+              s.seal ? 'Final' : s.wm || 'Draft',
+            ].filter(Boolean).join(' · ')}
+          </div>
         </div>
         {s.seal && <div className="dj-seal">{I.checkCircle} {s.seal}</div>}
         <div className="dj-page-h">{s.heading}</div>
@@ -227,7 +245,15 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
    authoring store (authoring_documents + doc_revisions + authoring_comments +
    frozen_documents); every when/who/ver is a real column value, never
    fabricated, and a milestone the store never recorded yields no stage. */
-type DjJourneyRow = DjStage & { snap?: DjSnap | null };
+/** The document's own identity, sent on every stage row by the assembler. */
+interface DjDocIdentity {
+  title: string | null;
+  module: string | null;
+  productCode: string | null;
+  version: string | null;
+}
+
+type DjJourneyRow = DjStage & { snap?: DjSnap | null; doc?: DjDocIdentity | null };
 
 export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = () =>
@@ -347,7 +373,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 </div>
               )}
-              {snap && <DJSnapshot snap={snap} />}
+              {snap && <DJSnapshot snap={snap} doc={stage?.doc ?? null} />}
             </div>
           </div>
         </>

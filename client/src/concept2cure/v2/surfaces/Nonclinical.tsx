@@ -326,6 +326,62 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
     isNcSummary,
   );
   const summary = summaryState.data;
+
+  /* ── "Today · your queue" was three invented work items ────────────────────
+     A Pinnacle21 SD0063 reject and a study numbered CARC-701 — neither of which
+     exists in any tenant's registry — shown under a heading with an item count
+     and an error-toned badge, so every organization opening Nonclinical was
+     told it had a blocking dataset reject. Clicking "Fix" then pushed that
+     fabricated study number into the assistant.
+
+     The queue is now DERIVED from the two live reads this surface already
+     makes: studies whose SEND package has not conformed, and the Module 2.6
+     sections the summary reports as missing. An org with neither gets an empty
+     queue, which is the truth about its day — and while either read is failing
+     the queue stays empty rather than asserting "nothing outstanding" over an
+     outage. */
+  const queue = useMemo(() => {
+    if (liveStudies.loading || liveStudies.error || summaryState.loading || summaryState.error) return [];
+    const items: Array<{ ico: string; title: string; sub: string; tone: string; action: string; cmd: string }> = [];
+
+    const sendOpen = studies.filter((st) => st.send === 'in progress');
+    if (sendOpen.length) {
+      const names = sendOpen.slice(0, 3).map((st) => st.id).join(', ');
+      items.push({
+        ico: 'shieldAlert',
+        title: `SEND validation outstanding on ${sendOpen.length} ${sendOpen.length === 1 ? 'study' : 'studies'}`,
+        sub: names + (sendOpen.length > 3 ? ` and ${sendOpen.length - 3} more` : ''),
+        tone: 'err',
+        action: 'Fix',
+        cmd: `Which SEND validation findings are open on ${names}, and what has to change to make the package conform?`,
+      });
+    }
+
+    const missing = (summary?.m26 ?? []).filter((sec) => sec.st === 'missing');
+    for (const sec of missing.slice(0, 2)) {
+      items.push({
+        ico: 'fileText',
+        title: `§${sec.n} ${sec.l} not written`,
+        sub: sec.note || 'Required for a complete Module 2.6',
+        tone: 'warn',
+        action: 'Draft',
+        cmd: `Draft §${sec.n} ${sec.l} from the governed nonclinical study registry, citing each claim to its source study.`,
+      });
+    }
+
+    const gaps = summary?.gaps ?? [];
+    if (gaps.length) {
+      items.push({
+        ico: 'clock',
+        title: `${gaps.length} Module 4 ${gaps.length === 1 ? 'gap' : 'gaps'}`,
+        sub: gaps.slice(0, 3).join(' · '),
+        tone: 'info',
+        action: 'Review',
+        cmd: 'Walk me through the open Module 4 gaps and what closes each one.',
+      });
+    }
+    return items;
+  }, [liveStudies.loading, liveStudies.error, summaryState.loading, summaryState.error, studies, summary]);
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -467,11 +523,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
         'Show the gap to a complete Module 4',
       ]}
       primary={<button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add study</button>}
-      queue={[
-        { ico: 'shieldAlert', title: 'SEND LB dataset — Reject', sub: 'Pinnacle21 rule SD0063 — blocks Module 5 crosswalk', tone: 'err', action: 'Fix', cmd: 'Fix the SEND LB dataset reject (rule SD0063) and re-validate the package' },
-        { ico: 'fileText', title: '§2.6.6 toxicology written summary drafting', sub: 'Carcinogenicity subsection held for CARC-701', tone: 'warn', action: 'Continue', cmd: 'Continue drafting the §2.6.6 toxicology written summary from the locked study reports' },
-        { ico: 'clock', title: 'CARC-701 terminal necropsy pending', sub: 'Gates the 2.6.6 carcinogenicity subsection', tone: 'info', action: 'Status', cmd: 'Status of CARC-701 and its impact on the 2.6.6 carcinogenicity subsection' },
-      ]}
+      queue={queue}
       onAsk={ask}
     >
       <div className="sp-sec">
