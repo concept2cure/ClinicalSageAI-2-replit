@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import regulatoryIR from './regulatoryIR.js';
+/* regulatoryIR is DELETED, not moved: it was written against a reg_questions
+ * shape this schema does not have (sub_id/q_id/final_md…), so every route it
+ * served failed at the database; it carried no tenant scoping on any query;
+ * and its delete was "gated" by a client-controlled request header. The live
+ * table's governed writes are server/routes/cmc-agency-questions.routes.ts
+ * (mounted at /api/cmc/agency-questions), and the board serves the reads. */
 import portfolio from './portfolio.js';
 import playbookRoutes from './playbookRoutes.js';
 import { pool } from '../../db.js';
@@ -737,8 +742,6 @@ function extractMitigationStrategies(text: string): string[] {
   return ['Early risk identification', 'Robust development approach'];
 }
 
-// Mount regulatory IR routes
-router.use('/regulatory', regulatoryIR);
 // Mount portfolio routes
 router.use('/portfolio', portfolio);
 // Mount playbook routes
