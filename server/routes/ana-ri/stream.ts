@@ -52,17 +52,24 @@ import { buildMemoryContextForChat } from '../../services/memory-context-assembl
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
-import { directiveFromToolResult } from '../../services/ana-ri/navigation-actions.js';
+import {
+  directiveFromToolResult,
+  surfaceActionFromToolResult,
+} from '../../services/ana-ri/navigation-actions.js';
 import {
   resolveDriveState,
   buildDriveStateEvent,
   buildDriveNavigationEvent,
+  buildDriveActionEvent,
   buildLiveDrivePromptBlock,
   auditDriveNavigation,
-  MAX_DRIVE_NAVIGATIONS,
+  auditDriveAction,
+  driveBudgetFor,
+  DEMO_MAX_ROUNDS,
 } from '../../services/ana-ri/live-drive.js';
 import auditService from '../../services/auditService.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
   runAgenticToolLoop,
   resolveMaxRounds,
@@ -154,6 +161,7 @@ export function mountStreamRoute(router: Router): void {
         model_override,
         effort_level,
         live_drive,
+        drive_mode,
       } = req.body;
 
       if (!message || typeof message !== 'string') {
@@ -270,12 +278,15 @@ export function mountStreamRoute(router: Router): void {
 
       // ── Live Drive (opt-in screen driving) ─────────────────────────────
       // The client sends `live_drive: true` only while the person has the
-      // toggle on. Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes)
-      // is resolved in parallel with context assembly; a deny is an honest
-      // `drive_state` event, never a dead turn. No request → zero queries.
+      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
+      // demonstration (bigger budgets, demo prompt block — same entitlement).
+      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
+      // in parallel with context assembly; a deny is an honest `drive_state`
+      // event, never a dead turn. No request → zero queries.
       const driveStatePromise = resolveDriveState(
         live_drive === true,
         orgId != null ? Number(orgId) : null,
+        { driveMode: drive_mode },
       );
 
       // ── Intelligence answer fast-path ──────────────────────────────────
@@ -503,7 +514,9 @@ export function mountStreamRoute(router: Router): void {
       }
       const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
       const streamVolatileSuffix =
-        memoryBlock + enrichment.block + (driveState.enabled ? buildLiveDrivePromptBlock() : '');
+        memoryBlock +
+        enrichment.block +
+        (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : '');
 
       // Thread resolution (before message building so we can load server history)
       let threadId = thread_id;
@@ -849,10 +862,17 @@ export function mountStreamRoute(router: Router): void {
       // services/ana-ri/navigation-actions.ts for why it is tool-driven and offered
       // rather than performed.
       const collectedNavigation: NavigationDirective[] = [];
+      // Validated surface-action directives from `act_on_screen` this turn —
+      // same carrier contract: offered as chips by post-processing, applied
+      // live under Drive within the mode's action budget.
+      const collectedSurfaceActions: SurfaceActionDirective[] = [];
       // Live Drive: how many directives were emitted for immediate application
-      // this turn. Shares the chips' budget (MAX_DRIVE_NAVIGATIONS) so driving
-      // can never move a person more times than offering would have offered.
+      // this turn, per kind. Budgets come from the shared per-mode policy
+      // (assist = the chip budget, so driving can never move a person more
+      // times than offering would have offered; demo = a full-tour allowance).
+      const driveBudget = driveBudgetFor(driveState.mode);
       let driveNavigationsApplied = 0;
+      let driveActionsApplied = 0;
       // Document drafts emitted this turn — persisted to the governed artifact
       // version history (concept2cure_artifacts / _artifact_versions) by
       // post-processing so Document Studio version history survives the session.
@@ -876,7 +896,13 @@ export function mountStreamRoute(router: Router): void {
       const streamThinkingResolved = resolveThinkingConfig({
         effort: effortUsed,
         riskTier: routingPlan.riskTier,
-        substantive: substantiveTurn,
+        // A demonstration turn runs a validated script — per-round private
+        // reasoning would only slow the tour down, so demo drops the
+        // substantive nudge. High-stakes ('high' riskTier) and an explicit
+        // Thorough effort still reason: resolveThinkingConfig enables those
+        // regardless of this flag, so governance keeps its floor.
+        substantive:
+          substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
       });
       const streamThinkingConfig = streamThinkingResolved.enabled
         ? streamThinkingResolved
@@ -902,9 +928,24 @@ export function mountStreamRoute(router: Router): void {
         filterToolsByPolicy(allTools, toolPolicy),
         typeof message === 'string' ? message : '',
         {
-          pinned: Array.isArray(selected_tools)
-            ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
-            : undefined,
+          // A driving turn MUST be offered the self-drive tools whatever the
+          // message's wording scores — a demo ask like "run the sales demo"
+          // must never lose navigate_to/act_on_screen to relevance trimming.
+          pinned: [
+            ...(Array.isArray(selected_tools)
+              ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
+              : []),
+            ...(driveState.enabled
+              ? [
+                  'list_app_screens',
+                  'navigate_to',
+                  'list_screen_actions',
+                  'act_on_screen',
+                  'list_demo_scripts',
+                  'start_product_demo',
+                ]
+              : []),
+          ],
           context: {
             projectType: asStr(submission_type),
             documentType: asStr(document_context),
@@ -1154,9 +1195,9 @@ export function mountStreamRoute(router: Router): void {
                   collectedNavigation.push(directive);
                   // Live Drive: the person opted in and is entitled, so the
                   // directive is ALSO emitted now for immediate application —
-                  // capped, audited, and re-validated client-side against the
-                  // same shared registry before the screen moves.
-                  if (driveState.enabled && driveNavigationsApplied < MAX_DRIVE_NAVIGATIONS) {
+                  // budgeted per mode, audited, and re-validated client-side
+                  // against the same shared registry before the screen moves.
+                  if (driveState.enabled && driveNavigationsApplied < driveBudget.navigations) {
                     driveNavigationsApplied += 1;
                     res.write(
                       `data: ${JSON.stringify(buildDriveNavigationEvent(directive, round))}\n\n`
@@ -1169,6 +1210,34 @@ export function mountStreamRoute(router: Router): void {
                         runId,
                         round,
                         directive,
+                        driveMode: driveState.mode,
+                      },
+                      entry => auditService.logAction(entry)
+                    );
+                  }
+                }
+                // A validated surface action AnA resolved this turn — the same
+                // carrier contract as navigation: chip via post-processing,
+                // applied live under Drive within the mode's action budget,
+                // audited per applied operation, client re-validates and only
+                // performs through a handler the mounted surface registered.
+                const actionDirective = surfaceActionFromToolResult(toolUse.name, resultStr);
+                if (actionDirective) {
+                  collectedSurfaceActions.push(actionDirective);
+                  if (driveState.enabled && driveActionsApplied < driveBudget.actions) {
+                    driveActionsApplied += 1;
+                    res.write(
+                      `data: ${JSON.stringify(buildDriveActionEvent(actionDirective, round))}\n\n`
+                    );
+                    auditDriveAction(
+                      {
+                        organizationId: orgId,
+                        userId: userId ?? null,
+                        threadId,
+                        runId,
+                        round,
+                        directive: actionDirective,
+                        driveMode: driveState.mode,
                       },
                       entry => auditService.logAction(entry)
                     );
@@ -1447,7 +1516,13 @@ export function mountStreamRoute(router: Router): void {
           // The ceiling is soft — a loop still discovering novel ground earns up
           // to resolveRoundExtension() extra rounds; a circling loop never does.
           {
-            maxRounds: resolveMaxRounds(effortUsed),
+            // Demo mode raises (never lowers) the ceiling: a narrated tour
+            // spends roughly one round per stop, so a full script must not be
+            // cut off at the effort ceiling mid-demonstration.
+            maxRounds:
+              driveState.enabled && driveState.mode === 'demo'
+                ? Math.max(resolveMaxRounds(effortUsed), DEMO_MAX_ROUNDS)
+                : resolveMaxRounds(effortUsed),
             progressExtension: resolveRoundExtension(effortUsed),
           }
         );
@@ -1556,6 +1631,7 @@ export function mountStreamRoute(router: Router): void {
         toolEvidenceCorpus,
         collectedProvenance,
         collectedNavigation,
+        collectedSurfaceActions,
         collectedDrafts,
         messages,
         model: gwResponse.model,

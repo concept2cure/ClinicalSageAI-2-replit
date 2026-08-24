@@ -72,7 +72,7 @@ type DjSnap = DjBriefLine | DjOutlineSnap | DjQcCheck | DjAssembleSnap | DjDocSn
 
 /* ── Sub-component: snapshot renderer ── */
 
-function DJSnapshot({ snap }: { snap: DjSnap }) {
+function DJSnapshot({ snap, doc }: { snap: DjSnap; doc?: DjDocIdentity | null }) {
   const m = snap.mode;
 
   if (m === 'brief') {
@@ -145,51 +145,56 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
   const s = snap as DjDocSnap;
   return (
     <>
-      {/* The toolbar is the visual language of a document preview and stays —
-          but its buttons are DISABLED, not wired to anything. They used to
-          fire document.execCommand against a non-editable region: inert by
-          accident. A control that cannot act renders as one that cannot act.
-          (That also removed the last execCommand calls in the client — the
-          canonical editor is v2/editor/RichSectionEditor.) */}
+      {/* ── The formatting toolbar is gone ─────────────────────────────────
+          It was a paragraph-style select and eight buttons — bold, italic,
+          underline, two list kinds, quote, table, and a "Track changes" pill —
+          on a preview that has no save path of any kind (its only request is
+          GET /api/doc-journey).
+
+          A previous pass marked them `disabled`, which was right and not
+          enough: none of the `.dj-tb-*` rules carry a `:disabled` state, so
+          every one still lifted on hover and read as an armable control on a
+          regulated document. Nine affordances that can never act, kept for
+          "visual language", teach a reader that this screen edits documents.
+
+          What replaces them is what is true, and the way out. The stage header
+          above already carries the real "Open in editor" — this states the
+          constraint the toolbar was pantomiming around. */}
+      {/* One statement, not two. The version beside it is the DOCUMENT's, from
+          the record — it used to be the literal 'v1.0' whenever the stage was
+          sealed, so a frozen document at v3 was labelled v1.0. */}
       <div className="dj-toolbar">
-        <select className="dj-tb-sel" defaultValue="h" title="Read-only preview" disabled>
-          <option value="t">Title</option>
-          <option value="h">Heading 1</option>
-          <option value="h2">Heading 2</option>
-          <option value="b">Body text</option>
-        </select>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Read-only preview" disabled><b>B</b></button>
-        <button className="dj-tb-b" title="Read-only preview" disabled><i>I</i></button>
-        <button className="dj-tb-b" title="Read-only preview" disabled><span style={{ textDecoration: 'underline' }}>U</span></button>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Read-only preview" disabled>{I.list}</button>
-        <button className="dj-tb-b" title="Read-only preview" disabled>1.</button>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-b" title="Read-only preview" disabled>{I.quote}</button>
-        <button className="dj-tb-b" title="Read-only preview" disabled>{I.grid}</button>
-        <span className="dj-tb-sep" />
-        <button className="dj-tb-tc" title="Read-only preview" disabled><span className="dj-tb-dot" />Track changes</button>
-        {/* Was: a green-check "Autosaved · v1.0" pill. This surface has no save
-            path of any kind — its only request is GET /api/doc-journey. The
-            page below carried `contentEditable` with no onInput, no state and
-            no write, so anything typed was lost on reload AND on any re-render
-            (selecting another stage re-renders s.body straight over the DOM).
-            The pill asserted the opposite of what happened. */}
-        <span className="dj-tb-save" title="This preview does not save. Author in Document Authoring.">
-          Read-only preview · {s.seal ? 'v1.0' : s.wm ? s.wm.replace('DRAFT ', '') : 'v0.x'}
+        <span className="dj-tb-ro">
+          {I.lock} Read-only preview{doc?.version ? ' · v' + doc.version : ''} — open this section
+          in the editor to change it.
         </span>
       </div>
-      {/* contentEditable removed with the same justification: an editable
-          surface that cannot save is a trap, not a feature. The formatting
-          toolbar above is left in place because it is the visual language of
-          this preview, and execCommand on a non-editable region is inert. */}
+      {/* contentEditable was removed for the same reason the toolbar was: an
+          editable surface that cannot save is a trap, not a feature. */}
       <div className={'dj-page' + (s.wm ? ' has-wm' : '')} spellCheck={false}>
         {s.wm && <div className="dj-wm" contentEditable={false}>{s.wm}</div>}
+        {/* ── The masthead was three string literals ──────────────────────────
+            "Concept2Cure Biosciences, Inc." / "2.5 Clinical Overview" /
+            "BX-204 (rezatinib) · BLA 761xyz". Every tenant opening any stage of
+            their OWN document read an invented sponsor, product and application
+            number as its header — with real content printed underneath, which
+            is what made it credible.
+
+            The identity now comes from the document record (title, module,
+            product code, version). The SPONSOR line is gone rather than
+            replaced: authoring_documents carries no sponsor, and naming the
+            wrong company on a regulatory document header is the single worst
+            thing this masthead could do. What is absent stays absent. */}
         <div className="dj-doc-mast">
-          <div className="dj-doc-spon">Concept2Cure Biosciences, Inc.</div>
-          <div className="dj-doc-title">2.5 Clinical Overview</div>
-          <div className="dj-doc-meta">BX-204 (rezatinib) · BLA 761xyz · CTD Module 2.5 · ICH M4E(R2) · {s.seal ? 'Final v1.0' : s.wm || 'Draft'}</div>
+          <div className="dj-doc-title">{doc?.title || s.heading || 'Untitled document'}</div>
+          <div className="dj-doc-meta">
+            {[
+              doc?.productCode,
+              doc?.module ? 'CTD ' + doc.module : null,
+              doc?.version ? 'v' + doc.version : null,
+              s.seal ? 'Final' : s.wm || 'Draft',
+            ].filter(Boolean).join(' · ')}
+          </div>
         </div>
         {s.seal && <div className="dj-seal">{I.checkCircle} {s.seal}</div>}
         <div className="dj-page-h">{s.heading}</div>
@@ -227,7 +232,15 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
    authoring store (authoring_documents + doc_revisions + authoring_comments +
    frozen_documents); every when/who/ver is a real column value, never
    fabricated, and a milestone the store never recorded yields no stage. */
-type DjJourneyRow = DjStage & { snap?: DjSnap | null };
+/** The document's own identity, sent on every stage row by the assembler. */
+interface DjDocIdentity {
+  title: string | null;
+  module: string | null;
+  productCode: string | null;
+  version: string | null;
+}
+
+type DjJourneyRow = DjStage & { snap?: DjSnap | null; doc?: DjDocIdentity | null };
 
 export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = () =>
@@ -347,7 +360,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 </div>
               )}
-              {snap && <DJSnapshot snap={snap} />}
+              {snap && <DJSnapshot snap={snap} doc={stage?.doc ?? null} />}
             </div>
           </div>
         </>

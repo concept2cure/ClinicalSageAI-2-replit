@@ -9,6 +9,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
+import { shellProgramName } from '../shellProject';
 
 /* ── Display types — aligned to the GET /api/haq-manager/rounds contract.
    server/routes/haq-manager.ts maps the governed HAQ store (feature store over
@@ -75,6 +76,13 @@ const EMPTY_QUESTIONS: Record<string, HaqQuestion[]> = {};
 /* ════ HaqManager -- Health Authority Questions response workbench ════ */
 
 export function HaqManager({ onAsk }: SurfaceViewProps) {
+  /* The open programme, named as a person would say it — never a hardcoded
+     product. `null` when no programme is open, and every caller below phrases
+     its request without one rather than substituting a placeholder: an
+     assistant that has to ask which programme beats one confidently answering
+     about the wrong one. */
+  const program = shellProgramName();
+
   /* Live governed HAQ store — the authority letters as "rounds" plus their
      questions grouped by round (server/routes/haq-manager.ts → GET /rounds).
      useLiveData unwraps the `{ data }` success envelope, so the payload is the
@@ -575,7 +583,13 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                       className="haq-act"
                       onClick={() =>
                         onAsk(
-                          `Refine the ${q.id} response to the ${round?.agency} ${round?.type} for BX-204`,
+                          /* `for BX-204` was a string literal, so refining any
+                             tenant's agency response asked about a demo
+                             programme. The round already knows its own
+                             submission — that is the real answer, and the open
+                             programme is the fallback. */
+                          `Refine the ${q.id} response to the ${round?.agency} ${round?.type}` +
+                            (round?.submission ? ` for ${round.submission}` : program ? ` for ${program}` : ''),
                         )
                       }
                     >

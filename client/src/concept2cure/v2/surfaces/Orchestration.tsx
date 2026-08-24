@@ -34,6 +34,10 @@ interface OrchStep {
 
 interface OrchRun {
   id: string;
+  /** The template this run executed. Carried so "Retry"/"Replay" can start the
+   *  same workflow again — without it neither button could name what to run,
+   *  which is why both were `noop`. */
+  templateId: string | null;
   title: string;
   status: string;
   started: string;
@@ -198,6 +202,7 @@ export function mapRuns(payload: unknown, tplNames: Record<string, string>): Orc
     .sort((a, b) => String(b.startedAt ?? '').localeCompare(String(a.startedAt ?? '')))
     .map((x): OrchRun => ({
       id: x.executionId,
+      templateId: typeof x.templateId === 'string' && x.templateId ? x.templateId : null,
       title: tplNames[String(x.templateId)] || String(x.templateId || 'workflow').replace(/_/g, ' '),
       status: x.status,
       started: fmtWhen(x.startedAt),
@@ -294,6 +299,9 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   /* ── Live adoption — every panel fixture-free (real → empty → error) ── */
   const prog = useOrchProgram();
   const pid = prog ? prog.pid : null;
+  const [newRunOpen, setNewRunOpen] = useState(false);
+  /** Bumped after a run is created, so the board is re-read from the engine. */
+  const [runsEpoch, setRunsEpoch] = useState(0);
   const progLabel = prog ? prog.label : null;
 
   // Template names give live runs their registered display titles (real
@@ -304,6 +312,14 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     const m: Record<string, string> = {};
     if (Array.isArray(t)) for (const x of t) if (x?.templateId && x?.name) m[x.templateId] = x.name;
     return m;
+  }, [tplState.data]);
+  /** The registered templates a new run can be started from, in registry order. */
+  const templates = useMemo(() => {
+    const t = (tplState.data as { templates?: Array<{ templateId?: string; name?: string; description?: string }> } | null)?.templates;
+    return Array.isArray(t)
+      ? t.filter((x): x is { templateId: string; name: string; description?: string } =>
+          typeof x?.templateId === 'string' && typeof x?.name === 'string')
+      : [];
   }, [tplState.data]);
 
   // Readiness — the computed ReadinessAssessment (real object / honest empty /
@@ -322,7 +338,10 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   // run controls can update optimistically (FLAGGED mock actions, see below);
   // seeded from the mapped live rows and re-seeded only when their identity
   // changes, so the seed effect can't loop on useLiveData's fresh null/[].
-  const runsState = useLiveData<unknown>(pid == null ? null : `/api/orchestration/project/${pid}`, [pid]);
+  const runsState = useLiveData<unknown>(
+    pid == null ? null : `/api/orchestration/project/${pid}`,
+    [pid, runsEpoch],
+  );
   const runsMapped = useMemo(
     () => (!runsState.loading && !runsState.error ? mapRuns(runsState.data, tplNames) : null),
     [runsState.loading, runsState.error, runsState.data, tplNames],
@@ -412,6 +431,51 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
+  /**
+   * Start a workflow run — POST /api/orchestration/execute.
+   *
+   * This is what "New run", "Retry" and "Replay" all are. The header CTA was
+   * hardcoded `disabled` with no onClick at all, on the surface whose entire
+   * purpose is workflow runs; Retry and Replay were `noop` behind a disabled
+   * flag because the display row did not carry the templateId they would need.
+   *
+   * Retry and Replay are stated as what they ARE: a NEW run of the same
+   * template against the same project. The engine keeps no resumable state for
+   * a finished run, so calling either of them "resuming" would be a claim about
+   * the record that is not true — the new run gets its own id and its own
+   * audit chain, and the failed or completed one stays exactly as it is.
+   */
+  const startRun = async (templateId: string, label: string) => {
+    if (busyRun || pid == null) return;
+    setBusyRun('new:' + templateId);
+    setRunErr('');
+    try {
+      const res = await apiRequest('POST', '/api/orchestration/execute', {
+        templateId,
+        projectId: pid,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        const detail = serverMessage(json);
+        setRunErr(`Couldn’t start ${label}${detail ? ` — ${detail}` : ` (HTTP ${res.status})`}. No run was created.`);
+        return;
+      }
+      setNewRunOpen(false);
+      // Re-read rather than appending a client-built row: the run that appears
+      // is the one the engine actually created, with its real id and status.
+      setRunsEpoch((n) => n + 1);
+    } catch (e) {
+      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
+      setRunErr(
+        known && (e as Error).message
+          ? (e as Error).message
+          : `Couldn’t reach the orchestration service. ${label} was not started.`,
+      );
+    } finally {
+      setBusyRun('');
+    }
+  };
+
   /* Pause / Resume / Retry / Replay and the approval decisions are NOT wired,
      and are no longer pretended.
      - The run controls used to call setRunStatus, relabelling a server-side run
@@ -433,7 +497,17 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
      The RUN controls below stay disabled with a visible reason, rather than
      removed: the run is real and worth showing, and hiding the control would
      hide the fact that no pause/resume path exists. */
-  const UNWIRED_RUN = 'Not available yet — orchestration supports execute and cancel only.';
+  /* Pause and Resume genuinely have no path: workflow-orchestrator runs a
+     template's steps through one loop and keeps no resumable state, so there is
+     nothing for a pause to hold or a resume to pick up. The control stays
+     visible with the specific reason — the run state it belongs to is real, and
+     hiding it would hide that no pause exists.
+
+     "Retry" and "Replay" ARE available, because both mean the same thing the
+     engine can actually do: run the template again. They no longer say
+     "unwired". */
+  const NO_PAUSE = 'The workflow engine has no pause: a run executes its steps in one pass and keeps no resumable state. Cancel it and start a new run instead.';
+  const NO_TEMPLATE = 'This run does not record which template it executed, so it cannot be run again from here.';
 
   /**
    * Record this user's decision on a gate — POST /api/orchestration/checkpoints/:id/decision.
@@ -532,12 +606,19 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const noop = () => undefined;
   const ctrlsFor = (x: OrchRun): CtrlTuple[] => {
     const cancel: CtrlTuple = ['Cancel', 'close', () => void cancelRun(x.id), false, busyRun === x.id];
-    if (x.status === 'running') return [['Pause', 'pause', noop, false, false, UNWIRED_RUN], cancel];
-    if (x.status === 'paused') return [['Resume', 'play', noop, true, false, UNWIRED_RUN], cancel];
-    if (x.status === 'failed') return [['Retry', 'rotateCw', noop, true, false, UNWIRED_RUN]];
+    /* Retry / Replay = a NEW run of the same template, which is what the engine
+       can do and what the label is now understood to mean. Disabled only when
+       the run does not record its template, with that stated. */
+    const again = (label: string, primary: boolean): CtrlTuple =>
+      x.templateId
+        ? [label, 'rotateCw', () => void startRun(x.templateId as string, `${label} of ${x.title}`), primary, busyRun === 'new:' + x.templateId]
+        : [label, 'rotateCw', noop, primary, false, NO_TEMPLATE];
+    if (x.status === 'running') return [['Pause', 'pause', noop, false, false, NO_PAUSE], cancel];
+    if (x.status === 'paused') return [['Resume', 'play', noop, true, false, NO_PAUSE], cancel];
+    if (x.status === 'failed') return [again('Retry', true)];
     if (x.status === 'awaiting_approval') return [['Open gate', 'shieldCheck', () => setView('approvals'), true]];
-    if (x.status === 'completed') return [['Replay', 'rotateCw', noop, false, false, UNWIRED_RUN]];
-    if (x.status === 'cancelled') return [['Retry', 'rotateCw', noop, true, false, UNWIRED_RUN]];
+    if (x.status === 'completed') return [again('Replay', false)];
+    if (x.status === 'cancelled') return [again('Retry', true)];
     return [];
   };
 
@@ -570,6 +651,42 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="page-inner orch">
+      {newRunOpen && (
+        <div className="orch-newrun-bd" onClick={() => setNewRunOpen(false)}>
+          <div
+            className="orch-newrun"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Start a workflow run"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="orch-newrun-h">Start a workflow run</div>
+            <p className="orch-newrun-sub">
+              Runs against {progLabel || 'the open program'}. Every step, object touched and output
+              is recorded for Part 11 traceability.
+            </p>
+            <div className="orch-newrun-list">
+              {templates.map((t) => (
+                <button
+                  key={t.templateId}
+                  className="orch-newrun-t"
+                  disabled={Boolean(busyRun)}
+                  onClick={() => void startRun(t.templateId, t.name)}
+                >
+                  <span className="orch-newrun-tn">{t.name}</span>
+                  {t.description && <span className="orch-newrun-td">{t.description}</span>}
+                  <span className="orch-newrun-go">
+                    {busyRun === 'new:' + t.templateId ? 'Starting…' : I.right}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="orch-newrun-f">
+              <button className="btn ghost" onClick={() => setNewRunOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Orchestration{progLabel ? <> {I.dot} {progLabel}</> : null}</div>
@@ -583,7 +700,28 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
               mounted, but it requires a templateId AND a projectId, i.e. a
               template-selection step this surface does not have. Until that
               exists the button says so rather than silently ignoring the click. */}
-          <button className="btn primary" disabled title="Starting a run needs a workflow template to be chosen first — not available from this surface yet.">{I.workflow} New run</button>
+          {/* ── The primary CTA of the whole surface was hardcoded disabled ──
+              `disabled` with no onClick at all, on the screen whose entire
+              purpose is workflow runs. Its title said starting one "needs a
+              workflow template to be chosen first" — which is true, and is a
+              picker, not a reason to have no button.
+              POST /api/orchestration/execute and GET /api/orchestration/templates
+              both existed; the surface already READ the templates, to title the
+              runs. */}
+          <button
+            className="btn primary"
+            onClick={() => setNewRunOpen(true)}
+            disabled={pid == null || templates.length === 0 || Boolean(busyRun)}
+            title={
+              pid == null
+                ? 'Open a program to start a workflow run against it.'
+                : templates.length === 0
+                  ? 'No workflow templates are registered in this deployment.'
+                  : undefined
+            }
+          >
+            {I.workflow} New run
+          </button>
         </div>
       </div>
 

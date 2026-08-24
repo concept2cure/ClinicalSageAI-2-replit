@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState, ErrorState } from '../dataConnect';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
@@ -9,6 +9,7 @@ import {
 } from '@shared/constants/domain/product-types';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { publishShellProject } from '../shellProject';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
@@ -979,6 +980,72 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     } catch (_) { /* noop */ }
     onNav('project-home');
   };
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     projects.*). Every handler drives the SAME state the human's own controls
+     drive (openProj / setWs / setStatus / setView), so there is no second
+     path; misses are honest refusals, never guesses. */
+  /* One guard for all three: while the wizard owns the canvas, a person may be
+     mid-form — AnA operating the portfolio underneath (or navigating away)
+     would discard their work. Honest refusal instead. */
+  const wizardGuard = () =>
+    wizardOpen ? { ok: false as const, reason: 'The new-project wizard is open — close it first.' } : null;
+  useSurfaceActionHandlers('projects', {
+    'projects.open-program': (params) => {
+      const guarded = wizardGuard();
+      if (guarded) return guarded;
+      const wanted = (params.program ?? '').trim().toLowerCase();
+      if (!wanted) return { ok: false, reason: 'No program named.' };
+      // Not-ready, not failed: the bus holds the directive and re-attempts on
+      // this surface's ready signal below — the navigate→act gap.
+      if (live.loading)
+        return { ok: false, reason: 'The portfolio is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The portfolio could not be read.' };
+      const exact = projects.find(
+        (p) => p.code.toLowerCase() === wanted || p.title.toLowerCase() === wanted,
+      );
+      const contains = exact
+        ? []
+        : projects.filter(
+            (p) => p.title.toLowerCase().includes(wanted) || p.code.toLowerCase().includes(wanted),
+          );
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.program}" matches ${contains.length} programs — name one exactly.`
+              : `No program named "${params.program}" in this portfolio.`,
+        };
+      }
+      openProj(match);
+      return { ok: true, detail: `Opened ${match.code} — ${match.title}` };
+    },
+    'projects.filter': (params) => {
+      const guarded = wizardGuard();
+      if (guarded) return guarded;
+      const applied: string[] = [];
+      if (params.workstream) { setWs(params.workstream); applied.push(`workstream ${params.workstream}`); }
+      if (params.status) { setStatus(params.status); applied.push(`status ${params.status}`); }
+      if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
+      return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
+    },
+    'projects.set-view': (params) => {
+      const guarded = wizardGuard();
+      if (guarded) return guarded;
+      if (params.view !== 'grid' && params.view !== 'list') {
+        return { ok: false, reason: 'View must be grid or list.' };
+      }
+      setView(params.view);
+      return { ok: true, detail: `Switched to the ${params.view} view` };
+    },
+  });
+  /* The ready signal for the retry contract above: when the portfolio read
+     settles, a held not-ready open-program gets its one re-attempt. */
+  useEffect(() => {
+    if (!live.loading) notifySurfaceActionReady('projects');
+  }, [live.loading]);
 
   /* The wizard takes the canvas instead of floating over it. Placed after every
      hook above, so the hook order is identical in both branches. It is a state

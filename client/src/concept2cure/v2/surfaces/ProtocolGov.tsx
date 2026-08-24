@@ -136,12 +136,33 @@ export function CompletenessGate({
   );
 }
 
-/** Audit trail panel (right pane). */
+/**
+ * Audit trail panel (right pane).
+ *
+ * ── The fallback was a fabricated Part 11 record ────────────────────────────
+ * With no entries this rendered two invented ones — a person who does not
+ * exist ("J. Chen"), audit ids that trace to nothing (AUD-7743, AUD-7740) and
+ * truncated sha256 hashes — in a panel whose entire purpose is to show a
+ * tenant their tamper-evident audit history. A reader cannot tell an invented
+ * entry from a real one; that is what makes it worse than an empty panel.
+ *
+ * It fails closed now. No entries means no entries, said plainly. An audit
+ * trail that shows something when it has nothing is not an audit trail.
+ *
+ * (The org's REAL audit history is AdminSurfaces' AuditTrail over
+ * GET /api/mdx/audit. This panel takes entries a caller already holds.)
+ */
 export function AuditTrail({ entries }: { entries?: AuditEntry[] }) {
-  const list = entries && entries.length ? entries : [
-    { actor: 'AnA', action: 'Drafted §2.3 rationale', when: '2m ago', audit: 'AUD-7743', hash: 'sha256:1f9c…' },
-    { actor: 'J. Chen', action: 'Updated endpoint timing', when: '18m ago', audit: 'AUD-7740', hash: 'sha256:0b22…' },
-  ];
+  const list = entries ?? [];
+  if (list.length === 0) {
+    return (
+      <div className="pg-audit">
+        <div className="pg-audit-empty">
+          No audit entries have been recorded against this record yet.
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="pg-audit">
       {list.map((e, i) => (

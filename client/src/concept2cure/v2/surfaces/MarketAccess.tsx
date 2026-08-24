@@ -4,6 +4,7 @@ import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
+import { shellProgramName } from '../shellProject';
 
 /* One payer/HTA position — the read shape of GET /api/market-access, one row per
    market × payer position per program from the REAL org-scoped store
@@ -46,6 +47,13 @@ function posSub(p: PayerPosition): string {
 /* ════ MarketAccess -- market access & reimbursement surface ════ */
 
 export function MarketAccess({ onAsk }: SurfaceViewProps) {
+  /* The open programme, named as a person would say it — never a hardcoded
+     product. `null` when no programme is open, and every caller below phrases
+     its request without one rather than substituting a placeholder: an
+     assistant that has to ask which programme beats one confidently answering
+     about the wrong one. */
+  const program = shellProgramName();
+
   const [tab, setTab] = useState('coverage');
   const ask = (q: string) => onAsk && onAsk(q);
 
@@ -136,7 +144,14 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
         <button
           className="reg-cta"
           onClick={() =>
-            ask('Build a US + EU market-access plan for the BX-204 CGM')
+            /* Was `'…for the BX-204 CGM'` — a hardcoded demo product AND a
+               hardcoded device type, so the plan came back about a continuous
+               glucose monitor the customer does not have. */
+            ask(
+              program
+                ? `Build a US + EU market-access plan for ${program}`
+                : 'Build a US + EU market-access plan for my programme'
+            )
           }
         >
           {I.sparkles} Plan with AnA
@@ -331,34 +346,36 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
 
       {tab === 'strategy' && (
         <div className="reg-panel reg-panel-pad">
+          {/* ── This was four bullets of invented market-access advice ────────
+              "AnA's access sequencing for BX-204, positioned against Libre 3 on
+              cost-comparability" — with a specific HCPCS code (E2103), a named
+              competitor, a "~30% list gap" and a four-market sequence, rendered
+              as though AnA had analysed the reader's own programme. None of it
+              was: it was a string literal, identical for every tenant, and the
+              heading above it claimed authorship.
+
+              Fabricated reimbursement strategy is not a cosmetic problem — a
+              customer acting on "no new NCD needed" for a product that has one
+              is a commercial decision made on invented evidence.
+
+              There is no market-access analysis endpoint to read instead, so
+              the surface says what is true: AnA has not produced a sequencing
+              analysis for this programme, and here is how to ask for one. */}
           <div className="ma-strat">
-            <p>
-              AnA's access sequencing for BX-204, positioned against Libre 3 on
-              cost-comparability:
+            <p className="ma-strat-empty">
+              {I.info || I.alertTriangle} No access sequencing has been generated for
+              {program ? <> <b>{program}</b></> : ' this programme'} yet. Sequencing depends on the
+              coverage landscape, the comparator set and the pricing position for your own
+              product — nothing here is pre-computed, and a generic sequence would be a
+              commercial recommendation made about a product this platform has not analysed.
             </p>
-            <ul>
-              <li>
-                <b>US first</b> -- leverage existing therapeutic-CGM coverage
-                (HCPCS E2103); fastest path to revenue, no new NCD needed.
-              </li>
-              <li>
-                <b>Pursue a Category III code</b> for the predictive-low
-                algorithm to differentiate and support a premium pad.
-              </li>
-              <li>
-                <b>UK / NICE</b> -- submit a cost-comparison case vs Libre 3;
-                the ~30% list gap is the lever payers expect.
-              </li>
-              <li>
-                <b>Germany / France</b> -- sequence post-CE; PMCF outcomes feed
-                the G-BA / HAS dossiers.
-              </li>
-            </ul>
             <button
               className="reg-ask"
               onClick={() =>
                 ask(
-                  'Generate the full global market-access strategy document for BX-204',
+                  program
+                    ? `Generate the full global market-access strategy document for ${program}`
+                    : 'Generate the full global market-access strategy document for my programme',
                 )
               }
             >

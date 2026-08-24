@@ -462,3 +462,6 @@
   @media (prefers-reduced-motion:reduce){*{transition-duration:1ms!important;animation-duration:1ms!important;}}
 
 }
+
+/* An audit panel with nothing to show says so, rather than inventing history. */
+.pg-audit-empty{padding:12px 4px;font-size:12px;line-height:1.55;color:var(--text-400);}

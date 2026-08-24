@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
@@ -405,6 +406,71 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
     }
     return null;
   };
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     vault.*). Both handlers drive the SAME state the human's own controls
+     drive (setQ / setActiveFolder / setExpanded); a folder AnA names is
+     resolved against the REAL tree with honest misses, never a guess. */
+  useSurfaceActionHandlers('vault', {
+    'vault.search': (params) => {
+      const query = (params.query ?? '').trim();
+      if (!query) return { ok: false, reason: 'No search term given.' };
+      if (vaultState.error) return { ok: false, reason: 'The vault could not be read.' };
+      // No loading guard: the query is pure view state — it filters whatever
+      // the read delivers, so applying it mid-load is correct, not early.
+      setQ(query);
+      return { ok: true, detail: `Searching the vault for "${query}"` };
+    },
+    'vault.open-folder': (params) => {
+      const wanted = (params.folder ?? '').trim().toLowerCase();
+      if (!wanted) return { ok: false, reason: 'No folder named.' };
+      // Not-ready, not failed: the bus holds the directive and re-attempts on
+      // this surface's ready signal below — the navigate→act gap.
+      if (vaultState.loading)
+        return { ok: false, reason: 'The vault is still loading.', retry: true };
+      if (vaultState.error) return { ok: false, reason: 'The vault could not be read.' };
+      /* Walk the real tree collecting every folder with its ancestor chain, so
+         opening also un-collapses the path down to it. */
+      const found: Array<{ folder: VaultFolder; ancestors: string[] }> = [];
+      const walk = (nodes: (VaultDoc | VaultFolder)[], ancestors: string[]) => {
+        for (const n of nodes) {
+          if (isVaultDoc(n)) continue;
+          const f = n as VaultFolder;
+          found.push({ folder: f, ancestors });
+          if (f.children) walk(f.children, [...ancestors, f.id]);
+        }
+      };
+      walk(tree, []);
+      const exact = found.filter((f) => f.folder.label.toLowerCase() === wanted);
+      const contains = exact.length
+        ? exact
+        : found.filter((f) => f.folder.label.toLowerCase().includes(wanted));
+      if (contains.length === 0) {
+        return { ok: false, reason: `No folder named "${params.folder}" in this vault.` };
+      }
+      if (contains.length > 1) {
+        return {
+          ok: false,
+          reason: `"${params.folder}" matches ${contains.length} folders — name one exactly.`,
+        };
+      }
+      const target = contains[0];
+      setQ('');
+      setActiveFolder(target.folder.id);
+      setExpanded((e) => {
+        const next = { ...e };
+        for (const a of target.ancestors) next[a] = true;
+        next[target.folder.id] = true;
+        return next;
+      });
+      return { ok: true, detail: `Opened ${target.folder.label}` };
+    },
+  });
+  /* The ready signal for the retry contract above: when the read settles, a
+     held not-ready directive gets its one re-attempt. */
+  React.useEffect(() => {
+    if (!vaultState.loading) notifySurfaceActionReady('vault');
+  }, [vaultState.loading]);
 
   // No live selection yet → fall back to the first folder / first doc so the
   // surface shows something without seeding local state from the async tree.
