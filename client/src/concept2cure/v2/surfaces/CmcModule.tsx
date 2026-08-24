@@ -52,6 +52,7 @@ import {
 } from './cmcRegisterForms';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers } from '../surfaceActions';
+import { ceremonyOpen } from '../ceremony';
 import {
   cmcProjectId,
   cmcProjectUuid,
@@ -2529,16 +2530,27 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
      cmc.open-tab, identity-resolved). The handler drives the SAME setter the
      sub-tab buttons and __cmSetTab drive. The tab list is a static constant,
      so there is deliberately NO loading guard, NO retry, and NO ready signal —
-     a not-ready refusal here would be dishonest. Known limitation, stated in
-     the registry description: a tab switch unmounts the current pane, and any
-     in-progress pane form state is child-local and invisible here (same
-     parity as the human's own tab buttons, which carry no guard either). */
+     a not-ready refusal here would be dishonest. The wave-2 limitation
+     (pane forms child-local and invisible here) is closed by the ceremony
+     channel: the pane forms — spec edits, batch e-sign releases, stability
+     registrations — all render through C2CForm, which reports itself, so a
+     switch that would unmount a person's half-completed ceremony refuses.
+     The human's own tab buttons still carry no guard; AnA acting on someone's
+     behalf holds a higher bar than their own hands. */
   useSurfaceActionHandlers('cmc', {
     'cmc.open-tab': (params) => {
       const target = (params.tab ?? '').trim();
       const meta = CMC_NAV.find((n) => n.id === target);
       if (!meta) return { ok: false, reason: `No CMC tab named "${params.tab}".` };
       if (tab === target) return { ok: true, detail: `Already on ${meta.label}` };
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed form is open on this screen — switching tabs would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
       setTab(target);
       return { ok: true, detail: `Opened ${meta.label}` };
     },
