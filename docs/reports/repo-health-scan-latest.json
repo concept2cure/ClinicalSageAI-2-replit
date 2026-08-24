@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T05:43:09.827Z",
+  "generatedAt": "2026-08-24T05:56:28.208Z",
   "git": {
-    "sha": "d7f83dfa0d617a03351b7bfe7b394296dd18b46a",
+    "sha": "03b3ccd07a6ca69a7c1c7f757594093cb13a743d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2185,16 +2185,16 @@
         "bytes": 168841
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 151221
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "bytes": 150437
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
         "bytes": 149277
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 148992
       },
       {
         "file": "server/storage.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3389
+        "lines": 3432
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
