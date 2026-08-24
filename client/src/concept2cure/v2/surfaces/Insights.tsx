@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -917,32 +918,92 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     void runReport(type);
   };
 
-  /* Seal the displayed governed run — POST /api/report-os/runs/:id/finalize locks
-     it to 'final' and returns a SealedRecord (sha256 content hash + provenance
-     atoms, aiDisclosed, sealedAt). A report the truthfulness gate holds below
-     final returns 409 and is NOT sealed — stated honestly. A re-shown report
-     with no run id cannot be sealed. This is the run's real integrity seal, not
-     a claimed event I did not create. */
+  /* ── "Export report" now exports a report ─────────────────────────────────
+     The control carries a download icon and the word Export, and its entire
+     effect was POST /runs/:id/finalize plus a toast. The run was sealed; no
+     file was ever produced, so the one thing the word Export promises — a
+     document the user can keep, attach or file — could not be done from this
+     surface at all.
+
+     Two acts, in order, both real:
+       1. POST /api/report-os/runs/:id/finalize — the run's integrity seal
+          (sha256 content hash + provenance atoms). A report the truthfulness
+          gate holds below final returns 409 and is NOT sealed.
+       2. GET  /api/report-os/runs/:id/export.pdf — the governed PDF the server
+          renders from the STORED run (createRunPdf: type, scope, status,
+          confidence, dependency providers, blockers). It is entitlement-gated
+          server-side exactly like the run itself, so a downgraded plan is
+          refused there rather than handed a document it has not paid for.
+
+     The seal is attempted first because sealing changes what the PDF states
+     (the run's status), and the download runs EVEN WHEN the seal is refused: a
+     partial report is still a real report, and withholding the file over a
+     status the gate is entitled to hold would be a second, invented refusal.
+     The toast states both outcomes separately — sealed or held, saved or not —
+     so neither is ever implied by the other. The file itself goes through the
+     canonical `downloadBlob` (v2/download.ts); its `false` return (no DOM, a
+     sandboxed frame) is reported as a failure to save, never swallowed. */
   const exportRep = async (rep: RenderedReport) => {
-    if (reportRunId == null) { fireToast('Only a freshly-run governed report can be sealed — run one first.', 'error'); return; }
+    if (reportRunId == null) { fireToast('Only a freshly-run governed report can be exported — run one first.', 'error'); return; }
+    const runId = reportRunId;
+
+    // ── 1. Seal ──
+    let sealNote: string;
     try {
-      const res = await apiRequest('POST', `/api/report-os/runs/${reportRunId}/finalize`);
+      const res = await apiRequest('POST', `/api/report-os/runs/${runId}/finalize`);
       const body = await res.json().catch(() => null);
       if (res.status === 409) {
         const reasons = Array.isArray(body?.reasons)
           ? body.reasons.join('; ')
           : (serverMessage(body) || 'the truthfulness gate holds it below final');
-        fireToast(`Not sealed — "${rep.reportTypeLabel}" is held below final: ${reasons}.`, 'error');
-        return;
+        sealNote = `Not sealed — held below final: ${reasons}`;
+      } else if (!res.ok) {
+        sealNote = `Not sealed — ${serverMessage(body) ?? 'the server did not say why'}`;
+      } else {
+        const seal = body?.data?.seal;
+        const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
+        setReport(r => (r ? { ...r, status: 'final' } : r));
+        sealNote = `Sealed · ${seal?.algorithm || 'sha256'}${hash ? ' ' + hash + '…' : ''} · ${seal?.atomCount ?? 0} provenance atoms · run locked final`;
       }
-      if (!res.ok) { fireToast(`Couldn't seal — ${serverMessage(body) ?? 'the server did not say why'}.`, 'error'); return; }
-      const seal = body?.data?.seal;
-      const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
-      setReport(r => (r ? { ...r, status: 'final' } : r));
-      fireToast(`Sealed · ${seal?.algorithm || 'sha256'}${hash ? ' ' + hash + '…' : ''} · ${seal?.atomCount ?? 0} provenance atoms · run locked final`);
     } catch (e) {
-      fireToast(`Couldn't seal — ${e instanceof Error ? e.message : String(e)}.`, 'error');
+      // `apiRequest` THROWS for every non-OK status except 401, so in the real
+      // app the 409 above is reached HERE, not by the `res.status` branch. The
+      // gate's own reasons live on the thrown error's payload; read
+      // STRUCTURALLY rather than via `instanceof ApiRequestError` — several
+      // suites mock '@/lib/queryClient' with a factory exporting only
+      // `apiRequest`, which binds the class to undefined and makes
+      // `e instanceof undefined` throw inside the catch (dataConnect's
+      // `failureFrom` documents the same hazard and takes the same precaution).
+      const err = e as { status?: unknown; payload?: { reasons?: unknown } } | null;
+      const reasons =
+        err && err.status === 409 && Array.isArray(err.payload?.reasons)
+          ? (err.payload!.reasons as unknown[]).join('; ')
+          : null;
+      sealNote = reasons
+        ? `Not sealed — held below final: ${reasons}`
+        : `Not sealed — ${e instanceof Error ? e.message : String(e)}`;
     }
+
+    // ── 2. The file ──
+    let fileNote: string;
+    try {
+      const res = await apiRequest('GET', `/api/report-os/runs/${runId}/export.pdf`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        fileNote = `no file saved — ${serverMessage(body) ?? 'the export service did not say why'}`;
+      } else {
+        const blob = await res.blob();
+        const filename = `${safeFileName(rep.reportTypeLabel || rep.reportTypeId, 'report')}_run${runId}.pdf`;
+        fileNote = downloadBlob(filename, blob)
+          ? `saved ${filename}`
+          : 'no file saved — this browser refused the download';
+      }
+    } catch (e) {
+      fileNote = `no file saved — ${e instanceof Error ? e.message : String(e)}`;
+    }
+
+    const failed = fileNote.startsWith('no file saved') || sealNote.startsWith('Not sealed');
+    fireToast(`${sealNote} · ${fileNote}.`, failed ? 'error' : undefined);
   };
 
   // Four-state render: loading → honest error → honest empty (no flagship

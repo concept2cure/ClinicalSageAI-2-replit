@@ -20,6 +20,13 @@ import {
 } from '../fixtures/vault-data';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
+import {
+  EDITOR_TARGET_DOC_TYPES,
+  clearEditorTarget,
+  setEditorTarget,
+  type EditorTargetDocType,
+} from '../editorTarget';
+import { readShellProject } from '../shellProject';
 import '../styles/project-home-v2.css';
 
 /* ── GET /api/c2c/project-vault/:id display contract ──
@@ -84,15 +91,48 @@ const EMPTY_TREE: VaultFolder[] = [];
 
 /* Current project id — the runtime channel Projects.tsx sets when a project is
    opened (same read as Inconsistency / CmcModule / ProjectHome). The vault is
-   project-scoped, so with no project in context there is nothing to load. */
+   project-scoped, so with no project in context there is nothing to load.
+
+   It goes through `readShellProject` (v2/shellProject.ts), the ONE reader for
+   window.C2C_PROJECT. This surface used to hand-roll its own copy of that
+   read, which is exactly the per-surface drift that module exists to stop. */
 function currentProjectId(): string | null {
-  try {
-    const p = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
-    const id = p && p.id != null ? String(p.id).trim() : '';
-    return id || null;
-  } catch (_e) {
-    return null;
+  const p = readShellProject();
+  const id = p && p.id != null ? String(p.id).trim() : '';
+  return id || null;
+}
+
+/**
+ * The governed document family a vault leaf sits under, uppercased, or null.
+ *
+ * The read-model nests every authored leaf inside `vaultdoc-<c2c_documents.id>`
+ * whose `code` is that row's `doc_type` uppercased
+ * (server/routes/c2c/project-vault.ts documentFolder). Branches with no
+ * governed document above them — the Module 3 artifact branch, the filing
+ * cabinet — inherit null, and null is reported as null: a family this cannot
+ * see must never be guessed, because naming the wrong one turns a resolvable
+ * section into a refusal in the editor.
+ *
+ * `undefined` means "leaf not in this tree" and is distinct from "found, no
+ * family", so a miss can never be read as an unfiled document.
+ */
+export function vaultDocFamilyCode(
+  nodes: readonly (VaultFolder | VaultDoc)[],
+  leafId: string,
+  inherited: string | null = null,
+): string | null | undefined {
+  for (const node of nodes) {
+    if (isVaultDoc(node)) {
+      if (node.id === leafId) return inherited;
+      continue;
+    }
+    const carried = node.id.startsWith('vaultdoc-')
+      ? (node.code || '').trim() || null
+      : inherited;
+    const hit = vaultDocFamilyCode(node.children, leafId, carried);
+    if (hit !== undefined) return hit;
   }
+  return undefined;
 }
 
 /* ── File icon resolver (maps key to I[key]) ── */
@@ -604,7 +644,58 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
 
   const st = (s: string) => vaultStatus(s);
 
-  const openDoc = () => {
+  /* ── "Open in editor" carries the SELECTED document ───────────────────────
+     It used to be `onNav('document-authoring')` and nothing else: the user
+     picked a specific section out of the dossier tree, clicked the one control
+     that promises to open it, and landed on the editor's default view with the
+     selection gone.
+
+     The deep-link channel for exactly this already exists — v2/editorTarget.ts,
+     one-shot and TTL-guarded, consumed by DocumentAuthoring on mount, which
+     resolves the named section by code then by title and posts an HONEST notice
+     when it cannot find it. Nothing new is invented here; this surface becomes
+     its second sender.
+
+     What is and is NOT claimed:
+       • section code/label — `num` is the rule pack's section key and `title`
+         its label (project-vault.ts leafDoc), the exact pair
+         `matchEditorTargetSection` matches on. '—' is the read-model's "no such
+         column" placeholder, so it is dropped rather than sent as a code.
+       • docType — only when the enclosing governed document's doc_type is in
+         the channel's vocabulary. A project filed as an IND resolves to null,
+         and null means "I hold a section but cannot name a family", which is
+         the truth. Guessing a family would make the editor REFUSE the target
+         ("this project's governed dossier is X, not Y") — a near-miss that
+         reads as a wrong-document error the user cannot act on.
+       • programId — sent only when the shell's project id is a string, because
+         that is what DocumentAuthoring's own `projectIdForOutline` accepts; a
+         numeric id there resolves to null and would fail the equality guard,
+         refusing a target that was never wrong.
+
+     A leaf with neither a code nor a title cannot be addressed at all, so the
+     channel is CLEARED rather than fed an empty claim — the plain "open the
+     editor" navigation it always was. */
+  const openDoc = (doc: VaultDoc) => {
+    const family = vaultDocFamilyCode(tree, doc.id);
+    const normalized = typeof family === 'string' ? family.toLowerCase() : null;
+    const docType =
+      normalized && (EDITOR_TARGET_DOC_TYPES as readonly string[]).includes(normalized)
+        ? (normalized as EditorTargetDocType)
+        : null;
+    const code = doc.num && doc.num !== '—' ? doc.num : null;
+    const label = doc.title && doc.title !== '—' ? doc.title : null;
+    const shell = readShellProject();
+    if (!code && !label) {
+      clearEditorTarget();
+    } else {
+      setEditorTarget({
+        docType,
+        code,
+        label,
+        programId: typeof shell?.id === 'string' ? shell.id : null,
+        programTitle: shell?.title ?? null,
+      });
+    }
     onNav && onNav('document-authoring');
   };
 
@@ -1064,7 +1155,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     <button
                       className="sp-primary"
                       style={{ padding: '8px 12px' }}
-                      onClick={openDoc}
+                      onClick={() => openDoc(sel)}
                     >
                       {I.penLine || I.fileText} Open in editor
                     </button>
