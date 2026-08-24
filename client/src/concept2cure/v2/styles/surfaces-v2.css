@@ -281,6 +281,10 @@
 .c2c-v2 .cmt-when{color:var(--text-500);}
 .c2c-v2 .cmt-body{font-size:12.5px;line-height:1.55;color:var(--text-200);}
 .c2c-v2 .cmt-actions{display:flex;gap:6px;margin-top:9px;}
+/* Threaded replies: indented under the head comment, joined by a rail line so
+   a thread reads as one conversation, not adjacent guestbook entries. */
+.c2c-v2 .cmt-replies{margin:8px 0 2px 9px;padding-left:12px;border-left:2px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .cmt-reply .cmt-meta{margin-bottom:3px;}
 
 /* The `.c2c-v2 .kanban` rule that stood here is deleted, not moved. Nothing in
    the v2 tree renders that class — the task board is `.tb-kanban`, which takes

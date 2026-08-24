@@ -95,7 +95,10 @@ interface ToastState {
    RETAINED, not dead code (audit determination): this in-session store still
    has WRITE consumers -- TaskBoard's New task / Move / Start-workflow actions
    and this file's own QuickTask / CollabDiscuss forms call
-   window.C2C.addTask / update. Those are MOCK, unpersisted actions (flagged at
+   window.C2C.addTask / update. `addTask` is now only ever called with a
+   SERVER-issued taskId (both the create modal and the collaboration composer
+   POST /api/tasks/tasks first and adopt the persisted row); the local store is
+   a view of what was written, not a source of ids. (flagged at
    each call site): their rows are orphaned from the live board above, which
    reads the real GET /api/task-management/board. The store stays until those
    writes are wired to POST /api/task-management/tasks in the actions pass -- it
@@ -692,21 +695,78 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       return;
     }
 
-    /* The task is created only AFTER the message is confirmed stored. The old
-       order created the task first, so a failed send still left a task behind
-       referencing a message nobody received. */
+    /* ── "Also create a task and assign it to <name>" ────────────────────────
+       The message half of this composer has always been a real write. The task
+       half was `C2C.addTask` — a client-minted id pushed onto a module-level
+       array — so a user who ticked "Also create a task and assign it to Jane"
+       watched the modal close and no task existed anywhere. Jane was never
+       assigned anything.
+
+       It now POSTs the SAME /api/tasks/tasks the create modal above uses,
+       with the same integer discipline: `assigneeId` is only sent when the
+       picked recipient is a real numeric user id, and `projectId` only when the
+       surface context carries one, because createTaskSchema takes integers and
+       would reject the string forms.
+
+       The task is created only AFTER the message is confirmed stored — the old
+       order created it first, so a failed send left a task behind referencing a
+       message nobody received. And a failed TASK write is now reported: the
+       message went, the task did not, and the user is told exactly that rather
+       than watching the modal close on a half-done action. */
     if (makeTask) {
-      C2C.addTask({
-        title: body.trim().slice(0, 90), project: surfaceCtx.project,
+      const taskBody: Record<string, unknown> = {
+        title: body.trim().slice(0, 90),
         moduleType: surfaceCtx.moduleType || 'Regulatory',
-        taskType: 'review', priority: 'medium', assignee: to, assignmentType: 'manual',
-        sourceEntityType: surfaceCtx.entityType,
-        sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
-        sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-        due: 'in 3 days', phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-        activity: [{ type: 'note', text: body.trim(), who: 'You', when: 'just now' }],
-      });
-      onCreated?.();
+        taskType: 'review',
+        priority: 'medium',
+        description: body.trim(),
+        dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+      };
+      const projectIdNum = Number(surfaceCtx.project);
+      if (surfaceCtx.project && Number.isFinite(projectIdNum) && projectIdNum > 0) {
+        taskBody.projectId = projectIdNum;
+      }
+      if (Number.isInteger(recipientUserId) && recipientUserId > 0) {
+        taskBody.assigneeId = recipientUserId;
+      }
+      try {
+        const tres = await apiRequest('POST', '/api/tasks/tasks', taskBody);
+        const tjson = await tres.json().catch(() => null);
+        const serverTask = (tjson as { data?: Record<string, unknown> } | null)?.data;
+        if (!tres.ok || !serverTask?.taskId) {
+          setSending(false);
+          setSendErr(
+            'The message was sent, but the task was not created — ' +
+              (serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`) +
+              '. Create it from the task board if it is still needed.',
+          );
+          return;
+        }
+        // Adopt the SERVER's row, exactly as the create modal does — the id in
+        // the local store is the persisted taskId, never a client-minted one.
+        C2C.addTask({
+          taskId: String(serverTask.taskId),
+          title: body.trim().slice(0, 90), project: surfaceCtx.project,
+          moduleType: surfaceCtx.moduleType || 'Regulatory',
+          taskType: 'review', priority: 'medium',
+          assignee: serverTask.assigneeId != null ? String(serverTask.assigneeId) : to,
+          assignmentType: 'manual',
+          sourceEntityType: surfaceCtx.entityType,
+          sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
+          sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+          due: 'in 3 days', phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+          activity: [{ type: 'note', text: body.trim(), who: 'You', when: 'just now' }],
+        });
+        onCreated?.();
+      } catch (e) {
+        setSending(false);
+        setSendErr(
+          'The message was sent, but the task was not created — ' +
+            (e instanceof Error ? e.message : String(e)) +
+            '. Create it from the task board if it is still needed.',
+        );
+        return;
+      }
     }
     setSending(false);
     onClose();

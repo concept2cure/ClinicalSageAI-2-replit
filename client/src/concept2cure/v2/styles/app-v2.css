@@ -2127,6 +2127,11 @@
 .c2c-v2 .haq-assemble{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:8px 13px;border-radius:var(--radius-md);background:var(--accent-100);color:#fff;white-space:nowrap;}
 .c2c-v2 .haq-assemble:disabled{background:var(--bg-200);color:var(--text-500);}
 .c2c-v2 .haq-assemble .ico{font-size:14px;}
+/* Assemble is a pair now: the Word package and the raw Markdown the server
+   returned, so a reviewer can read the assembly without opening Word. */
+.c2c-v2 .haq-assemble-row{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.c2c-v2 .haq-assemble.alt{background:transparent;color:var(--text-200);border:1px solid var(--border);}
+.c2c-v2 .haq-assemble.alt:disabled{background:transparent;color:var(--text-500);border-color:var(--border);}
 
 .c2c-v2 .haq-grid{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
 .c2c-v2 .haq-list{display:flex;flex-direction:column;gap:8px;}
@@ -3347,3 +3352,18 @@
 /* The batch-draft card, opened for editing. Same box as the rendered body so
    the card does not jump when the two swap. */
 .c2c-v2 .bd-card-edit{width:100%;min-height:160px;resize:vertical;font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--text-100);background:var(--bg-000);border:1px solid var(--accent-100);border-radius:8px;padding:10px 12px;outline:none;}
+
+/* Safety narrative — the audited reason that gates "Save version". Inline in the
+   document toolbar because that is where the writer is when they decide to save. */
+.c2c-v2 .sn-save-reason{min-width:200px;max-width:280px;}
+
+/* Registrations — a market that requires a label type it has none of. The gap is
+   carried in an icon and a sentence, not colour alone. */
+.c2c-v2 .reg-doss-gap{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:9px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.55;color:var(--error);background:color-mix(in srgb, var(--error) 8%, transparent);border:1px solid color-mix(in srgb, var(--error) 28%, transparent);}
+.c2c-v2 .reg-doss-basis{display:block;margin-top:3px;color:var(--text-400);font-size:11px;}
+.c2c-v2 .ac-val-err{margin:8px 0;padding:8px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.5;color:var(--error);background:color-mix(in srgb, var(--error) 8%, transparent);border:1px solid color-mix(in srgb, var(--error) 28%, transparent);}
+
+/* Biostatistics — a persisted document with no recorded statistical type has no
+   generator to open. Named in the row rather than left as a silent no-op. */
+.c2c-v2 .sp-row:disabled{cursor:default;opacity:.72;}
+.c2c-v2 .sp-row-note{font-size:10.5px;color:var(--text-400);white-space:nowrap;}

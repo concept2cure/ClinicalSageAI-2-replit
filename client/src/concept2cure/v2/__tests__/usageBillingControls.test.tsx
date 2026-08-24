@@ -58,6 +58,9 @@ afterEach(() => cleanup());
 
 /** Credits and auto-reload live on the Billing tab, not the default one. */
 async function mount() {
+  /* `{...(props as never)}` typechecked as a spread of `never`, which TS
+     rejects outright (TS2698). `props` is already shaped to the surface's
+     contract above, so it spreads as itself. */
   render(<UsageBilling {...props} />);
   await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/billing/credits'));
   const billingTab = screen

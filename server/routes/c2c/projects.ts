@@ -54,6 +54,11 @@ import {
   DEVICE_FAMILY_PRODUCT_TYPES,
   workstreamSqlCase,
 } from '../../../shared/constants/domain/product-types.js';
+import {
+  devicePathFor,
+  normalizeDeviceClassification,
+  usesDeviceClassification,
+} from '../../../shared/constants/domain/device-classification.js';
 /* Every 5xx on this router goes through the canonical helper. Its job here is
    the one the MDX UAT (item A1) proved was missing: it logs the failure keyed
    by the SAME `X-Request-Id` the user is shown as "Reference <id>", and echoes
@@ -651,11 +656,35 @@ router.post('/', async (req: Request, res: Response) => {
     );
   }
 
+  /* The device taxonomy a 510(k) turns on. regulatory_programs already had
+     columns for most of it and nothing wrote them, so a device programme was
+     created with an oncology therapeutic area and no product code. Validated
+     rather than trusted: an unparseable value is dropped and named, never
+     coerced into something that reads as data. */
+  const deviceCls = normalizeDeviceClassification((req.body ?? {}).deviceClassification);
+  if (deviceCls.rejected.length && !usesDeviceClassification(productType)) {
+    // A pharma filing sent device fields — ignore them rather than 400.
+    deviceCls.rejected.length = 0;
+  }
+  if (deviceCls.rejected.length) {
+    return res.status(400).json({
+      error: 'INVALID_DEVICE_CLASSIFICATION',
+      message: deviceCls.rejected.join('; '),
+    });
+  }
+  const dc = deviceCls.value;
+
   const targetAgencies = JSON.stringify([primaryAgency]);
   const metadata = JSON.stringify({
     createdVia: 'v2-new-project-wizard',
     ...(submissionTypeId ? { submissionTypeId } : {}),
     ...(teamMembers.length ? { teamMemberNames: teamMembers } : {}),
+    /* Review panel and the device flags have no column of their own. The flags
+       are load-bearing — each one adds a statutory section, so they drive the
+       required-content model rather than describing the product. */
+    ...(dc.reviewPanel ? { reviewPanel: dc.reviewPanel } : {}),
+    ...(dc.regulationNumber ? { regulationNumber: dc.regulationNumber } : {}),
+    ...(dc.flags?.length ? { deviceFlags: dc.flags } : {}),
   });
   const createdBy = userId != null ? String(userId) : 'system';
 
@@ -672,14 +701,24 @@ router.post('/', async (req: Request, res: Response) => {
          (organization_id, name, code, program_type, product_type, primary_agency,
           target_agencies, product_name, indication, status, phase, priority,
           target_submission_date, progress_percent, lead_user_id, team_members,
-          metadata, created_by, updated_by)
+          metadata, created_by, updated_by,
+          device_class, regulatory_path, product_code, intended_use, predicate_devices)
        VALUES ($1, $2, $3, $4, $5, $6, $7::json, $8, $9, 'active', 'planning', $10,
-               $11::timestamp, 0, $12, $13::json, $14::json, $15, $15)
+               $11::timestamp, 0, $12, $13::json, $14::json, $15, $15,
+               $16, $17, $18, $19, $20::json)
        RETURNING id`,
       [
         orgId, name, code, programType, productType, primaryAgency,
         targetAgencies, productName, indication, priority,
         targetSubmissionDate, userId, JSON.stringify(teamMembers), metadata, createdBy,
+        dc.deviceClass ?? null,
+        /* The US premarket route, derived from the filing type the user picked
+           — not asked for twice. FILING_TYPE_PRODUCT_CLASS already knows a
+           510(k) from a De Novo. */
+        devicePathFor(programType),
+        dc.productCode ?? null,
+        dc.intendedUse ?? null,
+        JSON.stringify(dc.predicateK ? [{ kNumber: dc.predicateK }] : []),
       ],
     );
 

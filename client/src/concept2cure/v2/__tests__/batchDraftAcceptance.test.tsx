@@ -308,7 +308,14 @@ describe('"accepted" means the write came back, not that it was attempted', () =
 });
 
 describe('sample prose is never written to a regulated document', () => {
-  it('stages an offline sample card locally and sends nothing', async () => {
+  it('offers no Accept at all on a sample card, and never calls itself accepted', async () => {
+    /* This used to assert the opposite — that clicking Accept marked the card
+       `.bd-card.accepted` while POSTing nothing. That was the defect: the card
+       read "accepted", the counter above it read "N accepted", and nothing was
+       written or staged anywhere, because `accepted` is a component boolean
+       that disappears on navigation. Refusing to write placeholder prose into a
+       regulated document is right; reporting that refusal as an acceptance is
+       not. */
     // No token → connected() is false → the surface takes the sample path.
     sessionStorage.clear();
     spineBody = spine({ tree: leaves([{ id: '7', num: '2.7.1', title: 'Summary of Clinical Efficacy' }]) });
@@ -316,10 +323,12 @@ describe('sample prose is never written to a regulated document', () => {
 
     await draftAll(container);
 
-    fireEvent.click(container.querySelector('.bd-card-acts .bd-primary') as HTMLButtonElement);
-    await waitFor(() => expect(container.querySelector('.bd-card.accepted')).not.toBeNull());
-
+    // There is no Accept control on the card at all — not a disabled one.
+    expect(container.querySelector('.bd-card-acts .bd-primary')).toBeNull();
+    // And the card is not claiming to be accepted.
+    expect(container.querySelector('.bd-card.accepted')).toBeNull();
     expect(acceptCalls().length, 'fabricated sample prose was POSTed to a document').toBe(0);
+    // The reason is visible text, not a title attribute on a disabled button.
     expect(container.textContent).toContain('never written to a document');
   });
 });
