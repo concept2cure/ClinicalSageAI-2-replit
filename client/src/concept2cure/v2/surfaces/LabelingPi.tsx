@@ -6,6 +6,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
 import { RedlineText } from '../RedlineText';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -329,6 +330,96 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
       setBusy('');
     }
   };
+
+  /* WHAT ANA SEES HERE — one publish, every branch. Loading, error and empty
+     publish as themselves: a failed read is a failure, never an empty label. */
+  const anaContext = useMemo(() => {
+    const actions = [
+      'Switch USPI / EU SmPC / SPL views; open a numbered section',
+      'Accepting agency text (reason-for-change gated, Part 11 audited), exporting the label, and building SPL are governed — AnA proposes them in conversation, never through screen controls; the reason field is audited evidence and is never auto-filled.',
+    ];
+    if (loading) {
+      return { summary: 'The label worklist is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      // The same message the ErrorState shows — a failed read, not an empty label.
+      return {
+        summary: `The label could not be loaded — ${error}. A failed read, not an empty label.`,
+        facts: { error },
+      };
+    }
+    if (empty) {
+      return {
+        summary:
+          'Labeling — prescribing information: no label sections yet. Record or author USPI sections and the section tree, rendered label text and agency negotiation appear here.',
+      };
+    }
+    if (fmt === 'smpc') {
+      // A second document with its own read — its triple publishes as itself.
+      if (smpc.loading) {
+        return { summary: 'EU SmPC (QRD): readiness is still loading.', availableActions: actions };
+      }
+      if (smpc.error) {
+        return {
+          summary: `The EU SmPC could not be loaded — ${smpc.error}. A failed read, not an empty document.`,
+          facts: { format: fmt, error: smpc.error },
+          availableActions: actions,
+        };
+      }
+      if (!smpc.data) {
+        return {
+          summary: 'EU SmPC (QRD): no readiness available — the section statuses for this organization could not be read.',
+          facts: { format: fmt },
+          availableActions: actions,
+        };
+      }
+      return {
+        summary:
+          `EU SmPC (QRD): ${smpc.data.completenessPct}% complete — ` +
+          `${smpc.data.finalRequired} of ${smpc.data.totalRequired} required sections final; ` +
+          (smpc.data.ready ? 'the set reports as ready.' : `${smpc.data.outstanding.length} section(s) outstanding.`),
+        facts: {
+          format: fmt,
+          completenessPct: smpc.data.completenessPct,
+          finalRequired: smpc.data.finalRequired,
+          totalRequired: smpc.data.totalRequired,
+          ready: smpc.data.ready,
+          outstanding: smpc.data.outstanding,
+        },
+        availableActions: actions,
+      };
+    }
+    if (fmt === 'spl') {
+      return {
+        summary:
+          'SPL: the SPL build form — a submission artifact builder; its fields are product identity for a governed build from this label\'s own sections.',
+        facts: { format: fmt },
+        availableActions: actions,
+      };
+    }
+    // USPI. Counts only when `answerable` — zero-proposed over a failed read is
+    // the exact lie this surface documents against. The store carries no
+    // version; none is invented.
+    return {
+      summary:
+        'US prescribing information (USPI — PLLR)' +
+        (program ? ` for ${program}` : '') +
+        (stIdx >= 0 ? `, at ${LP_STAGES[stIdx]}` : '') +
+        (answerable
+          ? ` — ${numberedSections} numbered section(s), ${agencyOpen} open agency edit(s), ${boxedProposed} boxed warning(s) proposed`
+          : '') +
+        `. §${active} is open.`,
+      facts: {
+        format: fmt,
+        ...(stIdx >= 0 ? { stage: LP_STAGES[stIdx] } : {}),
+        activeSection: active,
+        ...(answerable ? { sections: numberedSections, agencyOpen, boxedProposed } : {}),
+        ...(program ? { docTitle } : {}),
+      },
+      availableActions: actions,
+    };
+  }, [loading, error, empty, fmt, smpc.loading, smpc.error, smpc.data, stIdx, active, answerable, numberedSections, agencyOpen, boxedProposed, program, docTitle]);
+  usePublishSurfaceContext('labeling-pi', anaContext);
 
   return (
     <div className="reg-wrap lp">
