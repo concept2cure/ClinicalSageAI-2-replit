@@ -138,6 +138,63 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     ],
   },
   {
+    id: 'training-submission-day',
+    kind: 'training',
+    title: 'Submission day walkthrough',
+    audience: 'A regulatory operations team rehearsing how a sequence actually goes out.',
+    minutes: 5,
+    description:
+      'The dispatch-day route: open the program, work the Submission Center — select the submission, its working sequence, and the validation workspace — clear the review queue, and end at the gateway. Freezing and dispatching stay with a person; this tour shows everything up to their signature.',
+    steps: [
+      {
+        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real program, with every governed gate left in human hands.',
+      },
+      {
+        say: 'Start at the portfolio and open the program that is submitting (pick it from the list on screen).',
+        navigate: { target: 'projects' },
+      },
+      {
+        say: 'Open the program whose sequence ships today.',
+        act: { actionId: 'projects.open-program' },
+      },
+      {
+        say: 'The Submission Center is the operations cockpit — everything from planning to dispatch lives in one place.',
+        navigate: { target: 'submissions' },
+      },
+      {
+        say: 'Select the submission that is going out (pick it from the portfolio on screen).',
+        act: { actionId: 'submissions.select-submission' },
+      },
+      {
+        say: 'Open the sequences workspace to see the lifecycle of every sequence in this submission.',
+        act: { actionId: 'submissions.set-workspace', params: { workspace: 'sequences' } },
+      },
+      {
+        say: 'Pick the working sequence (from the list on screen) — the one the build and validation workspaces will act on.',
+        act: { actionId: 'submissions.select-sequence' },
+      },
+      {
+        say: 'Open validation: the pre-flight findings the team clears before anyone is asked to sign.',
+        act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
+      },
+      {
+        say: 'Review is the judgment gate — jump to the next document still awaiting a decision so nothing rides along unapproved.',
+        navigate: { target: 'review' },
+      },
+      {
+        say: 'Open the queue at the next undecided document.',
+        act: { actionId: 'review.open-queue' },
+      },
+      {
+        say: 'And the gateway: the transmittal chain and acknowledgments once a person has frozen and dispatched — the two acts that stay theirs, under a Part 11 signature.',
+        navigate: { target: 'submission-gateway' },
+      },
+      {
+        say: 'Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
+      },
+    ],
+  },
+  {
     id: 'sales-flagship',
     kind: 'sales',
     title: 'Sales demonstration',
