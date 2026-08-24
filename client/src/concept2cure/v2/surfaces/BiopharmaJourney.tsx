@@ -151,7 +151,7 @@ const PJ_STAGES: PjStage[] = [
     what: 'Phase 1->3 execution: dose-finding, the pivotal trial, risk-based monitoring and interim DSMB reviews. The End-of-Phase-2 meeting fixes the pivotal design and endpoints that the whole submission will rest on.',
     deliv: [['Phase 1/2 CSRs', 1], ['EOP2 meeting alignment', 1], ['Pivotal trial — enrolled', 1], ['Pivotal topline & CSR', 0]],
     caps: ['rbm', 'clinical-ops', 'biostatistics', 'csr-workflow', 'protocol-dev', 'safety-narrative'],
-    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 — continue', 'Complete'], ['Pivotal', 'BX204-301 · database lock', 'Upcoming']],
+    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 — continue', 'Complete'], ['Pivotal', 'Pivotal trial database lock', 'Upcoming']],
     ana: 'Summarize pivotal readiness — enrollment, DSMB history, and the gap to database lock' },
   { id: 'presub', num: 'Stage 5', label: 'Pre-submission', icon: 'messageSquare',
     gate: 'Pre-NDA / Pre-BLA meeting · filing plan & format agreed',
@@ -437,15 +437,33 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
               })}
             </div>
 
-            <div className="pj-seclbl">Agency interactions</div>
+            {/* The KIND and the description are definitional — Stage 2 is where a
+                Type B Pre-IND meeting happens, and that is true of anyone. The
+                OUTCOME was not, and the outcome is what this block really showed.
+
+                `PjRecord` carries no `interactions` field, so nothing could ever
+                override the literals: every organization was told its Pre-IND
+                minutes were filed, its 30-day safe-to-proceed was Complete and a
+                DSMB had said continue — under a header built from its own live
+                programme code. That is fabricated regulatory history, and it is
+                the most dangerous sentence this surface could show a customer.
+
+                The interactions stay listed, because knowing Stage 3 turns on a
+                30-day safe-to-proceed is genuinely useful. The status chip goes
+                until a record backs it; Agency meetings owns that, and the row
+                still routes there. Same call the deliverables above just got. */}
+            <div className="pj-seclbl">Agency interactions at this stage</div>
             <div className="pj-interact">
               {stage.interactions.map((x, i) => (
                 <button key={i} className="pj-int" onClick={() => open('agency-meetings')}>
                   <span className="pj-int-kind">{x[0]}</span>
                   <div className="pj-int-b"><div className="pj-int-t">{x[1]}</div></div>
-                  <span className="pj-chip" data-t={x[2] === 'Complete' ? 'done' : x[2] === 'Upcoming' ? 'upcoming' : 'active'}>{x[2]}</span>
+                  <span className="go">{I.right}</span>
                 </button>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              Which agency interactions this stage involves. Their outcomes are not tracked on the programme record — Agency meetings holds the real history.
             </div>
 
             <button className="pj-ana" onClick={() => ask(stage.ana)}>{I.sparkles} {stage.ana}</button>

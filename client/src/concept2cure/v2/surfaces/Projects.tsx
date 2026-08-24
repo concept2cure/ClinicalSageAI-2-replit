@@ -687,11 +687,18 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const projects = live.rows;
 
   const list = projects.filter(p => (ws === 'all' || p.ws === ws) && (status === 'all' || p.status === status));
+  /* Gated on the read, not just on the row count.
+     `projects` is empty while the portfolio read is in flight AND when it has
+     failed, so every figure here resolved to a settled 0 — and the `|| 1`
+     divisor turned what would at least have been a visible NaN into a clean
+     "0%", a portfolio-mean readiness computed over no programs. A director
+     reading the header learned they run nothing and have nothing blocked. */
+  const kv = (v: string) => (live.loading || live.error ? '—' : v);
   const health = [
-    { l: 'Active programs', n: String(projects.length), m: 'across MDX, Biotech, Pharma', t: '' },
-    { l: 'Average readiness', n: Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%', m: 'portfolio mean', t: '' },
-    { l: 'Blocked', n: String(projects.filter(p => p.status === 'blocked').length), m: 'need attention', t: 'err' },
-    { l: 'Filing < 60 days', n: String(projects.filter(p => /days/.test(p.due)).length), m: 'near-term submissions', t: 'warn' },
+    { l: 'Active programs', n: kv(String(projects.length)), m: 'across MDX, Biotech, Pharma', t: '' },
+    { l: 'Average readiness', n: kv(Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%'), m: 'portfolio mean', t: '' },
+    { l: 'Blocked', n: kv(String(projects.filter(p => p.status === 'blocked').length)), m: 'need attention', t: 'err' },
+    { l: 'Filing < 60 days', n: kv(String(projects.filter(p => /days/.test(p.due)).length)), m: 'near-term submissions', t: 'warn' },
   ];
   const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
 
@@ -707,6 +714,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      over an outage would make AnA confidently wrong about a customer's whole
      portfolio. */
   const anaContext = useMemo(() => {
+<<<<<<< HEAD
+=======
     /* The wizard is a full-canvas view now, so when it is open the portfolio is
        NOT on screen. Publishing "Projects portfolio: 14 programs, 3 blocked"
        while the person is looking at a filing-type catalogue would describe a
@@ -724,6 +733,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         ],
       };
     }
+>>>>>>> origin/concept2cure-v2
     if (live.loading) {
       return { summary: 'The project portfolio is still loading; nothing on screen is final yet.' };
     }
@@ -763,7 +773,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         'Create a new project through the new-project wizard',
       ],
     };
+<<<<<<< HEAD
+  }, [live.loading, live.error, projects, list, ws, status, view, health]);
+=======
   }, [wizardOpen, live.loading, live.error, projects, list, ws, status, view, health]);
+>>>>>>> origin/concept2cure-v2
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (pr: ProjPortfolioEntry) => {

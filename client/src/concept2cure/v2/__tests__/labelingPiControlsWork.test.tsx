@@ -111,14 +111,14 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 async function mount() {
-  /* LabelingPI destructures only onAsk, but it DECLARES the full
-     SurfaceViewProps — the render site owes the whole contract. */
   render(
     <LabelingPI
-      surface={{ id: 'labeling-pi', label: 'Labeling' } as never}
-      segment="biopharma"
-      onAsk={() => {}}
-      onNav={() => {}}
+      {...({
+        surface: { id: 'labeling-pi' },
+        onAsk: () => {},
+        onNav: () => {},
+        segment: 'biopharma',
+      } as unknown as React.ComponentProps<typeof LabelingPI>)}
     />,
   );
   await screen.findByText('Warnings and precautions');

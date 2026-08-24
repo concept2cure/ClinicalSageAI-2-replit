@@ -472,6 +472,14 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
             <>Open a project to load its agency communications.</>
           ) : liveComms.error ? (
             <>Couldn't load this project's agency communications.</>
+          ) : liveComms.loading ? (
+            /* The ternary had an `error` arm and no `loading` one, so while the
+               read was in flight `critical` and `responseDue` were both empty
+               and it fell through to the final arm — an authoritative all-clear
+               on IR and CRL response clocks, under the eyebrow "What the FDA is
+               waiting on from you". Transient, but it is the first thing on the
+               surface and it is the one sentence a user acts on. */
+            <>Reading this project's agency communications…</>
           ) : critical.length ? (
             <>
               The FDA issued a <b>{critical[0].communicationType}</b>

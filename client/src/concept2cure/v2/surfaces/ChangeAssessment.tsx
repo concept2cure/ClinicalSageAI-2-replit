@@ -108,6 +108,13 @@ function ChangeDecision({ title, flag, dec }: ChangeDecisionProps) {
 
 export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
   const live = useLiveRows<ChangeItem>('/api/change-assessment');
+  /* Gated on error as well as loading. `useLiveRows`/`useLiveData` return
+     `data: null` on a FAILED read, so each count below derives from an empty
+     list and resolves to 0 — and with `loading` already false the strip renders
+     a SETTLED zero rather than a placeholder. Rows are empty in three
+     situations and only the third may say "nothing is on file"; the pattern is
+     MarketAccess.tsx:62. */
+  const kv = (n: number | string) => (live.loading || live.error ? '—' : String(n));
   const items = live.rows;
   const [sel, setSel] = useState<string | null>(null);
 
@@ -141,10 +148,10 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{items.length}</div><div className="reg-kpi-l">Open changes</div></div>
-        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{triggers}</div><div className="reg-kpi-l">Trigger a filing</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{items.length - triggers}</div><div className="reg-kpi-l">Document to file</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{jurisdictions}</div><div className="reg-kpi-l">Jurisdictions assessed</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(items.length)}</div><div className="reg-kpi-l">Open changes</div></div>
+        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{kv(triggers)}</div><div className="reg-kpi-l">Trigger a filing</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(items.length - triggers)}</div><div className="reg-kpi-l">Document to file</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(jurisdictions)}</div><div className="reg-kpi-l">Jurisdictions assessed</div></div>
       </div>
 
       {live.loading ? (

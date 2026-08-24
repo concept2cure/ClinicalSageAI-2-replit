@@ -183,6 +183,17 @@ function RegRow({ r, prod, onAsk }: RegRowProps) {
 export function Registrations({ onAsk }: SurfaceViewProps) {
   const [tab, setTab] = useState('reg');
   const grid = useLiveData<GridResponse>('/api/rim/registrations', ['/api/rim/registrations'], isGridResponse);
+  /* Gated on error as well as loading. `useLiveRows`/`useLiveData` return
+     `data: null` on a FAILED read, so each count below derives from an empty
+     list and resolves to 0 — and with `loading` already false the strip renders
+     a SETTLED zero rather than a placeholder. Rows are empty in three
+     situations and only the third may say "nothing is on file"; the pattern is
+     MarketAccess.tsx:62. */
+  /* Was `grid.loading ? '—' : n`, a half-guard: a failed RIM read left
+     loading false and every count 0, so the header stated the org holds no
+     marketing authorizations anywhere. On the clock/commit/strategy tabs no
+     error panel is on screen at all, so those zeros stood alone. */
+  const kv = (n: number | string) => (grid.loading || grid.error ? '—' : String(n));
   /* The chips used to render `(standards.data || REG_STANDARDS_FALLBACK).map`.
      `useLive` hands back the parsed body cast to DataStandard[] without looking
      at it, and `||` only fires on null/undefined — so a 200 carrying `{}`,
@@ -289,9 +300,9 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{grid.loading ? '—' : countries}</div><div className="reg-kpi-l">Markets {I.dot} {grid.loading ? '—' : products} product{products === 1 ? '' : 's'}</div></div>
-        <div className="reg-kpi" data-tone="ok"><div className="reg-kpi-v">{grid.loading ? '—' : approved}</div><div className="reg-kpi-l">Approved / cleared</div></div>
-        <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{grid.loading ? '—' : review}</div><div className="reg-kpi-l">Under review {I.dot} on clocks</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(countries)}</div><div className="reg-kpi-l">Markets {I.dot} {kv(products)} product{products === 1 ? '' : 's'}</div></div>
+        <div className="reg-kpi" data-tone="ok"><div className="reg-kpi-v">{kv(approved)}</div><div className="reg-kpi-l">Approved / cleared</div></div>
+        <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{kv(review)}</div><div className="reg-kpi-l">Under review {I.dot} on clocks</div></div>
         <div className="reg-kpi" data-tone="ai"><div className="reg-kpi-v">&mdash;</div><div className="reg-kpi-l">Open HA commitments</div></div>
       </div>
 

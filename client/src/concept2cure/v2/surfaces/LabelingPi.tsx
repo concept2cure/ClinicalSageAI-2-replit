@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState, ErrorState } from '../dataConnect';
+import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob, downloadText, safeFileName } from '../download';
@@ -149,6 +150,20 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
     reload,
   ]);
 
+  /* Whether this surface has an ANSWER to state, as opposed to a count it can
+     compute. The KPI row renders above the error branch, so on a failed read
+     `rows` is [] and every metric derived from it reads zero — and one of them
+     is "Boxed warning proposed". A boxed warning is the most serious element of
+     a US label; reporting zero proposed when the read failed tells a regulatory
+     director the label carries none, in the neutral tone, on the strength of
+     nothing. That is BP-W0-3's defect — an empty result standing in for an
+     unexamined one — on a surface the fix did not reach. */
+  const answerable = hasAnswer(
+    assessmentStateFor(
+      { loading, error },
+      { scopeExists: true, findingCount: rows.length, assessmentRan: !loading && !error },
+    ),
+  );
   const stIdx = useMemo(() => deriveLabelStage(rows), [rows]);
   const numberedSections = rows.filter((s) => /^\d/.test(s.n)).length;
   const boxedProposed = rows.filter((s) => s.n === 'BW' && s.st !== 'na').length;
@@ -340,9 +355,9 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
 
       <div className="reg-kpis">
         <div className="reg-kpi"><div className="reg-kpi-v">PLLR</div><div className="reg-kpi-l">USPI format — 21 CFR 201.57</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{loading ? '--' : numberedSections}</div><div className="reg-kpi-l">Full PI sections</div></div>
-        <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{loading ? '--' : agencyOpen}</div><div className="reg-kpi-l">Open agency edits</div></div>
-        <div className="reg-kpi" data-tone={boxedProposed ? 'err' : undefined}><div className="reg-kpi-v">{loading ? '--' : boxedProposed}</div><div className="reg-kpi-l">Boxed warning proposed</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{answerable ? numberedSections : '--'}</div><div className="reg-kpi-l">Full PI sections</div></div>
+        <div className="reg-kpi" data-tone={answerable ? 'warn' : undefined}><div className="reg-kpi-v">{answerable ? agencyOpen : '--'}</div><div className="reg-kpi-l">Open agency edits</div></div>
+        <div className="reg-kpi" data-tone={answerable && boxedProposed ? 'err' : undefined}><div className="reg-kpi-v">{answerable ? boxedProposed : '--'}</div><div className="reg-kpi-l">Boxed warning proposed</div></div>
       </div>
 
       <div className="lp-fmt">
