@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-23T23:43:05.737Z",
+  "generatedAt": "2026-08-24T00:12:48.232Z",
   "git": {
-    "sha": "06befb2dd03c40ca134d83dc67325f5112bb4ec9",
+    "sha": "817b3e15b7733f12054feec493fabdbcb17d8b3f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2172,7 +2172,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 262187
+        "bytes": 266129
       },
       {
         "file": "server/statistics-service.ts",
@@ -2191,6 +2191,10 @@
         "bytes": 150437
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 148228
+      },
+      {
         "file": "server/storage.ts",
         "bytes": 145402
       },
@@ -2207,6 +2211,10 @@
         "bytes": 138092
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 137628
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 136607
       },
@@ -2219,16 +2227,8 @@
         "bytes": 135234
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 135023
-      },
-      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 133930
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2322,7 +2322,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6580
+        "lines": 6678
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2349,6 +2349,10 @@
         "lines": 3472
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3382
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
       },
@@ -2358,11 +2362,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3190
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3159
+        "lines": 3272
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",

@@ -8,7 +8,8 @@
  * - dossier_routes.ts   -> /dossier  (dossier management; its only mount)
  *
  * NO LONGER MOUNTED HERE — see mountSubRouters() below for the full reasoning:
- * - documentAuthoring.routes.ts      mounted at /api/document-authoring
+ * - documentAuthoring.routes.ts      DELETED (zero callers; the canonical
+ *                                    path is /api/authoring)
  * - documentOrchestrationRoutes.ts   mounted at the app root
  * - document-data-center.ts          mounted at /api/device-data-center
  * - document_qc_routes.ts            DELETED (unreachable by construction)
@@ -167,9 +168,8 @@ async function mountSubRouters() {
 
   // ── REMOVED: three shadow mounts and one structurally unreachable router ────
   //
-  // /authoring     -> documentAuthoring.routes, already mounted at
-  //                   /api/document-authoring by
-  //                   bootstrap/register-document-routes.ts:40
+  // /authoring     -> documentAuthoring.routes — since DELETED outright
+  //                   (zero callers; the canonical path is /api/authoring)
   // /orchestration -> documentOrchestrationRoutes, already mounted at the app
   //                   root by bootstrap/register-regulatory-routes.ts:26
   // /data-center   -> document-data-center, already mounted at

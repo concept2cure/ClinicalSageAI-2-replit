@@ -155,4 +155,54 @@ describe('DocumentAuthoring — real editable canvas', () => {
     // And the canvas says so: not persisted, still on this device.
     expect(await screen.findByText(/Save failed — kept on this device/i)).toBeTruthy();
   });
+  it('moves the open section — server-validated reorder, tree redrawn from the canonical order', async () => {
+    /* order_index is what the export assembles by, and nothing could change
+       it before the reorder endpoint existed. This drives the real seam: the
+       swap goes up as the FULL permutation, and the tree redraws from the
+       canonical GET, never from a local echo. */
+    const S2 = {
+      id: 'S2', doc_id: 'D1', code: '3.2.S.2', title: 'Manufacture', content: 'Made carefully.',
+      order_index: 1, comment_count: 0, revision_count: 1, citation_count: 0,
+      updated_at: '2026-07-20T10:00:00Z',
+    };
+    const reorder = vi.fn();
+    let order = ['S1', 'S2'];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) {
+        return ok({ ...DOCS, documents: [{ ...DOCS.documents[0], section_count: 2 }] });
+      }
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') {
+        const byId: Record<string, unknown> = { S1: SECTIONS.sections[0], S2 };
+        return ok({
+          success: true,
+          sections: order.map((id, i) => ({ ...(byId[id] as object), order_index: i })),
+        });
+      }
+      if (method === 'POST' && url === '/api/authoring/docs/D1/sections/reorder') {
+        reorder(body);
+        order = (body as { section_ids: string[] }).section_ids;
+        return ok({ success: true, order });
+      }
+      return ok({ success: true, revisions: [], comments: [], sources: [] });
+    });
+
+    render(<DocumentAuthoring {...props()} />);
+    const down = await screen.findByRole('button', { name: 'Move 3.2.S.1 down' });
+    fireEvent.click(down);
+
+    await waitFor(() => expect(reorder).toHaveBeenCalledWith({ section_ids: ['S2', 'S1'] }));
+    // The tree now lists 3.2.S.2 before 3.2.S.1 — the server's order, refetched.
+    await waitFor(() => {
+      const codes = Array.from(document.querySelectorAll('.ed-tree-row .ed-num')).map(
+        (n) => n.textContent,
+      );
+      const a = codes.indexOf('3.2.S.2');
+      const b = codes.indexOf('3.2.S.1');
+      expect(a).toBeGreaterThan(-1);
+      expect(b).toBeGreaterThan(-1);
+      expect(a).toBeLessThan(b);
+    });
+    // The moved section stays open.
+    expect(document.querySelector('.ed-mast-num')?.textContent).toBe('3.2.S.1');
+  });
 });
