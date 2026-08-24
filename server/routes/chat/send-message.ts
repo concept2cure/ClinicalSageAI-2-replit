@@ -50,10 +50,14 @@ import type { SignalReliability } from '../../services/intelligence/learning-loo
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
 import {
   directiveFromToolResult,
+  surfaceActionFromToolResult,
   toNavigationActions,
+  toSurfaceActionChips,
   type NavigationAction,
+  type SurfaceActionChip,
 } from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
   handleSubmissionChat,
   isPostSectionGenerationTurn,
@@ -400,6 +404,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // This caller used to DROP them silently — AnA resolved a target, told the
     // user she could take them there, and no chip ever reached this client.
     const collectedNavigation: NavigationDirective[] = [];
+    // Surface actions ride the same carrier: act_on_screen results become
+    // offer-chips here too (this route never applies anything live).
+    const collectedSurfaceActions: SurfaceActionDirective[] = [];
 
     // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
@@ -771,6 +778,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // refusals yield null here and never become one).
           const directive = directiveFromToolResult(toolName, result);
           if (directive) collectedNavigation.push(directive);
+          // An act_on_screen that resolved against the surface-action registry
+          // becomes an offer-chip the same way (refusals yield null).
+          const actionDirective = surfaceActionFromToolResult(toolName, result);
+          if (actionDirective) collectedSurfaceActions.push(actionDirective);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -869,6 +880,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           error: string | null;
         }
       | NavigationAction
+      | SurfaceActionChip
     > = [];
 
     if (numericOrgId && project_id) {
@@ -904,6 +916,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // leads. Deduped + capped by toNavigationActions (first occurrence wins).
     if (collectedNavigation.length > 0) {
       executedActions = [...executedActions, ...toNavigationActions(collectedNavigation)];
+    }
+
+    // Surface-action chips under the identical offered-not-performed contract.
+    if (collectedSurfaceActions.length > 0) {
+      executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
     }
 
     // Save to legacy chat_messages for backward compat

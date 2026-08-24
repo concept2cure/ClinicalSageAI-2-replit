@@ -5,6 +5,7 @@ import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
+import { shellProgramName } from '../shellProject';
 
 /* ── Render contract (GET /api/reg-change → { data: RciChange[] }) ── */
 
@@ -36,6 +37,13 @@ const _RCI_SEVL: Record<string, string> = { high: 'Action required', med: 'Revie
 /* ════ RegChange -- regulatory change intelligence surface ════ */
 
 export function RegChange({ onAsk }: SurfaceViewProps) {
+  /* The open programme, named as a person would say it — never a hardcoded
+     product. `null` when no programme is open, and every caller below phrases
+     its request without one rather than substituting a placeholder: an
+     assistant that has to ask which programme beats one confidently answering
+     about the wrong one. */
+  const program = shellProgramName();
+
   /* Fixture-free (real-data standard): the worklist reads the org's REAL
      regulatory-change store (reg_change_items, written via POST /api/reg-change).
      Real rows, an honest empty, or an honest error — never a fixture. `rows` is
@@ -123,7 +131,20 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
           <h1 className="reg-title">Regulatory change intelligence</h1>
           <p className="reg-sub">Horizon scan of FDA guidance, ISO/IEC standard revisions, and EU MDR/IVDR &amp; AI-Act changes &mdash; each assessed for impact against your portfolio and resolved to an action document. Not a feed: a worklist.</p>
         </div>
-        {ask && <button className="reg-cta" onClick={() => ask('Scan regulatory changes affecting the BX-204 portfolio and draft the impact assessments')}>{I.sparkles} Scan with AnA</button>}
+        {/* ── The scan asked about a product the customer does not own ───────
+            `'…affecting the BX-204 portfolio'` was a string literal. BX-204 is
+            a demo fixture programme, so every real tenant pressing this got a
+            regulatory-change scan scoped to someone else's imaginary product.
+
+            The open programme now names itself. When none is open the request
+            is phrased without one — an assistant that has to ask which
+            portfolio is better than one confidently answering about the
+            wrong one. */}
+        {ask && <button className="reg-cta" onClick={() => ask(
+          program
+            ? `Scan regulatory changes affecting the ${program} portfolio and draft the impact assessments`
+            : 'Scan regulatory changes affecting my portfolio and draft the impact assessments'
+        )}>{I.sparkles} Scan with AnA</button>}
       </div>
 
       <div className="reg-kpis">
@@ -171,7 +192,11 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
                   <div className="rci-foot">
                     <div className="rci-doc">{I.fileText} Generates <b>{c.doc}</b> {I.dot} {c.owner} {I.dot} {c.due}</div>
                     <div className="rci-acts">
-                      {ask && <button className="rci-act pri" onClick={() => ask(`Draft the ${c.doc} for ${c.title} — assess impact on the BX-204 portfolio`)}>{I.sparkles} Assess &amp; draft</button>}
+                      {ask && <button className="rci-act pri" onClick={() => ask(
+                        program
+                          ? `Draft the ${c.doc} for ${c.title} — assess impact on the ${program} portfolio`
+                          : `Draft the ${c.doc} for ${c.title} — assess the impact on my portfolio`
+                      )}>{I.sparkles} Assess &amp; draft</button>}
                       {ask && <button className="rci-act" onClick={() => ask(`Show the full text and citations for ${c.title}`)}>Open source</button>}
                     </div>
                   </div>

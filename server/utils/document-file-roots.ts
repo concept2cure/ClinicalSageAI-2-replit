@@ -10,8 +10,9 @@
  * 1. PREFIX MATCHING IS NOT CONTAINMENT. `fullPath.startsWith(root)` admits
  *    `/app/storage-evil/secret` for the root `/app/storage`, because the string
  *    genuinely does start with it. Containment needs the separator, or exact
- *    equality with the root itself. `routes/dossier_routes.ts` already had this
- *    right; these three sites did not.
+ *    equality with the root itself. `routes/dossier_routes.ts` (since deleted
+ *    as an unreachable parallel path) already had this right; these three
+ *    sites did not.
  *
  * 2. THE ALLOWLIST CONTAINED THE TENANT VAULT. `storage` was on the list, and
  *    `services/storage/local-provider.ts` puts every tenant's files under

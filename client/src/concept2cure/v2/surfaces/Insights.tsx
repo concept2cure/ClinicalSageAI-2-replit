@@ -713,15 +713,32 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
   if (dashboard.kind === 'compare') {
     const m = dashboard.markets || [];
     const prog = dashboard.program || {} as ProgramCtx;
-    const tRows: [string, string | null][] = [['Submission readiness', prog.readiness != null ? prog.readiness + '%' : null], ['Dossier standard', 'eCTD'], ['Module completeness', null], ['Region-specific gaps', null]];
+    /* ── Every cell in the first two rows was the same value ────────────────
+       The cell expression printed `r[1]` under EVERY market column for rows 0
+       and 1, so a single PROGRAMME-level readiness score appeared beneath FDA,
+       EMA, PMDA and the rest as though each agency had been assessed
+       separately — and "eCTD" was asserted as the dossier standard for all of
+       them. A reader asked this screen to compare markets and it answered by
+       repeating one number and inventing agreement.
+
+       Readiness is real, so it is stated ONCE, as what it is: a
+       programme-level figure. The per-market grid keeps only the rows the
+       governed record could actually fill per market, and they are all empty,
+       which is the honest answer until the regional providers are connected. */
+    const tRows: [string, string | null][] = [['Module completeness', null], ['Region-specific gaps', null]];
     return (
       <div className="ro-dash">
         <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Global harmonization</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{m.length} markets</span></div></div></div>
+        {prog.readiness != null && (
+          <div className="ro-dash-progline">
+            Submission readiness <b>{prog.readiness}%</b> — a programme-level figure, not assessed per market.
+          </div>
+        )}
         <div className="ro-table">
           <div className="ro-thead" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>Requirement</span>{m.map(x => <span key={x}>{x}</span>)}</div>
-          {tRows.map((r, ri) => (<div key={ri} className="ro-trow" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>{r[0]}</span>{m.map((_, ci) => <span key={ci}>{ci === 0 && r[1] != null ? r[1] : (r[1] != null && ri < 2 ? r[1] : '--')}</span>)}</div>))}
+          {tRows.map((r, ri) => (<div key={ri} className="ro-trow" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>{r[0]}</span>{m.map((_, ci) => <span key={ci}>{r[1] ?? '--'}</span>)}</div>))}
         </div>
-        <div className="ro-dash-note">{I.info} Where a market value is not in the governed record it shows as "--". Connect the live regional providers to populate the deltas.</div>
+        <div className="ro-dash-note">{I.info} No per-market assessment is in the governed record, so every market cell reads "--". Connect the live regional providers to populate the deltas.</div>
       </div>
     );
   }

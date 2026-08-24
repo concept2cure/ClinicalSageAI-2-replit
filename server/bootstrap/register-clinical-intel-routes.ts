@@ -57,21 +57,15 @@ export async function registerClinicalIntelRoutes({
   // space was incoherent — the AI-edit writer inserted concept2cure_artifacts
   // ids where this route's reads expected documents ids. Recorded section→source
   // lineage lives in authoring_citations (cite-source API + Source Tracer).
-  try {
-    const [documentsUnified, documentIntelligenceRoutes] = await Promise.all([
-      import('../routes/documents-unified'),
-      import('../routes/document-intelligence-routes'),
-    ]);
-
-    const documentsGateway = express.Router();
-    documentsGateway.use(documentsUnified.default);
-    documentsGateway.use(documentIntelligenceRoutes.default);
-
-    app.use('/api/documents', documentsGateway);
-    console.log('✅ Documents gateway mounted at /api/documents (unified + intelligence)');
-  } catch (error) {
-    console.error('Failed to mount consolidated documents gateway routes:', error);
-  }
+  // REMOVED: the /api/documents gateway (documents-unified +
+  // document-intelligence-routes, with document-routes and dossier_routes
+  // sub-mounted under it). Every path it served — /health, /docs, /core/*,
+  // /dossier/*, /process, /identify-types, /analyze, /enhance — had ZERO
+  // callers anywhere in the repository: no client fetch, no server-internal
+  // call, no test. The four routers wrote to parallel document stores beside
+  // the canonical /api/authoring pipeline, so any request they could have
+  // served was a write into a copy nothing reads. All four files are deleted
+  // with this mount per the zero-duplication rule.
 
   // ── RTM Export ──
   //

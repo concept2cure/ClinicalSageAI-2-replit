@@ -162,6 +162,67 @@ interface LedgerVerdict {
   breaks: Array<{ revisionId: string; reason: string }>;
 }
 
+/** A row from GET /docs/:docId/audit — the Part 11 audit trail the server has
+ *  written on every governed act since the store shipped, readable by no
+ *  surface until this rail. Field names are the endpoint's aliases. */
+interface AuthAuditEvent {
+  id: string;
+  section_id: string | null;
+  event_type: string | null;
+  actor: string | null;
+  actor_role: string | null;
+  change_reason: string | null;
+  content_hash_before: string | null;
+  content_hash_after: string | null;
+  created_at: string | null;
+}
+
+/** How each recorded operation reads to a reviewer. Unknown operations are
+ *  humanized from the raw value, never hidden. */
+const AUDIT_EVENT_LABELS: Record<string, string> = {
+  CREATE: 'created',
+  EDIT: 'content saved',
+  UPDATE: 'updated',
+  COMMIT: 'committed to filing',
+  REVERT: 'reverted to a prior revision',
+  REORDER_SECTIONS: 'sections reordered',
+  FREEZE: 'frozen',
+  SIGN: 'signed',
+  E_SIGN: 'e-signed',
+  EXPORT: 'exported',
+  EXPORT_HISTORY_DELETED: 'export record deleted',
+  SUBMIT: 'submitted',
+};
+
+function auditEventLabel(raw: string | null): string {
+  if (!raw) return 'recorded';
+  return AUDIT_EVENT_LABELS[raw] ?? raw.replace(/_/g, ' ').toLowerCase();
+}
+
+/** POST /sections/:id/ai/deficiency-scan — six mechanical checks over the
+ *  SAVED section (length, module keywords, tables/figures, placeholders,
+ *  structure). The handler itself refuses to call this a compliance
+ *  determination (`signal_type: 'heuristic_quality'`); the panel keeps that
+ *  framing rather than dressing regexes up as review. */
+interface ScanDeficiency {
+  type: string;
+  severity: 'high' | 'medium' | 'low' | string;
+  message: string;
+  recommendation?: string | null;
+  location?: string | null;
+}
+interface ScanResults {
+  section_id: string;
+  section_code?: string;
+  quality_score?: number;
+  status?: string;
+  deficiencies: ScanDeficiency[];
+  deficiency_count?: number;
+  scanned_at?: string;
+}
+
+const SEVERITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
 interface AuthComment {
   id: string;
   section_id: string | null;
@@ -173,6 +234,15 @@ interface AuthComment {
   created_at: string | null;
   /** Range anchor recorded at creation (authoring_comments.anchor JSONB). */
   anchor?: unknown;
+  /** Threaded replies — the server nests them under each top-level comment
+   *  (GET /documents/:id/comments), oldest first. Absent on reply rows. */
+  replies?: AuthComment[];
+  /** Resolution record — the server has captured all three since the store
+   *  shipped (PATCH /comments/:id), and a status chip alone is not a record:
+   *  the rail shows WHO resolved a thread, when, and their stated reason. */
+  resolved_by?: string | null;
+  resolved_at?: string | null;
+  resolution_note?: string | null;
 }
 
 /** Runtime guard over the JSONB the server returns verbatim. */
@@ -702,7 +772,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
-    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | null
+    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | null
   >('ana');
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
@@ -710,7 +780,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // and opposite facts.
   const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
   const [comments, setComments] = useState<AuthComment[]>([]);
+  const [commentsState, setCommentsState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [newComment, setNewComment] = useState('');
+  /* The document's Part 11 audit trail. 'error' is distinct from empty on
+     purpose: a failed read of the compliance record must never render as "no
+     governed acts have occurred". */
+  const [auditEvents, setAuditEvents] = useState<AuthAuditEvent[]>([]);
+  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   /* The revision ledger's recomputed verdict — null until asked, 'error' on a
      failed read (which is a failure to CHECK, never a claim about the chain). */
   const [ledger, setLedger] = useState<LedgerVerdict | 'error' | 'checking' | null>(null);
@@ -1249,11 +1325,42 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     setRevisions(Array.isArray(body?.revisions) ? body!.revisions! : []);
   }, []);
 
+  /* Same contract as loadSources below: a failed read is an ERROR, never an
+     empty list. This loader used to discard `ok` and render every failure as
+     "No comments yet" — on a rail consulted to decide whether a document is
+     clear of open review threads before freezing it, that conflation is the
+     dangerous one. */
   const loadComments = useCallback(async (docId: string) => {
-    const { body } = await readJson<{ comments?: AuthComment[] }>(
+    setCommentsState('loading');
+    const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
       `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
-    setComments(Array.isArray(body?.comments) ? body!.comments! : []);
+    if (!ok || !body) {
+      setCommentsState('error');
+      setComments([]);
+      return;
+    }
+    setCommentsState('ready');
+    setComments(Array.isArray(body.comments) ? body.comments : []);
+  }, []);
+
+  /* ── The document's audit trail ──
+     GET /docs/:docId/audit has served these rows — actor, role, operation,
+     reason, before/after content hashes — since the authoring store shipped,
+     and no surface ever called it: the record §11.10(e) exists for was being
+     written and could not be read. Newest first, as the server returns it. */
+  const loadAudit = useCallback(async (docId: string) => {
+    setAuditState('loading');
+    const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
+      `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
+    );
+    if (!ok || !body) {
+      setAuditState('error');
+      setAuditEvents([]);
+      return;
+    }
+    setAuditEvents(Array.isArray(body.events) ? body.events : []);
+    setAuditState('ready');
   }, []);
 
   /* ── The sources this section is drafted from ──
@@ -1315,6 +1422,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   useEffect(() => {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
+    if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
     if (rail === 'sources' && activeSectionId) {
       void loadSources(activeSectionId);
       void loadProjectSources();
@@ -1325,6 +1433,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     activeDocId,
     loadHistory,
     loadComments,
+    loadAudit,
     loadSources,
     loadProjectSources,
   ]);
@@ -1459,8 +1568,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           )
         );
         fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
-        // Keep the history rail fresh if it's open.
+        // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
+        if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
       } finally {
         setSaving(false);
       }
@@ -1611,7 +1721,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       });
       const json = await res.json().catch(() => null);
       if (res.status === 401) {
-        fireToast('Comment not posted — your session isn’t authenticated.', 'error');
+        fireToast('Comment not posted — your session isn’t authenticated. Sign in and retry.', 'error');
         return;
       }
       if (!res.ok) {
@@ -1640,6 +1750,57 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     }
   }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
 
+  /* ── Reply into a comment thread ──
+     The write endpoint has accepted `parent_comment_id` and the read has
+     returned nested `replies` since the duplicate-route collapse — and the
+     rail rendered neither, so every review "thread" was a guestbook: a
+     reviewer's question could only be answered by a NEW top-level comment
+     above it. One reply box open at a time; the reply posts against the
+     THREAD's section (not the section the author happens to have open), and
+     nothing local changes until the server confirms. */
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  /* Resolve opens a small confirm with an OPTIONAL reason — the platform's
+     reason-for-change convention, kept optional here because resolving a
+     comment is not an edit to governed content. Whatever is stated is
+     recorded as the thread's resolution_note and shown with the record. */
+  const [resolveFor, setResolveFor] = useState<string | null>(null);
+  const [resolveNote, setResolveNote] = useState('');
+  const addReply = useCallback(
+    async (parent: AuthComment) => {
+      if (!activeDocId || !replyText.trim() || !parent.section_id) return;
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${encodeURIComponent(parent.section_id)}/comment`,
+          { body: replyText.trim(), doc_id: activeDocId, parent_comment_id: parent.id }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Reply not posted — your session isn’t authenticated. Sign in and retry.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t post the reply — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'error'
+          );
+          return;
+        }
+        setReplyText('');
+        setReplyTo(null);
+        fireToast('Reply added to the thread.');
+        void loadComments(activeDocId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t post the reply — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeDocId, replyText, loadComments, fireToast]
+  );
+
   /* ── Resolve / reopen a comment thread ──
      PATCH /api/authoring/comments/:id has recorded status changes with resolver
      attribution (JWT actor, resolved_at) since the store shipped — and no
@@ -1647,17 +1808,23 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      is never deleted by this: a resolved comment stays in the record with who
      resolved it; reopen is the honest undo. */
   const setCommentStatus = useCallback(
-    async (commentId: string, statusTo: 'resolved' | 'open') => {
+    async (commentId: string, statusTo: 'resolved' | 'open', note?: string) => {
       if (!activeDocId) return;
       try {
         const res = await apiRequest(
           'PATCH',
           `/api/authoring/comments/${encodeURIComponent(commentId)}`,
-          { status: statusTo }
+          {
+            status: statusTo,
+            // The server has kept resolution_note since the store shipped; the
+            // UI never sent one, so every resolution closed without a stated
+            // disposition. Optional — an empty note is not fabricated into one.
+            ...(statusTo === 'resolved' && note?.trim() ? { resolution_note: note.trim() } : {}),
+          }
         );
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
-          fireToast('Not changed — your session isn’t authenticated.', 'error');
+          fireToast('Not changed — your session isn’t authenticated. Sign in and retry.', 'error');
           return;
         }
         if (!res.ok) {
@@ -1809,6 +1976,51 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     },
     [activeDocId, activeSection, sections, fireToast, loadSections]
   );
+
+  /* ── Heuristic section check ──
+     The endpoint has existed, worked, and needed no AI provider since it was
+     written — and no surface called it. Results describe the SAVED content
+     (the handler reads the stored row), so the panel says so when the canvas
+     is dirty rather than implying unsaved edits were checked. Cleared on
+     section switch: another section's flags must never linger. */
+  const [check, setCheck] = useState<ScanResults | null>(null);
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    setCheck(null);
+  }, [activeSectionId]);
+
+  const runCheck = useCallback(async () => {
+    if (!activeSection) return;
+    setChecking(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        `/api/authoring/sections/${activeSection.id}/ai/deficiency-scan`,
+        {}
+      );
+      const json = (await res.json().catch(() => null)) as {
+        scan_results?: ScanResults;
+        error?: unknown;
+      } | null;
+      if (!res.ok || !json?.scan_results) {
+        fireToast(
+          'Couldn’t check the section — ' +
+            (typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`) +
+            '. No result is shown because none was produced.',
+          'error'
+        );
+        return;
+      }
+      setCheck(json.scan_results);
+    } catch (e) {
+      fireToast(
+        'Couldn’t check the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
+    } finally {
+      setChecking(false);
+    }
+  }, [activeSection, fireToast]);
 
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
@@ -2152,6 +2364,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             >
               {I.shieldCheck} Signatures
             </button>
+            {/* §11.10(e): the audit trail has been WRITTEN on every governed
+                act since the store shipped — and readable by nothing. A
+                record that cannot be reviewed satisfies no regulation. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'audit' ? null : 'audit')}
+              data-active={rail === 'audit' || undefined}
+            >
+              {I.activity} Audit
+            </button>
             <button
               className="btn primary"
               style={{ height: 30 }}
@@ -2410,6 +2633,15 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                             </span>
                           );
                         })()}
+                      <button
+                        className="nda-open"
+                        style={{ marginLeft: 4, verticalAlign: 'middle' }}
+                        disabled={checking}
+                        title="Six mechanical checks over the saved section — length, module keywords, tables, placeholders, structure. Heuristic signals, not a compliance determination."
+                        onClick={() => void runCheck()}
+                      >
+                        {I.checkCircle} {checking ? 'Checking…' : 'Check'}
+                      </button>
                     </>
                   )}
                   <div className="ed-mast-meta">
@@ -2431,6 +2663,74 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       : ''}
                   </div>
                 </div>
+                {/* ── Heuristic check results ──
+                    Framed exactly as the server frames them: mechanical
+                    signals over the SAVED content. Zero flags is reported as
+                    "passed six mechanical checks", never as "compliant". */}
+                {check && check.section_id === activeSection.id && (
+                  <div
+                    className="scaf-note"
+                    role="status"
+                    style={{ marginBottom: 12, display: 'grid', gap: 6 }}
+                    data-testid="section-check"
+                  >
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                      <b style={{ fontSize: 12 }}>
+                        Section check — heuristic signals, not a compliance determination
+                      </b>
+                      <span style={{ flex: 1 }} />
+                      {dirty && (
+                        <span style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}>
+                          checked the last saved content — unsaved edits are not in it
+                        </span>
+                      )}
+                      <button className="nda-open" onClick={() => setCheck(null)}>
+                        Dismiss
+                      </button>
+                    </div>
+                    {check.deficiencies.length === 0 ? (
+                      <span style={{ fontSize: 12 }}>
+                        No flags. The section passed six mechanical checks (length, module
+                        keywords, tables, placeholders, structure) — this is not a review.
+                      </span>
+                    ) : (
+                      [...check.deficiencies]
+                        .sort(
+                          (a, b) =>
+                            (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3)
+                        )
+                        .map((d, i) => (
+                          <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+                            <span
+                              className={
+                                d.severity === 'high'
+                                  ? 'sp-tone-warn'
+                                  : d.severity === 'medium'
+                                    ? 'sp-tone-warn'
+                                    : undefined
+                              }
+                              style={{
+                                flexShrink: 0,
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                fontSize: 10,
+                                paddingTop: 2,
+                                ...(d.severity === 'high' ? { color: 'var(--c2c-err,#b42318)' } : {}),
+                              }}
+                            >
+                              {d.severity}
+                            </span>
+                            <span style={{ minWidth: 0 }}>
+                              {d.message}
+                              {d.recommendation && (
+                                <span style={{ opacity: 0.75 }}> — {d.recommendation}</span>
+                              )}
+                            </span>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                )}
                 {docSealed && (
                   <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>
                     {I.lock}{' '}
@@ -2855,6 +3155,116 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         </aside>
       )}
 
+      {/* ── Right: the document's Part 11 audit trail ──
+          Every row is a governed act the SERVER recorded — actor and role
+          from the verified JWT, operation, reason, and the content hashes on
+          either side of the change. Nothing here is composed client-side. */}
+      {rail === 'audit' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Audit trail{activeDoc ? ` · ${activeDoc.title}` : ''}</span>
+            <button
+              type="button"
+              className="nda-open"
+              onClick={() => activeDocId && void loadAudit(activeDocId)}
+              disabled={!activeDocId || auditState === 'loading'}
+            >
+              {auditState === 'loading' ? 'Loading…' : 'Refresh'}
+            </button>
+          </div>
+          {!activeDocId ? (
+            <EmptyState
+              icon={I.activity}
+              title="No document selected"
+              hint="Select a document to review its audit trail."
+            />
+          ) : auditState === 'error' ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn’t load the audit trail"
+              hint="The read failed. This is a failure to READ the record — it does not mean no governed acts occurred. Retry, or check the service is reachable."
+            />
+          ) : auditState === 'loading' && auditEvents.length === 0 ? (
+            <div className="scaf-note" style={{ padding: 12 }}>
+              Loading the audit trail…
+            </div>
+          ) : auditEvents.length === 0 ? (
+            <EmptyState
+              icon={I.activity}
+              title="No audit events yet"
+              hint="Governed acts on this document — saves, reverts, reorders, freezes, signatures, exports — are recorded here by the server as they happen."
+            />
+          ) : (
+            auditEvents.map(ev => {
+              const section = ev.section_id
+                ? sections.find(s => s.id === ev.section_id) ?? null
+                : null;
+              return (
+                <div key={ev.id} className="cmt">
+                  <div className="cmt-meta">
+                    <span className="cmt-av">
+                      {(ev.actor ?? '·')
+                        .split(/[@\s.]/)
+                        .filter(Boolean)
+                        .map(x => x[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </span>
+                    <b
+                      style={{
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {ev.actor ?? 'Unknown actor'}
+                    </b>
+                    {ev.actor_role && <span className="cmt-role">{ev.actor_role}</span>}
+                    <span className="cmt-when">· {relTime(ev.created_at)}</span>
+                  </div>
+                  <div className="cmt-body" style={{ display: 'grid', gap: 3 }}>
+                    <span>
+                      {auditEventLabel(ev.event_type)}
+                      {section && (
+                        <>
+                          {' — '}
+                          <button
+                            className="nda-open"
+                            title={`Open ${section.code} ${section.title}`}
+                            onClick={() => requestLeave({ kind: 'section', id: section.id })}
+                          >
+                            §{section.code}
+                          </button>
+                        </>
+                      )}
+                    </span>
+                    {ev.change_reason && (
+                      <span style={{ fontSize: 12, opacity: 0.85 }}>{ev.change_reason}</span>
+                    )}
+                    {(ev.content_hash_before || ev.content_hash_after) && (
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-mono, monospace)',
+                          fontSize: 10.5,
+                          opacity: 0.7,
+                        }}
+                        title={`Content hash before: ${ev.content_hash_before ?? '—'}\nContent hash after: ${ev.content_hash_after ?? '—'}`}
+                      >
+                        {(ev.content_hash_before ?? '—').slice(0, 8)} →{' '}
+                        {(ev.content_hash_after ?? '—').slice(0, 8)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </aside>
+      )}
+
       {rail === 'sources' && (
         <aside className="ed-comments">
           <div className="ed-comments-h">Drafted from</div>
@@ -3070,11 +3480,27 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             </div>
           )}
           {comments.length === 0 ? (
-            <EmptyState
-              icon={I.checkCircle}
-              title="No comments yet"
-              hint="Review comments on this document appear here."
-            />
+            /* Three different facts, three different renders: still reading,
+               the read FAILED, and genuinely no comments. This rail used to
+               render every failure as "No comments yet" — on the panel a
+               reviewer consults before freezing a document, the most dangerous
+               conflation on the surface. */
+            commentsState === 'loading' ? (
+              <EmptyState icon={I.checkCircle} title="Loading comments…" busy />
+            ) : commentsState === 'error' ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn’t load this document’s comments"
+                hint="The document may have open review threads that did not load — this is a failed read, not an empty record. Reopen the rail to retry."
+              />
+            ) : (
+              <EmptyState
+                icon={I.checkCircle}
+                title="No comments yet"
+                hint="Comments on this document appear here. Add one above."
+              />
+            )
           ) : (
             comments.map(c => {
               const anchor = asTextRangeAnchor(c.anchor);
@@ -3124,12 +3550,53 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         className="nda-open"
                         style={{ marginLeft: 'auto' }}
                         title="Mark this comment resolved — recorded under your name; the thread stays in the record"
-                        onClick={() => void setCommentStatus(c.id, 'resolved')}
+                        onClick={() => {
+                          setResolveFor(c.id);
+                          setResolveNote('');
+                        }}
                       >
                         Resolve
                       </button>
                     )}
                   </div>
+                  {/* The resolution RECORD, not just a chip: who closed the
+                      thread, when, and their stated reason — the facts the
+                      server has kept all along and the rail never showed. */}
+                  {c.status === 'resolved' && (c.resolved_by || c.resolved_at) && (
+                    <div className="cmt-resolution">
+                      Resolved{c.resolved_by ? ` by ${c.resolved_by}` : ''}
+                      {c.resolved_at ? ` · ${relTime(c.resolved_at)}` : ''}
+                      {c.resolution_note ? <em> — “{c.resolution_note}”</em> : null}
+                    </div>
+                  )}
+                  {resolveFor === c.id && (
+                    <div style={{ margin: '4px 0 6px' }}>
+                      <textarea
+                        className="c2c-input"
+                        value={resolveNote}
+                        autoFocus
+                        onChange={e => setResolveNote(e.target.value)}
+                        placeholder="Reason for resolving (optional)"
+                        aria-label="Reason for resolving"
+                        style={{ width: '100%', minHeight: 40, resize: 'vertical', fontSize: 13 }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 4 }}>
+                        <button className="nda-open" onClick={() => setResolveFor(null)}>
+                          Cancel
+                        </button>
+                        <button
+                          className="btn primary"
+                          style={{ height: 26 }}
+                          onClick={() => {
+                            setResolveFor(null);
+                            void setCommentStatus(c.id, 'resolved', resolveNote);
+                          }}
+                        >
+                          Resolve
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {/* The quoted range this thread is anchored to, with a jump
                       into the canvas. An anchor whose text no longer exists is
                       reported as exactly that — never silently repointed. */}
@@ -3176,6 +3643,75 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     </div>
                   )}
                   <div className="cmt-body">{c.body}</div>
+                  {/* The thread under its head: replies the server nests,
+                      oldest first, each with its own server-side attribution. */}
+                  {(c.replies?.length ?? 0) > 0 && (
+                    <div className="cmt-replies">
+                      {c.replies!.map(r => (
+                        <div key={r.id} className="cmt-reply">
+                          <div className="cmt-meta">
+                            <span className="cmt-av">
+                              {(r.author_name ?? '·')
+                                .split(' ')
+                                .map(x => x[0])
+                                .join('')
+                                .slice(0, 2)}
+                            </span>
+                            <b>{r.author_name ?? 'Unknown'}</b>
+                            <span className="cmt-when">· {relTime(r.created_at)}</span>
+                          </div>
+                          <div className="cmt-body">{r.body}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Reply — posts into THIS thread (parent_comment_id), against
+                      the thread's own section. One box open at a time. */}
+                  {c.section_id &&
+                    (replyTo === c.id ? (
+                      <div style={{ marginTop: 6 }}>
+                        <textarea
+                          className="c2c-input"
+                          value={replyText}
+                          autoFocus
+                          onChange={e => setReplyText(e.target.value)}
+                          placeholder={`Reply to ${c.author_name ?? 'this thread'}…`}
+                          aria-label={`Reply to ${c.author_name ?? 'this thread'}`}
+                          style={{ width: '100%', minHeight: 44, resize: 'vertical', fontSize: 13 }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 4 }}>
+                          <button
+                            className="nda-open"
+                            onClick={() => {
+                              setReplyTo(null);
+                              setReplyText('');
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn primary"
+                            style={{ height: 26 }}
+                            disabled={!replyText.trim()}
+                            onClick={() => void addReply(c)}
+                          >
+                            Reply
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="nda-open"
+                        style={{ marginTop: 4 }}
+                        title="Reply into this thread"
+                        onClick={() => {
+                          setReplyTo(c.id);
+                          setReplyText('');
+                        }}
+                      >
+                        {I.messageSquare} Reply
+                      </button>
+                    ))}
                 </div>
               );
             })

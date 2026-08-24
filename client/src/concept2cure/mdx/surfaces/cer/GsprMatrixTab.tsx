@@ -260,7 +260,12 @@ export function GsprMatrixTab({ programId, defaultRegulation, onAskAna }: GsprMa
           <div className="panel-hdr">
             <div>
               <div className="t">Sample requirement-by-requirement status</div>
-              <div className="s">Canonical example content · 23 requirements</div>
+              {/* The count is the REGULATION's, not a constant. This read
+                  "23 requirements" whichever regulation was selected — MDR's
+                  number, shown above an IVDR checklist. */}
+              <div className="s">
+                Canonical example content · {regulation === 'IVDR' ? 20 : 23} requirements
+              </div>
             </div>
           </div>
           <div className="tbl-scroll">

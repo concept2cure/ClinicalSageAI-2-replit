@@ -69,11 +69,19 @@ export function AuthoredHtml({
           try {
             const url = await resolveImageSrc(refSrc);
             img.setAttribute('src', url);
-          } catch {
+          } catch (e) {
+            // resolveImageSrc throws `HTTP <status>` on a refused fetch — say
+            // the actual cause instead of guessing at two.
+            const status = e instanceof Error ? /^HTTP (\d+)/.exec(e.message)?.[1] : null;
+            const reason =
+              status === '401' || status === '403'
+                ? 'you don’t have access to it'
+                : status
+                  ? 'the image store returned an error'
+                  : 'the image store is unreachable';
             const note = document.createElement('p');
             note.className = 'ed-figure-missing';
-            note.textContent =
-              'A figure could not be loaded — you may not have access, or the image store is unreachable. Its reference is kept in the section.';
+            note.textContent = `Couldn’t load this figure — ${reason}. Its reference is kept in the section.`;
             img.replaceWith(note);
           }
         }),

@@ -27,9 +27,15 @@ interface AnaVerbBarProps {
 interface StreamingRendererProps {
   active: boolean; verb: string; submissionTypeId?: string;
   sectionLabel?: string; documentId?: string; sectionKey?: string;
+  /* `onApply?: () => void` used to sit at the end of this list. It was declared
+     and nothing else: never destructured below, never called, so a parent that
+     wired an Apply handler got silence. It was also redundant — the "Accept"
+     button IS the apply, and it calls `onAccept` with the html and the usage,
+     which is strictly more than an argumentless onApply could carry.
+     A prop in a component's contract is a promise that it will be called. */
   onComplete?: () => void; onAccept?: (html: string, usage: UsageInfo) => void;
   onEdit?: (html: string, usage: UsageInfo) => void;
-  onDiscard?: () => void; onApply?: () => void;
+  onDiscard?: () => void;
 }
 interface GroundingSource {
   id: string; label: string; type: string; location: string; conf: number;

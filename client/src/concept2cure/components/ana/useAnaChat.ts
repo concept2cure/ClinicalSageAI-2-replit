@@ -599,6 +599,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // Live Drive opt-in — sent only while the toggle is on, so the common
         // case stays byte-identical and the server does zero extra work.
         live_drive: options.liveDrive === true ? true : undefined,
+        // Demonstration mode rides only on opted-in turns (the server ignores
+        // it otherwise), so a stale mode can never outlive the toggle.
+        drive_mode:
+          options.liveDrive === true && options.driveMode === 'demo' ? 'demo' : undefined,
       });
 
       let streamedText = '';
@@ -813,10 +817,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     : m
                 )
               );
-            } else if (event.type === 'drive_state' || event.type === 'drive_navigation') {
+            } else if (
+              event.type === 'drive_state' ||
+              event.type === 'drive_navigation' ||
+              event.type === 'drive_action'
+            ) {
               // Live Drive events — forwarded verbatim; the shell validates and
-              // applies (v2/liveDrive.ts). A listener throw must not kill the
-              // stream: the turn's answer matters more than the drive.
+              // applies (v2/liveDrive.ts + v2/surfaceActions.ts). A listener
+              // throw must not kill the stream: the turn's answer matters more
+              // than the drive.
               try {
                 options.onDriveEvent?.(event as DriveSseEvent);
               } catch {

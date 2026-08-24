@@ -20,11 +20,25 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockQuery } = vi.hoisted(() => ({ mockQuery: vi.fn() }));
-
+// Create-with-seed runs on a BEGIN/COMMIT client now; route its queries
+// through the same mock so the assertions below see one ordered stream. The
+// router's pool is getPool()'s return value, so connect lives there too.
+// Both live in vi.hoisted — the mock factory runs during the hoisted router
+// import, before ordinary module consts initialize.
+const { mockQuery, mockPool } = vi.hoisted(() => {
+  const mockQuery = vi.fn();
+  const mockPool = {
+    query: (...a: unknown[]) => mockQuery(...a),
+    connect: async () => ({
+      query: (...a: unknown[]) => mockQuery(...a),
+      release: () => {},
+    }),
+  };
+  return { mockQuery, mockPool };
+});
 vi.mock('../../db', () => ({
-  pool: { query: (...a: unknown[]) => mockQuery(...a) },
-  getPool: () => ({ query: (...a: unknown[]) => mockQuery(...a) }),
+  pool: mockPool,
+  getPool: () => mockPool,
   query: (...a: unknown[]) => mockQuery(...a),
   db: {},
 }));
@@ -152,7 +166,7 @@ describe('POST /docs — create from a template', () => {
       .send({ title: 'Doomed', module: 'M3', template_id: GLOBAL_TPL_ID });
 
     expect(res.status).toBe(404);
-    expect(String(res.body.error)).toMatch(/Template not found/);
+    expect(String(res.body.error)).toMatch(/No template with this id has any sections/);
     expect(calls('INSERT INTO authoring_documents')).toHaveLength(0);
     expect(calls('INSERT INTO authoring_sections')).toHaveLength(0);
   });
@@ -215,5 +229,46 @@ describe('GET /templates — the picker lists what create consumes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.templates.map((t: { name: string }) => t.name)).toEqual(['House template']);
+  });
+});
+
+describe('POST /docs — create-with-seed is one transaction', () => {
+  it('a mid-seed failure rolls the whole create back, so "nothing was persisted" is true', async () => {
+    // Before the transaction, a failure in the seeding loop left a COMMITTED
+    // document with some of its sections while the client reported nothing
+    // was persisted. The mock fails the SECOND section insert; the handler
+    // must ROLLBACK and never COMMIT.
+    let sectionInserts = 0;
+    mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (sql.includes('FROM intelligence.template_sections ts')) {
+        return {
+          rowCount: 2,
+          rows: [
+            { section_code: '3.2.S.1', section_title: 'General Information', ordering: 100 },
+            { section_code: '3.2.S.2', section_title: 'Manufacture (Drug Substance)', ordering: 200 },
+          ],
+        };
+      }
+      if (sql.includes('INSERT INTO authoring_documents')) {
+        return { rowCount: 1, rows: [{ id: (params as unknown[])[0], title: (params as unknown[])[1], status: 'draft' }] };
+      }
+      if (sql.includes('INSERT INTO authoring_sections')) {
+        sectionInserts += 1;
+        if (sectionInserts === 2) throw new Error('audit store unavailable');
+        return { rowCount: 1, rows: [{ id: 'sec-1', code: (params as unknown[])[1], content: (params as unknown[])[3] }] };
+      }
+      return { rowCount: 0, rows: [] };
+    });
+
+    const res = await request(makeApp())
+      .post('/api/authoring/docs')
+      .set('Authorization', await bearer())
+      .send({ title: 'Doomed halfway', module: 'M3', template_id: GLOBAL_TPL_ID });
+
+    expect(res.status).toBe(500);
+    const sqls = mockQuery.mock.calls.map((c) => String(c[0]));
+    expect(sqls).toContain('BEGIN');
+    expect(sqls).toContain('ROLLBACK');
+    expect(sqls).not.toContain('COMMIT');
   });
 });

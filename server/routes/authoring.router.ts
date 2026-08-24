@@ -1409,74 +1409,14 @@ router.post(
   }
 );
 
-// POST /api/authoring/templates/apply/:id - Apply template to document
-router.post('/templates/apply/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { document_id } = req.body;
-    const tenantId = getTenantId(req);
-    const userId = req.headers['x-user-email'] || 'system';
-
-    // Get template
-    const templateResult = await pool.query(
-      `SELECT id, template_name, template_type, category, regions, template_content, guidance_content, metadata, is_active, usage_count, created_at, updated_at, created_by, tenant_id FROM authoring_templates WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
-    );
-
-    if (((templateResult.rowCount ?? 0) === 0)) {
-      return res.status(404).json({ error: 'Template not found' });
-    }
-
-    const template = templateResult.rows[0];
-
-    // Update usage count — same tenant predicate as the SELECT above; without
-    // it this was the one write in the handler that crossed tenants.
-    await pool.query(
-      `UPDATE authoring_templates SET usage_count = usage_count + 1 WHERE id = $1 AND tenant_id = $2`,
-      [id, tenantId]
-    );
-
-    // Track usage
-    await pool.query(
-      `INSERT INTO template_usage (template_id, document_id, used_by, tenant_id)
-       VALUES ($1, $2, $3, $4)`,
-      [id, document_id, userId, tenantId]
-    );
-
-    // Apply template content to document sections
-    if (template.template_content?.sections) {
-      for (const section of template.template_content.sections) {
-        await pool.query(
-          `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, tenant_id)
-           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
-           ON CONFLICT (doc_id, code, tenant_id)
-           DO UPDATE SET content = $4, title = $3`,
-          [
-            document_id,
-            section.code,
-            section.title,
-            section.content,
-            section.order_index || 0,
-            tenantId,
-          ]
-        );
-      }
-    }
-
-    res.json({
-      success: true,
-      message: 'Template applied successfully',
-      template_id: id,
-      document_id,
-    });
-  } catch (error) {
-    console.error('Error applying template:', error);
-    res.status(500).json({
-      error: 'Failed to apply template',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+/* POST /templates/apply/:id is DELETED, not moved. It upserted section
+ * content with no revision, no audit row, no lock check and no role gate —
+ * an ungoverned overwrite of regulated content on a FROZEN or signed
+ * document included — and nothing in the client ever called it (it is in
+ * the orphan-endpoints report). The governed equivalent already exists:
+ * POST /docs/:docId/apply-template takes a pre-template snapshot revision,
+ * records 'template-apply' attribution, and runs in a transaction. Anything
+ * that wants apply-onto-existing-document wires there, never here. */
 
 // GET /api/authoring/guidance/:sectionId - Get contextual guidance
 router.get('/guidance/:sectionId', async (req: Request, res: Response) => {
@@ -1771,7 +1711,9 @@ router.post('/docs', async (req: Request, res: Response) => {
       if (!templateSections) {
         return res.status(404).json({
           success: false,
-          error: 'Template not found — no template with this id has any sections in your organization or the global reference store. Nothing was created.',
+          // The client appends its own "Nothing was persisted." on every failed
+          // create — the reason must not restate it (double-period, said twice).
+          error: 'No template with this id has any sections in your organization or the global reference store.',
         });
       }
     }
@@ -1841,12 +1783,67 @@ router.post('/docs', async (req: Request, res: Response) => {
       cols.push('c2c_document_id');
       vals.push(`$${args.length}`);
     }
-    const result = await pool.query(
-      `INSERT INTO authoring_documents (${cols.join(', ')})
-       VALUES (${vals.join(', ')})
-       RETURNING *`,
-      args,
-    );
+    // ── One transaction: the document, its skeleton, and their evidence ──
+    //
+    // These writes ran as independent pool queries, so a failure midway
+    // through the seeding loop left a committed document with some of its
+    // sections — while the client told the author "Nothing was persisted."
+    // A refusal that leaks partial state is the failure family the sibling
+    // lifecycle handlers (section save, freeze, sign) already close with a
+    // BEGIN/COMMIT client; a create-with-skeleton is the same shape of
+    // multi-statement mutation and takes the same treatment. The revision
+    // and audit helpers route through the transaction's executor, so the
+    // Part 11 evidence commits (or rolls back) atomically with the rows it
+    // records.
+    const txClient = await pool.connect();
+    let result: { rows: any[] };
+    try {
+      await txClient.query('BEGIN');
+      result = await txClient.query(
+        `INSERT INTO authoring_documents (${cols.join(', ')})
+         VALUES (${vals.join(', ')})
+         RETURNING *`,
+        args,
+      );
+
+      // Seed the document's section skeleton from the template resolved ABOVE
+      // (before any write — an unresolvable template refuses the create rather
+      // than producing a sectionless document behind a "seeded from" toast).
+      // Global templates seed structure with empty content (the honest
+      // scaffold: the section exists with its regulatory code, title and
+      // ordering, and the author writes it); org templates seed the content
+      // their rows carry.
+      //
+      // Every write to a regulated section produces its Part 11 evidence — the
+      // sibling POST /sections handler does exactly this, and a section that
+      // appears in a document with no record of how it got there is precisely
+      // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
+      // like any other. `createdBy` is the verified actor already resolved
+      // (and null-guarded) at the top of this handler.
+      if (templateSections) {
+        for (const s of templateSections) {
+          const seededRow = await txClient.query(
+            `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW(), $6)
+             RETURNING id, code, content`,
+            [docId, s.code, s.title, s.content, s.ordering, tenantId],
+          );
+          const row = seededRow.rows[0];
+          await createRevision(row.id, row.content ?? '', createdBy, tenantId, txClient, 'genesis');
+          await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
+            template_id,
+            section_code: row.code,
+            seeded: true,
+          }, txClient);
+        }
+      }
+      await txClient.query('COMMIT');
+    } catch (txErr) {
+      await txClient.query('ROLLBACK').catch(() => {});
+      throw txErr;
+    } finally {
+      txClient.release();
+    }
 
     // Creator auto-grant — the mandatory companion to sectionPermsEnforced().
     //
@@ -1860,8 +1857,9 @@ router.post('/docs', async (req: Request, res: Response) => {
     // a different value whenever the JWT carries an email claim; granting on that
     // would silently lock the creator out of their own document.
     //
-    // Best-effort: a failed grant must not fail document creation (the document is
-    // already committed and is valid without it), but it is logged loudly because a
+    // Best-effort AND outside the transaction, deliberately: a failed grant
+    // must not fail (or roll back) document creation — the document is
+    // committed and valid without it — but it is logged loudly because a
     // grant-store outage means the creator will hit a 403 on their next edit.
     const creatorEmail = getActorEmail(req);
     if (creatorEmail) {
@@ -1875,37 +1873,6 @@ router.post('/docs', async (req: Request, res: Response) => {
         logger.warn('creator auto-grant skipped; creator may be denied on next edit', {
           docId,
           error: grantErr instanceof Error ? grantErr.message : String(grantErr),
-        });
-      }
-    }
-
-    // Seed the document's section skeleton from the template resolved ABOVE
-    // (before the INSERT — an unresolvable template refuses the create rather
-    // than producing a sectionless document behind a "seeded from" toast).
-    // Global templates seed structure with empty content (the honest scaffold:
-    // the section exists with its regulatory code, title and ordering, and the
-    // author writes it); org templates seed the content their rows carry.
-    //
-    // Every write to a regulated section produces its Part 11 evidence — the
-    // sibling POST /sections handler does exactly this, and a section that
-    // appears in a document with no record of how it got there is precisely
-    // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
-    // like any other. `createdBy` is the verified actor already resolved (and
-    // null-guarded) at the top of this handler.
-    if (templateSections) {
-      for (const s of templateSections) {
-        const seededRow = await pool.query(
-          `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW(), $6)
-           RETURNING id, code, content`,
-          [docId, s.code, s.title, s.content, s.ordering, tenantId],
-        );
-        const row = seededRow.rows[0];
-        await createRevision(row.id, row.content ?? '', createdBy, tenantId, pool, 'genesis');
-        await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
-          template_id,
-          section_code: row.code,
-          seeded: true,
         });
       }
     }
@@ -2655,7 +2622,11 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       if (status === 'resolved') {
         paramCount++;
         updates.push(`resolved_at = NOW(), resolved_by = $${paramCount}`);
-        values.push(resolvedBy);
+        // The same principal convention comment CREATION records (user_name =
+        // verified email, falling back to the actor id): the rail displays
+        // this value, and "Resolved by 1" is an attribution no reader can use.
+        // Still JWT-sourced either way — never a header, never the body.
+        values.push(req.user?.email ?? resolvedBy);
       }
     }
 
@@ -2936,155 +2907,18 @@ router.get('/documents/:id/comments', async (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/authoring/comments/:id - Update comment
-router.put('/comments/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { body, status, resolution_note } = req.body;
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): resolver attribution must come from the JWT.
-    const userId = getActorId(req);
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-    const userName = req.user?.email || userId;
-
-    // Build dynamic update query
-    const updates = [];
-    const params = [];
-    let paramIndex = 1;
-
-    if (body !== undefined) {
-      updates.push(`body = $${paramIndex}`);
-      params.push(body);
-      paramIndex++;
-    }
-
-    if (status !== undefined) {
-      updates.push(`status = $${paramIndex}`);
-      params.push(status);
-      paramIndex++;
-
-      if (status === 'resolved') {
-        updates.push(`resolved_by = $${paramIndex}`);
-        params.push(userId);
-        paramIndex++;
-        updates.push(`resolved_at = NOW()`);
-
-        if (resolution_note) {
-          updates.push(`resolution_note = $${paramIndex}`);
-          params.push(resolution_note);
-          paramIndex++;
-        }
-      }
-    }
-
-    updates.push(`updated_at = NOW()`);
-    params.push(id);
-    params.push(tenantId);
-
-    const result = await pool.query(
-      `UPDATE authoring_comments
-       SET ${updates.join(', ')}
-       WHERE id = $${paramIndex} AND tenant_id = $${paramIndex + 1}
-       RETURNING *`,
-      params
-    );
-
-    if (((result.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Comment not found',
-      });
-    }
-
-    // Log activity to the ONE audit ledger. This used to INSERT into
-    // authoring_comment_activity — a second, parallel activity log that no
-    // migration ever created, so every resolve/reopen threw 42P01 AFTER the
-    // comment had already been updated: the change landed and the caller was
-    // told it failed. authoring_audit_trail is the ledger that exists, is on
-    // the durable migration path, and is what GET /docs/:docId/audit reads.
-    const activityType =
-      status === 'resolved'
-        ? 'comment_resolved'
-        : status === 'open'
-        ? 'comment_reopened'
-        : 'comment_edited';
-
-    await createAuditEvent(
-      result.rows[0].doc_id,
-      activityType,
-      userName,
-      { comment_id: id, status, resolution_note },
-      tenantId
-    );
-
-    res.json({
-      success: true,
-      comment: result.rows[0],
-      message: 'Comment updated successfully',
-    });
-  } catch (error) {
-    console.error('Error updating comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// DELETE /api/authoring/comments/:id - Delete comment
-router.delete('/comments/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const tenantId = getTenantId(req);
-    // SECURITY (21 CFR Part 11): activity-log actor must come from the JWT.
-    const userId = getActorId(req);
-    if (!userId) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-    const userName = req.user?.email || userId;
-
-    // Get comment details before deletion for activity log
-    const commentResult = await pool.query(
-      'SELECT doc_id FROM authoring_comments WHERE id = $1 AND tenant_id = $2',
-      [id, tenantId]
-    );
-
-    if (((commentResult.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Comment not found',
-      });
-    }
-
-    const docId = commentResult.rows[0].doc_id;
-
-    // Delete comment (cascades to replies due to FK constraint)
-    await pool.query('DELETE FROM authoring_comments WHERE id = $1 AND tenant_id = $2', [
-      id,
-      tenantId,
-    ]);
-
-    // Same ledger as every other authoring mutation — see the note on resolve.
-    // A deletion that leaves no trace is the one activity record a Part 11
-    // system cannot afford to lose.
-    await createAuditEvent(docId, 'comment_deleted', userName, { comment_id: id }, tenantId);
-
-    res.json({
-      success: true,
-      message: 'Comment deleted successfully',
-    });
-  } catch (error) {
-    console.error('Error deleting comment:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete comment',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+/* PUT /comments/:id and DELETE /comments/:id are DELETED, not moved. Neither
+ * was reachable from the client (the rail's only status writer is
+ * PATCH /comments/:id), and both let any authenticated tenant member rewrite
+ * or hard-delete ANY user's review comment: the PUT updated `body` in place
+ * with no prior-text capture anywhere (the audit event logged that an edit
+ * happened, never what changed), and the DELETE removed the row and its
+ * replies for good with only the comment id in the ledger — the reviewer's
+ * actual words unrecoverable even from the audit trail. Review history is
+ * immutable here: threads are resolved or reopened through PATCH (verified
+ * resolver, resolved_at, note kept), never rewritten, never erased. If
+ * retraction is ever wanted, it is a tombstone that retains and renders the
+ * original content as retracted — a new capability, not these routes. */
 
 // GET /api/authoring/documents/:id/reviews - Get review status
 router.get('/documents/:id/reviews', async (req: Request, res: Response) => {
@@ -5088,54 +4922,14 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
   }
 });
 
-// GET /api/authoring/guidance/compose - Get guidance for a section
-router.get('/guidance/compose', async (req: Request, res: Response) => {
-  try {
-    const { section, region = 'ICH' } = req.query;
-
-    if (!section) {
-      return res.status(400).json({ error: 'section parameter required' });
-    }
-
-    // Sample guidance - in production, this would query a guidance database
-    const guidanceMap: Record<string, string> = {
-      '3.2.P.5': `## ${region} Guidance for Drug Product Specifications
-
-### Requirements:
-- Establish specifications per ICH Q6A
-- Include tests for identity, strength, quality, and purity
-- Justify acceptance criteria based on clinical lots
-- Consider stability-indicating methods
-
-### Key Points:
-- Link to analytical methods in 3.2.P.5.2
-- Reference batch data in 3.2.P.5.4
-- Ensure consistency with stability protocol`,
-
-      '3.2.P.8': `## ${region} Guidance for Stability Studies
-
-### Requirements:
-- Follow ICH Q1A(R2) for stability testing
-- Include long-term, accelerated, and intermediate conditions
-- Cover photostability per ICH Q1B if applicable
-- Justify shelf life and storage conditions
-
-### Data Presentation:
-- Tabulate all stability data
-- Include graphical trends for key parameters
-- Discuss any out-of-specification results`,
-    };
-
-    const guidance =
-      guidanceMap[section as string] ||
-      `Generic guidance for section ${section} in region ${region}`;
-
-    res.json({ guidance_md: guidance });
-  } catch (error) {
-    console.error('GET /guidance/compose', error);
-    res.status(500).json({ error: 'Failed to get guidance' });
-  }
-});
+/* REMOVED: GET /guidance/compose — unreachable by construction since the day
+   it was written. Express matches in registration order and GET
+   /guidance/:sectionId registers ~3,600 lines earlier, so this path bound
+   sectionId='compose'; that handler then ran `WHERE s.id = 'compose'` against
+   a UUID column, which is a Postgres 22P02 on every call — a permanent 500.
+   Even if it had been reachable, its body was a hardcoded two-entry guidance
+   map presented as a guidance service. The real per-section guidance read is
+   GET /guidance/:sectionId (section_guidance + template_guidance tables). */
 
 // POST /docs/:docId/seed-stability - Seed stability data and insert P.8 tokens
 router.post('/docs/:docId/seed-stability', async (req: Request, res: Response) => {

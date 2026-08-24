@@ -23,7 +23,6 @@ import cmcCollaborationRoutes from '../api/cmc/collaborationRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
 import cmcModule3BoardRoutes from '../routes/cmc-module3-board.routes';
 import aiAssistanceRoutes, { setAIService } from '../routes/ai-assistance';
-import intelligentDocsRoutes from '../routes/intelligentDocs';
 import controlPlaneRouter from '../src/routes/control-plane.router';
 import pmSettingsRouter from '../src/routes/pm-settings.router';
 import { getAIRouter } from '../services/aiProviderRouter.js';
@@ -103,13 +102,17 @@ export function registerCoreRoutes({
   }
 
   try {
-    // Mount-level auth (H2): both families are tenant/admin surfaces whose
-    // handlers assume an authenticated req.user (getSecureOrgId /
-    // requireControlPlaneAccess) — no public endpoints inside.
-    app.use('/api/intelligent-docs', authenticateToken, intelligentDocsRoutes);
+    // Mount-level auth (H2): the control plane is a tenant/admin surface whose
+    // handlers assume an authenticated req.user (requireControlPlaneAccess) —
+    // no public endpoints inside.
+    // REMOVED: /api/intelligent-docs (routes/intelligentDocs.ts) — mounted,
+    // auth-gated, and unreachable: zero callers anywhere in the repository
+    // (client, server, tests). It fronted its own source/link tables beside
+    // the canonical authoring citation store; deleted per the zero-duplication
+    // rule rather than left as a parallel write path nothing reads.
     app.use('/api/control-plane', authenticateToken, controlPlaneRouter);
     app.use('/api/pm-settings', pmSettingsRouter);
-    console.log('✅ Intelligent Docs + PM Settings routes mounted');
+    console.log('✅ Control Plane + PM Settings routes mounted');
   } catch (error) {
     console.error('❌ Failed to mount core feature routes:', error);
   }

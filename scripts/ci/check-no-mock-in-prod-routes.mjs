@@ -123,7 +123,6 @@ const betaPathHints = [
   'ai-actions',
   'concept2cure',
   'cerv2',
-  'documents-unified',
   'project-modules',
   'conversation-os',
 ];
