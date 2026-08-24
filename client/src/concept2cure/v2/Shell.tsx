@@ -29,6 +29,8 @@ import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { stashNavParamsForTarget } from './navParams';
+import { listDemoScripts } from '@shared/navigation/demo-scripts';
+import { applySurfaceAction, validateDriveAction } from './surfaceActions';
 import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
@@ -567,6 +569,10 @@ export function AnaRail({
      *  actually committed) sends the tour ask. Owned by the shell — see the
      *  race note at the menu button. */
     onStartTour?: () => void;
+    /** One-click demonstration (training/sales, from the shared script
+     *  registry): enables Live Drive in demo mode and sends the demo ask —
+     *  same commit-then-send sequencing as the tour. */
+    onStartDemo?: (demoId: string, title: string) => void;
   };
 }) {
   const [draft, setDraft] = React.useState('');
@@ -923,6 +929,28 @@ export function AnaRail({
                           }}
                         >
                           {I.arrowRight} {a.label}
+                        </button>
+                      ) : a.actionType === 'surface_action' && a.actionId && onNav ? (
+                        <button
+                          key={i}
+                          type="button"
+                          className="ana-exec-chip is-nav"
+                          onClick={() => {
+                            /* Performed through the ONE surface-action bus,
+                               re-validated against the shared registry first —
+                               the chip's payload never executes as-is. If the
+                               action's screen is not mounted the bus stashes
+                               one-shot and navigates there (the tap is the
+                               consent), performing on the surface's mount. */
+                            const d = validateDriveAction({
+                              actionType: 'surface_action',
+                              actionId: a.actionId,
+                              params: a.params,
+                            });
+                            if (d) applySurfaceAction(d, onNav);
+                          }}
+                        >
+                          {I.zap} {a.label}
                         </button>
                       ) : (
                       <span
@@ -1321,6 +1349,29 @@ export function AnaRail({
                   <span className="ico">{I.rocket}</span>Show me around
                   <span className="mh">AnA gives a live tour, driving the screens</span>
                 </button>
+              )}
+              {liveDrive && !liveDrive.locked && liveDrive.onStartDemo && (
+                <>
+                  <div className="ana-menu-sec">Demonstrations</div>
+                  {listDemoScripts().map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      className="ana-menu-item"
+                      onClick={() => {
+                        /* Same commit-then-send sequencing as the tour — the
+                           shell queues the ask and flips toggle + demo mode in
+                           one click's batch (see queueDriveAsk in V2App). */
+                        setModeOpen(false);
+                        liveDrive.onStartDemo?.(d.id, d.title);
+                      }}
+                    >
+                      <span className="ico">{d.kind === 'sales' ? I.barChart : I.book}</span>
+                      {d.title}
+                      <span className="mh">{`≈${d.minutes} min · ${d.steps} stops · AnA drives, you can interrupt`}</span>
+                    </button>
+                  ))}
+                </>
               )}
               <div className="ana-menu-sec">Engine</div>
               {ANA_MODES.map((m) => (

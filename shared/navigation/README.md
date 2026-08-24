@@ -1,8 +1,12 @@
 # AnA navigation contract
 
-The single source of truth for **where AnA can navigate in the app, and how**.
-UI-agnostic: pure data + pure functions, importable by both the server (AnA
-tools) and the client (the navigate handler).
+The single source of truth for **where AnA can navigate in the app, and how**
+— and, since 2026-08-24, its two siblings in this directory: **what she can DO
+on a screen** (`surface-actions.ts`) and **the demonstrations she can run**
+(`demo-scripts.ts`), with the drive budgets both halves enforce in
+`drive-policy.ts`. UI-agnostic: pure data + pure functions, importable by both
+the server (AnA tools) and the client (the navigate handler / the
+surface-action bus).
 
 ## What ships today (contract locked)
 
@@ -61,6 +65,30 @@ re-validation against this registry, an `agent.ana.screen.navigate` audit row
 per applied move, and instant take-over (Esc). Chips remain the default for
 everyone else; governed actions keep their confirmation/e-sign gates in every
 mode.
+
+## Surface actions + demonstrations (2026-08-24)
+
+- **`surface-actions.ts`** — the governed catalog of UNGOVERNED screen
+  operations (open a program, search, filter, switch views/folders), with
+  `resolveSurfaceAction` mirroring `resolveNavigation`'s fail-closed shape.
+  The governance boundary is structural: `GOVERNED_VERB_PATTERN` +
+  `assertUngovernedActionId` refuse sign/approve/submit/lock/delete/… ids at
+  registration (the registry test walks every entry) and again at resolution.
+  Add an action only together with its surface handler
+  (`client/src/concept2cure/v2/surfaceActions.ts` bus) — an action no surface
+  performs is a fabricated ability.
+- **`demo-scripts.ts`** — curated training/sales demonstration plans whose
+  every step resolves against the two registries (`validateDemoScripts` is the
+  totality gate). Execution stays tool-driven (`navigate_to` /
+  `act_on_screen`) so all drive invariants hold unchanged.
+- **`drive-policy.ts`** — the drive modes (`assist` / `demo`) and per-turn
+  budgets, imported by BOTH halves so nothing is hand-mirrored. Assist's
+  navigation budget stays pinned to the chip budget by test.
+
+Tools: `list_screen_actions` / `act_on_screen` / `list_demo_scripts` /
+`start_product_demo` (definitions in `server/services/ana/navigationTools.ts`,
+handlers in `AnaToolExecutor.ts`). Full architecture write-up:
+`docs/ANA_LIVE_DRIVE_2026-08-23.md` §Expansion.
 
 No app **surfaces** are created here — only the navigation ability + contract.
 Surfaces remain owned by Claude Design.

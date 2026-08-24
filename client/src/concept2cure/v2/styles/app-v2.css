@@ -1610,7 +1610,9 @@
    this must be position:fixed; z-index 60 sits above CmdK's scrim (50) and
    below the collab FAB (70). Centered on the viewport; when the AnA rail is
    open, shifted left by half its width so it stays centered on the canvas. */
-.c2c-v2 .ana-drive-strip{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 32px));padding:8px 10px 8px 14px;background:var(--bg-000);border:1px solid var(--border);border-radius:999px;box-shadow:var(--v2-shadow-lg);animation:ana-drive-in 200ms ease-out;}
+.c2c-v2 .ana-drive-strip{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;max-width:min(560px,calc(100vw - 32px));padding:8px 10px 8px 14px;background:var(--bg-000);border:1px solid var(--border);border-radius:20px;box-shadow:var(--v2-shadow-lg);animation:ana-drive-in 200ms ease-out;}
+.c2c-v2 .ana-drive-row{display:flex;align-items:center;gap:10px;min-width:0;}
+.c2c-v2 .ana-drive-narration{font-size:12px;line-height:1.45;color:var(--text-200);padding:0 4px 2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .c2c-v2.shell[data-ana-open="true"] .ana-drive-strip{left:calc(50% - var(--ana) / 2);}
 .c2c-v2 .ana-drive-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;flex:none;}
 .c2c-v2 .ana-drive-title{font-size:12px;font-weight:600;color:var(--text-100);white-space:nowrap;}
@@ -1622,6 +1624,12 @@
 .c2c-v2 .ana-drive-btn.is-stop:hover{color:var(--text-100);}
 .c2c-v2 .ana-drive-kbd{font:inherit;font-size:10px;color:var(--text-400);border:1px solid var(--border);border-radius:4px;padding:0 4px;line-height:1.5;}
 .c2c-v2 .ana-drive-activity{font-size:12px;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:220px;}
+.c2c-v2 .ana-drive-strip[data-mode="demo"]{max-width:min(720px,calc(100vw - 32px));}
+.c2c-v2 .ana-drive-count{font-size:11px;color:var(--text-400);border:1px solid var(--border);border-radius:999px;padding:1px 7px;white-space:nowrap;flex:none;}
+.c2c-v2 .ana-drive-steer{display:flex;min-width:0;flex:1 1 120px;}
+.c2c-v2 .ana-drive-steer-input{width:100%;min-width:80px;font:inherit;font-size:12px;color:var(--text-100);background:var(--bg-100);border:1px solid var(--border);border-radius:999px;padding:4px 10px;outline:none;transition:border-color 200ms ease-out;}
+.c2c-v2 .ana-drive-steer-input:focus{border-color:var(--text-300);}
+.c2c-v2 .ana-drive-steer-input::placeholder{color:var(--text-400);}
 /* Follow-the-work: the artifact row a driven turn just produced. Highlighted
    with the accent, decaying to the resting row over 2.4s — long enough to see
    which row arrived, calm enough to not celebrate (motion-discipline). */

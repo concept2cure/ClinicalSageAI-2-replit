@@ -127,3 +127,105 @@ The first three gaps below were closed:
   there. Not a gap: the tool paths (SSE stream + /api/chat) both carry it.
 - The `/ana` socket namespace has no client consumer; Live Drive rides the SSE
   stream. Adding a second live transport would be duplication, not coverage.
+
+---
+
+## Expansion — full screen operation + demonstrations (2026-08-24)
+
+Live Drive grew from navigation-only to the full agentic surface the mode was
+named for. Same consent machinery, same take-over, same governed gates.
+
+### Surface actions — AnA operates the screen
+
+- **Contract:** `shared/navigation/surface-actions.ts` — the governed catalog
+  of UNGOVERNED screen operations (open a program, filter/search, switch
+  views/folders), the sibling of the navigation registry: typed targets,
+  `resolveSurfaceAction` fail-closed resolver, params with enums.
+  **Governance boundary is structural:** `GOVERNED_VERB_PATTERN` +
+  `assertUngovernedActionId` refuse sign/approve/submit/lock/delete/… ids at
+  registration (test walks every entry) AND at resolution; governed work stays
+  propose-only. The registry test shows the refusal failing on exactly the ids
+  someone would try next (`review.approve-document`, `vault.delete-document`).
+- **Tools:** `list_screen_actions` (discovery) + `act_on_screen` (validate →
+  `action_ready` directive; instruction tells the model applied-vs-offered
+  truthfully per drive context). Registered in `navigationTools.ts` +
+  `AnaToolExecutor.ts`.
+- **Stream:** `drive_action` SSE events (budgeted per mode, audited as
+  `agent.ana.screen.act`); non-drive turns get `surface_action` chips from the
+  same carrier (`navigation-actions.ts: surfaceActionFromToolResult` /
+  `toSurfaceActionChips`) on BOTH tool routes (SSE post-processing and
+  `/api/chat`).
+- **Client bus:** `v2/surfaceActions.ts` — ONE performer. A surface registers
+  handlers for its registered action ids (`useSurfaceActionHandlers`); the bus
+  re-validates every directive against the shared registry, performs only
+  through a live handler (honest `unavailable` otherwise), and bridges the
+  navigate→mount gap with a one-shot TTL stash consumed on registration (the
+  navParams idiom). Wave 1 handlers: **Projects** (`open-program` — resolves
+  against the real portfolio, publishes the shell project, honest ambiguity/
+  miss refusals; `filter`; `set-view`; all refused while the new-project
+  wizard owns the canvas) and **Vault** (`search`; `open-folder` — resolved
+  against the real tree, expands ancestors). Chip taps go through the same
+  bus (tap = consent; the bus stashes + navigates when the screen isn't open).
+
+### Demonstrations — training + sales
+
+- **Scripts:** `shared/navigation/demo-scripts.ts` — curated plans
+  (`training-orientation` 13 stops, `sales-flagship` 9 stops), each step a
+  talking point + at most one registry-validated move. `validateDemoScripts`
+  is the totality gate (shown failing on unknown screens/actions/params);
+  scripts must also fit the demo budgets by test. Steps that need live data
+  (which program to open) pin nothing — AnA fills params from the surface
+  context she can see, and the tools validate as always.
+- **Tools:** `list_demo_scripts` + `start_product_demo` (returns the script +
+  run instructions: narrate each stop in her own voice — never verbatim —
+  brisk pace, answer questions mid-demo then resume, report the reached stop
+  if the turn ends early; without Live Drive it says moves become chips).
+- **Demo mode:** request `drive_mode: 'demo'` (only meaningful with
+  `live_drive: true`; same entitlement — a demo is Live Drive with a bigger
+  itinerary). Budgets from the SHARED policy table
+  (`shared/navigation/drive-policy.ts`, both halves import it): assist 3/3
+  (nav budget still pinned equal to the chip budget), demo 12/16. Demo raises
+  the agentic round ceiling to `DEMO_MAX_ROUNDS` (16, never lowers) and drops
+  the substantive thinking nudge for pace (high-risk and Thorough still
+  reason — governance floor intact). Prompt block has a presenter variant.
+- **Start affordances:** AnA rail → Control → **Demonstrations** lists the
+  scripts from the shared registry ("Full product training", "Sales
+  demonstration"); `V2App.startDemo` queues the ask through the same
+  commit-then-send sequencing as the tour (epoch-keyed so an already-on
+  toggle still sends). Take-over, toggle-off, or starting a tour drops demo
+  mode.
+
+### Interactivity + visibility
+
+- The **drive strip** now carries: mode framing ("AnA is demonstrating"),
+  real applied-stop count, act steps (⚡) beside navigations (→), and a
+  **steer field** — a question typed there lands mid-run via the existing
+  run-control interject, so the person talks to AnA without taking the wheel.
+- On surfaces that own the conversation (document-authoring, ectd-coauthor,
+  rbm…) the rail is hidden, so the strip also shows the tail of AnA's REAL
+  streaming narration — a demo stop on the editor is no longer silent.
+
+### File map (delta)
+
+| Layer | File | Role |
+|---|---|---|
+| Shared | `shared/navigation/surface-actions.ts` | action registry + resolver + governed-verb refusal |
+| Shared | `shared/navigation/demo-scripts.ts` | demo scripts + totality validation |
+| Shared | `shared/navigation/drive-policy.ts` | modes + per-mode budgets + DEMO_MAX_ROUNDS (one table, both halves) |
+| Server | `services/ana-ri/live-drive.ts` | mode-aware state/events/prompt blocks, `buildDriveActionEvent`, `auditDriveAction` |
+| Server | `services/ana-ri/navigation-actions.ts` | `surfaceActionFromToolResult`, `toSurfaceActionChips` |
+| Server | `services/ana/navigationTools.ts` + `AnaToolExecutor.ts` | 4 new tools (actions + demos) |
+| Server | `routes/ana-ri/stream.ts` | `drive_mode`, per-mode budgets, `drive_action` emission + audit, drive-tool pinning, demo round raise, demo thinking drop |
+| Server | `routes/ana-ri/post-processing.ts`, `routes/chat/send-message.ts` | surface-action chips on both routes |
+| Client | `v2/surfaceActions.ts` | the surface-action bus (validate, register, stash, perform) |
+| Client | `v2/liveDrive.ts` | mode + action budgets + act steps in the reducer |
+| Client | `v2/V2App.tsx`, `v2/LiveDriveOverlay.tsx`, `v2/Shell.tsx` | drive_action apply, demo start, strip (mode/steer/narration), Demonstrations menu, surface_action chips |
+| Client | `v2/surfaces/Projects.tsx`, `v2/surfaces/Vault.tsx` | wave-1 action handlers |
+| Tests | `shared/navigation/__tests__/{surface-actions,demo-scripts}.test.ts`, extended live-drive/navigation-actions/navigation-tools/liveDrive + new `surfaceActions.test.ts` | totality, governance refusal (failing-first), fail-closed resolution, budgets, bus |
+
+### Growing the action surface
+
+Add an entry to `SURFACE_ACTIONS` **and** the handler in the surface, in the
+same change — an action AnA can resolve but no surface performs is a
+fabricated ability (the DEV console warns on unlisted registrations; the
+registry test enforces surface existence + the governed-verb refusal).

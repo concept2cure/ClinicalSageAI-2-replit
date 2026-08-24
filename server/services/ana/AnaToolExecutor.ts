@@ -16144,6 +16144,142 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>, ctx?: 
   }
 });
 
+// AnA self-operation — discover the ungoverned on-screen operations from the
+// governed surface-action registry (the sibling of list_app_screens).
+registerToolHandler('list_screen_actions', async (input: Record<string, unknown>) => {
+  try {
+    const { SURFACE_ACTIONS } = await import('../../../shared/navigation/surface-actions.js');
+    const surface = typeof input.surface === 'string' ? input.surface.trim() : '';
+    const actions = SURFACE_ACTIONS.filter(a => (surface ? a.surfaceId === surface : true)).map(
+      a => ({
+        id: a.id,
+        surface: a.surfaceId,
+        label: a.label,
+        description: a.description,
+        params: a.params,
+      })
+    );
+    return JSON.stringify({
+      status: 'ok',
+      count: actions.length,
+      actions,
+      instruction:
+        'Perform an action with act_on_screen using its id verbatim, after navigating to (or while on) the screen it operates. These are ungoverned view operations only — governed work (sign/approve/submit/lock) always goes through the propose-and-confirm path instead.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_screen_actions failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA self-operation — validate an on-screen operation against the governed
+// surface-action registry and produce the directive the client bus performs.
+// Refuses unknown actions, governed verbs, and invalid params rather than
+// emitting a broken (or forbidden) operation.
+registerToolHandler('act_on_screen', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  try {
+    const action = typeof input.action === 'string' ? input.action.trim() : '';
+    if (!action) {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        message: 'action is required — call list_screen_actions to discover action ids.',
+      });
+    }
+    const params =
+      input.params && typeof input.params === 'object'
+        ? (input.params as Record<string, unknown>)
+        : {};
+    const { resolveSurfaceAction } = await import('../../../shared/navigation/surface-actions.js');
+    const res = resolveSurfaceAction(action, params);
+    if (!res.ok) {
+      return JSON.stringify({
+        status:
+          res.code === 'unknown_action'
+            ? 'unknown_action'
+            : res.code === 'governed_refused'
+            ? 'governed_refused'
+            : 'needs_parameters',
+        message: res.error,
+        ...(res.code === 'unknown_action' && res.validActions ? { validActions: res.validActions } : {}),
+      });
+    }
+    return JSON.stringify({
+      status: 'action_ready',
+      directive: res.directive,
+      // The instruction must match what actually happens on screen, exactly as
+      // navigate_to's does.
+      instruction: ctx?.liveDrive
+        ? `Live Drive is on: this operation is being performed on the user's screen now (on the "${res.directive.surfaceId}" surface — make sure you have navigated there). Narrate what you did and what it shows, then continue.`
+        : `An action directive was produced and is OFFERED to the user as a chip they activate — the screen does not change on its own. Say what the action will do when they tap it, not that you have done it.`,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `act_on_screen failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA demonstrations — list the curated demo scripts (training + sales).
+registerToolHandler('list_demo_scripts', async (input: Record<string, unknown>) => {
+  try {
+    const { listDemoScripts } = await import('../../../shared/navigation/demo-scripts.js');
+    const kind = input.kind === 'training' || input.kind === 'sales' ? input.kind : undefined;
+    const scripts = listDemoScripts().filter(s => (kind ? s.kind === kind : true));
+    return JSON.stringify({
+      status: 'ok',
+      count: scripts.length,
+      scripts,
+      instruction:
+        'Fetch the chosen script with start_product_demo. Demonstrations run best under Live Drive demonstration mode — the user starts it from the AnA rail (Control → Run a demonstration).',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_demo_scripts failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA demonstrations — fetch one validated script and the instructions for
+// running it. The script is a plan; execution stays tool-driven (navigate_to /
+// act_on_screen), so every drive invariant holds unchanged.
+registerToolHandler('start_product_demo', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  try {
+    const demoId = typeof input.demo === 'string' ? input.demo.trim() : '';
+    const { findDemoScript, listDemoScripts, validateDemoScript } = await import(
+      '../../../shared/navigation/demo-scripts.js'
+    );
+    if (!demoId) {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        message: 'demo is required — call list_demo_scripts to discover script ids.',
+        scripts: listDemoScripts(),
+      });
+    }
+    const script = findDemoScript(demoId);
+    if (!script) {
+      return JSON.stringify({
+        status: 'unknown_demo',
+        message: `Unknown demonstration "${demoId}".`,
+        scripts: listDemoScripts(),
+      });
+    }
+    // Belt: scripts are registry-validated by the test suite; refuse rather
+    // than run a script that somehow references a screen that no longer exists.
+    const defects = validateDemoScript(script);
+    if (defects.length > 0) {
+      return JSON.stringify({
+        status: 'invalid_demo',
+        message: `Demonstration "${demoId}" failed validation and cannot run.`,
+        defects,
+      });
+    }
+    return JSON.stringify({
+      status: 'demo_ready',
+      script,
+      instruction: ctx?.liveDrive
+        ? `Run the demonstration now, stop by stop and briskly: for each step, narrate its "say" talking point in your own words (adapted to the user's real data on screen — never verbatim), then make its move (navigate_to for "navigate", act_on_screen for "act"). A step without pinned params (e.g. which program to open) is filled from the on-screen context; if the workspace has no programs yet, narrate from the portfolio and offer to set one up together instead. Answer any question the user asks mid-demo, then resume from the next stop. If the turn ends before the script does, say which stop you reached so you can continue from the next one.`
+        : `Live Drive is NOT on for this turn, so the moves below can only be OFFERED as chips, not performed. Tell the user a demonstration works best with Live Drive on (AnA rail → Control → Live Drive, or the Run a demonstration button) and offer to proceed chip-by-chip if they prefer.`,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `start_product_demo failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // ── HEOR modeling (server/services/heor) — deterministic, no DB/network. ──
 registerToolHandler('model_budget_impact', async (input: Record<string, unknown>) => {
   try {

@@ -14,13 +14,15 @@ import {
   MAX_DRIVE_APPLIES_PER_TURN,
   driveReducer,
   shouldApplyNavigation,
+  shouldApplyAction,
   validateDriveDirective,
   type LiveDriveState,
 } from '../liveDrive';
 import { resolveNavigation } from '@shared/navigation';
+import { DRIVE_BUDGETS } from '@shared/navigation/drive-policy';
 
-function engaged(): LiveDriveState {
-  return driveReducer(INITIAL_DRIVE_STATE, { kind: 'drive_state', enabled: true });
+function engaged(mode?: 'assist' | 'demo'): LiveDriveState {
+  return driveReducer(INITIAL_DRIVE_STATE, { kind: 'drive_state', enabled: true, mode });
 }
 
 function directive(targetId = 'cmc') {
@@ -123,5 +125,49 @@ describe('driveReducer', () => {
     // The next enabled turn re-engages cleanly.
     const next = driveReducer(s, { kind: 'drive_state', enabled: true });
     expect(shouldApplyNavigation(next)).toBe(true);
+  });
+
+  it('records applied screen actions on their own budget, tagged as acts in the trail', () => {
+    let s = engaged();
+    expect(shouldApplyAction(s)).toBe(true);
+    s = driveReducer(s, { kind: 'action', actionId: 'vault.search', label: 'Search the vault' });
+    expect(s.steps).toEqual([
+      { kind: 'act', targetId: 'vault.search', label: 'Search the vault' },
+    ]);
+    expect(s.turnActionsApplied).toBe(1);
+    // Navigation budget untouched by an action.
+    expect(s.turnApplied).toBe(0);
+  });
+
+  it('enforces the assist action budget and kills actions on take-over', () => {
+    let s = engaged();
+    for (let i = 0; i < DRIVE_BUDGETS.assist.actions + 2; i++) {
+      if (shouldApplyAction(s)) {
+        s = driveReducer(s, { kind: 'action', actionId: `projects.filter`, label: 'Filter' });
+      }
+    }
+    expect(s.steps.filter((st) => st.kind === 'act')).toHaveLength(DRIVE_BUDGETS.assist.actions);
+    expect(shouldApplyAction(s)).toBe(false);
+    s = driveReducer(s, { kind: 'take_over' });
+    expect(shouldApplyAction(s)).toBe(false);
+  });
+
+  it('a demo turn carries the larger shared budgets for both kinds of move', () => {
+    let s = engaged('demo');
+    expect(s.mode).toBe('demo');
+    for (let i = 0; i < DRIVE_BUDGETS.demo.navigations; i++) {
+      expect(shouldApplyNavigation(s)).toBe(true);
+      s = driveReducer(s, { kind: 'navigation', directive: directive(), round: i + 1 });
+    }
+    expect(shouldApplyNavigation(s)).toBe(false);
+    for (let i = 0; i < DRIVE_BUDGETS.demo.actions; i++) {
+      expect(shouldApplyAction(s)).toBe(true);
+      s = driveReducer(s, { kind: 'action', actionId: 'vault.search', label: 'Search' });
+    }
+    expect(shouldApplyAction(s)).toBe(false);
+    // turn end resets both budgets; the next assist turn is back to assist caps.
+    s = driveReducer(s, { kind: 'turn_end' });
+    const next = driveReducer(s, { kind: 'drive_state', enabled: true });
+    expect(next.mode).toBe('assist');
   });
 });
