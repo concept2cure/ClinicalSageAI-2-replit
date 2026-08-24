@@ -1991,16 +1991,37 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
      second click while a write is in flight must not create a second document. */
   const draftingRef = useRef(false);
   const [draftingId, setDraftingId] = useState<string | number | null>(null);
-  const draftMd = (c: CmcCorrespondence) => {
+  /* The skeleton is EDITOR HTML, not markdown: the authoring store holds the
+     canonical editor's serialization, and a markdown string saved there
+     renders as literal `#`/`**` characters in the canvas and the document
+     view. Only tags the editor round-trips (h1/h2, blockquote, p, ul/li,
+     strong, em, hr) so the section opens rich, never in source mode. */
+  const draftHtml = (c: CmcCorrespondence) => {
+    const esc = (t: string) =>
+      t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const sec = c.sectionRef ? `§${c.sectionRef}` : 'Module 3';
     const due = c.dueDate ? new Date(c.dueDate).toLocaleDateString() : 'no deadline recorded';
-    let s = `# Response to Agency Question — ${sec}\n\n`;
-    s += `> ${c.question}\n\n`;
-    s += `- **Region**: ${c.region ?? 'not recorded'}\n- **Due**: ${due}${c.overdue ? ' — **overdue**' : ''}\n- **Priority**: ${c.priority ?? c.severity ?? 'not recorded'}\n- **Status**: ${c.status}\n\n`;
-    s += `## Response\n\n[DATA NEEDED] State the position first, then the evidence. Cite the governed record (specification, method, batch, stability study) by identifier — the reviewer will trace it.\n\n`;
-    s += `## Supporting evidence\n\n- [ ] Approved Module 3 section(s) covering ${sec}\n- [ ] Specification / analytical method records cited in the response\n- [ ] Batch or stability data referenced, with lot numbers\n- [ ] Comparability or justification memo, if the answer relies on one\n\n`;
-    s += `---\n*Drafted from open agency question ${c.id}. Route through review and e-signature before it goes to the agency.*\n`;
-    return s;
+    return (
+      `<h1>Response to Agency Question — ${esc(sec)}</h1>` +
+      `<blockquote><p>${esc(c.question)}</p></blockquote>` +
+      `<ul>` +
+      `<li><strong>Region</strong>: ${esc(c.region ?? 'not recorded')}</li>` +
+      `<li><strong>Due</strong>: ${esc(due)}${c.overdue ? ' — <strong>overdue</strong>' : ''}</li>` +
+      `<li><strong>Priority</strong>: ${esc(c.priority ?? c.severity ?? 'not recorded')}</li>` +
+      `<li><strong>Status</strong>: ${esc(c.status)}</li>` +
+      `</ul>` +
+      `<h2>Response</h2>` +
+      `<p>[DATA NEEDED] State the position first, then the evidence. Cite the governed record (specification, method, batch, stability study) by identifier — the reviewer will trace it.</p>` +
+      `<h2>Supporting evidence</h2>` +
+      `<ul>` +
+      `<li>[ ] Approved Module 3 section(s) covering ${esc(sec)}</li>` +
+      `<li>[ ] Specification / analytical method records cited in the response</li>` +
+      `<li>[ ] Batch or stability data referenced, with lot numbers</li>` +
+      `<li>[ ] Comparability or justification memo, if the answer relies on one</li>` +
+      `</ul>` +
+      `<hr>` +
+      `<p><em>Drafted from open agency question ${esc(String(c.id))}. Route through review and e-signature before it goes to the agency.</em></p>`
+    );
   };
   const draftResponse = async (c: CmcCorrespondence) => {
     if (draftingRef.current) return;
@@ -2009,7 +2030,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
       const res = await saveToAuthoring({
         title: 'Response to agency question — ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3'),
         module: 'M3', code: 'agency_question_response',
-        content: draftMd(c), subject: 'the draft response',
+        content: draftHtml(c), subject: 'the draft response',
       });
       // Navigate only on a clean write — see authoringHandoff.
       if (!res.ok) { fireToast(res.message, 'error'); return; }
