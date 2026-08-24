@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T14:46:00.720Z",
+  "generatedAt": "2026-08-24T16:41:58.366Z",
   "git": {
-    "sha": "a749c33938654fe86ec1f05caf5c15ee8411d517",
+    "sha": "02a80755294c5edc1376ee822ca7d27da4551d47",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 168841
+        "bytes": 173939
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3926
+        "lines": 4018
       },
       {
         "file": "server/services/intelligent-report-engine.ts",

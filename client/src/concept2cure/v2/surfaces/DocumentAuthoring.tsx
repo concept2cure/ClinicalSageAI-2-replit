@@ -79,6 +79,7 @@ import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
+import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { useAuth } from '@/services/portal/authService';
@@ -752,6 +753,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   /** Bumped when the server replaces content out from under the editor
    *  (revert) so the canvas remounts on the new truth. */
   const [contentEpoch, setContentEpoch] = useState(0);
+  /* The RAG-grounded drafting panel. Open state only — the panel owns the
+     draft, because a draft that outlives its own panel is a draft whose
+     section scope nobody is enforcing. */
+  const [aiDraftOpen, setAiDraftOpen] = useState(false);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
   /** The signed-in author, for suggestion attribution and comment anchors. */
   const { user } = useAuth();
@@ -2137,6 +2142,41 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     }
   }, [activeSection, fireToast]);
 
+  /* ── An accepted AI draft landed ──
+     The server replaced the section content AND recorded span-level source
+     lineage for it in one transaction, so this mirrors `revert`: adopt the
+     returned row as the new truth, remount the canvas on it (a stale editor
+     buffer would silently re-save over text that now has citations behind
+     it), and refresh the rails the write actually touched — history gained a
+     revision, the audit trail gained a row, and sources gained the citations
+     that are the whole point of accepting this way rather than saving. */
+  const onAiDraftAccepted = useCallback(
+    (section: Record<string, unknown>, attribution: AcceptedAttribution | null) => {
+      if (!activeSectionId) return;
+      const content = typeof section.content === 'string' ? section.content : '';
+      setSections(ss =>
+        ss.map(x => (x.id === activeSectionId ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
+      );
+      setContentEpoch(e => e + 1);
+      setEditorDirty(false);
+      /* The server's own count, not a claim of correctness: how much of the
+         saved text is a verified quote from a source, and how much is recorded
+         as author-original. Both numbers are the record, so both are said —
+         and when the server sent no summary, that is said instead of a zero. */
+      fireToast(
+        attribution
+          ? `Draft accepted and saved. ${attribution.sourceSpans} verified citation(s) across ` +
+            `${attribution.distinctSources} source(s); ${attribution.coverage}% of the content is ` +
+            'quoted from evidence, the rest recorded as author-original.'
+          : 'Draft accepted and saved. The server reported no lineage summary for it — open Sources to see what was recorded.',
+      );
+      void loadHistory(activeSectionId);
+      void loadSources(activeSectionId);
+      if (activeDocId) void loadAudit(activeDocId);
+    },
+    [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+  );
+
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
     : 'Draft this section from the linked section evidence.';
@@ -2512,6 +2552,39 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             >
               {I.sparkles} Draft with AnA
             </button>
+            {/* Distinct from "Draft with AnA" on purpose, and named for the
+                difference: AnA is a conversation whose text you insert as a
+                tracked suggestion (author lineage). This retrieves the Data
+                Room and accepts through the ONE endpoint that records verified
+                span-level source citations alongside the content, in the same
+                transaction. Same act, different record — so it gets its own
+                control rather than being folded into the other. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => {
+                /* The panel lives in the section view — document view assembles
+                   sections for reading and edits none of them. Toggling open
+                   state from here would be a click with no visible effect, so
+                   it goes to the section it is about to draft instead. */
+                if (viewMode === 'document') {
+                  setViewMode('section');
+                  setAiDraftOpen(true);
+                  return;
+                }
+                setAiDraftOpen(o => !o);
+              }}
+              data-active={(aiDraftOpen && viewMode === 'section') || undefined}
+              disabled={!activeSection || docSealed}
+              data-testid="ai-draft-open"
+              title={
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : 'Draft this section from Data Room evidence and accept it with recorded citations.'
+              }
+            >
+              {I.wand} Draft from sources
+            </button>
             {activeDoc && (
               <AuthoringCollab
                 documentId={activeDoc.id}
@@ -2854,6 +2927,25 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       : 'This document is frozen. Its content is sealed under a content hash and cannot be edited.'}{' '}
                     Create a new version to make further changes.
                   </div>
+                )}
+                {/* Above the canvas, at reading width: the accept decision is
+                    made by reading a full section of regulatory prose, which
+                    is not a thing the 300px rail can carry. Keyed to the
+                    section so switching sections rebuilds it empty — the
+                    panel's own effect discards the draft, and the key makes
+                    that structural rather than dependent on effect ordering. */}
+                {aiDraftOpen && !docSealed && (
+                  <AuthoringAiDraft
+                    key={activeSection.id}
+                    sectionId={activeSection.id}
+                    sectionCode={activeSection.code}
+                    sectionTitle={activeSection.title}
+                    docSealed={docSealed}
+                    editorDirty={dirty}
+                    onAccepted={onAiDraftAccepted}
+                    onClose={() => setAiDraftOpen(false)}
+                    fireToast={fireToast}
+                  />
                 )}
                 <div
                   style={{
