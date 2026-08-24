@@ -77,7 +77,7 @@ export type SurfaceActionResolution =
  * governed path is the Part 11 propose-only pipeline, never this registry.
  */
 export const GOVERNED_VERB_PATTERN =
-  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign)\b/i;
+  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept)\b/i;
 
 /** Throws for an action id that names governed work. Exported for the tests. */
 export function assertUngovernedActionId(id: string): void {
@@ -173,6 +173,372 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         name: 'folder',
         required: true,
         description: 'The folder name as shown in the vault tree (case-insensitive; partial names resolve when unambiguous).',
+      },
+    ],
+  },
+
+  // ── Task board (nav target 'tasking' → the tasks surface) ──
+  {
+    id: 'tasking.set-view',
+    surfaceId: 'tasking',
+    label: 'Switch the task board view',
+    description:
+      'On the task board, switch between the Board (kanban), Critical path, Analytics, and Table presentations.',
+    params: [
+      {
+        name: 'view',
+        required: true,
+        description: 'Which presentation to show.',
+        enum: ['board', 'path', 'analytics', 'table'],
+      },
+    ],
+  },
+  {
+    id: 'tasking.filter',
+    surfaceId: 'tasking',
+    label: 'Filter the task board',
+    description:
+      'On the task board, filter by programme and/or module (both resolved against the live options on screen — pass the name as shown; "all" clears an axis), and/or toggle the My-tasks view. At least one param must be given. There is no status/priority/assignee filter on this board — status shows as the kanban columns.',
+    params: [
+      {
+        name: 'project',
+        required: false,
+        description: 'Programme name (as listed in the project picker) or "all" to clear.',
+      },
+      {
+        name: 'module',
+        required: false,
+        description: 'Module name (as listed in the module picker) or "all" to clear.',
+      },
+      {
+        name: 'mine',
+        required: false,
+        description: 'Show only the user\'s own tasks ("true") or everyone\'s ("false").',
+        enum: ['true', 'false'],
+      },
+    ],
+  },
+  {
+    id: 'tasking.open-task',
+    surfaceId: 'tasking',
+    label: 'Open a task',
+    description:
+      'On the task board, open a task\'s detail panel by its id or title, resolved against the tasks currently on screen under the active filters. Ambiguous or unknown names are honest refusals. Refused while a task detail with an in-progress archive justification, a form, or a signature ceremony is open.',
+    params: [
+      {
+        name: 'task',
+        required: true,
+        description: 'The task id or title as shown on the board (case-insensitive; partial titles resolve when unambiguous).',
+      },
+    ],
+  },
+
+  // ── Review (ungoverned selection only — decisions/sign-offs stay human) ──
+  {
+    id: 'review.select-document',
+    surfaceId: 'review',
+    label: 'Select a document in the review queue',
+    description:
+      'On the Review board, select a queued document by title so its workflow, passage, and comments show. View selection only — recording a decision, requesting changes, delegating, and commenting remain governed human acts. Refused while a request-changes or delegate form holds an in-progress justification.',
+    params: [
+      {
+        name: 'document',
+        required: true,
+        description: 'The document title as shown in the queue (case-insensitive; partial titles resolve when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'review.open-queue',
+    surfaceId: 'review',
+    label: 'Open the review queue',
+    description:
+      'On the Review board, jump to the next document still awaiting a decision — selects it and scrolls the queue into view. Honest refusals when nothing is in review or every document is already approved.',
+  },
+
+  // ── CMC / Quality (Module 3) ──
+  {
+    id: 'cmc.open-tab',
+    surfaceId: 'cmc',
+    label: 'Open a CMC tab',
+    description:
+      'On the CMC workstream, open one of its tabs: overview, substance & product (materials), specifications (specs), stability, batch records (batch), change control (change), quality by design (quality), Module 3 build (build), or program records (pathway). Switching tabs replaces the current pane — do it when asked or when beginning work there, not while the user is mid-form in the current pane.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab id to open.',
+        enum: ['overview', 'materials', 'specs', 'stability', 'batch', 'change', 'quality', 'build', 'pathway'],
+      },
+    ],
+  },
+
+  // ── Intelligence (global regulatory intelligence browser) ──
+  {
+    id: 'intelligence.open-group',
+    surfaceId: 'intelligence',
+    label: 'Open an intelligence group',
+    description:
+      'On the Intelligence browser, switch the capability catalog to a named group. Refused while a capability detail is open (its form would be discarded) — close it first.',
+    params: [
+      {
+        name: 'group',
+        required: true,
+        description: 'The group id to show.',
+        enum: [
+          'strategy',
+          'designations_access',
+          'clinical',
+          'quality_cmc',
+          'safety_pv',
+          'submissions',
+          'devices_dx',
+          'lifecycle',
+          'commercial_supply',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'intelligence.open-capability',
+    surfaceId: 'intelligence',
+    label: 'Open an intelligence capability',
+    description:
+      'On the Intelligence browser, open a capability\'s detail by name (resolved against the live catalog; unknown or ambiguous names are honest refusals). Opening shows its inputs — RUNNING a capability stays with the user.',
+    params: [
+      {
+        name: 'capability',
+        required: true,
+        description: 'The capability name or id as listed in the catalog (case-insensitive; partial names resolve when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'intelligence.close-capability',
+    surfaceId: 'intelligence',
+    label: 'Back to the capability catalog',
+    description:
+      'On the Intelligence browser, close the open capability detail and return to the catalog. A refusal when no capability is open. Note: closing discards anything typed into the capability form.',
+  },
+
+  // ── Document authoring (the unified editor; nav target "authoring") ──
+  {
+    id: 'authoring.open-document',
+    surfaceId: 'authoring',
+    label: 'Open a document for authoring',
+    description:
+      'In the authoring editor, open a document from the in-scope list by title (normalized exact match, then unique containment — the same resolution the deep-link hand-off uses). Refused with the real reason while there are unsaved edits, a save is in flight, or a dialog is open — AnA never discards a person\'s typing.',
+    params: [
+      {
+        name: 'title',
+        required: true,
+        description: 'The document title as listed in the authoring tree (case-insensitive; partial titles resolve when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'authoring.open-section',
+    surfaceId: 'authoring',
+    label: 'Open a section of the open document',
+    description:
+      'In the authoring editor, jump to a section of the CURRENTLY OPEN document by its code (e.g. "3.2.P.8"). For a section in another document, use navigate_to authoring with sectionCode instead — that path runs the bounded cross-document search. Same unsaved-edits refusals as opening a document.',
+    params: [
+      {
+        name: 'sectionCode',
+        required: true,
+        description: 'The CTD/outline section code as shown in the section tree of the open document.',
+      },
+    ],
+  },
+
+  // ── eCTD co-author ──
+  {
+    id: 'ectd-coauthor.search-tree',
+    surfaceId: 'ectd-coauthor',
+    label: 'Search the eCTD tree',
+    description:
+      'On the eCTD co-author, filter the backbone tree by title or module number — pure view state over the loaded documents; zero matches is a truthful result, not an error.',
+    params: [
+      {
+        name: 'query',
+        required: true,
+        description: 'The search term to filter the eCTD section tree by (title or module number).',
+      },
+    ],
+  },
+
+  // ── Submission Center (nav target "submissions") ──
+  {
+    id: 'submissions.set-workspace',
+    surfaceId: 'submissions',
+    label: 'Switch the submission workspace',
+    description:
+      'In the Submission Center, switch between its workspaces. The builder, validation, shadow-review, cross-region, and dispatch workspaces need a submission (and sequence) selected first — select one before switching there. Refused while an e-signature dialog is open or a lifecycle transition is in flight.',
+    params: [
+      {
+        name: 'workspace',
+        required: true,
+        description: 'The workspace tab to open.',
+        enum: [
+          'portfolio',
+          'planner',
+          'builder',
+          'sequences',
+          'validation',
+          'shadow-review',
+          'cross-region',
+          'dispatch',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'submissions.select-submission',
+    surfaceId: 'submissions',
+    label: 'Select a submission',
+    description:
+      'In the Submission Center, select a submission by title or product name (resolved against the live portfolio; unknown or ambiguous names are honest refusals). Note: selecting clears the working sequence and any verdict notice on screen. Refused while an e-signature dialog is open or a transition is in flight.',
+    params: [
+      {
+        name: 'submission',
+        required: true,
+        description: 'The submission title or product name as listed in the portfolio (case-insensitive; partial names resolve when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'submissions.select-sequence',
+    surfaceId: 'submissions',
+    label: 'Select a working sequence',
+    description:
+      'In the Submission Center, select the working sequence (by its number, e.g. "0000") that the build, validation, and dispatch workspaces act on. Requires a submission selected. Refused while an e-signature dialog is open or a transition is in flight. Freezing and dispatching remain governed human acts.',
+    params: [
+      {
+        name: 'sequence',
+        required: true,
+        description: 'The sequence number as rendered in the sequence list (e.g. "0000").',
+      },
+    ],
+  },
+
+  // ── Project home ──
+  {
+    id: 'project-home.set-stage',
+    surfaceId: 'project-home',
+    label: 'Open a lifecycle stage',
+    description:
+      'On the project home, open a programme lifecycle stage tab. Note: leaving the author stage unmounts its composer — do not switch away from author uninvited if the user may be mid-message there.',
+    params: [
+      {
+        name: 'stage',
+        required: true,
+        description: 'The lifecycle stage tab to open.',
+        enum: ['plan', 'evidence', 'author', 'review', 'submit', 'respond', 'lifecycle'],
+      },
+    ],
+  },
+
+  // ── Risk management (ISO 14971 file) ──
+  {
+    id: 'risk.set-matrix-view',
+    surfaceId: 'risk',
+    label: 'Switch the risk matrix view',
+    description:
+      'On the risk file, switch the severity × probability matrix between the initial and residual assessments. Refused while a new-hazard or add-control form is open.',
+    params: [
+      {
+        name: 'view',
+        required: true,
+        description: 'Which assessment to show.',
+        enum: ['initial', 'residual'],
+      },
+    ],
+  },
+  {
+    id: 'risk.select-hazard',
+    surfaceId: 'risk',
+    label: 'Open a hazard',
+    description:
+      'On the risk file, open a hazard by its reference (e.g. "HZ-01") or hazard text so its severity, probability, and controls show. Resolved against the real risk file with honest misses. Accepting residual risk stays a governed human act. Refused while a form is open.',
+    params: [
+      {
+        name: 'hazard',
+        required: true,
+        description: 'The hazard reference or text as listed in the register (case-insensitive; partial text resolves when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'risk.focus-cell',
+    surfaceId: 'risk',
+    label: 'Focus a matrix cell',
+    description:
+      'On the risk file, focus a severity × probability cell of the matrix and open the hazard sitting there (the first, when several share the cell — the count is reported). An empty cell is an honest miss. Refused while a form is open.',
+    params: [
+      {
+        name: 'severity',
+        required: true,
+        description: 'The severity band, exactly as labelled on the matrix axis.',
+        enum: ['Negligible', 'Minor', 'Serious', 'Critical', 'Catastrophic'],
+      },
+      {
+        name: 'probability',
+        required: true,
+        description: 'The probability band, exactly as labelled on the matrix axis.',
+        enum: ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'],
+      },
+      {
+        name: 'view',
+        required: false,
+        description: 'Which assessment to read the cell from (defaults to the one on screen).',
+        enum: ['initial', 'residual'],
+      },
+    ],
+  },
+
+  // ── Template library ──
+  {
+    id: 'template-library.select-template',
+    surfaceId: 'template-library',
+    label: 'Select a template',
+    description:
+      'In the template library, select a template by name so its preview opens — the same click a person makes on the list. Refused while an unsaved extraction preview is on screen (selecting under it is disorienting and its Discard is unrecoverable). Note: selection re-points the render/verify/apply toolbar at the newly selected template.',
+    params: [
+      {
+        name: 'template',
+        required: true,
+        description: 'The template name as shown in the list (case-insensitive; partial names resolve when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'template-library.open-tab',
+    surfaceId: 'template-library',
+    label: 'Open a template tab',
+    description:
+      'In the template library, open one of the selected template\'s tabs: live preview, specification, form fields, named styles, or the saved extraction report (read-only — it never starts an extraction).',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['preview', 'spec', 'fields', 'styles', 'extract'],
+      },
+    ],
+  },
+
+  // ── Artifacts center ──
+  {
+    id: 'artifacts-center.focus-artifact',
+    surfaceId: 'artifacts-center',
+    label: 'Focus an artifact',
+    description:
+      'In the artifacts center, bring a named artifact into view and highlight it — the same focus the follow-the-work hand-off applies when a driven turn saves a draft. Resolved against the real gallery with honest misses.',
+    params: [
+      {
+        name: 'artifact',
+        required: true,
+        description: 'The artifact name as shown in the gallery (case-insensitive; partial names resolve when unambiguous).',
       },
     ],
   },

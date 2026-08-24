@@ -54,6 +54,11 @@ import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
+import {
+  advertisedScreenActions,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+} from '../surfaceActions';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ectd-v2.css';
@@ -260,15 +265,20 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
 
   /* The pane's own named conversation — the REAL streaming assistant, grounded
      on the document the user has open so "tighten this" means this section. */
-  const moduleContext = useMemo(
-    () => ({
+  const moduleContext = useMemo(() => {
+    const base: Record<string, unknown> = {
       surface: 'ectd-coauthor',
       coauthorDocumentId: activeDoc?.id ?? null,
       moduleNumber: activeDoc?.moduleNumber ?? null,
       documentTitle: activeDoc?.title ?? null,
-    }),
-    [activeDoc?.id, activeDoc?.moduleNumber, activeDoc?.title],
-  );
+    };
+    /* The screen's OPERABLE vocabulary from the shared surface-action registry,
+       folded exactly as the shell folds it for railed surfaces (V2App) — this
+       surface owns its conversation, so its own chat must advertise what the
+       rail would have. Omitted entirely when empty, never an empty claim. */
+    const screenActions = advertisedScreenActions('ectd-coauthor');
+    return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
+  }, [activeDoc?.id, activeDoc?.moduleNumber, activeDoc?.title]);
   const anaChat = useAnaChat({
     screenName: 'ectd-coauthor',
     projectId: readProjectId(),
@@ -355,6 +365,31 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
       }))
       .filter((mod) => mod.docs.length > 0);
   }, [treeModules, treeFilter]);
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under this surface's own surfaceViews id ('ectd-coauthor', an
+     identity mapping in the registry). The one handler drives the SAME state
+     the human's own tree-search input drives (setTreeQuery) — no second
+     filter path. Deliberately NO loading guard: the query is pure view state
+     over whatever the read delivers (vault.search's rule), and zero matches
+     is a truthful outcome the tree already renders honestly ("No sections
+     match…"), never an error. */
+  useSurfaceActionHandlers('ectd-coauthor', {
+    'ectd-coauthor.search-tree': (params) => {
+      const query = (params.query ?? '').trim();
+      if (!query) return { ok: false, reason: 'No search term given.' };
+      if (error) return { ok: false, reason: 'The eCTD documents could not be read.' };
+      setTreeQuery(query);
+      return { ok: true, detail: `Filtering the eCTD tree for "${query}"` };
+    },
+  });
+  /* The bus's ready signal: search-tree itself never answers not-ready, but a
+     directive stashed across the navigate→mount gap still gets its re-attempt
+     the moment the read settles. Safe to fire on every settle; a no-op when
+     nothing is pending. */
+  useEffect(() => {
+    if (!loading) notifySurfaceActionReady('ectd-coauthor');
+  }, [loading]);
 
   /* KPIs derived from the REAL rows only (never hardcoded). Readiness weights
      approved/finalized fully and review/in-progress at half. */

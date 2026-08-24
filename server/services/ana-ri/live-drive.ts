@@ -284,8 +284,10 @@ export function buildLiveDrivePromptBlock(mode: DriveMode = 'assist'): string {
     `and why), then continue the work there. Drive deliberately: at most ` +
     `${budget.navigations} navigations and ${budget.actions} screen actions per turn, each ` +
     `one serving the user's request. Use act_on_screen for the on-screen operations a ` +
-    `person would click (open a program, search, filter, switch views) — discover what a ` +
-    `screen supports with list_screen_actions. ` +
+    `person would click (open a program, search, filter, switch views). The ACTIVE ` +
+    `screen's available actions arrive as screen_actions in your module context — act ` +
+    `from those directly; call list_screen_actions only for screens you have not ` +
+    `reached yet. ` +
     shared
   );
 }

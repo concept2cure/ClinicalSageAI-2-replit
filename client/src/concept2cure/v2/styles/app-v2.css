@@ -1187,6 +1187,37 @@
 
 /* ── Shell grid ── */
 .c2c-v2.shell{display:grid;grid-template-columns:var(--rail) 1fr var(--ana);grid-template-rows:100vh;height:100vh;overflow:hidden;background:var(--bg-000);}
+/* ── Phone-width rail (<=640px) ──
+   At 430px the 264px expanded rail crushed the content column to nothing —
+   the whole app behind an open rail was unusable. The grid now always
+   reserves only the collapsed strip (--rail is narrowed, so every shell
+   variant below inherits it), and the EXPANDED rail paints OVER the content
+   as a fixed drawer above the .rail-scrim, which tap-closes it; Escape does
+   the same via the shell-level listener. Desktop is untouched — none of this
+   applies above 640px, and the scrim renders display:none there. */
+@media (max-width: 640px) {
+  .c2c-v2.shell { --rail: var(--rail-collapsed); }
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 84vw);
+    z-index: 61;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim { display: block; }
+}
+.c2c-v2 .rail-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.35);
+  animation: rail-scrim-in 200ms ease-out;
+}
+@keyframes rail-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .c2c-v2 .rail-scrim { animation: none; } }
 .c2c-v2.shell[data-collapsed="true"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana);}
 .c2c-v2.shell[data-ana-open="false"]{grid-template-columns:var(--rail) 1fr var(--ana-seam);}
 .c2c-v2.shell[data-collapsed="true"][data-ana-open="false"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana-seam);}
@@ -3413,3 +3444,19 @@
 .c2c-v2 .orch-newrun-td{grid-column:1;font-size:11.5px;line-height:1.5;color:var(--text-400);}
 .c2c-v2 .orch-newrun-go{grid-row:1/span 2;font-size:11.5px;color:var(--text-400);white-space:nowrap;}
 .c2c-v2 .orch-newrun-f{display:flex;justify-content:flex-end;margin-top:14px;}
+
+/* Nonclinical — the SEND conformance report, findings shown per study with the
+   guidance each one cites. */
+.c2c-v2 .nc-send-report{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .nc-send-report-h{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);}
+.c2c-v2 .nc-send-row{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:start;font-size:12px;}
+.c2c-v2 .nc-send-study{font-family:var(--font-mono,monospace);color:var(--text-300);}
+.c2c-v2 .nc-send-fs{display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .nc-send-f{line-height:1.5;color:var(--text-200);}
+.c2c-v2 .nc-send-f em{font-style:normal;color:var(--text-400);}
+.c2c-v2 .nc-send-f.err{color:var(--error);}
+.c2c-v2 .nc-send-f.warn{color:var(--warning);}
+.c2c-v2 .nc-send-f.ok{color:var(--success);}
+
+/* Precedent engine — the comparison the engine returned, shown as it came back. */
+.c2c-v2 .pe-compare{margin:0;font-family:var(--font-mono,monospace);font-size:11.5px;line-height:1.6;color:var(--text-200);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;}

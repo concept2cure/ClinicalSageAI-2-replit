@@ -300,6 +300,8 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const prog = useOrchProgram();
   const pid = prog ? prog.pid : null;
   const [newRunOpen, setNewRunOpen] = useState(false);
+  /** Bumped by "Re-evaluate" — the readiness read recomputes on every call. */
+  const [rdEpoch, setRdEpoch] = useState(0);
   /** Bumped after a run is created, so the board is re-read from the engine. */
   const [runsEpoch, setRunsEpoch] = useState(0);
   const progLabel = prog ? prog.label : null;
@@ -327,7 +329,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   // or when the payload shape is rejected by mapReadiness.
   const rdState = useLiveData<unknown>(
     pid == null ? null : `/api/orchestration/projects/${pid}/readiness`,
-    [pid],
+    [pid, rdEpoch],
   );
   const r = useMemo(
     () => (!rdState.loading && !rdState.error ? mapReadiness(rdState.data) : null),
@@ -1014,7 +1016,23 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 Deterministic gate computed by the readiness engine: ready requires a 90+ score with zero critical blockers.
               </div>
             </div>
-            <button className="btn ghost" onClick={() => onAsk && onAsk('Re-run the readiness evaluation and explain the open blockers')}>{I.rotateCw} Re-evaluate</button>
+            {/* ── "Re-evaluate" asked the assistant to re-evaluate ──────────
+                It sat on the readiness score, with a refresh icon, and typed
+                'Re-run the readiness evaluation…' into the chat — nothing was
+                recomputed and the score on screen never moved.
+
+                GET /api/orchestration/projects/:id/readiness is not a cached
+                row: it assembles the cross-object payload and runs
+                computeReadinessAssessment on every call. So re-reading it IS
+                the re-evaluation, and the score that comes back is the engine's
+                current answer. */}
+            <button
+              className="btn ghost"
+              onClick={() => setRdEpoch((n) => n + 1)}
+              disabled={rdState.loading}
+            >
+              {I.rotateCw} {rdState.loading ? 'Evaluating…' : 'Re-evaluate'}
+            </button>
           </div>
           {findGroup('Rules-based findings', 'readinessRules · required_item / quality_gate', r.findings.rules)}
           {findGroup('Validation findings', 'eCTD · CDISC · hyperlink integrity', r.findings.validation)}

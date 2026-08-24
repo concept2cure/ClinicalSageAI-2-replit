@@ -42,11 +42,12 @@ export const DRIVE_BUDGETS: Readonly<Record<DriveMode, DriveBudget>> = {
 
 /**
  * Tool-round ceiling a demo turn needs: one narrated stop per round means a
- * full tour must be allowed as many rounds as its budget has moves, plus
- * headroom to answer a question mid-demo. The stream route raises the loop's
+ * full tour must be allowed roughly as many rounds as its script has stops
+ * (adjacent navigate+act pairs often batch into one round), plus headroom to
+ * answer a question mid-demo. The stream route raises the loop's
  * effort-resolved ceiling to at least this in demo mode (never lowers it).
  */
-export const DEMO_MAX_ROUNDS = 16;
+export const DEMO_MAX_ROUNDS = 20;
 
 /** Parse a requested drive mode; anything unknown is the conservative assist. */
 export function resolveDriveMode(raw: unknown): DriveMode {

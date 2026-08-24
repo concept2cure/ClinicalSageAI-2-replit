@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
 import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
@@ -1189,6 +1190,36 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       wsState.loading, wsState.error, wsState.data,
       draftsState.loading, draftsState.error, draftsState.data]);
   usePublishSurfaceContext('project-home', anaContext);
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     project-home.*, identity-resolved). The one action drives the SAME state
+     the StageTracker's own buttons drive (setStage). Stage is pure view state:
+     it selects which panels render over whatever the five reads deliver, so —
+     same reasoning as vault.search — applying it mid-load is correct, not
+     early, and there is no loading refusal and no retry.
+
+     Known gap, not expressible today: leaving the 'author' stage unmounts its
+     composer, whose in-progress draft is child-local state this handler cannot
+     see — a mid-message guard would need that state lifted out of the child.
+     The registry entry's description already warns AnA not to switch away from
+     author uninvited. */
+  useSurfaceActionHandlers('project-home', {
+    'project-home.set-stage': (params) => {
+      if (noProject)
+        return { ok: false, reason: 'No project is selected — open one from All projects.' };
+      const target = (params.stage ?? '').trim();
+      const meta = PJ_LIFECYCLE.find((s) => s.id === target);
+      if (!meta) return { ok: false, reason: `No lifecycle stage named "${params.stage}".` };
+      setStage(meta.id);
+      return { ok: true, detail: `Opened the ${meta.id} stage` };
+    },
+  });
+  /* Ready signal — harmless even though set-stage never answers retry: a
+     directive stashed across the navigate→mount gap is re-attempted by the
+     registration itself, and this keeps the surface on the uniform contract. */
+  useEffect(() => {
+    if (!progState.loading) notifySurfaceActionReady('project-home');
+  }, [progState.loading]);
 
   return (
     <div className="page-inner pj">

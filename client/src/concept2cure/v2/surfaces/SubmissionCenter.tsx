@@ -33,6 +33,7 @@ import React from 'react';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, hasKeys, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { EsignModal } from '../../_shared/components/EsignModal';
@@ -410,6 +411,113 @@ export function SubmissionCenter({
     };
   };
 
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     submissions.*; the bus alias-resolves that nav-target id onto this
+     surface's own 'submission-center' registration). Every handler drives the
+     SAME state the human's own controls drive (setWs / setSelSub / setSelSeq);
+     names are resolved against the REAL portfolio and sequence rows with
+     honest misses, never guesses. View state only: the governed chain
+     (doTransition / runGoverned, freeze/dispatch e-sign) and the create paths
+     stay human-operated and untouched. */
+  /* One guard for all three: while the Part 11 e-sign dialog is open a person
+     is mid-ceremony, and while a lifecycle transition POST is in flight the
+     rows are about to change under any selection — AnA operating the center
+     in either window would race a governed act. Honest refusal instead. */
+  const busyGuard = () => {
+    if (flow != null)
+      return { ok: false as const, reason: 'An e-signature dialog is open — finish or cancel it first.' };
+    if (acting != null)
+      return { ok: false as const, reason: 'A sequence transition is in flight — wait for it to finish.' };
+    return null;
+  };
+  useSurfaceActionHandlers('submission-center', {
+    'submissions.set-workspace': (params) => {
+      const guarded = busyGuard();
+      if (guarded) return guarded;
+      const target = (params.workspace ?? '').trim();
+      const meta = SUBMISSION_WORKSPACES.find((w) => w.id === target);
+      if (!meta) return { ok: false, reason: `No workspace named "${params.workspace}".` };
+      // Not-ready, not failed: whether a per-sequence workspace has a
+      // submission to operate on is unknowable until the portfolio lands. The
+      // bus holds the directive and re-attempts on the ready signal below.
+      if (subs.loading)
+        return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
+      if (PER_SEQ_WS.has(target) && !sub)
+        return { ok: false, reason: 'No submission is selected — select one first.' };
+      setWs(target);
+      return { ok: true, detail: `Opened the ${meta.label} workspace` };
+    },
+    'submissions.select-submission': (params) => {
+      const guarded = busyGuard();
+      if (guarded) return guarded;
+      const wanted = (params.submission ?? '').trim().toLowerCase();
+      if (!wanted) return { ok: false, reason: 'No submission named.' };
+      if (subs.loading)
+        return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
+      if (subs.error) return { ok: false, reason: 'The submission portfolio could not be read.' };
+      // Resolved over the same `list` the portfolio picker renders: exact
+      // title/product match first (case-insensitive), then unique containment.
+      const exact = list.find(
+        (s) => s.title.toLowerCase() === wanted || (s.productName ?? '').toLowerCase() === wanted,
+      );
+      const contains = exact
+        ? []
+        : list.filter(
+            (s) =>
+              s.title.toLowerCase().includes(wanted) ||
+              (s.productName ?? '').toLowerCase().includes(wanted),
+          );
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.submission}" matches ${contains.length} submissions — name one exactly.`
+              : `No submission named "${params.submission}" in this portfolio.`,
+        };
+      }
+      const already = match.id === sub?.id;
+      setSelSub(match.id);
+      // Changing submission runs the reset effect above (selSeq + notice
+      // cleared); say so — and never claim a reset that re-selecting the
+      // already-current submission skips.
+      return {
+        ok: true,
+        detail: already
+          ? `${match.title} is already the selected submission`
+          : `Selected ${match.title} — the working sequence and any verdict notice were cleared`,
+      };
+    },
+    'submissions.select-sequence': (params) => {
+      const guarded = busyGuard();
+      if (guarded) return guarded;
+      const wanted = (params.sequence ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No sequence named.' };
+      // The portfolio decides whether a submission is even selected; until it
+      // lands, "no submission" would be a false refusal — hold instead.
+      if (subs.loading)
+        return { ok: false, reason: 'The submission portfolio is still loading.', retry: true };
+      if (!sub) return { ok: false, reason: 'No submission is selected — select one first.' };
+      if (seqs.loading)
+        return { ok: false, reason: "This submission's sequences are still loading.", retry: true };
+      if (seqs.error) return { ok: false, reason: "This submission's sequences could not be read." };
+      if (seqs.rows.length === 0)
+        return { ok: false, reason: 'This submission has no sequences yet.' };
+      // Matched on the sequence number exactly as the list renders it ("0000").
+      const match = seqs.rows.find((r) => r.sequenceNumber === wanted);
+      if (!match) return { ok: false, reason: `No sequence "${params.sequence}" in ${sub.title}.` };
+      setSelSeq(match.id);
+      return { ok: true, detail: `Selected sequence ${match.sequenceNumber} as the working sequence` };
+    },
+  });
+  /* The ready signal for the retry contract above: a held directive gets its
+     re-attempt when the portfolio read settles AND again when the selected
+     submission's sequence read settles — select-sequence legitimately waits
+     through both reads in turn. */
+  React.useEffect(() => {
+    if (!subs.loading || !seqs.loading) notifySurfaceActionReady('submission-center');
+  }, [subs.loading, seqs.loading]);
 
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;

@@ -92,7 +92,14 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
   { id: 'deep-research', label: 'Deep Research', description: 'The full-screen deep-research chat surface.', scope: 'global', group: 'global' },
   { id: 'apps', label: 'Apps', description: 'The specialist-tools launcher (precedent intelligence, biostatistics, report engine, etc.).', scope: 'global', group: 'global' },
-  { id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global' },
+  {
+    id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
+    // Declared because it is already CONSUMED (the surface focuses/scrolls to
+    // this artifact on mount) and PRODUCED (the shell's follow-the-work stash
+    // on artifact_version_saved) — an undeclared param the channel carries is
+    // a contract gap, not a feature.
+    params: [{ name: 'artifactId', required: false, description: 'Artifact to focus and scroll into view on arrival.' }],
+  },
 
   // ── Project-scoped tabs (require an active project) ──
   { id: 'project-home', label: 'Project Home', description: 'The active project overview / home.', scope: 'project', group: 'project' },
@@ -117,7 +124,26 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
   {
     id: 'intelligence', label: 'Intelligence', description: 'The intelligence surface (protocol, CMC, biostat, reports tabs).', scope: 'project', group: 'module',
-    params: [{ name: 'intelligenceTab', required: false, description: 'Which intelligence tab to open.', enum: ['protocol', 'cmc', 'biostat', 'reports'] }],
+    params: [{
+      name: 'intelligenceTab',
+      required: false,
+      description: 'Which intelligence catalog group to open.',
+      // The REAL group ids the destination renders (shared/constants/global-ri-ui).
+      // The original values ('protocol','cmc','biostat','reports') predated the
+      // catalog and mostly matched nothing — a declared enum that promises tabs
+      // the screen does not have is the drift this list replaces.
+      enum: [
+        'strategy',
+        'designations_access',
+        'clinical',
+        'quality_cmc',
+        'safety_pv',
+        'submissions',
+        'devices_dx',
+        'lifecycle',
+        'commercial_supply',
+      ],
+    }],
   },
   { id: 'quality', label: 'Quality (SOP / Controlled Docs)', description: 'The quality management surface (SOP register, controlled documents).', scope: 'project', group: 'module' },
   {

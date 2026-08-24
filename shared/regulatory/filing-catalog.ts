@@ -79,6 +79,8 @@ const PATHWAY_BY_ID: Record<string, string> = {
   ich_csr: 'csr', ich_clin_overview: 'ctd',
   us_513g: 'device', us_qsub: 'device', us_breakthrough_device: 'device', us_rfd: 'device',
   eu_nb_consult: 'device',
+  /* W2-1: the two consultations that legitimately involve the EMA. */
+  eu_mdr_art117_nbop: 'device', eu_ivdr_art48_consult: 'ivdr',
   us_510k: '510k', us_de_novo: 'denovo', us_pma: 'pma', us_hde: 'device', us_eua: 'device',
   eu_mdr_techdoc: 'mdr', eu_mdr_class_i: 'mdr', eu_mdr_class_iia: 'mdr', eu_mdr_class_iib: 'mdr', eu_mdr_class_iii: 'mdr',
   eu_sscp: 'device', eu_doc: 'device',

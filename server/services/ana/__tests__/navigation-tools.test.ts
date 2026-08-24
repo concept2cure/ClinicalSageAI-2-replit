@@ -49,9 +49,9 @@ describe('navigate_to', () => {
   });
 
   it('validates enum params', async () => {
-    const ok = JSON.parse(await getToolHandler('navigate_to')!({ target: 'intelligence', params: { intelligenceTab: 'protocol' } }));
+    const ok = JSON.parse(await getToolHandler('navigate_to')!({ target: 'intelligence', params: { intelligenceTab: 'clinical' } }));
     expect(ok.status).toBe('navigation_ready');
-    expect(ok.directive.params).toEqual({ intelligenceTab: 'protocol' });
+    expect(ok.directive.params).toEqual({ intelligenceTab: 'clinical' });
 
     const bad = JSON.parse(await getToolHandler('navigate_to')!({ target: 'intelligence', params: { intelligenceTab: 'nope' } }));
     expect(bad.status).toBe('needs_parameters');

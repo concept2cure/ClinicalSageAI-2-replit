@@ -101,12 +101,24 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'cmc' },
       },
       {
-        say: 'Intelligence is the analytical layer — open the protocol tab and show how design, biostatistics, and reporting insight sit beside the work.',
-        navigate: { target: 'intelligence', params: { intelligenceTab: 'protocol' } },
+        say: 'Show them a register directly — open the specifications tab so they see the real Module 3 controls, not a slide of them.',
+        act: { actionId: 'cmc.open-tab', params: { tab: 'specs' } },
+      },
+      {
+        say: 'Intelligence is the analytical layer — open the clinical group of the capability catalog and show how design, biostatistics, and evidence insight sit beside the work.',
+        navigate: { target: 'intelligence', params: { intelligenceTab: 'clinical' } },
+      },
+      {
+        say: 'The catalog spans the whole operation — switch to the quality & CMC group to show its breadth without leaving the screen.',
+        act: { actionId: 'intelligence.open-group', params: { group: 'quality_cmc' } },
       },
       {
         say: 'Review is where governed judgments happen: readiness, approvals, and the Part 11 e-signature gates — AnA prepares everything, and a person always signs.',
         navigate: { target: 'review' },
+      },
+      {
+        say: 'Jump straight to the next document awaiting a decision — the click a reviewer starts every morning with.',
+        act: { actionId: 'review.open-queue' },
       },
       {
         say: 'The Submission Gateway is the final mile: pre-flight validation and the transmittal chain to the agency.',
@@ -117,7 +129,68 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'tasking' },
       },
       {
+        say: 'And it works the way each person does — filter the board to just their own tasks to show the personal view.',
+        act: { actionId: 'tasking.filter', params: { mine: 'true' } },
+      },
+      {
         say: 'Close the loop: recap the route just driven, name the one or two screens most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
+      },
+    ],
+  },
+  {
+    id: 'training-submission-day',
+    kind: 'training',
+    title: 'Submission day walkthrough',
+    audience: 'A regulatory operations team rehearsing how a sequence actually goes out.',
+    minutes: 5,
+    description:
+      'The dispatch-day route: open the program, work the Submission Center — select the submission, its working sequence, and the validation workspace — clear the review queue, and end at the gateway. Freezing and dispatching stay with a person; this tour shows everything up to their signature.',
+    steps: [
+      {
+        say: 'Frame the day: a sequence goes out today, and this is the exact route the team will drive — on their real program, with every governed gate left in human hands.',
+      },
+      {
+        say: 'Start at the portfolio and open the program that is submitting (pick it from the list on screen).',
+        navigate: { target: 'projects' },
+      },
+      {
+        say: 'Open the program whose sequence ships today.',
+        act: { actionId: 'projects.open-program' },
+      },
+      {
+        say: 'The Submission Center is the operations cockpit — everything from planning to dispatch lives in one place.',
+        navigate: { target: 'submissions' },
+      },
+      {
+        say: 'Select the submission that is going out (pick it from the portfolio on screen).',
+        act: { actionId: 'submissions.select-submission' },
+      },
+      {
+        say: 'Open the sequences workspace to see the lifecycle of every sequence in this submission.',
+        act: { actionId: 'submissions.set-workspace', params: { workspace: 'sequences' } },
+      },
+      {
+        say: 'Pick the working sequence (from the list on screen) — the one the build and validation workspaces will act on.',
+        act: { actionId: 'submissions.select-sequence' },
+      },
+      {
+        say: 'Open validation: the pre-flight findings the team clears before anyone is asked to sign.',
+        act: { actionId: 'submissions.set-workspace', params: { workspace: 'validation' } },
+      },
+      {
+        say: 'Review is the judgment gate — jump to the next document still awaiting a decision so nothing rides along unapproved.',
+        navigate: { target: 'review' },
+      },
+      {
+        say: 'Open the queue at the next undecided document.',
+        act: { actionId: 'review.open-queue' },
+      },
+      {
+        say: 'And the gateway: the transmittal chain and acknowledgments once a person has frozen and dispatched — the two acts that stay theirs, under a Part 11 signature.',
+        navigate: { target: 'submission-gateway' },
+      },
+      {
+        say: 'Close: recap the route, name where their sequence stands today, and offer to walk the validation findings together next.',
       },
     ],
   },
@@ -148,6 +221,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'The headline capability: authoring. AnA drafts regulatory documents grounded in the program evidence, with provenance and a governed version history — this is where weeks become days.',
         navigate: { target: 'authoring' },
+      },
+      {
+        say: 'Open one of their real documents (pick a title from the authoring tree on screen) so the drafting engine is shown on their own work, not a canned sample.',
+        act: { actionId: 'authoring.open-document' },
       },
       {
         say: 'The Vault: uploads are captured with checksums and audit chains, auto-classified into the dossier, and every source is tracked from captured to filed — the data room diligence teams wish they had.',

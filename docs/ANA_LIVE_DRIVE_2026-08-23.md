@@ -229,3 +229,52 @@ Add an entry to `SURFACE_ACTIONS` **and** the handler in the surface, in the
 same change — an action AnA can resolve but no surface performs is a
 fabricated ability (the DEV console warns on unlisted registrations; the
 registry test enforces surface existence + the governed-verb refusal).
+
+### Wave 2 landed (2026-08-24, same day)
+
+The 16 wave-2 registry actions are wired on their surfaces: `tasks` (set-view
+/ filter / open-task, registered under the v2 id with the 'tasking' alias
+resolved by the bus), `review` (select-document / open-queue via ONE shared
+openQueue path; board facts merged into the ReviewThreadsPane publisher — the
+surface's single 'review' publisher), `cmc` (open-tab), `global-ri`
+(open-group / open-capability / close-capability + the surface's FIRST
+context publisher), `document-authoring` (open-document / open-section
+through requestLeave with dirty/dialog refusals), `ectd-coauthor`
+(search-tree), `submission-center` (set-workspace / select-submission /
+select-sequence with e-sign/transition busy guards), `project-home`
+(set-stage). Owned surfaces fold `advertisedScreenActions` into their own
+moduleContext. Wiring proof: `anaDrivesWave2.test.tsx` — alias end-to-end,
+retry-held apply across the catalog load, honest refusals on misses and
+busy states. `check-ana-surface-context` ID_BASELINE 65→66.
+
+Deferred, with reasons (wave-3 recon reports): `apps.show-admin-controls`
+(reveals a live governed org-wide switch — pre-arming), `deep-research.*`
+(no context publisher exists; query/depth/source prefill pre-arms a metered
+credit spend), `ectd-coauthor.open-document` (the editor has no dirty flag —
+an unguardable unmount), `quality.*` (state is two levels child-local; needs
+lifts), `dossier-map` + `labeling` (no drivable ungoverned view state).
+Wave-3 wireable per recon: `risk.*` (matrix view / select hazard / focus
+cell), `template-library.*` (select-template / open-tab),
+`artifacts-center.focus-artifact` (needs the setFocusId destructure).
+Contract gaps recon flagged, to fix with wave 3: `accept` missing from
+GOVERNED_VERB_PATTERN; `artifactId` consumed by artifacts-center but not
+declared on its nav target; dossier-map's availableActions advertises a
+module opener that does not exist.
+
+### Wave 3 landed (2026-08-24, same day)
+
+Six more actions on three surfaces, from the wave-3 recon specs: `risk`
+(set-matrix-view / select-hazard — held through the load because the seed
+effect would clobber an early select / focus-cell over the SAME sevI×probI
+derivation the matrix dots render from, first-of-N reported honestly),
+`template-library` (select-template — refused while an unsaved extraction
+preview is up, detail says the toolbar re-points / open-tab), and
+`artifacts-center` (focus-artifact — drives the same focusId the
+follow-the-work hand-off drives; the scroll effect gained the
+jsdom/webview scrollIntoView guard the wiring test exposed). Contract
+fixes shipped with it: `accept` added to GOVERNED_VERB_PATTERN
+(risk.accept-residual pinned failing-first), `artifactId` declared on the
+artifacts-center nav target (it was consumed and produced but undeclared),
+and dossier-map's availableActions no longer advertises a module opener
+that does not exist. Registry now 27 actions across 13 surfaces. Wiring
+proof: `anaDrivesWave3.test.tsx`.

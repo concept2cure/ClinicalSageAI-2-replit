@@ -11,9 +11,10 @@
  * are applied from the authoring workspace (server/routes/authoring.router.ts),
  * PIN-verified and sealed against a frozen document version.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -313,6 +314,113 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   /** Re-read the board from the server after a confirmed write. */
   const refreshBoard = () => setBoardEpoch((e) => e + 1);
 
+  /* Jump to the next document still awaiting a decision — ONE path shared by
+     the AnswerLead's "Open the queue" button and AnA's review.open-queue
+     action, so the two can never drift. Selecting the row is the part that
+     matters; bringing it into view is a courtesy (`scrollIntoView` is absent
+     in jsdom and some embedded webviews, and an unguarded call there throws
+     out of the handler — taking the selection with it). */
+  const openQueue = (): ReviewItem | null => {
+    const next = queue.find((r) => r.state !== 'approved') ?? null;
+    if (next) setSel(next.id);
+    setRejecting(false);
+    try {
+      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
+    } catch { /* no scrollIntoView here — the row is still selected */ }
+    return next;
+  };
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under 'review' (identity-mapped nav target). View selection
+     ONLY: recording a decision, requesting changes, delegating, commenting,
+     and resolving stay governed human acts, untouched by this registration.
+     Both handlers refuse — with the real reason — while a form holding a
+     person's in-progress justification is open: setSel does not clear those
+     forms, so an AnA-driven selection change would silently re-target a
+     half-typed reason at a DIFFERENT document. */
+  const reviewBusyGuard = (): { ok: false; reason: string } | null => {
+    if (requesting) return { ok: false, reason: 'A review write is in flight — wait for it to finish.' };
+    if (rejecting) return { ok: false, reason: 'The request-changes form is open — close it first.' };
+    if (delegating) return { ok: false, reason: 'The delegate form is open — close it first.' };
+    return null;
+  };
+  useSurfaceActionHandlers('review', {
+    'review.select-document': (params) => {
+      const guarded = reviewBusyGuard();
+      if (guarded) return guarded;
+      const wanted = (params.document ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No document named.' };
+      if (boardState.error && queue.length === 0)
+        return { ok: false, reason: 'The review board could not be read.' };
+      // Not-ready, not failed: the bus holds the directive and re-attempts on
+      // the ready signal below — the navigate→act gap.
+      if (boardState.loading && queue.length === 0)
+        return { ok: false, reason: 'The review board is still loading.', retry: true };
+      if (queue.length === 0) return { ok: false, reason: 'Nothing is in review.' };
+      const lower = wanted.toLowerCase();
+      const exact = queue.find((r) => r.id === wanted || r.doc.toLowerCase() === lower);
+      const contains = exact ? [] : queue.filter((r) => r.doc.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.document}" matches ${contains.length} documents — name one exactly.`
+              : `No document named "${params.document}" in the review queue.`,
+        };
+      }
+      setSel(match.id);
+      setRejecting(false);
+      setDelegating(false);
+      return { ok: true, detail: `Selected ${match.doc}` };
+    },
+    'review.open-queue': () => {
+      const guarded = reviewBusyGuard();
+      if (guarded) return guarded;
+      if (boardState.error && queue.length === 0)
+        return { ok: false, reason: 'The review board could not be read.' };
+      if (boardState.loading && queue.length === 0)
+        return { ok: false, reason: 'The review board is still loading.', retry: true };
+      if (queue.length === 0) return { ok: false, reason: 'Nothing is in review.' };
+      if (!queue.some((r) => r.state !== 'approved'))
+        return { ok: false, reason: 'Every document in the queue is already approved.' };
+      const next = openQueue();
+      return { ok: true, detail: next ? `Opened the queue at ${next.doc}` : 'Opened the queue' };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!boardState.loading) notifySurfaceActionReady('review');
+  }, [boardState.loading]);
+
+  /* The approval-board slice of AnA's screen context. NOT published here:
+     ReviewThreadsPane (always mounted by this surface, in both the empty and
+     the loaded branch) is the ONE 'review' publisher — two publishers on one
+     id fight for the store, which surfaceContextIds.test.ts refuses. The
+     board facts travel to the pane as a prop and are merged into its context,
+     so AnA sees the queue AND the threads in one truthful block. A FAILED
+     read ships the failure: "0 documents in review" over an outage would make
+     her confidently wrong about the whole approval workload. */
+  const boardContext = useMemo(() => {
+    if (boardState.loading && queue.length === 0) {
+      return { state: 'loading' as const };
+    }
+    if (boardState.error && queue.length === 0) {
+      return { state: 'error' as const };
+    }
+    const awaiting = queue.filter((r) => r.state !== 'approved').length;
+    const selected = queue.find((r) => r.id === sel);
+    return {
+      state: 'ready' as const,
+      queueCount: queue.length,
+      awaitingDecision: awaiting,
+      selectedDoc: selected?.doc ?? null,
+      selectedState: selected?.state ?? null,
+    };
+  }, [boardState.loading, boardState.error, queue, sel]);
+
   useEffect(() => {
     try {
       const r = queue.find((x) => x.id === sel);
@@ -358,7 +466,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           icon={I.shieldCheck}
         />
         {/* Threads can exist even when no document is on the approval board. */}
-        <ReviewThreadsPane onNotice={fireToast} />
+        <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
         <C2CToast msg={toast} />
       </div>
     );
@@ -569,20 +677,9 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             : queue.some((r) => r.state !== 'approved')
               ? {
                   label: 'Open the queue',
-                  onClick: () => {
-                    const next = queue.find((r) => r.state !== 'approved');
-                    if (next) setSel(next.id);
-                    setRejecting(false);
-                    /* Selecting the row is the part that matters; bringing it
-                       into view is a courtesy. `scrollIntoView` is absent in
-                       jsdom and in some embedded webviews, and an unguarded
-                       call there throws out of the click handler — taking the
-                       selection with it. */
-                    try {
-                      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
-                    } catch { /* no scrollIntoView here — the row is still selected */ }
-                  },
+                  /* The ONE openQueue path — shared with AnA's review.open-queue
+                     surface action, so the button and the action cannot drift. */
+                  onClick: () => { openQueue(); },
                 }
               /* Every document is approved. There is no queue to open, so no
                  button is offered — the headline already says so, and a button
@@ -812,7 +909,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
       {/* Real, persisted review threads (Phase-13 backend) — assigned to the
           signed-in reviewer, with reply / request-changes / resolve in place. */}
-      <ReviewThreadsPane onNotice={fireToast} />
+      <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
 
       <C2CToast msg={toast} />
     </div>

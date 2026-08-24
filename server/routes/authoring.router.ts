@@ -1264,6 +1264,7 @@ router.get('/templates', async (req: Request, res: Response) => {
     // org's own templates must not vanish because the reference store is
     // unreachable.
     let globalRows: any[] = [];
+    let globalCatalog: 'ok' | 'unavailable' = 'ok';
     try {
       let globalQuery = `
         SELECT
@@ -1303,12 +1304,18 @@ router.get('/templates', async (req: Request, res: Response) => {
       logger.warn('Global template store unavailable; listing org templates only', {
         error: globalErr instanceof Error ? globalErr.message : String(globalErr),
       });
+      // The fail-soft is deliberate (an unreachable reference catalog must not
+      // hide the org's own templates) — but the caller must be able to tell a
+      // SHORT list from a FAILED half: the picker says so instead of letting
+      // "no shared templates" and "the catalog read failed" render identically.
+      globalCatalog = 'unavailable';
     }
 
     const merged = [...result.rows, ...globalRows];
     res.json({
       success: true,
       templates: merged,
+      globalCatalog,
       // rows.length, not rowCount: rowCount is a node-postgres field and is not
       // populated by every driver this code is exercised against.
       count: merged.length,

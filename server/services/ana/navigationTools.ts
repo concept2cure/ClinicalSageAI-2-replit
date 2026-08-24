@@ -39,14 +39,14 @@ export const LIST_APP_SCREENS: AnaTool = {
 export const NAVIGATE_TO: AnaTool = {
   name: 'navigate_to',
   description:
-    "Navigate the app to a screen/surface by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets or invalid/missing params rather than guessing. Use when the user asks to go somewhere, or to take them to the right surface to complete a task (e.g. open CMC, the dossier map, or the intelligence 'protocol' tab). Project-scoped targets require an active project in context. Tell the user where you're taking them.",
+    "Navigate the app to a screen/surface by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets or invalid/missing params rather than guessing. Use when the user asks to go somewhere, or to take them to the right surface to complete a task (e.g. open CMC, the dossier map, or the intelligence 'clinical' group). Project-scoped targets require an active project in context. Tell the user where you're taking them.",
   input_schema: {
     type: 'object',
     properties: {
       target: { type: 'string', description: 'Target screen id from list_app_screens, e.g. "cmc", "dossier-map", "intelligence".' },
       params: {
         type: 'object',
-        description: 'Optional params for the target (e.g. { "intelligenceTab": "protocol" }, { "sectionCode": "3.2.P.8" }).',
+        description: 'Optional params for the target (e.g. { "intelligenceTab": "clinical" }, { "sectionCode": "3.2.P.8" }).',
         additionalProperties: { type: 'string' },
       },
     },

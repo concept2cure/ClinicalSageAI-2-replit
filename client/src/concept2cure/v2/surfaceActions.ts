@@ -36,8 +36,76 @@
 import { useEffect, useRef } from 'react';
 import {
   resolveSurfaceAction,
+  SURFACE_ACTIONS,
   type SurfaceActionDirective,
+  type SurfaceActionTarget,
 } from '@shared/navigation/surface-actions';
+import { resolveSurfaceIdForTarget } from './navParams';
+
+/**
+ * A directive's `surfaceId` is a NAVIGATION-TARGET id (the shared registry is
+ * UI-agnostic and knows nothing of DEEP_LINK_ALIASES), while a surface
+ * registers under its own v2 surface id — e.g. the 'tasking' target resolves
+ * to the 'tasks' surface. Every match in this module goes through the SAME
+ * resolution nav() uses, so an aliased surface's actions land exactly like an
+ * identity-mapped one's.
+ */
+function resolvedTargetSurface(directive: SurfaceActionDirective): string {
+  return resolveSurfaceIdForTarget(directive.surfaceId);
+}
+
+/** Registry actions grouped by the RESOLVED v2 surface id (built once). */
+let actionsByResolvedSurface: Map<string, SurfaceActionTarget[]> | null = null;
+
+/**
+ * The registry actions that operate the given v2 surface (aliases applied) —
+ * what AnA COULD do here per the shared contract. The bus still refuses
+ * anything the mounted surface has not actually registered; this is the
+ * static half, used to advertise the screen's action vocabulary in AnA's
+ * per-turn context so she acts without a discovery round-trip.
+ */
+export function surfaceActionsForResolvedSurface(v2SurfaceId: string): SurfaceActionTarget[] {
+  if (!actionsByResolvedSurface) {
+    actionsByResolvedSurface = new Map();
+    for (const a of SURFACE_ACTIONS) {
+      const key = resolveSurfaceIdForTarget(a.surfaceId);
+      const list = actionsByResolvedSurface.get(key);
+      if (list) list.push(a);
+      else actionsByResolvedSurface.set(key, [a]);
+    }
+  }
+  return actionsByResolvedSurface.get(v2SurfaceId) ?? [];
+}
+
+/**
+ * The screen's action vocabulary shaped for AnA's `module_context` — id,
+ * label, and param names with enums (an action she cannot parameterize is one
+ * she cannot take). Used by the shell for every railed surface and by owned
+ * surfaces' own chat instances, so the fold cannot drift between them.
+ * Returns [] when the screen has no registered vocabulary — callers omit the
+ * field entirely rather than sending an empty claim.
+ */
+export function advertisedScreenActions(
+  v2SurfaceId: string,
+): Array<{
+  id: string;
+  label: string;
+  params?: Array<{ name: string; required: boolean; enum?: string[] }>;
+}> {
+  return surfaceActionsForResolvedSurface(v2SurfaceId).map((a) => ({
+    id: a.id,
+    label: a.label,
+    ...(a.params && a.params.length > 0
+      ? {
+          params: a.params.map((p) => ({
+            name: p.name,
+            required: p.required,
+            ...(p.enum ? { enum: p.enum } : {}),
+          })),
+        }
+      : {}),
+  }));
+}
 
 /** What actually happened when a directive was handed to the bus. */
 export type SurfaceActionOutcome =
@@ -163,7 +231,7 @@ export function useSurfaceActionHandlers(
  */
 function attemptPendingFor(surfaceId: string): void {
   const p = pending;
-  if (!p || p.directive.surfaceId !== surfaceId) return;
+  if (!p || resolvedTargetSurface(p.directive) !== surfaceId) return;
   if (Date.now() - p.setAt > PENDING_ACTION_TTL_MS) {
     pending = null;
     return;
@@ -181,7 +249,7 @@ function performRaw(
   | { kind: 'done'; outcome: SurfaceActionOutcome }
   | { kind: 'retry'; reason: string } {
   const reg = registration;
-  if (!reg || reg.surfaceId !== directive.surfaceId) {
+  if (!reg || reg.surfaceId !== resolvedTargetSurface(directive)) {
     return {
       kind: 'done',
       outcome: {
@@ -256,7 +324,7 @@ export function applySurfaceAction(
   onDeferredOutcome?: (outcome: SurfaceActionOutcome) => void,
 ): SurfaceActionOutcome {
   const reg = registration;
-  if (reg && reg.surfaceId === directive.surfaceId) {
+  if (reg && reg.surfaceId === resolvedTargetSurface(directive)) {
     const res = performRaw(directive);
     if (res.kind === 'done') return res.outcome;
     // Mounted but not ready — hold for the surface's ready signal.
@@ -265,6 +333,7 @@ export function applySurfaceAction(
   }
   // Not mounted (or another surface is): stash one-shot and head there. A
   // newer stash replaces an older one — the drive moved on, and so must we.
+  // nav() applies the same alias resolution, so the nav-target id is correct.
   pending = { directive, setAt: Date.now(), onOutcome: onDeferredOutcome };
   navigate(directive.surfaceId);
   return { status: 'stashed' };

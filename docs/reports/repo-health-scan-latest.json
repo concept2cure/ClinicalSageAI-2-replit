@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T04:41:24.047Z",
+  "generatedAt": "2026-08-24T05:56:28.208Z",
   "git": {
-    "sha": "2c24685e8893733a47bf99790a5878a692a1cee2",
+    "sha": "03b3ccd07a6ca69a7c1c7f757594093cb13a743d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 266371
+        "bytes": 266801
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,23 +2182,23 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 162344
+        "bytes": 168841
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 151221
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "bytes": 150437
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 148992
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 149277
       },
       {
         "file": "server/storage.ts",
         "bytes": 145402
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 142620
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2230,7 +2230,7 @@
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 129044
+        "bytes": 131820
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2316,7 +2316,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6576
+        "lines": 6583
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3811
+        "lines": 3926
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3389
+        "lines": 3432
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2387,6 +2387,10 @@
         "lines": 2609
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2598
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2582
       },
@@ -2397,10 +2401,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2479
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2603,6 +2603,10 @@
         "lines": 1650
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1649
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
@@ -2649,10 +2653,6 @@
       {
         "file": "server/routes/c2c/projects.ts",
         "lines": 1531
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1527
       }
     ]
   },
