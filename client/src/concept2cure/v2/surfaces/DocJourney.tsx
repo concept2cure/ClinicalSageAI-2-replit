@@ -151,15 +151,35 @@ function DJSnapshot({ snap, doc }: { snap: DjSnap; doc?: DjDocIdentity | null })
           on a preview that has no save path of any kind (its only request is
           GET /api/doc-journey).
 
-          A previous pass marked them `disabled`, which was right and not
-          enough: none of the `.dj-tb-*` rules carry a `:disabled` state, so
-          every one still lifted on hover and read as an armable control on a
-          regulated document. Nine affordances that can never act, kept for
-          "visual language", teach a reader that this screen edits documents.
+          ── Deleted, not disabled properly, and that was the choice ─────────
+          The alternative was real: keep the nine, give them a genuine
+          `:disabled` treatment, drop the hover highlights, and title each one
+          with what it is and where to edit. It was rejected because it had
+          already been tried HERE and had already failed. A previous pass DID
+          mark all nine `disabled` and DID give each `title="Read-only
+          preview"` — attribute-correct, and still a live-looking toolbar,
+          because the cascade never followed. No `.dj-tb-*` rule carried a
+          `:disabled` state, `.dj-tb-b:hover` still lifted every button, and
+          `.dj-tb-tc:hover` still turned the Track-changes pill accent-coloured
+          — an armable-looking Part 11 audit-trail toggle on a regulated
+          document view.
+
+          That is the case against the disabled treatment in this file: it
+          requires the same truth in three places at once — the attribute, the
+          tooltip, and a stylesheet 2,700 lines away — and those three drifted
+          apart inside one commit. Deletion needs one place. And the tooltip
+          only speaks to a mouse: a correctly-disabled row of nine still tells
+          every reader who never hovers that this screen formats documents.
+          The affordance is the message, so the affordance goes.
 
           What replaces them is what is true, and the way out. The stage header
           above already carries the real "Open in editor" — this states the
-          constraint the toolbar was pantomiming around. */}
+          constraint the toolbar was pantomiming around. The dead `.dj-tb-*`
+          rules were deleted with it (app-v2.css, beside `.dj-toolbar`);
+          leaving them would have left the resurrection kit behind. Both halves
+          are pinned by __tests__/docJourneyPreviewIsHonest.test.tsx, which
+          also holds the door open honestly: restore the toolbar and it must be
+          really disabled, with a title naming both facts. */}
       {/* One statement, not two. The version beside it is the DOCUMENT's, from
           the record — it used to be the literal 'v1.0' whenever the stage was
           sealed, so a frozen document at v3 was labelled v1.0. */}

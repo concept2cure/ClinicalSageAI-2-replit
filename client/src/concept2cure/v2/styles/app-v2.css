@@ -632,9 +632,17 @@
 .c2c-v2 .orch-detail-m{font-size:11px;color:var(--text-400);font-family:var(--font-mono);margin-top:3px;}
 .c2c-v2 .orch-ctrls{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
 .c2c-v2 .orch-ctrl{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:var(--radius-md);font-size:11.5px;font-weight:500;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);white-space:nowrap;}
-.c2c-v2 .orch-ctrl:hover{border-color:var(--text-400);}
+.c2c-v2 .orch-ctrl:hover:not(:disabled){border-color:var(--text-400);}
 .c2c-v2 .orch-ctrl.pri{background:var(--accent-100);border-color:var(--accent-100);color:#fff;}
-.c2c-v2 .orch-ctrl.pri:hover{background:var(--accent-200);}
+.c2c-v2 .orch-ctrl.pri:hover:not(:disabled){background:var(--accent-200);}
+/* A disabled run control looked EXACTLY like a live one. "Pause" and "Resume"
+   are permanently unavailable — the execution engine keeps no resumable state —
+   and "Resume" carries .pri, so it rendered as a full accent-filled primary
+   button that also lit up on hover. The only signal that it could not act was
+   that clicking did nothing. The reason now shows on hover (title) AND the
+   control reads as unavailable before it is pressed. */
+.c2c-v2 .orch-ctrl:disabled{opacity:.45;cursor:not-allowed;}
+.c2c-v2 .orch-ctrl.pri:disabled{background:var(--bg-100);border-color:var(--border);color:var(--text-400);}
 .c2c-v2 .orch-ctrl .ico{font-size:13px;}
 .c2c-v2 .orch-sec-l{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);font-weight:600;margin:16px 0 8px;}
 .c2c-v2 .orch-steps{display:flex;flex-direction:column;}
@@ -2737,19 +2745,37 @@
 .c2c-v2 .dj-page-refs .dj-page-sh{margin-top:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#8a8880;}
 .c2c-v2 .dj-ref{font-family:Georgia,'Times New Roman',serif;font-size:12px;line-height:1.6;color:#3d3d3a;margin-bottom:5px;padding-left:18px;text-indent:-18px;}
 .c2c-v2 .dj-toolbar{display:flex;align-items:center;gap:3px;flex-wrap:wrap;max-width:780px;margin:0 auto 12px;padding:6px 8px;background:var(--bg-000);border:1px solid var(--border);border-radius:9px;box-shadow:var(--v2-shadow-sm);}
-.c2c-v2 .dj-tb-sel{font-size:12px;color:var(--text-200);border:1px solid var(--border-control);border-radius:6px;padding:5px 8px;background:var(--bg-000);margin-right:2px;}
-.c2c-v2 .dj-tb-b{width:30px;height:30px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-200);background:none;border:none;}
-.c2c-v2 .dj-tb-b:hover{background:var(--bg-100);color:var(--text-100);}
-.c2c-v2 .dj-tb-b svg{width:15px;height:15px;}
-.c2c-v2 .dj-tb-sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
-.c2c-v2 .dj-tb-tc{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-300);padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg-000);}
-.c2c-v2 .dj-tb-tc:hover{border-color:var(--accent-100);color:var(--accent-200);}
-.c2c-v2 .dj-tb-dot{width:7px;height:7px;border-radius:50%;background:var(--text-500);}
-.c2c-v2 .dj-tb-tc:hover .dj-tb-dot{background:var(--accent-100);}
-.c2c-v2 .dj-tb-save{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-400);padding-right:6px;}
-.c2c-v2 .dj-tb-save svg{width:12px;height:12px;color:var(--success);}
-.c2c-v2 .dj-stagepane .dj-page[contenteditable]{outline:none;}
-.c2c-v2 .dj-stagepane .dj-page[contenteditable]:focus-within{box-shadow:0 1px 3px rgb(20 20 19/.05),0 18px 46px -20px rgb(20 20 19/.22),0 0 0 2px var(--accent-muted);}
+/* ── The nine formatting controls are gone, and so is their styling ──────────
+   The preview carried a paragraph-style select plus B, I, U, bulleted list,
+   numbered list, quote, insert-table and a "Track changes" pill, on a surface
+   whose only request is GET /api/doc-journey. Nothing there could write.
+
+   It was fixed once the other way — all nine marked `disabled`, each given
+   title="Read-only preview" — and it did not hold, because the cascade never
+   followed the attribute. These rules are what was left: `.dj-tb-b:hover` still
+   lifted every disabled button, and `.dj-tb-tc:hover` still turned the
+   Track-changes pill accent-coloured, so the control that implies a Part 11
+   audit-trail mode kept reading as armable on a regulated document.
+
+   That is why the toolbar was deleted rather than disabled properly. Disabling
+   it correctly means telling the same truth in three places at once — the
+   attribute, the tooltip and the cascade, across two files — and those three
+   drifted apart inside a single commit. Deletion needs one place. And a
+   correctly-disabled row of nine still tells everyone who never hovers that
+   this screen formats documents; the affordance is the message.
+
+   Deleting the markup and keeping the rules would have left the resurrection
+   kit in place: re-add one `<button className="dj-tb-b">` and the live-looking
+   hover comes back for free. `.dj-toolbar` stays — it now holds `.dj-tb-ro`,
+   which states the constraint and points at the editor. The
+   `.dj-page[contenteditable]` focus ring goes with them: contentEditable came
+   off this page in the same removal, so the ring could only ever have framed a
+   surface that cannot save.
+
+   Pinned by __tests__/docJourneyPreviewIsHonest.test.tsx, which reads this
+   file off disk — jsdom applies no author stylesheet, so a rendered-tree
+   assertion cannot see a hover rule at all, which is the exact blind spot the
+   previous fix fell into. */
 @media(max-width:1080px){
   .c2c-v2 .dj-stagepane .dj-page, .c2c-v2 .lp-main .lp-page, .c2c-v2 .dt-doc .rv-doc-page{padding:48px 40px 50px;}
   .c2c-v2 .dj-stagepane .dj-page::before, .c2c-v2 .lp-main .lp-page::before, .c2c-v2 .dt-doc .rv-doc-page::before, .c2c-v2 .dj-stagepane .dj-page::after, .c2c-v2 .lp-main .lp-page::after, .c2c-v2 .dt-doc .rv-doc-page::after{left:40px;right:40px;}
