@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T00:14:17.902Z",
+  "generatedAt": "2026-08-24T00:24:40.588Z",
   "git": {
-    "sha": "5558bff203774892bcdb5102f1ea02f5f6d3460e",
+    "sha": "125082c98f7893bdc86cdffde0c46dc16f2bd2e9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2192,19 +2192,19 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 150198
+        "bytes": 148228
       },
       {
         "file": "server/storage.ts",
         "bytes": 145402
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 139207
-      },
-      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 139064
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 138922
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2350,7 +2350,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3428
+        "lines": 3382
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2406,7 +2406,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2431
+        "lines": 2421
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
