@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T17:51:37.418Z",
+  "generatedAt": "2026-08-24T17:54:55.163Z",
   "git": {
-    "sha": "65ba4d38be9632aeef2d089c3229605035107ebd",
+    "sha": "c3b251b4ce6b185c748d7e74e5b2387c8dbed103",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2189,12 +2189,12 @@
         "bytes": 152211
       },
       {
-        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
-        "bytes": 150437
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 150764
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 150261
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "bytes": 150437
       },
       {
         "file": "server/storage.ts",
@@ -2384,7 +2384,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2621
+        "lines": 2633
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
