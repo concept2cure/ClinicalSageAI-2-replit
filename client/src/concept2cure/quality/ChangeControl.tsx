@@ -25,7 +25,6 @@ import { I } from './icons';
 import { registerRowMinWidth } from './registerGrid';
 import { ChangeFlow } from './ChangeFlow';
 import {
-  FIXTURE_CHANGES,
   FIXTURE_SUMMARY,
   CHANGE_FORMS,
   STATE_LABEL,
@@ -40,18 +39,34 @@ import {
   isImplementationOverdue,
   formatDate,
   type ChangeState,
+  /* The row type shares this component's name; the alias keeps both usable. */
+  type ChangeControl as ChangeControlRow,
 } from './changeData';
-import { useChangeRegister, useChangeSummary } from './changeHooks';
+import { useChangeSummary } from './changeHooks';
 /* The canonical sample-mode guard and its marker, shared with the MDX lane
    rather than re-implemented here — one definition of "may a fixture reach the
    screen", so the two lanes cannot answer it differently. */
-import { useSampleRows, useSampleValue, useShowingSample } from '../mdx/lib/useSampleRows';
+import { useSampleValue } from '../mdx/lib/useSampleRows';
 import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 import { EmptyState } from '../v2/dataConnect';
 
 export interface ChangeControlProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
+  /** Stage filter (owned by QualityApp — AnA's filter action drives the same value). */
+  stage: ChangeState | 'all';
+  /** Select a stage — the same setter the flowchart nodes and the clear-filter link share. */
+  onStageChange: (s: ChangeState | 'all') => void;
+  /** Expanded change row id, or null when none is open. */
+  openId: number | null;
+  /** Toggle a row's linked-records panel. */
+  onOpenIdChange: (id: number | null) => void;
+  /** The change register, already through the sample-mode boundary (see QualityApp). */
+  changes: ChangeControlRow[];
+  /** True while the register read is in flight. */
+  loading: boolean;
+  /** True when `changes` is the fixture — renders the standing sample marker. */
+  showingSample: boolean;
 }
 
 const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
@@ -76,35 +91,35 @@ function linkIcon(iconKey: string): React.ReactNode {
   return (I as Record<string, React.ReactNode>)[iconKey] ?? I.link;
 }
 
-export function ChangeControl({ onAsk }: ChangeControlProps) {
-  const reg = useChangeRegister();
+export function ChangeControl({
+  onAsk,
+  stage,
+  onStageChange,
+  openId,
+  onOpenIdChange,
+  changes,
+  loading,
+  showingSample,
+}: ChangeControlProps) {
   const sum = useChangeSummary();
 
-  /* `reg.changes ?? FIXTURE_CHANGES` — the raw fallback `useSampleRows` exists
-     to eliminate, on a GxP change-control register. It fired on exactly the
-     occasions a user cannot detect: an empty tenant, an expired token, a 500, a
-     fetch that had not started. `changeData.ts` supplies rows asserting
-     `classification: 'major'` and `status: 'approved'`, so a quality lead could
-     be shown approved major changes that are not theirs, with nothing on screen
-     saying so — this surface renders no banner at all.
-     Sample content now reaches the screen only through the explicit sample-mode
-     boundary (impossible in a production build), and always under the standing
-     marker below. */
-  const changes = useSampleRows(reg.changes, FIXTURE_CHANGES);
+  /* The register read — and its sample-mode boundary — lives in QualityApp
+     now, lifted because AnA's open-change action resolves free-text names
+     against the same rows this log renders, and a handler can only read state
+     its own component holds. `changes` arrives already gated: live rows, or
+     the fixture only under explicit sample mode (impossible in a production
+     build), always under the standing marker below. */
   const summary = useSampleValue(sum.summary, FIXTURE_SUMMARY);
-  const showingSample = useShowingSample(reg.changes);
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
-
-  const [stage, setStage] = React.useState<ChangeState | 'all'>('all');
-  const [openId, setOpenId] = React.useState<number | null>(null);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
 
   return (
     <>
-      {/* The standing marker. This surface had none — the fallback above was
-          silent as well as ungated. */}
-      <SampleDataBanner show={showingSample} loading={reg.loading} label="change records" />
+      {/* The standing marker. This surface once had none — its raw fallback
+          was silent as well as ungated. The gate now lives with the read in
+          QualityApp; the marker stays here, where the rows render. */}
+      <SampleDataBanner show={showingSample} loading={loading} label="change records" />
       <div className="qms-head">
         <div>
           <div className="qms-eyebrow">Workstream</div>
@@ -189,13 +204,13 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
           {stage !== 'all' && (
             <>
               <span className="spacer" />
-              <button className="qms-link" onClick={() => setStage('all')}>
+              <button className="qms-link" onClick={() => onStageChange('all')}>
                 {I.x} Clear filter · {STATE_LABEL[stage as ChangeState] ?? stage}
               </button>
             </>
           )}
         </div>
-        <ChangeFlow counts={counts} activeStage={stage} onSelectStage={setStage} onAsk={onAsk} />
+        <ChangeFlow counts={counts} activeStage={stage} onSelectStage={onStageChange} onAsk={onAsk} />
       </section>
 
       {/* ── Register / log ── */}
@@ -229,7 +244,7 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
                 <div className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={c.status}>
                   <button
                     className="qms-cell qms-num mono"
-                    onClick={() => setOpenId(open ? null : c.id)}
+                    onClick={() => onOpenIdChange(open ? null : c.id)}
                     aria-expanded={open}
                     title="Show linked records"
                   >
@@ -257,7 +272,7 @@ export function ChangeControl({ onAsk }: ChangeControlProps) {
                   </div>
                   <button
                     className="qms-cell qcc-linkcount"
-                    onClick={() => setOpenId(open ? null : c.id)}
+                    onClick={() => onOpenIdChange(open ? null : c.id)}
                     title={`${linkCount} linked record${linkCount === 1 ? '' : 's'}`}
                   >
                     {I.link} {linkCount}

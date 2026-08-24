@@ -105,6 +105,14 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'cmc.open-tab', params: { tab: 'specs' } },
       },
       {
+        say: 'Quality is the controlled-document spine: the SOP register and change control, where approvals, revisions and read-and-understood training are all Part 11 ceremonies a person signs.',
+        navigate: { target: 'quality' },
+      },
+      {
+        say: 'Filter the change log to what is approved and waiting to be implemented — the live change-control pipeline, not a slide of it.',
+        act: { actionId: 'quality.filter-changes', params: { stage: 'approved' } },
+      },
+      {
         say: 'Intelligence is the analytical layer — open the clinical group of the capability catalog and show how design, biostatistics, and evidence insight sit beside the work.',
         navigate: { target: 'intelligence', params: { intelligenceTab: 'clinical' } },
       },

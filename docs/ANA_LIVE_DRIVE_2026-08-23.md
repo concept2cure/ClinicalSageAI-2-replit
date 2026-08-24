@@ -278,3 +278,64 @@ artifacts-center nav target (it was consumed and produced but undeclared),
 and dossier-map's availableActions no longer advertises a module opener
 that does not exist. Registry now 27 actions across 13 surfaces. Wiring
 proof: `anaDrivesWave3.test.tsx`.
+
+### Wave 4 landed (2026-08-24, same day) — the deferred list, cleared
+
+Every deferrable from the waves 2–3 lists that had a safe design shipped;
+registry now **34 actions across 15 surfaces**.
+
+- **deep-research** (publisher-first, as recorded): the surface's FIRST
+  `usePublishSurfaceContext` — credits, connector inventory, tab, and a
+  running-job flag, with loading and failure published as themselves — then
+  `deep-research.open-tab`, the one ungoverned control. The research
+  question, source selection, and depth are STILL never driven ("the file's
+  own header comment documents the last time a pre-filled query cost a user
+  real credits"); a registry test now pins that structurally — no
+  `deep-research.*` action may carry a query/depth/connector/source param.
+  Refusals: open credential drawer, in-flight credential save, and a switch
+  away from a running (credit-metered) research job.
+- **quality** (the state lifts, as recorded): `tab` stayed in QualityApp;
+  `filter` (SopRegister), `stage` + `openId` (ChangeControl), and the
+  change-register READ lifted up to it — one slot, one state, and
+  `open-change` resolves names against the same rows the log renders.
+  Actions: `open-tab` / `filter-register` / `filter-changes` /
+  `open-change` (cross-tab: filters switch to their tab first and the
+  detail says so; an expansion a stage filter would hide clears the filter,
+  stated). First `usePublishSurfaceContext('quality', …)`: claims scoped to
+  what the shell holds — no SOP counts (absent beats guessed on a GxP
+  register), sample-mode flagged in the summary, a failed read never an
+  empty log. Approve/revise/retire/advance/training stay conversational.
+- **ectd-coauthor.open-document** (unblocked): the editor's existing
+  `onDirtyChange` is now subscribed (the surface never had), the flag resets
+  with the mount that owns it, and the handler refuses over unsaved edits
+  naming the §, refuses during a running validation/compliance check, holds
+  through the load (retry contract), resolves title-or-module-number with
+  ambiguity refusals, and expands the target's module on open — the same
+  two setters as the human tree click.
+- **authoring.find** (unblocked): `openFind(query?)` joined
+  `RichSectionEditorHandle` — the already-built find bar (plugin highlights,
+  counter, Ctrl/⌘-F) opened programmatically, pre-seeded; returns false in
+  source mode so the handler refuses honestly instead of claiming a find it
+  never opened. Read-only: dirtyGuard deliberately not applied (a person's
+  own Ctrl-F works over unsaved edits); replace stays human.
+- **artifacts-center → authoring hand-off gap** (recorded wave-3): the docx
+  Open button no longer navigates empty-handed — it rides the SAME
+  `authoring.open-document` directive AnA rides (stash → navigate → the
+  editor resolves with its own honest-miss rules).
+- **Governance regex grew with the surface**: `advance` (change-control's
+  Part 11 ceremony) and `launch` (a metered-spend start) joined
+  GOVERNED_VERB_PATTERN — pinned failing-first on `quality.advance-change`
+  and `deep-research.launch-research` before the pattern widened.
+- The training-orientation demo gained a quality stop (navigate + live
+  change-log filter). `check-ana-surface-context` ID_BASELINE 66→68
+  (deep-research + quality publishers). Wiring proof:
+  `anaDrivesWave4.test.tsx` — nine cases, including the credential-drawer
+  hold, the typed-into-the-real-canvas unsaved-edits refusal, find-bar
+  DOM with plugin highlights through the 'authoring' alias, the artifact
+  Open relay, and quality's held-through-the-load apply.
+
+Still deliberately absent, with reasons: `apps.show-admin-controls`
+(pre-arms a live governed org-wide switch), any deep-research
+query/sources/depth/launch driving (metered spend — now also structurally
+refused), `cmc` pane-form busy guards (child-local state; parity-with-human
+limitation recorded in wave 2).

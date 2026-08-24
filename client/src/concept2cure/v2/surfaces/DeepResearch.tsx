@@ -3,6 +3,8 @@ import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -312,6 +314,88 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
      are absent (not zero) until the board resolves — see `connectorsReady`. */
   const configuredCount = board.data?.configuredCount ?? conn.filter((c) => c.configured).length;
   const connectorCount = board.data?.connectorCount ?? conn.length;
+
+  /* ── AnA's hands + eyes on this screen ────────────────────────────────────
+     The ONE drivable control is the tab switch. The research question, source
+     selection, and depth are never driven from here: filling any of them
+     pre-arms the surface's primary button, which POSTs straight to
+     /api/deep-research/jobs and spends metered research credits — the exact
+     incident the note on `query` above records. Launching stays a human click.
+
+     Refusals are specific: an open credential drawer holds possibly-unsaved
+     values; an in-flight credential save shouldn't be reshuffled under; and a
+     switch away from a running research job would hide a live, metered spend
+     (the person's own tab buttons can — AnA uninvited must not). */
+  useSurfaceActionHandlers('deep-research', {
+    'deep-research.open-tab': (params) => {
+      const target = params.tab === 'connectors' ? 'connectors' : 'research';
+      if (form !== null) {
+        return {
+          ok: false,
+          reason:
+            `The "Configure ${form.name}" credential drawer is open with possibly unsaved values — ` +
+            'close or save it first.',
+        };
+      }
+      if (connBusy !== '') {
+        return { ok: false, reason: 'A connector credential save is in flight — let it finish first.' };
+      }
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      if (target === 'connectors' && phase === 'running') {
+        return {
+          ok: false,
+          reason:
+            'A research run is in progress on the research tab — switching away would hide a live, ' +
+            'credit-metered job. The person can switch themselves if they want to.',
+        };
+      }
+      setTab(target);
+      return { ok: true, detail: `Opened the ${target} tab` };
+    },
+  });
+  /* What AnA can see of this screen, published as itself. The three not-ready
+     states stay distinct: a loading board, a failed board read, and a real
+     inventory — "0 connectors" after an error would turn a failure into a
+     fabricated empty state, and a fabricated credits figure is a spend claim. */
+  const anaContext = React.useMemo(() => {
+    if (board.loading) {
+      return {
+        summary:
+          'The deep-research board is still loading; credits and the connector inventory are not readable yet.',
+      };
+    }
+    if (board.error) {
+      return {
+        summary:
+          'The deep-research board could not be read — credits and the connector inventory are unknown ' +
+          'because of a failure, not because the organization has none.',
+        availableActions: ['Retry the board read'],
+      };
+    }
+    return {
+      summary:
+        `Deep research: the ${tab} tab is open. ` +
+        (credits
+          ? credits.remaining < 0
+            ? 'Research credits this period: unlimited.'
+            : `Research credits this period: ${credits.remaining} of ${credits.limit} remaining.`
+          : 'Credits are not readable from the plan yet.') +
+        ` ${connectorCount} connector(s) for this organization, ${configuredCount} configured.` +
+        (phase === 'running' ? ' A research run is in progress.' : ''),
+      facts: {
+        tab,
+        credits,
+        connectorCount,
+        configuredCount,
+        researchRun: phase,
+      },
+      availableActions: [
+        'Switch between the research and connectors tabs',
+        'Typing the research question, choosing sources and depth, and launching stay human clicks — a launch spends metered research credits',
+      ],
+    };
+  }, [board.loading, board.error, tab, credits, connectorCount, configuredCount, phase]);
+  usePublishSurfaceContext('deep-research', anaContext);
 
   /**
    * Open the credential drawer. Nothing is marked configured here.

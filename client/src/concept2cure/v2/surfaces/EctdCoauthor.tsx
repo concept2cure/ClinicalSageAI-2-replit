@@ -210,6 +210,10 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<number | null>(null);
+  // The mounted editor's unsaved-buffer flag (its onDirtyChange). The canvas is
+  // keyed by document id, so any switch is an unmount that destroys the buffer
+  // — this flag is what lets an AnA-driven switch refuse instead of discard.
+  const [editorDirty, setEditorDirty] = useState(false);
   const [openModules, setOpenModules] = useState<Record<string, boolean>>({});
   // Tree search — a real client-side filter over the loaded documents
   // (title / eCTD section number), never a dead input.
@@ -298,6 +302,9 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
     setCompliance(null);
     setValidationUnavailable(false);
     setComplianceUnavailable(false);
+    // The dirty flag belongs to the editor mount that is going away; the new
+    // mount re-reports its own state through onDirtyChange.
+    setEditorDirty(false);
   }, [activeId]);
 
   /* ── The one save path (canonical editor → this store's own PUT) ──
@@ -368,12 +375,16 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
 
   /* ── AnA's hands on this screen — the surface-action bus ──────────────────
      Registered under this surface's own surfaceViews id ('ectd-coauthor', an
-     identity mapping in the registry). The one handler drives the SAME state
-     the human's own tree-search input drives (setTreeQuery) — no second
-     filter path. Deliberately NO loading guard: the query is pure view state
-     over whatever the read delivers (vault.search's rule), and zero matches
-     is a truthful outcome the tree already renders honestly ("No sections
-     match…"), never an error. */
+     identity mapping in the registry). Both handlers drive the SAME state the
+     human's own controls drive — setTreeQuery for the search; the tree row's
+     setActiveId/setTab pair for opening — never a second path. search-tree
+     keeps deliberately NO loading guard: the query is pure view state over
+     whatever the read delivers (vault.search's rule), and zero matches is a
+     truthful outcome the tree already renders honestly. open-document DOES
+     guard: the canvas is keyed by document id, so a switch is an unmount —
+     unsaved edits refuse (AnA never discards typing), a running governed
+     check refuses, and a still-loading read holds for the ready signal below
+     instead of failing. */
   useSurfaceActionHandlers('ectd-coauthor', {
     'ectd-coauthor.search-tree': (params) => {
       const query = (params.query ?? '').trim();
@@ -381,6 +392,52 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
       if (error) return { ok: false, reason: 'The eCTD documents could not be read.' };
       setTreeQuery(query);
       return { ok: true, detail: `Filtering the eCTD tree for "${query}"` };
+    },
+    'ectd-coauthor.open-document': (params) => {
+      const raw = (params.document ?? '').trim();
+      if (!raw) return { ok: false, reason: 'No document named.' };
+      if (editorDirty && activeDoc) {
+        return {
+          ok: false,
+          reason:
+            `There are unsaved edits in §${activeDoc.moduleNumber || '—'} ${activeDoc.title} — ` +
+            "save them first (Cmd/Ctrl-S or the editor's Save).",
+        };
+      }
+      if (busy !== '') {
+        return {
+          ok: false,
+          reason: `A ${busy} check is running against the open document — let it finish first.`,
+        };
+      }
+      if (loading) return { ok: false, reason: 'The eCTD documents are still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The eCTD documents could not be read.' };
+      /* Resolution over the flat rows on the tree filter's own fields (title /
+         module number): normalized exact first, then containment — multiple
+         containment hits are an honest refusal, never a guess. */
+      const norm = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+      const want = norm(raw);
+      const exact = docs.filter(
+        (d) => norm(d.title) === want || (d.moduleNumber || '').toLowerCase() === want,
+      );
+      const pool =
+        exact.length > 0
+          ? exact
+          : docs.filter(
+              (d) =>
+                norm(d.title).includes(want) ||
+                (d.moduleNumber || '').toLowerCase().includes(want),
+            );
+      if (pool.length === 0) return { ok: false, reason: `No eCTD document matching "${raw}".` };
+      if (pool.length > 1) {
+        return { ok: false, reason: `"${raw}" matches ${pool.length} documents — name one exactly.` };
+      }
+      const match = pool[0];
+      if (match.id === activeId) return { ok: true, detail: 'Already open' };
+      setActiveId(match.id);
+      setTab('document');
+      setOpenModules((m) => ({ ...m, [moduleOf(match)]: true }));
+      return { ok: true, detail: `Opened §${match.moduleNumber || '—'} ${match.title}` };
     },
   });
   /* The bus's ready signal: search-tree itself never answers not-ready, but a
@@ -693,6 +750,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                       value={activeDoc.content ?? ''}
                       format="html"
                       onSave={saveContent}
+                      onDirtyChange={setEditorDirty}
                       autosaveMs={null}
                       storageKey={'coauthor:' + activeDoc.id}
                       ariaLabel={'§' + (activeDoc.moduleNumber || '—') + ' ' + activeDoc.title}
