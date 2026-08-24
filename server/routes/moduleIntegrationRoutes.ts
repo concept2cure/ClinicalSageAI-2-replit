@@ -209,7 +209,12 @@ router.post('/approve-step', asyncHandler(async (req, res) => {
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  const result = await workflowService.approveWorkflowStep(approvalId, userId, comments);
+  const result = await workflowService.approveWorkflowStep(
+    approvalId,
+    userId,
+    comments,
+    getSecureOrgId(req),
+  );
   res.json(result);
 }));
 
@@ -223,7 +228,12 @@ router.post('/reject-step', asyncHandler(async (req, res) => {
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  const result = await workflowService.rejectWorkflowStep(approvalId, userId, comments);
+  const result = await workflowService.rejectWorkflowStep(
+    approvalId,
+    userId,
+    comments,
+    getSecureOrgId(req),
+  );
   res.json(result);
 }));
 
@@ -290,7 +300,12 @@ router.get('/pending-approvals', asyncHandler(async (req, res) => {
  */
 router.get('/workflow-history/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const history = await workflowService.getWorkflowHistory(parseInt(String(id), 10));
+  // Scoped to the caller's organization: the history of another tenant's
+  // workflow reads as empty, exactly like a workflow that does not exist.
+  const history = await workflowService.getWorkflowHistory(
+    parseInt(String(id), 10),
+    getSecureOrgId(req),
+  );
   res.json(history);
 }));
 

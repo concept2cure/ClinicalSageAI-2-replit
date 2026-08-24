@@ -514,12 +514,48 @@ export class WorkflowService {
   }
 
   /**
-   * Get approvals for a workflow
+   * Resolve a workflow the caller's organization owns, or null.
+   *
+   * `workflow_approvals` and `workflow_history` carry no organization_id of
+   * their own — they reach a tenant only through
+   * `workflowId -> document_workflows.organizationId`. Neither table is
+   * RLS-protected either, so an id-addressed query against them has no tenant
+   * boundary at all unless something walks that edge first. This is that walk,
+   * in one place, so each caller cannot forget it differently.
+   *
+   * @param tx A transaction handle, or the service's db when there is none
+   */
+  private async findOwnedWorkflow(tx: any, workflowId: number, orgId: number) {
+    const rows = await tx
+      .select()
+      .from(documentWorkflows)
+      .where(
+        and(
+          eq(documentWorkflows.id, workflowId),
+          eq(documentWorkflows.organizationId, orgId)
+        )
+      )
+      .limit(1);
+    return rows[0] ?? null;
+  }
+
+  /**
+   * Get approvals for a workflow, scoped to one organization.
+   *
+   * A workflow owned by another organization yields an empty list — the same
+   * answer as a workflow that does not exist.
    *
    * @param workflowId The workflow ID
+   * @param organizationId The caller's organization ID (required)
    * @returns Array of approvals
    */
-  async getWorkflowApprovals(workflowId: number) {
+  async getWorkflowApprovals(workflowId: number, organizationId: unknown) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) return [];
+
+    const workflow = await this.findOwnedWorkflow(this.db, workflowId, orgId);
+    if (!workflow) return [];
+
     return this.db
       .select()
       .from(workflowApprovals)
@@ -528,32 +564,63 @@ export class WorkflowService {
   }
 
   /**
+   * Load an approval together with the workflow that owns it, refusing any
+   * approval whose workflow belongs to another organization.
+   *
+   * Ownership is checked BEFORE the pending-status check, and before any
+   * caller mutates the row: approve/reject used to update the approval to
+   * 'approved'/'rejected' and only afterwards fetch the workflow, unfiltered.
+   * A user in one organization could sign off a governed step in another's
+   * tenancy, and the audit row was written under that other tenant.
+   *
+   * A foreign approval reports the same "not found" as a missing one, so the
+   * error cannot be used to probe for approval ids or their status.
+   */
+  private async loadOwnedApproval(tx: any, approvalId: any, orgId: number) {
+    const approvals = await tx
+      .select()
+      .from(workflowApprovals)
+      .where(eq(workflowApprovals.id, approvalId))
+      .limit(1);
+
+    const notFound = () => new Error(`Approval with ID ${approvalId} not found`);
+    if (!approvals.length) throw notFound();
+
+    const approval = approvals[0];
+    const workflow = await this.findOwnedWorkflow(tx, approval.workflowId, orgId);
+    if (!workflow) throw notFound();
+
+    if (approval.status !== 'pending') {
+      throw new Error(`Approval with ID ${approvalId} is not pending`);
+    }
+
+    return { approval, workflow };
+  }
+
+  /**
    * Approve a workflow step
    *
    * @param approvalId The approval ID
    * @param userId The user ID making the approval
    * @param comments Optional comments
+   * @param organizationId The caller's organization ID (required)
    * @returns The updated workflow
    */
-  async approveWorkflowStep(approvalId: any, userId: any, comments: string = '') {
+  async approveWorkflowStep(
+    approvalId: any,
+    userId: any,
+    comments: string = '',
+    organizationId: unknown
+  ) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) {
+      throw new Error('approveWorkflowStep requires an organization context');
+    }
     return this.db.transaction(async (tx: any) => {
-      // Get the approval
-      const approvals = await tx
-        .select()
-        .from(workflowApprovals)
-        .where(eq(workflowApprovals.id, approvalId))
-        .limit(1);
-
-      if (!approvals.length) {
-        throw new Error(`Approval with ID ${approvalId} not found`);
-      }
-
-      const approval = approvals[0];
-
-      // Check if approval is pending
-      if (approval.status !== 'pending') {
-        throw new Error(`Approval with ID ${approvalId} is not pending`);
-      }
+      // Ownership is established before anything is written. See
+      // loadOwnedApproval: the approval used to be marked 'approved' first and
+      // its workflow fetched afterwards with no tenant filter.
+      const { approval, workflow } = await this.loadOwnedApproval(tx, approvalId, orgId);
 
       // Update the approval
       const [updatedApproval] = await tx
@@ -566,15 +633,6 @@ export class WorkflowService {
         })
         .where(eq(workflowApprovals.id, approvalId))
         .returning();
-
-      // Get the workflow
-      const workflows = await tx
-        .select()
-        .from(documentWorkflows)
-        .where(eq(documentWorkflows.id, approval.workflowId))
-        .limit(1);
-
-      const workflow = workflows[0];
 
       // Create workflow history entry
       await tx.insert(workflowHistory).values({
@@ -606,7 +664,14 @@ export class WorkflowService {
             completedBy: userId,
             completedAt: new Date(),
           })
-          .where(eq(documentWorkflows.id, workflow.id))
+          // Tenant predicate repeated even though `workflow` came from an
+          // org-scoped read: no write trusts an id alone.
+          .where(
+            and(
+              eq(documentWorkflows.id, workflow.id),
+              eq(documentWorkflows.organizationId, orgId)
+            )
+          )
           .returning();
 
         // Create workflow history entry
@@ -649,7 +714,12 @@ export class WorkflowService {
           .set({
             currentStep: nextStepOrder,
           })
-          .where(eq(documentWorkflows.id, workflow.id))
+          .where(
+            and(
+              eq(documentWorkflows.id, workflow.id),
+              eq(documentWorkflows.organizationId, orgId)
+            )
+          )
           .returning();
 
         // Create workflow history entry
@@ -678,27 +748,22 @@ export class WorkflowService {
    * @param approvalId The approval ID
    * @param userId The user ID making the rejection
    * @param comments Comments explaining the rejection
+   * @param organizationId The caller's organization ID (required)
    * @returns The updated workflow
    */
-  async rejectWorkflowStep(approvalId: any, userId: any, comments: any) {
+  async rejectWorkflowStep(
+    approvalId: any,
+    userId: any,
+    comments: any,
+    organizationId: unknown
+  ) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) {
+      throw new Error('rejectWorkflowStep requires an organization context');
+    }
     return this.db.transaction(async (tx: any) => {
-      // Get the approval
-      const approvals = await tx
-        .select()
-        .from(workflowApprovals)
-        .where(eq(workflowApprovals.id, approvalId))
-        .limit(1);
-
-      if (!approvals.length) {
-        throw new Error(`Approval with ID ${approvalId} not found`);
-      }
-
-      const approval = approvals[0];
-
-      // Check if approval is pending
-      if (approval.status !== 'pending') {
-        throw new Error(`Approval with ID ${approvalId} is not pending`);
-      }
+      // Ownership before any write — see approveWorkflowStep.
+      const { approval, workflow } = await this.loadOwnedApproval(tx, approvalId, orgId);
 
       // Update the approval
       const [updatedApproval] = await tx
@@ -712,16 +777,9 @@ export class WorkflowService {
         .where(eq(workflowApprovals.id, approvalId))
         .returning();
 
-      // Get the workflow
-      const workflows = await tx
-        .select()
-        .from(documentWorkflows)
-        .where(eq(documentWorkflows.id, approval.workflowId))
-        .limit(1);
-
-      const workflow = workflows[0];
-
-      // Update the workflow status
+      // Update the workflow status. The organization predicate is repeated
+      // even though `workflow` came from an org-scoped read, so no write
+      // trusts an id alone.
       const [updatedWorkflow] = await tx
         .update(documentWorkflows)
         .set({
@@ -729,7 +787,12 @@ export class WorkflowService {
           rejectedBy: userId,
           rejectedAt: new Date(),
         })
-        .where(eq(documentWorkflows.id, workflow.id))
+        .where(
+          and(
+            eq(documentWorkflows.id, workflow.id),
+            eq(documentWorkflows.organizationId, orgId)
+          )
+        )
         .returning();
 
       // Create workflow history entry
@@ -963,12 +1026,25 @@ export class WorkflowService {
   }
 
   /**
-   * Get workflow history
+   * Get workflow history, scoped to one organization.
+   *
+   * `workflow_history` is the audit trail of a governed approval chain: who
+   * approved what, when, and with which comment. It carries no organization_id
+   * of its own, so ownership is established through the workflow first. A
+   * workflow owned by another organization yields an empty list, the same
+   * answer as one that does not exist.
    *
    * @param workflowId The workflow ID
+   * @param organizationId The caller's organization ID (required)
    * @returns Array of history events
    */
-  async getWorkflowHistory(workflowId: number) {
+  async getWorkflowHistory(workflowId: number, organizationId: unknown) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) return [];
+
+    const workflow = await this.findOwnedWorkflow(this.db, workflowId, orgId);
+    if (!workflow) return [];
+
     return this.db
       .select()
       .from(workflowHistory)
@@ -980,17 +1056,22 @@ export class WorkflowService {
    * Get active workflow for a document
    *
    * @param documentId The document ID
+   * @param organizationId The caller's organization ID (required)
    * @returns Active workflow or null
    */
-  async getDocumentWorkflow(documentId: number) {
+  async getDocumentWorkflow(documentId: number, organizationId: unknown) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) return null;
+
     try {
-      // First try to find a workflow with this document ID
+      // First try to find a workflow with this document ID, in this tenant.
       const workflow = await this.db
         .select()
         .from(documentWorkflows)
         .where(
           and(
             eq(documentWorkflows.documentId, documentId),
+            eq(documentWorkflows.organizationId, orgId),
             isNull(documentWorkflows.completedAt),
             isNull(documentWorkflows.rejectedAt)
           )
