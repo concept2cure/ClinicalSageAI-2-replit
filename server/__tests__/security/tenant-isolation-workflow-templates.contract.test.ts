@@ -45,33 +45,52 @@ const tableName = (table: unknown): string =>
 
 const TEMPLATES = 'workflow_templates';
 const STEPS = 'workflow_steps';
+const WORKFLOWS = 'document_workflows';
+const APPROVALS = 'workflow_approvals';
+const HISTORY = 'workflow_history';
 
 const ORG_A = 7;
 const ORG_B = 991;
 const TEMPLATE_ID = 5;
+const WORKFLOW_ID = 60;
+const APPROVAL_ID = 70;
+const DOCUMENT_ID = 1234;
 
 /**
  * Pull the (column, bound value) pairs out of a drizzle condition.
  *
- * The conditions under test are conjunctions of `eq(column, value)`, whose
- * query chunks emit the column and its parameter in order — verified against
- * drizzle directly: `and(eq(id,5), eq(organizationId,7))` walks to
- * columns ["id","organization_id"], params [5,7].
+ * A drizzle condition walks to an ordered token stream — verified against
+ * drizzle directly: `and(eq(documentId,1234), eq(organizationId,7),
+ * isNull(completedAt), isNull(rejectedAt))` yields
+ * col document_id, param 1234, col organization_id, param 7,
+ * col completed_at, col rejected_at.
+ *
+ * So a column pairs with the parameter that immediately follows it. A
+ * predicate carrying no parameter — `isNull(col)` — leaves its column
+ * unpaired and is simply not modelled here, which is right: this fake only
+ * needs the equality predicates, because those are where the tenant lives.
+ * Pairing columns and params as two flat positional lists would misalign the
+ * moment an isNull appeared, and silently mis-model the filter.
  */
 function readEqualities(condition: any): Record<string, unknown> {
-  const columns: string[] = [];
-  const params: unknown[] = [];
+  const tokens: Array<{ kind: 'col' | 'param'; value: unknown }> = [];
   const walk = (node: any) => {
     if (!node || typeof node !== 'object') return;
-    if (typeof node.name === 'string' && node.table) columns.push(node.name);
-    if ('value' in node && node.encoder) params.push(node.value);
+    if (typeof node.name === 'string' && node.table) {
+      tokens.push({ kind: 'col', value: node.name });
+    } else if ('value' in node && node.encoder) {
+      tokens.push({ kind: 'param', value: node.value });
+    }
     for (const chunk of node.queryChunks ?? []) walk(chunk);
   };
   walk(condition);
+
   const out: Record<string, unknown> = {};
-  columns.forEach((col, i) => {
-    out[col] = params[i];
-  });
+  for (let i = 0; i < tokens.length - 1; i += 1) {
+    if (tokens[i].kind === 'col' && tokens[i + 1].kind === 'param') {
+      out[tokens[i].value as string] = tokens[i + 1].value;
+    }
+  }
   return out;
 }
 
@@ -86,23 +105,44 @@ interface DbTrace {
  * Rows are the fixture; a query with no `organization_id` predicate sees every
  * row, which is precisely how the unfixed code leaked.
  */
-function makeFakeDb(rows: { templates: any[]; steps: any[] }) {
+interface FixtureRows {
+  templates: any[];
+  steps: any[];
+  workflows?: any[];
+  approvals?: any[];
+  history?: any[];
+}
+
+function makeFakeDb(rows: FixtureRows) {
   const trace: DbTrace = { selects: [], updates: [], inserts: [] };
   let nextId = 100;
 
   const rowsFor = (table: unknown): any[] => {
-    if (tableName(table) === TEMPLATES) return rows.templates;
-    if (tableName(table) === STEPS) return rows.steps;
-    return [];
+    switch (tableName(table)) {
+      case TEMPLATES: return rows.templates;
+      case STEPS: return rows.steps;
+      case WORKFLOWS: return rows.workflows ?? [];
+      case APPROVALS: return rows.approvals ?? [];
+      case HISTORY: return rows.history ?? [];
+      default: return [];
+    }
+  };
+
+  // Snake-cased column -> the camelCased field drizzle maps it to. A column
+  // this fake does not model is not filtered on, never silently dropped.
+  const COLUMN_TO_FIELD: Record<string, string> = {
+    id: 'id',
+    organization_id: 'organizationId',
+    template_id: 'templateId',
+    workflow_id: 'workflowId',
+    document_id: 'documentId',
   };
 
   const applyFilter = (candidates: any[], filter: Record<string, unknown>) =>
     candidates.filter(row =>
       Object.entries(filter).every(([col, value]) => {
-        if (col === 'id') return row.id === value;
-        if (col === 'organization_id') return row.organizationId === value;
-        if (col === 'template_id') return row.templateId === value;
-        return true;
+        const field = COLUMN_TO_FIELD[col];
+        return field ? row[field] === value : true;
       })
     );
 
@@ -185,12 +225,24 @@ function makeFakeDb(rows: { templates: any[]; steps: any[] }) {
     update: (t: unknown) => updateBuilder(t),
     delete: () => ({ where: () => Promise.resolve([]) }),
     transaction: (fn: any) => fn(handle),
+    // getDocumentWorkflow follows its scoped lookup with a relational query.
+    // Stubbed so the method's own try/catch does not swallow a missing surface
+    // and return null for a reason that has nothing to do with tenancy.
+    query: {
+      documentWorkflows: {
+        findFirst: async () => (rows.workflows ?? [])[0] ?? null,
+      },
+    },
   };
 
   return { db: handle, trace };
 }
 
-/** A template owned by ORG_A, plus its steps. */
+/**
+ * Everything below belongs to ORG_A: a template and its single step, an active
+ * workflow on that template, the pending approval for its one step, and a
+ * history row. ORG_B owns nothing here.
+ */
 const fixture = () => ({
   templates: [
     {
@@ -211,6 +263,32 @@ const fixture = () => ({
       approverIds: [42],
       requiredActions: [],
     },
+  ],
+  workflows: [
+    {
+      id: WORKFLOW_ID,
+      documentId: DOCUMENT_ID,
+      templateId: TEMPLATE_ID,
+      organizationId: ORG_A,
+      status: 'active',
+      currentStep: 1,
+      completedAt: null,
+      rejectedAt: null,
+    },
+  ],
+  approvals: [
+    {
+      id: APPROVAL_ID,
+      workflowId: WORKFLOW_ID,
+      stepId: 1,
+      stepOrder: 1,
+      status: 'pending',
+      assignedTo: ['42'],
+      assignmentType: 'user',
+    },
+  ],
+  history: [
+    { id: 1, workflowId: WORKFLOW_ID, action: 'workflow_started', performedBy: 'user-1' },
   ],
 });
 
@@ -346,6 +424,138 @@ describe('Workflow start — the tenant comes from the caller', () => {
     await expect(
       service.startWorkflow(1234, TEMPLATE_ID, 'user-1', null, {}),
     ).rejects.toThrow(/organization context/i);
+    expect(trace.inserts).toHaveLength(0);
+  });
+});
+
+describe('Workflow approvals and history — reads are tenant-scoped', () => {
+  it('does not return another organization\'s approvals', async () => {
+    const { db } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    const mine = await service.getWorkflowApprovals(WORKFLOW_ID, ORG_A);
+    expect(mine).toHaveLength(1);
+    expect(mine[0].id).toBe(APPROVAL_ID);
+
+    const theirs = await service.getWorkflowApprovals(WORKFLOW_ID, ORG_B);
+    expect(theirs).toEqual([]);
+  });
+
+  it('does not return another organization\'s workflow history', async () => {
+    const { db } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    const mine = await service.getWorkflowHistory(WORKFLOW_ID, ORG_A);
+    expect(mine).toHaveLength(1);
+
+    // workflow_history is the audit trail of a governed approval chain — who
+    // signed off what, when, with which comment.
+    const theirs = await service.getWorkflowHistory(WORKFLOW_ID, ORG_B);
+    expect(theirs).toEqual([]);
+  });
+
+  it('scopes the document-workflow lookup to the caller\'s organization', async () => {
+    const { db, trace } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    await service.getDocumentWorkflow(DOCUMENT_ID, ORG_A);
+
+    // Asserted on the emitted WHERE rather than the return value. This method
+    // wraps its work in a try/catch that returns null on any error, so a null
+    // result can mean "scoped correctly and found nothing" or "blew up on the
+    // way" — the filter is the thing actually under test.
+    const lookup = trace.selects.find(s => s.table === WORKFLOWS);
+    expect(lookup).toBeDefined();
+    expect(lookup!.filter).toMatchObject({
+      document_id: DOCUMENT_ID,
+      organization_id: ORG_A,
+    });
+  });
+
+  it('finds no document workflow for an organization that owns none', async () => {
+    const { db } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    await expect(service.getDocumentWorkflow(DOCUMENT_ID, ORG_B)).resolves.toBeNull();
+  });
+
+  it('fails closed with no organization on every id-addressed read', async () => {
+    const { db, trace } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    await expect(service.getWorkflowApprovals(WORKFLOW_ID, null)).resolves.toEqual([]);
+    await expect(service.getWorkflowHistory(WORKFLOW_ID, null)).resolves.toEqual([]);
+    await expect(service.getDocumentWorkflow(DOCUMENT_ID, null)).resolves.toBeNull();
+    expect(trace.selects).toHaveLength(0);
+  });
+});
+
+describe('Workflow approvals — a governed sign-off cannot cross tenants', () => {
+  it('refuses to approve another organization\'s step, and writes nothing', async () => {
+    const { db, trace } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    await expect(
+      service.approveWorkflowStep(APPROVAL_ID, 'user-b', 'looks fine', ORG_B),
+    ).rejects.toThrow(/not found/i);
+
+    // The pre-fix order marked the approval 'approved' and only afterwards
+    // fetched the workflow, unfiltered. Nothing may be written before
+    // ownership is known.
+    expect(trace.updates).toHaveLength(0);
+    expect(trace.inserts).toHaveLength(0);
+  });
+
+  it('refuses to reject another organization\'s step, and writes nothing', async () => {
+    const { db, trace } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    await expect(
+      service.rejectWorkflowStep(APPROVAL_ID, 'user-b', 'no', ORG_B),
+    ).rejects.toThrow(/not found/i);
+
+    expect(trace.updates).toHaveLength(0);
+    expect(trace.inserts).toHaveLength(0);
+  });
+
+  it('reports a foreign approval as "not found", never as "not pending"', async () => {
+    // A completed approval owned by ORG_A. ORG_B must learn nothing about its
+    // status — the ownership check runs before the pending check.
+    const rows = fixture();
+    rows.approvals[0].status = 'approved';
+    const { db } = makeFakeDb(rows);
+    const service = new WorkflowService(db);
+
+    await expect(
+      service.approveWorkflowStep(APPROVAL_ID, 'user-b', '', ORG_B),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it('still approves a step inside the caller\'s own organization', async () => {
+    const { db, trace } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    const result = await service.approveWorkflowStep(APPROVAL_ID, 'user-a', 'approved', ORG_A);
+
+    expect(result.isCompleted).toBe(true);
+    const approvalUpdate = trace.updates.find(u => u.table === APPROVALS);
+    expect(approvalUpdate!.values.status).toBe('approved');
+    // The workflow write carries the tenant predicate, not just the id.
+    const workflowUpdate = trace.updates.find(u => u.table === WORKFLOWS);
+    expect(workflowUpdate!.filter).toMatchObject({ id: WORKFLOW_ID, organization_id: ORG_A });
+  });
+
+  it('fails closed with no organization on approve and reject', async () => {
+    const { db, trace } = makeFakeDb(fixture());
+    const service = new WorkflowService(db);
+
+    await expect(
+      service.approveWorkflowStep(APPROVAL_ID, 'user-a', '', null),
+    ).rejects.toThrow(/organization context/i);
+    await expect(
+      service.rejectWorkflowStep(APPROVAL_ID, 'user-a', '', undefined),
+    ).rejects.toThrow(/organization context/i);
+    expect(trace.updates).toHaveLength(0);
     expect(trace.inserts).toHaveLength(0);
   });
 });
