@@ -61,6 +61,7 @@ import {
   type SeqRow,
 } from './SubmissionSeqWorkspaces';
 import '../styles/submission-v2.css';
+import { C2CForm } from '../C2CForm';
 
 /* ── Display types aligned to the canonical submission core's ACTUAL columns
    (shared/schema/submissions.ts; server/services/submission-service). Only
@@ -183,7 +184,12 @@ export function SubmissionCenter({
   const [selSub, setSelSub] = React.useState<number | null>(null);
 
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
-  const subs = useLiveRows<SubRow>('/api/submissions');
+  const [subsBump, setSubsBump] = React.useState(0);
+  const subs = useLiveRows<SubRow>('/api/submissions', ['/api/submissions', subsBump]);
+  /* The org's programmes, so the required projectId is PICKED rather than typed
+     as a uuid — createSubmissionSchema takes a uuid and a customer does not
+     have one to hand. */
+  const programmes = useLiveRows<{ id: string; title: string; code: string }>('/api/c2c/projects');
   const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
 
@@ -251,6 +257,82 @@ export function SubmissionCenter({
     setSelSeq(null);
     setNotice(null);
   }, [subId]);
+
+  /**
+   * Create a submission — POST /api/submissions.
+   *
+   * "+ New submission" is the ONLY create control on this surface, and on an
+   * empty tenant the empty state beside it says "Create your first
+   * submission". It did `onAsk('Start a new submission — create the canonical
+   * submission record.')`: a sentence into the chat rail. No record was
+   * created, so the one route into the Submission Center was closed and the
+   * empty state was instructing the user to press a button that could not do
+   * what it said.
+   *
+   * The route and its schema existed the whole time — createSubmissionSchema
+   * takes { type, projectId, targetAgency, targetDate? } — so this is a form
+   * over what the server already requires, with the project picked from the
+   * org's own programmes rather than typed as a uuid.
+   */
+  const [newOpen, setNewOpen] = React.useState(false);
+  const [creating, setCreating] = React.useState(false);
+  const createSubmission = async (v: Record<string, string>) => {
+    if (creating) return;
+    const projectId = (v.projectId ?? '').trim();
+    if (!projectId) {
+      setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
+      return;
+    }
+    setCreating(true);
+    setNotice(null);
+    const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
+      type: v.type,
+      projectId,
+      targetAgency: (v.targetAgency ?? '').trim(),
+      targetDate: v.targetDate || undefined,
+    });
+    setCreating(false);
+    if (r.data && (r.data as { id?: unknown }).id != null) {
+      setNewOpen(false);
+      // Re-read rather than appending a client-built row: what appears is the
+      // record the server created.
+      setSubsBump((b) => b + 1);
+      setNotice({ tone: 'ok', text: `Submission created — ${v.type} for ${v.targetAgency}.` });
+    } else {
+      setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
+    }
+  };
+
+  /**
+   * Create the original eCTD sequence — POST /api/submissions/:id/sequences.
+   *
+   * The empty state beside this button TELLS the user to create sequence 0000
+   * to begin assembling, and the button asked the assistant to do it: no
+   * sequence row was ever written, so the workspace it gates could not be
+   * entered.
+   *
+   * Every field the schema wants is already on the submission being viewed —
+   * its region, and 'original' for the first sequence — so there is nothing to
+   * ask the user for. The verdict is the server's, verbatim.
+   */
+  const [creatingSeq, setCreatingSeq] = React.useState(false);
+  const startFirstSequence = async (target: SubRow) => {
+    if (creatingSeq) return;
+    setCreatingSeq(true);
+    setNotice(null);
+    const r = await mutateVerbatim<SeqRow>('POST', `/api/submissions/${target.id}/sequences`, {
+      region: target.primaryRegion,
+      sequenceNumber: '0000',
+      type: 'original',
+    });
+    setCreatingSeq(false);
+    if (r.data && (r.data as { id?: unknown }).id != null) {
+      setSeqBump((b) => b + 1);
+      setNotice({ tone: 'ok', text: `Sequence 0000 created for ${target.title} — server-confirmed.` });
+    } else {
+      setNotice({ tone: 'err', text: `Sequence 0000 not created — ${r.error ?? 'the request failed'}.` });
+    }
+  };
 
   /** Non-governed lifecycle transition — the REAL endpoint, verdict verbatim.
    *  The server refuses frozen/dispatched here (GOVERNED_REQUIRED); those two
@@ -500,6 +582,40 @@ export function SubmissionCenter({
       {/* The latest server verdict (transition / governed outcome) — verbatim. */}
       <VerdictNote notice={notice} />
 
+      {newOpen && (
+        <C2CForm
+          config={{
+            eyebrow: 'Submission',
+            title: 'Create a submission',
+            sub: 'The canonical submission record. Its sequences, validation profile and regional Module 1 are derived from the type and agency chosen here.',
+            submitLabel: creating ? 'Creating…' : 'Create submission',
+            fields: [
+              {
+                key: 'type', label: 'Submission type', type: 'select',
+                // The server's own enum — a type it would refuse is never offered.
+                options: ['510k', 'PMA', 'De_Novo', 'IND', 'NDA', 'BLA'],
+                default: 'IND', required: true, half: true,
+              },
+              {
+                key: 'targetAgency', label: 'Target agency', type: 'text',
+                placeholder: 'e.g. FDA CDER', required: true, half: true,
+              },
+              {
+                key: 'projectId', label: 'Programme', type: 'select',
+                options: programmes.rows.map((p) => ({
+                  value: p.id,
+                  label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
+                })),
+                required: true,
+              },
+              { key: 'targetDate', label: 'Target date (optional)', type: 'date', half: true },
+            ],
+          }}
+          onCancel={() => setNewOpen(false)}
+          onSubmit={createSubmission}
+        />
+      )}
+
       {ws === 'portfolio' && (
         <>
         <div className="pj-card">
@@ -508,7 +624,13 @@ export function SubmissionCenter({
             <button
               type="button"
               className="pj-card-h-go"
-              onClick={() => onAsk('Start a new submission — create the canonical submission record.')}
+              onClick={() => setNewOpen(true)}
+              disabled={creating || programmes.rows.length === 0}
+              title={
+                programmes.rows.length === 0
+                  ? 'A submission belongs to a programme, and this organization has none yet. Create one in Projects first.'
+                  : undefined
+              }
             >
               + New submission
             </button>
@@ -766,13 +888,10 @@ export function SubmissionCenter({
                   <button
                     type="button"
                     className="sp-primary sc-btn"
-                    onClick={() =>
-                      onAsk(
-                        `Create the original eCTD sequence (0000) for the ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} submission ${sub.title}.`
-                      )
-                    }
+                    onClick={() => void startFirstSequence(sub)}
+                    disabled={creatingSeq}
                   >
-                    {I.sparkles} Start sequence 0000
+                    {I.sparkles} {creatingSeq ? 'Creating…' : 'Start sequence 0000'}
                   </button>
                 </div>
               </>
