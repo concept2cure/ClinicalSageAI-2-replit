@@ -2242,52 +2242,6 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   }, [loading, error, rows]);
   usePublishSurfaceContext('artifacts-center', anaContext);
 
-  /* What AnA can see of this screen.
-     This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and
-     "has that memo been signed?" are the questions it exists to answer — and
-     until now she could not see a single row of it.
-
-     A FAILED read publishes the failure: an empty gallery and an unreachable
-     one look identical from here, and telling a user they have drafted nothing
-     because a fetch failed is a claim about their evidence record. */
-  const anaContext = useMemo(() => {
-    if (loading) {
-      return { summary: 'The artifact gallery is still loading; nothing on screen is final yet.' };
-    }
-    if (error) {
-      return {
-        summary:
-          'The governed artifact gallery could not be read, so this screen is showing no artifacts ' +
-          'because of a failure, not because none exist.',
-        availableActions: ['Retry the artifact gallery read'],
-      };
-    }
-    const signed = rows.filter((a) => a.sig).length;
-    const programs = [...new Set(rows.map((a) => a.prog).filter(Boolean))];
-    return {
-      summary:
-        `Artifacts Center: ${rows.length} artifact(s) across ${programs.length} program(s), ` +
-        `${signed} carrying a Part 11 e-signature.`,
-      facts: {
-        totalArtifacts: rows.length,
-        eSignedArtifacts: signed,
-        programs,
-        // Enough to name an artifact back to the user, not the whole gallery.
-        artifacts: rows.slice(0, 15).map((a) => ({
-          id: a.id, name: a.name, kind: a.kind, format: a.fmt,
-          version: a.ver, program: a.prog, model: a.model,
-          updated: a.when, eSigned: a.sig,
-        })),
-      },
-      availableActions: [
-        'Open a DOCX artifact in the document editor',
-        'Download a rendered artifact',
-        'Read an artifact\u2019s version chain, provenance and signature status',
-      ],
-    };
-  }, [loading, error, rows]);
-  usePublishSurfaceContext('artifacts-center', anaContext);
-
   /* ── "Export all" was inert, and the code said so ──────────────────────────
      The two lines above it read: "MOCK ACTION (flagged): 'Export all' has no
      handler and no bulk-export endpoint exists — inert button, left for a later

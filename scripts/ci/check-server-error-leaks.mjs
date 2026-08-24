@@ -36,6 +36,17 @@
  * baseline, so it can be adopted today and the list is worked down over time.
  * The list MAY SHRINK, NEVER GROW.
  *
+ * ── Identity is per FILE, not per line ───────────────────────────────────────
+ * The first cut of this gate keyed each site on `file:line`. Within a day it
+ * reported nine new leaks in two files whose true count had not changed at all:
+ * another change had edited those files ABOVE the leaks and shifted every line
+ * number. A gate that fires on unrelated edits is a gate people learn to
+ * re-baseline past, which is how a ratchet quietly becomes a rubber stamp.
+ *
+ * So a file's baseline is a COUNT. A file may not gain a leak; it may lose as
+ * many as it likes. Line numbers are still reported by --list, because that is
+ * how you find them — they are just not the identity.
+ *
  * ── WHAT IS NOT A VIOLATION ──────────────────────────────────────────────────
  *   - `serverError(...)` — the canonical helper. It does not inline a 5xx body.
  *   - `pendingStore(...)` (server/routes/c2c/projects.ts) — builds its object in
@@ -135,6 +146,17 @@ for (const root of SCAN_ROOTS) {
 
 findings.sort((a, b) => a.site.localeCompare(b.site));
 
+/** Leaks per file — the unit the baseline is expressed in. */
+function tally(list) {
+  const byFile = {};
+  for (const f of list) {
+    const file = f.site.slice(0, f.site.lastIndexOf(':'));
+    byFile[file] = (byFile[file] || 0) + 1;
+  }
+  return byFile;
+}
+const counts = tally(findings);
+
 if (process.argv.includes('--list')) {
   for (const f of findings) console.log(`${f.site}  [${f.status}]`);
   console.log(`\n${findings.length} server-error leak site(s).`);
@@ -142,11 +164,6 @@ if (process.argv.includes('--list')) {
 }
 
 if (process.argv.includes('--write-baseline')) {
-  const byFile = {};
-  for (const f of findings) {
-    const file = f.site.split(':')[0];
-    byFile[file] = (byFile[file] || 0) + 1;
-  }
   fs.writeFileSync(
     BASELINE_FILE,
     JSON.stringify(
@@ -159,15 +176,17 @@ if (process.argv.includes('--write-baseline')) {
         rule: 'MDX_WORK_ORDER W0-3 acceptance criterion 3; BIOPHARMA_WORK_ORDER hard guardrail 3.',
         generatedBy: 'scripts/ci/check-server-error-leaks.mjs --write-baseline',
         totalSites: findings.length,
-        totalFiles: Object.keys(byFile).length,
-        sites: findings.map((f) => f.site),
+        totalFiles: Object.keys(counts).length,
+        /* Per-file COUNTS, not line numbers: an edit above a leak must not read
+           as a new leak. Run --list to see where they are. */
+        counts,
       },
       null,
       2,
     ) + '\n',
   );
   console.log(
-    `[ci:server-error-leaks] baseline written — ${findings.length} site(s) across ${Object.keys(byFile).length} file(s).`,
+    `[ci:server-error-leaks] baseline written — ${findings.length} site(s) across ${Object.keys(counts).length} file(s).`,
   );
   process.exit(0);
 }
@@ -181,14 +200,25 @@ if (!fs.existsSync(BASELINE_FILE)) {
 }
 
 const baselineDoc = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8'));
-const baseline = new Set(baselineDoc.sites);
-const current = new Set(findings.map((f) => f.site));
-const introduced = findings.filter((f) => !baseline.has(f.site));
-const fixed = [...baseline].filter((s) => !current.has(s));
+const baselineCounts = baselineDoc.counts ?? {};
 
-if (introduced.length) {
+const grown = [];
+let fixedTotal = 0;
+for (const file of new Set([...Object.keys(counts), ...Object.keys(baselineCounts)])) {
+  const now = counts[file] ?? 0;
+  const was = baselineCounts[file] ?? 0;
+  if (now > was) grown.push({ file, was, now });
+  else if (now < was) fixedTotal += was - now;
+}
+
+if (grown.length) {
   console.error('\n❌ A server error response carries the underlying failure text.\n');
-  for (const f of introduced) console.error(`   ${f.site}  [${f.status}]`);
+  for (const g of grown) {
+    console.error(`   ${g.file} — ${g.was} → ${g.now}`);
+    for (const f of findings.filter((x) => x.site.startsWith(`${g.file}:`))) {
+      console.error(`       ${f.site}  [${f.status}]`);
+    }
+  }
   console.error(
     '\n   The reader of this body is a regulatory director, and the internal shape of a\n' +
       '   governed store is an information-disclosure finding, not a formatting nicety.\n' +
@@ -203,8 +233,9 @@ if (introduced.length) {
 }
 
 console.log(
-  `[ci:server-error-leaks] OK — ${findings.length} baselined site(s), none new.` +
-    (fixed.length
-      ? `\n[ci:server-error-leaks] ${fixed.length} site(s) fixed since the baseline — shrink it with --write-baseline.`
+  `[ci:server-error-leaks] OK — ${findings.length} baselined site(s) across ` +
+    `${Object.keys(counts).length} file(s); no file gained one.` +
+    (fixedTotal
+      ? `\n[ci:server-error-leaks] ${fixedTotal} site(s) fixed since the baseline — shrink it with --write-baseline.`
       : ''),
 );

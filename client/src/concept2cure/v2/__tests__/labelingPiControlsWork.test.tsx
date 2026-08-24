@@ -111,7 +111,16 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 async function mount() {
-  render(<LabelingPI onAsk={() => {}} />);
+  render(
+    <LabelingPI
+      {...({
+        surface: { id: 'labeling-pi' },
+        onAsk: () => {},
+        onNav: () => {},
+        segment: 'biopharma',
+      } as unknown as React.ComponentProps<typeof LabelingPI>)}
+    />,
+  );
   await screen.findByText('Warnings and precautions');
 }
 
