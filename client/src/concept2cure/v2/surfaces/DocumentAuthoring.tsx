@@ -82,6 +82,7 @@ import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
 import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
+import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
@@ -182,6 +183,10 @@ interface AuthAuditEvent {
   content_hash_before: string | null;
   content_hash_after: string | null;
   created_at: string | null;
+  /** The endpoint has always returned this and no surface read it, so the
+   *  richest part of several governed records — which model produced a draft,
+   *  which redline a reviewer refused — was written and unreadable. */
+  metadata: Record<string, unknown> | null;
 }
 
 /** How each recorded operation reads to a reviewer. Unknown operations are
@@ -192,6 +197,8 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   UPDATE: 'updated',
   COMMIT: 'committed to filing',
   REVERT: 'reverted to a prior revision',
+  tracked_change_decision: 'tracked change decided',
+  tracked_change_bulk_decision: 'tracked changes decided in bulk',
   REORDER_SECTIONS: 'sections reordered',
   FREEZE: 'frozen',
   SIGN: 'signed',
@@ -200,6 +207,87 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   EXPORT_HISTORY_DELETED: 'export record deleted',
   SUBMIT: 'submitted',
 };
+
+/**
+ * The readable part of an audit row's `metadata`, or null when it carries
+ * nothing a reviewer would act on.
+ *
+ * Two recorded shapes were being written and shown to nobody, and both answer
+ * the first question an assessor asks:
+ *
+ *   tracked_change_decision — a reviewer accepted or REFUSED a redline. A
+ *     rejection changes no text, so this row is the only place it exists.
+ *   ai-draft-accept — which model and provider produced the text, and whether
+ *     the author edited it before accepting (so "accepted AI draft" cannot
+ *     vouch for words the model never wrote).
+ *
+ * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
+ * reading surface, and raw payloads are not read.
+ */
+export function describeAuditMetadata(
+  eventType: string | null,
+  metadata: Record<string, unknown> | null,
+): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const str = (k: string): string | null => {
+    const v = (metadata as Record<string, unknown>)[k];
+    return typeof v === 'string' && v.trim().length > 0 ? v : null;
+  };
+
+  if (eventType === 'tracked_change_decision') {
+    const decision = str('decision');
+    const kind = str('changeType');
+    const text = str('text');
+    const proposedBy = str('proposedBy');
+    if (!decision) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const what = kind === 'deletion' ? 'a proposed deletion' : kind === 'insertion' ? 'a proposed insertion' : 'a tracked change';
+    /* The quoted text is what makes the row resolvable — accepting a
+       suggestion strips its mark, so the document no longer holds it. */
+    const quoted = text ? ` — “${text.length > 160 ? text.slice(0, 160) + '…' : text}”` : '';
+    const by = proposedBy ? ` (proposed by ${proposedBy})` : '';
+    return `${verb} ${what}${by}${quoted}`;
+  }
+
+  if (eventType === 'tracked_change_bulk_decision') {
+    const decision = str('decision');
+    const count = typeof metadata.count === 'number' ? metadata.count : null;
+    if (!decision || count === null) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const omitted =
+      typeof metadata.changesOmittedFromSummary === 'number'
+        ? metadata.changesOmittedFromSummary
+        : 0;
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const sample = changes
+      .slice(0, 3)
+      .map(c => (c && typeof (c as any).text === 'string' ? (c as any).text : null))
+      .filter((t): t is string => !!t)
+      .map(t => `“${t.length > 80 ? t.slice(0, 80) + '…' : t}”`);
+    /* When the stored summary was capped, the row says so. A truncated record
+       that reads as complete is worse than one that admits its limit. */
+    return (
+      `${verb} ${count} tracked change${count === 1 ? '' : 's'} in one action` +
+      (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
+      (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
+    );
+  }
+
+  if (metadata.source === 'ai-draft-accept') {
+    const gen = (metadata.generator ?? null) as Record<string, unknown> | null;
+    const model = gen && typeof gen.model === 'string' ? gen.model : null;
+    const provider = gen && typeof gen.provider === 'string' ? gen.provider : null;
+    const who = [model, provider].filter(Boolean).join(' · ');
+    const edited = metadata.draft_modified_on_accept === true;
+    return (
+      'accepted an AI draft' +
+      (who ? ` generated by ${who}` : ' whose generating model was not recorded') +
+      (edited ? ', edited before accepting — the saved text is not the model’s wording' : '')
+    );
+  }
+
+  return null;
+}
 
 function auditEventLabel(raw: string | null): string {
   if (!raw) return 'recorded';
@@ -790,6 +878,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      against — a rail left stale would keep saying "matches the last export"
      about text that no longer matches it. */
   const [exportsEpoch, setExportsEpoch] = useState(0);
+  /** The open section, readable from the tracked-change callback. That callback
+   *  is configured once per editor mount, so closing over the state value would
+   *  attribute a decision to whichever section was open when the canvas
+   *  mounted. */
+  const activeSectionIdRef = useRef<string | null>(null);
+  /** Decisions awaiting their coalesced flush, and whether one is scheduled. */
+  const pendingDecisionsRef = useRef<SuggestionDecision[]>([]);
+  const decisionFlushRef = useRef(false);
+  useEffect(() => {
+    activeSectionIdRef.current = activeSectionId ?? null;
+  });
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -2190,6 +2289,94 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
   );
 
+  /** Post one reviewer action — one decision, or a whole accept/reject-all.
+   *
+   *  Split by size rather than by caller: a batch of one is a single decision
+   *  however it arrived, and a batch of many is one bulk act however it was
+   *  produced. Both carry the change TEXT, because accepting a suggestion
+   *  strips its mark and the id alone would name something no longer in the
+   *  document. */
+  const flushDecisions = useCallback(
+    async (docId: string, batch: SuggestionDecision[]) => {
+      const sectionId = activeSectionIdRef.current ?? undefined;
+      const context = (d: SuggestionDecision) => ({
+        changeId: d.changeId,
+        changeType: d.changeType,
+        text: d.text,
+        authorId: d.authorId ?? undefined,
+        authorName: d.authorName ?? undefined,
+        at: d.at ?? undefined,
+      });
+      const decision = batch[0].decision;
+      try {
+        const res =
+          batch.length === 1
+            ? await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions`,
+                { decision, sectionId, ...context(batch[0]) },
+              )
+            : await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions/bulk`,
+                {
+                  decision,
+                  changeIds: batch.map(d => d.changeId),
+                  changes: batch.map(context),
+                  sectionId,
+                },
+              );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        /* The audit rail gained a row. Refresh it if the reviewer is looking. */
+        if (rail === 'audit') void loadAudit(docId);
+      } catch (e) {
+        /* The decision is already applied to the document — undoing the edit
+           because a POST failed would be worse than the missing row. But a
+           compliance record that vanishes quietly is not acceptable either, so
+           the gap is stated and counted. */
+        fireToast(
+          `${batch.length === 1 ? 'That decision was' : `${batch.length} decisions were`} applied ` +
+            'to the document but NOT recorded on the audit trail — ' +
+            (e instanceof Error ? e.message : String(e)) +
+            '. The content is still saved on the next save; report the missing record.',
+          'error',
+        );
+      }
+    },
+    [rail, loadAudit, fireToast],
+  );
+
+  /* ── A reviewer decided a tracked change ──
+     Posted per decision, accept AND reject. The rejection is the one that has
+     had no home in the record: refusing a proposed deletion changes no text,
+     writes no revision, and until now left nothing behind saying a reviewer
+     considered it.
+
+     Deliberately fire-and-forget with a VISIBLE failure. It must not block the
+     editor action the reviewer just took — the decision is already applied to
+     the document, and undoing it because a POST failed would be worse than the
+     missing row. But a silently-dropped compliance record is not acceptable
+     either, so a failure says so and names what was not recorded. */
+  const recordTrackedChangeDecision = useCallback(
+    (d: SuggestionDecision) => {
+      if (!activeDocId) return;
+      /* "Accept all" resolves every suggestion in one synchronous loop, so the
+         callback fires N times in a single tick. Posting per call would send
+         fifty requests for one click. Queue and flush on the microtask so one
+         reviewer action becomes one write — the bulk endpoint exists for
+         exactly this and records it as the single act it was. */
+      pendingDecisionsRef.current.push(d);
+      if (decisionFlushRef.current) return;
+      decisionFlushRef.current = true;
+      queueMicrotask(() => {
+        decisionFlushRef.current = false;
+        const batch = pendingDecisionsRef.current.splice(0);
+        if (batch.length > 0) void flushDecisions(activeDocId, batch);
+      });
+    },
+    [activeDocId, flushDecisions],
+  );
+
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
     : 'Draft this section from the linked section evidence.';
@@ -3059,6 +3246,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         name: user?.displayName || user?.email || 'Unknown author',
                       },
                       onToggle: toggleTrackChanges,
+                      onResolve: recordTrackedChangeDecision,
                     }}
                     commentsApi={{
                       onCreate: requestAnchoredComment,
@@ -3490,6 +3678,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         </>
                       )}
                     </span>
+                    {/* The metadata the endpoint has always returned and no
+                        surface read — the redline a reviewer refused, the model
+                        that produced an accepted draft. */}
+                    {(() => {
+                      const detail = describeAuditMetadata(ev.event_type, ev.metadata);
+                      return detail ? (
+                        <span
+                          style={{ fontSize: 12, opacity: 0.85 }}
+                          data-testid="audit-metadata"
+                        >
+                          {detail}
+                        </span>
+                      ) : null;
+                    })()}
                     {ev.change_reason && (
                       <span style={{ fontSize: 12, opacity: 0.85 }}>{ev.change_reason}</span>
                     )}

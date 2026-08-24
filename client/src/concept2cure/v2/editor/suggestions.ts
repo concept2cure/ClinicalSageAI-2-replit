@@ -619,14 +619,122 @@ export function rememberAcceptedAuthor(
   store.acceptedAuthors.push({ id, name: authorName ?? id });
 }
 
+/**
+ * A stable identifier for one tracked change, derived from its content.
+ *
+ * ── Why this is derived and not stored on the mark ───────────────────────────
+ * The obvious design — mint an id when the mark is created and carry it in a
+ * `data-change-id` attribute — breaks the redline. ProseMirror merges adjacent
+ * marks only when their attributes are equal, and `minuteBucket` exists
+ * precisely so one continuous typing run stays ONE suggestion. A per-mark id
+ * differs on every keystroke, so every character would become its own
+ * suggestion and the review strip would list a hundred of them for a sentence.
+ *
+ * Deriving the id from the merge key instead (kind + author + bucket) preserves
+ * merging, but then two separate runs by the same author in the same minute
+ * share an id — and `authoring_tracked_change_decisions` has a UNIQUE index on
+ * (artifact_id, change_id, tenant_id), so accepting one and rejecting the other
+ * would silently overwrite the first reviewer decision with the second. A
+ * compliance record that loses a decision is worse than no record.
+ *
+ * So the id is the merge key PLUS a digest of the change's own text. Two runs
+ * in the same minute with different words get different ids, the editor's mark
+ * schema is untouched, and nothing about merging changes. The remaining
+ * collision — the same author proposing the identical text twice inside one
+ * minute — is genuinely the same change by every field that identifies one, and
+ * the decision for it is the same either way.
+ *
+ * FNV-1a rather than SHA-256 because this must be synchronous (WebCrypto's
+ * digest is not) and it is an index key, not a security boundary: the change's
+ * full text travels with the decision and is what the audit record is read on.
+ */
+function fnv1a(input: string, seed: number): string {
+  let h = seed >>> 0;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    // 32-bit FNV prime (16777619) by shift-add, staying inside 32 bits.
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
+}
+
+export function changeIdOf(range: SuggestionRange): string {
+  const key = [range.kind, range.authorId ?? '', range.at ?? '', range.text].join('\u0000');
+  // Two differently-seeded 32-bit passes → 64 bits of digest.
+  return `${range.kind}:${fnv1a(key, 0x811c9dc5)}${fnv1a(key, 0x01000193)}`;
+}
+
+/** What the host needs to record a decision: the id, the verdict, and enough
+ *  context that the id can be resolved back to what was actually decided. */
+export interface SuggestionDecision {
+  changeId: string;
+  decision: 'accept' | 'reject';
+  changeType: SuggestionRange['kind'];
+  /** The proposed text itself. Without it the audit record names a change that
+   *  no longer exists in the document — accepting one strips its mark. */
+  text: string;
+  authorId: string | null;
+  authorName: string | null;
+  at: string | null;
+}
+
+/** Build the decision record for one resolved range. */
+export function decisionOf(
+  range: SuggestionRange,
+  decision: 'accept' | 'reject',
+): SuggestionDecision {
+  return {
+    changeId: changeIdOf(range),
+    decision,
+    changeType: range.kind,
+    text: range.text,
+    authorId: range.authorId,
+    authorName: range.authorName,
+    at: range.at,
+  };
+}
+
+/**
+ * Hand one decision to the host, never letting it break the edit.
+ *
+ * The callback crosses into application code that will post to a network. A
+ * throw there would propagate out of a ProseMirror command and abort the
+ * transaction, so the reviewer's click would appear to do nothing — the
+ * recording of a decision undoing the decision itself.
+ */
+export function notifyResolved(
+  onResolve: ((d: SuggestionDecision) => void) | undefined,
+  range: SuggestionRange,
+  action: 'accept' | 'reject',
+): void {
+  if (!onResolve) return;
+  try {
+    onResolve(decisionOf(range, action));
+  } catch {
+    /* Reporting a decision is additive; the edit stands either way. */
+  }
+}
+
 export const TrackChanges = Extension.create<
-  { author: SuggestionAuthor; enabled: boolean },
+  {
+    author: SuggestionAuthor;
+    enabled: boolean;
+    /** Called for every resolved suggestion, accept OR reject.
+     *
+     *  Rejections are the reason this exists. An accepted insertion at least
+     *  reaches the record indirectly — the text lands in the next revision. A
+     *  REJECTED change alters nothing, so "the reviewer considered and refused
+     *  this deletion of the safety paragraph" has, until now, had no home in
+     *  the record at all. Fire-and-forget by contract: recording a decision
+     *  must never block or undo the editor action the reviewer just took. */
+    onResolve?: (decision: SuggestionDecision) => void;
+  },
   TrackChangesStorage
 >({
   name: 'c2cTrackChanges',
 
   addOptions() {
-    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false };
+    return { author: { id: 'unknown', name: 'Unknown author' }, enabled: false, onResolve: undefined };
   },
 
   addStorage() {
@@ -657,6 +765,10 @@ export const TrackChanges = Extension.create<
         ({ state, tr, dispatch }) => {
           const { insertion, deletion } = state.schema.marks;
           rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName);
+          /* Before the mark is stripped, for the same reason
+             rememberAcceptedAuthor is: stripping it erases the text and the
+             attribution the decision record is about. */
+          notifyResolved(this.options.onResolve, range, action);
           const keepText =
             (range.kind === 'insertion') === (action === 'accept');
           if (keepText) {
@@ -679,6 +791,7 @@ export const TrackChanges = Extension.create<
           // Descending order so earlier positions stay valid as text is removed.
           for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
             rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName);
+            notifyResolved(this.options.onResolve, r, action);
             const keepText = (r.kind === 'insertion') === (action === 'accept');
             if (keepText) {
               tr.removeMark(r.from, r.to, r.kind === 'insertion' ? insertion : deletion);
