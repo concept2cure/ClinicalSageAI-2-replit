@@ -48,6 +48,7 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../_shared/components/GovernedConfirmDialog';
+import { usePublishSurfaceContext } from '../v2/surfaceContext';
 
 const HERE_LABEL: Record<string, string> = {
   overview: 'Program dashboard',
@@ -223,6 +224,236 @@ export function PdevApp({
     typeof program.view?.program.metadata?.blocker === 'string'
       ? (program.view.program.metadata.blocker as string)
       : null;
+
+  // ── AnA screen context ────────────────────────────────────────────
+  /* One builder, eight literal publish calls: the AnA coverage gate counts
+     single-quoted surface-id literals, so each of the 8 pdev* surface ids
+     this host serves gets its own call (the two-id shape in
+     v2/surfaces/UsageBilling.tsx is the sanctioned precedent; quality/App.tsx
+     is the kit-App precedent). The store keys on surface id, so the seven
+     calls whose nav is not active publish null and are ignored. Branches
+     mirror the render gates in the `surface` chain below — the context never
+     claims more than the screen shows, and a failed read publishes as a
+     failure, never as an empty program. */
+  const anaContext = React.useMemo(() => {
+    const here = HERE_LABEL[activeNav] ?? 'PDEV';
+    if (programsError) {
+      return {
+        summary: `${here}. The IND programs could not be read — a failure, not an empty portfolio.`,
+        facts: { screen: here, error: programsError },
+      };
+    }
+    if (program.error) {
+      return {
+        summary: `${here}. The program could not be read — a failure, not an empty program.`,
+        facts: { screen: here, error: program.error },
+      };
+    }
+    if (!programId && !programsLoading && indPrograms.length === 0) {
+      return {
+        summary: `${here}. No IND programs yet — this is a real empty portfolio, not a failed read.`,
+        facts: { screen: here, indPrograms: 0 },
+      };
+    }
+    if (!program.view) {
+      return {
+        summary: `${here}. The PDEV program is still loading — nothing is readable yet.`,
+        facts: { screen: here },
+      };
+    }
+
+    const base = `${here} for ${program.view.program.code} — ${program.view.program.productName}.`;
+    const facts: Record<string, unknown> = {
+      screen: here,
+      program: program.view.program.code,
+      product: program.view.program.productName,
+    };
+    let detail = '';
+
+    if (activeNav === 'overview') {
+      /* effectiveReadiness falls through report → overall snapshot →
+         progressPercent → 0, so a bare 0 is ambiguous. readinessSource says
+         which figure the screen is actually showing. */
+      const readinessSource = readiness.report
+        ? 'report'
+        : program.view.latestSnapshots.some((s) => s.workstream === 'overall') ||
+            program.view.program.progressPercent != null
+          ? 'snapshot-fallback'
+          : 'unknown';
+      if (readiness.error) {
+        detail = ` The readiness read failed; the figure shown (${Math.round(effectiveReadiness)}%) falls back to the last snapshot/progress.`;
+        facts.readinessError = readiness.error;
+      } else if (readiness.report) {
+        detail = ` Readiness ${Math.round(effectiveReadiness)}% against threshold ${READINESS_THRESHOLD_DEFAULT}%.`;
+      } else if (readinessSource === 'snapshot-fallback') {
+        detail = ` Readiness ${Math.round(effectiveReadiness)}% from the last snapshot/progress (the live recompute has not returned).`;
+      } else {
+        detail =
+          ' Readiness shows 0% because no report, snapshot or progress figure exists yet — a fallback default, not a computed score.';
+      }
+      if (topBlocker) detail += ` Top blocker: ${topBlocker}.`;
+      facts.readiness = Math.round(effectiveReadiness);
+      facts.threshold = READINESS_THRESHOLD_DEFAULT;
+      facts.topBlocker = topBlocker;
+      facts.readinessSource = readinessSource;
+    } else if (workstreamId) {
+      if (workstream.error) {
+        detail = ` The ${workstreamId} workstream read failed — a failure, not an empty workstream.`;
+        facts.workstreamError = workstream.error;
+      } else if (workstream.loading || !workstream.payload) {
+        detail = ` The ${workstreamId} workstream is still loading.`;
+      } else {
+        const rollup = workstream.payload.rollup;
+        detail =
+          ` ${workstream.payload.activities.length} activities on screen` +
+          (rollup
+            ? ` — ${rollup.completedActivities} of ${rollup.totalActivities} complete, ${rollup.blockedActivities} blocked.`
+            : '.');
+        facts.workstream = workstreamId;
+        facts.activitiesShown = workstream.payload.activities.length;
+        if (rollup) {
+          facts.totalActivities = rollup.totalActivities;
+          facts.completedActivities = rollup.completedActivities;
+          facts.blockedActivities = rollup.blockedActivities;
+        }
+      }
+    } else if (activeNav === 'ind_assembly') {
+      if (assembly.error) {
+        detail = ' The IND assembly read failed — a failure, not an empty assembly.';
+        facts.assemblyError = assembly.error;
+      } else if (assembly.loading || !assembly.payload) {
+        detail = ' IND assembly readiness is still loading.';
+      } else {
+        const a = assembly.payload;
+        const belowThreshold = a.overallReadiness < a.threshold;
+        /* The compile button's third disabled cause — a compile already in
+           flight — is state the Assembly surface holds in its own mutation
+           hook; this host cannot see it, so it is named as a property of the
+           control, never claimed as current state. */
+        const compileDisabledBecause = [
+          ...(belowThreshold ? ['readiness below threshold'] : []),
+          ...(projectIdForProgram === null ? ['no backing project linked'] : []),
+        ];
+        detail =
+          ` Overall readiness ${a.overallReadiness}% against threshold ${a.threshold}%` +
+          (belowThreshold ? ' — below threshold.' : ' — threshold met.') +
+          (compileDisabledBecause.length
+            ? ` The compile CTA is disabled: ${compileDisabledBecause.join('; ')}.`
+            : ' The compile CTA is enabled (it also disables while a compile is in flight).');
+        facts.overallReadiness = a.overallReadiness;
+        facts.threshold = a.threshold;
+        facts.belowThreshold = belowThreshold;
+        facts.modules = a.modules.map(
+          (m) => `${m.label}: mandatory ${m.mandatory.present}/${m.mandatory.total}`,
+        );
+        facts.compileDisabledBecause = compileDisabledBecause;
+        facts.forceCompileGoverned = true;
+      }
+    } else if (activeNav === 'contradictions') {
+      if (contradictions.error) {
+        detail = ' The contradictions read failed — a failure, not a clean registry.';
+        facts.contradictionsError = contradictions.error;
+      } else if (contradictions.loading || !contradictions.payload) {
+        detail = ' Contradictions are still loading.';
+      } else {
+        const rows = contradictions.payload.contradictions;
+        const blocking = rows.filter(
+          (c) => c.authorityState === 'blocks_promotion',
+        ).length;
+        detail =
+          rows.length === 0
+            ? ' No contradictions detected — a real zero.'
+            : ` ${rows.length} contradiction${rows.length === 1 ? '' : 's'} on screen; ${blocking} block${blocking === 1 ? 's' : ''} promotion.`;
+        facts.contradictions = rows.length;
+        facts.blocksPromotion = blocking;
+      }
+    } else if (activeNav === 'fda_interactions') {
+      if (fdaStream.error || fdaProposals.error) {
+        detail = ' The FDA interactions read failed — a failure, not an empty stream.';
+        facts.fdaError = fdaStream.error ?? fdaProposals.error;
+      } else if (fdaStream.loading || !fdaStream.payload) {
+        detail = ' FDA interactions are still loading.';
+      } else {
+        const items = fdaStream.payload.interactions.length;
+        detail =
+          ` ${items} interaction${items === 1 ? '' : 's'} in the stream` +
+          (fdaProposals.payload
+            ? `; ${fdaProposals.payload.proposals.length} feedback proposal${fdaProposals.payload.proposals.length === 1 ? '' : 's'}.`
+            : fdaProposals.loading
+              ? '; feedback proposals are still loading.'
+              : '; feedback proposals are unavailable.');
+        facts.interactions = items;
+        facts.proposals = fdaProposals.payload
+          ? fdaProposals.payload.proposals.length
+          : null;
+      }
+    }
+
+    /* Overlay sheets sit over the page — when one is open, it is what the
+       person is actually looking at. */
+    let sheetLine = '';
+    if (activeActivity) {
+      sheetLine += ` The "${activeActivity.registry.title}" activity sheet is open — that is what the person is looking at.`;
+      facts.openActivity = activeActivity.registry.key;
+    }
+    if (aiDraftFor) {
+      sheetLine += ` The AI drafting workbench is open for "${aiDraftFor.activity.registry.title}".`;
+      facts.aiDraftActivity = aiDraftFor.activity.registry.key;
+    }
+    if (evidencePickerFor) {
+      sheetLine += ` The evidence picker is open for "${evidencePickerFor.registry.title}".`;
+      facts.evidencePickerActivity = evidencePickerFor.registry.key;
+    }
+
+    return {
+      summary: base + detail + sheetLine,
+      facts,
+      availableActions: [
+        'Switch workstream cards / open an activity are screen clicks AnA can describe',
+        'Readiness snapshots, IND compilation (and force compile), activity state changes, evidence attachment and AI drafts are governed — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [
+    activeNav,
+    workstreamId,
+    programsError,
+    programsLoading,
+    indPrograms.length,
+    programId,
+    program.error,
+    program.view,
+    readiness.error,
+    readiness.report,
+    effectiveReadiness,
+    topBlocker,
+    workstream.error,
+    workstream.loading,
+    workstream.payload,
+    assembly.error,
+    assembly.loading,
+    assembly.payload,
+    projectIdForProgram,
+    contradictions.error,
+    contradictions.loading,
+    contradictions.payload,
+    fdaStream.error,
+    fdaStream.loading,
+    fdaStream.payload,
+    fdaProposals.error,
+    fdaProposals.loading,
+    fdaProposals.payload,
+    activeActivity,
+    aiDraftFor,
+    evidencePickerFor,
+  ]);
+  usePublishSurfaceContext('pdev', activeNav === 'overview' ? anaContext : null);
+  usePublishSurfaceContext('pdev-cmc', activeNav === 'cmc' ? anaContext : null);
+  usePublishSurfaceContext('pdev-nonclinical', activeNav === 'nonclinical' ? anaContext : null);
+  usePublishSurfaceContext('pdev-clinical', activeNav === 'clinical' ? anaContext : null);
+  usePublishSurfaceContext('pdev-regulatory', activeNav === 'regulatory' ? anaContext : null);
+  usePublishSurfaceContext('pdev-ind-assembly', activeNav === 'ind_assembly' ? anaContext : null);
+  usePublishSurfaceContext('pdev-fda-interactions', activeNav === 'fda_interactions' ? anaContext : null);
+  usePublishSurfaceContext('pdev-contradictions', activeNav === 'contradictions' ? anaContext : null);
 
   const onSnapshot = () => {
     if (!programId) return;
