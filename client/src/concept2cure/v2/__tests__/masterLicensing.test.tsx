@@ -372,3 +372,147 @@ describe('Master Licensing — governed writes', () => {
     });
   });
 });
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Enforcement tab
+
+   This panel exists to answer ONE question — is it safe to start refusing
+   requests? — and the way it fails is by answering "yes" when it means "I don't
+   know". An empty observation buffer renders as no rows whether the platform
+   would refuse nothing or whether this server restarted a minute ago, and only
+   `observingSince` separates them. Every test below is that distinction.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const ENFORCEMENT = `${LICENSING}/enforcement`;
+
+const REPORT = {
+  mode: 'report',
+  observingSince: '2026-08-01T10:00:00.000Z',
+  perProcess: true,
+  capacity: 500,
+  truncated: false,
+  organizationsAffected: 1,
+  modulesAffected: ['pv-cockpit'],
+  observations: [
+    {
+      path: '/api/pv-cockpit/signals',
+      organizationId: 42,
+      modules: ['pv-cockpit'],
+      reasons: ['pv-cockpit: Requires the Professional plan'],
+      enforced: false,
+      firstSeen: '2026-08-01T10:00:00.000Z',
+      lastSeen: '2026-08-02T09:30:00.000Z',
+      count: 17,
+    },
+  ],
+};
+
+function routeEnforcement(report: unknown, over: { del?: () => Promise<Response> } = {}) {
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+    if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+    if (method === 'GET' && url === ENFORCEMENT) return ok(report);
+    if (method === 'DELETE' && url === ENFORCEMENT && over.del) return over.del();
+    throw apiError(404, { error: `unrouted ${method} ${url}` });
+  });
+}
+
+async function openEnforcement(report: unknown, over?: { del?: () => Promise<Response> }) {
+  routeEnforcement(report, over);
+  await mount();
+  fireEvent.click(screen.getByRole('button', { name: /Enforcement/ }));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', ENFORCEMENT));
+}
+
+describe('Master Licensing — enforcement report', () => {
+  it('says NOT ENOUGH IS KNOWN when nothing has been observed — never an all-clear', async () => {
+    await openEnforcement({ ...REPORT, observingSince: null, observations: [], organizationsAffected: 0, modulesAffected: [] });
+
+    const card = await screen.findByTestId('ml-enf-nothing-yet');
+    const text = card.textContent ?? '';
+    // The claim it must make: no evidence held.
+    expect(text).toMatch(/since this server last restarted/i);
+    expect(text).toMatch(/not the same as knowing nothing would be refused/i);
+    // The claim it must NOT make.
+    expect(text).not.toMatch(/safe to (turn|switch) on/i);
+    expect(screen.queryByTestId('ml-enf-observed')).toBeNull();
+  });
+
+  it('distinguishes "not switched on" from "observing and quiet"', async () => {
+    await openEnforcement({ ...REPORT, mode: 'off', observingSince: null, observations: [] });
+
+    const card = await screen.findByTestId('ml-enf-off');
+    expect(card.textContent).toMatch(/not checking entitlement/i);
+    // Different state, different card — the two must never share one branch.
+    expect(screen.queryByTestId('ml-enf-nothing-yet')).toBeNull();
+  });
+
+  it('reports what would be refused, and says it was served', async () => {
+    await openEnforcement(REPORT);
+
+    const card = await screen.findByTestId('ml-enf-observed');
+    expect(card.textContent).toMatch(/observing only/i);
+    expect(card.textContent).toMatch(/everything below was served/i);
+    // Named by the WORKSPACE and MODULE an operator can act on, not by an id.
+    expect(screen.getByText(ORG.name)).toBeTruthy();
+    expect(document.body.textContent).toMatch(/Requires the Professional plan/);
+    expect(document.body.textContent).toMatch(/17/);
+  });
+
+  it('says refusals are real once enforcement is on', async () => {
+    await openEnforcement({
+      ...REPORT,
+      mode: 'enforce',
+      observations: [{ ...REPORT.observations[0], enforced: true }],
+    });
+
+    const card = await screen.findByTestId('ml-enf-observed');
+    expect(card.textContent).toMatch(/Enforcement is on/i);
+    expect(card.textContent).not.toMatch(/observing only/i);
+    expect(document.body.textContent).toMatch(/Refused/);
+  });
+
+  it('always states the per-server caveat, so the report is not read as a total', async () => {
+    await openEnforcement(REPORT);
+    await screen.findByTestId('ml-enf-observed');
+    expect(document.body.textContent).toMatch(/cleared when it restarts/i);
+    expect(document.body.textContent).toMatch(/sample, not a total/i);
+  });
+
+  it('says so when the buffer is full, rather than presenting a truncated report as complete', async () => {
+    await openEnforcement({ ...REPORT, truncated: true });
+    await screen.findByTestId('ml-enf-observed');
+    expect(document.body.textContent).toMatch(/older ones have been dropped/i);
+  });
+
+  it('surfaces a failed read as an error, never as an empty report', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      if (method === 'GET' && url === ENFORCEMENT) throw apiError(500, { error: 'read failed' });
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+    await mount();
+    fireEvent.click(screen.getByRole('button', { name: /Enforcement/ }));
+
+    expect(await screen.findByTestId('ml-enf-error')).toBeTruthy();
+    expect(screen.queryByTestId('ml-enf-nothing-yet')).toBeNull();
+    expect(screen.queryByTestId('ml-enf-off')).toBeNull();
+  });
+
+  it('will not discard the record without a reason', async () => {
+    const del = vi.fn(async () => ok({ ...REPORT, observingSince: null, observations: [] }));
+    await openEnforcement(REPORT, { del });
+    await screen.findByTestId('ml-enf-observed');
+
+    fireEvent.click(screen.getByRole('button', { name: /Start a new window/i }));
+    // The dialog is up and NOTHING has been sent yet.
+    await screen.findByRole('dialog');
+    expect(del).not.toHaveBeenCalled();
+
+    await completeConfirmDialog('packaging fixed, measuring again');
+    await waitFor(() => expect(del).toHaveBeenCalled());
+    const sent = apiRequest.mock.calls.find((c: unknown[]) => c[0] === 'DELETE');
+    expect((sent?.[2] as { reason?: string })?.reason).toBe('packaging fixed, measuring again');
+  });
+});

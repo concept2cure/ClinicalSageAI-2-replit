@@ -154,6 +154,38 @@ function verdictText(m: TenantModule): string {
   }
 }
 
+/* ── Enforcement report ─────────────────────────────────────────────────────
+   What route-level enforcement is refusing, or would refuse if it were on.
+
+   The one thing this must never do is collapse "nothing has been observed" into
+   "nothing would be refused". They render identically as an empty table and they
+   mean opposite things: the second is a green light to switch enforcement on,
+   the first is an absence of evidence. `observingSince: null` is the server
+   saying it holds no evidence, and the surface below says so in those words. */
+
+interface EnforcementObservation {
+  path: string;
+  organizationId: number;
+  modules: string[];
+  reasons: string[];
+  enforced: boolean;
+  firstSeen: string;
+  lastSeen: string;
+  count: number;
+}
+
+interface EnforcementReport {
+  mode: string;
+  /** null = this server holds no observations. NOT "nothing would be refused". */
+  observingSince: string | null;
+  perProcess: boolean;
+  capacity: number;
+  truncated: boolean;
+  organizationsAffected: number;
+  modulesAffected: string[];
+  observations: EnforcementObservation[];
+}
+
 /* ── The one governed action shape ─────────────────────────────────────────── */
 
 type Pending =
@@ -161,17 +193,29 @@ type Pending =
   | { kind: 'tenant-tier'; config: ConfirmConfig; orgId: string; label: string; from: string; to: Tier }
   | { kind: 'tenant-provision'; config: ConfirmConfig; orgId: string; label: string; tier: string }
   | { kind: 'tenant-module'; config: ConfirmConfig; orgId: string; moduleId: string; label: string; enabled: boolean }
-  | { kind: 'flag'; config: ConfirmConfig; key: string; label: string; enabled: boolean };
+  | { kind: 'flag'; config: ConfirmConfig; key: string; label: string; enabled: boolean }
+  | { kind: 'enforcement-clear'; config: ConfirmConfig; observations: number };
 
 const TABS = [
   { id: 'packaging', label: 'Packaging', icon: 'layers' },
   { id: 'tenants', label: 'Tenants', icon: 'building' },
   { id: 'flags', label: 'Feature flags', icon: 'sliders' },
+  { id: 'enforcement', label: 'Enforcement', icon: 'shieldAlert' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
 
 const LICENSING_PATH = '/api/admin/master/licensing';
 const FLAGS_PATH = '/api/admin/master/feature-flags';
+const ENFORCEMENT_PATH = '/api/admin/master/licensing/enforcement';
+
+/** Absolute, not relative: "3 hours ago" invites an operator to reason about a
+ *  window whose start this server cannot actually vouch for across a restart. */
+function whenText(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
 
 export function MasterLicensing() {
   const [tab, setTab] = useState<TabId>('packaging');
@@ -206,6 +250,13 @@ export function MasterLicensing() {
     flagsPath,
     [flagsPath, reload],
     hasKeys<{ flags: FeatureFlag[] }>('flags'),
+  );
+
+  const enfPath = tab === 'enforcement' ? ENFORCEMENT_PATH : null;
+  const enf = useLiveData<EnforcementReport>(
+    enfPath,
+    [enfPath, reload],
+    hasKeys<EnforcementReport>('mode', 'observations'),
   );
 
   /* ── Editable copies, seeded once per resolved fetch ────────────────────────
@@ -417,6 +468,17 @@ export function MasterLicensing() {
       return;
     }
 
+    if (action.kind === 'enforcement-clear') {
+      const res = await apiCall('DELETE', ENFORCEMENT_PATH, { reason });
+      if (!res.ok) {
+        fireToast(apiErrorText(res, 'The observation window was not reset.'), 'error');
+        return;
+      }
+      fireToast('Observation window reset. Denials recorded from now on.');
+      retry();
+      return;
+    }
+
     setFlagState(action.key, action.enabled);
     const res = await apiCall('PATCH', `${FLAGS_PATH}/${encodeURIComponent(action.key)}`, {
       enabled: action.enabled,
@@ -444,6 +506,19 @@ export function MasterLicensing() {
         action: 'Change the plan tier a module belongs to',
         target: `${m.name} · ${tierLabel(m.minTier)} → ${tierLabel(to)}`,
         resource: m.moduleId,
+        minReason: 3,
+      },
+    });
+  };
+
+  const askEnforcementClear = () => {
+    setPending({
+      kind: 'enforcement-clear',
+      observations: enf.data?.observations.length ?? 0,
+      config: {
+        action: 'Discard the recorded denials and start a new window',
+        target: `${enf.data?.observations.length ?? 0} recorded`,
+        resource: 'Enforcement observations',
         minReason: 3,
       },
     });
@@ -975,6 +1050,199 @@ export function MasterLicensing() {
                 })}
               </div>
             </div>
+          )}
+        </section>
+      )}
+
+      {/* ══ Enforcement ════════════════════════════════════════════════════
+          The rollout instrument. Route-level enforcement ships switched off,
+          then observing, then on — and the middle step exists so nobody flips
+          a live product to refusing requests without first seeing which paying
+          workspaces would start being refused.
+
+          Every branch below is written against one rule: an empty table is NOT
+          evidence that enforcement is safe to switch on. "Nothing recorded" and
+          "nothing would be refused" are different claims and only the server
+          knows which one it is making — so the copy follows `observingSince`
+          rather than the row count. */}
+      {tab === 'enforcement' && (
+        <section className="ml-sec" aria-labelledby="ml-enf-h">
+          <h2 id="ml-enf-h" className="ml-sec-h">Enforcement</h2>
+
+          {enf.loading ? (
+            <div className="ml-loading" role="status">Loading the enforcement report…</div>
+          ) : enf.error ? (
+            <ErrorState
+              title="Couldn't load the enforcement report"
+              message={enf.error}
+              retry={retry}
+              testId="ml-enf-error"
+            />
+          ) : !enf.data ? (
+            <ErrorState
+              title="Couldn't load the enforcement report"
+              message="The platform returned no report for this server."
+              retry={retry}
+              testId="ml-enf-noreport"
+            />
+          ) : (
+            <>
+              {enf.data.mode === 'off' ? (
+                <div className="ml-enf-state" data-tone="unknown" data-testid="ml-enf-off">
+                  <span className="ml-enf-ic" aria-hidden="true">{I.shieldAlert}</span>
+                  <div>
+                    <div className="ml-enf-h">Access checks are not being applied</div>
+                    <p className="ml-enf-body">
+                      Modules a workspace has not licensed are shown as locked in its navigation,
+                      but this server is not checking entitlement when a request arrives — so a
+                      workspace that reaches a locked module another way is still served. Nothing
+                      is being measured either, which is why there is nothing to report here.
+                    </p>
+                    <p className="ml-enf-body">
+                      Turn on observation for this deployment to record what enforcement would
+                      refuse, then read it here before switching enforcement on.
+                    </p>
+                  </div>
+                </div>
+              ) : enf.data.observingSince === null ? (
+                <div className="ml-enf-state" data-tone="unknown" data-testid="ml-enf-nothing-yet">
+                  <span className="ml-enf-ic" aria-hidden="true">{I.shieldAlert}</span>
+                  <div>
+                    <div className="ml-enf-h">Nothing recorded on this server yet</div>
+                    <p className="ml-enf-body">
+                      No request has been refused, or would have been refused, since this server
+                      last restarted. That is not the same as knowing nothing would be refused —
+                      a quiet period and a clean one look identical from here, and the record
+                      starts empty after every restart.
+                    </p>
+                    <p className="ml-enf-body">
+                      Leave observation running across a period that covers real use before
+                      treating this as evidence.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="ml-enf-state" data-testid="ml-enf-observed">
+                  <span className="ml-enf-ic" aria-hidden="true">{I.shieldCheck}</span>
+                  <div>
+                    <div className="ml-enf-h">
+                      {enf.data.mode === 'enforce'
+                        ? 'Requests are being refused'
+                        : 'Requests that would be refused'}
+                    </div>
+                    <p className="ml-enf-body">
+                      {enf.data.mode === 'enforce'
+                        ? 'Enforcement is on. Everything below was actually refused.'
+                        : 'Enforcement is observing only — everything below was served. This is what switching it on would cost.'}
+                      {' '}Recorded since {whenText(enf.data.observingSince)}.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {enf.data.mode !== 'off' && (
+                <div className="ml-banner">
+                  <span className="ml-banner-ic" aria-hidden="true">{I.info}</span>
+                  <p>
+                    This record is held by one server and is cleared when it restarts. A deployment
+                    running several servers keeps a separate record on each, and this is one of
+                    them — so treat what you see as a sample, not a total.
+                    {enf.data.truncated
+                      ? ` Only the ${enf.data.capacity} most recent are kept, and that limit has been reached; older ones have been dropped.`
+                      : ''}
+                  </p>
+                </div>
+              )}
+
+              {enf.data.observations.length > 0 && (
+                <>
+                  <div className="ml-enf-stats">
+                    <div className="ml-enf-stat">
+                      <b>{enf.data.organizationsAffected}</b>
+                      <span>
+                        {enf.data.organizationsAffected === 1 ? 'Workspace' : 'Workspaces'}
+                      </span>
+                    </div>
+                    <div className="ml-enf-stat">
+                      <b>{enf.data.modulesAffected.length}</b>
+                      <span>{enf.data.modulesAffected.length === 1 ? 'Module' : 'Modules'}</span>
+                    </div>
+                    <div className="ml-enf-stat">
+                      <b>{enf.data.observations.length}</b>
+                      <span>Recorded</span>
+                    </div>
+                  </div>
+
+                  <div className="ml-scroll">
+                    <div
+                      className="ml-table ml-table-enforce"
+                      role="table"
+                      aria-label="Refused requests"
+                    >
+                      <div className="ml-thead" role="row">
+                        <span role="columnheader">Workspace</span>
+                        <span role="columnheader">What it needed</span>
+                        <span role="columnheader">Requests</span>
+                        <span role="columnheader">Last seen</span>
+                      </div>
+                      {enf.data.observations.map((o) => {
+                        const org = orgRows.find((r) => String(r.id) === String(o.organizationId));
+                        return (
+                          <div className="ml-row" role="row" key={`${o.organizationId} ${o.path}`}>
+                            <div role="cell">
+                              <div className="ml-name">{org?.name ?? 'Unknown workspace'}</div>
+                              <div className="ml-sub">
+                                {org ? (
+                                  <>
+                                    <span className="mono">{org.slug}</span>
+                                    {` · ${tierLabel(org.tier)}`}
+                                  </>
+                                ) : (
+                                  'This workspace is not in the list above — it may have been removed.'
+                                )}
+                              </div>
+                            </div>
+                            <div role="cell">
+                              <div className="ml-name">
+                                {o.modules
+                                  .map(
+                                    (id) =>
+                                      moduleRows.find((m) => m.moduleId === id)?.name ?? id,
+                                  )
+                                  .join(' or ')}
+                              </div>
+                              <div className="ml-sub">
+                                {o.reasons[0] || 'Not included in this plan.'}
+                              </div>
+                              <div className="ml-sub mono">{o.path}</div>
+                            </div>
+                            <div role="cell">
+                              <span className="ml-chip" data-tone={o.enforced ? 'warn' : 'off'}>
+                                {o.count}
+                              </span>
+                              <div className="ml-sub">{o.enforced ? 'Refused' : 'Served'}</div>
+                            </div>
+                            <div role="cell" className="ml-sub">
+                              {whenText(o.lastSeen)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="ml-enf-acts">
+                    <button type="button" className="btn ghost" onClick={askEnforcementClear}>
+                      Start a new window
+                    </button>
+                    <span className="ml-sub">
+                      Discards what is recorded here, so you can see whether a packaging change
+                      stopped the refusals.
+                    </span>
+                  </div>
+                </>
+              )}
+            </>
           )}
         </section>
       )}
