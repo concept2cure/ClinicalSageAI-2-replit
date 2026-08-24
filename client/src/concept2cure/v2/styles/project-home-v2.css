@@ -139,6 +139,34 @@
 .c2c-v2 .npw-field .c2c-input{min-height:36px;font-size:13px;padding:6px 11px;}
 .c2c-v2 .npw-field > .c2c-input{margin-top:0;}
 
+/* Device classification (W1-6). The help text is not decoration: a product code
+   decides the regulation number, the review panel and the predicate set, and a
+   flag decides whether a statutory section is required — so each field says
+   what it governs rather than leaving the user to know. */
+.c2c-v2 .npw-field-help{
+  font-size:11px;line-height:1.45;color:var(--text-400);margin-top:4px;
+}
+.c2c-v2 .npw-flags{border:0;padding:0;margin:0;min-width:0;}
+.c2c-v2 .npw-flags legend{padding:0;}
+.c2c-v2 .npw-flag-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));
+  gap:8px;margin-top:8px;
+}
+.c2c-v2 .npw-flag{
+  display:flex;gap:8px;align-items:flex-start;
+  border:1px solid var(--border);border-radius:6px;padding:9px 11px;
+  cursor:pointer;background:var(--surface);
+  transition:border-color 200ms ease-out,background 200ms ease-out;
+}
+.c2c-v2 .npw-flag:hover{border-color:var(--border-strong,var(--border));}
+.c2c-v2 .npw-flag:focus-within{outline:2px solid var(--focus,#0C6360);outline-offset:1px;}
+.c2c-v2 .npw-flag input{margin-top:2px;flex:none;}
+.c2c-v2 .npw-flag-l{display:block;font-size:12.5px;font-weight:500;color:var(--text-200);}
+.c2c-v2 .npw-flag-w{display:block;font-size:11px;line-height:1.4;color:var(--text-400);margin-top:2px;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .npw-flag{transition:none;}
+}
+
 .c2c-v2 .npw-review{
   margin:0;
   border:1px solid var(--border);

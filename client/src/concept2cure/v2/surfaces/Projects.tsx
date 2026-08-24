@@ -19,6 +19,10 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
 import { RegistryPicker } from './AnaVerbs';
 import { getSubmissionTypeContext } from './RegistryBridge';
+import {
+  DEVICE_CLASSES, DEVICE_FLAGS, REVIEW_PANELS,
+  usesDeviceClassification, type DeviceFlagId,
+} from '../../../../../shared/constants/domain/device-classification';
 import '../styles/project-home-v2.css';
 
 /* ── Window global owned by this surface (the app shell sets it to auto-open
@@ -209,6 +213,19 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
   const [ta, setTa] = useState('onc_general');
+  /* The device taxonomy. Step 2 offered a therapeutic-area dropdown and nothing
+     else — an oncology / vaccines list, defaulting to "Oncology (general)",
+     shown to someone filing a peak flow meter. These are the fields a device
+     reviewer opens the file to find. */
+  const [productCode, setProductCode] = useState('');
+  const [regulationNumber, setRegulationNumber] = useState('');
+  const [deviceClass, setDeviceClass] = useState('');
+  const [reviewPanel, setReviewPanel] = useState('');
+  const [predicateK, setPredicateK] = useState('');
+  const [intendedUse, setIntendedUse] = useState('');
+  const [deviceFlags, setDeviceFlags] = useState<DeviceFlagId[]>([]);
+  const toggleFlag = (id: DeviceFlagId) =>
+    setDeviceFlags(f => (f.includes(id) ? f.filter(x => x !== id) : [...f, id]));
   // Team assignment needs a persisted project id (GET /:id/team); no endpoint
   // lists selectable org members for a not-yet-created project, so the wizard
   // creates the project solo and teammates are added afterward.
@@ -248,6 +265,11 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
   const selTpl: SelTpl | null = ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null;
+  /* From the FILING TYPE, not the lane: a 510(k) picked from any tab is a
+     device filing, and a pharma filing picked from the device tab is not. */
+  const isDeviceFiling = usesDeviceClassification(
+    productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
+  );
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
@@ -263,7 +285,16 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
       productType: productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg),
       primaryAgency: selTpl?.agency || 'FDA',
       submissionTypeId: selTpl?.id,
-      indication: taLabel,
+      indication: isDeviceFiling ? (intendedUse || undefined) : taLabel,
+      ...(isDeviceFiling
+        ? {
+            deviceClassification: {
+              productCode, regulationNumber, deviceClass,
+              reviewPanel, predicateK, intendedUse,
+              flags: deviceFlags,
+            },
+          }
+        : {}),
       targetSubmissionDate: target || null,
       teamMembers: team,
     };
@@ -479,23 +510,135 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                   />
                 </label>
 
-                <label className="npw-field">
-                  <span className="npw-field-l">Therapeutic area</span>
-                  <select className="c2c-input" value={ta} onChange={e => setTa(e.target.value)}>
-                    {taGroups.map(g => {
-                      const items = taList.filter(t => t.group === g.id);
-                      return items.length
-                        ? <optgroup key={g.id} label={g.label}>{items.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>
-                        : null;
-                    })}
-                  </select>
-                </label>
+                {/* A device files under a product code, not a therapeutic area.
+                    The pharma axis is wrong for it in both directions: there is
+                    no oncology peak flow meter, and the fields a CDRH reviewer
+                    actually opens the file for had nowhere to live. */}
+                {isDeviceFiling ? (
+                  <label className="npw-field">
+                    <span className="npw-field-l">Device class</span>
+                    <select
+                      className="c2c-input"
+                      value={deviceClass}
+                      onChange={e => setDeviceClass(e.target.value)}
+                    >
+                      <option value="">Not yet determined</option>
+                      {DEVICE_CLASSES.map(c => (
+                        <option key={c} value={c}>Class {c}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <label className="npw-field">
+                    <span className="npw-field-l">Therapeutic area</span>
+                    <select className="c2c-input" value={ta} onChange={e => setTa(e.target.value)}>
+                      {taGroups.map(g => {
+                        const items = taList.filter(t => t.group === g.id);
+                        return items.length
+                          ? <optgroup key={g.id} label={g.label}>{items.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</optgroup>
+                          : null;
+                      })}
+                    </select>
+                  </label>
+                )}
 
                 <label className="npw-field">
                   <span className="npw-field-l">Target submission date</span>
                   <input className="c2c-input" type="date" value={target} onChange={e => setTarget(e.target.value)} />
                 </label>
               </div>
+
+              {isDeviceFiling && (
+                <div className="npw-grid">
+                  <label className="npw-field">
+                    <span className="npw-field-l">Product code</span>
+                    <input
+                      className="c2c-input"
+                      value={productCode}
+                      onChange={e => setProductCode(e.target.value.toUpperCase().slice(0, 3))}
+                      placeholder="e.g. BZH"
+                      maxLength={3}
+                      aria-describedby="npw-pc-help"
+                    />
+                    <span className="npw-field-help" id="npw-pc-help">
+                      Three letters. It decides the regulation number, the review panel and which
+                      predicates you can compare against.
+                    </span>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Regulation number</span>
+                    <input
+                      className="c2c-input"
+                      value={regulationNumber}
+                      onChange={e => setRegulationNumber(e.target.value)}
+                      placeholder="e.g. 868.1860"
+                      aria-describedby="npw-rn-help"
+                    />
+                    <span className="npw-field-help" id="npw-rn-help">21 CFR — the part is the panel.</span>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Review panel</span>
+                    <select className="c2c-input" value={reviewPanel} onChange={e => setReviewPanel(e.target.value)}>
+                      <option value="">Not yet determined</option>
+                      {REVIEW_PANELS.map(pnl => <option key={pnl} value={pnl}>{pnl}</option>)}
+                    </select>
+                  </label>
+
+                  <label className="npw-field">
+                    <span className="npw-field-l">Predicate device</span>
+                    <input
+                      className="c2c-input"
+                      value={predicateK}
+                      onChange={e => setPredicateK(e.target.value.toUpperCase())}
+                      placeholder="e.g. K181234"
+                      aria-describedby="npw-pk-help"
+                    />
+                    <span className="npw-field-help" id="npw-pk-help">
+                      The cleared device this one is substantially equivalent to.
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {isDeviceFiling && (
+                <>
+                  <div className="npw-field npw-field-wide">
+                    <span className="npw-field-l">Indications for use</span>
+                    <textarea
+                      className="c2c-input"
+                      rows={3}
+                      value={intendedUse}
+                      onChange={e => setIntendedUse(e.target.value)}
+                      placeholder="The statement that will appear on FDA Form 3881."
+                    />
+                  </div>
+
+                  <fieldset className="npw-field npw-field-wide npw-flags">
+                    <legend className="npw-field-l">Product characteristics</legend>
+                    <span className="npw-field-help">
+                      Each of these adds required content to the submission, so they are recorded
+                      now rather than discovered at assembly.
+                    </span>
+                    <div className="npw-flag-grid">
+                      {DEVICE_FLAGS.map(f => (
+                        <label key={f.id} className="npw-flag" title={f.because}>
+                          <input
+                            type="checkbox"
+                            checked={deviceFlags.includes(f.id)}
+                            onChange={() => toggleFlag(f.id)}
+                          />
+                          <span>
+                            <span className="npw-flag-l">{f.label}</span>
+                            <span className="npw-flag-w">{f.because}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                </>
+              )}
 
               <div className="npw-field npw-field-wide">
                 <span className="npw-field-l">Team members</span>
@@ -566,6 +709,39 @@ export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => v
                   <dt>Recorded as</dt>
                   <dd>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {productTypeForSelection(programTypeFor(selTpl, uiSeg), uiSeg)}</dd>
                 </div>
+                {/* Only what was actually entered. A device row that reads
+                    "Not recorded" is the truth about the programme; filling it
+                    with a default here would put a classification nobody chose
+                    into the record the reviewer reads. */}
+                {isDeviceFiling && (
+                  <>
+                    <div className="npw-review-row">
+                      <dt>Classification</dt>
+                      <dd>
+                        {[
+                          productCode && `Product code ${productCode}`,
+                          regulationNumber && `21 CFR ${regulationNumber}`,
+                          deviceClass && `Class ${deviceClass}`,
+                          reviewPanel,
+                        ].filter(Boolean).join(' · ') || 'Not recorded'}
+                      </dd>
+                    </div>
+                    <div className="npw-review-row">
+                      <dt>Predicate</dt>
+                      <dd>{predicateK || 'Not recorded'}</dd>
+                    </div>
+                    {deviceFlags.length > 0 && (
+                      <div className="npw-review-row">
+                        <dt>Adds required content</dt>
+                        <dd>
+                          {deviceFlags
+                            .map(id => DEVICE_FLAGS.find(f => f.id === id)?.label ?? id)
+                            .join(' · ')}
+                        </dd>
+                      </div>
+                    )}
+                  </>
+                )}
               </dl>
 
               <div className="npw-next">
