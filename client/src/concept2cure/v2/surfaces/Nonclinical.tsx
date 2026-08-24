@@ -7,6 +7,7 @@ import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 
 /* ── Inline fixture types ── */
 
@@ -340,6 +341,46 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
      queue, which is the truth about its day — and while either read is failing
      the queue stays empty rather than asserting "nothing outstanding" over an
      outage. */
+  /**
+   * Run the SEND conformance check across the registry's studies.
+   *
+   * Each study is evaluated by the server (evaluateSendReadiness over its real
+   * datasets, define.xml, nSDRG and validator state) and the findings are shown
+   * with the study they belong to. Nothing is summarised away: a study the
+   * check reports as outside mandatory SEND scope says so, and a failed
+   * evaluation is listed as a failure rather than dropped, because a study
+   * silently missing from a conformance report reads as a study that passed.
+   */
+  const [sendRunning, setSendRunning] = useState(false);
+  const [sendReport, setSendReport] = useState<
+    Array<{ study: string; ok: boolean; risk?: string; findings: Array<{ severity: string; message: string; basis?: string }>; error?: string }> | null
+  >(null);
+  const runSendConformance = async () => {
+    if (sendRunning || studies.length === 0) return;
+    setSendRunning(true);
+    setSendReport(null);
+    try {
+      const out = await Promise.all(
+        studies.map(async (st) => {
+          try {
+            const res = await apiRequest('GET', `/api/nonclinical/studies/${encodeURIComponent(st.id)}/send-readiness`);
+            const j = await res.json().catch(() => null);
+            if (!res.ok || !j) {
+              return { study: st.id, ok: false, findings: [], error: serverMessage(j) ?? `HTTP ${res.status}` };
+            }
+            const r = j as { findings?: Array<{ severity: string; message: string; basis?: string }>; riskLevel?: string };
+            return { study: st.id, ok: true, risk: r.riskLevel, findings: Array.isArray(r.findings) ? r.findings : [] };
+          } catch (e) {
+            return { study: st.id, ok: false, findings: [], error: e instanceof Error ? e.message : String(e) };
+          }
+        }),
+      );
+      setSendReport(out);
+    } finally {
+      setSendRunning(false);
+    }
+  };
+
   const queue = useMemo(() => {
     if (liveStudies.loading || liveStudies.error || summaryState.loading || summaryState.error) return [];
     const items: Array<{ ico: string; title: string; sub: string; tone: string; action: string; cmd: string }> = [];
@@ -603,9 +644,49 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             )}
           </SummaryBody>
+          {sendReport && (
+            <div className="nc-send-report">
+              <div className="nc-send-report-h">
+                SEND conformance — {sendReport.length} {sendReport.length === 1 ? 'study' : 'studies'} checked
+              </div>
+              {sendReport.map((r) => (
+                <div key={r.study} className="nc-send-row">
+                  <span className="nc-send-study">{r.study}</span>
+                  {!r.ok ? (
+                    <span className="nc-send-f err">Not checked — {r.error}</span>
+                  ) : r.findings.length === 0 ? (
+                    <span className="nc-send-f ok">No findings{r.risk ? ` · risk ${r.risk}` : ''}</span>
+                  ) : (
+                    <span className="nc-send-fs">
+                      {r.findings.map((f, i) => (
+                        <span key={i} className={'nc-send-f ' + (f.severity === 'critical' || f.severity === 'major' ? 'err' : 'warn')}>
+                          {f.message}
+                          {f.basis && <em> — {f.basis}</em>}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="sp-foot">
-            <button className="sp-ask" onClick={() => ask('Run SEND conformance — map units to controlled terminology and re-validate the package.')}>
-              {I.sparkles} Run SEND conformance
+            {/* ── "Run SEND conformance" ran nothing ─────────────────────────
+                It typed a sentence into the chat. The check is real and
+                deterministic: GET /api/nonclinical/studies/:id/send-readiness
+                runs evaluateSendReadiness — required SENDIG 3.x domains,
+                define.xml, the nSDRG, and open validator errors — each finding
+                carrying the guidance it comes from. It had no caller.
+
+                Run per study, because that is the unit the check evaluates;
+                the rollup above is derived from the same registry. */}
+            <button
+              className="sp-ask"
+              onClick={() => void runSendConformance()}
+              disabled={sendRunning || studies.length === 0}
+              title={studies.length === 0 ? 'No studies are in the registry to check.' : undefined}
+            >
+              {I.sparkles} {sendRunning ? 'Checking…' : 'Run SEND conformance'}
             </button>
           </div>
         </SpCard>
@@ -638,7 +719,17 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
             {(sum) => (
               <div className="sp-list">
                 {sum.m26.map((m, i) => (
-                  <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Open §${m.n} ${m.l} and continue drafting`)}>
+                  /* ── These rows asked the chat to "open" a section ──────────
+                     `ask('Open §2.6.6 … and continue drafting')`, while the
+                     Module 4 rows two panels up — identical in look and
+                     behaviour-suggesting affordance — actually navigate
+                     (`onClick={() => open('dossier')}`). One of the two was
+                     lying about what a click does, and it was this one.
+
+                     A §2.6 section is authored in the document workspace, so
+                     that is where the row goes; the section is named in the
+                     prompt only when the user asks for help with it. */
+                  <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => open('document-authoring')}>
                     <span className="sp-tag">{m.n}</span>
                     <span className="sp-row-b">
                       <span className="sp-row-t">{m.l}</span>

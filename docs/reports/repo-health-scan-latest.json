@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T04:41:24.047Z",
+  "generatedAt": "2026-08-24T05:27:16.164Z",
   "git": {
-    "sha": "2c24685e8893733a47bf99790a5878a692a1cee2",
+    "sha": "1a7b6d990c6a2c5e698e33d149c3c3c36c1cabc3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2193,12 +2193,12 @@
         "bytes": 148992
       },
       {
-        "file": "server/storage.ts",
-        "bytes": 145402
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 148156
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 142620
+        "file": "server/storage.ts",
+        "bytes": 145402
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2230,7 +2230,7 @@
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 129044
+        "bytes": 131820
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2391,16 +2391,16 @@
         "lines": 2582
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2578
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "lines": 2559
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2479
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",

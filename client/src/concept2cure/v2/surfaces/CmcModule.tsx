@@ -2030,15 +2030,84 @@ interface ProvenanceRow {
   sectionKey: string;
 }
 
-function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const projectId = cmcProjectId();
   /* Open Module 3 agency questions — the org-scoped board serves them from
      reg_questions. This card was a permanent empty state ("once a
      correspondence source is connected") while the same rows fed an Overview
      KPI; the source was connected all along. */
-  const board = useLiveData<CmcBoardData>('/api/cmc/module3-board');
+  /* corrEpoch bumps after every correspondence WRITE (log / close), refetching
+     the board so the card shows the server's list — never a locally invented
+     row. useLiveData refetches when its deps change; the path never does. */
+  const [corrEpoch, setCorrEpoch] = useState(0);
+  const board = useLiveData<CmcBoardData>('/api/cmc/module3-board', ['/api/cmc/module3-board', corrEpoch]);
   const corr = board.data?.correspondence;
   const [toast, fireToast] = useToast();
+
+  /* ── Log an agency question ──
+     The board READS reg_questions; until this, nothing in the product could
+     WRITE it — questions arrived only through the email ingest, so an IR
+     received by phone or portal (how most agencies actually deliver them)
+     could not be recorded at all. POST /api/cmc/agency-questions stamps the
+     org from the verified session; the card reloads from the server. */
+  const [logOpen, setLogOpen] = useState(false);
+  const LOG_FORM: C2CFormConfig = {
+    eyebrow: 'CMC — agency correspondence',
+    title: 'Log an agency question',
+    sub: 'Records an open information request in the correspondence file. Triage, drafting and closure all work from this record.',
+    submitLabel: 'Log question',
+    fields: [
+      { key: 'questionText', label: 'Question, as received', type: 'textarea', required: true, placeholder: 'Quote the agency’s question verbatim — never a paraphrase.' },
+      { key: 'sectionReference', label: 'CTD section', type: 'text', half: true, placeholder: 'e.g. 3.2.S.4.1' },
+      { key: 'region', label: 'Agency / region', type: 'text', half: true, placeholder: 'e.g. FDA' },
+      { key: 'priority', label: 'Priority', type: 'seg', options: ['low', 'medium', 'high'], default: 'medium', half: true },
+      { key: 'dueDate', label: 'Response due', type: 'date', half: true },
+      { key: 'assignedTo', label: 'Assigned to', type: 'text', placeholder: 'Who owns the response (optional)' },
+    ],
+  };
+  const logQuestion = async (v: Record<string, string>) => {
+    try {
+      const res = await apiRequest('POST', '/api/cmc/agency-questions', {
+        questionText: v.questionText,
+        ...(v.sectionReference?.trim() ? { sectionReference: v.sectionReference.trim() } : {}),
+        ...(v.region?.trim() ? { region: v.region.trim() } : {}),
+        ...(v.priority ? { priority: v.priority } : {}),
+        ...(v.dueDate ? { dueDate: v.dueDate } : {}),
+        ...(v.assignedTo?.trim() ? { assignedTo: v.assignedTo.trim() } : {}),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast('Couldn’t log the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. Nothing was recorded.', 'error');
+        return;
+      }
+      setLogOpen(false);
+      const row = (json as { data?: { sectionRef?: string | null } })?.data;
+      fireToast('Agency question logged' + (row?.sectionRef ? ' · §' + row.sectionRef : '') + ' — open in the correspondence file.');
+      setCorrEpoch((e) => e + 1);
+    } catch (e) {
+      fireToast('Couldn’t log the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    }
+  };
+
+  /* Close = the question is answered and submitted; the row leaves the OPEN
+     list but stays in the record. Inline confirm — a closed row disappears
+     from this view, so a misclick must not do that silently. */
+  const [closingId, setClosingId] = useState<string | number | null>(null);
+  const closeQuestion = async (c: CmcCorrespondence) => {
+    try {
+      const res = await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), { status: 'CLOSED' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast('Couldn’t close the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. It stays open.', 'error');
+        return;
+      }
+      fireToast('Question closed' + (c.sectionRef ? ' · §' + c.sectionRef : '') + ' — it leaves the open list and stays in the record.');
+      setClosingId(null);
+      setCorrEpoch((e) => e + 1);
+    } catch (e) {
+      fireToast('Couldn’t close the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    }
+  };
 
   /* "Draft response" — the same real handoff as the change memo's editor
      button: the response document is CREATED (POST document + section via
@@ -2151,6 +2220,14 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
         <div className="pj-card-h">
           <span className="t">Open agency correspondence</span>
           <span className="s">Module 3 questions, organization-wide — triage by deadline</span>
+          <button
+            className="nda-open"
+            style={{ marginLeft: 'auto' }}
+            title="Record an information request the agency sent — by letter, portal or call"
+            onClick={() => setLogOpen(true)}
+          >
+            {I.plus} Log question
+          </button>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {board.loading ? (
@@ -2223,6 +2300,27 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
                     >
                       {I.checkSquare} Create task
                     </button>
+                    {/* Close leaves the open list (the record keeps the row),
+                        so a misclick must confirm before it disappears. */}
+                    {closingId === c.id ? (
+                      <>
+                        <span className="cm-meta">Close this question?</span>
+                        <button className="nda-open" onClick={() => setClosingId(null)}>
+                          Cancel
+                        </button>
+                        <button className="nda-open" onClick={() => void closeQuestion(c)}>
+                          {I.check} Close
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="nda-open"
+                        title="Close this question — it leaves the open list and stays in the record"
+                        onClick={() => setClosingId(c.id)}
+                      >
+                        Close
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -2349,6 +2447,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
           </div>
         </>
       )}
+      {logOpen && <C2CForm config={LOG_FORM} onCancel={() => setLogOpen(false)} onSubmit={logQuestion} />}
       <C2CToast msg={toast} />
     </div>
   );

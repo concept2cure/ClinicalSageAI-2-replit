@@ -162,3 +162,116 @@ describe('CmChange — a simulated change collides with open agency questions', 
     expect(screen.queryByTestId('cmc-corr-notice')).toBeNull();
   });
 });
+
+/* ── The correspondence WRITE half, at render level ──
+   The board reads reg_questions; until the agency-questions routes nothing in
+   the product could write it. Pinned: Log question POSTs the form to
+   /api/cmc/agency-questions and the card reloads from the server (never a
+   locally invented row); Close confirms, PATCHes CLOSED, and reloads. */
+import { CmPathway } from '../surfaces/CmcModule';
+
+const CORR_BOARD = {
+  success: true,
+  data: {
+    portfolio: [],
+    sections: null,
+    kpis: { submissions: 0, rpiAverage: null, irOverdue: 1, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
+    correspondence: [
+      { id: 9, question: 'Clarify the shelf-life claim.', sectionRef: '3.2.P.8.1', priority: 'medium', severity: 'MAJOR', status: 'OPEN', region: 'FDA', dueDate: '2026-09-03', overdue: false, assignedTo: null },
+    ],
+    meta: { projectId: null, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: 'now' },
+  },
+};
+
+describe('CmPathway — logging and closing agency questions', () => {
+  beforeEach(() => {
+    apiRequest.mockReset();
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  it('Log question POSTs the form and reloads the card from the server', async () => {
+    const posts: Array<{ url: string; body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'POST' && url === '/api/cmc/agency-questions') {
+        posts.push({ url, body });
+        return res({ success: true, data: { id: 10, sectionRef: '3.2.S.2' } }, 201);
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByRole('button', { name: /Log question/ }));
+    fireEvent.change(await screen.findByLabelText(/Question, as received/), {
+      target: { value: 'Justify the scale-up comparability approach.' },
+    });
+    fireEvent.change(screen.getByLabelText(/CTD section/), { target: { value: '3.2.S.2' } });
+    // The dialog's submit shares its label with the card-header opener — the
+    // dialog renders after it, so the LAST match is the submit.
+    const submits = screen.getAllByRole('button', { name: /^Log question$/ });
+    fireEvent.click(submits[submits.length - 1]);
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0].body).toMatchObject({
+      questionText: 'Justify the scale-up comparability approach.',
+      sectionReference: '3.2.S.2',
+      priority: 'medium',
+    });
+    // Confirmed + reloaded from the server, not appended locally.
+    await screen.findByText(/Agency question logged · §3\.2\.S\.2/);
+    const boardReads = apiRequest.mock.calls.filter(
+      (c) => c[0] === 'GET' && c[1] === '/api/cmc/module3-board',
+    );
+    expect(boardReads.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('Close confirms first, PATCHes CLOSED, and reloads', async () => {
+    const patches: Array<{ url: string; body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ url, body });
+        return res({ success: true, data: { id: 9, status: 'CLOSED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle(/Close this question/));
+    // Nothing PATCHed yet — the confirm is on screen.
+    expect(patches).toHaveLength(0);
+    await screen.findByText('Close this question?');
+    fireEvent.click(screen.getByRole('button', { name: /Close$/ }));
+
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'CLOSED' });
+    await screen.findByText(/Question closed · §3\.2\.P\.8\.1/);
+  });
+
+  it('a refused log says so and records nothing locally', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url === '/api/cmc/agency-questions') {
+        return res({ success: false, error: 'The agency question could not be recorded.' }, 500);
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    fireEvent.click(screen.getByRole('button', { name: /Log question/ }));
+    fireEvent.change(await screen.findByLabelText(/Question, as received/), {
+      target: { value: 'Doomed.' },
+    });
+    const submits = screen.getAllByRole('button', { name: /^Log question$/ });
+    fireEvent.click(submits[submits.length - 1]);
+
+    await screen.findByText(/Couldn’t log the question/);
+    // Still exactly the one server row on screen.
+    expect(screen.getAllByText('Clarify the shelf-life claim.')).toHaveLength(1);
+  });
+});

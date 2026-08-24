@@ -22,6 +22,7 @@ import cmcModule3AutoDraftRoutes from '../api/cmc/module3AutoDraftRoutes';
 import cmcCollaborationRoutes from '../api/cmc/collaborationRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
 import cmcModule3BoardRoutes from '../routes/cmc-module3-board.routes';
+import cmcAgencyQuestionRoutes from '../routes/cmc-agency-questions.routes';
 import aiAssistanceRoutes, { setAIService } from '../routes/ai-assistance';
 import controlPlaneRouter from '../src/routes/control-plane.router';
 import pmSettingsRouter from '../src/routes/pm-settings.router';
@@ -84,6 +85,9 @@ export function registerCoreRoutes({
     app.use('/api/cmc/documents', cmcDocumentRoutes);
     // Module 3 board — portfolio + governed section read-model for the ui-v2 cmc surface.
     app.use('/api/cmc/module3-board', authenticateToken, cmcModule3BoardRoutes());
+    // Agency questions — the org-scoped WRITE half of the correspondence loop
+    // the board reads (log a question, triage status/assignee/due date).
+    app.use('/api/cmc/agency-questions', authenticateToken, cmcAgencyQuestionRoutes());
     // /api/cmc/dashboard removed — backed by Prisma which was excised in
     // 066acdb. Route file (cmc-dashboard-prisma.ts) had zero callers.
     console.log('✅ CMC Module API routes mounted');
