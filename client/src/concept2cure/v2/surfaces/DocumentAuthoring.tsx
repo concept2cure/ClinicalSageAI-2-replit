@@ -80,6 +80,7 @@ import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
+import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { useAuth } from '@/services/portal/authService';
@@ -782,8 +783,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
-    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | null
+    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | 'exports' | null
   >('ana');
+  /* Bumped after a save or an export so the Exports rail re-reads. A save
+     changes the live content hash, which is exactly what its verdict compares
+     against — a rail left stale would keep saying "matches the last export"
+     about text that no longer matches it. */
+  const [exportsEpoch, setExportsEpoch] = useState(0);
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -1691,6 +1697,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
         if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
+        /* A save changes the document's content hash, which is precisely what
+           the Exports rail compares against the last export. Unconditional:
+           the rail re-reads on mount, so bumping while it is closed simply
+           means it opens on the truth rather than on a cached verdict. */
+        setExportsEpoch(e => e + 1);
       } finally {
         setSaving(false);
       }
@@ -1813,6 +1824,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         // the canvas on the new truth rather than leaving a stale buffer.
         setContentEpoch(e => e + 1);
         setEditorDirty(false);
+        setExportsEpoch(e => e + 1);
         fireToast('Section reverted to the selected revision.');
         void loadHistory(activeSection.id);
       } catch (e) {
@@ -2159,6 +2171,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       );
       setContentEpoch(e => e + 1);
       setEditorDirty(false);
+      setExportsEpoch(e => e + 1);
       /* The server's own count, not a claim of correctness: how much of the
          saved text is a verified quote from a source, and how much is recorded
          as author-original. Both numbers are the record, so both are said —
@@ -2440,6 +2453,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     requestLeave({ kind: 'section', id: s.id })
                   );
               }}
+              /* A successful export re-baselines this document, so the Exports
+                 rail's "changed since the last export" verdict is now stale. */
+              onExported={() => setExportsEpoch(e => e + 1)}
             />
             {/* Section / Document. An author writes a section but SHIPS a
                 document, and until now the whole document was never on screen
@@ -2529,6 +2545,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               data-active={rail === 'audit' || undefined}
             >
               {I.activity} Audit
+            </button>
+            {/* Every export writes an authoring_export_history row — actor,
+                time, format, and the document's content hash at that moment.
+                Three endpoints read that table and none had a caller, so the
+                product could hand someone a Word file and never tell them it
+                had gone out of date. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'exports' ? null : 'exports')}
+              data-active={rail === 'exports' || undefined}
+              data-testid="exports-rail-open"
+            >
+              {I.fileDown} Exports
             </button>
             <button
               className="btn primary"
@@ -3359,6 +3389,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         <aside className="ed-comments">
           <div className="ed-comments-h">Electronic signatures</div>
           <AuthoringSignatures docId={activeDocId} />
+        </aside>
+      )}
+
+      {/* ── Right: what left this document, and whether it is still current ──
+          Two drifts, reported separately because they answer different
+          questions: the section text against the last export's content hash,
+          and the citations added since that export. A single "out of date"
+          badge would have merged them. */}
+      {rail === 'exports' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h">Exports{activeDoc ? ` · ${activeDoc.title}` : ''}</div>
+          <AuthoringExports docId={activeDocId} refreshKey={exportsEpoch} />
         </aside>
       )}
 
