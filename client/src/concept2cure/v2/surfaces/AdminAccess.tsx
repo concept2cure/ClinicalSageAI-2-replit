@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
@@ -224,6 +225,55 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
   const kv = (n: number) => (ready ? String(n) : '--');
 
   const ask = (t: string) => onAsk(t);
+
+  /* WHAT ANA SEES HERE. Aggregates only: a per-member MFA/SSO list is a target
+     list, so who-lacks-MFA is published as a count and never as names. No
+     emails, no grants, no role scopes, no key ids/scopes/owners, no audit
+     hashes, no SSO domains, no setting values. roleFilter is dead state
+     (nothing sets it) and is not published. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'Admin and access is still loading; the KPI counts read "--" and nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The admin read-model could not be read, or this account lacks organization-admin access — a failed read, not an organization with no administrators.',
+        availableActions: ['Retry the admin read as an organization admin'],
+      };
+    }
+    if (!hasData) {
+      return {
+        summary:
+          'This organization has no members, roles or keys to administer yet — a real empty, not a failure; they appear here as soon as they exist.',
+      };
+    }
+    const tabLabel = TABS.find((t) => t.id === tab)?.label ?? tab;
+    return {
+      summary:
+        `Admin and access, on the "${tabLabel}" tab: ${allMembers.length} member(s) (${activeMembers} active, ` +
+        `${mfaMembers} MFA-enrolled), ${roles.length} role(s), ${apiKeys.length} API key(s), ` +
+        `${audit.length} admin audit entry(ies) shown. SSO is ${sso ? 'configured' : 'not reported'}.`,
+      facts: {
+        tab,
+        memberCount: allMembers.length,
+        activeMembers,
+        mfaMembers,
+        roleCount: roles.length,
+        apiKeyCount: apiKeys.length,
+        auditEntryCount: audit.length,
+        ssoConfigured: sso !== null,
+        scimEnabled: sso?.scim?.enabled ?? null,
+        stateFilter,
+        aMemberIsSelected: member != null,
+      },
+      availableActions: [
+        'Inviting a member, granting program access, editing role scopes, revoking an API key and changing org settings each capture a reason and emit a Part 11 audit entry — administrator acts, proposed only in conversation',
+        'Switch between the Members, Roles + scopes, SSO + provisioning, API keys and Settings tabs, or filter members by state (all / active / invited / disabled)',
+      ],
+    };
+  }, [loading, error, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
+  usePublishSurfaceContext('admin-console', anaContext);
 
   return (
     <div className="adm-access">

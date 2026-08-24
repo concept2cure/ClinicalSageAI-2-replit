@@ -30,6 +30,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   PY_ROLES, PY_STATUS, PY_RISK,
@@ -395,6 +396,104 @@ export function PyramidShell(_props: SurfaceViewProps) {
   const goTask = (id: string) => setOpenTask(id);
   const openObj = openTask ? tasks.find(t => t.id === openTask) ?? null : null;
   const activeType = typesState.rows.find(t => t.id === type);
+
+  /* WHAT ANA SEES HERE — published above the type-picker early return so one
+     call covers every branch. */
+  const anaContext = useMemo(() => {
+    const actions = [
+      'Pick a submission type; switch dashboard/work-breakdown/analytics/global tabs; focus a phase; open a task',
+      'Changing a task status is a persisted, org-scoped write — AnA proposes it in conversation, never through screen controls.',
+    ];
+    if (!type) {
+      if (typesState.loading) {
+        return { summary: 'Submission pyramid: no submission type picked yet — the type list is still loading.' };
+      }
+      if (typesState.error) {
+        return {
+          summary:
+            'Submission pyramid: no submission type picked yet — the submission types could not be read. A failed read, not an empty catalog.',
+        };
+      }
+      if (typesState.empty) {
+        return {
+          summary:
+            'Submission pyramid: no submission type picked yet — the engine returned no submission types to pick from.',
+        };
+      }
+      return {
+        summary: `Submission pyramid: no submission type picked yet — ${typesState.rows.length} type(s) to pick from.`,
+        facts: { typeCount: typesState.rows.length },
+        availableActions: actions,
+      };
+    }
+    // A refused status write is echoed in the surface's own wording, not swallowed.
+    const refusal = statusErr ? ` ${statusErr}` : '';
+    if (tab === 'global') {
+      if (globalsState.loading) {
+        return { summary: `Submission pyramid (${type}), global tab: global submissions are still loading.${refusal}` };
+      }
+      if (globalsState.error) {
+        return {
+          summary: `Submission pyramid (${type}), global tab: the global-pyramid configurations could not be read — a failed read, not an empty catalog.${refusal}`,
+        };
+      }
+      if (globalsState.empty) {
+        return {
+          summary: `Submission pyramid (${type}), global tab: the engine returned no global pyramid configurations.${refusal}`,
+        };
+      }
+      return {
+        summary: `Submission pyramid (${type}), global tab: ${globalsState.rows.length} international agency configuration(s).${refusal}`,
+        facts: { type, tab, globalCount: globalsState.rows.length },
+        availableActions: actions,
+      };
+    }
+    if (pyrState.loading) {
+      return { summary: `Submission pyramid: the ${type} pyramid is still loading.${refusal}` };
+    }
+    if (pyrState.error) {
+      return {
+        summary: `Submission pyramid: the ${type} pyramid could not be loaded — the engine did not return its work breakdown. A failed read, not an empty pyramid.${refusal}`,
+      };
+    }
+    const merged: PyPyramid | null = pyrState.data ? { ...pyrState.data, tasks } : null;
+    if (!merged || pyrState.empty) {
+      return {
+        summary: `Submission pyramid: the engine has no work-breakdown definition for ${type} yet.${refusal}`,
+      };
+    }
+    const prog = pyProgress(merged);
+    // Recorded progress merges from a SECOND read (progressState); when that
+    // read is absent or failed, say so rather than asserting nothing is done.
+    const progressRead = progressState.data != null;
+    return {
+      summary:
+        `Submission pyramid ${type}, ${tab} tab: ${prog.pct}% complete — ${prog.completed}/${prog.total} tasks done, ` +
+        `critical path ${prog.criticalPathPct}%, ${prog.hoursRemaining}h remaining.` +
+        (progressRead ? '' : ' Recorded progress may not have been read — completion reflects only what was readable.') +
+        refusal,
+      facts: {
+        type,
+        tab,
+        progressPct: prog.pct,
+        tasksCompleted: prog.completed,
+        tasksTotal: prog.total,
+        criticalPathPct: prog.criticalPathPct,
+        hoursRemaining: prog.hoursRemaining,
+        ...(focusPhase ? { focusPhase } : {}),
+        ...(openTask ? { openTask } : {}),
+        ...(progressRead ? {} : { recordedProgressRead: false }),
+      },
+      availableActions: actions,
+    };
+  }, [
+    type, tab, statusErr,
+    typesState.loading, typesState.error, typesState.empty, typesState.rows,
+    globalsState.loading, globalsState.error, globalsState.empty, globalsState.rows,
+    pyrState.loading, pyrState.error, pyrState.empty, pyrState.data,
+    tasks, progressState.data, focusPhase, openTask,
+  ]);
+  usePublishSurfaceContext('pyramid', anaContext);
 
   // ── Entry: submission type selector (four states) ──
   if (!type) {

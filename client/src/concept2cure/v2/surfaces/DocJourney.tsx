@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -290,6 +291,65 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   const inProgress = stages.find((s) => s.active);
   const currentStage = inProgress?.label ?? (total > 0 ? 'Complete' : '—');
   const headWhen = (inProgress ?? stages[stages.length - 1])?.when || '—';
+
+  /* WHAT ANA SEES HERE. Branches mirror the render; a failed read is a
+     failure, not an empty journey. A '—' the screen shows for an unrecorded
+     value is published as absent, not as a value; the store carries no
+     sponsor, so none is ever synthesized. Read-only surface — the actions must
+     not imply editing here. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'Document journey — loading the document lifecycle; nothing is on screen yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'Document journey — the document lifecycle did not load, so no stages are on screen — a failed read, not an empty journey.',
+      };
+    }
+    if (live.empty || total === 0) {
+      return { summary: 'Document journey — no document journey recorded yet; nothing authored in this workspace has a lifecycle to show.' };
+    }
+    const d = stage?.doc;
+    const docFacts = {
+      ...(d?.title ? { title: d.title } : {}),
+      ...(d?.module ? { module: d.module } : {}),
+      ...(d?.productCode ? { productCode: d.productCode } : {}),
+      ...(d?.version ? { version: d.version } : {}),
+    };
+    return {
+      summary:
+        'Document journey — ' + doneCount + ' of ' + total + ' lifecycle stage(s) recorded, current stage ' + currentStage
+        + (currentVer !== '—' ? ' at v' + currentVer : '')
+        + (stage ? '; viewing ‘' + stage.label + '’' : '')
+        + '. Read-only reconstruction of the real audit trail.',
+      facts: {
+        stagesRecorded: doneCount,
+        stagesTotal: total,
+        ...(currentVer !== '—' ? { currentVersion: currentVer } : {}),
+        currentStage,
+        ...(headWhen !== '—' ? { lastUpdate: headWhen } : {}),
+        ...(stage
+          ? {
+              activeStage: {
+                id: stage.id,
+                label: stage.label,
+                ...(stage.ver && stage.ver !== '—' ? { ver: stage.ver } : {}),
+                ...(stage.when ? { when: stage.when } : {}),
+                ...(stage.who ? { who: stage.who } : {}),
+              },
+            }
+          : {}),
+        ...(Object.keys(docFacts).length ? { document: docFacts } : {}),
+      },
+      availableActions: [
+        'Select a stage on the rail to view its recorded snapshot',
+        'This surface is a read-only reconstruction of the audit trail — nothing on it edits the document',
+        '‘Open in editor’ exists as navigation to Document Authoring, where changes are made',
+      ],
+    };
+  }, [live.loading, live.error, live.empty, total, doneCount, currentVer, currentStage, headWhen, stage]);
+  usePublishSurfaceContext('doc-journey', anaContext);
 
   return (
     <div className="reg-wrap dj">

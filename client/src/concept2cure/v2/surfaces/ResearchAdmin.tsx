@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -92,12 +93,21 @@ function labelize(s: string): string {
 
 /* ════ CITI training matrix (REAL — GET /api/research-admin) ════ */
 
-function Training() {
+interface TrainingProps {
+  /** The live read's state, lifted to ResearchAdmin (which owns the one AnA
+   *  publisher slot) and passed down unchanged. */
+  personnel: CitiPerson[];
+  loading: boolean;
+  error?: string;
+  empty: boolean;
+}
+
+function Training({ personnel, loading, error, empty }: TrainingProps) {
   // Real org personnel × CITI training matrix. GET /api/research-admin returns
-  // { id, name, role, cells } per person; useLiveRows unwraps the { data }
-  // envelope. No fixture fallback — real rows, an honest empty, or an honest
-  // error (403 without org context, or an unprovisioned store).
-  const { rows: personnel, loading, error, empty } = useLiveRows<CitiPerson>('/api/research-admin');
+  // { id, name, role, cells } per person; useLiveRows (called in ResearchAdmin)
+  // unwraps the { data } envelope. No fixture fallback — real rows, an honest
+  // empty, or an honest error (403 without org context, or an unprovisioned
+  // store).
   const cellTone: Record<string, string> = { current: 'ok', expiring: 'warn', expired: 'err', missing: 'err', 'n/a': 'idle' };
 
   // "Expiring soon" is a deterministic projection of the live matrix: every
@@ -213,6 +223,70 @@ function NotYetConnected({ icon, title, hint }: { icon?: React.ReactNode; title:
 
 export function ResearchAdmin({ onAsk }: SurfaceViewProps) {
   const [sec, setSec] = useState('committees');
+  // Lifted from Training so the single publisher below can see the read's
+  // state; Training renders from these props and keeps its early returns.
+  const training = useLiveRows<CitiPerson>('/api/research-admin');
+
+  /* WHAT ANA SEES HERE. Four of the five sections are NOT connected — said
+     plainly, because this surface's own Ask-AnA button invites questions about
+     committees the workspace does not have. Training publishes aggregates only:
+     a named person paired with a compliance status is an individually-
+     attributable finding, so names never travel. */
+  const anaContext = useMemo(() => {
+    const label = SECTIONS.find((s) => s.id === sec)?.label ?? sec;
+    const facts: Record<string, unknown> = {
+      openSection: sec,
+      connectedSections: ['training'],
+      unconnectedSections: ['committees', 'coverage', 'grants', 'portfolio'],
+    };
+    let summary: string;
+    if (sec !== 'training') {
+      summary =
+        `Research administration, ${label} section. This capability is not connected to the workspace — ` +
+        'no committee/coverage/grant/portfolio data is on screen and none exists here to report.';
+    } else if (training.loading) {
+      summary = 'Research administration, Training (CITI) section — the training matrix is still loading.';
+    } else if (training.error) {
+      facts.trainingUnavailable = training.error;
+      summary =
+        'Research administration, Training (CITI) section — the training register could not be read. A failed read, not an organization with no training records.';
+    } else if (training.empty) {
+      facts.personnelCount = 0;
+      facts.expiringCount = 0;
+      summary =
+        'Research administration, Training (CITI) section — no CITI training records yet; personnel appear once the register is populated.';
+    } else {
+      // Aggregates over the rendered 5-column matrix; expiringCount matches the
+      // "Expiring soon" panel (every expiring cell in the live vectors).
+      const rollup: Record<string, number> = { current: 0, expiring: 0, expired: 0, missing: 0, 'n/a': 0 };
+      for (const p of training.rows) {
+        for (let i = 0; i < CITI_TRAININGS.length; i++) {
+          const c = (p.cells || [])[i] ?? 'n/a';
+          if (c in rollup) rollup[c] += 1;
+        }
+      }
+      const expiringCount = training.rows.reduce(
+        (n, p) => n + (p.cells || []).filter((c) => c === 'expiring').length,
+        0,
+      );
+      facts.personnelCount = training.rows.length;
+      facts.expiringCount = expiringCount;
+      facts.statusRollup = rollup;
+      summary =
+        `Research administration, Training (CITI) section — ${training.rows.length} personnel across ${CITI_TRAININGS.length} CITI modules, ` +
+        (expiringCount === 0 ? 'nothing expiring.' : `${expiringCount} module assignment(s) marked expiring.`);
+    }
+    return {
+      summary,
+      facts,
+      availableActions: [
+        'Switch section: Committees, Coverage analysis, Grant finder, Training (CITI), Portfolio',
+        'Only the Training (CITI) section is connected to live workspace data; the other four have governed backends not yet wired to this surface',
+      ],
+    };
+  }, [sec, training.loading, training.error, training.empty, training.rows]);
+  usePublishSurfaceContext('research-admin', anaContext);
+
   const body = (() => {
     switch (sec) {
       case 'coverage':
@@ -222,7 +296,14 @@ export function ResearchAdmin({ onAsk }: SurfaceViewProps) {
         return <NotYetConnected icon={I.sparkles} title="Grant finder isn't connected yet"
           hint="Your organization's funding profile and ranked funding opportunities appear here once the grant finder is connected to the workspace." />;
       case 'training':
-        return <Training />;
+        return (
+          <Training
+            personnel={training.rows}
+            loading={training.loading}
+            error={training.error}
+            empty={training.empty}
+          />
+        );
       case 'portfolio':
         return <NotYetConnected icon={I.barChart} title="Portfolio analytics isn't connected yet"
           hint="Continuing-review expiration analytics across the committee portfolio appear here once this organization's portfolio is connected to the workspace." />;
