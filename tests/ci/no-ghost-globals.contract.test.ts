@@ -117,11 +117,18 @@ const ELIMINATED = ['C2C_API', 'C2C_SIGNED'];
  * Shrink the list when a channel is ported; never extend it.
  */
 const FENCED: Record<string, string[]> = {
-  C2C_AUTHORING: [
-    'client/src/concept2cure/v2/surfaces/AnaVerbs.tsx',
-    'client/src/concept2cure/v2/surfaces/BatchDraft.tsx',
-  ],
-  __C2C_DOC_ID: ['client/src/concept2cure/v2/surfaces/BatchDraft.tsx'],
+  /* BatchDraft left this fence. Its `window.C2C_AUTHORING.batchDraft` branch
+     was the offline path that FABRICATED regulatory prose when the drafting
+     service was unreachable — and the channel is assigned nowhere in this
+     repository, so that branch was dead in every build while still being the
+     second caller of the fabricator. Both went. The file's remaining mentions
+     are comments recording that, which `codeOf` strips.
+
+     A fence must shrink when a reader leaves, or it stops describing anything:
+     the entry that outlives its reader silently re-authorises the next one. */
+  C2C_AUTHORING: ['client/src/concept2cure/v2/surfaces/AnaVerbs.tsx'],
+  /* `__C2C_DOC_ID` has no readers at all now, so it is not fenced — it is
+     GONE, and `ghosts that stay gone` below is what holds it there. */
 };
 
 /**
@@ -264,12 +271,26 @@ describe('fenced ghosts cannot spread', () => {
     expect(writers).toEqual([]);
   });
 
-  it('BatchDraft still says out loud that these are unported', () => {
-    // The fence is only defensible while the file is honest about degrading.
-    const raw = fs.readFileSync(
-      path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/BatchDraft.tsx'), 'utf8',
+  /* Was: "BatchDraft still says out loud that these are unported", asserting
+     the file carried a disclosure sentence. That assertion was correct while
+     BatchDraft READ a ghost it could not provide. It no longer does, so the
+     sentence would now be a disclosure about nothing — and a gate satisfied by
+     a comment is satisfied by deleting the code and keeping the comment.
+
+     What replaces it is the stronger statement the change actually earned. */
+  it('BatchDraft reads no ghost channel at all', () => {
+    const code = codeOf(
+      path.join(REPO_ROOT, 'client/src/concept2cure/v2/surfaces/BatchDraft.tsx'),
     );
-    expect(raw).toMatch(/no typed provider yet|until those modules port/i);
+    for (const ghost of ['C2C_AUTHORING', '__C2C_DOC_ID']) {
+      expect(code, `BatchDraft is reading ${ghost} again`).not.toMatch(
+        new RegExp(`\\b${ghost}\\b`),
+      );
+    }
+  });
+
+  it('__C2C_DOC_ID is read nowhere, so it needs no fence', () => {
+    expect(readersOf('__C2C_DOC_ID')).toEqual([]);
   });
 });
 

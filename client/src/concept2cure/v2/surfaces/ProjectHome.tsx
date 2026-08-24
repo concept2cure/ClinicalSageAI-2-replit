@@ -1244,9 +1244,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
         </div>
-        <div className="pj-top-actions">
-          <button className="pj-icon" title="Project settings" onClick={() => onNav('projects')}>{I.more}</button>
-        </div>
+        {/* ── The ⋯ button called "Project settings" is gone ─────────────────
+            Its handler was `onNav('projects')`: it did not open settings, it
+            threw the user out of the project workspace they were in and back
+            to the all-projects list — the exact opposite of what its tooltip
+            promised, and a duplicate of the "All projects" control two rows
+            above it.
+
+            It is removed rather than relabelled or rewired because there is
+            nothing behind it: `shared/constants/ui-surface-registry.ts` has no
+            project-settings surface, and `server/routes/c2c/projects.ts`
+            exposes no PATCH/PUT for a regulatory program at all (only POST /,
+            POST /:id/evidence and DELETE /:id/evidence/:evId). A project's
+            settings cannot be edited anywhere in the product today, so any
+            destination this button reached would be a second lie in place of
+            the first. When a settings surface and its governed write exist,
+            this is where the control belongs. */}
       </div>
 
       <StageTracker stage={stage} setStage={setStage} />
