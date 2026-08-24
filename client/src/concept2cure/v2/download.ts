@@ -73,3 +73,37 @@ export function downloadBlob(filename: string, blob: Blob): boolean {
 export function downloadText(filename: string, text: string, mime = 'text/plain;charset=utf-8'): boolean {
   return downloadBlob(filename, new Blob([text], { type: mime }));
 }
+
+/**
+ * Serialise rows to RFC 4180 CSV.
+ *
+ * Four surfaces had written this same escape-and-join by hand
+ * (`.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')` joined on
+ * CRLF), which is correct — and correct four times is still four places for
+ * the fifth one to get it wrong. Every value is quoted unconditionally, so a
+ * comma, a quote or a newline inside a cell cannot break the row, and
+ * null/undefined render as empty rather than as the words "null"/"undefined".
+ */
+export function toCsv(headers: readonly string[], rows: ReadonlyArray<readonly unknown[]>): string {
+  const cell = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  return [headers, ...rows].map((line) => line.map(cell).join(',')).join('\r\n');
+}
+
+/** Build a CSV and hand it to the browser. */
+export function downloadCsv(
+  filename: string,
+  headers: readonly string[],
+  rows: ReadonlyArray<readonly unknown[]>,
+): boolean {
+  return downloadText(filename, toCsv(headers, rows), 'text/csv;charset=utf-8');
+}
+
+/**
+ * Download a base64 payload the server returned inline (the mdx export hooks'
+ * `{ data, mime_type, filename }` shape). Decoding lived in two byte-identical
+ * `triggerDownload` copies in sibling hooks.
+ */
+export function downloadBase64(filename: string, base64: string, mime: string): boolean {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  return downloadBlob(filename, new Blob([bytes], { type: mime }));
+}
