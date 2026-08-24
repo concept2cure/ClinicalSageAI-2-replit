@@ -284,6 +284,7 @@
 /* Threaded replies: indented under the head comment, joined by a rail line so
    a thread reads as one conversation, not adjacent guestbook entries. */
 .c2c-v2 .cmt-replies{margin:8px 0 2px 9px;padding-left:12px;border-left:2px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .cmt-resolution{font-size:11.5px;color:var(--text-400);margin:2px 0 4px;}
 .c2c-v2 .cmt-reply .cmt-meta{margin-bottom:3px;}
 
 /* The `.c2c-v2 .kanban` rule that stood here is deleted, not moved. Nothing in

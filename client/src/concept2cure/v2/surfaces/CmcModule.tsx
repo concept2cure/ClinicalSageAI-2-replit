@@ -201,6 +201,23 @@ const CMC_CHANGE_TYPES: CmcChangeType[] = [
   { id: 'packaging_change', label: 'Packaging change', risk: 'low' },
 ];
 
+/* The CTD sections each change type refiles. Type decides the sections; risk
+   only decides the filing category — a low-risk equipment change still rewrites
+   §3.2.S.2 / §3.2.P.3. Both spellings of each address are listed because the
+   correspondence store records both, exactly as CmCorrNotice's other callers
+   match them ('3.2.S.4' and the leaf-coded 'm3.2.S.4'). */
+const SECTIONS_FOR_CHANGE: Record<string, string[]> = {
+  api_supplier_change: ['3.2.S.2', 'm3.2.S.2'],
+  process_scale_up: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
+  excipient_replacement: ['3.2.P.1', '3.2.P.2', '3.2.P.4', 'm3.2.P.1', 'm3.2.P.2', 'm3.2.P.4'],
+  analytical_method_change: ['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5'],
+  facility_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
+  equipment_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
+  process_parameter_change: ['3.2.S.2', '3.2.P.3', 'm3.2.S.2', 'm3.2.P.3'],
+  specification_change: ['3.2.S.4', '3.2.P.5', 'm3.2.S.4', 'm3.2.P.5'],
+  packaging_change: ['3.2.P.7', 'm3.2.P.7'],
+};
+
 const CMC_MARKETS: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda', 'PMDA'], ['nmpa', 'NMPA'], ['health_canada', 'Health Canada'], ['uk_mhra', 'UK MHRA']];
 
 /* ── Inline helpers ──
@@ -326,13 +343,21 @@ function CmHead({ title, meta, ask, suggest, actions }: CmHeadProps) {
   );
 }
 
-function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; tone?: string }) {
-  return <div className="reg-kpi" data-tone={tone}><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div></div>;
+/* A KPI is a figure first; `onClick` makes it a door as well. The interactive
+   variant is a real <button> carrying the SAME class and children — the
+   .c2c-v2 button reset (app-v2.css) zeroes the chrome and .reg-kpi supplies
+   the identical box — so the tile looks the same, reads as a control to a
+   screen reader, and gains the focus ring. A tile with nothing behind it stays
+   a plain <div>: a clickable dead end is noise, not an affordance. */
+function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.ReactNode; s?: string; tone?: string; onClick?: () => void; title?: string }) {
+  const body = <><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div></>;
+  if (onClick) return <button type="button" className="reg-kpi" data-tone={tone} title={title} onClick={onClick}>{body}</button>;
+  return <div className="reg-kpi" data-tone={tone}>{body}</div>;
 }
 
 /* ═══════════ Overview -- LIVE portfolio + governed section approvals ═══════════ */
 
-function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   /* Live board -- GET /api/cmc/module3-board[?projectId]. useLiveData unwraps the
      { success, data } envelope, so `board.data` is the display payload directly:
      real portfolio + KPIs, an honest empty, or an honest error — never a fixture.
@@ -523,7 +548,26 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
               four numbers — submissions, RPI, overdue IRs, sections approved —
               in a sentence that also says which one to act on, and "sections
               approved" appears a third time in the build-state bar below.
-              Repeating a figure three times does not make it more true. */}
+              Repeating a figure three times does not make it more true.
+              The ONE tile that returns is IR overdue, and it returns as a
+              door, not a repeat: the questions behind the count live on the
+              Program records tab, so a positive count jumps there. At zero it
+              stays a plain figure, and over an empty portfolio it does not
+              render at all — "0 overdue" across no submissions is a claim
+              nothing has assessed. */}
+          {port.length > 0 && (
+            <div className="cm-kpis" style={{ gridTemplateColumns: 'minmax(150px, 240px)' }}>
+              <Kpi
+                l="IR overdue"
+                v={irOverdue}
+                tone={irOverdue ? 'err' : 'ok'}
+                onClick={irOverdue > 0
+                  ? () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway')
+                  : undefined}
+                title={irOverdue > 0 ? 'Open the agency correspondence — overdue first' : undefined}
+              />
+            </div>
+          )}
           {/* Section approvals first: it is the only content on this page a
               CMC lead can act on. The portfolio and build-state cards below
               are reference material, and reference material does not go
@@ -1690,7 +1734,7 @@ function filingPath(changeType: string, risk: string, mkt: string): string[] {
   return map[mkt] || ['Assess locally', 'Region rule not modelled'];
 }
 
-function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
   const [type, setType] = useState('api_supplier_change');
   const [markets, setMarkets] = useState(['fda', 'ema']);
   const [desc, setDesc] = useState('');
@@ -1700,6 +1744,10 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
   const ct = CMC_CHANGE_TYPES.find((c) => c.id === type)!;
   const simulate = () => { if (!desc.trim() || !markets.length) return; setResult({ type: ct, markets: [...markets], desc: desc.trim(), paths: markets.map((m) => ({ m, label: CMC_MARKETS.find((x) => x[0] === m)![1], path: filingPath(type, ct.risk, m) })) }); };
   const riskTone = ct.risk === 'high' ? 'err' : ct.risk === 'med' ? 'warn' : 'ok';
+  /* The sections the SIMULATED change refiles — keyed by the result's own type,
+     not the select's current value, so the signpost describes the assessment on
+     screen even after the form moves on. */
+  const collides = result ? SECTIONS_FOR_CHANGE[result.type.id] ?? [] : [];
 
   const memoMd = (r: CmcChangeResult) => {
     const compBy = r.type.risk === 'high' ? 'A prospective comparability protocol (ICH Q5E) with pre-defined acceptance criteria and side-by-side characterization of the pre- and post-change material is required before implementation.'
@@ -1773,6 +1821,16 @@ function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id: string
       <CmComparabilityStudies />
       {result && (
         <div className="cm-change-out">
+          {/* A change colliding with an open agency question is exactly what a
+              regulatory lead must see before implementing: the sections this
+              change refiles are the sections the agency is already asking
+              about, and refiling under an open question is a decision to make,
+              not an accident to discover. Same signpost, same rules as the
+              Specifications and Stability tabs — presence only; on a failed
+              read the Program-records card reports the failure. */}
+          {collides.length > 0 && (
+            <CmCorrNotice prefixes={collides} noun="the sections this change refiles" />
+          )}
           <div className="cm-doc">
             <div className="cm-doc-bar">
               <div><span className="cm-doc-kind">Regulatory Change Impact Assessment</span><span className="cm-doc-prov">SUPAC — ICH Q12 — draft</span></div>
@@ -2105,7 +2163,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
           <EmptyState
             icon={I.globe}
             title="Correspondence store not provisioned"
-            hint="The agency-question store (reg_questions) is not provisioned in this environment — nothing is shown because nothing could be read, not because nothing is open."
+            hint="The agency-question store is not provisioned in this environment — nothing is shown because nothing could be read, not because nothing is open."
           />
             </div>
           ) : corr.length === 0 ? (
@@ -2162,7 +2220,7 @@ function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id: strin
                       title="Create a task for this question"
                       onClick={() => cmcTask('Agency question ' + (c.sectionRef ? '§' + c.sectionRef : 'Module 3'))}
                     >
-                      {I.checkSquare} Task
+                      {I.checkSquare} Create task
                     </button>
                   </div>
                 </td>

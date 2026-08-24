@@ -176,6 +176,12 @@ interface AuthComment {
   /** Threaded replies — the server nests them under each top-level comment
    *  (GET /documents/:id/comments), oldest first. Absent on reply rows. */
   replies?: AuthComment[];
+  /** Resolution record — the server has captured all three since the store
+   *  shipped (PATCH /comments/:id), and a status chip alone is not a record:
+   *  the rail shows WHO resolved a thread, when, and their stated reason. */
+  resolved_by?: string | null;
+  resolved_at?: string | null;
+  resolution_note?: string | null;
 }
 
 /** Runtime guard over the JSONB the server returns verbatim. */
@@ -713,6 +719,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // and opposite facts.
   const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
   const [comments, setComments] = useState<AuthComment[]>([]);
+  const [commentsState, setCommentsState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [newComment, setNewComment] = useState('');
   /* The revision ledger's recomputed verdict — null until asked, 'error' on a
      failed read (which is a failure to CHECK, never a claim about the chain). */
@@ -1252,11 +1259,23 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     setRevisions(Array.isArray(body?.revisions) ? body!.revisions! : []);
   }, []);
 
+  /* Same contract as loadSources below: a failed read is an ERROR, never an
+     empty list. This loader used to discard `ok` and render every failure as
+     "No comments yet" — on a rail consulted to decide whether a document is
+     clear of open review threads before freezing it, that conflation is the
+     dangerous one. */
   const loadComments = useCallback(async (docId: string) => {
-    const { body } = await readJson<{ comments?: AuthComment[] }>(
+    setCommentsState('loading');
+    const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
       `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
-    setComments(Array.isArray(body?.comments) ? body!.comments! : []);
+    if (!ok || !body) {
+      setCommentsState('error');
+      setComments([]);
+      return;
+    }
+    setCommentsState('ready');
+    setComments(Array.isArray(body.comments) ? body.comments : []);
   }, []);
 
   /* ── The sources this section is drafted from ──
@@ -1614,7 +1633,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       });
       const json = await res.json().catch(() => null);
       if (res.status === 401) {
-        fireToast('Comment not posted — your session isn’t authenticated.', 'error');
+        fireToast('Comment not posted — your session isn’t authenticated. Sign in and retry.', 'error');
         return;
       }
       if (!res.ok) {
@@ -1653,6 +1672,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      nothing local changes until the server confirms. */
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  /* Resolve opens a small confirm with an OPTIONAL reason — the platform's
+     reason-for-change convention, kept optional here because resolving a
+     comment is not an edit to governed content. Whatever is stated is
+     recorded as the thread's resolution_note and shown with the record. */
+  const [resolveFor, setResolveFor] = useState<string | null>(null);
+  const [resolveNote, setResolveNote] = useState('');
   const addReply = useCallback(
     async (parent: AuthComment) => {
       if (!activeDocId || !replyText.trim() || !parent.section_id) return;
@@ -1664,7 +1689,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         );
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
-          fireToast('Reply not posted — your session isn’t authenticated.', 'error');
+          fireToast('Reply not posted — your session isn’t authenticated. Sign in and retry.', 'error');
           return;
         }
         if (!res.ok) {
@@ -1695,17 +1720,23 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      is never deleted by this: a resolved comment stays in the record with who
      resolved it; reopen is the honest undo. */
   const setCommentStatus = useCallback(
-    async (commentId: string, statusTo: 'resolved' | 'open') => {
+    async (commentId: string, statusTo: 'resolved' | 'open', note?: string) => {
       if (!activeDocId) return;
       try {
         const res = await apiRequest(
           'PATCH',
           `/api/authoring/comments/${encodeURIComponent(commentId)}`,
-          { status: statusTo }
+          {
+            status: statusTo,
+            // The server has kept resolution_note since the store shipped; the
+            // UI never sent one, so every resolution closed without a stated
+            // disposition. Optional — an empty note is not fabricated into one.
+            ...(statusTo === 'resolved' && note?.trim() ? { resolution_note: note.trim() } : {}),
+          }
         );
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
-          fireToast('Not changed — your session isn’t authenticated.', 'error');
+          fireToast('Not changed — your session isn’t authenticated. Sign in and retry.', 'error');
           return;
         }
         if (!res.ok) {
@@ -3118,11 +3149,27 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             </div>
           )}
           {comments.length === 0 ? (
-            <EmptyState
-              icon={I.checkCircle}
-              title="No comments yet"
-              hint="Review comments on this document appear here."
-            />
+            /* Three different facts, three different renders: still reading,
+               the read FAILED, and genuinely no comments. This rail used to
+               render every failure as "No comments yet" — on the panel a
+               reviewer consults before freezing a document, the most dangerous
+               conflation on the surface. */
+            commentsState === 'loading' ? (
+              <EmptyState icon={I.checkCircle} title="Loading comments…" busy />
+            ) : commentsState === 'error' ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn’t load this document’s comments"
+                hint="The document may have open review threads that did not load — this is a failed read, not an empty record. Reopen the rail to retry."
+              />
+            ) : (
+              <EmptyState
+                icon={I.checkCircle}
+                title="No comments yet"
+                hint="Comments on this document appear here. Add one above."
+              />
+            )
           ) : (
             comments.map(c => {
               const anchor = asTextRangeAnchor(c.anchor);
@@ -3172,12 +3219,53 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         className="nda-open"
                         style={{ marginLeft: 'auto' }}
                         title="Mark this comment resolved — recorded under your name; the thread stays in the record"
-                        onClick={() => void setCommentStatus(c.id, 'resolved')}
+                        onClick={() => {
+                          setResolveFor(c.id);
+                          setResolveNote('');
+                        }}
                       >
                         Resolve
                       </button>
                     )}
                   </div>
+                  {/* The resolution RECORD, not just a chip: who closed the
+                      thread, when, and their stated reason — the facts the
+                      server has kept all along and the rail never showed. */}
+                  {c.status === 'resolved' && (c.resolved_by || c.resolved_at) && (
+                    <div className="cmt-resolution">
+                      Resolved{c.resolved_by ? ` by ${c.resolved_by}` : ''}
+                      {c.resolved_at ? ` · ${relTime(c.resolved_at)}` : ''}
+                      {c.resolution_note ? <em> — “{c.resolution_note}”</em> : null}
+                    </div>
+                  )}
+                  {resolveFor === c.id && (
+                    <div style={{ margin: '4px 0 6px' }}>
+                      <textarea
+                        className="c2c-input"
+                        value={resolveNote}
+                        autoFocus
+                        onChange={e => setResolveNote(e.target.value)}
+                        placeholder="Reason for resolving (optional)"
+                        aria-label="Reason for resolving"
+                        style={{ width: '100%', minHeight: 40, resize: 'vertical', fontSize: 13 }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 4 }}>
+                        <button className="nda-open" onClick={() => setResolveFor(null)}>
+                          Cancel
+                        </button>
+                        <button
+                          className="btn primary"
+                          style={{ height: 26 }}
+                          onClick={() => {
+                            setResolveFor(null);
+                            void setCommentStatus(c.id, 'resolved', resolveNote);
+                          }}
+                        >
+                          Resolve
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {/* The quoted range this thread is anchored to, with a jump
                       into the canvas. An anchor whose text no longer exists is
                       reported as exactly that — never silently repointed. */}
