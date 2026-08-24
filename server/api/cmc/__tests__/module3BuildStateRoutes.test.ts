@@ -22,6 +22,8 @@ vi.mock('../../../services/cmc/resolve-cmc-artifact-project', () => ({
 }));
 
 const queries: Array<{ sql: string; params: unknown[] }> = [];
+/** Rows the grouped cmc_source_objects read returns ({sourceType, count}). */
+const sourceObjectRows: Array<{ sourceType: string; count: string }> = [];
 vi.mock('../../../db', () => ({
   getPool: () => ({
     query: async (sql: string, params: unknown[] = []) => {
@@ -35,6 +37,9 @@ vi.mock('../../../db', () => ({
           err.code = '22P02';
           throw err;
         }
+      }
+      if (sql.includes('FROM cmc_source_objects')) {
+        return { rows: sourceObjectRows };
       }
       return { rows: [] };
     },
@@ -118,5 +123,36 @@ describe('GET /build-state/:projectId — artifact spine resolution', () => {
     expect(res.body.data).toEqual([]);
     expect(res.body.artifactRegistry.state).toBe('unanchored');
     expect(queries.filter((q) => q.sql.includes('concept2cure_artifacts'))).toHaveLength(0);
+  });
+});
+
+describe('build-state derives its source rules from the composer (anti-drift)', () => {
+  beforeEach(() => {
+    resolveCmcArtifactProject.mockReset();
+    queries.length = 0;
+    sourceObjectRows.length = 0;
+  });
+
+  it('counts qc_result sources toward 3.2.S.4 and 3.2.P.5 — the drift the copied map had', async () => {
+    // The route used to carry its own copy of the section→source-type rules,
+    // and the copy lacked `qc_result` on S.4/P.5 while the composer counts it —
+    // so the build screen undercounted exactly the sections QC feeds. The map
+    // is imported from MODULE3_SECTION_RULES now; this pins the reunion.
+    resolveCmcArtifactProject.mockResolvedValue({
+      state: 'unanchored',
+      artifactProjectId: null,
+      detail: 'This program has no PM-spine anchor.',
+    });
+    sourceObjectRows.push({ sourceType: 'qc_result', count: '2' });
+
+    const res = await request(makeApp()).get(`/api/cmc/module3-os/build-state/${PROGRAM_UUID}`);
+
+    expect(res.status).toBe(200);
+    const s4 = res.body.data.sections.find((s: any) => s.sectionKey === '3.2.S.4');
+    expect(s4.sourceTypes).toContain('qc_result');
+    expect(s4.sourceObjectCount).toBe(2);
+    const p5 = res.body.data.sections.find((s: any) => s.sectionKey === '3.2.P.5');
+    expect(p5.sourceTypes).toContain('qc_result');
+    expect(p5.sourceObjectCount).toBeGreaterThanOrEqual(2);
   });
 });
