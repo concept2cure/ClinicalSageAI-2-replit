@@ -30,7 +30,26 @@
 -- in the v2 surface view map, both are reachable today by command palette, deep
 -- link, the medtech segment focus list and the medtech quick actions, and both
 -- are backed by live org-scoped stores with their own read and write routes.
--- Neither has ever had a row in `available_modules`.
+--
+-- CORRECTION (prose only — no statement below changed). This header originally
+-- read "Neither has ever had a row in available_modules." That was wrong:
+-- migrations/20260814j_catalog_missing_product_surfaces.sql seeded both, in the
+-- ROOT migrations/ tree rather than db/migrations/, under different names
+-- ('Design controls', 'Human factors'), a different category ('Device &
+-- diagnostics' rather than 'Evidence & data') and different sort orders
+-- (210/220 rather than 255/305) — and, being from before packaging was decided,
+-- with `{"tiers": []}`, which is what actually made them unsellable.
+--
+-- So this file RE-KEYS two existing rows rather than adding two missing ones.
+-- Nothing about the SQL needs to change for that: the INSERT is an upsert whose
+-- DO UPDATE sets every column, C2C_MIGRATION_FILES orders this file after
+-- 20260814j, and the DO block below asserts the end state — so the definition
+-- here wins deterministically on every apply. The end state was always right;
+-- only this description of how it was reached was not.
+--
+-- The reconciliation gate (moduleCatalogReconciliation.test.ts) records the
+-- re-key in its KNOWN_RESEEDS list, so this pair is acknowledged and any NEW
+-- accidental double-seed still fails.
 --
 -- A missing catalog row is not a cosmetic gap. It removes all three of the
 -- things a catalog row is for, in three different layers:

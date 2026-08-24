@@ -29,6 +29,7 @@ import {
 import type { GlobalRiCatalog, EnrichedGlobalRiCapability } from '@shared/types/global-ri-api';
 import { consumeNavParams } from '../navParams';
 import '../styles/surfaces-v2.css';
+import { useChatUpload } from '../../hooks/useChatUpload';
 
 /* ════════════ Home — AnA-first landing (centered composer) ════════════ */
 
@@ -118,6 +119,18 @@ export function Home({
   const fileRef = React.useRef<HTMLInputElement>(null);
   const ctx = getSegmentContext(segment);
 
+  /* ── "Attach file" opened a picker into nothing ────────────────────────────
+     The `<input type="file">` below carried no onChange, so on the product's
+     FRONT PAGE a user pressed +, chose "Attach file", picked a document in the
+     OS dialog — and nothing was read, uploaded or shown. The picker closing
+     was the entire feedback.
+
+     `useChatUpload` → POST /api/chat/upload is the same path the shell
+     composer and ConversationThread use; this composer just never called it.
+     Attached files ride along to the thread this composer seeds, so the
+     document the user attached is the one the conversation opens on. */
+  const upload = useChatUpload();
+
   /* Time-aware greeting — the only warmth in the product, once. */
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -126,7 +139,16 @@ export function Home({
 
   const send = () => {
     const t = draft.trim();
-    if (!t) return;
+    /* Attachments alone are a legitimate turn ("read this"), and a file still
+       being read is not ready to be named — the same rule ConversationThread's
+       composer applies. Only files the SERVER confirmed it read are mentioned;
+       a failed upload keeps its chip and its error and is never described as
+       attached. */
+    if (upload.uploading) return;
+    const ready = upload.attachments.filter((a) => a.status === 'ready').map((a) => a.name);
+    if (!t && ready.length === 0) return;
+    const line = ready.length ? `Attached: ${ready.join(', ')}` : '';
+    const seedText = t && line ? `${t}\n\n${line}` : t || line;
     /*
      * Seed the thread, do not `onAsk`.
      *
@@ -145,8 +167,9 @@ export function Home({
      * already uses (ProjectHome.tsx:570). The seed is sent on mount, into the
      * thread the user is actually looking at.
      */
-    (window as any).C2C_CONVO = { id: 'new', seed: t };
+    (window as any).C2C_CONVO = { id: 'new', seed: seedText };
     setDraft('');
+    upload.clear();
     onNav('conversation-thread');
   };
   /* Open the wizard, not the (empty) portfolio behind it. Projects.tsx:675
@@ -218,7 +241,33 @@ export function Home({
             multiple
             accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.xml"
             className="ana-hidden-input"
+            aria-label="Attach files for AnA to read"
+            onChange={(e) => {
+              upload.addFiles(e.target.files);
+              // Clear the input so re-picking the SAME file fires change again.
+              e.target.value = '';
+            }}
           />
+          {upload.attachments.length > 0 && (
+            <div className="landing-atts">
+              {upload.attachments.map((a) => (
+                <span key={a.id} className="landing-att" data-status={a.status}>
+                  {I.paperclip} {a.name}
+                  {a.status === 'uploading' && <em> · reading…</em>}
+                  {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
+                  <button
+                    type="button"
+                    className="landing-att-x"
+                    aria-label={`Remove ${a.name}`}
+                    onClick={() => upload.removeAttachment(a.id)}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <span className="sr-only" aria-live="polite">{upload.statusMessage}</span>
           <div className="landing-crow">
             <div className="landing-crow-l">
               <button
@@ -289,7 +338,7 @@ export function Home({
               <button
                 type="button"
                 className="landing-send"
-                disabled={!draft.trim()}
+                disabled={upload.uploading || (!draft.trim() && !upload.attachments.some((a) => a.status === 'ready'))}
                 onClick={send}
                 title="Send"
               >

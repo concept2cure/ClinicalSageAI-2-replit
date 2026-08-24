@@ -94,3 +94,50 @@ export function restoreShellProject(): ShellProject | null {
     return null;
   }
 }
+
+/**
+ * The open program, or null. The READ half of this channel.
+ *
+ * `restoreShellProject` rehydrates at boot; this is what a surface calls on
+ * every render to ask "which program is the user looking at". It was being
+ * hand-rolled per surface (IndLifecycle had its own `readShellProject`), which
+ * is how six surfaces ended up not asking at all and hardcoding a program name
+ * into their AnA prompts instead.
+ */
+export function readShellProject(): ShellProject | null {
+  try {
+    const p = readGlobal();
+    return p && p.id != null && String(p.id).trim() !== '' ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * How to NAME the open program to the assistant, or null when none is open.
+ *
+ * ── Why this exists ──────────────────────────────────────────────────────────
+ * Six surfaces sent AnA a prompt with a program name spliced into it as a
+ * string literal — `'Scan regulatory changes affecting the BX-204 portfolio'`,
+ * `'Build a US + EU market-access plan for the BX-204 CGM'`, `'Refine the
+ * ${q.id} response … for BX-204'`. BX-204 is a demo fixture. Every real
+ * customer pressing those buttons asked the assistant about a product they do
+ * not own, and got an answer about it.
+ *
+ * A prompt cannot fall back to a placeholder here: an answer about the wrong
+ * program is worse than an answer that had to ask which one. Callers therefore
+ * get null and phrase the request without a program, or disable the control.
+ *
+ * Prefers the human-facing identifiers in the order a person would say them,
+ * and never returns the bare UUID — "affecting the 0f3c…-a1 portfolio" is not
+ * a question anyone asked.
+ */
+export function shellProgramName(): string | null {
+  const p = readShellProject();
+  if (!p) return null;
+  for (const v of [p.product, p.code, p.title]) {
+    const s = String(v ?? '').trim();
+    if (s) return s;
+  }
+  return null;
+}

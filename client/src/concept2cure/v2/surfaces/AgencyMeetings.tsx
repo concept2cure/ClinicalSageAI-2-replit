@@ -9,6 +9,8 @@ import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
+import { shellProgramName } from '../shellProject';
+import { useLiveRows } from '../dataConnect';
 
 /* ════ AgencyMeetings — regulator-interaction worklist ════
 
@@ -18,6 +20,15 @@ import { downloadBlob } from '../download';
    JSONB columns — or an honest loading / empty / error state. New requests are
    persisted via POST /api/agency-meetings and the surface adopts the row the
    server actually wrote. No fixture, no "Sample data" pill, no local stand-in. */
+
+/** The fields this surface reads off GET /api/c2c/projects to name a programme
+ *  in the meeting-request select. The portfolio row carries more; these are the
+ *  only three a label is built from. */
+interface AmProgramOption {
+  id: string;
+  code: string;
+  title: string;
+}
 
 /* -- Render-contract types (shape of GET /api/agency-meetings rows) -- */
 
@@ -108,6 +119,30 @@ function meetShort(s: string | null): string | null {
 /* ════ AgencyMeetings -- agency meetings & briefing books surface ════ */
 
 export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
+  /* The open programme, named as a person would say it — never a hardcoded
+     product. `null` when no programme is open, and every caller below phrases
+     its request without one rather than substituting a placeholder: an
+     assistant that has to ask which programme beats one confidently answering
+     about the wrong one. */
+  const program = shellProgramName();
+
+  /* ── The Programme select offered five invented programmes ─────────────────
+     `['BX-204 · IND', 'BX-204 · NDA', 'BX-204 · MAA', 'AltexaTab · NDA',
+     'Aurora CGM · 510(k)']` — a required field, so every customer requesting an
+     agency meeting had to file it against a demo product. The real portfolio is
+     one read away (GET /api/c2c/projects, the same list the Projects surface
+     renders) and was never asked for.
+
+     An org with no programmes gets no options and the field says so, rather
+     than a list of somebody's fictional pipeline. */
+  const portfolio = useLiveRows<AmProgramOption>('/api/c2c/projects');
+  const programOptions = portfolio.rows
+    .map((p) => {
+      const label = [p.code, p.title].filter((v) => String(v ?? '').trim()).join(' · ');
+      return label || String(p.id ?? '');
+    })
+    .filter(Boolean);
+
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [bbMap, setBbMap] = useState<Record<string, BriefingBook>>({});
   const [minMap, setMinMap] = useState<Record<string, Minutes>>({});
@@ -277,8 +312,18 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
       { key: 'cat', label: 'Category', type: 'text', placeholder: 'e.g. Type B', half: true },
       {
         key: 'program', label: 'Program', type: 'select',
-        options: ['BX-204 · IND', 'BX-204 · NDA', 'BX-204 · MAA', 'AltexaTab · NDA', 'Aurora CGM · 510(k)'],
+        options: programOptions,
+        // Prefer the programme the user already has open — it is almost always
+        // the one they are requesting the meeting for.
+        default: programOptions.find((o) => program && o.includes(program)) ?? programOptions[0],
         required: true,
+        desc: portfolio.loading
+          ? 'Loading your programmes…'
+          : portfolio.error
+            ? 'Your programmes could not be read, so none are listed here. Retry, or create the meeting once the list loads.'
+            : programOptions.length === 0
+              ? 'No programmes are recorded for your organization yet. Create one in Projects and it appears here.'
+              : undefined,
       },
       {
         key: 'format', label: 'Format', type: 'select',
@@ -448,7 +493,9 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
               className="reg-cta sm"
               onClick={() =>
                 onAsk(
-                  'Draft a Pre-IND meeting request and briefing book for BX-204',
+                  program
+                    ? `Draft a Pre-IND meeting request and briefing book for ${program}`
+                    : 'Draft a Pre-IND meeting request and briefing book for my programme',
                 )
               }
             >

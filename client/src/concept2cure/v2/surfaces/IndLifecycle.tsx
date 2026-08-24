@@ -21,6 +21,7 @@ import type {
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
+import { readShellProject } from '../shellProject';
 
 /* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist).
    Assembled by server/services/ind-lifecycle/ind-checklist-view-assembler.ts from
@@ -181,14 +182,8 @@ interface ShellProjectRead {
   code?: string;
 }
 
-function readShellProject(): ShellProjectRead | null {
-  try {
-    const p = (window as unknown as { C2C_PROJECT?: ShellProjectRead }).C2C_PROJECT;
-    return p && p.id != null ? p : null;
-  } catch {
-    return null;
-  }
-}
+/* The local copy of this reader is gone — `../shellProject` owns both ends of
+   the window channel, and a second reader is how the two drift. */
 
 function rowMatchesProgram(row: IndlChecklist, p: ShellProjectRead): boolean {
   const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();

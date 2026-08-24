@@ -35,8 +35,12 @@ import { processResponseActions } from '../../services/ana-guidance-executor.js'
 import type { CommandContext } from '../../services/ana-ri/command-executor.js';
 import { isPositiveIntegerId } from './shared.js';
 import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersionStore.js';
-import { toNavigationActions } from '../../services/ana-ri/navigation-actions.js';
+import {
+  toNavigationActions,
+  toSurfaceActionChips,
+} from '../../services/ana-ri/navigation-actions.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 
 export interface StreamPostProcessingContext {
   res: Response;
@@ -72,6 +76,12 @@ export interface StreamPostProcessingContext {
    * performed by the server. See services/ana-ri/navigation-actions.ts.
    */
   collectedNavigation?: NavigationDirective[];
+  /**
+   * Validated surface actions `act_on_screen` resolved this turn. Surfaced on
+   * `post_done` as `actionType: 'surface_action'` chips — offered to the user,
+   * performed client-side through the one surface-action bus when activated.
+   */
+  collectedSurfaceActions?: SurfaceActionDirective[];
   /** Document drafts emitted this turn — persisted to the governed artifact version history. */
   collectedDrafts: { title: string; content: string; documentType?: string; reasonForChange?: string }[];
   /** Gateway message history built for the turn (for working-memory write-back). */
@@ -232,6 +242,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     toolEvidenceCorpus,
     collectedProvenance,
     collectedNavigation,
+    collectedSurfaceActions,
     collectedDrafts,
     messages,
     model,
@@ -272,6 +283,14 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // the server offers a destination, the person takes it.
     if (collectedNavigation && collectedNavigation.length > 0) {
       executedActions = [...executedActions, ...toNavigationActions(collectedNavigation)];
+    }
+
+    // Surface actions — the on-screen operations AnA resolved this turn become
+    // chips too, under the identical offered-not-performed contract. (Under
+    // Live Drive the stream already applied them; the chip remains the
+    // transcript record and the re-run affordance.)
+    if (collectedSurfaceActions && collectedSurfaceActions.length > 0) {
+      executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
     }
 
     // Command executor — execute operational commands (create project, artifact, task, etc.)
