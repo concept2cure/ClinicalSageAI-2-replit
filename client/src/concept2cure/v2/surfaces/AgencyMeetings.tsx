@@ -8,6 +8,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
 
 /* ════ AgencyMeetings — regulator-interaction worklist ════
 
@@ -231,15 +232,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
         fireToast('Could not render the briefing book PDF — the server refused the request.', 'error');
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'fda-briefing-book.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      downloadBlob('fda-briefing-book.pdf', await res.blob());
     } catch (e) {
       fireToast(
         'Could not render the briefing book PDF — ' + (e instanceof Error ? e.message : String(e)) + '.',

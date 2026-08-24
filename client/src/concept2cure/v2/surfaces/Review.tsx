@@ -573,8 +573,15 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
                     const next = queue.find((r) => r.state !== 'approved');
                     if (next) setSel(next.id);
                     setRejecting(false);
-                    queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
+                    /* Selecting the row is the part that matters; bringing it
+                       into view is a courtesy. `scrollIntoView` is absent in
+                       jsdom and in some embedded webviews, and an unguarded
+                       call there throws out of the click handler — taking the
+                       selection with it. */
+                    try {
+                      queueRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      queueRef.current?.querySelector<HTMLButtonElement>('.lrow[data-on]')?.focus();
+                    } catch { /* no scrollIntoView here — the row is still selected */ }
                   },
                 }
               /* Every document is approved. There is no queue to open, so no

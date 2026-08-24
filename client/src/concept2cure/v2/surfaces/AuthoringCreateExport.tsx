@@ -25,6 +25,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 import { unboundNotice } from '../governanceNotice';
+import { downloadBlob, safeFileName } from '../download';
 
 interface AuthoringTemplate { id: string | number; name?: string | null; title?: string | null; }
 
@@ -152,13 +153,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
         fireToast('Export failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. No file was produced; the document is unchanged. Try again, or export a single section to narrow it down.', 'error');
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (docTitle ?? 'document').replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_') + '.' + format;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(safeFileName(docTitle ?? 'document') + '.' + format, await res.blob());
       fireToast('Published ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
     } catch (e) {
       fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '. No file was produced; the document is unchanged. Check your connection and try again.', 'error');

@@ -20,6 +20,7 @@ import type {
 } from '../fixtures/ind-lifecycle-data';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
 
 /* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist).
    Assembled by server/services/ind-lifecycle/ind-checklist-view-assembler.ts from
@@ -494,15 +495,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — sign in and retry.' }));
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'ind-cover-letter.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      downloadBlob('ind-cover-letter.pdf', await res.blob());
       setCl((s) => ({ ...s, busy: false }));
     } catch (e) {
       setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — ' + failMsg(e) + '.' }));
@@ -567,15 +560,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         patchRun(id, { busy: false, error: `Could not render the PDF — ${serverErr(json, res.status)}.` });
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = w.pdf.filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      downloadBlob(w.pdf.filename, await res.blob());
       patchRun(id, { busy: false });
     } catch (e) {
       patchRun(id, { busy: false, error: 'Could not render the PDF — ' + failMsg(e) + '.' });

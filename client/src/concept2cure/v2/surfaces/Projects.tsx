@@ -88,6 +88,14 @@ function productTypeForSelection(programType: string, uiSeg: string): string {
 }
 
 // UI segment → human label, for the wizard's "Tailored for …" banner.
+/* Registry tab → UI segment, so the banner can follow a tab change. Only the
+   lanes that map 1:1 back; pharma_biotech is ambiguous (biotech and pharma both
+   point at it) and keeps whatever lane the user actually arrived in. */
+const REG2SEG: Record<string, string> = {
+  medical_devices: 'medtech',
+  diagnostics_ivd: 'diagnostics',
+};
+
 const SEG_LABELS: Record<string, string> = {
   biotech: 'Biotech', pharma: 'Pharma', medtech: 'Medical Devices',
   diagnostics: 'Diagnostics & IVD', cro: 'CRO / Services', health: 'Digital Health',
@@ -185,7 +193,7 @@ const STEP_LABELS = ['Choose filing type', 'Configure project', 'Review & create
  *  acceptance criterion in its own right (a failed write must be visible and
  *  must offer a way out), and driving it through the whole Projects surface
  *  would test the registry loader rather than the banner. */
-export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id: string) => void }) {
+export function NewProjectWizard({ onClose, onNav, segment }: { onClose: () => void; onNav: (id: string) => void; segment?: string }) {
   /* `useDialog` on something that is deliberately not a dialog, and on purpose.
      The hook sets no ARIA of its own — it is three keyboard behaviours: focus
      the container on mount, call onClose on Escape, hand focus back to the
@@ -223,7 +231,17 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
   const fail = (message: string, correlationId?: string) =>
     setOutcome({ kind: 'error', message, correlationId });
 
-  const uiSeg = (typeof window !== 'undefined' && window.__C2C_SEGMENT) || 'biotech';
+  /* The SHELL's active client category, passed down. This used to read
+     window.__C2C_SEGMENT, which only BiopharmaJourney ever writes and which it
+     can only set to 'biotech' or 'pharma' — so opening New project from the
+     Medical Device or Diagnostics lane showed "Tailored for Biotech" and
+     defaulted to the pharma template tab. The global is kept as a fallback for
+     the two callers that still open the wizard without a segment. */
+  const arrivedSeg = segment || (typeof window !== 'undefined' && window.__C2C_SEGMENT) || 'biotech';
+  /* The tab the user is LOOKING at, which is the lane they arrived in until
+     they switch. The banner reads this, not the arrival lane. */
+  const [tabSeg, setTabSeg] = useState<string | null>(null);
+  const uiSeg = tabSeg ?? arrivedSeg;
   const regSeg = SEG2REG[uiSeg];
   const segLabel = SEG_LABELS[uiSeg] || uiSeg;
   const ctx = tpl ? getSubmissionTypeContext(tpl) : null;
@@ -426,7 +444,12 @@ export function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNa
                   880px modal, so the global registry — every agency, every
                   pathway — was read four rows at a time. The page scrolls now
                   and the picker is as tall as it needs to be. */}
-              <RegistryPicker value={tpl ?? ''} onChange={(id) => setTpl(id)} initialSegment={regSeg || undefined} />
+              <RegistryPicker
+                value={tpl ?? ''}
+                onChange={(id) => setTpl(id)}
+                initialSegment={regSeg || undefined}
+                onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
+              />
             </div>
           )}
 
@@ -787,7 +810,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      the shell persists, and backing out of a half-filled form would then have to
      unwind that too. */
   if (wizardOpen) {
-    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} />;
+    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} />;
   }
 
   return (

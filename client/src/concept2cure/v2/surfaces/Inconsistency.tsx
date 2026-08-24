@@ -137,6 +137,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   }, [liveFindings]);
 
   const [form, setForm] = useState<{ id: string; label: string; value: string; refs?: unknown[] } | null>(null);
+  const [propagating, setPropagating] = useState(false);
   const [toast, fireToast] = useToast();
 
   /* Resolve one finding WITH AnA — optimistic local flip only (see flag #2). */
@@ -360,12 +361,36 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
         headline: <>Your <b>{progCode}</b> can't be filed yet -- {gate.blocking.length === 1 ? '1 issue would' : gate.blocking.length + ' issues would'} block it under {reg}.</>,
         body: b.title + '. ' + b.description,
         reassure: 'This is fixable, and I\'ll do the work with you — one governed change and the block clears.',
+        /* ── Was a 1.6-second outline and nothing else ────────────────────
+           The blocking finding is almost always below the fold, so the one
+           thing this button did was flash a border on a card the user could
+           not see — no scroll, no explanation, and the word "how" answered by
+           nothing.
+
+           It now brings the finding onto the screen, moves focus to it (so a
+           keyboard or screen-reader user arrives there too, which the outline
+           never did), and asks AnA for the governed resolution of THAT finding
+           by name — which is what "show me how to clear it" promises. */
         action: {
           label: 'Show me how to clear it',
           onClick: () => {
             const el = document.getElementById('gi-f-' + b.id);
-            if (el) el.style.outline = '2px solid var(--accent-200)';
-            setTimeout(() => { if (el) el.style.outline = ''; }, 1600);
+            /* Asking AnA is the part that matters; moving the viewport is a
+               courtesy. `scrollIntoView` is absent in jsdom and in some
+               embedded webviews, and an unguarded call there throws out of the
+               click handler — so the guidance would never be requested. */
+            try {
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.setAttribute('tabindex', '-1');
+                el.focus({ preventScroll: true });
+              }
+            } catch { /* no scrollIntoView here — the ask below still runs */ }
+            ask(
+              'The ' + progCode + ' filing is blocked under ' + reg + ' by "' + b.title +
+                '". Walk me through clearing it: what the governed change is, which documents it touches, ' +
+                'and what has to be re-approved afterwards.',
+            );
           },
         },
       };
@@ -396,13 +421,60 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const ordered = [...findings].sort((a, b) => rank(a) - rank(b) || ((GI_META.severity[b.severity] ? 1 : 0) - (GI_META.severity[a.severity] ? 1 : 0)));
 
   const sevS = (s: string) => (GI_META.severity[s] || { s: 'low' }).s;
-  const propagate = (v: Record<string, string>) => {
+  /**
+   * Change a governed assumption's value — POST /api/governed-intelligence/
+   * assumptions/:id/revalue.
+   *
+   * This used to fire the toast "cross-dossier propagation is not yet wired"
+   * and stop there: a user filled in a new value AND a mandatory reason for
+   * change on a form headed "Governed change", pressed Propagate change, and
+   * nothing was propagated, nothing was recorded, and nothing was audited.
+   *
+   * The propagation was wired the whole time — superseding an assumption calls
+   * propagateChange, which marks every downstream object stale. What was
+   * missing was any call to it. The route does both writes (record the
+   * replacement, supersede the original by it) in one request, so a failure
+   * cannot leave an orphan replacement behind.
+   */
+  const propagate = async (v: Record<string, string>) => {
     const nv = (v.value || '').trim();
-    if (!nv || !form) return;
-    setForm(null);
-    // Softened: local UI only — the cross-dossier propagation + re-approval routing
-    // is not wired (flag #4).
-    fireToast('Requested change: ' + form.label + ' -> ' + nv + ' -- cross-dossier propagation is not yet wired');
+    const why = (v.reason || '').trim();
+    if (!nv || !form || propagating) return;
+    if (why.length < 8) {
+      fireToast('Enter a reason for change of at least 8 characters — it is recorded on the supersession.', 'error');
+      return;
+    }
+    setPropagating(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/governed-intelligence/assumptions/' + encodeURIComponent(form.id) + '/revalue',
+        { newValue: nv, reason: why },
+      );
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast(
+          'The value was not changed — ' +
+            (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`) +
+            '. ' + form.label + ' is still ' + form.value + '.',
+          'error',
+        );
+        return;
+      }
+      setForm(null);
+      setRefresh((n) => n + 1);
+      fireToast(
+        form.label + ' is now ' + nv + '. The previous assumption is superseded and everything downstream of it is flagged stale.',
+      );
+    } catch (e) {
+      fireToast(
+        'The value was not changed — ' + (e instanceof Error ? e.message : String(e)) +
+          '. ' + form.label + ' is still ' + form.value + '.',
+        'error',
+      );
+    } finally {
+      setPropagating(false);
+    }
   };
 
   const PROP_FORM: C2CFormConfig | null = form ? {
@@ -410,7 +482,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     title: 'Change ' + form.label,
     sub: 'Current value ' + form.value + ' -- cited in ' + (form.refs ? form.refs.length : 0) + ' sections. AnA propagates the change and flags anything locked for re-approval.',
     governed: 'Governed change — draft sections update inline; approved/locked sections are flagged for re-approval, all on the audit trail.',
-    submitLabel: 'Propagate change',
+    submitLabel: propagating ? 'Propagating…' : 'Propagate change',
     fields: [
       { key: 'value', label: 'New value', type: 'text', placeholder: form.value, required: true },
       { key: 'reason', label: 'Reason for change', type: 'textarea', placeholder: 'e.g. reconcile to the Protocol-specified dose', required: true },
@@ -577,6 +649,22 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                         <span className="sp-tag">{a.category}</span>
                         <span className="sp-row-b"><span className="sp-row-t">{a.title} {I.dot} <b style={{ color: 'var(--accent-200)' }}>{a.assumedValue}</b></span><span className="sp-row-s">{a.domainTrack} {I.dot} {a.source}</span></span>
                         <span className="rd-chip tone-ok">{a.status}</span>
+                        {/* The governed-change form is reachable from HERE, on a
+                            row that carries a real assumption id. Its other
+                            trigger sits behind `f.factId`, which the findings
+                            table documents as null on every live row — so the
+                            form had a real backend and no way in. A superseded
+                            record cannot be re-valued; change the one that
+                            replaced it. */}
+                        {a.status !== 'superseded' && (
+                          <button
+                            className="sp-ask"
+                            title={'Change ' + a.title + ' and flag everything downstream of it'}
+                            onClick={() => setForm({ id: a.id, label: a.title, value: a.assumedValue })}
+                          >
+                            {I.gitCompare} Change value
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -21,6 +21,7 @@ import {
 } from '../fixtures/deep-research-data';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
 
 /* Real deep-research contract — GET /api/deep-research/board (credits) and
    POST/GET /api/deep-research/jobs (launch + poll). No fabricated fields;
@@ -126,14 +127,7 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
         );
         return;
       }
-      const url = URL.createObjectURL(await res.blob());
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'deep-research-brief.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      downloadBlob('deep-research-brief.pdf', await res.blob());
     } catch (e) {
       fireToast(
         'Brief not exported — ' + (e instanceof Error ? e.message : String(e)) + '.',

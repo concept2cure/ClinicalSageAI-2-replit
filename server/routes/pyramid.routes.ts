@@ -14,12 +14,20 @@
  *   GET /global-pyramids          → PyGlobalConfig[] (distinct canonical configs)
  *   GET /global-pyramids/:type    → PyGlobalConfig   (single; 404 on unknown type)
  *
- * TASK STATUS — the engine models progress as a SEPARATE client-owned
- * TaskProgress[] (docs/PYRAMID_UI_ADVISORY.md §1.3 / §8); the immutable pyramid
- * STRUCTURE carries none. A pure structure read therefore emits every task at
- * its honest initial status 'todo' (the absence of recorded progress, per the
- * advisory's own todo→…→done state machine — NOT fabricated content). The UI
- * owns status locally from there.
+ * TASK STATUS — the engine models progress as a SEPARATE TaskProgress[]
+ * (docs/PYRAMID_UI_ADVISORY.md §1.3 / §8); the immutable pyramid STRUCTURE
+ * carries none. The structure read still emits every task at its honest initial
+ * status 'todo' (the absence of recorded progress), and the org's RECORDED
+ * progress is now merged over it from a real store:
+ *
+ *   GET   /pyramids/:type/progress        → the org's recorded task statuses
+ *   PATCH /pyramids/:type/progress/:taskId → record one task's status
+ *
+ * "The UI owns status locally from there" is what this replaced, and it was the
+ * defect: the surface's status dropdown wrote to a `statusOverrides` object in
+ * component state, so a submission task marked Done updated the completion ring
+ * and the phase bars, was never sent anywhere, and vanished on reload — or on
+ * merely switching submission type, which cleared the overrides outright.
  *
  * DROPPED FIELDS (client rendered them; engine doesn't produce them → dropped,
  * never fabricated): PyPyramid.program (was a fixture-only program identifier);
@@ -42,6 +50,7 @@
 import { Router, type Request, type Response } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { ok, clientError } from '../lib/api-response.js';
+import { createFeatureStore } from '../utils/feature-persistence.js';
 import {
   getAllSupportedTypes,
   getPyramidForProject,
@@ -288,6 +297,111 @@ router.get('/pyramids/:type', authenticateToken, (req: Request, res: Response) =
     return clientError(res, 404, `Unknown submission type: ${raw}`);
   }
   return ok(res, adaptPyramid(getPyramidForProject(match)));
+});
+
+
+// ─── Task progress — the org's RECORDED status per pyramid task ──────────────
+//
+// Held in the feature store (category 'pyramid_task_progress', one row per
+// organization + submission type) rather than a new table: this is a small
+// per-org key→status map, exactly the shape the store exists for, and it needs
+// no DDL to become real in a deployment that already has project_memory_entries.
+const progressStore = createFeatureStore('pyramid_task_progress');
+
+/** The task statuses the surface's dropdown offers — the advisory's state machine. */
+const PY_TASK_STATUSES = new Set(['todo', 'in_progress', 'blocked', 'done']);
+
+function progressOrgId(req: Request): number | null {
+  const r = req as {
+    tenantId?: unknown; organizationId?: unknown;
+    tenantContext?: { organizationId?: unknown }; user?: { organizationId?: unknown };
+  };
+  const raw = r.tenantId ?? r.organizationId ?? r.tenantContext?.organizationId ?? r.user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** The supported submission type matching `raw`, or null. */
+function matchType(raw: string): SubmissionType | null {
+  return getAllSupportedTypes().find((t) => t === raw || t === raw.toUpperCase()) ?? null;
+}
+
+/** The org's stored progress row for one submission type, or null. */
+async function loadProgressRow(orgId: number, type: string) {
+  const rows = await progressStore.query(orgId, type);
+  return rows[0] ?? null;
+}
+
+/** GET /pyramids/:type/progress → { statuses: { [taskId]: status } }. */
+router.get('/pyramids/:type/progress', authenticateToken, async (req: Request, res: Response) => {
+  const orgId = progressOrgId(req);
+  if (orgId === null) return clientError(res, 403, 'Organization context required.');
+  const match = matchType(String(req.params.type ?? ''));
+  if (!match) return clientError(res, 404, `Unknown submission type: ${req.params.type}`);
+  try {
+    const row = await loadProgressRow(orgId, match);
+    return ok(res, { type: match, statuses: (row?.statuses as Record<string, string>) ?? {} });
+  } catch (err) {
+    // No recorded progress and an unreadable store are different claims, but
+    // both render as "every task is todo" — so a broken read is reported, not
+    // flattened into a clean board.
+    if ((err as { code?: string })?.code === '42P01') {
+      return ok(res, { type: match, statuses: {}, pendingStore: true });
+    }
+    console.error('[pyramid] progress read failed:', err instanceof Error ? err.message : String(err));
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read pyramid task progress.' } });
+  }
+});
+
+/**
+ * PATCH /pyramids/:type/progress/:taskId → record one task's status.
+ *
+ * The task id is validated against the pyramid's own STRUCTURE, so progress
+ * cannot be recorded against a task that does not exist in the submission type
+ * being viewed — which is what would let a stale tab quietly write orphan rows
+ * that never render anywhere.
+ */
+router.patch('/pyramids/:type/progress/:taskId', authenticateToken, async (req: Request, res: Response) => {
+  const orgId = progressOrgId(req);
+  if (orgId === null) return clientError(res, 403, 'Organization context required.');
+  const match = matchType(String(req.params.type ?? ''));
+  if (!match) return clientError(res, 404, `Unknown submission type: ${req.params.type}`);
+
+  const status = String((req.body ?? {}).status ?? '');
+  if (!PY_TASK_STATUSES.has(status)) {
+    return clientError(res, 400, `status must be one of: ${[...PY_TASK_STATUSES].join(', ')}.`);
+  }
+  const taskId = String(req.params.taskId ?? '');
+  const structure = adaptPyramid(getPyramidForProject(match));
+  const known = structure.tasks.some((t) => t.id === taskId);
+  if (!known) {
+    return clientError(res, 404, `No task ${taskId} in the ${match} pyramid.`);
+  }
+
+  try {
+    const row = await loadProgressRow(orgId, match);
+    const statuses: Record<string, string> = { ...((row?.statuses as Record<string, string>) ?? {}) };
+    // 'todo' is the absence of recorded progress, so recording it REMOVES the
+    // row rather than storing it — otherwise the store slowly fills with
+    // entries that say nothing and a reset never actually resets.
+    if (status === 'todo') delete statuses[taskId];
+    else statuses[taskId] = status;
+
+    const payload = { type: match, statuses };
+    if (row) await progressStore.update(row.id, orgId, payload);
+    else await progressStore.insert(orgId, match, `Pyramid task progress — ${match}`, payload);
+
+    return ok(res, { type: match, taskId, status, statuses });
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.status(503).json({
+        error: { code: 'PROGRESS_STORE_UNPROVISIONED', message: 'The progress store is not provisioned in this deployment.' },
+      });
+    }
+    console.error('[pyramid] progress write failed:', err instanceof Error ? err.message : String(err));
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to record the task status.' } });
+  }
 });
 
 /** GET /global-pyramids → PyGlobalConfig[] (distinct canonical global configs). */
