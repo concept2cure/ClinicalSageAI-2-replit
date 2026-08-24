@@ -161,7 +161,13 @@ router.post('/templates', asyncHandler(async (req, res) => {
  */
 router.get('/templates/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const template = await workflowService.getWorkflowTemplate(parseInt(String(id), 10));
+  // Scoped to the caller's organization: a template owned by another tenant
+  // 404s exactly like one that does not exist, so the response cannot be used
+  // to probe for foreign template ids.
+  const template = await workflowService.getWorkflowTemplate(
+    parseInt(String(id), 10),
+    getSecureOrgId(req),
+  );
 
   if (!template) {
     return res.status(404).json({ error: 'Workflow template not found' });
@@ -180,14 +186,15 @@ router.post('/workflows', asyncHandler(async (req, res) => {
   if (!startedByUserId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
+  // The organization is passed as its own argument, not folded into metadata.
+  // metadata is client-supplied and lands in a JSON column; the tenant a record
+  // is filed under is not something a request body gets a say in.
   const workflow = await workflowService.startWorkflow(
     documentId,
     templateId,
     startedByUserId,
-    {
-      ...(metadata || {}),
-      organizationId: getSecureOrgId(req),
-    }
+    getSecureOrgId(req),
+    metadata || {},
   );
   res.status(201).json(workflow);
 }));

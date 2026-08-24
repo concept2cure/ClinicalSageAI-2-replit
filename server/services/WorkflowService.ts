@@ -20,15 +20,53 @@ import {
 } from '../../shared/schema/unified_workflow';
 import { LRUCache } from '../middleware/enterprise-performance';
 
-// Template cache: templates change infrequently, cache for 5 minutes
+/**
+ * Template cache: templates change infrequently, cache for 5 minutes.
+ *
+ * The key carries the ORGANIZATION as well as the template id, and every read
+ * that populates it is org-filtered. Both halves are load-bearing.
+ *
+ * `workflow_templates` and `document_workflows` are not RLS-protected — the
+ * 20260206 orchestration migration enables row-level security on
+ * `orchestration.workflow_runs`/`step_runs`/`step_run_events` only, and these
+ * are the unrelated `public` tables from shared/schema/unified_workflow.ts.
+ * Tenant isolation on this family is therefore whatever the query says, and
+ * `getWorkflowTemplate` said nothing: it looked a template up by primary key
+ * alone, so any authenticated caller could read any organization's template —
+ * name, description, and the full step list with its approver ids.
+ *
+ * The process-global cache in front of it was a second, independent leak of the
+ * same shape as the Nano Banana response cache: a row fetched for organization
+ * A was stored under `template:<id>` and served to organization B on the next
+ * request. A cache in front of a filtered query still hands one tenant another
+ * tenant's row unless the key says whose row it is — which is why this is fixed
+ * here and not left to the database.
+ */
 const templateCache = new LRUCache<any>({ maxSize: 200, defaultTtl: 5 * 60_000 });
+
+/**
+ * Coerce an organization id to the positive integer the schema stores, or null
+ * when it cannot be trusted. Callers treat null as "no access", never as
+ * "unscoped" — an unresolvable tenant must not fall through to a shared key or
+ * an unfiltered query.
+ */
+function normalizeOrgId(organizationId: unknown): number | null {
+  if (organizationId === null || organizationId === undefined) return null;
+  const raw = typeof organizationId === 'number' ? organizationId : String(organizationId).trim();
+  if (raw === '') return null;
+  const parsed = Number(raw);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) return null;
+  return parsed;
+}
 
 export class WorkflowService {
   constructor(private db: any) {}
 
-  /** Invalidate cached template after mutation */
-  private invalidateTemplateCache(templateId: number) {
-    templateCache.delete(`template:${templateId}`);
+  /** Invalidate the cached template after a mutation, for one organization. */
+  private invalidateTemplateCache(templateId: number, organizationId: unknown) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) return;
+    templateCache.delete(`template:${orgId}:${templateId}`);
   }
 
   /**
@@ -53,20 +91,35 @@ export class WorkflowService {
   }
 
   /**
-   * Get a specific workflow template
+   * Get a specific workflow template, scoped to one organization.
+   *
+   * Returns null for a template that belongs to another organization, which is
+   * the same answer callers already handle for a template that does not exist —
+   * a caller must not be able to tell those two cases apart.
    *
    * @param templateId The template ID
-   * @returns The workflow template
+   * @param organizationId The caller's organization ID (required)
+   * @returns The workflow template, or null
    */
-  async getWorkflowTemplate(templateId: number) {
-    const cacheKey = `template:${templateId}`;
+  async getWorkflowTemplate(templateId: number, organizationId: unknown) {
+    const orgId = normalizeOrgId(organizationId);
+    // Fail closed. Without a tenant there is no scoped key to read and no
+    // filter to apply, so there is no safe query to run.
+    if (orgId === null) return null;
+
+    const cacheKey = `template:${orgId}:${templateId}`;
     const cached = templateCache.get(cacheKey);
     if (cached) return cached;
 
     const templates = await this.db
       .select()
       .from(workflowTemplates)
-      .where(eq(workflowTemplates.id, templateId))
+      .where(
+        and(
+          eq(workflowTemplates.id, templateId),
+          eq(workflowTemplates.organizationId, orgId)
+        )
+      )
       .limit(1);
 
     if (!templates.length) {
@@ -227,8 +280,17 @@ export class WorkflowService {
    * @param userId The user ID making the update
    * @returns The updated template
    */
-  async updateWorkflowTemplate(templateId: number, data: any, userId: string) {
-    this.invalidateTemplateCache(templateId);
+  async updateWorkflowTemplate(
+    templateId: number,
+    data: any,
+    userId: string,
+    organizationId: unknown
+  ) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) {
+      throw new Error('updateWorkflowTemplate requires an organization context');
+    }
+    this.invalidateTemplateCache(templateId, orgId);
     return this.db.transaction(async (tx: any) => {
       // Update the template
       const [template] = await tx
@@ -241,8 +303,20 @@ export class WorkflowService {
           updatedAt: new Date(),
           updatedBy: userId,
         })
-        .where(eq(workflowTemplates.id, templateId))
+        .where(
+          and(
+            eq(workflowTemplates.id, templateId),
+            eq(workflowTemplates.organizationId, orgId)
+          )
+        )
         .returning();
+
+      // No row matched the id AND the organization: the template is another
+      // tenant's, or gone. Either way there is nothing here to edit, and the
+      // step rewrite below must not run against a foreign template.
+      if (!template) {
+        return null;
+      }
 
       // Handle step updates if provided
       if (data.steps && data.steps.length > 0) {
@@ -295,8 +369,16 @@ export class WorkflowService {
    * @param userId The user ID making the update
    * @returns Success status
    */
-  async deactivateWorkflowTemplate(templateId: number, userId: string) {
-    this.invalidateTemplateCache(templateId);
+  async deactivateWorkflowTemplate(
+    templateId: number,
+    userId: string,
+    organizationId: unknown
+  ) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) {
+      throw new Error('deactivateWorkflowTemplate requires an organization context');
+    }
+    this.invalidateTemplateCache(templateId, orgId);
     await this.db
       .update(workflowTemplates)
       .set({
@@ -304,7 +386,12 @@ export class WorkflowService {
         updatedAt: new Date(),
         updatedBy: userId,
       })
-      .where(eq(workflowTemplates.id, templateId));
+      .where(
+        and(
+          eq(workflowTemplates.id, templateId),
+          eq(workflowTemplates.organizationId, orgId)
+        )
+      );
 
     return { success: true };
   }
@@ -343,16 +430,36 @@ export class WorkflowService {
   /**
    * Start a workflow for a document
    *
+   * The organization is an explicit parameter rather than a field read back off
+   * the template. It used to be `organizationId: template.organizationId` — the
+   * template was fetched by id with no tenant filter, so a caller in one
+   * organization could name another organization's template and have the new
+   * `document_workflows` row stamped with THAT organization. The tenant of a
+   * record must come from the caller's verified identity, never from a row the
+   * caller chose. (The scoped lookup below now also makes the two agree, which
+   * is the point: they must not be able to differ.)
+   *
    * @param documentId The document ID
    * @param templateId The template ID
    * @param startedBy The user ID starting the workflow
+   * @param organizationId The caller's organization ID (required)
    * @param metadata Additional metadata
    * @returns The created workflow
    */
-  async startWorkflow(documentId: any, templateId: any, startedBy: any, metadata: any = {}) {
+  async startWorkflow(
+    documentId: any,
+    templateId: any,
+    startedBy: any,
+    organizationId: unknown,
+    metadata: any = {}
+  ) {
+    const orgId = normalizeOrgId(organizationId);
+    if (orgId === null) {
+      throw new Error('startWorkflow requires an organization context');
+    }
     return this.db.transaction(async (tx: any) => {
-      // Get the template with steps
-      const template = await this.getWorkflowTemplate(templateId);
+      // Get the template with steps, scoped to the caller's organization.
+      const template = await this.getWorkflowTemplate(templateId, orgId);
 
       if (!template) {
         throw new Error(`Workflow template with ID ${templateId} not found`);
@@ -367,7 +474,7 @@ export class WorkflowService {
           status: 'active',
           currentStep: 1,
           startedBy,
-          organizationId: template.organizationId,
+          organizationId: orgId,
           metadata: metadata || {},
         })
         .returning();
@@ -481,8 +588,13 @@ export class WorkflowService {
         },
       });
 
-      // Get the template to determine next steps
-      const template = await this.getWorkflowTemplate(workflow.templateId);
+      // Get the template to determine next steps. The organization comes from
+      // the workflow row being approved, so the lookup stays inside the tenant
+      // that owns the workflow.
+      const template = await this.getWorkflowTemplate(
+        workflow.templateId,
+        workflow.organizationId
+      );
 
       // Check if this was the last step
       if (approval.stepOrder === template.steps.length) {
@@ -695,7 +807,9 @@ export class WorkflowService {
     const templateMap = new Map<number, any>();
     await Promise.all(
       uniqueTemplateIds.map(async (tid: number) => {
-        const template = await this.getWorkflowTemplate(tid);
+        // organizationId is this method's own scoped parameter — the same one
+        // the workflow query above filters on.
+        const template = await this.getWorkflowTemplate(tid, organizationId);
         if (template) templateMap.set(tid, template);
       })
     );
@@ -758,7 +872,9 @@ export class WorkflowService {
     const templateMap = new Map<number, any>();
     await Promise.all(
       uniqueTemplateIds.map(async (tid: number) => {
-        const template = await this.getWorkflowTemplate(tid);
+        // organizationId is this method's own scoped parameter — the same one
+        // the workflow query above filters on.
+        const template = await this.getWorkflowTemplate(tid, organizationId);
         if (template) templateMap.set(tid, template);
       })
     );
@@ -830,7 +946,10 @@ export class WorkflowService {
     return Promise.all(
       userApprovals.map(async (approval: any) => {
         const workflow = workflows.find((w: any) => w.id === approval.workflowId);
-        const template = await this.getWorkflowTemplate(workflow.templateId);
+        const template = await this.getWorkflowTemplate(
+          workflow.templateId,
+          organizationId
+        );
         const step = template.steps.find((s: any) => s.id === approval.stepId);
 
         return {
