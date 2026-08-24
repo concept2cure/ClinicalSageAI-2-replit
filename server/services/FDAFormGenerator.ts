@@ -1,5 +1,25 @@
 import { FDAFormsRegistry, FDA_FORMS_RELEASE_READINESS, FormField, FDAFormDefinition, governedFormDefinition, getRequiredForms, getFormsForStage } from '../config/FDAFormsRegistry';
 
+/**
+ * HTML-escape one interpolated value.
+ *
+ * This existed already — scoped INSIDE `generateUniversalFormHTML`, where the
+ * four legacy builders (3514, 3601, 3881, 3654) could not reach it. They
+ * interpolated applicant, device and certifier fields raw into stored FDA form
+ * drafts, and those builders are LIVE: `server/routes/fda-forms.routes.ts`
+ * calls all four from a router mounted unconditionally at `/api/fda-forms`.
+ *
+ * An applicant named "Smith & Nephew", or a device name containing `<`, silently
+ * corrupts a stored Form 3514 draft that carries a compliance score and an audit
+ * entry asserting it was generated correctly. Stored-XSS is latent (no renderer
+ * for these drafts exists today); the confirmed harm is document integrity, on a
+ * document that goes to an agency.
+ */
+const escapeHtml = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 export default class FDAFormGenerator {
   /**
    * Universal SMART Form Generator
@@ -126,9 +146,6 @@ export default class FDAFormGenerator {
    * Generate universal HTML for any form
    */
   private generateUniversalFormHTML(formDefinition: FDAFormDefinition, formData: any): string {
-    const escapeHtml = (value: unknown) => String(value ?? '')
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     let html = `
 <!DOCTYPE html>
 <html>
@@ -456,23 +473,23 @@ export default class FDAFormGenerator {
     <div class="section-title">APPLICANT INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Applicant Name:</span>
-      <span class="field-value">${data.applicantName}</span>
+      <span class="field-value">${escapeHtml(data.applicantName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Contact Person:</span>
-      <span class="field-value">${data.contactName || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.contactName || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Phone Number:</span>
-      <span class="field-value">${data.contactPhone || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.contactPhone || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Email Address:</span>
-      <span class="field-value">${data.contactEmail || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.contactEmail || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Establishment Registration:</span>
-      <span class="field-value">${data.establishmentNumber || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.establishmentNumber || 'Not Provided')}</span>
     </div>
   </div>
 
@@ -480,19 +497,19 @@ export default class FDAFormGenerator {
     <div class="section-title">DEVICE INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Device Trade Name:</span>
-      <span class="field-value">${data.deviceName}</span>
+      <span class="field-value">${escapeHtml(data.deviceName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Device Classification:</span>
-      <span class="field-value">${data.deviceClass}</span>
+      <span class="field-value">${escapeHtml(data.deviceClass)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Product Code:</span>
-      <span class="field-value">${data.productCode || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.productCode || 'Not Provided')}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Regulation Number:</span>
-      <span class="field-value">${data.regulationNumber || 'Not Provided'}</span>
+      <span class="field-value">${escapeHtml(data.regulationNumber || 'Not Provided')}</span>
     </div>
   </div>
 
@@ -500,11 +517,11 @@ export default class FDAFormGenerator {
     <div class="section-title">SUBMISSION INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Submission Type:</span>
-      <span class="field-value">${data.submissionType}</span>
+      <span class="field-value">${escapeHtml(data.submissionType)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Date Prepared:</span>
-      <span class="field-value">${data.submissionDate}</span>
+      <span class="field-value">${escapeHtml(data.submissionDate)}</span>
     </div>
   </div>
 
@@ -553,11 +570,11 @@ export default class FDAFormGenerator {
     <div class="section-title">APPLICANT INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Applicant Name:</span>
-      <span class="field-value">${data.applicantName}</span>
+      <span class="field-value">${escapeHtml(data.applicantName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Device Name:</span>
-      <span class="field-value">${data.deviceName}</span>
+      <span class="field-value">${escapeHtml(data.deviceName)}</span>
     </div>
   </div>
 
@@ -565,7 +582,7 @@ export default class FDAFormGenerator {
     <div class="section-title">FEE INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Fee Category:</span>
-      <span class="field-value">${data.feeCategory}</span>
+      <span class="field-value">${escapeHtml(data.feeCategory)}</span>
     </div>
     <div class="fee-box">
       <div class="field-group">
@@ -595,7 +612,7 @@ export default class FDAFormGenerator {
     </div>
     <div class="field-group" style="margin-top: 15px;">
       <span class="field-label">Payment Reference:</span>
-      <span class="field-value">${data.referenceNumber || 'Will be provided upon payment'}</span>
+      <span class="field-value">${escapeHtml(data.referenceNumber || 'Will be provided upon payment')}</span>
     </div>
   </div>
 
@@ -604,7 +621,7 @@ export default class FDAFormGenerator {
     <p>I certify that the information provided is complete and accurate and that the appropriate user fee has been paid.</p>
     <div class="field-group" style="margin-top: 20px;">
       <span class="field-label">Date:</span>
-      <span class="field-value">${data.submissionDate}</span>
+      <span class="field-value">${escapeHtml(data.submissionDate)}</span>
     </div>
   </div>
 
@@ -656,7 +673,7 @@ export default class FDAFormGenerator {
     </div>
     <div class="field-group">
       <span class="field-label">Device Name:</span>
-      <span class="field-value" style="min-height: 30px;">${data.deviceName}</span>
+      <span class="field-value" style="min-height: 30px;">${escapeHtml(data.deviceName)}</span>
     </div>
   </div>
 
@@ -664,16 +681,16 @@ export default class FDAFormGenerator {
     <div class="section-title">INDICATIONS FOR USE</div>
     <div class="field-group">
       <span class="field-label">Intended Use:</span>
-      <div class="field-value">${data.intendedUse}</div>
+      <div class="field-value">${escapeHtml(data.intendedUse)}</div>
     </div>
     <div class="field-group">
       <span class="field-label">Indications for Use:</span>
-      <div class="field-value">${data.indications}</div>
+      <div class="field-value">${escapeHtml(data.indications)}</div>
     </div>
     ${data.patientPopulation ? `
     <div class="field-group">
       <span class="field-label">Patient Population:</span>
-      <div class="field-value">${data.patientPopulation}</div>
+      <div class="field-value">${escapeHtml(data.patientPopulation)}</div>
     </div>
     ` : ''}
   </div>
@@ -695,16 +712,16 @@ export default class FDAFormGenerator {
     <div class="section-title">COMPARISON TO PREDICATE DEVICE</div>
     <div class="field-group">
       <span class="field-label">Predicate Device:</span>
-      <div class="field-value" style="min-height: 30px;">${data.predicateDevice || 'Not Provided'}</div>
+      <div class="field-value" style="min-height: 30px;">${escapeHtml(data.predicateDevice || 'Not Provided')}</div>
     </div>
     <div class="field-group">
       <span class="field-label">Predicate 510(k) Number:</span>
-      <div class="field-value" style="min-height: 30px;">${data.predicateK || 'Not Provided'}</div>
+      <div class="field-value" style="min-height: 30px;">${escapeHtml(data.predicateK || 'Not Provided')}</div>
     </div>
     ${data.comparisonStatement ? `
     <div class="field-group">
       <span class="field-label">Comparison Statement:</span>
-      <div class="field-value">${data.comparisonStatement}</div>
+      <div class="field-value">${escapeHtml(data.comparisonStatement)}</div>
     </div>
     ` : ''}
   </div>
@@ -764,19 +781,19 @@ export default class FDAFormGenerator {
     <div class="section-title">SUBMISSION INFORMATION</div>
     <div class="field-group">
       <span class="field-label">Applicant/Sponsor:</span>
-      <span class="field-value">${data.applicantName}</span>
+      <span class="field-value">${escapeHtml(data.applicantName)}</span>
     </div>
     <div class="field-group">
       <span class="field-label">Device Name:</span>
-      <span class="field-value">${data.deviceName}</span>
+      <span class="field-value">${escapeHtml(data.deviceName)}</span>
     </div>
   </div>
 
   <div class="certification-box">
     <div class="section-title">CERTIFICATION</div>
     <p style="text-align: justify; line-height: 1.6;">
-      I certify that, in my capacity as <strong>${data.certifierTitle || '(Title)'}</strong> of 
-      <strong>${data.applicantName}</strong>, I believe to the best of my knowledge, that all data and 
+      I certify that, in my capacity as <strong>${escapeHtml(data.certifierTitle || '(Title)')}</strong> of 
+      <strong>${escapeHtml(data.applicantName)}</strong>, I believe to the best of my knowledge, that all data and 
       information submitted in the premarket notification are truthful and accurate and that no material 
       fact has been omitted.
     </p>
@@ -830,18 +847,18 @@ export default class FDAFormGenerator {
       </div>
       <div>
         <span style="display: inline-block; width: 300px;">
-          <strong>Signature:</strong> ${data.certifierName || ''}
+          <strong>Signature:</strong> ${escapeHtml(data.certifierName || '')}
         </span>
         <span style="display: inline-block; width: 300px;">
-          <strong>Date:</strong> ${data.signatureDate}
+          <strong>Date:</strong> ${escapeHtml(data.signatureDate)}
         </span>
       </div>
       <div style="margin-top: 10px;">
         <span style="display: inline-block; width: 300px;">
-          <strong>Typed Name:</strong> ${data.certifierName || ''}
+          <strong>Typed Name:</strong> ${escapeHtml(data.certifierName || '')}
         </span>
         <span style="display: inline-block; width: 300px;">
-          <strong>Title:</strong> ${data.certifierTitle}
+          <strong>Title:</strong> ${escapeHtml(data.certifierTitle)}
         </span>
       </div>
     </div>

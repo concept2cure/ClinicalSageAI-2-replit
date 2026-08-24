@@ -657,7 +657,13 @@ function generateProductComponent(
               <code code="${roleCode}" codeSystem="2.16.840.1.113883.6.163" displayName="${role}"/>
 
               <!-- Route -->
-              <routeCode code="${routeCode}" codeSystem="2.16.840.1.113883.5.112" displayName="${escapeXml(product.route || '')}"/>
+              <!-- displayName on this same line was escaped and code was not.
+                   An unmapped route falls back to the raw DB value, so a route
+                   carrying a quote breaks the attribute — on an artifact the job
+                   marks complete and computes a Part 11 completion signature
+                   over, without ever checking it is well-formed. The sibling EMA
+                   generator escapes the same expression. -->
+              <routeCode code="${escapeXml(routeCode)}" codeSystem="2.16.840.1.113883.5.112" displayName="${escapeXml(product.route || '')}"/>
 
               <!-- Dosage -->
               ${
