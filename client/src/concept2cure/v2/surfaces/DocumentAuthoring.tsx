@@ -1518,6 +1518,28 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setTreeScrollNonce(n => n + 1);
       return { ok: true, detail: `Opened §${match.code} · ${match.title}` };
     },
+    'authoring.find': params => {
+      /* Read-only affordance: dirtyGuard deliberately does NOT apply — the
+         person's own Ctrl/⌘-F works over unsaved edits and opening the bar
+         discards nothing. The dialog/save guards still do. */
+      const guarded = authoringGuard();
+      if (guarded) return guarded;
+      if (docsState === 'loading' || sectionsState === 'loading')
+        return { ok: false, reason: 'The document is still loading.', retry: true };
+      const handle = editorRef.current;
+      if (!handle) {
+        return { ok: false, reason: 'No section is open in the editor — open a document first.' };
+      }
+      const q = (params.query ?? '').trim();
+      if (!handle.openFind(q || undefined)) {
+        return {
+          ok: false,
+          reason:
+            'This section is in raw-HTML source mode — the find bar is unavailable there (the browser\'s own find works).',
+        };
+      }
+      return { ok: true, detail: q ? `Find bar open — searching for "${q}"` : 'Find bar opened' };
+    },
   });
   /* The ready signal for the retry contract above: when the reads settle
      (sections 'idle' — no document open — counts as settled; the handler
