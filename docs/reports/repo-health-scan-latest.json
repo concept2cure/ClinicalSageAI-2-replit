@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T04:27:02.982Z",
+  "generatedAt": "2026-08-24T04:32:26.474Z",
   "git": {
-    "sha": "540c5463db2c8cf8f000624cc6aba4279f19b4c2",
+    "sha": "edfd95b240c53a9ed4868eb226ed0033b2cb10d3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 270173
+        "bytes": 266041
       },
       {
         "file": "server/statistics-service.ts",
@@ -2182,7 +2182,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 157555
+        "bytes": 162344
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2197,12 +2197,12 @@
         "bytes": 145402
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 139064
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 142620
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 138922
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 139064
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2316,7 +2316,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6742
+        "lines": 6572
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 3723
+        "lines": 3811
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2400,7 +2400,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2421
+        "lines": 2479
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
