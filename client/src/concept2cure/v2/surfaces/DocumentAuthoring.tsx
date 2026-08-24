@@ -73,7 +73,7 @@ import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
@@ -294,7 +294,7 @@ function auditEventLabel(raw: string | null): string {
   return AUDIT_EVENT_LABELS[raw] ?? raw.replace(/_/g, ' ').toLowerCase();
 }
 
-/** POST /sections/:id/ai/deficiency-scan — six mechanical checks over the
+/** POST /sections/:id/ai/deficiency-scan — a handful of mechanical checks over the
  *  SAVED section (length, module keywords, tables/figures, placeholders,
  *  structure). The handler itself refuses to call this a compliance
  *  determination (`signal_type: 'heuristic_quality'`); the panel keeps that
@@ -313,6 +313,11 @@ interface ScanResults {
   status?: string;
   deficiencies: ScanDeficiency[];
   deficiency_count?: number;
+  /** The denominator behind `quality_score`, and how many of those passed. The
+   *  panel names the server's count rather than a literal, so the sentence
+   *  cannot drift from the checks the handler actually runs. */
+  checks_run?: number;
+  checks_passed?: number;
   scanned_at?: string;
 }
 
@@ -911,6 +916,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  /** Citations the last document-wide re-read could NOT refresh, with the
+   *  server's reason. Held rather than toasted away: "3 could not be re-read"
+   *  is the finding, and a message that fades in four seconds is not where a
+   *  finding belongs. */
+  const [skippedRefreshes, setSkippedRefreshes] = useState<
+    Array<{ cite_id: string; reason: string }>
+  >([]);
   const [picking, setPicking] = useState(false);
 
   const [toast, fireToast] = useToast();
@@ -1771,6 +1783,68 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     },
     [activeSectionId, fireToast, loadSources]
   );
+
+  /* ── Re-read every source in the DOCUMENT ──
+     The per-citation "re-read" above answers one claim at a time, which is the
+     wrong granularity before an export or a sign-off: the question there is
+     "has anything I cite moved?", across the whole document.
+
+     The server re-resolves each unfrozen citation against its stored source and
+     reports three separate numbers — how many it refreshed, how many of those
+     actually CHANGED, and which it could not refresh and why. All three are
+     said. Collapsing `skipped` into the success count is the tempting summary
+     and the dishonest one: a citation whose source no longer exists is exactly
+     what the person about to file this needs to see. */
+  const [refreshingAll, setRefreshingAll] = useState(false);
+  const refreshAllSources = useCallback(async () => {
+    if (!activeDocId) return;
+    setRefreshingAll(true);
+    try {
+      const res = await apiRequest('POST', `/api/authoring/docs/${activeDocId}/refresh-all`, {});
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        refreshed?: number;
+        changed?: number;
+        skipped?: Array<{ cite_id: string; reason: string }>;
+      } | null;
+      if (!res.ok || json?.ok !== true) {
+        fireToast(
+          'Couldn’t re-read this document’s sources — ' +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
+            '. Nothing was changed.',
+          'error',
+        );
+        return;
+      }
+      const refreshed = typeof json.refreshed === 'number' ? json.refreshed : 0;
+      const changed = typeof json.changed === 'number' ? json.changed : 0;
+      const skipped = Array.isArray(json.skipped) ? json.skipped : [];
+      setSkippedRefreshes(skipped);
+      /* A refresh that changed nothing is a real and useful outcome — it means
+         the citations still say what they said. It is reported as that, not as
+         a bare "done". */
+      fireToast(
+        `Re-read ${refreshed} citation${refreshed === 1 ? '' : 's'}: ` +
+          (changed === 0
+            ? 'none had changed'
+            : `${changed} had changed since they were recorded`) +
+          (skipped.length > 0
+            ? `. ${skipped.length} could not be re-read — see Sources.`
+            : '.'),
+        skipped.length > 0 ? 'error' : 'ok',
+      );
+      if (activeSectionId) void loadSources(activeSectionId);
+    } catch (e) {
+      fireToast(
+        'Couldn’t re-read this document’s sources — ' +
+          (e instanceof Error ? e.message : String(e)) +
+          '. Nothing was changed.',
+        'error',
+      );
+    } finally {
+      setRefreshingAll(false);
+    }
+  }, [activeDocId, activeSectionId, loadSources, fireToast]);
 
   /* ── Save the section content (real, awaited, auto-revisioned) ──
      The ONE save path: the canonical editor serializes and calls this; the
@@ -2727,6 +2801,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               style={{ height: 30 }}
               onClick={() => setRail(rail === 'sources' ? null : 'sources')}
               data-active={rail === 'sources' || undefined}
+              data-testid="sources-rail-open"
             >
               {I.fileText} Sources
               {activeSection && num(activeSection.citation_count) > 0
@@ -3064,7 +3139,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         className="nda-open"
                         style={{ marginLeft: 4, verticalAlign: 'middle' }}
                         disabled={checking}
-                        title="Six mechanical checks over the saved section — length, module keywords, tables, placeholders, structure. Heuristic signals, not a compliance determination."
+                        title="Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination."
                         onClick={() => void runCheck()}
                       >
                         {I.checkCircle} {checking ? 'Checking…' : 'Check'}
@@ -3093,7 +3168,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 {/* ── Heuristic check results ──
                     Framed exactly as the server frames them: mechanical
                     signals over the SAVED content. Zero flags is reported as
-                    "passed six mechanical checks", never as "compliant". */}
+                    "passed N of M mechanical checks", never as "compliant" — and
+                    N and M come from the server's own count, so the sentence
+                    cannot drift from the checks the code actually runs. */}
                 {check && check.section_id === activeSection.id && (
                   <div
                     className="scaf-note"
@@ -3117,8 +3194,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     </div>
                     {check.deficiencies.length === 0 ? (
                       <span style={{ fontSize: 12 }}>
-                        No flags. The section passed six mechanical checks (length, module
-                        keywords, tables, placeholders, structure) — this is not a review.
+                        {typeof check.checks_run === 'number' && check.checks_run > 0
+                          ? `No flags. The section passed all ${check.checks_run} mechanical checks `
+                          : 'No flags. The section passed the mechanical checks '}
+                        (length, module keywords, CTD elements where defined, tables,
+                        placeholders, structure) — this is not a review.
                       </span>
                     ) : (
                       [...check.deficiencies]
@@ -3740,7 +3820,54 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
       {rail === 'sources' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Drafted from</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Drafted from</span>
+            {/* Document-wide, not section-wide, because the question before an
+                export or a sign-off is "has anything I cite moved?" across the
+                whole document — not one claim at a time. */}
+            <button
+              className="nda-open"
+              onClick={() => void refreshAllSources()}
+              disabled={!activeDocId || refreshingAll}
+              data-testid="refresh-all-sources"
+              title="Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."
+            >
+              {refreshingAll ? 'Re-reading…' : 'Re-read all'}
+            </button>
+          </div>
+          {/* The findings from the last document-wide re-read. Kept on the rail
+              rather than in a toast: a citation whose source is gone is the
+              thing the person about to file this needs to see, and it must not
+              fade after four seconds. */}
+          {skippedRefreshes.length > 0 && (
+            <div
+              className="scaf-note"
+              role="alert"
+              data-testid="refresh-skipped"
+              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--c2c-err,#b42318)' }}
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                <b>
+                  {skippedRefreshes.length} citation
+                  {skippedRefreshes.length === 1 ? '' : 's'} could not be re-read
+                </b>
+                <span style={{ flex: 1 }} />
+                <button className="nda-open" onClick={() => setSkippedRefreshes([])}>
+                  Dismiss
+                </button>
+              </div>
+              {skippedRefreshes.slice(0, 8).map(sk => (
+                <div key={sk.cite_id} style={{ marginTop: 4 }}>
+                  {sk.reason}
+                </div>
+              ))}
+              {skippedRefreshes.length > 8 && (
+                <div style={{ marginTop: 4, opacity: 0.75 }}>
+                  and {skippedRefreshes.length - 8} more.
+                </div>
+              )}
+            </div>
+          )}
           {!activeSection ? (
             <EmptyState
               icon={I.fileText}

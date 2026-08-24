@@ -3635,21 +3635,40 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     const section = sectionResult.rows[0];
 
     // Perform deficiency analysis
-    const deficiencies = [];
+    const deficiencies: Array<Record<string, unknown>> = [];
     const content = section.content || '';
     const contentLength = content.length;
 
-    // Basic content checks
-    if (contentLength < 100) {
-      deficiencies.push({
-        type: 'content_length',
-        severity: 'high',
-        message:
-          'Section content appears insufficient. Regulatory sections typically require detailed information.',
-        recommendation: 'Expand content to include all required regulatory elements.',
-        location: 'entire_section',
-      });
-    }
+    /* Which distinct checks ran, and which of them flagged.
+       The score was `(10 - deficiencies.length) / 10`, where 10 was a constant
+       unrelated to the checks actually performed. The module-keyword check
+       alone pushes one deficiency PER missing term — six of them — so a poor
+       section reached thirteen deficiencies and scored -30%. A percentage
+       below zero is not a signal, it is a bug wearing one. Counting distinct
+       checks makes the denominator mean something and keeps the range 0-100,
+       and it lets the response say "passed N of M" instead of asking a reader
+       to trust a bare number. */
+    const checks: Array<{ id: string; flagged: boolean }> = [];
+    const runCheck = (id: string, fn: () => void) => {
+      const before = deficiencies.length;
+      fn();
+      checks.push({ id, flagged: deficiencies.length > before });
+    };
+
+    const contentLower = content.toLowerCase();
+
+    runCheck('content_length', () => {
+      if (contentLength < 100) {
+        deficiencies.push({
+          type: 'content_length',
+          severity: 'high',
+          message:
+            'Section content appears insufficient. Regulatory sections typically require detailed information.',
+          recommendation: 'Expand content to include all required regulatory elements.',
+          location: 'entire_section',
+        });
+      }
+    });
 
     // Check for required regulatory keywords based on module
     const requiredKeywords: Record<string, string[]> = {
@@ -3660,68 +3679,108 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       M1: ['form', 'administrative', 'regulatory'],
     };
 
-    const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
-    const contentLower = content.toLowerCase();
+    runCheck('module_keywords', () => {
+      const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
+      moduleKeywords.forEach(keyword => {
+        if (!contentLower.includes(keyword)) {
+          deficiencies.push({
+            type: 'missing_keyword',
+            severity: 'medium',
+            message: `Missing expected regulatory term: "${keyword}"`,
+            recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+            location: 'content',
+          });
+        }
+      });
+    });
 
-    moduleKeywords.forEach(keyword => {
-      if (!contentLower.includes(keyword)) {
+    /* CTD required-element check, migrated from POST /ai/validate-compliance.
+       That endpoint was a second, callerless implementation of this same
+       capability — heuristic keyword presence over section content — and it
+       reported `overall_compliance: 'PASS'` whenever its list came back empty.
+       Its list was only ever populated for five hardcoded 3.2.S.* codes, so
+       for every other section in the CTD it checked nothing and answered PASS.
+       The useful half is these per-section element lists; they belong on the
+       one scan that has a caller and an honest frame, and the endpoint is
+       deleted in the same change (zero duplication). */
+    const ctdRequiredElements: Record<string, string[]> = {
+      '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
+      '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
+      '3.2.S.3': ['elucidation of structure', 'impurities'],
+      '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
+      '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
+    };
+    const ctdElements = ctdRequiredElements[String(section.code)];
+    /* Only counted as a check when there IS a list for this section code.
+       Running it against a section it has no expectations for and recording a
+       pass would inflate the score with a check that never looked at anything
+       — the exact arithmetic that let the deleted endpoint answer PASS. */
+    if (ctdElements) {
+      runCheck('ctd_required_elements', () => {
+        ctdElements.forEach(element => {
+          if (!contentLower.includes(element)) {
+            deficiencies.push({
+              type: 'missing_ctd_element',
+              severity: 'medium',
+              message: `Section ${section.code} would normally discuss ${element}`,
+              recommendation: `Add information about ${element} to ${section.code}`,
+              location: 'content',
+            });
+          }
+        });
+      });
+    }
+
+    runCheck('data_presence', () => {
+      if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
         deficiencies.push({
-          type: 'missing_keyword',
+          type: 'missing_data',
           severity: 'medium',
-          message: `Missing expected regulatory term: "${keyword}"`,
-          recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+          message: 'No data tables or figures detected',
+          recommendation: 'Consider adding supporting data, tables, or figures',
           location: 'content',
         });
       }
     });
 
-    // Check for data completeness
-    if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
-      deficiencies.push({
-        type: 'missing_data',
-        severity: 'medium',
-        message: 'No data tables or figures detected',
-        recommendation: 'Consider adding supporting data, tables, or figures',
-        location: 'content',
+    runCheck('placeholder_text', () => {
+      const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
+      placeholderPatterns.forEach(pattern => {
+        const matches = content.match(pattern);
+        if (matches && matches.length > 0) {
+          deficiencies.push({
+            type: 'placeholder_text',
+            severity: 'high',
+            message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
+              matches.length > 3 ? '...' : ''
+            }`,
+            recommendation: 'Replace all placeholder text with actual content',
+            location: 'multiple',
+          });
+        }
       });
-    }
+    });
 
-    // Check for placeholder text
-    const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
-    placeholderPatterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches && matches.length > 0) {
+    runCheck('structure', () => {
+      if (!content.includes('\n') || content.split('\n').length < 5) {
         deficiencies.push({
-          type: 'placeholder_text',
-          severity: 'high',
-          message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
-            matches.length > 3 ? '...' : ''
-          }`,
-          recommendation: 'Replace all placeholder text with actual content',
-          location: 'multiple',
+          type: 'poor_structure',
+          severity: 'low',
+          message: 'Content lacks proper structure and formatting',
+          recommendation: 'Add headings, paragraphs, and proper formatting',
+          location: 'formatting',
         });
       }
     });
-
-    // Structure checks
-    if (!content.includes('\n') || content.split('\n').length < 5) {
-      deficiencies.push({
-        type: 'poor_structure',
-        severity: 'low',
-        message: 'Content lacks proper structure and formatting',
-        recommendation: 'Add headings, paragraphs, and proper formatting',
-        location: 'formatting',
-      });
-    }
 
     // Heuristic quality/completeness signal — NOT a 21 CFR compliance
     // determination. It is derived purely from word-count and keyword presence
     // and cannot prove regulatory compliance; labelling a section "compliant" /
     // "non_compliant" on that basis overstates what the check establishes. It is
     // reported as a review signal ('review required' / 'heuristic quality').
-    const totalChecks = 10;
-    const passedChecks = totalChecks - deficiencies.length;
-    const qualityScore = Math.round((passedChecks / totalChecks) * 100);
+    const checksRun = checks.length;
+    const checksPassed = checks.filter(c => !c.flagged).length;
+    const qualityScore = checksRun > 0 ? Math.round((checksPassed / checksRun) * 100) : 0;
 
     res.json({
       success: true,
@@ -3737,6 +3796,11 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         signal_type: 'heuristic_quality',
         quality_score: qualityScore,
         compliance_score: qualityScore,
+        /* The denominator, so a reader is never asked to take the percentage
+           on trust — and so the UI can name how many checks actually ran
+           rather than hardcoding a number that drifts from the code. */
+        checks_run: checksRun,
+        checks_passed: checksPassed,
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
@@ -4686,6 +4750,17 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
     // catch below turned every call into a 500. See ledger C-14.
     await ensureExportHistoryTableExists();
     const tenantId = getTenantId(req);
+    /* Same guard as GET …/exports, for the same reason: an unknown or
+       cross-tenant docId answered `{ baseline: null, changed: [] }`, which is
+       the response a real document with no export yet gets. Those are opposite
+       facts. Nothing surfaces the difference today — the Exports rail renders
+       citation drift only when `baseline` is non-null — but a future caller
+       reading "no exports" for a document it cannot see is a defect waiting on
+       a caller, which is precisely how the rest of this router accumulated its
+       silent 500s. */
+    if (!(await documentExistsForTenant(req.params.docId, tenantId))) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
     const lastExportResult = await pool.query(
       `
       SELECT COALESCE(exported_at, created_at) AS exported_at
@@ -6116,80 +6191,32 @@ router.post('/ai/suggestions', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/authoring/ai/validate-compliance - Validate regulatory compliance
-router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
-  try {
-    const { document_id, section_code, content } = req.body;
-    const tenantId = getTenantId(req);
-
-    const validationResults: {
-      ich_compliance: any[];
-      fda_compliance: any[];
-      ctd_structure: any[];
-      missing_elements: any[];
-      recommendations: any[];
-    } = {
-      ich_compliance: [],
-      fda_compliance: [],
-      ctd_structure: [],
-      missing_elements: [],
-      recommendations: [],
-    };
-
-    // Check CTD structure requirements
-    if (section_code && section_code.startsWith('3.2.')) {
-      const requiredSections: Record<string, string[]> = {
-        '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
-        '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
-        '3.2.S.3': ['elucidation of structure', 'impurities'],
-        '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
-        '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
-      };
-
-      const required = requiredSections[section_code] || [];
-      required.forEach((element: any) => {
-        if (!content.toLowerCase().includes(element)) {
-          validationResults.missing_elements.push({
-            element,
-            section: section_code,
-            severity: 'important',
-            message: `Section ${section_code} should include information about ${element}`,
-          });
-        }
-      });
-    }
-
-    // ICH guideline applicability. There is no automated ICH-guideline
-    // conformance engine wired, so we do NOT assert a pass/fail verdict or a
-    // score — the prior implementation fabricated both with Math.random()
-    // (`compliant: Math.random() > 0.3`, `score: 75 + Math.random() * 25`),
-    // randomly claiming conformance to ICH Q1A/Q3A/Q6A/E6/M4. We surface the
-    // applicable guidelines for the section and flag them for manual review
-    // instead of inventing a verdict.
-    const ichGuidelines = ['Q1A', 'Q3A', 'Q6A', 'E6', 'M4'];
-    ichGuidelines.forEach(guideline => {
-      validationResults.ich_compliance.push({
-        guideline,
-        compliant: null,
-        assessment: 'not_assessed',
-        issues: [],
-        score: null,
-        note: 'Automated ICH conformance assessment is not available — manual review required.',
-      });
-    });
-
-    res.json({
-      success: true,
-      validation: validationResults,
-      overall_compliance:
-        validationResults.missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Compliance validation error:', error);
-    res.status(500).json({ error: 'Failed to validate compliance' });
-  }
-});
+/* POST /api/authoring/ai/validate-compliance has been DELETED.
+ *
+ * It was a second implementation of the capability POST
+ * /sections/:sectionId/ai/deficiency-scan already provides — heuristic keyword
+ * presence over a section's text — with no caller anywhere in the repository,
+ * and it ended in a verdict it could not support:
+ *
+ *     overall_compliance: missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT'
+ *
+ * `missing_elements` was only ever populated for five hardcoded 3.2.S.* codes.
+ * For every other section in the CTD — all of M1, M2, M4, M5, and most of M3 —
+ * the array was empty because nothing had been examined, and the response said
+ * PASS. A check that ran zero assertions reporting a compliance pass is the
+ * defect this repository keeps finding, and this one named the field
+ * `overall_compliance`.
+ *
+ * Its ICH block had already been repaired once: it used to fabricate
+ * `compliant: Math.random() > 0.3` and a random score against Q1A/Q3A/Q6A/E6/M4,
+ * and was changed to report `not_assessed`. That left the endpoint returning an
+ * honest "we did not assess ICH" beside a dishonest "PASS" in the same body.
+ *
+ * The one part worth keeping — the per-section CTD required-element lists — is
+ * now a check inside the deficiency scan, which has a caller and frames its
+ * output as signals rather than a determination. Migrated and deleted in the
+ * same change, per the zero-duplication rule.
+ */
 
 // ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
 
