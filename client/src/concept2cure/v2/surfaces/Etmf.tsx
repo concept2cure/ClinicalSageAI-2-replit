@@ -43,22 +43,11 @@ import { tmfArtifactName } from '../fixtures/etmf';
 import type { TmfCompletenessResult } from '../fixtures/etmf';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
 
 type MissingDoc = { zone: number; zoneName: string; code: string; name: string };
 
-/* ---- Helper: file download ---- */
-function downloadBlob(name: string, blob: Blob) {
-  try {
-    const u = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = u;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(u), 1500);
-  } catch (_e) { /* noop */ }
-}
+/* The local copy of this helper is gone — see client/src/concept2cure/v2/download.ts. */
 
 /* ---- Helper: offline readiness report as markdown, from the REAL assessment ---- */
 function readinessReportMd(

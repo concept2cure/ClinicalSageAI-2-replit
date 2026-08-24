@@ -7,6 +7,7 @@ import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob, safeFileName } from '../download';
 
 /* ── TemplateSpec types (templateSpec.ts) ── */
 
@@ -371,13 +372,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         note(res.status === 401 ? 'Sign in to render.' : 'Render failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.', 'error');
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = t.name.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_') + '_specimen.' + format;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(safeFileName(t.name) + '_specimen.' + format, await res.blob());
       note('Rendered ' + format.toUpperCase() + ' with the real template engine.');
     } catch (e) {
       note('Render failed — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
