@@ -1782,9 +1782,57 @@ router.post('/docs', async (req: Request, res: Response) => {
       cols.push('client_program_id');
       vals.push(`$${args.length}`);
     }
-    // Referenced ONLY when a binding resolved, for the same reason
-    // client_program_id is: a database without the 20260728 migration emits the
-    // original statement and keeps working.
+    /* Referenced only when the binding resolved AND the column exists.
+     *
+     * The existence check is the load-bearing half, and it was missing. This
+     * guarded on `binding.documentId` alone, on the reasoning that a database
+     * without the 20260728 migration "emits the original statement and keeps
+     * working" — which assumes binding resolution and column existence rise
+     * and fall together. They do not. Resolution depends on the governance
+     * store (c2c_documents / regulatory_programs) answering; the column
+     * depends on an ALTER that lives in the root `migrations/` tree while the
+     * authoring tables live in `db/migrations/`, and which the canonical
+     * authoring migration set does not include.
+     *
+     * On a deployment where the governance store resolves and that ALTER never
+     * ran, this INSERT named a column that does not exist — inside the
+     * BEGIN/COMMIT below, so the whole create rolled back and NEW DOCUMENTS
+     * COULD NOT BE CREATED AT ALL. The most critical path in the editor,
+     * broken by a schema difference the code believed it was tolerating.
+     *
+     * commit-section-to-filing.ts — the write half of the same binding —
+     * already checks information_schema for this exact column before touching
+     * the filing. This is the same check on the read half, so both halves
+     * degrade the same way: unbound, with the reason recorded, rather than
+     * refusing to create a document. */
+    let bindingColumnPresent = false;
+    if (binding.documentId) {
+      try {
+        const col = await pool.query<{ ok: boolean }>(
+          `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema = 'public'
+                             AND table_name = 'authoring_documents'
+                             AND column_name = 'c2c_document_id') AS ok`,
+        );
+        bindingColumnPresent = col.rows[0]?.ok === true;
+      } catch {
+        /* Unable to ask — treat as absent. Creating the document unbound is
+           recoverable; failing the create is not. */
+        bindingColumnPresent = false;
+      }
+      if (!bindingColumnPresent) {
+        /* The caller is told the truth about what it got: a document that is
+           NOT bound to a filing, and why. Silently dropping the binding while
+           reporting `bound: true` would be the worse failure — every later
+           save would look for a filing that was never linked. */
+        binding = {
+          documentId: null,
+          reason:
+            'This deployment has no c2c_document_id column on authoring_documents, so the ' +
+            'document was created without a binding to a filing.',
+        };
+      }
+    }
     if (binding.documentId) {
       args.push(binding.documentId);
       cols.push('c2c_document_id');
