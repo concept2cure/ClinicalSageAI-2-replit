@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T05:56:28.208Z",
+  "generatedAt": "2026-08-24T09:34:11.539Z",
   "git": {
-    "sha": "03b3ccd07a6ca69a7c1c7f757594093cb13a743d",
+    "sha": "8bbd07687ab096d153e95fcadf4fc8ab7a3d86be",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2580,7 +2580,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1734
+        "lines": 1740
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
