@@ -8,8 +8,16 @@
  *   • the eCTD backbone tree is the org's REAL coauthor documents
  *     (GET /api/coauthor/documents), bucketed into ICH M4 modules M1--5 by each
  *     document's moduleNumber — never a codebase tree;
- *   • the artifact renders the SELECTED document's real persisted content
- *     (coauthor_documents.content, HTML) through the audited DOMPurify path;
+ *   • the artifact IS the ONE canonical editor (v2/editor/RichSectionEditor)
+ *     over the selected document's persisted content
+ *     (coauthor_documents.content, HTML), saving through the store's own
+ *     PUT /api/coauthor/documents/:id. A surface named "Co-Author" rendered
+ *     that content read-only through dangerouslySetInnerHTML until this — its
+ *     own empty state told the author to go draft "in the authoring editor",
+ *     an admission the surface could not do its job. Save is explicit
+ *     (Cmd/Ctrl-S or the footer control); every keystroke is device-cached and
+ *     offered back on return, and stale validation/compliance reports are
+ *     cleared on save because they described the previous content;
  *   • structural validation (POST …/validate) and ICH M4 compliance
  *     (GET …/compliance) are computed on the server from that document and its
  *     sections;
@@ -37,10 +45,10 @@
  * they were typed into, and a governed command comes back as the real §11.50
  * sign-off rather than vanishing.
  */
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { I } from '../icons';
 import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
-import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
+import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import { useAnaChat } from '../../components/ana/useAnaChat';
 import { useChatUpload, attachmentReadLabel } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
@@ -269,6 +277,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
        rail's turns (see SurfaceViewProps.liveDrive). */
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const turns = anaChat.messages;
 
@@ -280,6 +289,35 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
     setValidationUnavailable(false);
     setComplianceUnavailable(false);
   }, [activeId]);
+
+  /* ── The one save path (canonical editor → this store's own PUT) ──
+     Awaited and adopted: the tree, readiness and the next validation run all
+     read the server's row, never a local echo. Throwing on a refused write is
+     the contract the editor's footer renders truthfully ("Save failed — kept
+     on this device"). A save also clears the validation/compliance reports:
+     they were computed from the PREVIOUS content, and a stale "Valid" over
+     new text is a false claim. */
+  const editorRef = useRef<RichSectionEditorHandle | null>(null);
+  const saveContent = useCallback(
+    async (serialized: string) => {
+      if (!activeDoc) throw new Error('No document open');
+      const r = await liveMutateOrNull<{ document?: CoauthorDoc }>(
+        'PUT',
+        '/api/coauthor/documents/' + activeDoc.id,
+        { content: serialized },
+      );
+      const saved = r.data?.document;
+      if (!saved) {
+        throw new Error(r.error || 'The server did not confirm the write.');
+      }
+      setDocs((ds) => ds.map((d) => (d.id === activeDoc.id ? { ...d, ...saved } : d)));
+      setValidation(null);
+      setCompliance(null);
+      setValidationUnavailable(false);
+      setComplianceUnavailable(false);
+    },
+    [activeDoc],
+  );
 
   /* eCTD backbone: real documents bucketed into ICH M4 modules, M1..M5 first
      then any unassigned. */
@@ -600,15 +638,39 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                   />
                   <h1 className="ec-doc-h1">{activeDoc.title}</h1>
                   <div className="ec-doc-num">&sect;{activeDoc.moduleNumber || '—'}{activeDoc.moduleName ? ' -- ' + activeDoc.moduleName : ''}</div>
-                  {activeDoc.content && activeDoc.content.trim() ? (
-                    <div className="ec-doc-body" dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(activeDoc.content) }} />
-                  ) : (
-                    <EmptyState
-                      icon={I.fileText || I.file}
-                      title="This document has no content yet"
-                      hint={<>Draft §{activeDoc.moduleNumber || 'this section'} in the authoring editor, or ask AnA to start it. The body renders the saved document content.</>}
+                  {/* The canonical editor over the persisted document. An
+                      empty document is the editor's placeholder plus its
+                      Draft-with-AnA affordance — not a dead end telling the
+                      author to go find a different editor. */}
+                  <div
+                    style={{
+                      minHeight: 420,
+                      border: '1px solid var(--c2c-line,#e4e7ec)',
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <RichSectionEditor
+                      key={activeDoc.id}
+                      ref={editorRef}
+                      value={activeDoc.content ?? ''}
+                      format="html"
+                      onSave={saveContent}
+                      autosaveMs={null}
+                      storageKey={'coauthor:' + activeDoc.id}
+                      ariaLabel={'§' + (activeDoc.moduleNumber || '—') + ' ' + activeDoc.title}
+                      placeholder={
+                        'Write §' +
+                        (activeDoc.moduleNumber || 'this section') +
+                        ' here. Cmd/Ctrl-S saves the document; validation and compliance re-run against what is saved.'
+                      }
+                      onAsk={(p) => {
+                        void anaChat.send(p);
+                      }}
                     />
-                  )}
+                  </div>
                 </>
               )}
             </div>

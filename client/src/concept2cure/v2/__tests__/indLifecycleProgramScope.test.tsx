@@ -55,6 +55,20 @@ function wire(rows: unknown[]) {
   });
 }
 
+<<<<<<< HEAD
+=======
+/* IndLifecycle destructures only onAsk/onNav, but it DECLARES the full
+   SurfaceViewProps — so the render site owes the whole contract. */
+function surfaceProps() {
+  return {
+    surface: { id: 'ind-checklist', label: 'IND Checklist' } as never,
+    segment: 'biopharma',
+    onAsk: () => {},
+    onNav: () => {},
+  };
+}
+
+>>>>>>> origin/concept2cure-v2
 beforeEach(() => {
   apiRequest.mockReset();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
@@ -72,7 +86,11 @@ describe('IndLifecycle — program scoping', () => {
       product: 'BX-701',
     };
     wire(TWO_ROWS);
+<<<<<<< HEAD
     render(<IndLifecycle {...({ onAsk: () => {}, onNav: () => {} } as any)} />);
+=======
+    render(<IndLifecycle {...surfaceProps()} />);
+>>>>>>> origin/concept2cure-v2
 
     expect(await screen.findByRole('heading', { name: /BX-701 -- Initial IND/ })).toBeTruthy();
     const note = screen.getByTestId('indl-scope-note');
@@ -87,7 +105,11 @@ describe('IndLifecycle — program scoping', () => {
       product: 'CX-900',
     };
     wire(TWO_ROWS);
+<<<<<<< HEAD
     render(<IndLifecycle {...({ onAsk: () => {}, onNav: () => {} } as any)} />);
+=======
+    render(<IndLifecycle {...surfaceProps()} />);
+>>>>>>> origin/concept2cure-v2
 
     expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(
@@ -97,7 +119,11 @@ describe('IndLifecycle — program scoping', () => {
 
   it('with no program open and several INDs, says which one is shown and how to scope', async () => {
     wire(TWO_ROWS);
+<<<<<<< HEAD
     render(<IndLifecycle {...({ onAsk: () => {}, onNav: () => {} } as any)} />);
+=======
+    render(<IndLifecycle {...surfaceProps()} />);
+>>>>>>> origin/concept2cure-v2
 
     expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/Open a program to scope/);
@@ -105,7 +131,11 @@ describe('IndLifecycle — program scoping', () => {
 
   it('a single IND with no program open needs no note — nothing to disambiguate', async () => {
     wire([TWO_ROWS[0]]);
+<<<<<<< HEAD
     render(<IndLifecycle {...({ onAsk: () => {}, onNav: () => {} } as any)} />);
+=======
+    render(<IndLifecycle {...surfaceProps()} />);
+>>>>>>> origin/concept2cure-v2
 
     expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
     expect(screen.queryByTestId('indl-scope-note')).toBeNull();

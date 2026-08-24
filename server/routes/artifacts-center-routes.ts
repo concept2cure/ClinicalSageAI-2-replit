@@ -51,6 +51,7 @@ import { Router, Request, Response } from 'express';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { pool } from '../db.js';
+import { generateDocxBuffer } from '../services/docxGenerator.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
@@ -284,6 +285,136 @@ export default function createArtifactsCenterRoutes(): Router {
         err: error instanceof Error ? error.message : String(error),
       });
       return res.status(500).json({ success: false, error: 'Failed to load artifacts center' });
+    }
+  });
+
+
+  /**
+   * Download one governed artifact as a file.
+   *
+   * ── Why this exists ────────────────────────────────────────────────────────
+   * The Artifacts Center's per-row "Download" button ran
+   * `onAsk('Download <name> (PDF, 24 KB)')` — it typed the file's name into the
+   * chat rail as a sentence. No file was produced. The gallery read above
+   * deliberately returns `octet_length(a.content)` rather than the content, so
+   * the client had nothing to render even if it had wanted to, and there was no
+   * per-artifact endpoint to ask.
+   *
+   * This is that endpoint. It re-reads the artifact org-scoped (never trusting
+   * an id the client supplies to reach across tenants), renders the stored
+   * content, and streams it back.
+   *
+   * ── The export-review gate is NOT skipped ──────────────────────────────────
+   * AI-generated regulatory content must not leave the system unreviewed. The
+   * three single-document exporters in routes/concept2cure.ts all sit behind
+   * `validateExportGovernance`, which refuses with HUMAN_REVIEW_REQUIRED when
+   * the environment enforces it. A download route that quietly bypassed that
+   * would be a hole in the same gate, reachable from a gallery listing EVERY
+   * artifact in the org — so this refuses unreviewed AI content the same way,
+   * reading the artifact's own review state rather than asking the caller to
+   * assert it.
+   */
+  router.get('/:artifactId/export', async (req: Request, res: Response) => {
+    try {
+      const orgId = getOrgId(req);
+      const artifactId = String(req.params.artifactId || '').trim();
+      if (!artifactId) {
+        return res.status(400).json({ success: false, error: 'An artifact id is required.' });
+      }
+
+      const format = String(req.query.format || 'docx').toLowerCase();
+      if (format !== 'docx' && format !== 'txt') {
+        // PDF rendering for artifacts goes through the chat exporter, which
+        // takes a different payload; offering it here without wiring it would
+        // be the same empty promise this route replaces.
+        return res.status(400).json({
+          success: false,
+          error: 'Unsupported format. This endpoint renders docx or txt.',
+        });
+      }
+
+      const { rows } = await pool.query(
+        `SELECT a.title,
+                a.content,
+                a.metadata,
+                EXISTS (
+                  SELECT 1 FROM concept2cure_signatures s
+                   WHERE s.artifact_id = a.id
+                     AND s.organization_id = a.organization_id
+                     AND s.status = 'active'
+                ) AS is_signed
+           FROM concept2cure_artifacts a
+          WHERE a.artifact_id = $1 AND a.organization_id = $2`,
+        [artifactId, orgId],
+      );
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'That artifact was not found in your organization.',
+        });
+      }
+
+      const row = rows[0] as {
+        title: string | null;
+        content: string | null;
+        metadata: Record<string, unknown> | null;
+        is_signed: boolean;
+      };
+
+      const content = typeof row.content === 'string' ? row.content : '';
+      if (!content.trim()) {
+        // An artifact row with no content is a real state (a placeholder minted
+        // before drafting). Reported as what it is, rather than shipping an
+        // empty file the user has to open to discover was empty.
+        return res.status(409).json({
+          success: false,
+          error: 'That artifact has no content to export yet.',
+        });
+      }
+
+      /* The export-review gate, read from the artifact rather than asserted by
+         the caller. An active signature IS the human review — a signed artifact
+         has been approved by a named person through the Part 11 ceremony. An
+         unsigned, AI-generated artifact is exactly what the gate exists to
+         hold, so it is refused with the same code the other exporters use. */
+      const meta = row.metadata ?? {};
+      const aiGenerated = Boolean(
+        meta.model ?? meta.modelTier ?? meta.aiModel ?? meta.aiGenerated,
+      );
+      if (aiGenerated && !row.is_signed && process.env.EXPORT_REVIEW_GATE === 'enforce') {
+        return res.status(403).json({
+          success: false,
+          error: 'HUMAN_REVIEW_REQUIRED',
+          message:
+            'This artifact was AI-generated and carries no active signature. Sign it before exporting.',
+        });
+      }
+
+      const title = row.title || 'artifact';
+      const safeTitle = title.replace(/[^\w.-]+/g, '_').slice(0, 80) || 'artifact';
+
+      if (format === 'txt') {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.txt"`);
+        return res.send(content);
+      }
+
+      const buffer = await generateDocxBuffer(title, content);
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.docx"`);
+      return res.send(buffer);
+    } catch (error) {
+      logger.error('artifact export failed', {
+        err: error instanceof Error ? error.message : String(error),
+        artifactId: String(req.params.artifactId || ''),
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'The artifact could not be exported.',
+      });
     }
   });
 

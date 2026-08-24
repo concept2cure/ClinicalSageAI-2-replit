@@ -260,9 +260,14 @@ export function V2App() {
     },
     [setLocation]
   );
+  /* True from a drive_state{enabled} until the person takes over — read by the
+     follow-the-work effect below, which fires AFTER turn_end has already
+     released the reducer's `active` (drafts persist post-`done`). */
+  const droveThisTurnRef = React.useRef(false);
   const onDriveEvent = React.useCallback(
     (ev: DriveSseEvent) => {
       if (ev.type === 'drive_state') {
+        droveThisTurnRef.current = ev.enabled;
         dispatchDrive({
           kind: 'drive_state',
           enabled: ev.enabled,
@@ -286,6 +291,29 @@ export function V2App() {
       nav(directive.targetId);
     },
     [dispatchDrive, nav]
+  );
+  /* ── Follow the work (declared before useAnaChat, which takes it) ─────
+     The point of Live Drive is WATCHING AnA work — and her biggest work
+     product is a persisted draft (`artifact_version_saved` → onArtifactSaved,
+     fired by EVERY chat instance: the rail's and each owned dock's via the
+     bridge). When a driven turn lands one, take the subscriber to the
+     Artifacts Center with that artifact focused, so the document appears in
+     front of them instead of behind a nav item. */
+  const followedArtifactsRef = React.useRef<Set<string>>(new Set());
+  const followWork = React.useCallback(
+    (artifactId: string) => {
+      /* Both gates on purpose: the toggle must still be ON (a turn-old ref
+         must not outlive the person switching drive off) AND this turn must
+         have genuinely driven (an un-entitled or undriven turn never moves
+         the screen, drafts included). Deduped per artifact so a re-render or
+         duplicate event can never re-hijack the screen. */
+      if (!artifactId || !prefs.liveDrive || !droveThisTurnRef.current) return;
+      if (followedArtifactsRef.current.has(artifactId)) return;
+      followedArtifactsRef.current.add(artifactId);
+      stashNavParamsForTarget('artifacts-center', { artifactId });
+      nav('artifacts-center');
+    },
+    [nav, prefs.liveDrive]
   );
   /* The real AnA assistant for the whole shell — one streaming conversation
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
@@ -318,6 +346,7 @@ export function V2App() {
        turn's drive events feed the shell's apply/take-over machine above. */
     liveDrive: prefs.liveDrive,
     onDriveEvent,
+    onArtifactSaved: followWork,
   });
   /* A turn ending releases the drive (and its per-turn cap/take-over) so the
      overlay never claims AnA is driving after she has stopped working. */
@@ -359,14 +388,52 @@ export function V2App() {
      rest of the turn AND drop the toggle, so the next turn does not re-engage
      until they deliberately switch it back on. AnA keeps answering. */
   const takeOverDrive = () => {
+    droveThisTurnRef.current = false;
     dispatchDrive({ kind: 'take_over' });
     set('liveDrive', false);
   };
+  /* ── One-click guided tour ("Show me around") ─────────────────────────
+     Enable the toggle, then send the tour ask only AFTER the pref has
+     committed — sending in the same tick would build the request from this
+     render's stale options and the tour turn would stream WITHOUT live_drive
+     (the toolsOverride trap, documented in useAnaChat). Already-on skips the
+     wait and sends immediately. */
+  const TOUR_ASK =
+    'Show me around this workspace. Take me through the screens that matter most for my work — navigate to each one and briefly explain what I can do there as you go.';
+  const pendingTourRef = React.useRef(false);
+  const startTour = () => {
+    /* The tour button lives in the AnaRail's Control menu, and the rail is
+       only rendered on surfaces that do NOT own the conversation — so opening
+       the rail is always the right move here. */
+    if (!prefs.anaOpen) set('anaOpen', true);
+    if (prefs.liveDrive) {
+      void anaChat.send(TOUR_ASK);
+      return;
+    }
+    pendingTourRef.current = true;
+    set('liveDrive', true);
+  };
+  React.useEffect(() => {
+    if (!pendingTourRef.current || !prefs.liveDrive) return;
+    pendingTourRef.current = false;
+    void anaChat.send(TOUR_ASK);
+    // anaChat.send is rebuilt each render with fresh options; this effect runs
+    // on the render WHERE liveDrive committed, so the turn carries the flag.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs.liveDrive]);
+  const lastMsg = anaChat.messages[anaChat.messages.length - 1];
+  /* What AnA is doing right now, for the drive strip — only ever a label the
+     stream genuinely reported (the running tool's label, else the phase). */
+  const driveActivity =
+    lastMsg?.role === 'assistant' && lastMsg.streaming
+      ? (lastMsg.toolCalls?.filter((t) => t.status === 'running').slice(-1)[0]?.label ??
+        lastMsg.statusPhase)
+      : undefined;
   /* The bridge for surfaces that run their own conversation (see
      SurfaceViewProps.liveDrive) — same toggle, same reducer, one machine. */
   const liveDriveBridge = React.useMemo(
-    () => ({ on: prefs.liveDrive, onDriveEvent }),
-    [prefs.liveDrive, onDriveEvent]
+    () => ({ on: prefs.liveDrive, onDriveEvent, onWorkSaved: followWork }),
+    [prefs.liveDrive, onDriveEvent, followWork]
   );
   const { user } = useAuth();
   /* The onboarding welcome must reflect the TENANT's real client type
@@ -635,6 +702,7 @@ export function V2App() {
               set('liveDrive', v);
               if (!v) dispatchDrive({ kind: 'take_over' });
             },
+            onStartTour: startTour,
           }}
         />
       )}
@@ -651,7 +719,12 @@ export function V2App() {
       <CollabLayer onNav={nav} />
       {/* Fixed strip, above every surface, while AnA is actually driving —
           who is driving, where she just went, take-over one keypress away. */}
-      <LiveDriveOverlay state={drive} onTakeOver={takeOverDrive} onStop={() => anaChat.stop()} />
+      <LiveDriveOverlay
+        state={drive}
+        activity={driveActivity}
+        onTakeOver={takeOverDrive}
+        onStop={() => anaChat.stop()}
+      />
     </div>
     </NavEntitlementsProvider>
   );

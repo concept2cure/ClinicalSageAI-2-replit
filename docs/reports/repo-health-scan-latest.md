@@ -1,8 +1,14 @@
 # Repo Health Scan
 
+<<<<<<< HEAD
 Generated: 2026-08-23T23:09:02.440Z
 Branch: concept2cure-v2
 SHA: 49a54b10621458f9430c44fae2887d925f05c85a
+=======
+Generated: 2026-08-23T23:45:47.580Z
+Branch: concept2cure-v2
+SHA: ef164822f5cac3aa4d7d81f6e3c72838b2c3d6c9
+>>>>>>> origin/concept2cure-v2
 
 ## Summary
 

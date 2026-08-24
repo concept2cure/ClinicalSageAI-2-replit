@@ -421,6 +421,14 @@ export interface UseAnaChatOptions {
    * v2/liveDrive.ts, next to the shell that owns navigation.
    */
   onDriveEvent?: (event: DriveSseEvent) => void;
+  /**
+   * Fired when the server persists a draft this turn produced
+   * (`artifact_version_saved`, with the governed artifact's external id).
+   * The shell's follow-the-work behavior hangs off this so a driven turn's
+   * document appears in front of the subscriber — from ANY chat instance
+   * (rail or an owned surface's dock), not just the shell's own.
+   */
+  onArtifactSaved?: (artifactId: string) => void;
 }
 /**
  * Live Drive SSE events, forwarded verbatim to `onDriveEvent` as they stream.

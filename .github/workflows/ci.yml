@@ -277,6 +277,11 @@ jobs:
       - name: Guardrails — regulated-data delete audit coverage (Part 11)
         run: npm run ci:regulated-delete-audit
 
+      - name: Guardrails — no unreachable catch around an audit write (Part 11)
+        run: |
+          npm run ci:dead-audit-catch:self-test
+          npm run ci:dead-audit-catch
+
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 

@@ -1621,6 +1621,15 @@
 .c2c-v2 .ana-drive-btn.is-stop{color:var(--text-300);}
 .c2c-v2 .ana-drive-btn.is-stop:hover{color:var(--text-100);}
 .c2c-v2 .ana-drive-kbd{font:inherit;font-size:10px;color:var(--text-400);border:1px solid var(--border);border-radius:4px;padding:0 4px;line-height:1.5;}
+.c2c-v2 .ana-drive-activity{font-size:12px;color:var(--text-300);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:220px;}
+/* Follow-the-work: the artifact row a driven turn just produced. Highlighted
+   with the accent, decaying to the resting row over 2.4s — long enough to see
+   which row arrived, calm enough to not celebrate (motion-discipline). */
+.c2c-v2 .art-row.is-focus{outline:2px solid var(--accent-200);outline-offset:-2px;background:var(--accent-000);animation:art-focus-settle 2400ms ease-out forwards;}
+@keyframes art-focus-settle{0%,60%{outline-color:var(--accent-200);}100%{outline-color:transparent;background:transparent;}}
+@media (prefers-reduced-motion: reduce){
+  .c2c-v2 .art-row.is-focus{animation:none;}
+}
 @keyframes ana-drive-in{from{opacity:0;transform:translateX(-50%) translateY(6px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 @media (prefers-reduced-motion: reduce){
   .c2c-v2 .ana-drive-strip{animation:none;}
@@ -2771,7 +2780,7 @@
 .c2c-v2 .lp-fmt{display:flex;align-items:center;gap:8px;margin-top:16px;flex-wrap:wrap;}
 .c2c-v2 .lp-fmt-b{font-size:12px;font-weight:500;color:var(--text-300);border:1px solid var(--border);border-radius:8px;padding:7px 12px;background:var(--bg-000);}
 .c2c-v2 .lp-fmt-b.on{background:var(--accent-000);border-color:var(--accent-100);color:var(--accent-200);}
-.c2c-v2 .lp-stages{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;}
+.c2c-v2 .lp-stages{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap;list-style:none;margin-block:0;padding:0;}
 .c2c-v2 .lp-stage{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-400);border:1px solid var(--border);border-radius:99px;padding:5px 11px;background:var(--bg-000);}
 .c2c-v2 .lp-stage.done{color:var(--success);border-color:var(--success-muted);}
 .c2c-v2 .lp-stage.on{background:var(--accent-strong);border-color:var(--accent-100);color:var(--accent-on-strong);}
@@ -2835,6 +2844,25 @@
 .c2c-v2 .reg-btn.pri:hover{background:var(--accent-200);}
 .c2c-v2 .reg-btn.ghost{border-color:transparent;color:var(--text-400);}
 .c2c-v2 .reg-btn:hover{border-color:var(--text-400);}
+
+/* Labeling — stage ladder is a read-out (an <ol>), so the pill needs the same
+   box the old <button> got from the UA. */
+.c2c-v2 .lp-stages .lp-stage{list-style:none;}
+/* Labeling — SmPC section rows (read-only, so <div> not <button>). */
+.c2c-v2 .lp-sec-st{margin-left:auto;font-size:10.5px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 div.lp-sec{cursor:default;}
+/* Labeling — SPL product-identity form. */
+.c2c-v2 .lp-spl{padding:4px 2px 18px;}
+.c2c-v2 .lp-spl-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0 0 14px;}
+.c2c-v2 .lp-spl-f{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);}
+.c2c-v2 .lp-spl-f input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .lp-spl-f input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+/* Labeling — agency negotiation: audited reason + expanded redline. */
+.c2c-v2 .lp-neg-reason{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--text-400);margin:12px 0 10px;}
+.c2c-v2 .lp-neg-reason input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;background:var(--bg-000);color:var(--text-100);}
+.c2c-v2 .lp-neg-reason input:focus-visible{outline:2px solid var(--accent-100);outline-offset:1px;}
+.c2c-v2 .lp-neg-redline{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:12px;background:var(--bg-000);}
+.c2c-v2 .lp-neg-redline-h{font-size:11px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.04em;}
 @media(max-width:1080px){.c2c-v2 .lp-split{grid-template-columns:1fr;}.c2c-v2 .lp-stages{margin-left:0;width:100%;}}
 
 /* ════ Registry Picker ════ */
@@ -3315,3 +3343,7 @@
 @media (max-width: 480px) {
   .c2c-global-errors { right: 8px; left: 8px; bottom: 8px; width: auto; }
 }
+
+/* The batch-draft card, opened for editing. Same box as the rendered body so
+   the card does not jump when the two swap. */
+.c2c-v2 .bd-card-edit{width:100%;min-height:160px;resize:vertical;font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--text-100);background:var(--bg-000);border:1px solid var(--accent-100);border-radius:8px;padding:10px 12px;outline:none;}

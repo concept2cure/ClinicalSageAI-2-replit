@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "generatedAt": "2026-08-23T23:09:02.440Z",
   "git": {
     "sha": "49a54b10621458f9430c44fae2887d925f05c85a",
+=======
+  "generatedAt": "2026-08-23T23:45:47.580Z",
+  "git": {
+    "sha": "ef164822f5cac3aa4d7d81f6e3c72838b2c3d6c9",
+>>>>>>> origin/concept2cure-v2
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2172,7 +2178,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
+<<<<<<< HEAD
         "bytes": 260888
+=======
+        "bytes": 266129
+>>>>>>> origin/concept2cure-v2
       },
       {
         "file": "server/statistics-service.ts",
@@ -2203,6 +2213,14 @@
         "bytes": 138123
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 138092
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 137628
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 136607
       },
@@ -2213,6 +2231,10 @@
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 135234
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 135023
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2322,7 +2344,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
+<<<<<<< HEAD
         "lines": 6550
+=======
+        "lines": 6678
+>>>>>>> origin/concept2cure-v2
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2358,7 +2384,15 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+<<<<<<< HEAD
         "lines": 3182
+=======
+        "lines": 3272
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3159
+>>>>>>> origin/concept2cure-v2
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2407,6 +2441,10 @@
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2419
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2400
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2458,7 +2496,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2084
+        "lines": 2083
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -2593,6 +2631,10 @@
         "lines": 1704
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1683
+      },
+      {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
       },
@@ -2635,6 +2677,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
         "lines": 1582
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 1553
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",

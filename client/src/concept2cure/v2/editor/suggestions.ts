@@ -554,6 +554,24 @@ function structuredNodes(schema: Schema, clean: string, mark: PMMark): PMNode[] 
 interface TrackChangesStorage {
   enabled: boolean;
   author: SuggestionAuthor;
+  /**
+   * Authors whose INSERTIONS have been accepted since the last save.
+   *
+   * Accepting an insertion strips its mark — that is what accepting a tracked
+   * change means — and the mark is the only place the author was recorded. So
+   * the moment a reviewer accepts an AnA draft, the text becomes
+   * indistinguishable from text they typed themselves, and the revision the
+   * save then writes is attributed wholly to them.
+   *
+   * For a §11.10(e) record that is a real attribution defect: the audit trail
+   * says a human authored words a model produced. Collecting the authors here
+   * lets the save carry them into the revision, so the ledger records who the
+   * accepted text actually came from.
+   *
+   * Deletions are not collected: accepting a deletion removes text, and the
+   * resulting content carries no contribution from the proposer.
+   */
+  acceptedAuthors: SuggestionAuthor[];
 }
 
 const trackKey = new PluginKey('c2cTrackChanges');
@@ -581,6 +599,26 @@ declare module '@tiptap/core' {
   }
 }
 
+/**
+ * Record an accepted insertion's author, once per distinct author.
+ *
+ * Called before the mark is stripped, because stripping it is what erases the
+ * attribution this exists to preserve.
+ */
+export function rememberAcceptedAuthor(
+  store: TrackChangesStorage,
+  kind: SuggestionRange['kind'],
+  action: 'accept' | 'reject',
+  authorId: string | null,
+  authorName: string | null,
+): void {
+  if (kind !== 'insertion' || action !== 'accept') return;
+  if (!authorId && !authorName) return;
+  const id = authorId ?? authorName!;
+  if (store.acceptedAuthors.some((a) => a.id === id)) return;
+  store.acceptedAuthors.push({ id, name: authorName ?? id });
+}
+
 export const TrackChanges = Extension.create<
   { author: SuggestionAuthor; enabled: boolean },
   TrackChangesStorage
@@ -592,7 +630,7 @@ export const TrackChanges = Extension.create<
   },
 
   addStorage() {
-    return { enabled: this.options.enabled, author: this.options.author };
+    return { enabled: this.options.enabled, author: this.options.author, acceptedAuthors: [] };
   },
 
   addExtensions() {
@@ -618,6 +656,7 @@ export const TrackChanges = Extension.create<
         (range: SuggestionRange, action: 'accept' | 'reject') =>
         ({ state, tr, dispatch }) => {
           const { insertion, deletion } = state.schema.marks;
+          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName);
           const keepText =
             (range.kind === 'insertion') === (action === 'accept');
           if (keepText) {
@@ -639,6 +678,7 @@ export const TrackChanges = Extension.create<
           const removedAt: number[] = [];
           // Descending order so earlier positions stay valid as text is removed.
           for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
+            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName);
             const keepText = (r.kind === 'insertion') === (action === 'accept');
             if (keepText) {
               tr.removeMark(r.from, r.to, r.kind === 'insertion' ? insertion : deletion);

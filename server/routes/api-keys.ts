@@ -76,25 +76,24 @@ async function auditApiKeyEvent(entry: {
   outcome: 'success' | 'failure';
   reason?: string;
 }): Promise<void> {
-  try {
-    await auditService.logAction({
-      tenantId: entry.organizationId,
-      userId: entry.userId,
-      action: entry.action,
-      resourceType: 'api_key',
-      resourceId: String(entry.keyId),
-      ipAddress: entry.ipAddress,
-      userAgent: entry.userAgent,
-      details: {
-        outcome: entry.outcome,
-        reason: entry.reason,
-        keyPrefix: entry.keyPrefix,
-        scopes: entry.scopes,
-      },
-    });
-  } catch (err) {
+  const apiKeyAudit = await auditService.logAction({
+    tenantId: entry.organizationId,
+    userId: entry.userId,
+    action: entry.action,
+    resourceType: 'api_key',
+    resourceId: String(entry.keyId),
+    ipAddress: entry.ipAddress,
+    userAgent: entry.userAgent,
+    details: {
+      outcome: entry.outcome,
+      reason: entry.reason,
+      keyPrefix: entry.keyPrefix,
+      scopes: entry.scopes,
+    },
+  });
+  if (!apiKeyAudit.persisted) {
     log.warn('API-key audit write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: apiKeyAudit.error ?? 'no durable store accepted the row',
       action: entry.action,
     });
   }

@@ -911,6 +911,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
        apply/take-over machine as the rail's turns. */
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
@@ -1424,8 +1425,15 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!activeSection) throw new Error('No section open');
       setSaving(true);
       try {
+        /* Authors whose insertions this reviewer accepted since the last save.
+           Accepting a suggestion strips the mark that named its author, so
+           without this the revision would attribute an AnA draft entirely to
+           whoever pressed accept. Read-and-clear: an author counts once, for
+           the save that carried their text in. */
+        const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
         const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           content: serialized,
+          ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
         });
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
@@ -1745,6 +1753,61 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setRenameBusy(false);
     }
   }, [activeSection, renameCode, renameTitle, fireToast]);
+
+  /* ── Move the open section within its document ──
+     `order_index` is what the tree AND the export assembler order by, and
+     until the reorder endpoint existed nothing could change it — a document
+     whose sections were created out of order assembled out of order,
+     permanently. The server validates the full permutation and renumbers in
+     one transaction; the tree redraws from the canonical GET afterwards,
+     never from a local echo. */
+  const [reordering, setReordering] = useState(false);
+  const moveSection = useCallback(
+    async (dir: -1 | 1) => {
+      if (!activeDocId || !activeSection || sections.length < 2) return;
+      const idx = sections.findIndex(s => s.id === activeSection.id);
+      const to = idx + dir;
+      if (idx < 0 || to < 0 || to >= sections.length) return;
+      const ids = sections.map(s => s.id);
+      [ids[idx], ids[to]] = [ids[to], ids[idx]];
+      setReordering(true);
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/docs/${encodeURIComponent(activeDocId)}/sections/reorder`,
+          { section_ids: ids }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not moved — your session isn’t authenticated.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t move the section — ' +
+              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              ' The order is unchanged.',
+            'error'
+          );
+          // A 409 means the section list moved under us — adopt the truth.
+          if (res.status === 409) void loadSections(activeDocId);
+          return;
+        }
+        await loadSections(activeDocId);
+        fireToast(
+          `${activeSection.code} moved ${dir === -1 ? 'up' : 'down'} — the document assembles and exports in this order.`
+        );
+      } catch (e) {
+        fireToast(
+          'Couldn’t move the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      } finally {
+        setReordering(false);
+      }
+    },
+    [activeDocId, activeSection, sections, fireToast, loadSections]
+  );
 
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
@@ -2317,6 +2380,33 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                           {I.penLine} Rename
                         </button>
                       )}
+                      {!docSealed &&
+                        sections.length > 1 &&
+                        (() => {
+                          const idx = sections.findIndex(s => s.id === activeSection.id);
+                          return (
+                            <span style={{ marginLeft: 4, verticalAlign: 'middle' }}>
+                              <button
+                                className="nda-open"
+                                disabled={reordering || idx <= 0}
+                                title="Move this section up — the document assembles and exports in tree order"
+                                aria-label={`Move ${activeSection.code} up`}
+                                onClick={() => void moveSection(-1)}
+                              >
+                                {I.arrowUp}
+                              </button>
+                              <button
+                                className="nda-open"
+                                disabled={reordering || idx >= sections.length - 1}
+                                title="Move this section down"
+                                aria-label={`Move ${activeSection.code} down`}
+                                onClick={() => void moveSection(1)}
+                              >
+                                {I.arrowDown}
+                              </button>
+                            </span>
+                          );
+                        })()}
                     </>
                   )}
                   <div className="ed-mast-meta">

@@ -163,6 +163,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     // Live Drive bridge — same opt-in and shell-level apply machine as the rail.
     liveDrive: liveDrive?.on,
     onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
     role: m.role,

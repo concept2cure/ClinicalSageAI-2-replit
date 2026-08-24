@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { useAuth } from '@/services/portal/authService';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -75,7 +74,8 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 const MCOLS = '40px 1.4fr 100px 1fr 90px 70px 90px';
-const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px';
+// + a trailing Action column for the explicit Revoke control.
+const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px 90px';
 
 export function AdminAccess({ onAsk }: SurfaceViewProps) {
   /* Fixture-free read: adopt the org's REAL admin estate from GET
@@ -95,9 +95,44 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      requireAdmin), enforces the seat-licensing gate and audits the create. The
      roster is re-read afterwards so the new member appears because the server
      stored them. */
-  const { user } = useAuth();
   const [toast, fireToast] = useToast();
   const [inviting, setInviting] = useState(false);
+
+  /** The key a Revoke click is confirming. Null when no confirmation is open. */
+  const [revoking, setRevoking] = useState<{ id: string; name: string } | null>(null);
+
+  const revokeKey = async () => {
+    const k = revoking;
+    setRevoking(null);
+    if (!k) return;
+    try {
+      const res = await apiRequest('DELETE', `/api/api-keys/${encodeURIComponent(k.id)}`);
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        fireToast(
+          'Key not revoked — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
+        );
+        return;
+      }
+      fireToast(`API key "${k.name}" revoked — the revocation is in the audit trail.`);
+      setAdminEpoch((n) => n + 1);
+    } catch (e) {
+      fireToast(
+        'Key not revoked — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing changed.',
+        'error',
+      );
+    }
+  };
+
+  const REVOKE_FORM: C2CFormConfig = {
+    eyebrow: 'API keys · revoke',
+    title: revoking ? `Revoke "${revoking.name}"?` : 'Revoke key',
+    governed:
+      'Revocation is immediate and cannot be undone. Any service authenticating with this key stops working at once. The revocation is recorded in the audit trail against you.',
+    submitLabel: 'Revoke key',
+    fields: [],
+  };
 
   const INVITE_FORM: C2CFormConfig = {
     eyebrow: 'Admin and access · new member',
@@ -120,7 +155,6 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
   const invite = async (v: Record<string, string>) => {
     setInviting(false);
-    const orgId = Number((user as { organizationId?: unknown } | null)?.organizationId);
     try {
       const res = await apiRequest('POST', '/api/tenant-users', {
         name: (v.name || '').trim(),
@@ -128,9 +162,10 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         role: v.role,
         title: (v.title || '').trim() || undefined,
         department: (v.department || '').trim() || undefined,
-        // Optional server-side; sent when the session carries one so the route
-        // does not have to infer the tenant.
-        ...(Number.isInteger(orgId) && orgId > 0 ? { organizationId: orgId } : {}),
+        // organizationId is optional on createUserSchema — the route resolves
+        // the tenant from the session, so this surface does not need an
+        // AuthProvider just to name it. Reading it from useAuth here broke
+        // every AdminAccess test, which render the surface standalone.
       });
       if (!res.ok) {
         const b = await res.json().catch(() => null);
@@ -368,11 +403,32 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                 <div className="adm-empty">No API keys. Create one to let a service authenticate — scopes are fixed at creation and every use is audited.</div>
               ) : (
                 <div className="ctable">
-                  <div className="ctable-head" style={{ gridTemplateColumns: KCOLS }}><div>Key</div><div>Name</div><div>Scopes</div><div>Owner</div><div>Created</div><div>Rotate in</div><div>Last used</div></div>
+                  {/* ── The whole ROW was a button that claimed to rotate the key ──
+                      Clicking anywhere on a row ran ask('Rotate API key … Stage a
+                      new key, dual-publish for 24h, deprecate the old key…') — a
+                      sentence into the AnA panel. No key was staged, rotated or
+                      deprecated, and the only affordance on the keys table did
+                      nothing.
+
+                      Two things were wrong, and only one of them is "no handler".
+                      Rotating a credential is destructive and must be deliberate;
+                      a whole table row is the wrong trigger for it at any level of
+                      wiring — a stray click should never be able to invalidate a
+                      key a live integration is authenticating with.
+
+                      So the row is a row, and the destructive action is its own
+                      explicit control. `DELETE /api/api-keys/:id` exists, is
+                      tenant-scoped and audits through auditApiKeyEvent
+                      ('api_key_revoked'), so REVOKE is wired for real. Rotation —
+                      stage, dual-publish, deprecate — has no endpoint and is a
+                      three-step ceremony; it is not silently reduced to a revoke
+                      here, and the 'Rotate in' column keeps telling the admin when
+                      one is due. */}
+                  <div className="ctable-head" style={{ gridTemplateColumns: KCOLS }}><div>Key</div><div>Name</div><div>Scopes</div><div>Owner</div><div>Created</div><div>Rotate in</div><div>Last used</div><div>Action</div></div>
                   {apiKeys.map((k) => {
                     const overdue = k.rotateIn === 'overdue';
                     return (
-                      <button key={k.id} className="ctable-row" style={{ gridTemplateColumns: KCOLS }} onClick={() => ask(`Rotate API key ${k.name} (${k.id}). Stage a new key, dual-publish for 24h, deprecate the old key, and confirm the audit entry.`)}>
+                      <div key={k.id} className="ctable-row" style={{ gridTemplateColumns: KCOLS }}>
                         <div className="mono small">{k.id}</div>
                         <div className="ctable-strong">{k.name}</div>
                         <div className="adm-groups">{k.scopes.map((s) => <span key={s} className="adm-scope mono tiny">{s}</span>)}</div>
@@ -380,7 +436,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                         <div className="adm-muted">{k.created}</div>
                         <div className={overdue ? 'adm-overdue' : ''}>{k.rotateIn || '—'}</div>
                         <div className="adm-muted">{k.lastUsed}</div>
-                      </button>
+                        <div>
+                          <button
+                            className="btn ghost small"
+                            onClick={() => setRevoking(k)}
+                            title={`Revoke ${k.name} — any service using this key stops authenticating immediately`}
+                            data-testid="apikey-revoke"
+                          >
+                            {I.x || I.trash} Revoke
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -433,6 +499,13 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
           config={INVITE_FORM}
           onCancel={() => setInviting(false)}
           onSubmit={invite}
+        />
+      )}
+      {revoking && (
+        <C2CForm
+          config={REVOKE_FORM}
+          onCancel={() => setRevoking(null)}
+          onSubmit={() => void revokeKey()}
         />
       )}
       <C2CToast msg={toast} />

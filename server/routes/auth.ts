@@ -41,24 +41,23 @@ async function auditAuthEvent(entry: {
   ipAddress?: string;
   userAgent?: string;
 }): Promise<void> {
-  try {
-    await auditService.logAction({
-      tenantId: entry.tenantId ?? undefined,
-      userId: entry.userId ?? undefined,
-      action: entry.action,
-      resourceType: 'user',
-      resourceId: entry.userId?.toString() ?? entry.email ?? 'unknown',
-      ipAddress: entry.ipAddress,
-      userAgent: entry.userAgent,
-      details: {
-        outcome: entry.outcome,
-        reason: entry.reason,
-        email: entry.email,
-      },
-    });
-  } catch (err) {
+  const authAudit = await auditService.logAction({
+    tenantId: entry.tenantId ?? undefined,
+    userId: entry.userId ?? undefined,
+    action: entry.action,
+    resourceType: 'user',
+    resourceId: entry.userId?.toString() ?? entry.email ?? 'unknown',
+    ipAddress: entry.ipAddress,
+    userAgent: entry.userAgent,
+    details: {
+      outcome: entry.outcome,
+      reason: entry.reason,
+      email: entry.email,
+    },
+  });
+  if (!authAudit.persisted) {
     logger.warn('Audit log write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: authAudit.error ?? 'no durable store accepted the row',
       action: entry.action,
     });
   }

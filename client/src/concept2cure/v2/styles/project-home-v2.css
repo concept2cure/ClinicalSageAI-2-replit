@@ -15,6 +15,186 @@
   padding:28px 32px 80px;
 }
 
+/* ── New project wizard — full canvas ──
+   Was an 880px `.esign-modal` over the portfolio, with a 440px scroll pane
+   inside it for the global filing registry. It is now a view of the `projects`
+   surface, which is registered `full: true`, so it gets the same box
+   `.pj-index` gets: the flex child of `.page-full`, claiming the row and
+   `min-width:0` so a wide catalogue scrolls inside it rather than pushing the
+   shell wider than the viewport.
+
+   Column layout rather than one scrolling document: the crumb, the heading and
+   the step rail stay put, the body scrolls, and the footer holding Continue /
+   Create is pinned. In the modal the footer sat at the end of the content, so
+   on the registry step the primary action was below several screens of rows. */
+.c2c-v2 .npw{
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.c2c-v2 .npw-head{padding:22px 32px 0;}
+.c2c-v2 .npw-head-inner{max-width:760px;}
+.c2c-v2 .npw-head .ph-sub{margin-top:8px;}
+
+/* Step rail. `data-state` drives the number badge, and every state is also
+   spelled out in text ("Step 2", the step's name) with aria-current on the
+   list item — colour is never the only carrier. */
+.c2c-v2 .npw-steps{padding:20px 32px 0;}
+.c2c-v2 .npw-steps ol{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  list-style:none;
+  margin:0;
+  padding:0;
+  border-bottom:1px solid var(--border);
+}
+.c2c-v2 .npw-step{flex:0 1 auto;}
+.c2c-v2 .npw-step-btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 14px 12px;
+  background:none;
+  border:0;
+  border-bottom:2px solid transparent;
+  text-align:left;
+  cursor:pointer;
+  transition:border-color 200ms ease-out,color 200ms ease-out;
+}
+.c2c-v2 .npw-step-btn:disabled{cursor:default;}
+.c2c-v2 .npw-step-n{
+  width:22px;
+  height:22px;
+  flex:0 0 auto;
+  border-radius:50%;
+  border:1px solid var(--border-control);
+  color:var(--text-300);
+  font-size:11px;
+  font-weight:600;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.c2c-v2 .npw-step-n svg{width:12px;height:12px;}
+.c2c-v2 .npw-step-l{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.c2c-v2 .npw-step-k{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  font-weight:600;
+  color:var(--text-400);
+}
+.c2c-v2 .npw-step-t{font-size:12.5px;font-weight:500;color:var(--text-300);}
+.c2c-v2 .npw-step[data-state="done"] .npw-step-n{
+  border-color:var(--success);
+  color:var(--success);
+}
+.c2c-v2 .npw-step[data-state="done"] .npw-step-t{color:var(--text-200);}
+.c2c-v2 .npw-step[data-state="current"] .npw-step-btn{border-bottom-color:var(--accent-100);}
+.c2c-v2 .npw-step[data-state="current"] .npw-step-n{
+  border-color:var(--accent-100);
+  background:var(--accent-100);
+  color:var(--accent-on-strong);
+}
+.c2c-v2 .npw-step[data-state="current"] .npw-step-k{color:var(--accent-200);}
+.c2c-v2 .npw-step[data-state="current"] .npw-step-t{color:var(--text-100);font-weight:600;}
+
+.c2c-v2 .npw-scroll{flex:1;min-height:0;overflow-y:auto;padding:24px 32px 36px;}
+/* Two measures, one container: the registry step is a catalogue scanned across
+   columns, the two form steps are read line by line. */
+.c2c-v2 .npw-inner{margin:0 auto;}
+.c2c-v2 .npw-inner[data-measure="wide"]{max-width:1180px;}
+.c2c-v2 .npw-inner[data-measure="form"]{max-width:760px;}
+
+.c2c-v2 .npw-seg-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  padding:12px 14px;
+  margin-bottom:18px;
+  border:1px solid var(--accent-muted,var(--border));
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--accent-000);
+}
+.c2c-v2 .npw-seg-note .ico{color:var(--accent-200);display:inline-flex;flex:0 0 auto;margin-top:1px;}
+.c2c-v2 .npw-seg-note .ico svg{width:16px;height:16px;}
+.c2c-v2 .npw-seg-t{font-size:12.5px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .npw-seg-s{font-size:11.5px;color:var(--text-300);margin-top:2px;line-height:1.5;}
+
+.c2c-v2 .npw-form{display:flex;flex-direction:column;gap:18px;}
+.c2c-v2 .npw-h2{font-size:15px;font-weight:600;margin:0;}
+/* auto-fit, so the pair of short fields sits side by side on a wide canvas and
+   stacks on a narrow one without a breakpoint of its own. */
+.c2c-v2 .npw-fields{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:16px 20px;
+}
+.c2c-v2 .npw-field{display:flex;flex-direction:column;gap:5px;}
+.c2c-v2 .npw-field-wide{grid-column:1/-1;}
+.c2c-v2 .npw-field-l{font-size:11.5px;font-weight:500;color:var(--text-300);}
+.c2c-v2 .npw-field .c2c-input{min-height:36px;font-size:13px;padding:6px 11px;}
+.c2c-v2 .npw-field > .c2c-input{margin-top:0;}
+
+.c2c-v2 .npw-review{
+  margin:0;
+  border:1px solid var(--border);
+  border-radius:var(--v2-radius-lg,12px);
+  background:var(--bg-050);
+  overflow:hidden;
+}
+.c2c-v2 .npw-review-row{
+  display:grid;
+  grid-template-columns:190px 1fr;
+  gap:16px;
+  padding:11px 18px;
+  border-top:1px solid var(--border);
+  font-size:13px;
+}
+.c2c-v2 .npw-review-row:first-child{border-top:0;}
+.c2c-v2 .npw-review dt{color:var(--text-300);font-weight:500;margin:0;}
+.c2c-v2 .npw-review dd{margin:0;color:var(--text-100);}
+.c2c-v2 .npw-review-strong{font-weight:600;}
+
+.c2c-v2 .npw-next{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  padding:11px 14px;
+  border:1px solid var(--success);
+  border-radius:var(--v2-radius-md,8px);
+  background:color-mix(in srgb,var(--success) 8%,transparent);
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text-200);
+}
+.c2c-v2 .npw-next .ico{color:var(--success);display:inline-flex;flex:0 0 auto;margin-top:1px;}
+.c2c-v2 .npw-next .ico svg{width:15px;height:15px;}
+
+.c2c-v2 .npw-outcome{margin-top:18px;}
+
+.c2c-v2 .npw-foot{flex:0 0 auto;border-top:1px solid var(--border);background:var(--bg-000);}
+.c2c-v2 .npw-foot-inner{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:14px 32px;
+  margin:0 auto;
+  max-width:1180px;
+}
+.c2c-v2 .npw-foot-gap{flex:1;}
+
+@media (max-width:760px){
+  .c2c-v2 .npw-head{padding:18px 18px 0;}
+  .c2c-v2 .npw-steps{padding:16px 18px 0;}
+  .c2c-v2 .npw-scroll{padding:20px 18px 28px;}
+  .c2c-v2 .npw-foot-inner{padding:12px 18px;}
+  .c2c-v2 .npw-review-row{grid-template-columns:1fr;gap:2px;}
+}
+
 /* ── Project home dashboard (home2.css) ── */
 .c2c-v2 .ph-grid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start;}
 .c2c-v2 .ph-col{display:flex;flex-direction:column;gap:16px;}
