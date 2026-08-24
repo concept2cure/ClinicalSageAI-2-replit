@@ -24,6 +24,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   PY_ROLES, PY_STATUS, PY_RISK,
@@ -301,28 +302,79 @@ export function PyramidShell(_props: SurfaceViewProps) {
   const [tab, setTab] = useState('dashboard');
   const [focusPhase, setFocusPhase] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<string | null>(null);
-  // Client-owned task status (the ONE local slice) as id→status overrides over
-  // the real pyramid's seeded statuses. Reset whenever the submission type
-  // changes so one pyramid's edits never bleed into another.
-  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+  /* ── Task status is the ORG'S RECORDED progress, not a local override ──────
+     This was `statusOverrides` in component state. A user marked a submission
+     task "Done" or "Blocked", the completion ring and the phase bars updated,
+     and the change was never sent anywhere — it vanished on reload, and on
+     merely switching submission type, which cleared the object outright.
+
+     The pyramid STRUCTURE is immutable and shared (a pure engine read); the
+     PROGRESS over it is per-org, which is why the advisory models them
+     separately. GET/PATCH /api/v1/pyramids/:type/progress is that second half.
+
+     Applied optimistically and REVERTED if the write is refused, so the ring
+     never counts a task the record does not have done. */
+  const [statuses, setStatuses] = useState<Record<string, string>>({});
+  const [statusErr, setStatusErr] = useState('');
 
   const typesState = useLiveRows<PyType>('/api/v1/pyramids/types');
   const pyrState = useLiveData<PyPyramid>(type ? `/api/v1/pyramids/${type}` : null);
   const globalsState = useLiveRows<PyGlobalConfig>('/api/v1/global-pyramids');
+  const progressState = useLiveData<{ type: string; statuses: Record<string, string> }>(
+    type ? `/api/v1/pyramids/${type}/progress` : null,
+  );
 
-  useEffect(() => { setStatusOverrides({}); }, [type]);
+  // Adopt the org's recorded progress whenever the type changes or the read
+  // resolves. Keyed on the payload so an in-flight local edit is not clobbered
+  // by the same response arriving twice.
+  useEffect(() => {
+    setStatusErr('');
+    setStatuses(progressState.data?.statuses ?? {});
+  }, [type, progressState.data]);
 
-  // Working task list: real pyramid tasks (seeded status) with local overrides
-  // applied. Pure derivation — never seeds state during render (loop-safe).
+  // Working task list: real pyramid tasks (structure) with the org's recorded
+  // statuses applied. Pure derivation — never seeds state during render.
   const tasks = useMemo<PyTask[]>(
     () => (pyrState.data?.tasks ?? []).map(
-      t => (statusOverrides[t.id] ? { ...t, status: statusOverrides[t.id] } : t),
+      t => (statuses[t.id] ? { ...t, status: statuses[t.id] } : t),
     ),
-    [pyrState.data, statusOverrides],
+    [pyrState.data, statuses],
   );
   const pyr: PyPyramid | null = pyrState.data ? { ...pyrState.data, tasks } : null;
 
-  const setStatus = (id: string, status: string) => setStatusOverrides(o => ({ ...o, [id]: status }));
+  const setStatus = async (id: string, status: string) => {
+    if (!type) return;
+    const before = statuses;
+    setStatuses(o => {
+      const next = { ...o };
+      // 'todo' is the ABSENCE of recorded progress — same reading the server
+      // takes — so it clears the entry rather than storing a status that says
+      // nothing.
+      if (status === 'todo') delete next[id];
+      else next[id] = status;
+      return next;
+    });
+    setStatusErr('');
+    try {
+      const res = await apiRequest(
+        'PATCH',
+        `/api/v1/pyramids/${encodeURIComponent(type)}/progress/${encodeURIComponent(id)}`,
+        { status },
+      );
+      if (!res.ok) {
+        setStatuses(before);
+        const j = await res.json().catch(() => null);
+        setStatusErr(
+          (serverMessage(j) ?? `The status was not saved (HTTP ${res.status})`) + '. The task is unchanged.',
+        );
+      }
+    } catch (e) {
+      setStatuses(before);
+      setStatusErr(
+        'The status was not saved — ' + (e instanceof Error ? e.message : String(e)) + '. The task is unchanged.',
+      );
+    }
+  };
   const goPhase = (id: string) => { setFocusPhase(id); setTab('wbs'); };
   const goTask = (id: string) => setOpenTask(id);
   const openObj = openTask ? tasks.find(t => t.id === openTask) ?? null : null;
@@ -430,6 +482,12 @@ export function PyramidShell(_props: SurfaceViewProps) {
             onClick={() => { setTab(id); if (id !== 'wbs') setFocusPhase(null); }}>{l}</button>
         ))}
       </div>
+
+      {/* A refused status write is announced, not swallowed. Without this the
+          revert above would look like the dropdown simply snapping back. */}
+      {statusErr && (
+        <div className="py-status-err" role="alert">{statusErr}</div>
+      )}
 
       {tab === 'global' ? renderGlobalTab() : renderPyramidTab()}
 
