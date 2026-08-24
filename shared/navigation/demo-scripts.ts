@@ -247,6 +247,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'deep-research.open-tab', params: { tab: 'connectors' } },
       },
       {
+        say: 'For pharma programs the PDEV → IND engine tracks the whole pre-IND arc: four workstreams, readiness against threshold, and IND assembly with human-gated compilation.',
+        navigate: { target: 'pdev' },
+      },
+      {
         say: 'Review readiness: the platform scores whether the submission would survive review, before the agency sees it.',
         navigate: { target: 'review-readiness' },
       },
