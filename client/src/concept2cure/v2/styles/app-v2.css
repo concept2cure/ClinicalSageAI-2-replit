@@ -3413,3 +3413,19 @@
 .c2c-v2 .orch-newrun-td{grid-column:1;font-size:11.5px;line-height:1.5;color:var(--text-400);}
 .c2c-v2 .orch-newrun-go{grid-row:1/span 2;font-size:11.5px;color:var(--text-400);white-space:nowrap;}
 .c2c-v2 .orch-newrun-f{display:flex;justify-content:flex-end;margin-top:14px;}
+
+/* Nonclinical — the SEND conformance report, findings shown per study with the
+   guidance each one cites. */
+.c2c-v2 .nc-send-report{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .nc-send-report-h{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);}
+.c2c-v2 .nc-send-row{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:start;font-size:12px;}
+.c2c-v2 .nc-send-study{font-family:var(--font-mono,monospace);color:var(--text-300);}
+.c2c-v2 .nc-send-fs{display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .nc-send-f{line-height:1.5;color:var(--text-200);}
+.c2c-v2 .nc-send-f em{font-style:normal;color:var(--text-400);}
+.c2c-v2 .nc-send-f.err{color:var(--error);}
+.c2c-v2 .nc-send-f.warn{color:var(--warning);}
+.c2c-v2 .nc-send-f.ok{color:var(--success);}
+
+/* Precedent engine — the comparison the engine returned, shown as it came back. */
+.c2c-v2 .pe-compare{margin:0;font-family:var(--font-mono,monospace);font-size:11.5px;line-height:1.6;color:var(--text-200);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;}
