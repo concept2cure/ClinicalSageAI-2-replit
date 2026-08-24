@@ -1187,6 +1187,37 @@
 
 /* ── Shell grid ── */
 .c2c-v2.shell{display:grid;grid-template-columns:var(--rail) 1fr var(--ana);grid-template-rows:100vh;height:100vh;overflow:hidden;background:var(--bg-000);}
+/* ── Phone-width rail (<=640px) ──
+   At 430px the 264px expanded rail crushed the content column to nothing —
+   the whole app behind an open rail was unusable. The grid now always
+   reserves only the collapsed strip (--rail is narrowed, so every shell
+   variant below inherits it), and the EXPANDED rail paints OVER the content
+   as a fixed drawer above the .rail-scrim, which tap-closes it; Escape does
+   the same via the shell-level listener. Desktop is untouched — none of this
+   applies above 640px, and the scrim renders display:none there. */
+@media (max-width: 640px) {
+  .c2c-v2.shell { --rail: var(--rail-collapsed); }
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 84vw);
+    z-index: 61;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim { display: block; }
+}
+.c2c-v2 .rail-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.35);
+  animation: rail-scrim-in 200ms ease-out;
+}
+@keyframes rail-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .c2c-v2 .rail-scrim { animation: none; } }
 .c2c-v2.shell[data-collapsed="true"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana);}
 .c2c-v2.shell[data-ana-open="false"]{grid-template-columns:var(--rail) 1fr var(--ana-seam);}
 .c2c-v2.shell[data-collapsed="true"][data-ana-open="false"]{grid-template-columns:var(--rail-collapsed) 1fr var(--ana-seam);}

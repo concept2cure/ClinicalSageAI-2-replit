@@ -205,6 +205,8 @@ describe('GET /templates — the picker lists what create consumes', () => {
       .set('Authorization', await bearer());
 
     expect(res.status).toBe(200);
+    // The shared catalog read succeeded and the response says so.
+    expect(res.body.globalCatalog).toBe('ok');
     const names = res.body.templates.map((t: { name: string }) => t.name);
     // Org row first, real global next; the zero-section global cannot seed
     // anything and must not be offered.
@@ -229,6 +231,9 @@ describe('GET /templates — the picker lists what create consumes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.templates.map((t: { name: string }) => t.name)).toEqual(['House template']);
+    // The response SAYS the shared catalog failed — a short list and a failed
+    // half are different facts, and the picker renders the difference.
+    expect(res.body.globalCatalog).toBe('unavailable');
   });
 });
 
