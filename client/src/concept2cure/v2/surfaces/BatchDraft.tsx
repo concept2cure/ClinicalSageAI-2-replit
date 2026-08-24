@@ -579,12 +579,30 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     if (!sec) return;
     const label = '§' + sec.num + ' ' + sec.title;
 
+    /* ── Fail-closed guard: a sample is never acceptable ─────────────────────
+       This used to set `accepted: true` and tell the user the draft was
+       "staged locally". Nothing was staged: `accepted` is a component boolean
+       that disappears on navigation, and `savedToDocument` was false — so the
+       card read "accepted", the counter above it read "N accepted", and there
+       was nothing anywhere.
+
+       The card no longer renders an Accept control in this state, so this is a
+       guard rather than a path: if anything ever calls accept() on a sample or
+       while disconnected, it records WHY it cannot proceed instead of marking
+       the card accepted. Refusing to write placeholder prose into a regulated
+       document is right; reporting that refusal as an acceptance is not. */
     if (card.sample || !connected()) {
-      setCards((c) => ({ ...c, [key]: { ...c[key], accepted: true, savedToDocument: false, saveError: null } }));
-      onAsk && onAsk(
-        'Staged the sample draft for ' + label + ' locally. It is placeholder prose, '
-        + 'so it is not written to the document — connect to the drafting service for a real draft.',
-      );
+      setCards((c) => ({
+        ...c,
+        [key]: {
+          ...c[key],
+          accepted: false,
+          savedToDocument: false,
+          saveError: card.sample
+            ? 'this is placeholder prose, not a real draft — it is never written to a document. Connect to the drafting service and re-draft ' + label + '.'
+            : 'you are not connected to the drafting service, so nothing can be written to the document.',
+        },
+      }));
       return;
     }
 
@@ -662,7 +680,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         b: 'Each card is a proposal. '
           + (canLive
             ? 'Accept writes it into the section’s document and versions what it replaced; '
-            : 'Accept stages the sample locally — it is never written to a document; ')
+            : 'These are sample drafts and cannot be accepted — placeholder prose is never written to a document; ')
           + 'Edit opens it in the section editor; Discard drops it. '
           + (acceptedCount ? '' : 'Nothing has been written yet.'),
       };
@@ -912,14 +930,36 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                         >
                           {editingCard === s.id ? 'Done editing' : 'Edit'}
                         </button>
-                        <button
-                          className="bd-primary sm"
-                          disabled={c.saving}
-                          onClick={() => { void accept(s.id); }}
-                          title={c.sample ? 'Sample prose is staged locally and never written to the document.' : undefined}
-                        >
-                          {c.saving ? 'Saving…' : c.saveError ? 'Retry save' : (canLive && !c.sample) ? 'Accept · save to document' : 'Accept'}
-                        </button>
+                        {/* ── A sample card gets no Accept button ────────────
+                            It used to have one that set `accepted: true` and
+                            reported the draft "staged locally". Nothing was
+                            staged — `accepted` is a component boolean that
+                            disappears on navigation and `savedToDocument` was
+                            false — so the card read "accepted", the counter
+                            above read "N accepted", and there was nothing
+                            anywhere.
+
+                            Refusing to write placeholder prose into a regulated
+                            document is right; reporting that refusal as an
+                            acceptance is not. The control is removed rather
+                            than disabled, and the reason is visible text on the
+                            card rather than a title attribute a disabled button
+                            will not announce. */}
+                        {c.sample || !canLive ? (
+                          <span className="bd-accepted-note">
+                            {c.sample
+                              ? 'Sample prose — never written to a document. Re-draft this section against the drafting service to accept it.'
+                              : 'Not connected to the drafting service, so nothing can be written to the document.'}
+                          </span>
+                        ) : (
+                          <button
+                            className="bd-primary sm"
+                            disabled={c.saving}
+                            onClick={() => { void accept(s.id); }}
+                          >
+                            {c.saving ? 'Saving…' : c.saveError ? 'Retry save' : 'Accept · save to document'}
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <div className="bd-card-acts">

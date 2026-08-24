@@ -150,11 +150,9 @@ interface ArtifactCardProps {
   expanded: boolean;
   onToggle: () => void;
   onNav?: (id: string) => void;
-  onAdvance: () => void;
-  onDownload: () => void;
 }
 
-function ArtifactCard({ art, expanded, onToggle, onNav, onAdvance, onDownload }: ArtifactCardProps) {
+function ArtifactCard({ art, expanded, onToggle, onNav }: ArtifactCardProps) {
   return (
     <div className="ct-art" data-status={art.status} data-open={expanded || undefined}>
       <button className="ct-art-head" onClick={onToggle}>
@@ -232,10 +230,23 @@ function ArtifactCard({ art, expanded, onToggle, onNav, onAdvance, onDownload }:
                 : <span className="ct-art-audit">Not yet written to the governed record</span>}
             </div>
           </div>
+          {/* ── ".docx" and "Route to review" / "Approve" are gone ───────────
+              Both were wired to `onAdvance`, which the one mount of this panel
+              passed as `() => undefined`. Clicking ".docx" downloaded no file;
+              clicking "Route to review" advanced no workflow. They could not
+              have worked: nothing links a conversation artifact to a governed
+              document, so there is no id to render and no workflow to advance.
+
+              They are removed rather than left inert. Governed-artifact
+              generation from the stream is a tracked follow-up, and the day it
+              lands it must bring its own export and its own workflow
+              transition — inheriting two buttons that already look finished is
+              how a dead control survives a feature landing on top of it.
+
+              "Edit" stays because it does what it says: it opens the authoring
+              workspace, which is a real destination. */}
           <div className="ct-art-actions">
             <button className="ct-art-edit" onClick={() => onNav && onNav('document-authoring')}>{I.penLine} Edit</button>
-            <button className="ct-art-dl" onClick={onDownload}>{I.download} .docx</button>
-            {art.status !== 'approved' && <button className="ct-art-adv" onClick={onAdvance}>{I.arrowRight || I.check} {art.status === 'draft' ? 'Route to review' : 'Approve'}</button>}
           </div>
         </div>
       )}
@@ -250,12 +261,11 @@ interface ArtifactPanelProps {
   openId: string | null;
   setOpenId: (id: string | null) => void;
   onNav?: (id: string) => void;
-  onAdvance: (id: string, isDownload?: boolean) => void;
   collapsed: boolean;
   setCollapsed: (v: boolean) => void;
 }
 
-function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collapsed, setCollapsed }: ArtifactPanelProps) {
+function ArtifactPanel({ artifacts, openId, setOpenId, onNav, collapsed, setCollapsed }: ArtifactPanelProps) {
   if (collapsed) {
     return (
       <button className="ct-art-rail" onClick={() => setCollapsed(false)} title="Show artifacts">
@@ -275,8 +285,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
       <div className="ct-art-list">
         {artifacts.length === 0 && <div className="ct-art-empty">Artifacts AnA generates in this conversation appear here — classification reports, predicate analyses, eSTAR sections — each versioned, traceable, and exportable.</div>}
         {artifacts.map(a => (
-          <ArtifactCard key={a.id} art={a} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)}
-            onNav={onNav} onAdvance={() => onAdvance(a.id)} onDownload={() => onAdvance(a.id, true)} />
+          <ArtifactCard key={a.id} art={a} expanded={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} onNav={onNav} />
         ))}
       </div>
     </aside>
@@ -522,7 +531,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
         </div>
 
         <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
-          onAdvance={() => undefined} collapsed={panelCollapsed} setCollapsed={setPanelCollapsed} />
+          collapsed={panelCollapsed} setCollapsed={setPanelCollapsed} />
       </div>
     </div>
   );

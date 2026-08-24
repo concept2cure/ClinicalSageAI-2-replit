@@ -21,6 +21,7 @@ import {
   listProducts,
   listRegistrations,
   getLabelCurrencyInput,
+  getMarketDossier,
 } from '../services/rim/rim-service';
 import { summarizeGrid, evaluateLabelCurrency, expectedLabelType } from '../services/rim/rim-logic';
 import { recordRimProductCreated, recordRimRegistration, recordRimLabelApproved } from '../services/rim-metrics';
@@ -172,6 +173,30 @@ router.get('/products/:id/label-currency', async (req, res) => {
   try {
     const input = await getLabelCurrencyInput(orgId, id);
     res.json(evaluateLabelCurrency(input));
+  } catch (err) { fail(res, err); }
+});
+
+/**
+ * GET /products/:id/market-dossier
+ *
+ * The per-market dossier behind the Registrations grid's expandable rows.
+ *
+ * That expansion had a data source of `const REG_DOSSIERS: Record<string,
+ * RegDossier> = {}` — deliberately empty, with a comment saying no fabricated
+ * dossiers would be shown until a real source existed, which meant the caret
+ * never rendered and clicking a row did nothing. This is the real source: the
+ * registration record, the org's approved labels for that market, and the label
+ * type the market requires with the rule that says so. A market with no labels
+ * comes back with an empty list and labelGap true, because that is the fact.
+ */
+router.get('/products/:id/market-dossier', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  try {
+    const markets = await getMarketDossier(orgId, id);
+    res.json({ data: markets, meta: { count: markets.length } });
   } catch (err) { fail(res, err); }
 });
 

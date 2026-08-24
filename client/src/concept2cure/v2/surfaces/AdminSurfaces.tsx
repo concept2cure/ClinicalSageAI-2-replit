@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
+import { downloadBlob, downloadText, safeFileName } from '../download';
 import { SampleTag, useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
@@ -898,15 +899,12 @@ async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: strin
     }
     const json = (await res.json().catch(() => null)) as { export?: unknown } | null;
     if (!json?.export) return { ok: false, error: 'The export response was malformed.' };
-    const blob = new Blob([JSON.stringify(json.export, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'audit-trail-signed-export.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    const saved = downloadText(
+      'audit-trail-signed-export.json',
+      JSON.stringify(json.export, null, 2),
+      'application/json',
+    );
+    if (!saved) return { ok: false, error: 'The export was produced but the browser refused the download.' };
     return { ok: true };
   } catch {
     // Raw fetch: the only throw reachable here is the request itself failing,
@@ -2273,14 +2271,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         );
         return;
       }
-      const url = URL.createObjectURL(await res.blob());
-      const el = document.createElement('a');
-      el.href = url;
-      el.download = `${a.name.replace(/[^\w.-]+/g, '_').slice(0, 80) || 'artifact'}.docx`;
-      document.body.appendChild(el);
-      el.click();
-      el.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      downloadBlob(safeFileName(a.name, 'artifact').slice(0, 80) + '.docx', await res.blob());
     } catch (e) {
       // eslint-disable-next-line no-alert
       window.alert('Not downloaded — ' + (e instanceof Error ? e.message : String(e)) + '.');
@@ -2303,14 +2294,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
       cols.map((c) => csvCell(c[0])).join(','),
       ...rows.map((r) => cols.map((c) => csvCell(c[1](r))).join(',')),
     ].join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'artifacts-manifest.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    downloadText('artifacts-manifest.csv', csv, 'text/csv;charset=utf-8');
   };
   return (
     <div className="page-inner">
@@ -2505,21 +2489,35 @@ function vkitBadge(status: string | null): string {
 
 /** Authenticated download — the endpoint is Bearer-gated, so an <a href> can't
     carry the JWT; fetch with the token and stream the blob to a download. */
-async function downloadValidationDoc(docId: string, filename: string): Promise<void> {
-  const token = getAuthToken();
-  const res = await fetch(`/api/validation-kit/${encodeURIComponent(docId)}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) return;
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+/**
+ * Fetch one GAMP 5 validation document and hand it to the browser.
+ *
+ * `if (!res.ok) return;` was the whole error path: a 401, 403 or 500 produced
+ * no file, no message and no sign anything had happened, so an auditor clicking
+ * IQ/OQ/PQ on a computer-system-validation file saw a dead button. Returns a
+ * message on failure, null on success, so the caller can say so.
+ */
+async function downloadValidationDoc(docId: string, filename: string): Promise<string | null> {
+  try {
+    const token = getAuthToken();
+    const res = await fetch(`/api/validation-kit/${encodeURIComponent(docId)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      return res.status === 401 || res.status === 403
+        ? `${docId} was not downloaded — your account is not authorised to read the validation kit.`
+        : `${docId} was not downloaded — the validation kit refused the request (HTTP ${res.status}).`;
+    }
+    const blob = await res.blob();
+    if (blob.size === 0) {
+      return `${docId} came back empty — nothing was downloaded.`;
+    }
+    return downloadBlob(filename, blob)
+      ? null
+      : `${docId} was fetched but the browser refused the download.`;
+  } catch (e) {
+    return `${docId} was not downloaded — ${e instanceof Error ? e.message : String(e)}.`;
+  }
 }
 
 /* Platform role grants — live from GET /api/admin/access/grants (the audited
@@ -2557,6 +2555,9 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   // honest empty state, or an honest error state — never a fixture.
   const vkit = useLiveData<ValidationKit>(sec === 'validation' ? '/api/validation-kit' : null);
   const vkitDocs = vkit.data?.artifacts ?? [];
+  /* A refused validation-kit download. Announced beside the document list —
+     the button used to swallow 401/403/500 entirely (`if (!res.ok) return;`). */
+  const [vkitError, setVkitError] = useState('');
   const grantsState = useLiveData<{ grants?: LiveGrant[] }>(
     sec === 'access' ? '/api/admin/access/grants' : null,
   );
@@ -2891,6 +2892,9 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         Release-by-release validation documentation for your
                         computer-system-validation file.
                       </span>
+                      {vkitError && (
+                        <div className="ac-val-err" role="alert">{vkitError}</div>
+                      )}
                       {vkitDocs.length > 0 && (
                         <div className="ac-val-docs">
                           {vkitDocs.map((d) => (
@@ -2899,7 +2903,10 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                               type="button"
                               className="ac-val-doc"
                               title={d.status || undefined}
-                              onClick={() => downloadValidationDoc(d.docId, `${d.docId}.md`)}
+                              onClick={async () => {
+                                const problem = await downloadValidationDoc(d.docId, `${d.docId}.md`);
+                                setVkitError(problem ?? '');
+                              }}
                             >
                               {I.download}
                               <span className="ac-val-doc-t">{d.type}</span>
