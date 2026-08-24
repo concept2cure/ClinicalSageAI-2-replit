@@ -97,10 +97,14 @@ export async function registerPreStartRoutes(
   // must cover all of them, and because mounting it per-family is how a new
   // family silently ships ungated.
   //
-  // Inert unless MODULE_ENFORCEMENT is set: 'report' logs what it WOULD deny
-  // and serves the request, 'enforce' denies. Default 'off'. Turning hard
-  // enforcement on as a first act would deny real requests nobody has measured
-  // yet — see the module header.
+  // Off unless a mode is set: 'report' records what it WOULD deny and serves
+  // the request, 'enforce' denies. Default 'off'. Turning hard enforcement on
+  // as a first act would deny real requests nobody has measured yet — which is
+  // what report mode and its console report exist to prevent.
+  //
+  // The mode is a governed platform setting changed from the licensing console,
+  // with the deployment's own configuration as the fallback, so this can go
+  // live without a redeploy — see services/entitlements/enforcement-mode.ts.
   registerEntitlementGate({ app });
 
   // Slot 1 — Device-Project CRUD.

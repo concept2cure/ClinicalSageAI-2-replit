@@ -157,6 +157,94 @@ export interface LockNotice {
   ctaLabel: string | null;
   /** Surface id the CTA opens. Null when ctaLabel is null. */
   ctaTarget: string | null;
+  /**
+   * True when the step left for THIS viewer is to ask an administrator.
+   *
+   * Separate from `ctaLabel`, and it has to be. `ctaLabel` is the step the
+   * viewer can take THEMSELVES — open the plans page, open the Apps catalog —
+   * and for a member who cannot buy it is correctly null on two of the three
+   * lock reasons. That honesty was also a dead end: the panel named the reason,
+   * refused to offer a button that would be refused, and left the person who
+   * actually needs the module with nothing to do. This is the step that was
+   * missing, and it is never offered to an org administrator, who holds the
+   * control already and would only be asking themselves.
+   */
+  requestable: boolean;
+}
+
+/** One of the viewer's own access requests, as GET /api/module-access-requests/mine
+ *  returns it. The panel reads only these fields. */
+export interface ModuleAccessRequestSummary {
+  id: number;
+  moduleId: string;
+  status: 'open' | 'approved' | 'declined';
+  note: string | null;
+  createdAt: string | null;
+  decidedAt: string | null;
+  decisionReason: string | null;
+}
+
+/**
+ * An absolute date, never a relative one.
+ *
+ * "3 days ago" invites a regulatory reader to do arithmetic against a clock
+ * they cannot see, and it is exactly the phrase that becomes wrong when a page
+ * is left open. Returns null for an instant that will not parse, so a
+ * date-shaped string nobody can trust is never rendered as a date.
+ */
+export function requestDate(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, { dateStyle: 'long' });
+}
+
+/**
+ * What to say about a request this viewer has already made, or null when there
+ * is nothing to report.
+ *
+ * The open case is the one that matters. Without it, a second press on
+ * "Request access" is absorbed into the request already on file and reported as
+ * success — which teaches the requester that pressing the button does nothing.
+ * The panel says a request is already open and when it was made, and offers no
+ * second press.
+ */
+export function requestNotice(request: ModuleAccessRequestSummary | null): string | null {
+  if (!request) return null;
+  const made = requestDate(request.createdAt);
+  const answered = requestDate(request.decidedAt);
+  switch (request.status) {
+    case 'open':
+      return made
+        ? `You asked for this app on ${made}. It is with your administrators.`
+        : 'You have already asked for this app. It is with your administrators.';
+    case 'declined': {
+      const when = answered ? `Declined on ${answered}.` : 'Your last request was declined.';
+      return request.decisionReason ? `${when} Reason given: ${request.decisionReason}` : when;
+    }
+    case 'approved':
+      return answered
+        ? `Your request was approved on ${answered}. If this app is still locked, reload the page.`
+        : 'Your request was approved. If this app is still locked, reload the page.';
+    default:
+      return null;
+  }
+}
+
+/**
+ * The request on file for one module, or null.
+ *
+ * An ANSWERED request is only reported while it is the most recent word on the
+ * module: once the requester opens a new one, the old decline is history and
+ * showing it alongside a live request would say two contradictory things at
+ * once. Rows arrive newest first, so the first match is the current one.
+ */
+export function currentRequestFor(
+  requests: ModuleAccessRequestSummary[] | null | undefined,
+  moduleId: string,
+): ModuleAccessRequestSummary | null {
+  if (!Array.isArray(requests)) return null;
+  return requests.find((r) => r && r.moduleId === moduleId) ?? null;
 }
 
 /**
@@ -216,6 +304,7 @@ export function lockNotice(
           : 'An administrator disabled this app for your organization. Ask them to turn it back on.',
         ctaLabel: opts.isOrgAdmin ? 'Open Apps catalog' : null,
         ctaTarget: opts.isOrgAdmin ? 'apps' : null,
+        requestable: !opts.isOrgAdmin,
       };
     case 'industry':
       return {
@@ -223,6 +312,7 @@ export function lockNotice(
         body: 'This app is not part of the catalog for your workspace’s industry setting. Changing that setting is an administrator action, not a plan change.',
         ctaLabel: opts.isOrgAdmin ? 'Open workspace setup' : null,
         ctaTarget: opts.isOrgAdmin ? 'setup' : null,
+        requestable: !opts.isOrgAdmin,
       };
     case 'tier':
     default: {
@@ -234,6 +324,10 @@ export function lockNotice(
           : 'Your plan does not include this app.',
         ctaLabel: 'View plans',
         ctaTarget: 'licensing',
+        /* A member sees the plans page too — it is the honest explanation of
+           what the tier includes — but buying is not theirs to do, so the step
+           that IS theirs is offered alongside it. */
+        requestable: !opts.isOrgAdmin,
       };
     }
   }

@@ -17,6 +17,8 @@
  *   POST  /licensing/tenants/:id/provision  apply that plan — grant what it includes
  *   GET   /licensing/enforcement        what route enforcement is denying, or would
  *   DELETE /licensing/enforcement       start a fresh observation window
+ *   GET   /licensing/enforcement/mode   the mode in force, and where it came from
+ *   PATCH /licensing/enforcement/mode   change it (governed) — no redeploy
  *
  * The per-tenant module override already existed as
  * `PATCH /tenants/:id/modules` in ./master-admin and is deliberately not
@@ -54,7 +56,15 @@ import {
   clearObservations,
   enforcementReport,
 } from '../../services/entitlements/enforcement-observations';
-import { enforcementMode } from '../../middleware/moduleEntitlementGate';
+import {
+  ENFORCEMENT_MODES,
+  MODE_CACHE_TTL_MS,
+  currentEnforcementMode,
+  parseMode,
+  writeEnforcementMode,
+  type EnforcementMode,
+  type ResolvedEnforcementMode,
+} from '../../services/entitlements/enforcement-mode';
 
 const logger = createScopedLogger('admin-master-licensing');
 const router = Router();
@@ -532,7 +542,7 @@ router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) 
 // ─── GET /licensing/enforcement — what enforcement costs ─────────────────────
 
 /**
- * The rollout instrument for MODULE_ENFORCEMENT.
+ * The rollout instrument for route-level enforcement.
  *
  * The gate ships in 'report' mode: it resolves the real verdict, records every
  * request it WOULD refuse, and serves it anyway. That measurement had nowhere
@@ -550,7 +560,8 @@ router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) 
  *     process and this is one of them.
  */
 router.get('/licensing/enforcement', async (_req: Request, res: Response) => {
-  return res.json(enforcementReport(enforcementMode()));
+  const resolved = await currentEnforcementMode();
+  return res.json(enforcementReport(resolved.mode));
 });
 
 /**
@@ -568,7 +579,8 @@ router.delete('/licensing/enforcement', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
   }
 
-  const before = enforcementReport(enforcementMode());
+  const resolved = await currentEnforcementMode();
+  const before = enforcementReport(resolved.mode);
   clearObservations();
 
   await auditService.logAction({
@@ -587,7 +599,134 @@ router.delete('/licensing/enforcement', async (req: Request, res: Response) => {
     },
   });
 
-  return res.json(enforcementReport(enforcementMode()));
+  return res.json(enforcementReport(resolved.mode));
+});
+
+// ─── /licensing/enforcement/mode — execute the decision, here ────────────────
+//
+// WHY THIS EXISTS. The report above lets the platform owner MAKE the rollout
+// decision on a screen. Until these two endpoints, they could not EXECUTE it
+// there: the mode lived only in the deployment's own configuration, so acting
+// on what they had just read meant an engineer and a redeploy. A control room
+// whose one conclusion has to be carried out somewhere else is not finished.
+//
+// PRECEDENCE, and why the response says which one answered: a stored value
+// wins; with nothing stored the deployment decides, exactly as before. The
+// response carries `source` so an operator can tell a mode they set from one
+// they inherited — otherwise they would "change" a value that the next deploy
+// silently puts back, and never know why enforcement reverted.
+
+/** What the report says about switching to refusing mode right now. */
+function impactOf(mode: EnforcementMode) {
+  const report = enforcementReport(mode);
+  return {
+    /** Distinct workspaces recorded as refused, or as would-be refused. */
+    organizationsAffected: report.organizationsAffected,
+    modulesAffected: report.modulesAffected,
+    observations: report.observations.length,
+    /**
+     * null means NOTHING HAS BEEN OBSERVED — not "nothing would be refused".
+     * The two are opposite claims and only one of them is a green light.
+     */
+    observingSince: report.observingSince,
+    perProcess: report.perProcess,
+  };
+}
+
+function modeResponse(resolved: ResolvedEnforcementMode) {
+  return {
+    mode: resolved.mode,
+    /** 'stored' — set here. 'deployment' — inherited from how this is deployed. */
+    source: resolved.source,
+    storedMode: resolved.storedMode,
+    deploymentMode: resolved.deploymentMode,
+    modes: ENFORCEMENT_MODES,
+    updatedAt: resolved.updatedAt,
+    updatedBy: resolved.updatedBy,
+    reason: resolved.reason,
+    /** True when the stored value could not be read and this is a fail-safe. */
+    degraded: resolved.degraded,
+    /** Seconds a change takes to reach every server. See enforcement-mode.ts. */
+    propagationSeconds: Math.round(MODE_CACHE_TTL_MS / 1000),
+    impact: impactOf(resolved.mode),
+  };
+}
+
+router.get('/licensing/enforcement/mode', async (_req: Request, res: Response) => {
+  return res.json(modeResponse(await currentEnforcementMode()));
+});
+
+/**
+ * Change the mode.
+ *
+ * Governed exactly like every other mutation on this router — a reason of at
+ * least 3 characters, written verbatim to the Part 11 chain. Switching a live
+ * product to refusing requests is among the most consequential acts available
+ * in this console, and the record of who did it, when and why is the point.
+ *
+ * The audit detail carries the impact measured AT THE MOMENT OF THE CHANGE
+ * (`workspacesAtRisk`), not later: if this turns out to have broken a customer,
+ * the question asked afterwards is what the operator could see when they
+ * decided, and a number reconstructed from a buffer that has since been cleared
+ * cannot answer it.
+ *
+ * This endpoint informs; it does not obstruct. A move to refusing while
+ * workspaces are recorded as would-be-refused is allowed — the operator may
+ * well have decided those denials are correct — but the count travels with the
+ * decision so nobody can claim it was invisible.
+ */
+router.patch('/licensing/enforcement/mode', async (req: Request, res: Response) => {
+  try {
+    const body = (req.body ?? {}) as { mode?: unknown; reason?: unknown };
+    const mode = parseMode(body.mode);
+    if (mode == null) {
+      return res.status(400).json({ error: `mode must be one of ${ENFORCEMENT_MODES.join(', ')}.` });
+    }
+    const reason = normalizeReason(body.reason);
+    if (!reason) {
+      return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
+    }
+
+    const previous = await currentEnforcementMode();
+    const impact = impactOf(previous.mode);
+
+    const resolved = await writeEnforcementMode({
+      mode,
+      reason,
+      updatedBy: typeof req.userId === 'number' ? req.userId : null,
+    });
+
+    await auditService.logAction({
+      // No tenantId: this is a platform-wide act, not one tenant's.
+      userId: req.userId,
+      action: 'data_modify',
+      resourceType: 'platform_config',
+      resourceId: 'module-enforcement-mode',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: {
+        masterAdminAction: 'enforcement.mode_change',
+        previousMode: previous.mode,
+        previousSource: previous.source,
+        mode,
+        deploymentMode: resolved.deploymentMode,
+        // What the operator could see when they decided.
+        workspacesAtRisk: impact.organizationsAffected,
+        modulesAtRisk: impact.modulesAffected,
+        observingSince: impact.observingSince,
+        reason,
+      },
+    });
+
+    return res.json({
+      ...modeResponse(resolved),
+      previousMode: previous.mode,
+      previousSource: previous.source,
+    });
+  } catch (err) {
+    logger.error('enforcement mode change failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to change the enforcement mode.' });
+  }
 });
 
 export default router;

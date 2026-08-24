@@ -9,11 +9,24 @@
  * CONFLICT and its enabled_at/disabled_at/enabled_by/disabled_by bookkeeping
  * inline in the handler.
  *
- * Two more callers now need to write the same row — opening a time-limited
- * trial, and approving a member's access request — and three copies of that
- * upsert is three places for the bookkeeping to drift. A correction to one
- * would apply to a third of the product. So the statement lives here, once,
- * and every path that grants or revokes a module goes through it.
+ * It was not the only one. Three more inline upserts of the same row existed —
+ * the customer-facing admin toggle in `server/routes/module-subscriptions.ts`,
+ * the tier provisioning that runs at checkout and on the subscription webhook
+ * in `server/services/billing.ts`, and the master-admin toggle — and two more
+ * callers now need it (opening a time-limited trial, approving a member's
+ * access request). A correction to one would have applied to a fifth of the
+ * product.
+ *
+ * That was not hypothetical. NONE of the three touched `expires_at`. On an
+ * organization whose trial of a module had lapsed, the row already holds a past
+ * date, so writing `enabled = true` beside it produced a grant that was
+ * instantly expired: resolution ignored the override and the rail stayed
+ * locked, while every one of those paths reported success. The billing one was
+ * the worst — a customer could buy a plan that included the module, have the
+ * payment clear, and still not get it.
+ *
+ * All of them are migrated onto this function and their copies deleted, which
+ * is what makes the required `expiresAt` below actually fix anything.
  *
  * ── The decision this function refuses to make for you ───────────────────────
  *

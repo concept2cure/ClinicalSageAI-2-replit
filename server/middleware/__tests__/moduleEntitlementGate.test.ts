@@ -6,22 +6,42 @@
  * customer's request, so each test below names the production failure it
  * exists to prevent rather than the branch it covers.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../services/license-manager.js', () => ({
   canAccessModule: vi.fn(),
 }));
 
+/* The settings store is stubbed, not the resolver. The gate's contract is that
+   the mode an operator STORED reaches the request path without a restart, so
+   the real resolver — precedence, cache, fail-safe — has to run for these tests
+   to mean anything. */
+const dbQuery = vi.hoisted(() => vi.fn(async () => ({ rows: [] as unknown[] })));
+vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => dbQuery(...(a as [])) } }));
+
 import { canAccessModule } from '../../services/license-manager.js';
+import {
+  MODE_CACHE_TTL_MS,
+  invalidateEnforcementModeCache,
+  peekEnforcementMode,
+} from '../../services/entitlements/enforcement-mode';
 import {
   NEVER_GATED,
   buildPrefixMap,
-  enforcementMode,
   moduleEntitlementGate,
   modulesForPath,
 } from '../moduleEntitlementGate';
 
 const mockAccess = canAccessModule as unknown as ReturnType<typeof vi.fn>;
+
+/** The settings row the platform_settings read returns, or none. */
+function storeHolds(mode: string | null) {
+  dbQuery.mockImplementation(async () => ({
+    rows: mode == null
+      ? []
+      : [{ setting_value: mode, updated_at: new Date('2026-08-24T09:00:00.000Z'), updated_by: 4, reason: 'rollout' }],
+  }));
+}
 
 const SURFACES = [
   { id: 'projects', apiPrefixes: ['/api/projects', '/api/programs'] },
@@ -52,8 +72,16 @@ function resSpy() {
   return res;
 }
 
+beforeEach(() => {
+  dbQuery.mockReset();
+  storeHolds(null); // nothing stored: the deployment value decides, as before
+  invalidateEnforcementModeCache();
+});
+
 afterEach(() => {
   mockAccess.mockReset();
+  invalidateEnforcementModeCache();
+  vi.useRealTimers();
   delete process.env.MODULE_ENFORCEMENT;
 });
 
@@ -105,24 +133,6 @@ describe('modulesForPath', () => {
       { id: 'specific', apiPrefixes: ['/api/x/deep'] },
     ]);
     expect([...(modulesForPath('/api/x/deep/thing', m) ?? [])]).toEqual(['specific']);
-  });
-});
-
-describe('enforcementMode', () => {
-  it('defaults to off — enforcement is opt-in', () => {
-    // Shipping this on by default would deny requests nobody has measured.
-    expect(enforcementMode()).toBe('off');
-    process.env.MODULE_ENFORCEMENT = '';
-    expect(enforcementMode()).toBe('off');
-    process.env.MODULE_ENFORCEMENT = 'nonsense';
-    expect(enforcementMode()).toBe('off');
-  });
-
-  it('reads report and enforce', () => {
-    process.env.MODULE_ENFORCEMENT = 'report';
-    expect(enforcementMode()).toBe('report');
-    process.env.MODULE_ENFORCEMENT = 'ENFORCE';
-    expect(enforcementMode()).toBe('enforce');
   });
 });
 
@@ -207,5 +217,110 @@ describe('the gate', () => {
       expect(next, `${p} must never be gated`).toHaveBeenCalledOnce();
       expect(res.statusCode).toBe(0);
     }
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Where the mode comes from
+
+   The gate used to read the deployment's configuration directly, so the one
+   conclusion the Master Licensing console produces — "it is safe to start
+   refusing" — could only be executed by an engineer and a redeploy. It now
+   reads the governed setting through the shared resolver. Three properties of
+   that have to hold at THIS layer, because getting any of them wrong here is
+   invisible from the resolver's own tests:
+
+     1. A stored decision actually changes what the gate does.
+     2. It arrives without a restart.
+     3. It does not cost a settings query per request.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+describe('the gate takes its mode from the governed setting', () => {
+  const gate = moduleEntitlementGate(buildPrefixMap(SURFACES));
+
+  it('refuses because the STORED mode says so, over a deployment that says off', async () => {
+    // The defect this catches: the console reports the change as applied and
+    // the gate goes on reading the deployment value, so enforcement never
+    // actually moves and nobody finds out until a customer is not refused.
+    process.env.MODULE_ENFORCEMENT = 'off';
+    storeHolds('enforce');
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'requires professional' });
+
+    const next = vi.fn();
+    const res = resSpy();
+    await gate(reqFor('/api/pv/signals'), res, next);
+
+    expect(res.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('serves because the STORED mode says off, over a deployment that says enforce', async () => {
+    // The same defect in the direction that breaks customers: an operator
+    // stands enforcement down on the console and the gate keeps refusing.
+    process.env.MODULE_ENFORCEMENT = 'enforce';
+    storeHolds('off');
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'requires professional' });
+
+    const next = vi.fn();
+    const res = resSpy();
+    await gate(reqFor('/api/pv/signals'), res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.statusCode).toBe(0);
+    expect(mockAccess).not.toHaveBeenCalled();
+  });
+
+  it('picks up a change without a restart, once the staleness window passes', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-24T12:00:00.000Z'));
+    process.env.MODULE_ENFORCEMENT = 'off';
+    storeHolds('report');
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'requires professional' });
+
+    const first = vi.fn();
+    const firstRes = resSpy();
+    await gate(reqFor('/api/pv/signals'), firstRes, first);
+    expect(first).toHaveBeenCalledOnce(); // report: measured, served
+
+    storeHolds('enforce');
+    vi.setSystemTime(new Date(Date.now() + MODE_CACHE_TTL_MS + 1_000));
+    // The stale value is served without waiting; the refresh happens behind it.
+    await gate(reqFor('/api/pv/signals'), resSpy(), vi.fn());
+    await vi.waitFor(() => expect(peekEnforcementMode()?.mode).toBe('enforce'));
+
+    const next = vi.fn();
+    const res = resSpy();
+    await gate(reqFor('/api/pv/signals'), res, next);
+    expect(res.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('does not read the settings store on every request', async () => {
+    // A configuration query per API request is a worse defect than the one the
+    // stored mode exists to fix.
+    process.env.MODULE_ENFORCEMENT = 'off';
+    storeHolds('enforce');
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'requires professional' });
+
+    for (let i = 0; i < 30; i += 1) await gate(reqFor('/api/pv/signals'), resSpy(), vi.fn());
+    expect(dbQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not start refusing when the setting cannot be read at all', async () => {
+    // The outage this prevents: the settings store hiccups on a freshly started
+    // process and a deployment configured to refuse begins 403ing paying
+    // customers on the strength of a fault rather than a decision.
+    process.env.MODULE_ENFORCEMENT = 'enforce';
+    dbQuery.mockRejectedValue(new Error('connection terminated'));
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'requires professional' });
+
+    const next = vi.fn();
+    const res = resSpy();
+    await gate(reqFor('/api/pv/signals'), res, next);
+
+    expect(res.statusCode).toBe(0);
+    expect(next).toHaveBeenCalledOnce();
+    // Still measured — the denial is recorded even though it was not applied.
+    expect(mockAccess).toHaveBeenCalled();
   });
 });

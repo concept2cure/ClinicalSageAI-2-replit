@@ -39,6 +39,7 @@ import auditService from '../../services/auditService';
 import { writeModuleGrant } from '../../services/entitlements/module-grants';
 import masterLicensingRoutes from './master-licensing';
 import licensingTrialsRoutes from './licensing-trials';
+import licensingHistoryRoutes from './licensing-history';
 
 const logger = createScopedLogger('admin-master');
 const router = Router();
@@ -56,6 +57,10 @@ router.use(masterLicensingRoutes);
 // customer's commercial position, so it inherits this gate rather than
 // declaring its own.
 router.use(licensingTrialsRoutes);
+// The read side of the same record: who changed the commercial model, when and
+// why. Read-only, but it renders the Part 11 chain, so it inherits this gate
+// rather than declaring its own.
+router.use(licensingHistoryRoutes);
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

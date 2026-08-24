@@ -1,0 +1,96 @@
+/* ══ Licensing decision history ════════════════════════════════════════════
+   The read side of the Master Licensing console: what changed, on which
+   workspace or module, who did it, when, and the reason they typed.
+
+   Everything structural is borrowed from the `.ml-*` block in
+   misc-surfaces-v2.css — the section shell, the banner, the grid table, the
+   chips and the filter fields are the same components, and a second copy of
+   them would drift. What is declared here is only what this panel adds: its
+   own column template, the recorded-field list inside a row, the reason block,
+   and the pagination footer.
+
+   Colour rules follow the console: --text-300 is the floor for small text
+   (--text-400 measures 3.37:1 and fails SC 1.4.3 at this size; --text-500 at
+   2.11:1 is never text), and an interactive boundary uses --border-control. */
+
+/* Two classes, so this template wins over the base `.ml-table` declaration
+   regardless of stylesheet order. */
+.c2c-v2 .ml-table.lh-table {
+  --ml-cols: 155px minmax(210px, 1.3fr) minmax(150px, 1fr) minmax(200px, 1.4fr) 165px;
+  min-width: 940px;
+}
+
+/* The recorded fields of one decision. Rendered for every action, including
+   one this build has never heard of — which is the point: an unrecognised
+   action still says what it changed instead of being reduced to a token. */
+.c2c-v2 .lh-fields {
+  margin: 5px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-300);
+}
+.c2c-v2 .lh-fields > div { word-break: break-word; }
+.c2c-v2 .lh-fields b {
+  font-weight: 600;
+  color: var(--text-200);
+}
+
+/* The operator's own sentence. Set apart so it reads as quoted testimony
+   rather than as this product's prose. */
+.c2c-v2 .lh-reason {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-100);
+  word-break: break-word;
+}
+.c2c-v2 .lh-reason-none {
+  font-size: 12px;
+  color: var(--text-300);
+}
+
+/* Integrity cell: the chip carries the words, never colour alone. */
+.c2c-v2 .lh-int { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+
+/* ── Page footer ──────────────────────────────────────────────────────────
+   The truncation line and the two page controls sit together, because the
+   sentence "215 more are recorded" is only useful next to the control that
+   reaches them. */
+.c2c-v2 .lh-page {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+.c2c-v2 .lh-page-note {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-300);
+  font-variant-numeric: tabular-nums;
+}
+.c2c-v2 .lh-page-acts { display: flex; gap: 8px; margin-left: auto; }
+
+/* An honest count of what this page could not interpret. Kept visually
+   distinct from the integrity banner: unreadable content and a broken chain
+   are different failures and must not read as one. */
+.c2c-v2 .lh-partial {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--warning) 34%, transparent);
+  background: color-mix(in srgb, var(--warning) 7%, transparent);
+  border-radius: var(--radius-md);
+}
+.c2c-v2 .lh-partial-ic { display: inline-flex; flex-shrink: 0; margin-top: 1px; color: var(--warning); }
+.c2c-v2 .lh-partial-ic svg { width: 14px; height: 14px; }
+.c2c-v2 .lh-partial p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-200);
+  max-width: 78ch;
+}

@@ -17,6 +17,7 @@ import { pool } from '../db.js';
 // drops the cached entry to make the change take effect immediately on this
 // instance instead of after the TTL. See services/tenant/tenant-lifecycle.ts.
 import { invalidateTenantPosture } from './tenant/tenant-lifecycle';
+import { writeModuleGrant } from './entitlements/module-grants';
 
 /**
  * The amount to charge per billing interval, in cents.
@@ -910,13 +911,22 @@ async function provisionModulesForTier(organizationId: number, tier: string): Pr
       || requiredTiers.some((t: string) => orgLevel >= (tierLevel[t] ?? 99));
 
     if (qualifies) {
-      await pool.query(
-        `INSERT INTO module_subscriptions (organization_id, module_id, enabled, enabled_at)
-         VALUES ($1, $2, true, NOW())
-         ON CONFLICT (organization_id, module_id)
-         DO UPDATE SET enabled = true, enabled_at = NOW()`,
-        [organizationId, mod.module_id]
-      );
+      /* One canonical grant writer — services/entitlements/module-grants.ts.
+         This ran at checkout and on the subscription webhook, and did not touch
+         `expires_at`. So a customer whose trial of a module had lapsed and who
+         then BOUGHT a plan that includes it got `enabled = true` written beside
+         the stale past date — an instantly-expired grant. The purchase
+         completed, the payment cleared, and the module stayed locked.
+
+         `expiresAt: null` is what clears that date: a module the paid plan
+         includes is granted perpetually. */
+      await writeModuleGrant({
+        organizationId,
+        moduleId: mod.module_id,
+        enabled: true,
+        actorEmail: null,
+        expiresAt: null,
+      });
     }
   }
 }

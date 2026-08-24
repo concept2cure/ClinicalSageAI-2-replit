@@ -43,6 +43,9 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
+import AccessRequestsPanel from './licensing/AccessRequestsPanel';
+import EnforcementModeControl from './licensing/EnforcementModeControl';
+import LicensingHistoryPanel from './licensing/LicensingHistoryPanel';
 import { TrialsPanel } from './licensing/TrialsPanel';
 import '../styles/misc-surfaces-v2.css';
 
@@ -200,9 +203,11 @@ type Pending =
 const TABS = [
   { id: 'packaging', label: 'Packaging', icon: 'layers' },
   { id: 'tenants', label: 'Tenants', icon: 'building' },
+  { id: 'access-requests', label: 'Access requests', icon: 'clipboardList' },
   { id: 'trials', label: 'Trials', icon: 'clock' },
   { id: 'flags', label: 'Feature flags', icon: 'sliders' },
   { id: 'enforcement', label: 'Enforcement', icon: 'shieldAlert' },
+  { id: 'history', label: 'Decisions', icon: 'history' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
 
@@ -1063,6 +1068,12 @@ export function MasterLicensing() {
           endpoint end-to-end is the shape the remaining tabs should take too. */}
       {tab === 'trials' && <TrialsPanel />}
 
+      {/* ══ Access requests ════════════════════════════════════════════════
+          Every workspace's open requests, for the platform owner. The
+          org-scoped view of the same queue is its own surface — one
+          implementation, parameterised by scope. */}
+      {tab === 'access-requests' && <AccessRequestsPanel />}
+
       {/* ══ Enforcement ════════════════════════════════════════════════════
           The rollout instrument. Route-level enforcement ships switched off,
           then observing, then on — and the middle step exists so nobody flips
@@ -1077,6 +1088,14 @@ export function MasterLicensing() {
       {tab === 'enforcement' && (
         <section className="ml-sec" aria-labelledby="ml-enf-h">
           <h2 id="ml-enf-h" className="ml-sec-h">Enforcement</h2>
+
+          {/* The switch sits above the report deliberately: the report exists to
+              inform this one decision, and an operator who has just read it
+              should not have to leave to act on it. `onChanged` re-reads the
+              report, because changing the mode changes what the rows below
+              mean — the same denials are observed in one mode and real in the
+              other. */}
+          <EnforcementModeControl onChanged={retry} />
 
           {enf.loading ? (
             <div className="ml-loading" role="status">Loading the enforcement report…</div>
@@ -1255,6 +1274,11 @@ export function MasterLicensing() {
           )}
         </section>
       )}
+
+      {/* ══ Decisions ══════════════════════════════════════════════════════
+          Every licensing change was already written to the Part 11 chain and
+          readable nowhere in the product. This is the read side. */}
+      {tab === 'history' && <LicensingHistoryPanel />}
 
       {pending && (
         <GovernedConfirmDialog

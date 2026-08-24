@@ -12,8 +12,15 @@
  * that it covers all of them. Mounting it per-family instead is precisely how a
  * new family silently ships ungated.
  *
- * Inert unless MODULE_ENFORCEMENT is set: 'report' logs what it WOULD deny and
- * serves the request, 'enforce' denies. Default 'off'.
+ * Off unless a mode is set: 'report' records what it WOULD deny and serves the
+ * request, 'enforce' denies. Default 'off'.
+ *
+ * The mode is no longer read from the deployment's environment alone. It is a
+ * governed platform setting a master admin changes from the licensing console,
+ * with the environment value as the fallback when nothing is stored — see
+ * services/entitlements/enforcement-mode.ts for the precedence and the
+ * propagation window. So this gate can become live without a redeploy, and a
+ * comment claiming otherwise would send somebody looking in the wrong place.
  *
  * @module server/bootstrap/register-entitlement-gate
  */

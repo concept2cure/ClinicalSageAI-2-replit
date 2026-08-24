@@ -180,6 +180,12 @@ export function Rail({
     // re-checks platform-admin server-side on every read and write; this only
     // decides whether the entry is offered.
     ...(isOrgAdmin ? [{ label: 'Licensing', ic: 'checkSquare', to: 'master-licensing' }] : []),
+    /* Where a member's request for a locked module lands. Without this entry the
+       lock panel's one instruction — "ask an administrator" — points at nobody:
+       the request is recorded, and the person who can approve it has no way to
+       find it. The queue is org-scoped server-side; this only decides whether
+       the entry is offered. */
+    ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
     { sep: true },

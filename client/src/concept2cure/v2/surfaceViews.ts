@@ -248,6 +248,7 @@ const ArtifactsCenter = lazySurface(() => import('./surfaces/AdminSurfaces').the
 const AuditTrail = lazySurface(() => import('./surfaces/AdminSurfaces').then((m) => ({ default: m.AuditTrail })));
 const AdminAccess = lazySurface(() => import('./surfaces/AdminAccess').then((m) => ({ default: m.AdminAccess })));
 const MasterLicensing = lazySurface(() => import('./surfaces/MasterLicensing').then((m) => ({ default: m.MasterLicensing })));
+const AccessRequests = lazySurface(() => import('./surfaces/AccessRequests').then((m) => ({ default: m.AccessRequests })));
 const AgencyMeetings = lazySurface(() => import('./surfaces/AgencyMeetings').then((m) => ({ default: m.AgencyMeetings })));
 const AnaCommand = lazySurface(() => import('./surfaces/AnaCommand').then((m) => ({ default: m.AnaCommand })));
 const AnaMemory = lazySurface(() => import('./surfaces/AnaMemory').then((m) => ({ default: m.AnaMemory })));
@@ -358,6 +359,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // be lockable, or a mis-set tier could strand the owner outside the only
   // place the tier can be un-set.
   'master-licensing': { component: MasterLicensing, full: true },
+  'access-requests': { component: AccessRequests },
   'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
   'ana-memory': { component: AnaMemory },

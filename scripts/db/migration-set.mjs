@@ -1539,6 +1539,16 @@ export const C2C_MIGRATION_FILES = [
   // mechanism is introduced.
   'db/migrations/20260824_module_access_requests.sql',
 
+  // ── The enforcement mode becomes a governed setting ───────────────────────
+  // Creates platform_settings, the store the Master Licensing console writes
+  // the route-enforcement mode into. Seeds NO row: an empty table means the
+  // deployment's own configuration still decides, so applying this changes no
+  // deployment's behaviour. Read by
+  // server/services/entitlements/enforcement-mode.ts, which treats a missing
+  // relation as "nothing stored" — so applying it late is safe, but until it is
+  // applied the console cannot store a decision.
+  'db/migrations/20260824_enforcement_mode_setting.sql',
+
   // ── Both entries below must precede the two isolation steps ────────────────
   // The last two entries of this list are, and must remain, the uuid non-public
   // step and the integer sweep — C-33 requires the sweep to see everything the

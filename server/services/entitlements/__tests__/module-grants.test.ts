@@ -23,6 +23,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const dbQuery = vi.hoisted(() => vi.fn());
 vi.mock('../../../db', () => ({ query: dbQuery }));
 
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+
 import { writeModuleGrant } from '../module-grants';
 
 const ROW = {
@@ -105,5 +108,33 @@ describe('writeModuleGrant', () => {
       expiresAt: null,
     });
     expect(out).toEqual(ROW);
+  });
+});
+
+describe('there is exactly one place this row is written', () => {
+  it('no other server module upserts module_subscriptions', () => {
+    /* The header claims this is the one canonical writer. That claim was FALSE
+       when the module was first extracted — three other inline upserts existed
+       (the customer-facing toggle, billing's tier provisioning, and the
+       master-admin toggle), none of which touched `expires_at`, so each one
+       could write `enabled = true` onto a row still holding a lapsed trial's
+       past date and report success for a grant that resolved to nothing.
+
+       A comment asserting a property nothing checks is a comment that goes
+       stale the first time somebody adds a fourth copy. This checks it. */
+    const files = execSync("git ls-files 'server/**/*.ts'", {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      maxBuffer: 32 * 1024 * 1024,
+    })
+      .split('\n')
+      .filter(Boolean)
+      .filter((f) => !/__tests__|\.test\.ts$/.test(f));
+
+    const writers = files.filter((f) =>
+      /INSERT\s+INTO\s+module_subscriptions/i.test(readFileSync(f, 'utf8')),
+    );
+
+    expect(writers).toEqual(['server/services/entitlements/module-grants.ts']);
   });
 });

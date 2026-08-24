@@ -35,7 +35,7 @@
  *
  * ── Ships in report-only mode ────────────────────────────────────────────────
  *
- * MODULE_ENFORCEMENT: 'off' (default) | 'report' | 'enforce'.
+ * Three modes: 'off' (default) | 'report' | 'enforce'.
  *
  * Turning hard enforcement on across a live product as the first act would be
  * reckless: nobody knows today which real, paying, working requests would start
@@ -49,6 +49,21 @@
  * This is deliberately the one place in the stack that is allowed to be
  * permissive, and it is permissive on purpose rather than by omission.
  *
+ * ── Where the mode comes from ────────────────────────────────────────────────
+ *
+ * NOT from this file. `services/entitlements/enforcement-mode.ts` owns the
+ * whole decision — the stored setting, the deployment fallback, the precedence
+ * between them, the cache and the fail-safe direction — because the console
+ * that changes the mode and the gate that acts on it must be reading one
+ * implementation, not two that agree today.
+ *
+ * What matters HERE is the cost: `currentEnforcementMode()` is cache-backed and
+ * adds no query to a request. Only the first call in a process awaits a read;
+ * after that a stale entry is served immediately and refreshed behind the
+ * request. A mode change made on the console takes effect within the cache TTL
+ * (30s) with no restart. Anything that turns this into a query per request is
+ * a worse defect than the one the mode exists to manage.
+ *
  * @module server/middleware/moduleEntitlementGate
  */
 
@@ -56,18 +71,13 @@ import type { Request, Response, NextFunction } from 'express';
 import { UI_SURFACES } from '../../shared/constants/ui-surface-registry';
 import { canAccessModule } from '../services/license-manager.js';
 import { recordObservation } from '../services/entitlements/enforcement-observations.js';
+import { currentEnforcementMode } from '../services/entitlements/enforcement-mode.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('module-entitlement-gate');
 
-export type EnforcementMode = 'off' | 'report' | 'enforce';
-
-export function enforcementMode(): EnforcementMode {
-  const raw = (process.env.MODULE_ENFORCEMENT ?? '').trim().toLowerCase();
-  if (raw === 'enforce') return 'enforce';
-  if (raw === 'report') return 'report';
-  return 'off';
-}
+// Re-exported, not redefined: one type for one concept. The resolver owns it.
+export type { EnforcementMode } from '../services/entitlements/enforcement-mode.js';
 
 /**
  * Prefixes that must NEVER be gated, whatever the registry says.
@@ -151,7 +161,7 @@ export function moduleEntitlementGate(
   prefixMap: Map<string, Set<string>> = buildPrefixMap(),
 ) {
   return async function gate(req: Request, res: Response, next: NextFunction) {
-    const mode = enforcementMode();
+    const { mode } = await currentEnforcementMode();
     if (mode === 'off') return next();
 
     const pathname = (req.path || req.originalUrl || '').split('?')[0];

@@ -407,10 +407,35 @@ const REPORT = {
   ],
 };
 
+/* The Enforcement tab now also carries the mode switch, which reads its own
+   endpoint. Routed here so it renders its control rather than its error state —
+   an unrouted 404 would leave these cases asserting against a panel that is
+   half in a failure mode, which is not the thing under test. */
+const MODE = {
+  mode: 'report',
+  source: 'deployment',
+  storedMode: null,
+  deploymentMode: 'report',
+  modes: ['off', 'report', 'enforce'],
+  updatedAt: null,
+  updatedBy: null,
+  reason: null,
+  degraded: false,
+  propagationSeconds: 30,
+  impact: {
+    organizationsAffected: 0,
+    modulesAffected: [],
+    observations: 0,
+    observingSince: null,
+    perProcess: true,
+  },
+};
+
 function routeEnforcement(report: unknown, over: { del?: () => Promise<Response> } = {}) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
     if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+    if (method === 'GET' && url === `${ENFORCEMENT}/mode`) return ok(MODE);
     if (method === 'GET' && url === ENFORCEMENT) return ok(report);
     if (method === 'DELETE' && url === ENFORCEMENT && over.del) return over.del();
     throw apiError(404, { error: `unrouted ${method} ${url}` });
@@ -489,6 +514,7 @@ describe('Master Licensing — enforcement report', () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
       if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      if (method === 'GET' && url === `${ENFORCEMENT}/mode`) return ok(MODE);
       if (method === 'GET' && url === ENFORCEMENT) throw apiError(500, { error: 'read failed' });
       throw apiError(404, { error: `unrouted ${method} ${url}` });
     });
