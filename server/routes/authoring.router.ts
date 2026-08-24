@@ -990,25 +990,6 @@ const resolveSignerName = async (email: string): Promise<string | null> => {
 };
 
 // Helper to create or update user PIN
-const createUserPin = async (email: string, pin: string, tenantId: number): Promise<boolean> => {
-  try {
-    const pinHash = await bcrypt.hash(pin, 10);
-    const pinExpiry = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
-
-    await pool.query(
-      `INSERT INTO user_pins (email, pin_hash, tenant_id, pin_expires_at)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (email, tenant_id)
-       DO UPDATE SET pin_hash = $2, pin_expires_at = $4, updated_at = NOW(), failed_attempts = 0, locked_until = NULL`,
-      [email, pinHash, tenantId, pinExpiry]
-    );
-
-    return true;
-  } catch (error) {
-    console.error('Error creating PIN:', error);
-    return false;
-  }
-};
 
 // Helper function to create revision automatically.
 //
@@ -3961,49 +3942,36 @@ async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
 
 // ============= 21 CFR Part 11 Compliance Endpoints =============
 
-// POST /api/authoring/docs/:docId/create-pin - Create/update PIN for user
-router.post('/docs/:docId/create-pin', async (req: Request, res: Response) => {
-  try {
-    const { pin } = req.body;
-    // Part 11 attribution: signer identity comes from the verified JWT only.
-    // The previous x-user-email header source was attacker-controlled (same
-    // class as the getActorId fix above) — a caller could mint a PIN for any
-    // email and later sign as that identity.
-    const email = getActorEmail(req);
-    const tenantId = getTenantId(req);
+/* POST /api/authoring/docs/:docId/create-pin has been DELETED.
+ *
+ * It was a second endpoint for the same thing POST /users/pin does — setting
+ * the signing PIN that gates every electronic signature in this router — with
+ * no caller anywhere, and it bypassed both controls the canonical one exists
+ * to enforce.
+ *
+ * NO OLD-PIN CHECK. /users/pin requires the current PIN, bcrypt-verified,
+ * before it will overwrite an existing one; its own header records why, citing
+ * §11.200(a)(1): possession of a session must not become possession of the
+ * signing credential. This route called createUserPin() straight through, so
+ * any authenticated session could replace another sitting PIN it did not know.
+ *
+ * IT CLEARED THE LOCKOUT. createUserPin's upsert ended in
+ * `failed_attempts = 0, locked_until = NULL`. verifyUserPin enforces three
+ * attempts and a thirty-minute lockout, and this endpoint reset both — so the
+ * brute-force control could be cleared between guesses by the same session
+ * doing the guessing.
+ *
+ * createUserPin() is deleted with it: this was its only call site.
+ *
+ * NOTE, deliberately left as a finding rather than fixed here: `pin_expires_at`
+ * was written ONLY by createUserPin (90 days) and is read by nothing —
+ * verifyUserPin selects pin_hash, failed_attempts and locked_until and never
+ * consults it. PIN aging therefore looks implemented and is not enforced, and
+ * after this deletion the column has no writer either. Enforcing expiry would
+ * start locking real signers out of a governed action, which is a product
+ * decision and not a cleanup.
+ */
 
-    if (!email) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    if (!pin || pin.length < 6) {
-      return res.status(400).json({ error: 'PIN must be at least 6 characters' });
-    }
-
-    const success = await createUserPin(email, pin, tenantId);
-
-    if (success) {
-      // Log PIN creation in audit trail
-      await createAuditTrail(
-        req,
-        req.params.docId,
-        null,
-        'PIN_CREATED',
-        null,
-        null,
-        'User PIN created or updated',
-        { email }
-      );
-
-      res.json({ success: true, message: 'PIN created successfully' });
-    } else {
-      res.status(500).json({ error: 'Failed to create PIN' });
-    }
-  } catch (error) {
-    console.error('Error creating PIN:', error);
-    res.status(500).json({ error: 'Failed to create PIN' });
-  }
-});
 
 // POST /api/authoring/docs/:docId/freeze - Freeze document with immutable snapshot
 router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
@@ -5096,94 +5064,32 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
    map presented as a guidance service. The real per-section guidance read is
    GET /guidance/:sectionId (section_guidance + template_guidance tables). */
 
-// POST /docs/:docId/seed-stability - Seed stability data and insert P.8 tokens
-router.post('/docs/:docId/seed-stability', async (req: Request, res: Response) => {
-  try {
-    const { docId } = req.params;
-    const {
-      product_code = 'UAT-PROD',
-      study_code = 'SS-UAT-001',
-      study_name = 'UAT Stability 24M',
-    } = req.body;
+/* POST /api/authoring/docs/:docId/seed-stability has been DELETED.
+ *
+ * It spawned `node scripts/seed-stability.mjs` from a request handler, with no
+ * caller anywhere and no environment guard of any kind — so a UAT fixture
+ * seeder, defaulting to product_code 'UAT-PROD' and study_code 'SS-UAT-001',
+ * was reachable over HTTP by any authenticated user in any deployment
+ * including production. CLAUDE.md's working agreement is explicit: no fixture
+ * data in governed paths. This was the mechanism for putting it there.
+ *
+ * It was also broken in a way that would have hidden its own failures. The
+ * handler ended with
+ *
+ *     process.on('error', …)
+ *
+ * — the GLOBAL Node process, not the spawned child. A child that failed to
+ * start emits 'error' on `childProcess`, which nothing listened to, so the
+ * request hung rather than answering; and every call added another permanent
+ * listener to the global process, each closing over a response object long
+ * since finished.
+ *
+ * scripts/seed-stability.mjs is KEPT. Its own header documents it as a command
+ * an operator runs (`node scripts/seed-stability.mjs`), which is the right
+ * shape for a seeder: a deliberate act at a terminal, not an endpoint on the
+ * governed authoring API.
+ */
 
-    if (!docId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Document ID is required',
-      });
-    }
-
-    // Run the stability seeder script with the provided parameters.
-    // BP-W0-6: same CommonJS `require` under "type": "module" as the docx export
-    // branch had — this route would have thrown ReferenceError the first time
-    // anyone called it. Found while fixing the export; converted rather than
-    // left as the next instance of the same 500.
-    const { spawn } = await import('node:child_process');
-    /* The `require` this replaced returned `any`, so nothing typechecked the
-       call — and it was wrong. Every one of these values comes off req.body and
-       is `string | undefined`, which no `spawn` overload accepts. Passing
-       undefined into a child's env is not a type nicety either: the child reads
-       process.env.PRODUCT_CODE and would get the string "undefined" or nothing
-       at all, depending on the platform. Coerced explicitly. */
-    const childProcess = spawn('node', ['scripts/seed-stability.mjs'], {
-      env: {
-        ...process.env,
-        BASE_URL: `http://localhost:${process.env.PORT || 5000}`,
-        PRODUCT_CODE: String(product_code ?? ''),
-        STUDY_CODE: String(study_code ?? ''),
-        STUDY_NAME: String(study_name ?? ''),
-        DOC_ID: String(docId ?? ''),
-      },
-    });
-
-    let output = '';
-    let errorOutput = '';
-
-    childProcess.stdout.on('data', (data: any) => {
-      output += data.toString();
-    });
-
-    childProcess.stderr.on('data', (data: any) => {
-      errorOutput += data.toString();
-    });
-
-    childProcess.on('close', (code: number) => {
-      if (code === 0) {
-        res.json({
-          success: true,
-          message: 'Stability data seeded successfully',
-          study_code,
-          product_code,
-          doc_id: docId,
-          output: output.trim(),
-        });
-      } else {
-        console.error('Stability seeder failed:', errorOutput);
-        res.status(500).json({
-          success: false,
-          error: 'Stability seeding failed',
-          details: errorOutput.trim(),
-        });
-      }
-    });
-
-    process.on('error', (err: any) => {
-      console.error('Failed to start stability seeder:', err);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to start stability seeder',
-        details: err.message,
-      });
-    });
-  } catch (error) {
-    console.error('Stability seeding error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to seed stability data',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
 
 // DELETE /docs/:docId (UAT-only; admin-guarded) - Step 12: Fixture Cleanup
 router.delete('/docs/:docId', async (req: Request, res: Response) => {
