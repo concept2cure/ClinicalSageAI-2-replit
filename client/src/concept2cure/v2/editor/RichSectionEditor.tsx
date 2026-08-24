@@ -68,6 +68,7 @@ import {
   TrackChanges,
   collectSuggestions,
   type SuggestionAuthor,
+  type SuggestionDecision,
   type SuggestionRange,
 } from './suggestions';
 import {
@@ -148,6 +149,10 @@ export interface RichSectionEditorProps {
     author: SuggestionAuthor;
     /** Persist the toggle (PATCH track_changes). Reject to refuse the flip. */
     onToggle?: (enabled: boolean) => void | Promise<void>;
+    /** Every accept/reject, so the host can record it as a governed act.
+     *  Rejections in particular change no text and are otherwise unrecorded
+     *  anywhere. Fire-and-forget: it must not block or undo the edit. */
+    onResolve?: (decision: SuggestionDecision) => void;
   } | null;
   /** Range-anchored comments. Omit to hide the capability. */
   commentsApi?: {
@@ -296,6 +301,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       onSaveRef.current = onSave;
     });
 
+    /** `track.onResolve` as of the last render. The extension list is built
+     *  once per mount, so configuring the callback directly would freeze the
+     *  first render's closure and post decisions against a stale document id. */
+    const onResolveRef = useRef(track?.onResolve);
+    useEffect(() => {
+      onResolveRef.current = track?.onResolve;
+    });
+
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
       if (!collab) return null;
@@ -355,6 +368,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
+          // Stable identity reading the latest handler — see onResolveRef.
+          onResolve: (d: SuggestionDecision) => onResolveRef.current?.(d),
         }),
         CommentAnchor.configure({
           onAnchorClick: commentsApi?.onOpen ?? null,
