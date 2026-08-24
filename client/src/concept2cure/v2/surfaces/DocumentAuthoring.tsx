@@ -95,6 +95,11 @@ import {
   type EditorTarget,
 } from '../editorTarget';
 import { consumeNavParams } from '../navParams';
+import {
+  advertisedScreenActions,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+} from '../surfaceActions';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -967,17 +972,23 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
      context rather than being dropped. */
-  const moduleContext = useMemo(
-    () => ({
+  const moduleContext = useMemo(() => {
+    const base: Record<string, unknown> = {
       surface: 'document-authoring',
       documentId: activeDocId,
       documentTitle: activeDoc?.title ?? null,
       sectionId: activeSectionId,
       sectionCode: activeSection?.code ?? null,
       sectionTitle: activeSection?.title ?? null,
-    }),
-    [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title]
-  );
+    };
+    /* The screen's OPERABLE vocabulary from the shared surface-action registry
+       (aliases applied), folded exactly as the shell folds it for railed
+       surfaces (V2App) — this surface owns its conversation, so its own chat
+       must advertise what the rail would have. Omitted entirely when empty
+       rather than sending an empty claim. */
+    const screenActions = advertisedScreenActions('document-authoring');
+    return screenActions.length > 0 ? { ...base, screen_actions: screenActions } : base;
+  }, [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title]);
   const ana = useAnaChat({
     screenName: 'document-authoring',
     projectId: projectIdForOutline,
@@ -1303,6 +1314,110 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     const row = rootRef.current?.querySelector<HTMLElement>('.ed-tree-row[data-active]');
     if (row && typeof row.scrollIntoView === 'function') row.scrollIntoView({ block: 'nearest' });
   }, [treeScrollNonce, activeSectionId, sections]);
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under this surface's OWN surfaceViews id ('document-authoring');
+     the bus alias-resolves the registry's 'authoring' surfaceId onto it, the
+     same resolution nav() applies. Both handlers drive the SAME path the
+     human's own tree clicks drive — requestLeave (the unsaved-work gate) plus
+     the tree-scroll nonce — never a second navigation path, and both answer
+     honest refusals instead of discarding a person's typing or resolving a
+     near-miss into the wrong document. */
+  /* One guard for both handlers: while a dialog or a write owns the canvas, an
+     AnA-driven switch would discard or race the person's work. Specific per
+     flag, because "busy" tells the subscriber nothing they can act on. */
+  const authoringGuard = (): { ok: false; reason: string } | null => {
+    if (pendingLeave)
+      return { ok: false, reason: 'An unsaved-changes dialog is open — resolve it first.' };
+    if (leaving)
+      return { ok: false, reason: 'A save-and-leave is in progress — let it finish first.' };
+    if (saving) return { ok: false, reason: 'A save is in progress — let it finish first.' };
+    if (picking)
+      return { ok: false, reason: 'The source picker is open — finish or cancel it first.' };
+    if (pendingAnchor)
+      return { ok: false, reason: 'A comment is being anchored — post or cancel it first.' };
+    return null;
+  };
+  /* Separate from the busy flags because it needs the honest specifics: AnA
+     never discards typing, and the refusal names the section holding it. */
+  const dirtyGuard = (): { ok: false; reason: string } | null => {
+    if (!dirty) return null;
+    const where = activeSection?.code ? `§${activeSection.code}` : 'the open section';
+    return { ok: false, reason: `There are unsaved edits in ${where} — save or leave them first.` };
+  };
+  useSurfaceActionHandlers('document-authoring', {
+    'authoring.open-document': params => {
+      const guarded = authoringGuard() ?? dirtyGuard();
+      if (guarded) return guarded;
+      const raw = (params.title ?? '').trim();
+      if (!raw) return { ok: false, reason: 'No document named.' };
+      // Not-ready, not failed: the bus holds the directive and re-attempts on
+      // this surface's ready signal below — the navigate→act gap.
+      if (docsState === 'loading')
+        return { ok: false, reason: 'The document list is still loading.', retry: true };
+      if (docsState === 'error') return { ok: false, reason: 'The document list could not be read.' };
+      /* The same resolution idiom as the deep-link hand-off above — normalized
+         exact, then containment — except that MULTIPLE containment hits are an
+         honest refusal here. The legacy inline path silently took the first;
+         an AnA-driven open must not guess between documents. */
+      const norm = (s: string) =>
+        s.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const want = norm(raw);
+      const exact = docs.filter(d => norm(d.title) === want);
+      const pool = exact.length > 0 ? exact : docs.filter(d => norm(d.title).includes(want));
+      if (pool.length === 0) {
+        return {
+          ok: false,
+          reason: `No document matching "${raw}" in scope (status filter: ${status.replace('_', ' ')}).`,
+        };
+      }
+      if (pool.length > 1) {
+        return { ok: false, reason: `"${raw}" matches ${pool.length} documents — name one exactly.` };
+      }
+      const match = pool[0];
+      if (match.id === activeDocId) return { ok: true, detail: 'Already open' };
+      requestLeave({ kind: 'document', id: match.id });
+      setTreeScrollNonce(n => n + 1);
+      return { ok: true, detail: `Opened “${match.title}”` };
+    },
+    'authoring.open-section': params => {
+      const guarded = authoringGuard() ?? dirtyGuard();
+      if (guarded) return guarded;
+      const code = (params.sectionCode ?? '').trim();
+      if (!code) return { ok: false, reason: 'No section code given.' };
+      if (activeDocId == null || sectionsState === 'idle') {
+        return { ok: false, reason: 'No document is open — open one first.' };
+      }
+      if (sectionsState === 'loading')
+        return { ok: false, reason: 'The document’s sections are still loading.', retry: true };
+      if (sectionsState === 'error')
+        return { ok: false, reason: 'The document’s sections could not be read.' };
+      /* Resolved ONLY within the open document's loaded sections — the
+         cross-document search belongs to navigate_to, and the refusal says so
+         instead of quietly widening the scope. */
+      const match = matchEditorTargetSection(sections, { sectionCode: code, sectionLabel: null });
+      if (!match) {
+        const docName = activeDoc ? `“${activeDoc.title}”` : 'the open document';
+        return {
+          ok: false,
+          reason: `§${code} is not in ${docName} — for another document, ask me to navigate to authoring with that section code.`,
+        };
+      }
+      if (match.id === activeSectionId) return { ok: true, detail: 'Already open' };
+      requestLeave({ kind: 'section', id: match.id });
+      setTreeScrollNonce(n => n + 1);
+      return { ok: true, detail: `Opened §${match.code} · ${match.title}` };
+    },
+  });
+  /* The ready signal for the retry contract above: when the reads settle
+     (sections 'idle' — no document open — counts as settled; the handler
+     answers that case honestly), a held not-ready directive gets its one
+     re-attempt. */
+  useEffect(() => {
+    if (docsState !== 'loading' && sectionsState !== 'loading') {
+      notifySurfaceActionReady('document-authoring');
+    }
+  }, [docsState, sectionsState]);
 
   /* ── Load the right-rail data for the active section on demand ── */
   const loadHistory = useCallback(async (sectionId: string) => {

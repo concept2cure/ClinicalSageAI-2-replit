@@ -28,6 +28,8 @@ import {
 } from '../registryModel';
 import type { GlobalRiCatalog, EnrichedGlobalRiCapability } from '@shared/types/global-ri-api';
 import { consumeNavParams } from '../navParams';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/surfaces-v2.css';
 import { useChatUpload } from '../../hooks/useChatUpload';
 
@@ -491,6 +493,137 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
     () => consumeNavParams('global-ri')?.intelligenceTab ?? null,
   );
 
+  /* The loading and error branches below return early, but every HOOK in this
+     component must run on every render, so the hooks (and the reads they
+     share) live above those returns. The open-capability and active-group
+     reads are hoisted here in null-safe form and reused by the render further
+     down — one computation, not two. */
+  const cap =
+    capId && catalog ? catalog.capabilities.find((c) => c.id === capId) ?? null : null;
+  const activeGroup = catalog
+    ? group ?? matchIntelligenceGroup(catalog.groups, navTab) ?? catalog.groups[0]?.id
+    : undefined;
+
+  /* What AnA can see of this screen. A FAILED read publishes the failure: an
+     empty catalog over an outage and a genuinely empty catalog are different
+     truths, and a summary counting zero capabilities over an error would make
+     her confidently wrong about the whole intelligence surface. */
+  const anaContext = React.useMemo(() => {
+    if (isLoading) {
+      return { summary: 'The intelligence catalog is still loading; nothing on screen is final yet.' };
+    }
+    if (isError || !catalog) {
+      return {
+        summary:
+          'The intelligence catalog could not be read, so this screen is empty because of a ' +
+          'failure, not because there are no capabilities.',
+      };
+    }
+    const groupLabel = catalog.groups.find((g) => g.id === activeGroup)?.label ?? activeGroup;
+    return {
+      summary:
+        `Global regulatory intelligence: ${catalog.total} capabilities in the catalog` +
+        (groupLabel ? `, group "${groupLabel}" open` : '') +
+        (cap ? `, capability "${cap.label}" open showing its inputs` : '') +
+        '.',
+      facts: {
+        activeGroup: activeGroup ?? null,
+        capId,
+        totalCapabilities: catalog.total,
+        groups: catalog.groups.map((g) => g.id),
+      },
+      availableActions: [
+        'Open an intelligence group',
+        'Open a capability to see its inputs',
+        'Close the open capability',
+      ],
+    };
+  }, [isLoading, isError, catalog, activeGroup, capId, cap]);
+  usePublishSurfaceContext('global-ri', anaContext);
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     intelligence.*; the 'intelligence' nav-target id resolves to this
+     surface's own 'global-ri' id through DEEP_LINK_ALIASES). Every handler
+     drives the SAME state the human's own controls drive (setGroup /
+     setCapId); names are resolved against the LIVE catalog with honest
+     misses, never a guess. While the catalog is still loading the handlers
+     answer not-ready (`retry: true`) and the bus holds the directive for the
+     ready signal below — the navigate→act gap. */
+  useSurfaceActionHandlers('global-ri', {
+    'intelligence.open-group': (params) => {
+      /* A person may be mid-form in the open capability detail; swapping the
+         catalog underneath it would discard their typing. Honest refusal. */
+      if (capId !== null) {
+        return { ok: false, reason: 'A capability detail is open — close it first.' };
+      }
+      if (isLoading) {
+        return { ok: false, reason: 'The intelligence catalog is still loading.', retry: true };
+      }
+      if (isError || !catalog) {
+        return { ok: false, reason: 'The intelligence catalog could not be read.' };
+      }
+      const wanted = (params.group ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No group named.' };
+      const matched = matchIntelligenceGroup(catalog.groups, wanted);
+      if (!matched) {
+        return { ok: false, reason: `No intelligence group named "${params.group}" in the catalog.` };
+      }
+      setGroup(matched);
+      const label = catalog.groups.find((g) => g.id === matched)?.label ?? matched;
+      return { ok: true, detail: `Opened ${label}` };
+    },
+    'intelligence.open-capability': (params) => {
+      if (isLoading) {
+        return { ok: false, reason: 'The intelligence catalog is still loading.', retry: true };
+      }
+      if (isError || !catalog) {
+        return { ok: false, reason: 'The intelligence catalog could not be read.' };
+      }
+      const wanted = (params.capability ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No capability named.' };
+      const lower = wanted.toLowerCase();
+      /* id exact wins, then label (case-insensitive), then unique containment. */
+      let match =
+        catalog.capabilities.find((c) => c.id === wanted) ??
+        catalog.capabilities.find((c) => c.label.toLowerCase() === lower) ??
+        null;
+      if (!match) {
+        const contains = catalog.capabilities.filter(
+          (c) => c.label.toLowerCase().includes(lower) || c.id.toLowerCase().includes(lower),
+        );
+        if (contains.length > 1) {
+          return {
+            ok: false,
+            reason: `"${params.capability}" matches ${contains.length} capabilities — name one exactly.`,
+          };
+        }
+        match = contains[0] ?? null;
+      }
+      if (!match) {
+        return { ok: false, reason: `No capability named "${params.capability}" in the catalog.` };
+      }
+      setCapId(match.id);
+      setGroup(match.group);
+      return { ok: true, detail: `Opened ${match.label}` };
+    },
+    'intelligence.close-capability': () => {
+      if (capId === null) return { ok: false, reason: 'No capability is open.' };
+      /* Closing discards anything typed into the capability form. That loss is
+         stated in the registry description; the form state is child-local and
+         invisible here, so it cannot be guarded — only said. */
+      setCapId(null);
+      return {
+        ok: true,
+        detail: cap ? `Closed ${cap.label} — back to the catalog` : 'Back to the capability catalog',
+      };
+    },
+  });
+  /* The ready signal for the retry contract above: when the catalog read
+     settles, a held not-ready directive gets its one re-attempt. */
+  React.useEffect(() => {
+    if (!isLoading) notifySurfaceActionReady('global-ri');
+  }, [isLoading]);
+
   if (isLoading) {
     return (
       <div className="gri-main">
@@ -522,11 +655,8 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
     );
   }
 
-  const cap = capId ? catalog.capabilities.find((c) => c.id === capId) : null;
   if (cap) return <GlobalRiCapability cap={cap} catalog={catalog} onBack={() => setCapId(null)} onAsk={onAsk} />;
 
-  const activeGroup =
-    group ?? matchIntelligenceGroup(catalog.groups, navTab) ?? catalog.groups[0]?.id;
   const groupMeta = catalog.groups.find((g) => g.id === activeGroup);
   const caps = catalog.capabilities.filter((c) => c.group === activeGroup);
   return (
