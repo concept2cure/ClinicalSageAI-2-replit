@@ -275,3 +275,66 @@ describe('CmPathway — logging and closing agency questions', () => {
     expect(screen.getAllByText('Clarify the shelf-life claim.')).toHaveLength(1);
   });
 });
+
+/* ── Drafting a response advances the question's lifecycle ──
+   The board renders OPEN/DRAFTED/IN_REVIEW; drafting used to leave the
+   question OPEN forever. Pinned: after the authoring write succeeds, an OPEN
+   question is PATCHed to DRAFTED before navigation; a non-OPEN question is
+   never downgraded by re-drafting. */
+describe('CmPathway — draft response advances the question to DRAFTED', () => {
+  beforeEach(() => {
+    apiRequest.mockReset();
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'POST' && url === '/api/authoring/docs') {
+        return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+      }
+      if (method === 'POST' && url === '/api/authoring/sections') {
+        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+      }
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ url, body });
+        return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+  }
+
+  it('an OPEN question is marked DRAFTED once the draft persisted, then the editor opens', async () => {
+    const patches: Array<{ url: string; body: unknown }> = [];
+    const navd: string[] = [];
+    wireDraft('OPEN', patches);
+    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'DRAFTED' });
+    await waitFor(() => expect(navd).toContain('document-authoring'));
+    // Ordering: the authoring write came before the status flip — a DRAFTED
+    // status with no draft behind it would be the dishonest order.
+    const urls = apiRequest.mock.calls.map((c) => String(c[1]));
+    expect(urls.indexOf('/api/authoring/docs')).toBeLessThan(urls.indexOf('/api/cmc/agency-questions/9'));
+  });
+
+  it('a question already IN_REVIEW is not downgraded by re-drafting', async () => {
+    const patches: Array<{ url: string; body: unknown }> = [];
+    const navd: string[] = [];
+    wireDraft('IN_REVIEW', patches);
+    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
+    await waitFor(() => expect(navd).toContain('document-authoring'));
+    expect(patches).toHaveLength(0);
+  });
+});
