@@ -18,7 +18,7 @@ interface NcStudy {
   // duration_label / key_finding / finding_class are nullable columns — and the
   // POST /studies write path does not set dur/finding/cls, so persisted studies
   // routinely carry null there. Rendered honestly (omitted when absent), never
-  // fabricated. `_new` is a client-only optimistic-add marker.
+  // fabricated.
   id: string;
   type: string;
   species: string | null;
@@ -26,7 +26,6 @@ interface NcStudy {
   finding: string | null;
   cls: string | null;
   send: string;
-  _new?: boolean;
 }
 
 interface NcM26Section {
@@ -237,28 +236,20 @@ function pill(status: string) {
   return <span className={'rd-chip tone-' + (map[status] || 'idle')}>{status}</span>;
 }
 
-function rowcls(r: { _new?: boolean }): string {
-  return 'sp-row' + (r._new ? ' de-row-new' : '');
+/* Was `'sp-row' + (r._new ? ' de-row-new' : '')`. `_new` was set only by the
+   deleted optimistic-append path, so the highlight had no writer left. */
+function rowcls(): string {
+  return 'sp-row';
 }
 
-function useRows(seed: NcStudy[]): readonly [NcStudy[], (r: NcStudy) => void] {
-  const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
-  // Re-seed when the live list resolves (the seed identity changes once the
-  // backend responds); user-added rows before that are optimistic.
-  const seedRef = useRef(seed);
-  useEffect(() => {
-    if (seed !== seedRef.current) {
-      seedRef.current = seed;
-      setRows((seed || []).map((r) => ({ ...r })));
-    }
-  }, [seed]);
-  const add = (r: NcStudy) => {
-    const row: NcStudy = { ...r, _new: true };
-    setRows((rs) => [row, ...rs]);
-    setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
-  };
-  return [rows, add] as const;
-}
+/* `useRows` is gone.
+   It mirrored the live list and let a caller APPEND an optimistic row — which
+   is the machinery "Add study" used to fabricate a saved study with. Now that
+   the create is a real governed POST followed by a re-read, there is nothing
+   left for it to do: the list IS the store's list. A helper whose only
+   remaining purpose is to let a surface show a row the server does not have is
+   the defect, not a convenience. */
+
 
 /* ── Honest loading / error / empty guard for the /api/nonclinical-summary
    object (the M2.6 / Module 4 / SEND projection). The route fails closed to a
@@ -300,9 +291,13 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   /* Was a dead write to `c2c_open_surface`, a key with no reader — so every
      Module 4 placement row was a button that did nothing. */
   const open = (id: string) => onNav(id);
+  /* Bumped after a confirmed create so the list is RE-READ — the surface shows
+     the store's row, never a locally-appended echo of the form. */
+  const [studyReload, setStudyReload] = useState(0);
+  const [savingStudy, setSavingStudy] = useState(false);
   const liveStudies = useLiveRows<NcStudy>(
     '/api/nonclinical/studies',
-    ['/api/nonclinical/studies'],
+    ['/api/nonclinical/studies', studyReload],
     STUDY_ROWS,
   );
   // `useLiveRows` synthesizes a FRESH [] every render whenever it has no array
@@ -312,7 +307,9 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   // []), that reference is stable and becomes the seed.
   const seedStudies =
     liveStudies.loading || liveStudies.error ? EMPTY_STUDIES : liveStudies.rows;
-  const [studies, addStudy] = useRows(seedStudies);
+  // The org's studies, exactly as the store holds them. Nothing is appended
+  // locally; a confirmed create bumps `studyReload` and this re-reads.
+  const studies = seedStudies;
 
   // Live M2.6 / M4-placement / SEND projection of the governed registry
   // (server nonclinical-summary.routes.ts → m26-m4-view.ts). useLiveData unwraps
@@ -432,28 +429,94 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
     governed: 'Study records are governed — the report is classified, SEND is queued, and an audit entry is written.',
     submitLabel: 'Add study',
     fields: [
-      { key: 'id', label: 'Study ID', type: 'text', placeholder: 'e.g. TX-703', required: true, half: true },
-      { key: 'type', label: 'Study type', type: 'select', options: ['Repeat-dose tox', 'Single-dose tox', 'Carcinogenicity', 'Toxicokinetics', 'Safety pharm (CV)', 'Safety pharm (CNS)', 'Genotoxicity (Ames + MN)', 'Reproductive tox', 'Local tolerance'], required: true, half: true },
-      { key: 'species', label: 'Species / system', type: 'select', options: ['Rat', 'Mouse', 'Tg mouse', 'Cynomolgus', 'Rabbit', 'Dog', 'in vitro', 'in vitro / in vivo'], required: true, half: true },
-      { key: 'dur', label: 'Duration', type: 'text', placeholder: 'e.g. 26-week', half: true },
-      { key: 'finding', label: 'Key finding', type: 'text', placeholder: 'Principal observed finding', required: true },
-      { key: 'cls', label: 'Finding classification', type: 'seg', options: ['clean', 'non-adverse', 'adverse', 'pending'], default: 'pending' },
-      { key: 'send', label: 'SEND status', type: 'seg', options: ['n/a', 'in progress', 'conforms'], default: 'in progress' },
+      { key: 'id', label: 'Study number', type: 'text', placeholder: 'e.g. TX-703', required: true, half: true },
+      /* The study-type options are the SERVER's vocabulary (the STUDY_TYPE enum
+         in server/routes/nonclinical.ts), labelled for a reader. They used to be
+         nine display strings of the surface's own invention — "Toxicokinetics",
+         "Safety pharm (CV)" — none of which the schema accepts, so even a
+         wired-up form would have been rejected on every submit. */
+      { key: 'type', label: 'Study type', type: 'select', required: true, half: true, options: [
+        { value: 'repeat_dose_tox', label: 'Repeat-dose toxicity' },
+        { value: 'single_dose_tox', label: 'Single-dose toxicity' },
+        { value: 'carcinogenicity', label: 'Carcinogenicity' },
+        { value: 'safety_pharmacology', label: 'Safety pharmacology' },
+        { value: 'genotoxicity', label: 'Genotoxicity' },
+        { value: 'reproductive_tox', label: 'Reproductive toxicity' },
+        { value: 'local_tolerance', label: 'Local tolerance' },
+        { value: 'adme_pk', label: 'ADME / PK' },
+        { value: 'immunotoxicity', label: 'Immunotoxicity' },
+        { value: 'other', label: 'Other' },
+      ] },
+      { key: 'title', label: 'Study title', type: 'text', placeholder: 'e.g. 26-week repeat-dose toxicity study in the rat', required: true },
+      { key: 'species', label: 'Species / system', type: 'select', options: ['Rat', 'Mouse', 'Tg mouse', 'Cynomolgus', 'Rabbit', 'Dog', 'in vitro', 'in vitro / in vivo'], half: true },
+      { key: 'testingFacility', label: 'Testing facility', type: 'text', half: true, placeholder: 'GLP facility name' },
+      { key: 'noael', label: 'NOAEL', type: 'text', placeholder: 'e.g. 30 mg/kg/day', half: true },
+      { key: 'reason', label: 'Reason for change (governed)', type: 'textarea', required: true,
+        placeholder: 'Why this study is being recorded — at least 8 characters; written to the audit trail.' },
     ],
   };
 
-  const onSubmit = (v: Record<string, string>) => {
-    addStudy({
-      id: v.id,
-      type: v.type,
-      species: v.species,
-      dur: v.dur || '—',
-      finding: v.finding,
-      cls: v.cls,
-      send: v.send,
-    });
-    setForm(false);
-    fireToast('Study added -- ' + v.id + ' -- SEND queued');
+  /* ── "Add study" told the user it had saved, and saved nothing ─────────────
+     `onSubmit` called `addStudy` — a local optimistic-row helper — and toasted
+     "Study added — <id> — SEND queued". The row appeared, the count moved, and
+     the whole thing was gone on reload. Nothing was POSTed, no SEND was queued,
+     and no audit entry was written, while the form's own governed banner said
+     all three had happened.
+
+     POST /api/nonclinical/studies existed the entire time. It is a GOVERNED
+     write: it requires a reason for change and records the act, which is why
+     the form now collects one. Fields the store does not carry (the display
+     classification and SEND status, which are DERIVED server-side from the
+     validation record) are no longer collected — asking for data that is
+     discarded is the same defect in a smaller form.
+
+     The row is adopted only after the server confirms it, and the surface then
+     re-reads so what is on screen is the store's row, not a local echo. */
+  const onSubmit = async (v: Record<string, string>) => {
+    if (savingStudy) return;
+    const reason = (v.reason ?? '').trim();
+    if (reason.length < 8) {
+      fireToast('Enter a reason for change (at least 8 characters) — the study record is audited.', 'error');
+      return;
+    }
+    setSavingStudy(true);
+    try {
+      const body: Record<string, unknown> = {
+        studyNumber: v.id.trim(),
+        title: v.title.trim(),
+        studyType: v.type,
+        reason,
+      };
+      if (v.species) body.species = v.species;
+      if (v.testingFacility?.trim()) body.testingFacility = v.testingFacility.trim();
+      if (v.noael?.trim()) body.noael = v.noael.trim();
+
+      const res = await apiRequest('POST', '/api/nonclinical/studies', body);
+      const j = await res.json().catch(() => null);
+      if (!res.ok || (j as { id?: unknown } | null)?.id == null) {
+        fireToast(
+          'The study was not recorded — ' +
+            (serverMessage(j) ?? `the server refused it (HTTP ${res.status})`) +
+            '. Nothing was saved.',
+          'error',
+        );
+        return;
+      }
+      setForm(false);
+      setStudyReload((n) => n + 1);
+      const domains = (j as { requiredSendDomains?: string[] }).requiredSendDomains ?? [];
+      fireToast(
+        'Study ' + v.id.trim() + ' recorded and audited' +
+          (domains.length ? ` — SEND domains required: ${domains.join(', ')}.` : '.'),
+      );
+    } catch (e) {
+      fireToast(
+        'The study was not recorded — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.',
+        'error',
+      );
+    } finally {
+      setSavingStudy(false);
+    }
   };
 
   const clsPill = (c: string | null) =>
@@ -598,7 +661,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
               />
             ) : (
               studies.map((s, i) => (
-                <div key={i} className={rowcls(s)}>
+                <div key={i} className={rowcls()}>
                   <span className="sp-tag">{s.id}</span>
                   <span className="sp-row-b">
                     <span className="sp-row-t">
