@@ -468,7 +468,13 @@ export function DeviationsTab({ doc, onAdd }: ListTabProps) {
       {deviations.map((d: any) => (
         <div key={d.id} className="pd-card">
           <div className="pd-card-h">
-            <span className="pg-badge" data-tone={d.sev === 'major' ? 'err' : 'warn'}>{PG.labelize(d.sev)}</span>
+            {/* Was `d.sev === 'major' ? 'err' : 'warn'`, which put CRITICAL — the
+                most severe value the column allows — into the amber bucket while
+                major got red, inverting the two grades that decide 3-day versus
+                10-day reporting. `PG.SEV_TONE` is the canonical map, already
+                correct (`critical: 'err'`), and already used by the comment
+                badge thirty lines below; this one hand-rolled its own. */}
+            <span className="pg-badge" data-tone={PG.SEV_TONE[d.sev] || 'warn'}>{PG.labelize(d.sev)}</span>
             <span className="pd-card-t">{d.title}</span>
             {d.reportable && <span className="pg-badge" data-tone="err">Reportable</span>}
             <PG.StatusBadge status={d.status} />

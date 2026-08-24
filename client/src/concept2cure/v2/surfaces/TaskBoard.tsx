@@ -673,6 +673,19 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const heaviest = workload[0];
   const critOpen = critChain.filter(t => t.status !== 'completed');
   const critBlocked = critChain.find(t => t.blocked);
+  /* Has anything actually been DESIGNATED critical-path?
+     `unified_tasks.critical_path` is a real column that defaults FALSE, and no
+     write path in the repo ever sets it true — not the three insert sites, not
+     the workflow-template instantiation the "clear" branch itself offers as its
+     call to action. So `critChain` is permanently empty, and the headline
+     asserted "The critical path is clear — nothing open is blocking the
+     milestone" in AnA's voice over every board, with a forward commitment ("I
+     will flag the moment anything threatens") that no watcher implements —
+     while the Blocked column on the same screen showed a non-zero count.
+
+     An empty designation is not a cleared path. Nothing designated means the
+     question has not been asked. */
+  const critDesignated = list.some(t => t.criticalPath);
   const milestone = critChain[critChain.length - 1];
 
   return (
@@ -720,13 +733,23 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           ? <>Your path to {milestone ? <b>"{milestone.title}"</b> : 'the milestone'} is <b>blocked</b> at "{critBlocked.title}".</>
           : critOpen.length
             ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
-            : <>The critical path is clear — nothing open is blocking the milestone right now.</>}
+            : critDesignated
+              ? <>The critical path is clear — nothing open is blocking the milestone right now.</>
+              : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
         body={critBlocked
           ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
           : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
-        reassure={critBlocked || overdue.length ? "I will help you unblock the path and rebalance the team, one step at a time." : "You are on track. I will flag the moment anything threatens the milestone."}
+        reassure={
+          critBlocked || overdue.length
+            ? 'I will help you unblock the path and rebalance the team, one step at a time.'
+            : critDesignated
+              ? 'I will flag the moment anything threatens the milestone.'
+              /* No "You are on track" over an undesignated board, and no promise
+                 to watch a path that does not exist. */
+              : undefined
+        }
         action={{
-          label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : 'Start a workflow from a template',
+          label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : critDesignated ? 'Start a workflow from a template' : 'Mark the tasks that gate the milestone',
           onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
           alt: { label: 'Auto-balance assignments', onClick: () => onAsk && onAsk('Rebalance open task assignments by workload using getOptimalAssignee') },
         }}
