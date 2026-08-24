@@ -68,6 +68,10 @@ describe('the governance boundary', () => {
       'submission-gateway.submit-package',
       'vault.delete-document',
       'authoring.lock-section',
+      // Part 11 e-signed sequence lifecycle writes — flagged in wave-2 recon
+      // as a regex gap (freeze/dispatch were not refused); they are now.
+      'submissions.freeze-sequence',
+      'submissions.dispatch-sequence',
     ]) {
       expect(GOVERNED_VERB_PATTERN.test(bad), bad).toBe(true);
       expect(() => assertUngovernedActionId(bad)).toThrow(/governed/);

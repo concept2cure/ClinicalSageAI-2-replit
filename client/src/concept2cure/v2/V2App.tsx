@@ -31,7 +31,11 @@ import {
   type DriveAction,
   type DriveLock,
 } from './liveDrive';
-import { applySurfaceAction, validateDriveAction } from './surfaceActions';
+import {
+  advertisedScreenActions,
+  applySurfaceAction,
+  validateDriveAction,
+} from './surfaceActions';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
 import { stashNavParamsForTarget } from './navParams';
 import { getAuthHeaders } from '@/utils/authToken';
@@ -347,10 +351,17 @@ export function V2App() {
      context belongs to the surface currently mounted, so context from the
      previous screen can never be presented as this one's. */
   const activeSurfaceContext = useActiveSurfaceContext(activeId);
-  const anaModuleContext = React.useMemo(
-    () => toModuleContext(activeSurfaceContext),
-    [activeSurfaceContext]
-  );
+  const anaModuleContext = React.useMemo(() => {
+    const base = toModuleContext(activeSurfaceContext);
+    /* The active screen's OPERABLE vocabulary, from the shared surface-action
+       registry (aliases applied) — folded into every turn so AnA can
+       act_on_screen without a list_screen_actions round-trip. Static truth of
+       what is wireable here; the bus still refuses anything the mounted
+       surface has not actually registered. */
+    const screenActions = advertisedScreenActions(activeId);
+    if (screenActions.length === 0) return base;
+    return { ...(base ?? { surface: activeId }), screen_actions: screenActions };
+  }, [activeSurfaceContext, activeId]);
   /* Demonstration mode — 'demo' while a started demonstration is live. It
      rides every opted-in turn (so a question asked mid-demo and the resumed
      stops keep the demo budgets), and drops on take-over, toggle-off, or

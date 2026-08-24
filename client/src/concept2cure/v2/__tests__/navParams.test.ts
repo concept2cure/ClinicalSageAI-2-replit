@@ -28,8 +28,8 @@ describe('stash → consume', () => {
   it('delivers params to the RESOLVED surface (aliases applied), exactly once', () => {
     // 'intelligence' is a registry id whose surface is 'global-ri' via alias.
     expect(resolveSurfaceIdForTarget('intelligence')).toBe('global-ri');
-    stashNavParamsForTarget('intelligence', { intelligenceTab: 'protocol' });
-    expect(consumeNavParams('global-ri')).toEqual({ intelligenceTab: 'protocol' });
+    stashNavParamsForTarget('intelligence', { intelligenceTab: 'clinical' });
+    expect(consumeNavParams('global-ri')).toEqual({ intelligenceTab: 'clinical' });
     // One shot — a second mount gets nothing.
     expect(consumeNavParams('global-ri')).toBeNull();
   });
@@ -49,9 +49,9 @@ describe('stash → consume', () => {
   });
 
   it('refuses stale and future-stamped entries', () => {
-    stashNavParamsForTarget('intelligence', { intelligenceTab: 'cmc' });
+    stashNavParamsForTarget('intelligence', { intelligenceTab: 'quality_cmc' });
     expect(consumeNavParams('global-ri', Date.now() + NAV_PARAMS_TTL_MS + 1000)).toBeNull();
-    stashNavParamsForTarget('intelligence', { intelligenceTab: 'cmc' });
+    stashNavParamsForTarget('intelligence', { intelligenceTab: 'quality_cmc' });
     expect(consumeNavParams('global-ri', Date.now() - NAV_PARAMS_TTL_MS - 1000)).toBeNull();
   });
 

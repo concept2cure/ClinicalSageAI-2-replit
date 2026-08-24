@@ -168,6 +168,34 @@ describe('applySurfaceAction', () => {
     expect(deferred).not.toHaveBeenCalled();
   });
 
+  it('resolves DEEP_LINK_ALIASES: a nav-target directive lands on the v2 surface registration', () => {
+    // 'tasking' (the nav-target id the shared registry declares) aliases to
+    // the 'tasks' surface — the registration a mounted TaskBoard makes. The
+    // bus must match through the SAME resolution nav() uses, or every aliased
+    // surface's actions would strand as 'unavailable'.
+    const handler = vi.fn().mockReturnValue({ ok: true, detail: 'Switched' });
+    registerSurfaceActionHandlers('tasks', { 'tasking.set-view': handler });
+    const d = directive('tasking.set-view', { view: 'table' });
+    expect(d.surfaceId).toBe('tasking');
+    const outcome = applySurfaceAction(d, vi.fn());
+    expect(outcome).toEqual({ status: 'applied', detail: 'Switched' });
+    expect(handler).toHaveBeenCalledWith({ view: 'table' });
+  });
+
+  it('alias stash: an act for an unmounted aliased surface navigates by nav-target id and performs on the v2 registration', () => {
+    const nav = vi.fn();
+    const deferred = vi.fn();
+    expect(
+      applySurfaceAction(directive('tasking.set-view', { view: 'board' }), nav, deferred),
+    ).toEqual({ status: 'stashed' });
+    // nav() receives the nav-target id — its own alias resolution routes it.
+    expect(nav).toHaveBeenCalledWith('tasking');
+    const handler = vi.fn().mockReturnValue({ ok: true });
+    registerSurfaceActionHandlers('tasks', { 'tasking.set-view': handler });
+    expect(handler).toHaveBeenCalledWith({ view: 'board' });
+    expect(deferred).toHaveBeenCalledWith({ status: 'applied' });
+  });
+
   it('unregistration clears ownership so a stale unmount cannot swallow actions', () => {
     const unregister = registerSurfaceActionHandlers('vault', {
       'vault.search': () => ({ ok: true }),

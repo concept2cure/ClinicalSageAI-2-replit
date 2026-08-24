@@ -101,12 +101,24 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'cmc' },
       },
       {
-        say: 'Intelligence is the analytical layer — open the protocol tab and show how design, biostatistics, and reporting insight sit beside the work.',
-        navigate: { target: 'intelligence', params: { intelligenceTab: 'protocol' } },
+        say: 'Show them a register directly — open the specifications tab so they see the real Module 3 controls, not a slide of them.',
+        act: { actionId: 'cmc.open-tab', params: { tab: 'specs' } },
+      },
+      {
+        say: 'Intelligence is the analytical layer — open the clinical group of the capability catalog and show how design, biostatistics, and evidence insight sit beside the work.',
+        navigate: { target: 'intelligence', params: { intelligenceTab: 'clinical' } },
+      },
+      {
+        say: 'The catalog spans the whole operation — switch to the quality & CMC group to show its breadth without leaving the screen.',
+        act: { actionId: 'intelligence.open-group', params: { group: 'quality_cmc' } },
       },
       {
         say: 'Review is where governed judgments happen: readiness, approvals, and the Part 11 e-signature gates — AnA prepares everything, and a person always signs.',
         navigate: { target: 'review' },
+      },
+      {
+        say: 'Jump straight to the next document awaiting a decision — the click a reviewer starts every morning with.',
+        act: { actionId: 'review.open-queue' },
       },
       {
         say: 'The Submission Gateway is the final mile: pre-flight validation and the transmittal chain to the agency.',
@@ -115,6 +127,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'Tasking keeps the team coordinated: the cross-program board with every open item and owner.',
         navigate: { target: 'tasking' },
+      },
+      {
+        say: 'And it works the way each person does — filter the board to just their own tasks to show the personal view.',
+        act: { actionId: 'tasking.filter', params: { mine: 'true' } },
       },
       {
         say: 'Close the loop: recap the route just driven, name the one or two screens most relevant to what this team does daily, and invite them to try the next task with you in Live Drive.',
@@ -148,6 +164,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'The headline capability: authoring. AnA drafts regulatory documents grounded in the program evidence, with provenance and a governed version history — this is where weeks become days.',
         navigate: { target: 'authoring' },
+      },
+      {
+        say: 'Open one of their real documents (pick a title from the authoring tree on screen) so the drafting engine is shown on their own work, not a canned sample.',
+        act: { actionId: 'authoring.open-document' },
       },
       {
         say: 'The Vault: uploads are captured with checksums and audit chains, auto-classified into the dossier, and every source is tracked from captured to filed — the data room diligence teams wish they had.',
