@@ -199,6 +199,30 @@ function auditEventLabel(raw: string | null): string {
   return AUDIT_EVENT_LABELS[raw] ?? raw.replace(/_/g, ' ').toLowerCase();
 }
 
+/** POST /sections/:id/ai/deficiency-scan — six mechanical checks over the
+ *  SAVED section (length, module keywords, tables/figures, placeholders,
+ *  structure). The handler itself refuses to call this a compliance
+ *  determination (`signal_type: 'heuristic_quality'`); the panel keeps that
+ *  framing rather than dressing regexes up as review. */
+interface ScanDeficiency {
+  type: string;
+  severity: 'high' | 'medium' | 'low' | string;
+  message: string;
+  recommendation?: string | null;
+  location?: string | null;
+}
+interface ScanResults {
+  section_id: string;
+  section_code?: string;
+  quality_score?: number;
+  status?: string;
+  deficiencies: ScanDeficiency[];
+  deficiency_count?: number;
+  scanned_at?: string;
+}
+
+const SEVERITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
 interface AuthComment {
   id: string;
   section_id: string | null;
@@ -1922,6 +1946,51 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     [activeDocId, activeSection, sections, fireToast, loadSections]
   );
 
+  /* ── Heuristic section check ──
+     The endpoint has existed, worked, and needed no AI provider since it was
+     written — and no surface called it. Results describe the SAVED content
+     (the handler reads the stored row), so the panel says so when the canvas
+     is dirty rather than implying unsaved edits were checked. Cleared on
+     section switch: another section's flags must never linger. */
+  const [check, setCheck] = useState<ScanResults | null>(null);
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    setCheck(null);
+  }, [activeSectionId]);
+
+  const runCheck = useCallback(async () => {
+    if (!activeSection) return;
+    setChecking(true);
+    try {
+      const res = await apiRequest(
+        'POST',
+        `/api/authoring/sections/${activeSection.id}/ai/deficiency-scan`,
+        {}
+      );
+      const json = (await res.json().catch(() => null)) as {
+        scan_results?: ScanResults;
+        error?: unknown;
+      } | null;
+      if (!res.ok || !json?.scan_results) {
+        fireToast(
+          'Couldn’t check the section — ' +
+            (typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`) +
+            '. No result is shown because none was produced.',
+          'error'
+        );
+        return;
+      }
+      setCheck(json.scan_results);
+    } catch (e) {
+      fireToast(
+        'Couldn’t check the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error'
+      );
+    } finally {
+      setChecking(false);
+    }
+  }, [activeSection, fireToast]);
+
   const draftPrompt = activeSection
     ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
     : 'Draft this section from the linked section evidence.';
@@ -2533,6 +2602,15 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                             </span>
                           );
                         })()}
+                      <button
+                        className="nda-open"
+                        style={{ marginLeft: 4, verticalAlign: 'middle' }}
+                        disabled={checking}
+                        title="Six mechanical checks over the saved section — length, module keywords, tables, placeholders, structure. Heuristic signals, not a compliance determination."
+                        onClick={() => void runCheck()}
+                      >
+                        {I.checkCircle} {checking ? 'Checking…' : 'Check'}
+                      </button>
                     </>
                   )}
                   <div className="ed-mast-meta">
@@ -2554,6 +2632,74 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       : ''}
                   </div>
                 </div>
+                {/* ── Heuristic check results ──
+                    Framed exactly as the server frames them: mechanical
+                    signals over the SAVED content. Zero flags is reported as
+                    "passed six mechanical checks", never as "compliant". */}
+                {check && check.section_id === activeSection.id && (
+                  <div
+                    className="scaf-note"
+                    role="status"
+                    style={{ marginBottom: 12, display: 'grid', gap: 6 }}
+                    data-testid="section-check"
+                  >
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                      <b style={{ fontSize: 12 }}>
+                        Section check — heuristic signals, not a compliance determination
+                      </b>
+                      <span style={{ flex: 1 }} />
+                      {dirty && (
+                        <span style={{ fontSize: 11, color: 'var(--warning,#b54708)' }}>
+                          checked the last saved content — unsaved edits are not in it
+                        </span>
+                      )}
+                      <button className="nda-open" onClick={() => setCheck(null)}>
+                        Dismiss
+                      </button>
+                    </div>
+                    {check.deficiencies.length === 0 ? (
+                      <span style={{ fontSize: 12 }}>
+                        No flags. The section passed six mechanical checks (length, module
+                        keywords, tables, placeholders, structure) — this is not a review.
+                      </span>
+                    ) : (
+                      [...check.deficiencies]
+                        .sort(
+                          (a, b) =>
+                            (SEVERITY_ORDER[a.severity] ?? 3) - (SEVERITY_ORDER[b.severity] ?? 3)
+                        )
+                        .map((d, i) => (
+                          <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12 }}>
+                            <span
+                              className={
+                                d.severity === 'high'
+                                  ? 'sp-tone-warn'
+                                  : d.severity === 'medium'
+                                    ? 'sp-tone-warn'
+                                    : undefined
+                              }
+                              style={{
+                                flexShrink: 0,
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                fontSize: 10,
+                                paddingTop: 2,
+                                ...(d.severity === 'high' ? { color: 'var(--c2c-err,#b42318)' } : {}),
+                              }}
+                            >
+                              {d.severity}
+                            </span>
+                            <span style={{ minWidth: 0 }}>
+                              {d.message}
+                              {d.recommendation && (
+                                <span style={{ opacity: 0.75 }}> — {d.recommendation}</span>
+                              )}
+                            </span>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                )}
                 {docSealed && (
                   <div className="scaf-note" role="status" style={{ marginBottom: 12 }}>
                     {I.lock}{' '}

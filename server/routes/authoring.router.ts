@@ -5088,54 +5088,14 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
   }
 });
 
-// GET /api/authoring/guidance/compose - Get guidance for a section
-router.get('/guidance/compose', async (req: Request, res: Response) => {
-  try {
-    const { section, region = 'ICH' } = req.query;
-
-    if (!section) {
-      return res.status(400).json({ error: 'section parameter required' });
-    }
-
-    // Sample guidance - in production, this would query a guidance database
-    const guidanceMap: Record<string, string> = {
-      '3.2.P.5': `## ${region} Guidance for Drug Product Specifications
-
-### Requirements:
-- Establish specifications per ICH Q6A
-- Include tests for identity, strength, quality, and purity
-- Justify acceptance criteria based on clinical lots
-- Consider stability-indicating methods
-
-### Key Points:
-- Link to analytical methods in 3.2.P.5.2
-- Reference batch data in 3.2.P.5.4
-- Ensure consistency with stability protocol`,
-
-      '3.2.P.8': `## ${region} Guidance for Stability Studies
-
-### Requirements:
-- Follow ICH Q1A(R2) for stability testing
-- Include long-term, accelerated, and intermediate conditions
-- Cover photostability per ICH Q1B if applicable
-- Justify shelf life and storage conditions
-
-### Data Presentation:
-- Tabulate all stability data
-- Include graphical trends for key parameters
-- Discuss any out-of-specification results`,
-    };
-
-    const guidance =
-      guidanceMap[section as string] ||
-      `Generic guidance for section ${section} in region ${region}`;
-
-    res.json({ guidance_md: guidance });
-  } catch (error) {
-    console.error('GET /guidance/compose', error);
-    res.status(500).json({ error: 'Failed to get guidance' });
-  }
-});
+/* REMOVED: GET /guidance/compose — unreachable by construction since the day
+   it was written. Express matches in registration order and GET
+   /guidance/:sectionId registers ~3,600 lines earlier, so this path bound
+   sectionId='compose'; that handler then ran `WHERE s.id = 'compose'` against
+   a UUID column, which is a Postgres 22P02 on every call — a permanent 500.
+   Even if it had been reachable, its body was a hardcoded two-entry guidance
+   map presented as a guidance service. The real per-section guidance read is
+   GET /guidance/:sectionId (section_guidance + template_guidance tables). */
 
 // POST /docs/:docId/seed-stability - Seed stability data and insert P.8 tokens
 router.post('/docs/:docId/seed-stability', async (req: Request, res: Response) => {

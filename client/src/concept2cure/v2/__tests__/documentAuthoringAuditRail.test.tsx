@@ -133,3 +133,60 @@ describe('the audit rail reads the real record', () => {
     expect(screen.queryByText(/Couldn’t load the audit trail/)).toBeNull();
   });
 });
+
+describe('the heuristic section check', () => {
+  it('runs the scan on demand and renders the flags under the server’s own honest framing', async () => {
+    const scan = vi.fn();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+      if (method === 'POST' && url === '/api/authoring/sections/S1/ai/deficiency-scan') {
+        scan(body);
+        return ok({
+          success: true,
+          scan_results: {
+            section_id: 'S1', section_code: '3.2.S.1', signal_type: 'heuristic_quality',
+            quality_score: 62, status: 'review_recommended', deficiency_count: 2,
+            deficiencies: [
+              { type: 'placeholder', severity: 'low', message: 'Placeholder text found', recommendation: 'Replace TBD before review.' },
+              { type: 'short', severity: 'high', message: 'Content is very short', recommendation: 'Expand the discussion.' },
+            ],
+            scanned_at: '2026-08-24T12:00:00Z',
+          },
+        });
+      }
+      return ok({ success: true, revisions: [], comments: [], sources: [] });
+    });
+
+    render(<DocumentAuthoring {...props()} />);
+    const btn = await screen.findByRole('button', { name: /check/i });
+    fireEvent.click(btn);
+
+    await waitFor(() => expect(scan).toHaveBeenCalled());
+    const panel = await screen.findByTestId('section-check');
+    // The server's framing survives into the UI — signals, not compliance.
+    expect(panel.textContent).toContain('not a compliance determination');
+    // High severity sorts first.
+    expect(panel.textContent!.indexOf('Content is very short')).toBeLessThan(
+      panel.textContent!.indexOf('Placeholder text found'),
+    );
+    expect(panel.textContent).toContain('Expand the discussion.');
+  });
+
+  it('zero flags reads as "passed mechanical checks" — never as compliant', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+      if (method === 'POST' && url === '/api/authoring/sections/S1/ai/deficiency-scan') {
+        return ok({ success: true, scan_results: { section_id: 'S1', deficiencies: [], deficiency_count: 0 } });
+      }
+      return ok({ success: true, revisions: [], comments: [], sources: [] });
+    });
+
+    render(<DocumentAuthoring {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /check/i }));
+    const panel = await screen.findByTestId('section-check');
+    expect(panel.textContent).toContain('this is not a review');
+    expect(panel.textContent).not.toMatch(/compliant/i);
+  });
+});
