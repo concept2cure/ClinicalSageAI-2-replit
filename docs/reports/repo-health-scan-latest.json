@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T14:30:49.281Z",
+  "generatedAt": "2026-08-24T14:46:00.720Z",
   "git": {
-    "sha": "491739092a3aafe5868c49eb8835db5b275984f0",
+    "sha": "a749c33938654fe86ec1f05caf5c15ee8411d517",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2249,12 +2249,12 @@
         "bytes": 116241
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
-        "bytes": 114943
+        "file": "server/services/intelligent-report-engine.ts",
+        "bytes": 115224
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "bytes": 114705
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "bytes": 114943
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
@@ -2340,7 +2340,7 @@
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
-        "lines": 3555
+        "lines": 3563
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
