@@ -375,11 +375,17 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           label: 'Show me how to clear it',
           onClick: () => {
             const el = document.getElementById('gi-f-' + b.id);
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              el.setAttribute('tabindex', '-1');
-              el.focus({ preventScroll: true });
-            }
+            /* Asking AnA is the part that matters; moving the viewport is a
+               courtesy. `scrollIntoView` is absent in jsdom and in some
+               embedded webviews, and an unguarded call there throws out of the
+               click handler — so the guidance would never be requested. */
+            try {
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.setAttribute('tabindex', '-1');
+                el.focus({ preventScroll: true });
+              }
+            } catch { /* no scrollIntoView here — the ask below still runs */ }
             ask(
               'The ' + progCode + ' filing is blocked under ' + reg + ' by "' + b.title +
                 '". Walk me through clearing it: what the governed change is, which documents it touches, ' +
