@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T09:34:11.539Z",
+  "generatedAt": "2026-08-24T14:30:49.281Z",
   "git": {
-    "sha": "8bbd07687ab096d153e95fcadf4fc8ab7a3d86be",
+    "sha": "491739092a3aafe5868c49eb8835db5b275984f0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2194,7 +2194,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 149277
+        "bytes": 150261
       },
       {
         "file": "server/storage.ts",
@@ -2383,12 +2383,12 @@
         "lines": 2685
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "lines": 2609
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 2621
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2598
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "lines": 2609
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2599,12 +2599,12 @@
         "lines": 1678
       },
       {
-        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
-        "lines": 1650
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1672
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1649
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "lines": 1650
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",
