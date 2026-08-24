@@ -2672,7 +2672,13 @@
 .c2c-v2 .ct-art-actions{display:flex;gap:6px;flex-wrap:wrap;}
 .c2c-v2 .ct-art-actions button{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-art-actions button:hover{background:var(--bg-100);}.c2c-v2 .ct-art-actions button svg{width:13px;height:13px;}
+/* A disabled artifact action looked exactly like an enabled one — the artifact
+   card's controls can be legitimately unavailable (a draft with no governed
+   row, no open program), and until now the only signal was the tooltip. */
+.c2c-v2 .ct-art-actions button:disabled{opacity:.55;cursor:not-allowed;}
+.c2c-v2 .ct-art-actions button:disabled:hover{background:var(--bg-000);}
 .c2c-v2 .ct-art-adv{margin-left:auto;background:var(--accent-100)!important;color:#fff!important;border-color:var(--accent-100)!important;}
+.c2c-v2 .ct-art-adv:disabled{background:var(--bg-000)!important;color:var(--text-300)!important;border-color:var(--border)!important;}
 .c2c-v2 .ct-art-adv:hover{background:var(--accent-200)!important;}
 
 .c2c-v2 .ct-art-chip{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:8px 11px;border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:9px;cursor:pointer;}
