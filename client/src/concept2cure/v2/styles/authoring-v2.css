@@ -335,6 +335,33 @@
     text-align: left;
   }
   .ed-full-sec-body td { padding: 7px 12px; border: 1px solid var(--border); }
+  /* Figures in the assembled read. A still-resolving governed reference is a
+     quiet placeholder box, never a broken glyph; a failed one is replaced by
+     the stated .ed-figure-missing line (AuthoredHtml). */
+  .ed-full-sec-body img,
+  .bd-card-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .ed-full-sec-body img[data-authsrc]:not([src]),
+  .bd-card-body img[data-authsrc]:not([src]) {
+    min-height: 120px;
+    min-width: 240px;
+    background: var(--bg-050);
+  }
+  .ed-figure-missing {
+    font-size: 13px;
+    color: var(--text-400);
+    font-style: italic;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 16px 0;
+  }
   .ed-full-sec-empty {
     font-size: 13px;
     color: var(--text-400);

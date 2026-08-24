@@ -100,7 +100,8 @@ import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { AuthoringSignatures } from './AuthoringSignatures';
 import { useDialog } from '../useDialog';
-import { renderSafeMarkdown, sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
+import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
+import { AuthoredHtml } from '../editor/AuthoredHtml';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
 
@@ -2233,10 +2234,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                           </button>
                         </div>
                         {html ? (
-                          <div
-                            className="ed-full-sec-body"
-                            dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(html) }}
-                          />
+                          /* AuthoredHtml, not sanitizeChatHtml: the chat
+                             allowlist strips figures, so the assembled read
+                             showed a DIFFERENT document from the canvas when
+                             a section carried one. Same audited sanitiser
+                             module, authoring variant, auth-resolved refs. */
+                          <AuthoredHtml className="ed-full-sec-body" html={html} />
                         ) : (
                           /* Not "empty" as a finding — nothing has been written
                              here yet, and the document view says which. */

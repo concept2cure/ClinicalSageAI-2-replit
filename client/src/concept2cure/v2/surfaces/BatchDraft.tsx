@@ -3,7 +3,7 @@ import { I } from '../icons';
 import { connected, useLiveData, EmptyState, hasKeys } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
+import { AuthoredHtml } from '../editor/AuthoredHtml';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals -- runtime channels with no typed provider yet (kit
@@ -879,12 +879,17 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                       aria-label={`Edit the draft for ${s.title || s.num || s.id}`}
                       data-testid="bd-card-edit"
                     />
+                  ) : c.html ? (
+                    /* AuthoredHtml, not sanitizeChatHtml: a draft derived from
+                       stored TipTap content can carry a governed figure
+                       reference, and the chat allowlist strips it — the card
+                       would show a different draft from the one Accept posts.
+                       Same audited sanitiser module, authoring variant. */
+                    <AuthoredHtml className="bd-card-body" html={c.html} />
                   ) : (
                     <div
                       className="bd-card-body"
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeChatHtml(c.html) || '<p class="bd-ph">Waiting to start...</p>',
-                      }}
+                      dangerouslySetInnerHTML={{ __html: '<p class="bd-ph">Waiting to start...</p>' }}
                     />
                   )
                 )}
