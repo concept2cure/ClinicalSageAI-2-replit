@@ -127,6 +127,33 @@ export async function getHfFile(orgId: number, id: string): Promise<HfEngineerin
   return rows[0] ?? null;
 }
 
+/**
+ * Set the element-presence map on an HFE/UE file (the governed element write).
+ *
+ * The v2 HumanFactors surface renders a file-completeness percentage derived
+ * from `present`. Before this existed the surface's element tiles moved that
+ * percentage in React state only, so a reviewer read a completeness figure the
+ * record did not hold. Completeness is still never STORED — only the element
+ * map is — so the derived figure and the record cannot disagree.
+ *
+ * Returns the refreshed row, or null when the file does not belong to the org
+ * (fails closed rather than creating one).
+ */
+export async function setHfFileElements(
+  orgId: number,
+  id: string,
+  present: unknown,
+): Promise<HfEngineeringFileRow | null> {
+  const normalized = normalizePresent(present);
+  const { rows } = await pool.query<HfEngineeringFileRow>(
+    `UPDATE hf_engineering_files SET present = $1::jsonb, updated_at = now()
+      WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL
+      RETURNING ${SELECT_COLS}`,
+    [JSON.stringify(normalized), id, orgId],
+  );
+  return rows[0] ?? null;
+}
+
 /** Soft-delete an HFE/UE file (keeps the row for the audit trail). */
 export async function deleteHfFile(orgId: number, id: string): Promise<boolean> {
   const { rowCount } = await pool.query(

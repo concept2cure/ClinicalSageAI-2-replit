@@ -380,8 +380,14 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState('');
 
+  /* `who` is the assignee the CLIENT can name — which, for "auto", is nobody.
+     C2C.optimalFor deliberately returns '' (its own note explains why: the
+     fixture roster it used to consult named people who do not work here). The
+     server owns the auto decision — getOptimalAssignee runs against the org's
+     real roster when assigneeId is omitted — so the client cannot know the
+     answer until the write comes back. Anything it renders before then is a
+     guess, and a blank one is the worst kind. */
   const who = f.assignee === 'auto' ? C2C.optimalFor(f.moduleType) : f.assignee;
-  const whoName = (C2C.team[who] || { n: who }).n;
 
   /**
    * REAL, awaited create against the org task store.
@@ -560,9 +566,20 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           )}
         </div>
       </div>
+      {/* This said "Auto-assign resolves to <b>{whoName}</b> for <b>{moduleType}</b>"
+          — and with Auto selected, which is the DEFAULT, whoName was the empty
+          string on every render. The user was told a person had been chosen and
+          shown nobody, in the past tense, before any request existed.
+
+          The honest statement is the one the server can keep: it has not chosen
+          yet, it will choose on save, and here are the criteria. The chosen name
+          arrives with the created task (the create handler adopts
+          serverTask.assigneeId), so nothing here has to guess it. */}
       {f.assignee === 'auto' && (
         <div className="cl-note">
-          <span className="ico">{I.sparkles}</span>Auto-assign resolves to <b>{whoName}</b> for <b>{f.moduleType}</b> -- workload-balanced via <code>getOptimalAssignee()</code>.
+          <span className="ico">{I.sparkles}</span>Auto-assign: the assignee is chosen when you save, from your
+          organisation&rsquo;s roster for <b>{f.moduleType}</b>, balanced on current workload. Pick a name above
+          if you want to decide it yourself.
         </div>
       )}
       <div className="cl-field"><label>Flags</label>
