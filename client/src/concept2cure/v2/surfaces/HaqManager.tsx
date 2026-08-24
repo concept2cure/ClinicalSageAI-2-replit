@@ -8,6 +8,7 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob, downloadText, safeFileName } from '../download';
 
 /* ── Display types — aligned to the GET /api/haq-manager/rounds contract.
    server/routes/haq-manager.ts maps the governed HAQ store (feature store over
@@ -219,6 +220,67 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       fireToast(`Couldn’t ${verb} — ` + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
+  /* ── "Assemble response package" ───────────────────────────────────────────
+     The primary action of the whole workbench, and it had NO onClick at all:
+     a user approved every question in the round, clicked the one button
+     everything else builds toward, and nothing happened.
+
+     POST /api/haq-manager/letters/:id/assemble assembles the package from the
+     round's own approved responses — question text, approved response,
+     citations, commitments, in question order — and REFUSES with the list of
+     what is outstanding if any question is unapproved. The Markdown it returns
+     downloads as-is, or goes to the DOCX/PDF renderer. Nothing is drafted on
+     the way through. */
+  const [assembling, setAssembling] = useState<'docx' | 'md' | null>(null);
+  const assemble = async (format: 'docx' | 'md') => {
+    if (assembling || !round) return;
+    setAssembling(format);
+    try {
+      const res = await apiRequest('POST', `/api/haq-manager/letters/${encodeURIComponent(round.id)}/assemble`, {});
+      const json = (await res.json().catch(() => null)) as
+        | { success?: boolean; error?: string; data?: { markdown: string; title: string; questionCount: number; questionsWithNoResponseText: string[] } }
+        | null;
+      if (!res.ok || json?.success !== true || !json.data?.markdown) {
+        fireToast(
+          'The package was not assembled — ' + (json?.error ?? `the server refused it (HTTP ${res.status})`),
+          'error',
+        );
+        return;
+      }
+      const { markdown, title, questionCount, questionsWithNoResponseText } = json.data;
+      const base = safeFileName(title, 'haq-response-package');
+      let ok: boolean;
+      if (format === 'md') {
+        ok = downloadText(base + '.md', markdown, 'text/markdown;charset=utf-8');
+      } else {
+        const r2 = await apiRequest('POST', '/api/concept2cure/artifacts/export-docx', { title, content: markdown });
+        if (!r2.ok) {
+          const b = await r2.json().catch(() => null);
+          fireToast(
+            'The package assembled but the Word file was not produced — ' +
+              ((b as any)?.error?.message ?? (b as any)?.error ?? `HTTP ${r2.status}`) + '.',
+            'error',
+          );
+          return;
+        }
+        ok = downloadBlob(base + '.docx', await r2.blob());
+      }
+      fireToast(
+        ok
+          ? `Response package downloaded — ${questionCount} approved response${questionCount === 1 ? '' : 's'}.` +
+              (questionsWithNoResponseText.length
+                ? ` ${questionsWithNoResponseText.join(', ')} ${questionsWithNoResponseText.length === 1 ? 'carries' : 'carry'} no response text.`
+                : '')
+          : 'The package was built but the browser refused the download.',
+        ok ? 'ok' : 'error',
+      );
+    } catch (e) {
+      fireToast('The package was not assembled — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    } finally {
+      setAssembling(null);
+    }
+  };
+
   const approved = qs.filter((x) => x.status === 'approved').length;
   const pct = qs.length ? Math.round((approved / qs.length) * 100) : 0;
   const stPill = (s: string) =>
@@ -380,17 +442,28 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
               <div className="haq-ready-bar">
                 <span style={{ width: pct + '%' }} />
               </div>
-              <button
-                className="haq-assemble"
-                disabled={pct < 100}
-                title={
-                  pct < 100
-                    ? 'Approve all responses to assemble the package'
-                    : 'Assemble the response package'
-                }
-              >
-                {I.fileText} Assemble response package
-              </button>
+              <div className="haq-assemble-row">
+                <button
+                  className="haq-assemble"
+                  disabled={pct < 100 || assembling !== null || qs.length === 0}
+                  onClick={() => void assemble('docx')}
+                  title={
+                    pct < 100
+                      ? 'Approve all responses to assemble the package'
+                      : 'Assemble the response package as a Word document'
+                  }
+                >
+                  {I.fileText} {assembling === 'docx' ? 'Assembling…' : 'Assemble response package'}
+                </button>
+                <button
+                  className="haq-assemble alt"
+                  disabled={pct < 100 || assembling !== null || qs.length === 0}
+                  onClick={() => void assemble('md')}
+                  title="Download the assembled package as Markdown"
+                >
+                  {assembling === 'md' ? 'Assembling…' : 'Markdown'}
+                </button>
+              </div>
             </div>
 
             <div className="haq-grid">
