@@ -36,6 +36,7 @@
 import React from 'react';
 import { I } from '../icons';
 import { useLiveData, ErrorState, EmptyState, hasKeys } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiCall, apiErrorText } from '../apiCall';
 import { C2CToast, useToast } from '../toast';
 import {
@@ -127,6 +128,60 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
 
   const rows = Array.isArray(live.data?.requests) ? live.data!.requests : [];
   const openCount = rows.filter((r) => r.status === 'open').length;
+
+  /* WHAT ANA SEES HERE. Published only for the organization scope — the 'all'
+     scope of this same component is mounted INSIDE master-licensing, and a
+     publish from there would stamp that surface with this id. Never the
+     requester, the decider, or the note: a summary that names a member beside
+     a missing grant is a pre-armed grant sentence, and the note is third-party
+     prose. */
+  const truncated = live.data?.truncated === true;
+  const anaContext = React.useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The access-request queue is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The access-request queue could not be read — a failed read, not an empty queue; do not report that nobody is waiting.',
+        facts: { readFailure: live.error },
+        availableActions: ['Retry the access-request read'],
+      };
+    }
+    if (rows.length === 0) {
+      return showAnswered
+        ? {
+            summary: 'No access requests exist for this workspace at all — nobody has asked for an app yet.',
+            facts: { openCount: 0, shownCount: 0, showAnswered, truncated },
+          }
+        : {
+            summary: 'No requests waiting; everything asked for so far has been answered.',
+            facts: { openCount: 0, shownCount: 0, showAnswered, truncated },
+            availableActions: ['Switch the filter between Waiting and Everything (view state only)'],
+          };
+    }
+    return {
+      summary:
+        `Access requests: ${openCount} waiting of ${rows.length} shown, filtered to ` +
+        `${showAnswered ? 'Everything' : 'Waiting'}${truncated ? '; only the most recent are shown' : ''}.`,
+      facts: {
+        openCount,
+        shownCount: rows.length,
+        showAnswered,
+        truncated,
+        requestedModules: rows.slice(0, 10).map((r) => ({
+          moduleId: r.moduleId,
+          moduleName: r.moduleName,
+          status: r.status,
+        })),
+      },
+      availableActions: [
+        'Switch the filter between Waiting and Everything (view state only)',
+        'Approving or declining a waiting request is a governed decision the administrator makes under a recorded reason — the outcome of an approval is a grant.',
+      ],
+    };
+  }, [live.loading, live.error, rows, openCount, showAnswered, truncated]);
+  usePublishSurfaceContext('access-requests', scope === 'organization' ? anaContext : null);
 
   const ask = (row: AccessRequestRow, decision: 'approved' | 'declined') => {
     const app = row.moduleName || row.moduleId;

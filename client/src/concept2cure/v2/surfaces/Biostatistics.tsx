@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
@@ -654,6 +655,51 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   };
   const groups = BiostatDocs.REGISTRY.reduce<Record<string, DocDef[]>>((m, d) => { (m[d.group] = m[d.group] || []).push(d); return m; }, {});
   const vTone = (v: string) => v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err';
+
+  /* WHAT ANA SEES HERE. The design engine is pure and in-browser, so its
+     numbers are always current; the govDocs read scopes ONLY the
+     persisted-documents claim — its error must never read as zero rows. When
+     the engine itself returns null the screen shows no n/power/verdict, so
+     none is published either. */
+  const anaContext = useMemo(() => {
+    const presetLabel = BS_PRESETS[preset]?.label ?? preset;
+    const gov = govDocs.loading
+      ? 'the governed statistical document list is still loading'
+      : govDocs.error
+        ? 'the governed statistical document list did not load, so the count of persisted documents is unknown'
+        : govDocs.empty
+          ? 'no governed statistical documents persisted yet'
+          : govDocs.rows.length + ' governed statistical document(s) persisted (org-scoped)';
+    const govFacts = !govDocs.loading && !govDocs.error ? { governedDocumentsPersisted: govDocs.rows.length } : {};
+    if (!res || !jud) {
+      return {
+        summary:
+          'Biostatistics — the design engine could not compute a result for the current inputs, so no sample size, power or verdict is on screen; ' + gov + '.',
+        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts },
+      };
+    }
+    return {
+      summary:
+        'Biostatistics — a ' + (docDef?.label ?? 'statistical document') + ' drafted for a ' + input.studyType.replace(/_/g, ' ')
+        + ' design (' + presetLabel + ' preset): ' + n + ' subjects, ' + (res.power * 100).toFixed(0) + '% power, overall verdict '
+        + jud.overallVerdict + '; ' + gov + '.',
+      facts: {
+        documentType: docDef?.label ?? null,
+        preset: presetLabel,
+        subjectsN: n,
+        achievedPowerPct: Number((res.power * 100).toFixed(1)),
+        overallVerdict: jud.overallVerdict,
+        ...govFacts,
+      },
+      availableActions: [
+        'Adjust any design input or preset — the document rewrites deterministically',
+        'Pick a different statistical document type to generate',
+        'Refine the document with AnA',
+        'Opening in the editor and attaching to the dossier both file a real governed document (genesis revision + Part 11 audit row) — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows]);
+  usePublishSurfaceContext('biostatistics', anaContext);
 
   return (
     <div className="bs">

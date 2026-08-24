@@ -278,3 +278,124 @@ artifacts-center nav target (it was consumed and produced but undeclared),
 and dossier-map's availableActions no longer advertises a module opener
 that does not exist. Registry now 27 actions across 13 surfaces. Wiring
 proof: `anaDrivesWave3.test.tsx`.
+
+### Wave 4 landed (2026-08-24, same day) — the deferred list, cleared
+
+Every deferrable from the waves 2–3 lists that had a safe design shipped;
+registry now **34 actions across 15 surfaces**.
+
+- **deep-research** (publisher-first, as recorded): the surface's FIRST
+  `usePublishSurfaceContext` — credits, connector inventory, tab, and a
+  running-job flag, with loading and failure published as themselves — then
+  `deep-research.open-tab`, the one ungoverned control. The research
+  question, source selection, and depth are STILL never driven ("the file's
+  own header comment documents the last time a pre-filled query cost a user
+  real credits"); a registry test now pins that structurally — no
+  `deep-research.*` action may carry a query/depth/connector/source param.
+  Refusals: open credential drawer, in-flight credential save, and a switch
+  away from a running (credit-metered) research job.
+- **quality** (the state lifts, as recorded): `tab` stayed in QualityApp;
+  `filter` (SopRegister), `stage` + `openId` (ChangeControl), and the
+  change-register READ lifted up to it — one slot, one state, and
+  `open-change` resolves names against the same rows the log renders.
+  Actions: `open-tab` / `filter-register` / `filter-changes` /
+  `open-change` (cross-tab: filters switch to their tab first and the
+  detail says so; an expansion a stage filter would hide clears the filter,
+  stated). First `usePublishSurfaceContext('quality', …)`: claims scoped to
+  what the shell holds — no SOP counts (absent beats guessed on a GxP
+  register), sample-mode flagged in the summary, a failed read never an
+  empty log. Approve/revise/retire/advance/training stay conversational.
+- **ectd-coauthor.open-document** (unblocked): the editor's existing
+  `onDirtyChange` is now subscribed (the surface never had), the flag resets
+  with the mount that owns it, and the handler refuses over unsaved edits
+  naming the §, refuses during a running validation/compliance check, holds
+  through the load (retry contract), resolves title-or-module-number with
+  ambiguity refusals, and expands the target's module on open — the same
+  two setters as the human tree click.
+- **authoring.find** (unblocked): `openFind(query?)` joined
+  `RichSectionEditorHandle` — the already-built find bar (plugin highlights,
+  counter, Ctrl/⌘-F) opened programmatically, pre-seeded; returns false in
+  source mode so the handler refuses honestly instead of claiming a find it
+  never opened. Read-only: dirtyGuard deliberately not applied (a person's
+  own Ctrl-F works over unsaved edits); replace stays human.
+- **artifacts-center → authoring hand-off gap** (recorded wave-3): the docx
+  Open button no longer navigates empty-handed — it rides the SAME
+  `authoring.open-document` directive AnA rides (stash → navigate → the
+  editor resolves with its own honest-miss rules).
+- **Governance regex grew with the surface**: `advance` (change-control's
+  Part 11 ceremony) and `launch` (a metered-spend start) joined
+  GOVERNED_VERB_PATTERN — pinned failing-first on `quality.advance-change`
+  and `deep-research.launch-research` before the pattern widened.
+- The training-orientation demo gained a quality stop (navigate + live
+  change-log filter). `check-ana-surface-context` ID_BASELINE 66→68
+  (deep-research + quality publishers). Wiring proof:
+  `anaDrivesWave4.test.tsx` — nine cases, including the credential-drawer
+  hold, the typed-into-the-real-canvas unsaved-edits refusal, find-bar
+  DOM with plugin highlights through the 'authoring' alias, the artifact
+  Open relay, and quality's held-through-the-load apply.
+
+Still deliberately absent, with reasons: `apps.show-admin-controls`
+(pre-arms a live governed org-wide switch), any deep-research
+query/sources/depth/launch driving (metered spend — now also structurally
+refused), `cmc` pane-form busy guards (child-local state; parity-with-human
+limitation recorded in wave 2).
+
+### Wave 5 landed (2026-08-24, same day) — zero blind surfaces
+
+Two halves. **Hands (small):** `ectd-coauthor.open-tab` — view-only where
+the human tab buttons auto-run a validation/compliance check (the wiring
+test pins that no POST fires), dirty-guarded because the editor unmounts
+on a tab switch; the sales demo gained its Deep Research stop; and
+`anaDrivesWave5.test.tsx` backfilled dedicated bus wiring tests for the
+three wave-2 surfaces that had only behavioral coverage (cmc /
+submission-center-via-alias / project-home with its no-project refusal).
+The cmc pane-form guard stays deferred: the right shape is a platform
+form-open channel in C2CForm itself (its e-sign ceremonies span six pane
+components), recorded here as the candidate design.
+
+**Eyes (the wave):** every one of the 46 remaining blind routable surfaces
+gained a screen-state publisher — `check-ana-surface-context` now reads
+**114 of 120 publish, 6 exempt, 0 still blind**. The two kit families
+publish from their single hosts with one context builder and per-id
+LITERAL gated calls (the UsageBilling shape — the gate counts literal ids,
+and a dynamic id would ground AnA while the ratchet silently reported her
+blind): MdxSurfaceHost covers the 16 `device-*` ids (program identity only
+from `programForContext`'s recorded honesty rule; no leaf counts — absent
+beats guessed), and PdevApp covers the 8 `pdev*` ids (readiness with its
+SOURCE named — live report, snapshot fallback, or an ambiguous zero stated
+as a fallback default; IND-assembly module presence with the compile CTA's
+real disabled causes; a compile-in-flight state the host cannot see is
+described as a property of the control, never claimed as current state).
+The 22 singles follow the same honest-branch law, with the sharp edges
+kept sharp: the `inconsistency` submission gate publishes never-scanned as
+NOT clear and fails closed on a read failure, with counts only in
+assessed states; `orchestration`'s dead checkpoint store is published in
+reviewer-protecting words ("NOT a report that zero human-in-the-loop
+gates are pending"); `ectd-publishing` leads every branch with "read-only;
+nothing on this screen publishes, transmits, or freezes a sequence" — the
+name is a trap; `precedent-intelligence` publishes `searchRun: false` with
+nothing from a typed-but-unrun form; `licensing` states that the free
+card's "Current" tag on a failed read is the fallback of the failure, not
+a finding; `labeling-pi` gates every count on its own `answerable` flag.
+
+The admin set publishes **aggregates only, with security exclusions as
+hard rules**: no SCIM bearer token (a live credential must never enter
+model context), no allowlist CIDRs, no member emails or per-person
+MFA/SSO flags (a who-lacks-MFA list is a target list), no role scopes,
+grants, API-key ids, audit chain hashes, org-setting values, cross-tenant
+rosters or per-org enforcement refusal paths. `access-requests` publishes
+scope-guarded (the same queue mounted inside master-licensing publishes
+null there); third-party request notes and decision reasons never enter
+the prompt. `research-admin`'s read lifted out of its early-returning
+child so the one publisher can also say the load-bearing negative: four
+of its five sections are not connected, which is exactly what stops its
+own "summarize my committees" button from producing a confident answer
+about data that does not exist.
+
+Wiring proof: `anaSeesScreens.test.tsx` — publisher output pinned through
+`useActiveSurfaceContext` (the same hook the shell folds into
+module_context): real counts when loaded, the fail-closed register read,
+the identity-console forbidden state with a payload scan proving no
+token/CIDR/org-id, the orchestration gates-error words, and the program
+journey's identity line. `ID_BASELINE` 68 → **114 exact**, landed across
+five pushes as each verified slice completed.

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -135,6 +136,52 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
   const jurisdictions = new Set(
     items.flatMap((c) => [c.fda ? 'FDA' : null, c.eu ? 'EU' : null].filter(Boolean) as string[]),
   ).size;
+
+  /* WHAT ANA SEES HERE. Branches mirror the render exactly. On error the
+     screen's kv() shows '—' for every KPI, so no numeric facts are published
+     there — a failed read is a failure, not zero changes. A jurisdiction with
+     no determination on the selected row is reported absent, never asserted. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'Change assessment — loading the 510(k)-change / MDR significant-change worklist; nothing is on screen yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'Change assessment — the 510(k)-change / MDR significant-change worklist did not load, so no counts are on screen — a failed read, not an empty worklist.',
+      };
+    }
+    if (items.length === 0 || !item) {
+      return { summary: 'Change assessment — no change assessments on file yet; record a change or ask AnA to assess one and its FDA / EU MDR determination appears here.' };
+    }
+    return {
+      summary:
+        'Change assessment — ' + items.length + ' open change(s): ' + triggers + ' trigger a filing, '
+        + (items.length - triggers) + ' document-to-file, ' + jurisdictions + ' jurisdiction(s) assessed. Selected: '
+        + item.id + ' — ' + item.title + '.',
+      facts: {
+        openChanges: items.length,
+        triggerFiling: triggers,
+        documentToFile: items.length - triggers,
+        jurisdictionsAssessed: jurisdictions,
+        selected: {
+          id: item.id,
+          title: item.title,
+          device: item.device,
+          area: item.area,
+          raised: item.raised,
+          owner: item.owner,
+          docStatus: item.doc?.status ?? null,
+        },
+        determinationsPresent: { fda: !!item.fda, eu: !!item.eu },
+      },
+      availableActions: [
+        'Selecting a row in the worklist is the only screen control here — the FDA and EU MDR determinations shown are read-outs of recorded assessments, not something this screen edits',
+        'Ask AnA to assess a new change, or to draft the selected change’s document-to-file',
+      ],
+    };
+  }, [live.loading, live.error, items, item, triggers, jurisdictions]);
+  usePublishSurfaceContext('change-assessment', anaContext);
 
   return (
     <div className="page-inner reg">

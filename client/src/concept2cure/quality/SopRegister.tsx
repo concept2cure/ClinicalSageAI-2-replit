@@ -40,11 +40,17 @@ import { SampleDataBanner } from '../mdx/components/SampleDataBanner';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
+  /** Status chip applied to the register (owned by QualityApp — AnA's filter action drives the same value). */
+  filter: StatusFilter;
+  /** Apply a status chip — the same setter the chips and AnA share. */
+  onFilterChange: (f: StatusFilter) => void;
 }
 
-type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
+export type StatusFilter = 'all' | 'effective' | 'in_review' | 'draft';
 
-const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+/** The register's status chips — exported so QualityApp can belt-validate a
+    driven filter against the same set the pane renders. */
+export const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'effective', label: 'Effective' },
   { id: 'in_review', label: 'Under review' },
@@ -81,7 +87,7 @@ function Kpi({
   );
 }
 
-export function SopRegister({ onAsk }: SopRegisterProps) {
+export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps) {
   const reg = useSopRegister();
   const tpl = useSopTemplates();
   const rev = useReviewDue();
@@ -107,8 +113,6 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
   /* One predicate for the whole surface: the document register is what the
      rest is derived from, so if that is sample then so is the view. */
   const showingSample = useShowingSample(reg.docs);
-
-  const [filter, setFilter] = React.useState<StatusFilter>('all');
 
   const effectiveCount = docs.filter((d) => d.status === 'effective').length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
@@ -231,7 +235,7 @@ export function SopRegister({ onAsk }: SopRegisterProps) {
                 data-on={filter === f.id}
                 aria-pressed={filter === f.id}
                 style={filter === f.id ? { borderColor: 'var(--text-300)', color: 'var(--text-100)' } : undefined}
-                onClick={() => setFilter(f.id)}
+                onClick={() => onFilterChange(f.id)}
               >
                 {f.label}
               </button>

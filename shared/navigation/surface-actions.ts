@@ -75,9 +75,12 @@ export type SurfaceActionResolution =
  * Verbs that name governed work. An action id containing one of these is
  * refused at registration (test) AND at resolution (runtime belt) — the
  * governed path is the Part 11 propose-only pipeline, never this registry.
+ * `advance` (a change-control lifecycle transition is an e-signed ceremony)
+ * and `launch` (starting a metered job is a spend, which gets the same
+ * structural exclusion as a signature) joined with wave 4.
  */
 export const GOVERNED_VERB_PATTERN =
-  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept)\b/i;
+  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept|advance|launch)\b/i;
 
 /** Throws for an action id that names governed work. Exported for the tests. */
 export function assertUngovernedActionId(id: string): void {
@@ -350,6 +353,20 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       },
     ],
   },
+  {
+    id: 'authoring.find',
+    surfaceId: 'authoring',
+    label: 'Find text in the open section',
+    description:
+      'In the authoring editor, open the find & replace bar over the open section, optionally pre-seeded with a search term — the same bar as Ctrl/⌘-F, highlights and match counter included. Read-only: replacing text stays a human act. Refused while a dialog or save owns the canvas, and honestly unavailable when the section is in raw-HTML source mode (the browser\'s own find works there).',
+    params: [
+      {
+        name: 'query',
+        required: false,
+        description: 'Text to find. When omitted the bar opens seeded from the current selection.',
+      },
+    ],
+  },
 
   // ── eCTD co-author ──
   {
@@ -363,6 +380,36 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         name: 'query',
         required: true,
         description: 'The search term to filter the eCTD section tree by (title or module number).',
+      },
+    ],
+  },
+  {
+    id: 'ectd-coauthor.open-tab',
+    surfaceId: 'ectd-coauthor',
+    label: 'Open a co-author tab',
+    description:
+      'On the eCTD co-author, switch between the document, validation, and compliance tabs. View only — unlike the human tab buttons it never starts a validation or compliance run (those issue server checks and stay human clicks); a tab whose report has not been run shows its honest idle state, and the detail says so. Refused while the open document holds unsaved edits — the editor unmounts on a tab switch.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['document', 'validation', 'compliance'],
+      },
+    ],
+  },
+  {
+    id: 'ectd-coauthor.open-document',
+    surfaceId: 'ectd-coauthor',
+    label: 'Open an eCTD document',
+    description:
+      'On the eCTD co-author, open a document from the backbone by title or module number (e.g. "2.5") — the same tree click a person makes, with the module expanded so the row shows. Refused with the real reason while the open document holds unsaved edits or a validation/compliance check is running — AnA never discards a person\'s typing.',
+    params: [
+      {
+        name: 'document',
+        required: true,
+        description:
+          'The document title or module number as listed in the eCTD tree (case-insensitive; partial titles resolve when unambiguous).',
       },
     ],
   },
@@ -539,6 +586,95 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         name: 'artifact',
         required: true,
         description: 'The artifact name as shown in the gallery (case-insensitive; partial names resolve when unambiguous).',
+      },
+    ],
+  },
+
+  // ── Quality (SOP register / change control) ──
+  {
+    id: 'quality.open-tab',
+    surfaceId: 'quality',
+    label: 'Open a quality tab',
+    description:
+      'On the quality surface, switch between the SOP register and change control tabs. Approving, revising, or retiring a controlled document, raising or advancing a change, and recording training are governed acts that stay in conversation — never driven from here.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['sop', 'change'],
+      },
+    ],
+  },
+  {
+    id: 'quality.filter-register',
+    surfaceId: 'quality',
+    label: 'Filter the SOP register',
+    description:
+      'Filter the controlled-document register by status — the same chips a person clicks. Opens the SOP register tab first when change control is showing. Superseded and retired documents are only listed under "all"; the register has no chip for them.',
+    params: [
+      {
+        name: 'status',
+        required: true,
+        description: 'The status chip to apply.',
+        enum: ['all', 'effective', 'in_review', 'draft'],
+      },
+    ],
+  },
+  {
+    id: 'quality.filter-changes',
+    surfaceId: 'quality',
+    label: 'Filter the change log',
+    description:
+      'Filter the change-control log to one lifecycle stage — the same selection the flowchart nodes make. Opens the change control tab first when the SOP register is showing.',
+    params: [
+      {
+        name: 'stage',
+        required: true,
+        description: 'The lifecycle stage to filter to.',
+        enum: [
+          'all',
+          'proposed',
+          'under_assessment',
+          'approved',
+          'rejected',
+          'in_implementation',
+          'verification',
+          'closed',
+          'cancelled',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'quality.open-change',
+    surfaceId: 'quality',
+    label: 'Expand a change record',
+    description:
+      'Expand a change record to its linked deviations, CAPAs, validations and documents, by change number (e.g. "CC-2026-014") or title. Opens the change control tab first when needed and clears a stage filter that would hide the row (the detail says so). Resolved against the real change log with honest misses. Advancing a change stays a governed human ceremony.',
+    params: [
+      {
+        name: 'change',
+        required: true,
+        description:
+          'The change number or title as listed in the log (case-insensitive; partial titles resolve when unambiguous).',
+      },
+    ],
+  },
+
+  // ── Deep research ──
+  {
+    id: 'deep-research.open-tab',
+    surfaceId: 'deep-research',
+    label: 'Open a deep-research tab',
+    description:
+      'On the deep-research surface, switch between the research and connectors tabs. View-only: it never fills the research question, never picks sources or depth, and never launches research — launching spends metered research credits and stays a human click. Refused while the connector credential drawer is open or a credential save is in flight, and it will not switch away from a research run in progress.',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['research', 'connectors'],
       },
     ],
   },

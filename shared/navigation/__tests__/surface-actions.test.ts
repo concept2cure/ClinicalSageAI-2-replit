@@ -75,6 +75,14 @@ describe('the governance boundary', () => {
       // Residual-risk acceptance is a persisted governed judgment (ISO 14971
       // risk file PATCH) — flagged in wave-3 recon as the next regex gap.
       'risk.accept-residual',
+      // Advancing a change is the quality module's Part 11 ceremony (reason +
+      // e-signature + independent approver); launching deep research is a
+      // metered credit spend. Both flagged by wave-4 recon as exactly the ids
+      // someone would try next — and as regex gaps until 'advance'/'launch'
+      // joined the pattern.
+      'quality.advance-change',
+      'quality.approve-document',
+      'deep-research.launch-research',
     ]) {
       expect(GOVERNED_VERB_PATTERN.test(bad), bad).toBe(true);
       expect(() => assertUngovernedActionId(bad)).toThrow(/governed/);
@@ -84,6 +92,21 @@ describe('the governance boundary', () => {
   it('ungoverned view verbs pass the pattern (no false positives on the registry style)', () => {
     for (const good of ['vault.search', 'projects.open-program', 'tasking.filter-status']) {
       expect(GOVERNED_VERB_PATTERN.test(good), good).toBe(false);
+    }
+  });
+
+  it('deep-research actions carry no credit-spend pre-arm params', () => {
+    // The surface's primary button POSTs the query/sources/depth as-is to the
+    // metered jobs endpoint — a directive that fills any of them arms a spend
+    // one click away (that incident is documented in the surface itself, from
+    // when a fixture value did it). The tab param is the whole surface.
+    const dr = SURFACE_ACTIONS.filter((a) => a.surfaceId === 'deep-research');
+    expect(dr.length).toBeGreaterThan(0);
+    const forbidden = ['query', 'indication', 'question', 'depth', 'connector', 'connectors', 'source', 'sources', 'sel'];
+    for (const a of dr) {
+      for (const p of a.params ?? []) {
+        expect(forbidden.includes(p.name), `${a.id}.${p.name} pre-arms a metered spend`).toBe(false);
+      }
     }
   });
 });

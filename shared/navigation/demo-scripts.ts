@@ -105,6 +105,14 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         act: { actionId: 'cmc.open-tab', params: { tab: 'specs' } },
       },
       {
+        say: 'Quality is the controlled-document spine: the SOP register and change control, where approvals, revisions and read-and-understood training are all Part 11 ceremonies a person signs.',
+        navigate: { target: 'quality' },
+      },
+      {
+        say: 'Filter the change log to what is approved and waiting to be implemented — the live change-control pipeline, not a slide of it.',
+        act: { actionId: 'quality.filter-changes', params: { stage: 'approved' } },
+      },
+      {
         say: 'Intelligence is the analytical layer — open the clinical group of the capability catalog and show how design, biostatistics, and evidence insight sit beside the work.',
         navigate: { target: 'intelligence', params: { intelligenceTab: 'clinical' } },
       },
@@ -229,6 +237,14 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'The Vault: uploads are captured with checksums and audit chains, auto-classified into the dossier, and every source is tracked from captured to filed — the data room diligence teams wish they had.',
         navigate: { target: 'vault' },
+      },
+      {
+        say: 'Beyond their own vault: Deep Research runs multi-source regulatory research over live connectors, metered and governed — launching stays their click, never yours.',
+        navigate: { target: 'deep-research' },
+      },
+      {
+        say: 'Show the connector inventory — the org’s own sources with live configured status, credentials encrypted per-organization.',
+        act: { actionId: 'deep-research.open-tab', params: { tab: 'connectors' } },
       },
       {
         say: 'Review readiness: the platform scores whether the submission would survive review, before the agency sees it.',

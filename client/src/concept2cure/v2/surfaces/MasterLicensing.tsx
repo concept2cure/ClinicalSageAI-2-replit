@@ -38,6 +38,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, ErrorState, EmptyState, hasKeys } from '../dataConnect';
 import { apiCall, apiErrorText } from '../apiCall';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CToast, useToast } from '../toast';
 import {
   GovernedConfirmDialog,
@@ -603,6 +604,133 @@ export function MasterLicensing() {
   /* ── Render ─────────────────────────────────────────────────────────────── */
 
   const selectedOrgRow = orgRows.find((o) => String(o.id) === selectedOrg) ?? null;
+
+  /* WHAT ANA SEES HERE — current-tab aggregates only. This is the cross-tenant
+     platform-owner console: the org roster, a selected workspace's identity,
+     entitlement maps, flag scope lists, observation rows (path / org / modules /
+     reasons) and provisioning retained-lists name customers and what they pay
+     for, so none of them are published. */
+  const anaContext = useMemo(() => {
+    const facts: Record<string, unknown> = { openTab: tab };
+    let summary: string;
+    if (tab === 'packaging') {
+      facts.categoryFilter = category;
+      facts.searchTerm = search;
+      if (lic.loading) {
+        summary = 'Licensing, Packaging tab — the module catalogue is still loading.';
+      } else if (lic.error) {
+        facts.licensingUnavailable = lic.error;
+        summary =
+          'Licensing, Packaging tab — the licensing model could not be read. A failed read, not a platform that licenses nothing.';
+      } else if (moduleRows.length === 0) {
+        summary =
+          'Licensing, Packaging tab — no modules are registered, so there is nothing to package into tiers yet.';
+      } else {
+        facts.moduleCount = moduleRows.length;
+        facts.visibleModuleCount = visibleModules.length;
+        summary =
+          `Licensing, Packaging tab — ${moduleRows.length} module(s) in the catalogue, ` +
+          `${visibleModules.length} shown` +
+          (category !== 'all' ? ` (category "${category}")` : '') +
+          (search.trim() ? ` (search "${search.trim()}")` : '') + '.';
+      }
+    } else if (tab === 'tenants') {
+      facts.aWorkspaceIsSelected = selectedOrg !== '';
+      if (lic.loading) {
+        summary = 'Licensing, Tenants tab — the workspace list is still loading.';
+      } else if (lic.error) {
+        facts.licensingUnavailable = lic.error;
+        summary =
+          'Licensing, Tenants tab — the workspace list could not be read. A failed read, not a platform with no workspaces.';
+      } else if (orgRows.length === 0) {
+        summary = 'Licensing, Tenants tab — no workspaces on this deployment yet.';
+      } else {
+        facts.workspaceCount = orgRows.length;
+        // The tenant-detail read is its own read; its state is mirrored without
+        // naming the workspace.
+        let detail = 'no workspace is selected';
+        if (selectedOrg) {
+          if (tenant.loading) {
+            detail = 'a workspace is selected and its detail is still loading';
+          } else if (tenant.error) {
+            facts.tenantUnavailable = tenant.error;
+            detail =
+              'a workspace is selected but its detail could not be read — a failed read, not a workspace with no entitlements';
+          } else {
+            detail = 'a workspace is selected and its module-by-module verdict is on screen';
+          }
+        }
+        summary = `Licensing, Tenants tab — ${orgRows.length} workspace(s) on this deployment; ${detail}.`;
+      }
+    } else if (tab === 'flags') {
+      if (flagsState.loading) {
+        summary = 'Licensing, Feature flags tab — the flags are still loading.';
+      } else if (flagsState.error) {
+        facts.flagsUnavailable = flagsState.error;
+        summary =
+          'Licensing, Feature flags tab — the flags could not be read. A failed read, not a deployment with no flags.';
+      } else if (flagRows.length === 0) {
+        summary = 'Licensing, Feature flags tab — no feature flags are registered on this deployment.';
+      } else {
+        const enabled = flagRows.filter((f) => f.enabled).length;
+        facts.flagCount = flagRows.length;
+        facts.flagsEnabled = enabled;
+        summary = `Licensing, Feature flags tab — ${flagRows.length} deployment-wide flag(s), ${enabled} enabled.`;
+      }
+    } else if (tab === 'enforcement') {
+      if (enf.loading) {
+        summary = 'Licensing, Enforcement tab — the enforcement report is still loading.';
+      } else if (enf.error || !enf.data) {
+        facts.enforcementUnavailable = enf.error ?? 'The platform returned no report for this server.';
+        summary =
+          'Licensing, Enforcement tab — the enforcement report could not be read. A failed read, not a report of zero refusals.';
+      } else {
+        // Three states, never collapsed: off ≠ nothing recorded ≠ observed.
+        facts.enforcementMode = enf.data.mode;
+        facts.enforcementObserving = enf.data.observingSince !== null;
+        if (enf.data.mode === 'off') {
+          summary =
+            'Licensing, Enforcement tab — enforcement is off: route-level checks are not being applied and nothing is measured, so there is nothing to report.';
+        } else if (enf.data.observingSince === null) {
+          summary =
+            'Licensing, Enforcement tab — observation is on but this server has recorded nothing since restart. Absence of evidence, not evidence nothing would be refused.';
+        } else {
+          facts.observationCount = enf.data.observations.length;
+          facts.organizationsAffected = enf.data.organizationsAffected;
+          facts.modulesAffectedCount = enf.data.modulesAffected.length;
+          facts.truncated = enf.data.truncated;
+          summary =
+            `Licensing, Enforcement tab — mode "${enf.data.mode}"` +
+            (enf.data.mode === 'enforce'
+              ? ' (everything recorded was actually refused)'
+              : ' (observing only — everything recorded was served)') +
+            `, recorded since ${whenText(enf.data.observingSince)}: ` +
+            `${enf.data.observations.length} observation(s) across ${enf.data.organizationsAffected} workspace(s) and ${enf.data.modulesAffected.length} module(s)` +
+            (enf.data.truncated ? '; the record is truncated at capacity, older entries dropped' : '') +
+            '.';
+        }
+      }
+    } else {
+      // Access requests / Trials / Decisions are self-contained panels with
+      // their own reads; nothing of theirs is visible from here to report.
+      const label = TABS.find((t) => t.id === tab)?.label ?? tab;
+      summary = `Licensing, ${label} tab — this panel owns its own read; its contents are not part of what this console publishes.`;
+    }
+    return {
+      summary,
+      facts,
+      availableActions: [
+        'packaging, per-workspace entitlements, feature flags and enforcement mode change here — every change requires a reason and lands in the platform audit log',
+        'Switch among the seven tabs: Packaging, Tenants, Access requests, Trials, Feature flags, Enforcement, Decisions',
+        'Filter the packaging table by category, or search the module catalogue',
+      ],
+    };
+  }, [
+    tab, category, search, lic.loading, lic.error, moduleRows, visibleModules,
+    selectedOrg, orgRows, tenant.loading, tenant.error,
+    flagsState.loading, flagsState.error, flagRows, enf.loading, enf.error, enf.data,
+  ]);
+  usePublishSurfaceContext('master-licensing', anaContext);
 
   return (
     <div className="page-inner ml-lic">

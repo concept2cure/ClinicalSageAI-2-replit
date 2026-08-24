@@ -12,10 +12,11 @@
  * clock, predicted HAQs, cross-module contradictions and open blockers --
  * every row routes into the deep surface that owns it.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -254,6 +255,60 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     setSegState(v);
     setSel(null);
   };
+
+  /* WHAT ANA SEES HERE — published above the honest-state early returns so one
+     call covers every branch. Two never-fabricate rules this surface holds: no
+     per-deliverable status exists on the record, and no agency-interaction
+     outcomes do — neither is published. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The program journey is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The program journey could not be loaded — the program-journey store did not respond. A failed read, not an empty portfolio.',
+      };
+    }
+    if (empty) {
+      return {
+        summary:
+          'Program journey: no program journey data yet — once a program is provisioned for this organization, its end-to-end regulatory arc appears here.',
+      };
+    }
+    const bySegCtx: Record<string, PjRecord> = {};
+    for (const r of rows) bySegCtx[r.seg] = r;
+    const rec = bySegCtx[seg] ?? rows[0];
+    const overlay = rec.overlay ?? {};
+    const done = PJ_STAGES.filter((s) => (overlay[s.id] ?? ['upcoming', 0])[0] === 'done').length;
+    return {
+      summary:
+        `Program journey (${seg}): ${rec.code} — ${rec.name} (${rec.app}), ${done} of 9 stages complete` +
+        (typeof rec.readiness === 'number' ? `, ${rec.readiness}% ready` : '') +
+        `. Current stage: ${rec.current}.`,
+      facts: {
+        program: {
+          code: rec.code,
+          name: rec.name,
+          app: rec.app,
+          modality: rec.modality,
+          indication: rec.indication,
+          pathway: rec.pathway,
+          agency: rec.agency,
+        },
+        // typeof, not truthiness: 0% ready is a real readiness.
+        ...(typeof rec.readiness === 'number' ? { readiness: rec.readiness } : {}),
+        ...(rec.target ? { target: rec.target } : {}),
+        currentStage: rec.current,
+        doneCount: done,
+        stagesTotal: 9,
+        segment: seg,
+        ...(sel ? { selectedStage: sel } : {}),
+      },
+      availableActions: ['Switch the biotech/pharma segment view; select a stage'],
+    };
+  }, [loading, error, empty, rows, seg, sel]);
+  usePublishSurfaceContext('program-journey', anaContext);
 
   if (loading) {
     return (

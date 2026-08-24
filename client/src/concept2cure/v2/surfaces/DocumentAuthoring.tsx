@@ -73,14 +73,16 @@ import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringPlaceIntoFiling } from './AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from './AuthoringCollab';
 import { AuthoringCreateExport } from './AuthoringCreateExport';
 import { AuthoringRevisionDiff } from './AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from './AuthoringAiDraft';
+import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
+import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
@@ -181,6 +183,10 @@ interface AuthAuditEvent {
   content_hash_before: string | null;
   content_hash_after: string | null;
   created_at: string | null;
+  /** The endpoint has always returned this and no surface read it, so the
+   *  richest part of several governed records — which model produced a draft,
+   *  which redline a reviewer refused — was written and unreadable. */
+  metadata: Record<string, unknown> | null;
 }
 
 /** How each recorded operation reads to a reviewer. Unknown operations are
@@ -191,6 +197,8 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   UPDATE: 'updated',
   COMMIT: 'committed to filing',
   REVERT: 'reverted to a prior revision',
+  tracked_change_decision: 'tracked change decided',
+  tracked_change_bulk_decision: 'tracked changes decided in bulk',
   REORDER_SECTIONS: 'sections reordered',
   FREEZE: 'frozen',
   SIGN: 'signed',
@@ -200,12 +208,93 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   SUBMIT: 'submitted',
 };
 
+/**
+ * The readable part of an audit row's `metadata`, or null when it carries
+ * nothing a reviewer would act on.
+ *
+ * Two recorded shapes were being written and shown to nobody, and both answer
+ * the first question an assessor asks:
+ *
+ *   tracked_change_decision — a reviewer accepted or REFUSED a redline. A
+ *     rejection changes no text, so this row is the only place it exists.
+ *   ai-draft-accept — which model and provider produced the text, and whether
+ *     the author edited it before accepting (so "accepted AI draft" cannot
+ *     vouch for words the model never wrote).
+ *
+ * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
+ * reading surface, and raw payloads are not read.
+ */
+export function describeAuditMetadata(
+  eventType: string | null,
+  metadata: Record<string, unknown> | null,
+): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+  const str = (k: string): string | null => {
+    const v = (metadata as Record<string, unknown>)[k];
+    return typeof v === 'string' && v.trim().length > 0 ? v : null;
+  };
+
+  if (eventType === 'tracked_change_decision') {
+    const decision = str('decision');
+    const kind = str('changeType');
+    const text = str('text');
+    const proposedBy = str('proposedBy');
+    if (!decision) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const what = kind === 'deletion' ? 'a proposed deletion' : kind === 'insertion' ? 'a proposed insertion' : 'a tracked change';
+    /* The quoted text is what makes the row resolvable — accepting a
+       suggestion strips its mark, so the document no longer holds it. */
+    const quoted = text ? ` — “${text.length > 160 ? text.slice(0, 160) + '…' : text}”` : '';
+    const by = proposedBy ? ` (proposed by ${proposedBy})` : '';
+    return `${verb} ${what}${by}${quoted}`;
+  }
+
+  if (eventType === 'tracked_change_bulk_decision') {
+    const decision = str('decision');
+    const count = typeof metadata.count === 'number' ? metadata.count : null;
+    if (!decision || count === null) return null;
+    const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    const omitted =
+      typeof metadata.changesOmittedFromSummary === 'number'
+        ? metadata.changesOmittedFromSummary
+        : 0;
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const sample = changes
+      .slice(0, 3)
+      .map(c => (c && typeof (c as any).text === 'string' ? (c as any).text : null))
+      .filter((t): t is string => !!t)
+      .map(t => `“${t.length > 80 ? t.slice(0, 80) + '…' : t}”`);
+    /* When the stored summary was capped, the row says so. A truncated record
+       that reads as complete is worse than one that admits its limit. */
+    return (
+      `${verb} ${count} tracked change${count === 1 ? '' : 's'} in one action` +
+      (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
+      (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
+    );
+  }
+
+  if (metadata.source === 'ai-draft-accept') {
+    const gen = (metadata.generator ?? null) as Record<string, unknown> | null;
+    const model = gen && typeof gen.model === 'string' ? gen.model : null;
+    const provider = gen && typeof gen.provider === 'string' ? gen.provider : null;
+    const who = [model, provider].filter(Boolean).join(' · ');
+    const edited = metadata.draft_modified_on_accept === true;
+    return (
+      'accepted an AI draft' +
+      (who ? ` generated by ${who}` : ' whose generating model was not recorded') +
+      (edited ? ', edited before accepting — the saved text is not the model’s wording' : '')
+    );
+  }
+
+  return null;
+}
+
 function auditEventLabel(raw: string | null): string {
   if (!raw) return 'recorded';
   return AUDIT_EVENT_LABELS[raw] ?? raw.replace(/_/g, ' ').toLowerCase();
 }
 
-/** POST /sections/:id/ai/deficiency-scan — six mechanical checks over the
+/** POST /sections/:id/ai/deficiency-scan — a handful of mechanical checks over the
  *  SAVED section (length, module keywords, tables/figures, placeholders,
  *  structure). The handler itself refuses to call this a compliance
  *  determination (`signal_type: 'heuristic_quality'`); the panel keeps that
@@ -224,6 +313,11 @@ interface ScanResults {
   status?: string;
   deficiencies: ScanDeficiency[];
   deficiency_count?: number;
+  /** The denominator behind `quality_score`, and how many of those passed. The
+   *  panel names the server's count rather than a literal, so the sentence
+   *  cannot drift from the checks the handler actually runs. */
+  checks_run?: number;
+  checks_passed?: number;
   scanned_at?: string;
 }
 
@@ -782,8 +876,24 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   // Right rail: AnA, revision history, comments, or the section's sources.
   const [rail, setRail] = useState<
-    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | null
+    'ana' | 'history' | 'comments' | 'sources' | 'signatures' | 'audit' | 'exports' | null
   >('ana');
+  /* Bumped after a save or an export so the Exports rail re-reads. A save
+     changes the live content hash, which is exactly what its verdict compares
+     against — a rail left stale would keep saying "matches the last export"
+     about text that no longer matches it. */
+  const [exportsEpoch, setExportsEpoch] = useState(0);
+  /** The open section, readable from the tracked-change callback. That callback
+   *  is configured once per editor mount, so closing over the state value would
+   *  attribute a decision to whichever section was open when the canvas
+   *  mounted. */
+  const activeSectionIdRef = useRef<string | null>(null);
+  /** Decisions awaiting their coalesced flush, and whether one is scheduled. */
+  const pendingDecisionsRef = useRef<SuggestionDecision[]>([]);
+  const decisionFlushRef = useRef(false);
+  useEffect(() => {
+    activeSectionIdRef.current = activeSectionId ?? null;
+  });
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
@@ -806,6 +916,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [sources, setSources] = useState<SectionSource[]>([]);
   const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  /** Citations the last document-wide re-read could NOT refresh, with the
+   *  server's reason. Held rather than toasted away: "3 could not be re-read"
+   *  is the finding, and a message that fades in four seconds is not where a
+   *  finding belongs. */
+  const [skippedRefreshes, setSkippedRefreshes] = useState<
+    Array<{ cite_id: string; reason: string }>
+  >([]);
   const [picking, setPicking] = useState(false);
 
   const [toast, fireToast] = useToast();
@@ -1413,6 +1530,28 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setTreeScrollNonce(n => n + 1);
       return { ok: true, detail: `Opened §${match.code} · ${match.title}` };
     },
+    'authoring.find': params => {
+      /* Read-only affordance: dirtyGuard deliberately does NOT apply — the
+         person's own Ctrl/⌘-F works over unsaved edits and opening the bar
+         discards nothing. The dialog/save guards still do. */
+      const guarded = authoringGuard();
+      if (guarded) return guarded;
+      if (docsState === 'loading' || sectionsState === 'loading')
+        return { ok: false, reason: 'The document is still loading.', retry: true };
+      const handle = editorRef.current;
+      if (!handle) {
+        return { ok: false, reason: 'No section is open in the editor — open a document first.' };
+      }
+      const q = (params.query ?? '').trim();
+      if (!handle.openFind(q || undefined)) {
+        return {
+          ok: false,
+          reason:
+            'This section is in raw-HTML source mode — the find bar is unavailable there (the browser\'s own find works).',
+        };
+      }
+      return { ok: true, detail: q ? `Find bar open — searching for "${q}"` : 'Find bar opened' };
+    },
   });
   /* The ready signal for the retry contract above: when the reads settle
      (sections 'idle' — no document open — counts as settled; the handler
@@ -1645,6 +1784,68 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     [activeSectionId, fireToast, loadSources]
   );
 
+  /* ── Re-read every source in the DOCUMENT ──
+     The per-citation "re-read" above answers one claim at a time, which is the
+     wrong granularity before an export or a sign-off: the question there is
+     "has anything I cite moved?", across the whole document.
+
+     The server re-resolves each unfrozen citation against its stored source and
+     reports three separate numbers — how many it refreshed, how many of those
+     actually CHANGED, and which it could not refresh and why. All three are
+     said. Collapsing `skipped` into the success count is the tempting summary
+     and the dishonest one: a citation whose source no longer exists is exactly
+     what the person about to file this needs to see. */
+  const [refreshingAll, setRefreshingAll] = useState(false);
+  const refreshAllSources = useCallback(async () => {
+    if (!activeDocId) return;
+    setRefreshingAll(true);
+    try {
+      const res = await apiRequest('POST', `/api/authoring/docs/${activeDocId}/refresh-all`, {});
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        refreshed?: number;
+        changed?: number;
+        skipped?: Array<{ cite_id: string; reason: string }>;
+      } | null;
+      if (!res.ok || json?.ok !== true) {
+        fireToast(
+          'Couldn’t re-read this document’s sources — ' +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
+            '. Nothing was changed.',
+          'error',
+        );
+        return;
+      }
+      const refreshed = typeof json.refreshed === 'number' ? json.refreshed : 0;
+      const changed = typeof json.changed === 'number' ? json.changed : 0;
+      const skipped = Array.isArray(json.skipped) ? json.skipped : [];
+      setSkippedRefreshes(skipped);
+      /* A refresh that changed nothing is a real and useful outcome — it means
+         the citations still say what they said. It is reported as that, not as
+         a bare "done". */
+      fireToast(
+        `Re-read ${refreshed} citation${refreshed === 1 ? '' : 's'}: ` +
+          (changed === 0
+            ? 'none had changed'
+            : `${changed} had changed since they were recorded`) +
+          (skipped.length > 0
+            ? `. ${skipped.length} could not be re-read — see Sources.`
+            : '.'),
+        skipped.length > 0 ? 'error' : 'ok',
+      );
+      if (activeSectionId) void loadSources(activeSectionId);
+    } catch (e) {
+      fireToast(
+        'Couldn’t re-read this document’s sources — ' +
+          (e instanceof Error ? e.message : String(e)) +
+          '. Nothing was changed.',
+        'error',
+      );
+    } finally {
+      setRefreshingAll(false);
+    }
+  }, [activeDocId, activeSectionId, loadSources, fireToast]);
+
   /* ── Save the section content (real, awaited, auto-revisioned) ──
      The ONE save path: the canonical editor serializes and calls this; the
      header Save button and Cmd/Ctrl-S route through the editor's own save so
@@ -1691,6 +1892,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
         if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
+        /* A save changes the document's content hash, which is precisely what
+           the Exports rail compares against the last export. Unconditional:
+           the rail re-reads on mount, so bumping while it is closed simply
+           means it opens on the truth rather than on a cached verdict. */
+        setExportsEpoch(e => e + 1);
       } finally {
         setSaving(false);
       }
@@ -1813,6 +2019,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         // the canvas on the new truth rather than leaving a stale buffer.
         setContentEpoch(e => e + 1);
         setEditorDirty(false);
+        setExportsEpoch(e => e + 1);
         fireToast('Section reverted to the selected revision.');
         void loadHistory(activeSection.id);
       } catch (e) {
@@ -2159,6 +2366,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       );
       setContentEpoch(e => e + 1);
       setEditorDirty(false);
+      setExportsEpoch(e => e + 1);
       /* The server's own count, not a claim of correctness: how much of the
          saved text is a verified quote from a source, and how much is recorded
          as author-original. Both numbers are the record, so both are said —
@@ -2175,6 +2383,94 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (activeDocId) void loadAudit(activeDocId);
     },
     [activeSectionId, activeDocId, loadHistory, loadSources, loadAudit, fireToast],
+  );
+
+  /** Post one reviewer action — one decision, or a whole accept/reject-all.
+   *
+   *  Split by size rather than by caller: a batch of one is a single decision
+   *  however it arrived, and a batch of many is one bulk act however it was
+   *  produced. Both carry the change TEXT, because accepting a suggestion
+   *  strips its mark and the id alone would name something no longer in the
+   *  document. */
+  const flushDecisions = useCallback(
+    async (docId: string, batch: SuggestionDecision[]) => {
+      const sectionId = activeSectionIdRef.current ?? undefined;
+      const context = (d: SuggestionDecision) => ({
+        changeId: d.changeId,
+        changeType: d.changeType,
+        text: d.text,
+        authorId: d.authorId ?? undefined,
+        authorName: d.authorName ?? undefined,
+        at: d.at ?? undefined,
+      });
+      const decision = batch[0].decision;
+      try {
+        const res =
+          batch.length === 1
+            ? await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions`,
+                { decision, sectionId, ...context(batch[0]) },
+              )
+            : await apiRequest(
+                'POST',
+                `/api/authoring/documents/${docId}/tracked-change-decisions/bulk`,
+                {
+                  decision,
+                  changeIds: batch.map(d => d.changeId),
+                  changes: batch.map(context),
+                  sectionId,
+                },
+              );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        /* The audit rail gained a row. Refresh it if the reviewer is looking. */
+        if (rail === 'audit') void loadAudit(docId);
+      } catch (e) {
+        /* The decision is already applied to the document — undoing the edit
+           because a POST failed would be worse than the missing row. But a
+           compliance record that vanishes quietly is not acceptable either, so
+           the gap is stated and counted. */
+        fireToast(
+          `${batch.length === 1 ? 'That decision was' : `${batch.length} decisions were`} applied ` +
+            'to the document but NOT recorded on the audit trail — ' +
+            (e instanceof Error ? e.message : String(e)) +
+            '. The content is still saved on the next save; report the missing record.',
+          'error',
+        );
+      }
+    },
+    [rail, loadAudit, fireToast],
+  );
+
+  /* ── A reviewer decided a tracked change ──
+     Posted per decision, accept AND reject. The rejection is the one that has
+     had no home in the record: refusing a proposed deletion changes no text,
+     writes no revision, and until now left nothing behind saying a reviewer
+     considered it.
+
+     Deliberately fire-and-forget with a VISIBLE failure. It must not block the
+     editor action the reviewer just took — the decision is already applied to
+     the document, and undoing it because a POST failed would be worse than the
+     missing row. But a silently-dropped compliance record is not acceptable
+     either, so a failure says so and names what was not recorded. */
+  const recordTrackedChangeDecision = useCallback(
+    (d: SuggestionDecision) => {
+      if (!activeDocId) return;
+      /* "Accept all" resolves every suggestion in one synchronous loop, so the
+         callback fires N times in a single tick. Posting per call would send
+         fifty requests for one click. Queue and flush on the microtask so one
+         reviewer action becomes one write — the bulk endpoint exists for
+         exactly this and records it as the single act it was. */
+      pendingDecisionsRef.current.push(d);
+      if (decisionFlushRef.current) return;
+      decisionFlushRef.current = true;
+      queueMicrotask(() => {
+        decisionFlushRef.current = false;
+        const batch = pendingDecisionsRef.current.splice(0);
+        if (batch.length > 0) void flushDecisions(activeDocId, batch);
+      });
+    },
+    [activeDocId, flushDecisions],
   );
 
   const draftPrompt = activeSection
@@ -2440,6 +2736,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     requestLeave({ kind: 'section', id: s.id })
                   );
               }}
+              /* A successful export re-baselines this document, so the Exports
+                 rail's "changed since the last export" verdict is now stale. */
+              onExported={() => setExportsEpoch(e => e + 1)}
             />
             {/* Section / Document. An author writes a section but SHIPS a
                 document, and until now the whole document was never on screen
@@ -2502,6 +2801,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               style={{ height: 30 }}
               onClick={() => setRail(rail === 'sources' ? null : 'sources')}
               data-active={rail === 'sources' || undefined}
+              data-testid="sources-rail-open"
             >
               {I.fileText} Sources
               {activeSection && num(activeSection.citation_count) > 0
@@ -2529,6 +2829,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               data-active={rail === 'audit' || undefined}
             >
               {I.activity} Audit
+            </button>
+            {/* Every export writes an authoring_export_history row — actor,
+                time, format, and the document's content hash at that moment.
+                Three endpoints read that table and none had a caller, so the
+                product could hand someone a Word file and never tell them it
+                had gone out of date. */}
+            <button
+              className="btn ghost"
+              style={{ height: 30 }}
+              onClick={() => setRail(rail === 'exports' ? null : 'exports')}
+              data-active={rail === 'exports' || undefined}
+              data-testid="exports-rail-open"
+            >
+              {I.fileDown} Exports
             </button>
             <button
               className="btn primary"
@@ -2825,7 +3139,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         className="nda-open"
                         style={{ marginLeft: 4, verticalAlign: 'middle' }}
                         disabled={checking}
-                        title="Six mechanical checks over the saved section — length, module keywords, tables, placeholders, structure. Heuristic signals, not a compliance determination."
+                        title="Mechanical checks over the saved section — length, module keywords, CTD elements, tables, placeholders, structure. Heuristic signals, not a compliance determination."
                         onClick={() => void runCheck()}
                       >
                         {I.checkCircle} {checking ? 'Checking…' : 'Check'}
@@ -2854,7 +3168,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 {/* ── Heuristic check results ──
                     Framed exactly as the server frames them: mechanical
                     signals over the SAVED content. Zero flags is reported as
-                    "passed six mechanical checks", never as "compliant". */}
+                    "passed N of M mechanical checks", never as "compliant" — and
+                    N and M come from the server's own count, so the sentence
+                    cannot drift from the checks the code actually runs. */}
                 {check && check.section_id === activeSection.id && (
                   <div
                     className="scaf-note"
@@ -2878,8 +3194,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     </div>
                     {check.deficiencies.length === 0 ? (
                       <span style={{ fontSize: 12 }}>
-                        No flags. The section passed six mechanical checks (length, module
-                        keywords, tables, placeholders, structure) — this is not a review.
+                        {typeof check.checks_run === 'number' && check.checks_run > 0
+                          ? `No flags. The section passed all ${check.checks_run} mechanical checks `
+                          : 'No flags. The section passed the mechanical checks '}
+                        (length, module keywords, CTD elements where defined, tables,
+                        placeholders, structure) — this is not a review.
                       </span>
                     ) : (
                       [...check.deficiencies]
@@ -3029,6 +3348,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         name: user?.displayName || user?.email || 'Unknown author',
                       },
                       onToggle: toggleTrackChanges,
+                      onResolve: recordTrackedChangeDecision,
                     }}
                     commentsApi={{
                       onCreate: requestAnchoredComment,
@@ -3362,6 +3682,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         </aside>
       )}
 
+      {/* ── Right: what left this document, and whether it is still current ──
+          Two drifts, reported separately because they answer different
+          questions: the section text against the last export's content hash,
+          and the citations added since that export. A single "out of date"
+          badge would have merged them. */}
+      {rail === 'exports' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h">Exports{activeDoc ? ` · ${activeDoc.title}` : ''}</div>
+          <AuthoringExports docId={activeDocId} refreshKey={exportsEpoch} />
+        </aside>
+      )}
+
       {/* ── Right: the document's Part 11 audit trail ──
           Every row is a governed act the SERVER recorded — actor and role
           from the verified JWT, operation, reason, and the content hashes on
@@ -3448,6 +3780,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         </>
                       )}
                     </span>
+                    {/* The metadata the endpoint has always returned and no
+                        surface read — the redline a reviewer refused, the model
+                        that produced an accepted draft. */}
+                    {(() => {
+                      const detail = describeAuditMetadata(ev.event_type, ev.metadata);
+                      return detail ? (
+                        <span
+                          style={{ fontSize: 12, opacity: 0.85 }}
+                          data-testid="audit-metadata"
+                        >
+                          {detail}
+                        </span>
+                      ) : null;
+                    })()}
                     {ev.change_reason && (
                       <span style={{ fontSize: 12, opacity: 0.85 }}>{ev.change_reason}</span>
                     )}
@@ -3474,7 +3820,54 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
       {rail === 'sources' && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Drafted from</div>
+          <div className="ed-comments-h ed-comments-h-row">
+            <span>Drafted from</span>
+            {/* Document-wide, not section-wide, because the question before an
+                export or a sign-off is "has anything I cite moved?" across the
+                whole document — not one claim at a time. */}
+            <button
+              className="nda-open"
+              onClick={() => void refreshAllSources()}
+              disabled={!activeDocId || refreshingAll}
+              data-testid="refresh-all-sources"
+              title="Re-read every unfrozen citation in this document against its stored source. Frozen citations are left alone."
+            >
+              {refreshingAll ? 'Re-reading…' : 'Re-read all'}
+            </button>
+          </div>
+          {/* The findings from the last document-wide re-read. Kept on the rail
+              rather than in a toast: a citation whose source is gone is the
+              thing the person about to file this needs to see, and it must not
+              fade after four seconds. */}
+          {skippedRefreshes.length > 0 && (
+            <div
+              className="scaf-note"
+              role="alert"
+              data-testid="refresh-skipped"
+              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--c2c-err,#b42318)' }}
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                <b>
+                  {skippedRefreshes.length} citation
+                  {skippedRefreshes.length === 1 ? '' : 's'} could not be re-read
+                </b>
+                <span style={{ flex: 1 }} />
+                <button className="nda-open" onClick={() => setSkippedRefreshes([])}>
+                  Dismiss
+                </button>
+              </div>
+              {skippedRefreshes.slice(0, 8).map(sk => (
+                <div key={sk.cite_id} style={{ marginTop: 4 }}>
+                  {sk.reason}
+                </div>
+              ))}
+              {skippedRefreshes.length > 8 && (
+                <div style={{ marginTop: 4, opacity: 0.75 }}>
+                  and {skippedRefreshes.length - 8} more.
+                </div>
+              )}
+            </div>
+          )}
           {!activeSection ? (
             <EmptyState
               icon={I.fileText}

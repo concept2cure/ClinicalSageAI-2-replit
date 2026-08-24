@@ -6,7 +6,12 @@ import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import {
+  applySurfaceAction,
+  notifySurfaceActionReady,
+  useSurfaceActionHandlers,
+} from '../surfaceActions';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { getSurfaceMeta } from '../registryModel';
 import { consumeNavParams } from '../navParams';
 // LIC_TIER_LEVEL is the client's one ascending tier ordering (free < standard <
@@ -2453,7 +2458,22 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
                     export-review gate the other exporters use. */}
                 <button
                   className="art-act pri"
-                  onClick={() => (isDoc ? onNav('document-authoring') : void downloadArtifact(a))}
+                  onClick={() => {
+                    if (!isDoc) {
+                      void downloadArtifact(a);
+                      return;
+                    }
+                    /* Open used to navigate empty-handed: the editor landed on
+                       its default document, not this artifact. It now rides the
+                       same authoring.open-document directive AnA rides — the
+                       bus stashes it across the navigate→mount gap and the
+                       editor resolves the name with its own honest-miss rules.
+                       An unresolvable name still lands on the editor (what the
+                       bare navigation always did), never a fabricated open. */
+                    const res = resolveSurfaceAction('authoring.open-document', { title: a.name });
+                    if (res.ok) applySurfaceAction(res.directive, (t) => onNav(t));
+                    else onNav('document-authoring');
+                  }}
                 >
                   {isDoc ? I.penLine : I.download}
                   {f.action}

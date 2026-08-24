@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ── Display-contract types (mapped from the real orchestration backends) ── */
@@ -617,6 +618,89 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const gatesReady = !cpsState.loading && !cpsState.error;
   const kvRuns = (n: number) => (runsReady ? String(n) : '—');
   const kvGates = (n: number) => (gatesReady ? String(n) : '—');
+
+  /* WHAT ANA SEES HERE. Four independent reads stay independent — runs, gates,
+     readiness and templates each report their own loading/error/empty, and a
+     failed gates read is never published as zero pending approvals. */
+  const activeRunCount = runs.filter((x) => ['running', 'paused', 'awaiting_approval'].indexOf(x.status) > -1).length;
+  const pendingGateCount = pendingGates.length;
+  const anaContext = useMemo(() => {
+    const parts: string[] = [];
+    if (pid == null) {
+      parts.push('Orchestration — no lead program identified, so no runs, readiness or templates are being read.');
+    } else {
+      parts.push(`Orchestration for ${progLabel}, ${view} view.`);
+      if (runsState.loading) parts.push('Workflow runs are still loading.');
+      else if (runsState.error) parts.push('The execution engine did not respond — a failed read, not a project with no runs.');
+      else if (runs.length === 0) parts.push('No workflow runs yet for this program.');
+      else parts.push(`${activeRunCount} active run(s) of ${runs.length} total.`);
+    }
+    // The gates read is not program-scoped, so it is reported even with no program.
+    if (cpsState.loading) {
+      parts.push('The approval-gate store is still loading.');
+    } else if (cpsState.error) {
+      parts.push(
+        'The approval-checkpoint store could not be read, so the Awaiting-approval count reads "—". ' +
+          'This is NOT a report that zero human-in-the-loop gates are pending — a reviewer must not treat it as one.',
+      );
+    } else if (cps.length === 0) {
+      parts.push('No human-in-the-loop approval gates exist for this organization yet.');
+    } else {
+      parts.push(`${pendingGateCount} of ${cps.length} approval gate(s) awaiting a human decision.`);
+    }
+    if (pid != null) {
+      if (rdState.loading) parts.push('Readiness is being evaluated.');
+      else if (rdState.error) parts.push('The readiness engine did not respond — the score is unknown, not zero.');
+      else if (!r) parts.push('No readiness assessment yet — the engine has nothing to score for this program.');
+      else
+        parts.push(
+          `Readiness ${r.overallScore}%, ${r.blockerCount} critical blocker(s), ` +
+            `${r.isReady ? 'Ready' : 'Not ready'} (Ready requires 90+ and zero critical blockers), evaluated ${r.evaluatedAt}.`,
+        );
+      if (tplState.error) parts.push('The template registry could not be read — whether templates are registered is unknown.');
+      else if (!tplSettled) parts.push('The template registry has not answered yet.');
+      else parts.push(`${templates.length} workflow template(s) registered.`);
+    }
+    const facts: Record<string, unknown> = {
+      program: progLabel,
+      projectId: pid,
+      openView: view,
+      activeRuns: runsReady ? activeRunCount : null,
+      totalRuns: runsReady ? runs.length : null,
+      ...(runsState.error ? { runsUnavailable: runsState.error } : {}),
+      pendingGateCount: gatesReady ? pendingGateCount : null,
+      totalGates: gatesReady ? cps.length : null,
+      ...(cpsState.error ? { gatesUnavailable: cpsState.error } : {}),
+      readinessScore: r ? r.overallScore : null,
+      blockerCount: r ? r.blockerCount : null,
+      isReady: r ? r.isReady : null,
+      evaluatedAt: r ? r.evaluatedAt : null,
+      ...(rdState.error ? { readinessUnavailable: rdState.error } : {}),
+      templatesRegistered: tplSettled ? templates.length : null,
+      ...(sel
+        ? {
+            selectedRun: {
+              id: sel.id, title: sel.title, status: sel.status, pct: sel.pct,
+              blockers: sel.blockers.slice(0, 5),
+            },
+          }
+        : {}),
+    };
+    return {
+      summary: parts.join(' '),
+      facts,
+      // Pause/resume are not offered: the engine has no pause path.
+      availableActions: [
+        'Switch view: Runs, Approvals or Readiness; select a run to inspect its steps, outputs and blockers',
+        'approving or rejecting a gate (separation-of-duties enforced), starting/retrying/cancelling runs, and re-evaluating readiness are human acts — AnA proposes them in conversation only',
+      ],
+    };
+  }, [
+    pid, progLabel, view, runsState.loading, runsState.error, runsReady, runs, activeRunCount,
+    cpsState.loading, cpsState.error, gatesReady, cps, pendingGateCount,
+    rdState.loading, rdState.error, r, tplState.error, tplSettled, templates, sel,
+  ]);
+  usePublishSurfaceContext('orchestration', anaContext);
 
   /* Cancel, Retry, Replay and "Open gate" all reach a real endpoint. The two
      that cannot — Pause and Resume — stay visible (the run state they belong to

@@ -1782,9 +1782,57 @@ router.post('/docs', async (req: Request, res: Response) => {
       cols.push('client_program_id');
       vals.push(`$${args.length}`);
     }
-    // Referenced ONLY when a binding resolved, for the same reason
-    // client_program_id is: a database without the 20260728 migration emits the
-    // original statement and keeps working.
+    /* Referenced only when the binding resolved AND the column exists.
+     *
+     * The existence check is the load-bearing half, and it was missing. This
+     * guarded on `binding.documentId` alone, on the reasoning that a database
+     * without the 20260728 migration "emits the original statement and keeps
+     * working" — which assumes binding resolution and column existence rise
+     * and fall together. They do not. Resolution depends on the governance
+     * store (c2c_documents / regulatory_programs) answering; the column
+     * depends on an ALTER that lives in the root `migrations/` tree while the
+     * authoring tables live in `db/migrations/`, and which the canonical
+     * authoring migration set does not include.
+     *
+     * On a deployment where the governance store resolves and that ALTER never
+     * ran, this INSERT named a column that does not exist — inside the
+     * BEGIN/COMMIT below, so the whole create rolled back and NEW DOCUMENTS
+     * COULD NOT BE CREATED AT ALL. The most critical path in the editor,
+     * broken by a schema difference the code believed it was tolerating.
+     *
+     * commit-section-to-filing.ts — the write half of the same binding —
+     * already checks information_schema for this exact column before touching
+     * the filing. This is the same check on the read half, so both halves
+     * degrade the same way: unbound, with the reason recorded, rather than
+     * refusing to create a document. */
+    let bindingColumnPresent = false;
+    if (binding.documentId) {
+      try {
+        const col = await pool.query<{ ok: boolean }>(
+          `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema = 'public'
+                             AND table_name = 'authoring_documents'
+                             AND column_name = 'c2c_document_id') AS ok`,
+        );
+        bindingColumnPresent = col.rows[0]?.ok === true;
+      } catch {
+        /* Unable to ask — treat as absent. Creating the document unbound is
+           recoverable; failing the create is not. */
+        bindingColumnPresent = false;
+      }
+      if (!bindingColumnPresent) {
+        /* The caller is told the truth about what it got: a document that is
+           NOT bound to a filing, and why. Silently dropping the binding while
+           reporting `bound: true` would be the worse failure — every later
+           save would look for a filing that was never linked. */
+        binding = {
+          documentId: null,
+          reason:
+            'This deployment has no c2c_document_id column on authoring_documents, so the ' +
+            'document was created without a binding to a filing.',
+        };
+      }
+    }
     if (binding.documentId) {
       args.push(binding.documentId);
       cols.push('c2c_document_id');
@@ -3635,21 +3683,40 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
     const section = sectionResult.rows[0];
 
     // Perform deficiency analysis
-    const deficiencies = [];
+    const deficiencies: Array<Record<string, unknown>> = [];
     const content = section.content || '';
     const contentLength = content.length;
 
-    // Basic content checks
-    if (contentLength < 100) {
-      deficiencies.push({
-        type: 'content_length',
-        severity: 'high',
-        message:
-          'Section content appears insufficient. Regulatory sections typically require detailed information.',
-        recommendation: 'Expand content to include all required regulatory elements.',
-        location: 'entire_section',
-      });
-    }
+    /* Which distinct checks ran, and which of them flagged.
+       The score was `(10 - deficiencies.length) / 10`, where 10 was a constant
+       unrelated to the checks actually performed. The module-keyword check
+       alone pushes one deficiency PER missing term — six of them — so a poor
+       section reached thirteen deficiencies and scored -30%. A percentage
+       below zero is not a signal, it is a bug wearing one. Counting distinct
+       checks makes the denominator mean something and keeps the range 0-100,
+       and it lets the response say "passed N of M" instead of asking a reader
+       to trust a bare number. */
+    const checks: Array<{ id: string; flagged: boolean }> = [];
+    const runCheck = (id: string, fn: () => void) => {
+      const before = deficiencies.length;
+      fn();
+      checks.push({ id, flagged: deficiencies.length > before });
+    };
+
+    const contentLower = content.toLowerCase();
+
+    runCheck('content_length', () => {
+      if (contentLength < 100) {
+        deficiencies.push({
+          type: 'content_length',
+          severity: 'high',
+          message:
+            'Section content appears insufficient. Regulatory sections typically require detailed information.',
+          recommendation: 'Expand content to include all required regulatory elements.',
+          location: 'entire_section',
+        });
+      }
+    });
 
     // Check for required regulatory keywords based on module
     const requiredKeywords: Record<string, string[]> = {
@@ -3660,68 +3727,108 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
       M1: ['form', 'administrative', 'regulatory'],
     };
 
-    const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
-    const contentLower = content.toLowerCase();
+    runCheck('module_keywords', () => {
+      const moduleKeywords = requiredKeywords[section.module] || requiredKeywords['M3'];
+      moduleKeywords.forEach(keyword => {
+        if (!contentLower.includes(keyword)) {
+          deficiencies.push({
+            type: 'missing_keyword',
+            severity: 'medium',
+            message: `Missing expected regulatory term: "${keyword}"`,
+            recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+            location: 'content',
+          });
+        }
+      });
+    });
 
-    moduleKeywords.forEach(keyword => {
-      if (!contentLower.includes(keyword)) {
+    /* CTD required-element check, migrated from POST /ai/validate-compliance.
+       That endpoint was a second, callerless implementation of this same
+       capability — heuristic keyword presence over section content — and it
+       reported `overall_compliance: 'PASS'` whenever its list came back empty.
+       Its list was only ever populated for five hardcoded 3.2.S.* codes, so
+       for every other section in the CTD it checked nothing and answered PASS.
+       The useful half is these per-section element lists; they belong on the
+       one scan that has a caller and an honest frame, and the endpoint is
+       deleted in the same change (zero duplication). */
+    const ctdRequiredElements: Record<string, string[]> = {
+      '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
+      '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
+      '3.2.S.3': ['elucidation of structure', 'impurities'],
+      '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
+      '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
+    };
+    const ctdElements = ctdRequiredElements[String(section.code)];
+    /* Only counted as a check when there IS a list for this section code.
+       Running it against a section it has no expectations for and recording a
+       pass would inflate the score with a check that never looked at anything
+       — the exact arithmetic that let the deleted endpoint answer PASS. */
+    if (ctdElements) {
+      runCheck('ctd_required_elements', () => {
+        ctdElements.forEach(element => {
+          if (!contentLower.includes(element)) {
+            deficiencies.push({
+              type: 'missing_ctd_element',
+              severity: 'medium',
+              message: `Section ${section.code} would normally discuss ${element}`,
+              recommendation: `Add information about ${element} to ${section.code}`,
+              location: 'content',
+            });
+          }
+        });
+      });
+    }
+
+    runCheck('data_presence', () => {
+      if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
         deficiencies.push({
-          type: 'missing_keyword',
+          type: 'missing_data',
           severity: 'medium',
-          message: `Missing expected regulatory term: "${keyword}"`,
-          recommendation: `Include discussion of ${keyword} as required by ${region} guidelines`,
+          message: 'No data tables or figures detected',
+          recommendation: 'Consider adding supporting data, tables, or figures',
           location: 'content',
         });
       }
     });
 
-    // Check for data completeness
-    if (!content.includes('[') && !content.includes('Table') && !content.includes('Figure')) {
-      deficiencies.push({
-        type: 'missing_data',
-        severity: 'medium',
-        message: 'No data tables or figures detected',
-        recommendation: 'Consider adding supporting data, tables, or figures',
-        location: 'content',
+    runCheck('placeholder_text', () => {
+      const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
+      placeholderPatterns.forEach(pattern => {
+        const matches = content.match(pattern);
+        if (matches && matches.length > 0) {
+          deficiencies.push({
+            type: 'placeholder_text',
+            severity: 'high',
+            message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
+              matches.length > 3 ? '...' : ''
+            }`,
+            recommendation: 'Replace all placeholder text with actual content',
+            location: 'multiple',
+          });
+        }
       });
-    }
+    });
 
-    // Check for placeholder text
-    const placeholderPatterns = [/\[.*?\]/g, /TBD/gi, /TODO/gi, /XXX/gi];
-    placeholderPatterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches && matches.length > 0) {
+    runCheck('structure', () => {
+      if (!content.includes('\n') || content.split('\n').length < 5) {
         deficiencies.push({
-          type: 'placeholder_text',
-          severity: 'high',
-          message: `Found placeholder text: ${matches.slice(0, 3).join(', ')}${
-            matches.length > 3 ? '...' : ''
-          }`,
-          recommendation: 'Replace all placeholder text with actual content',
-          location: 'multiple',
+          type: 'poor_structure',
+          severity: 'low',
+          message: 'Content lacks proper structure and formatting',
+          recommendation: 'Add headings, paragraphs, and proper formatting',
+          location: 'formatting',
         });
       }
     });
-
-    // Structure checks
-    if (!content.includes('\n') || content.split('\n').length < 5) {
-      deficiencies.push({
-        type: 'poor_structure',
-        severity: 'low',
-        message: 'Content lacks proper structure and formatting',
-        recommendation: 'Add headings, paragraphs, and proper formatting',
-        location: 'formatting',
-      });
-    }
 
     // Heuristic quality/completeness signal — NOT a 21 CFR compliance
     // determination. It is derived purely from word-count and keyword presence
     // and cannot prove regulatory compliance; labelling a section "compliant" /
     // "non_compliant" on that basis overstates what the check establishes. It is
     // reported as a review signal ('review required' / 'heuristic quality').
-    const totalChecks = 10;
-    const passedChecks = totalChecks - deficiencies.length;
-    const qualityScore = Math.round((passedChecks / totalChecks) * 100);
+    const checksRun = checks.length;
+    const checksPassed = checks.filter(c => !c.flagged).length;
+    const qualityScore = checksRun > 0 ? Math.round((checksPassed / checksRun) * 100) : 0;
 
     res.json({
       success: true,
@@ -3737,6 +3844,11 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         signal_type: 'heuristic_quality',
         quality_score: qualityScore,
         compliance_score: qualityScore,
+        /* The denominator, so a reader is never asked to take the percentage
+           on trust — and so the UI can name how many checks actually ran
+           rather than hardcoding a number that drifts from the code. */
+        checks_run: checksRun,
+        checks_passed: checksPassed,
         status:
           qualityScore >= 80
             ? 'heuristic_ok'
@@ -4520,6 +4632,16 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
 
+    /* An unknown or cross-tenant docId used to return `exports: []` — the same
+       answer as a real document nobody has exported yet. Those are opposite
+       facts, and the second one is the whole point of the rail. Refuse instead.
+       This also protects the hash below: computeDocHash walks the section rows
+       and hashes the empty string when there are none, so an unguarded call
+       would hand back sha256("") as if it described a document. */
+    if (!(await documentExistsForTenant(req.params.docId, tenantId))) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
+
     // Ensure table exists
     await ensureExportHistoryTableExists();
 
@@ -4577,15 +4699,40 @@ router.get('/docs/:docId/exports', async (req: Request, res: Response) => {
       [req.params.docId, tenantId]
     );
 
+    /* Is the most recently exported file still the current document?
+       `doc_sha256` on each row is computeDocHash at export time, so the same
+       function now answers it for the live document and the two are directly
+       comparable. Returned as the two hashes AND the derived verdict: the
+       verdict is what a reader acts on, the hashes are what makes it checkable.
+
+       `content_changed_since_last_export` is null — not false — when there is
+       no export to compare against, or when the stored row carried no hash.
+       "Nothing to compare" is not "nothing has changed", and a UI that renders
+       the second for the first tells an author their stale file is current.
+
+       Scope, stated because the verdict is narrower than it sounds: this
+       compares section CODE and CONTENT in order. It says nothing about
+       citations, attachments, or signatures — the citation drift that
+       …/diff-since-export reports is a separate question with a separate
+       answer. */
+    const lastExport = result.rows[0] || null;
+    const currentContentHash = await computeDocHash(req.params.docId, tenantId);
+    const lastHash =
+      typeof lastExport?.doc_sha256 === 'string' && lastExport.doc_sha256.length > 0
+        ? lastExport.doc_sha256
+        : null;
+
     res.json({
       success: true,
       exports: result.rows,
       total: parseInt(countResult.rows[0]?.total || '0'),
-      last_export: result.rows[0] || null,
+      last_export: lastExport,
+      current_content_hash: currentContentHash,
+      content_changed_since_last_export: lastHash === null ? null : lastHash !== currentContentHash,
     });
   } catch (error) {
     console.error('GET /docs/:id/exports', error);
-    res.status(500).json({ error: 'Failed to list exports' });
+    res.status(500).json({ success: false, error: 'Failed to list exports' });
   }
 });
 
@@ -4651,6 +4798,17 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
     // catch below turned every call into a 500. See ledger C-14.
     await ensureExportHistoryTableExists();
     const tenantId = getTenantId(req);
+    /* Same guard as GET …/exports, for the same reason: an unknown or
+       cross-tenant docId answered `{ baseline: null, changed: [] }`, which is
+       the response a real document with no export yet gets. Those are opposite
+       facts. Nothing surfaces the difference today — the Exports rail renders
+       citation drift only when `baseline` is non-null — but a future caller
+       reading "no exports" for a document it cannot see is a defect waiting on
+       a caller, which is precisely how the rest of this router accumulated its
+       silent 500s. */
+    if (!(await documentExistsForTenant(req.params.docId, tenantId))) {
+      return res.status(404).json({ success: false, error: 'Document not found' });
+    }
     const lastExportResult = await pool.query(
       `
       SELECT COALESCE(exported_at, created_at) AS exported_at
@@ -6081,80 +6239,32 @@ router.post('/ai/suggestions', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/authoring/ai/validate-compliance - Validate regulatory compliance
-router.post('/ai/validate-compliance', async (req: Request, res: Response) => {
-  try {
-    const { document_id, section_code, content } = req.body;
-    const tenantId = getTenantId(req);
-
-    const validationResults: {
-      ich_compliance: any[];
-      fda_compliance: any[];
-      ctd_structure: any[];
-      missing_elements: any[];
-      recommendations: any[];
-    } = {
-      ich_compliance: [],
-      fda_compliance: [],
-      ctd_structure: [],
-      missing_elements: [],
-      recommendations: [],
-    };
-
-    // Check CTD structure requirements
-    if (section_code && section_code.startsWith('3.2.')) {
-      const requiredSections: Record<string, string[]> = {
-        '3.2.S.1': ['nomenclature', 'structure', 'general properties'],
-        '3.2.S.2': ['manufacturer', 'manufacturing process', 'controls'],
-        '3.2.S.3': ['elucidation of structure', 'impurities'],
-        '3.2.S.4': ['specifications', 'analytical procedures', 'validation'],
-        '3.2.S.7': ['stability data', 'post-approval stability', 'storage conditions'],
-      };
-
-      const required = requiredSections[section_code] || [];
-      required.forEach((element: any) => {
-        if (!content.toLowerCase().includes(element)) {
-          validationResults.missing_elements.push({
-            element,
-            section: section_code,
-            severity: 'important',
-            message: `Section ${section_code} should include information about ${element}`,
-          });
-        }
-      });
-    }
-
-    // ICH guideline applicability. There is no automated ICH-guideline
-    // conformance engine wired, so we do NOT assert a pass/fail verdict or a
-    // score — the prior implementation fabricated both with Math.random()
-    // (`compliant: Math.random() > 0.3`, `score: 75 + Math.random() * 25`),
-    // randomly claiming conformance to ICH Q1A/Q3A/Q6A/E6/M4. We surface the
-    // applicable guidelines for the section and flag them for manual review
-    // instead of inventing a verdict.
-    const ichGuidelines = ['Q1A', 'Q3A', 'Q6A', 'E6', 'M4'];
-    ichGuidelines.forEach(guideline => {
-      validationResults.ich_compliance.push({
-        guideline,
-        compliant: null,
-        assessment: 'not_assessed',
-        issues: [],
-        score: null,
-        note: 'Automated ICH conformance assessment is not available — manual review required.',
-      });
-    });
-
-    res.json({
-      success: true,
-      validation: validationResults,
-      overall_compliance:
-        validationResults.missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('Compliance validation error:', error);
-    res.status(500).json({ error: 'Failed to validate compliance' });
-  }
-});
+/* POST /api/authoring/ai/validate-compliance has been DELETED.
+ *
+ * It was a second implementation of the capability POST
+ * /sections/:sectionId/ai/deficiency-scan already provides — heuristic keyword
+ * presence over a section's text — with no caller anywhere in the repository,
+ * and it ended in a verdict it could not support:
+ *
+ *     overall_compliance: missing_elements.length === 0 ? 'PASS' : 'NEEDS_IMPROVEMENT'
+ *
+ * `missing_elements` was only ever populated for five hardcoded 3.2.S.* codes.
+ * For every other section in the CTD — all of M1, M2, M4, M5, and most of M3 —
+ * the array was empty because nothing had been examined, and the response said
+ * PASS. A check that ran zero assertions reporting a compliance pass is the
+ * defect this repository keeps finding, and this one named the field
+ * `overall_compliance`.
+ *
+ * Its ICH block had already been repaired once: it used to fabricate
+ * `compliant: Math.random() > 0.3` and a random score against Q1A/Q3A/Q6A/E6/M4,
+ * and was changed to report `not_assessed`. That left the endpoint returning an
+ * honest "we did not assess ICH" beside a dishonest "PASS" in the same body.
+ *
+ * The one part worth keeping — the per-section CTD required-element lists — is
+ * now a check inside the deficiency scan, which has a caller and frames its
+ * output as signals rather than a determination. Migrated and deleted in the
+ * same change, per the zero-duplication rule.
+ */
 
 // ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
 
@@ -6209,12 +6319,36 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       [artifactId, changeId, decision, userId, userName, tenantId]
     );
 
-    // Audit trail for regulatory compliance
+    /* Audit trail for regulatory compliance.
+       `authoring_tracked_change_decisions` stores the id and the verdict and
+       nothing about the change itself — and accepting a suggestion STRIPS its
+       mark, so by the time anyone reads the row the id it names no longer
+       exists in the document. The row is an index; this is where the change is
+       actually recorded, so the decision can be read back as a sentence rather
+       than as an opaque key. The text is bounded: an audit row is not a place
+       to mirror a section. */
     await createAuditEvent(
       artifactId,
       'tracked_change_decision',
       userName,
-      { changeId, decision },
+      {
+        changeId,
+        decision,
+        ...(typeof req.body?.changeType === 'string' ? { changeType: req.body.changeType } : {}),
+        ...(typeof req.body?.text === 'string' && req.body.text.length > 0
+          ? { text: req.body.text.slice(0, 500) }
+          : {}),
+        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
+        /* Who PROPOSED the change, which is not who decided it — that is the
+           audit row's own actor. A redline record that cannot tell the two
+           apart says nothing about review at all. */
+        ...(typeof req.body?.authorName === 'string'
+          ? { proposedBy: req.body.authorName }
+          : typeof req.body?.authorId === 'string'
+            ? { proposedBy: req.body.authorId }
+            : {}),
+        ...(typeof req.body?.at === 'string' ? { proposedAt: req.body.at } : {}),
+      },
       tenantId
     );
 
@@ -6278,12 +6412,38 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       results.push(result.rows[0]);
     }
 
-    // Single audit event for bulk action
+    /* Single audit event for the bulk action.
+       Ids alone would make this row unresolvable for exactly the case that
+       needs it most: rejecting changes alters no text, so no revision records
+       what was refused. A bounded per-change summary travels with it, and when
+       it is bounded the row SAYS how many it left out — a truncated record
+       that looks complete is worse than one that admits its limit. */
+    const MAX_SUMMARISED = 20;
+    const rawChanges = Array.isArray(req.body?.changes) ? req.body.changes : [];
+    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => ({
+      changeId: typeof c?.changeId === 'string' ? c.changeId : null,
+      changeType: typeof c?.changeType === 'string' ? c.changeType : null,
+      proposedBy:
+        typeof c?.authorName === 'string'
+          ? c.authorName
+          : typeof c?.authorId === 'string'
+            ? c.authorId
+            : null,
+      text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
+    }));
     await createAuditEvent(
       artifactId,
       'tracked_change_bulk_decision',
       userName,
-      { changeIds, decision, count: changeIds.length },
+      {
+        changeIds,
+        decision,
+        count: changeIds.length,
+        ...(summarised.length > 0 ? { changes: summarised } : {}),
+        ...(rawChanges.length > MAX_SUMMARISED
+          ? { changesOmittedFromSummary: rawChanges.length - MAX_SUMMARISED }
+          : {}),
+      },
       tenantId
     );
 

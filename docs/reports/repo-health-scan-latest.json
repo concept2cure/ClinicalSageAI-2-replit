@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T16:41:58.366Z",
+  "generatedAt": "2026-08-24T17:51:37.418Z",
   "git": {
-    "sha": "02a80755294c5edc1376ee822ca7d27da4551d47",
+    "sha": "65ba4d38be9632aeef2d089c3229605035107ebd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2154,7 +2154,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 688789
+        "bytes": 689106
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2166,7 +2166,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 266801
+        "bytes": 276844
       },
       {
         "file": "server/statistics-service.ts",
@@ -2177,16 +2177,16 @@
         "bytes": 202559
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 192914
+      },
+      {
         "file": "server/routes/ana-features.ts",
         "bytes": 179637
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 173939
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 151221
+        "bytes": 152211
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2308,7 +2308,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18503
+        "lines": 18509
       },
       {
         "file": "server/statistics-service.ts",
@@ -2316,7 +2316,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6583
+        "lines": 6743
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2336,7 +2336,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 4018
+        "lines": 4411
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2348,7 +2348,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3432
+        "lines": 3452
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2636,7 +2636,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 1553
+        "lines": 1578
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",

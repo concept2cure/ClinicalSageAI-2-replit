@@ -35,9 +35,11 @@ deliberately hidden and structurally cut off downstream.
   canonical spine `submissions → ectd_sequences → submission_leaves`.
 - **Entitlements**: the rail is gated on real license state
   (`server/services/entitlements/navigation-entitlements.ts`, commit 24f6431f).
-  The `cmc` catalog row exists and is unrestricted
-  (`db/migrations/20260810_reconcile_module_catalog.sql:215`, `tiers []`), so
-  every org resolves entitled via source `included`.
+  The `cmc` catalog row exists; it was unrestricted when this audit ran
+  (`db/migrations/20260810_reconcile_module_catalog.sql:215`, `tiers []`) and
+  has since been banded — `standard` by the 20260823 packaging, then
+  `professional` by 20260824 with grandfathering. See
+  `docs/plans/CMC_COMMERCIAL_FLIP_RUNBOOK_2026-08-24.md` for current state.
 
 ## 2. Finding N1 — CMC is deliberately hidden from the left rail
 

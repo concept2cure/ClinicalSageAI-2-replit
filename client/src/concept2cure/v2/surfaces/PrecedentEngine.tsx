@@ -4,6 +4,7 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { severityTone } from '../fixtures/precedent-engine-data';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
@@ -446,6 +447,57 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
       )}
     </div>
   );
+
+  /* WHAT ANA SEES HERE — published above the honest-state early returns so one
+     call covers every branch (a hook below a conditional return would not). */
+  const anaContext = useMemo(() => {
+    if (!applied) {
+      // Nothing from the typed-but-unrun form: a pre-filled query once told an
+      // org which predicate to cite for a device it did not have.
+      return {
+        summary:
+          'Precedent intelligence: no search has been run; nothing is on screen but the empty search form.',
+        facts: { searchRun: false },
+      };
+    }
+    if (board.loading && !board.data) {
+      return {
+        summary: `Precedent intelligence: the applied ${applied.submissionType} search is still loading; no board is on screen yet.`,
+      };
+    }
+    if (board.error && !board.data) {
+      return {
+        summary:
+          'Precedent intelligence: the precedent read-model did not respond — a failed read, not an empty corpus.',
+      };
+    }
+    return {
+      summary:
+        `Precedent intelligence for the applied ${applied.submissionType} search` +
+        (applied.indication.trim() ? ` (${applied.indication.trim()})` : '') +
+        `: ${results.length} precedent(s)` +
+        (sel ? `; ${sel.clearanceNumber} selected` : '') +
+        `; the ${tab} analysis tab is open.`,
+      facts: {
+        query: {
+          submissionType: applied.submissionType,
+          therapeuticArea: applied.therapeuticArea,
+          indication: applied.indication,
+          productCode: applied.productCode,
+        },
+        resultCount: results.length,
+        ...(sel ? { selected: sel.clearanceNumber } : {}),
+        tab,
+        // `cycle` is nullable on the real record — no range unless one exists.
+        ...(lo != null && hi != null ? { cycleDaysMin: lo, cycleDaysMax: hi } : {}),
+      },
+      availableActions: [
+        'Select a result; switch the analysis tab',
+        'Running a search commits a query; ingesting a precedent, comparing, saved-query changes and claim checks are writes or verdicts — AnA proposes them in conversation, never through screen controls.',
+      ],
+    };
+  }, [applied, board.loading, board.error, board.data, results.length, sel, tab, lo, hi]);
+  usePublishSurfaceContext('precedent-intelligence', anaContext);
 
   /* Four honest states on the real read-model — never a fixture, and never a
      seeded search standing in for one the user has not run. */
