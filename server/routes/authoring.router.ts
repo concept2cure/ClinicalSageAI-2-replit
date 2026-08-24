@@ -1249,12 +1249,69 @@ router.get('/templates', async (req: Request, res: Response) => {
 
     const result = await pool.query(query, params);
 
+    // ── Merge in the GLOBAL regulatory reference templates ──
+    //
+    // POST /docs resolves template_id against intelligence.document_templates
+    // first — the deliberately untenanted store of agency-expectation
+    // skeletons (CTD section sets, response letters). A picker that lists only
+    // the org's own rows offers a different universe from the one create
+    // consumes; with authoring_templates shipping empty, it offered NOTHING
+    // for the life of the feature. Org rows stay first (customer content
+    // before reference data); shape is aliased to the same contract.
+    //
+    // FAIL SOFT on the global read: the intelligence schema is a separate
+    // bundle, absent in some deployments and in the authoring test harness. An
+    // org's own templates must not vanish because the reference store is
+    // unreachable.
+    let globalRows: any[] = [];
+    try {
+      let globalQuery = `
+        SELECT
+          t.id,
+          t.template_name AS name,
+          t.template_name,
+          t.document_type AS template_type,
+          'Regulatory reference' AS category,
+          ARRAY[t.agency]::text[] AS regions,
+          t.description,
+          (SELECT count(*)::int FROM intelligence.template_sections ts WHERE ts.template_id = t.id) AS section_count,
+          t.created_at,
+          true AS active
+        FROM intelligence.document_templates t
+        WHERE t.status = 'active'
+      `;
+      const globalParams: any[] = [];
+      if (category) {
+        // Globals carry the synthetic category 'Regulatory reference'; a
+        // category filter for anything else excludes them.
+        if (String(category) !== 'Regulatory reference') globalQuery += ` AND false`;
+      }
+      if (template_type) {
+        globalParams.push(template_type);
+        globalQuery += ` AND t.document_type = $${globalParams.length}`;
+      }
+      if (search) {
+        globalParams.push(`%${search}%`);
+        globalQuery += ` AND LOWER(t.template_name) LIKE LOWER($${globalParams.length})`;
+      }
+      globalQuery += ` ORDER BY t.template_name ASC`;
+      const globalResult = await pool.query(globalQuery, globalParams);
+      // A template with zero sections cannot seed anything — offering it in
+      // "Start from" would recreate the sectionless-document lie server-side.
+      globalRows = globalResult.rows.filter((r: any) => Number(r.section_count) > 0);
+    } catch (globalErr) {
+      logger.warn('Global template store unavailable; listing org templates only', {
+        error: globalErr instanceof Error ? globalErr.message : String(globalErr),
+      });
+    }
+
+    const merged = [...result.rows, ...globalRows];
     res.json({
       success: true,
-      templates: result.rows,
+      templates: merged,
       // rows.length, not rowCount: rowCount is a node-postgres field and is not
       // populated by every driver this code is exercised against.
-      count: result.rows.length,
+      count: merged.length,
     });
   } catch (error) {
     console.error('Error listing templates:', error);
@@ -1659,6 +1716,66 @@ router.post('/docs', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'client_program_id must be a valid UUID' });
     }
 
+    // ── Resolve the template BEFORE anything is written ──
+    //
+    // Two template stores are legitimate here and the picker offers both: the
+    // GLOBAL regulatory reference store (intelligence.document_templates —
+    // structure + guidance, no prose) and the org's own authoring_templates
+    // (tenant-scoped, sections WITH content). The old order created the
+    // document first and looked the template up after, in the global store
+    // only — so an org-template id, or any id that resolved nothing, produced
+    // a SECTIONLESS document while the confirmation said "seeded from <name>".
+    // A create that cannot honor its chosen template must refuse before the
+    // INSERT, not lie after it.
+    type TemplateSectionSeed = { code: string; title: string; content: string; ordering: number };
+    let templateSections: TemplateSectionSeed[] | null = null;
+    if (template_id) {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(template_id))) {
+        return res.status(400).json({ success: false, error: 'template_id must be a valid UUID' });
+      }
+      // (a) The global reference store. Deliberately no tenant filter — these
+      // templates describe agency expectations, not customer content; tenancy
+      // comes from the document being created.
+      const globalSections = await pool.query(
+        `SELECT ts.section_code, ts.section_title, ts.ordering
+           FROM intelligence.template_sections ts
+          WHERE ts.template_id = $1
+          ORDER BY ts.ordering`,
+        [template_id],
+      );
+      if (globalSections.rows.length > 0) {
+        templateSections = globalSections.rows.map((r: any, i: number) => ({
+          code: String(r.section_code),
+          title: String(r.section_title),
+          // Structure and guidance only — the honest scaffold starts empty.
+          content: '',
+          ordering: Number.isFinite(Number(r.ordering)) ? Number(r.ordering) : i,
+        }));
+      } else {
+        // (b) The org's own template store (tenant-scoped, carries content).
+        const orgTemplate = await pool.query(
+          `SELECT template_content FROM authoring_templates
+            WHERE id = $1 AND tenant_id = $2 AND is_active = true`,
+          [template_id, tenantId],
+        );
+        const orgSections = orgTemplate.rows[0]?.template_content?.sections;
+        if (Array.isArray(orgSections) && orgSections.length > 0) {
+          templateSections = orgSections.map((s: any, i: number) => ({
+            code: String(s.code ?? ''),
+            title: String(s.title ?? ''),
+            content: typeof s.content === 'string' ? s.content : '',
+            ordering: Number.isFinite(Number(s.order_index)) ? Number(s.order_index) : i,
+          }));
+        }
+      }
+      if (!templateSections) {
+        return res.status(404).json({
+          success: false,
+          error: 'Template not found — no template with this id has any sections in your organization or the global reference store. Nothing was created.',
+        });
+      }
+    }
+
     // Build the INSERT so the new program-scope column is referenced ONLY when
     // supplied. A create without client_program_id (the org-wide path and the
     // golden-journey harness) emits the exact original statement, so databases
@@ -1762,45 +1879,28 @@ router.post('/docs', async (req: Request, res: Response) => {
       }
     }
 
-    // If template_id provided, scaffold the document's section skeleton.
+    // Seed the document's section skeleton from the template resolved ABOVE
+    // (before the INSERT — an unresolvable template refuses the create rather
+    // than producing a sectionless document behind a "seeded from" toast).
+    // Global templates seed structure with empty content (the honest scaffold:
+    // the section exists with its regulatory code, title and ordering, and the
+    // author writes it); org templates seed the content their rows carry.
     //
-    // This query could never run. It selected `code, title, content, order_index`
-    // from an unqualified `template_sections` filtered by `tenant_id` — but the
-    // only such table is `intelligence.template_sections`
-    // (db/migrations/20260520_document_templates.sql:78), whose columns are
-    // `section_code`, `section_title` and `ordering`, with NO `content` and NO
-    // `tenant_id`. Every column named was wrong and the relation was unresolvable,
-    // so a create-from-template always fell into the catch below and 500'd.
-    //
-    // Templates are GLOBAL regulatory reference data — `intelligence.document_templates`
-    // carries no tenancy column, deliberately, because they describe agency
-    // expectations rather than customer content. So there is no tenant filter to
-    // apply on the read; tenancy comes from the document being created, and every
-    // seeded row carries that tenant.
-    //
-    // Templates store section STRUCTURE and authoring guidance, not prose, so a
-    // seeded section starts empty. That is the honest scaffold: the section exists
-    // with its regulatory code, title and ordering, and the author writes it.
-    if (template_id) {
-      const seeded = await pool.query(
-        `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
-         SELECT gen_random_uuid(), $1, ts.section_code, ts.section_title, '', ts.ordering, NOW(), NOW(), $2
-         FROM intelligence.template_sections ts
-         WHERE ts.template_id = $3
-         ORDER BY ts.ordering
-         RETURNING id, code, content`,
-        [docId, tenantId, template_id]
-      );
-
-      // Every write to a regulated section produces its Part 11 evidence — the
-      // sibling POST /sections handler does exactly this, and a section that
-      // appears in a document with no record of how it got there is precisely
-      // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
-      // like any other.
-      // `createdBy` is the verified actor already resolved (and null-guarded)
-      // at the top of this handler — not re-derived, so a seeded section is
-      // attributed to exactly the principal the document is.
-      for (const row of seeded.rows) {
+    // Every write to a regulated section produces its Part 11 evidence — the
+    // sibling POST /sections handler does exactly this, and a section that
+    // appears in a document with no record of how it got there is precisely
+    // the §11.10(e) gap the audit trail exists to close. Seeding is a CREATE
+    // like any other. `createdBy` is the verified actor already resolved (and
+    // null-guarded) at the top of this handler.
+    if (templateSections) {
+      for (const s of templateSections) {
+        const seededRow = await pool.query(
+          `INSERT INTO authoring_sections (id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id)
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW(), $6)
+           RETURNING id, code, content`,
+          [docId, s.code, s.title, s.content, s.ordering, tenantId],
+        );
+        const row = seededRow.rows[0];
         await createRevision(row.id, row.content ?? '', createdBy, tenantId, pool, 'genesis');
         await createAuditTrail(req, docId, row.id, 'CREATE', null, row.content ?? '', 'Seeded from template', {
           template_id,
@@ -1813,6 +1913,10 @@ router.post('/docs', async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       document: result.rows[0],
+      // How many sections the chosen template actually seeded (absent for a
+      // blank create) — the client's confirmation states it instead of
+      // implying it.
+      ...(templateSections ? { sections_seeded: templateSections.length } : {}),
       message: 'Document created successfully',
       // The binding outcome, always present. A document that is NOT attached to
       // a governed filing must say so at the moment it is created — an unbound

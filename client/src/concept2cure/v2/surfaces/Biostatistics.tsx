@@ -775,10 +775,25 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
               {govDocs.rows.map((p) => {
                 const def = p.doc ? BiostatDocs.byId(p.doc) : undefined;
                 return (
-                  <button key={p.id} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => { if (p.doc && BiostatDocs.byId(p.doc)) setDocType(p.doc); }}>
+                  /* `doc` is null whenever statisticalDocumentType was not
+                     recorded on the artifact — a condition this type declares as
+                     normal. The row was still a <button> in that case, so
+                     clicking a perfectly ordinary persisted document did
+                     nothing at all. It now says so: a row we cannot open is
+                     rendered as a row, disabled, with the reason in its title,
+                     rather than as a control that silently declines. */
+                  <button
+                    key={p.id}
+                    className="sp-row"
+                    style={{ width: '100%', textAlign: 'left' }}
+                    disabled={!def}
+                    title={def ? `Open the ${def.label} generator` : 'This document has no recorded statistical type, so there is no generator to open for it.'}
+                    onClick={() => { if (p.doc && def) setDocType(p.doc); }}
+                  >
                     <span className="sp-tag" style={{ fontFamily: 'var(--font-mono)' }}>{p.id}</span>
                     <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' -- ' : ''}{def?.label || 'Statistical document'}</span></span>
                     <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{p.status}</span>
+                    {!def && <span className="sp-row-note">no recorded type</span>}
                   </button>
                 );
               })}

@@ -343,8 +343,9 @@ describe('Stage 4: Backend beta contract smoke net', () => {
   });
 
   it('keeps CERV2, document data center, and eCTD/IND entry routes visible', () => {
-    // vault-auto.ts and ectd-validate.ts were removed in the design-system port;
-    // vault flows through documents-unified, eCTD validation through ectd-export.
+    // vault-auto.ts and ectd-validate.ts were removed in the design-system port
+    // (and documents-unified has since been deleted as an unreachable parallel
+    // path); eCTD validation flows through ectd-export.
     const cerv2Content = fs.readFileSync(
       path.join(repoRoot, 'server/routes/cerv2-document-routes.ts'),
       'utf8'

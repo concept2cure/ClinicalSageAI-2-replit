@@ -158,6 +158,100 @@ router.patch('/assumptions/:id/status', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /assumptions/:id/revalue — change a governed assumption's value.
+ *
+ * The Inconsistency surface's "Propagate change" button collected a new value
+ * and a mandatory reason for change, then fired the toast "cross-dossier
+ * propagation is not yet wired" and did nothing. The propagation IS wired —
+ * `supersede` calls `propagateChange`, which marks every downstream object
+ * stale — but changing a value takes TWO writes (record the new assumption,
+ * then supersede the old one BY it), and doing them from the client would leave
+ * an orphan replacement behind whenever the second failed.
+ *
+ * So it is one endpoint. The replacement carries the original's identity
+ * (project, domain track, category, unit, regulators) with the new value, and
+ * the reason travels into the supersession record — which is what a reviewer
+ * reads to understand why the dossier moved.
+ */
+router.post('/assumptions/:id/revalue', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const id = String(req.params.id);
+    const b = (req.body ?? {}) as Record<string, unknown>;
+
+    const newValue = typeof b.newValue === 'string' ? b.newValue.trim() : '';
+    if (!newValue) {
+      return res.status(400).json({ error: 'newValue is required.' });
+    }
+    const reason = typeof b.reason === 'string' ? b.reason.trim() : '';
+    if (reason.length < 8) {
+      return res.status(400).json({
+        error: 'A reason for change of at least 8 characters is required — it is what a reviewer reads to understand why the dossier moved.',
+      });
+    }
+
+    const current = await assumptionRegistryService.getById(id, orgId);
+    if (!current) return res.status(404).json({ error: 'Assumption not found' });
+    if (current.status === 'superseded') {
+      return res.status(409).json({
+        error: 'This assumption is already superseded; change the value on the record that replaced it.',
+      });
+    }
+    if (String(current.assumedValue) === newValue) {
+      return res.status(409).json({ error: 'The new value is the same as the current one; nothing was changed.' });
+    }
+
+    // The replacement is the SAME assumption at a new value: it keeps the
+    // original's project, track, category, unit and regulator scope, so the
+    // supersession chain reads as one fact changing rather than two unrelated
+    // records.
+    const replacement = await assumptionRegistryService.create({
+      organizationId: orgId,
+      projectId: current.projectId,
+      assumptionCode: current.assumptionCode,
+      title: current.title,
+      domainTrack: current.domainTrack,
+      category: current.category,
+      assumedValue: newValue,
+      unit: current.unit ?? undefined,
+      rationale: reason,
+      sourceType: current.sourceType,
+      sourceReference: current.sourceReference ?? undefined,
+      confidenceLevel: current.confidenceLevel ?? undefined,
+      applicableRegulators: current.applicableRegulators ?? undefined,
+      linkedArtifactId: current.linkedArtifactId ?? undefined,
+      linkedArtifactVersion: current.linkedArtifactVersion ?? undefined,
+      linkedSectionCode: current.linkedSectionCode ?? undefined,
+      createdBy: userId,
+    });
+
+    // Superseding is what triggers propagateChange — the downstream objects
+    // this assumption feeds are marked stale by the service, not by the client.
+    const superseded = await assumptionRegistryService.supersede(id, {
+      organizationId: orgId,
+      replacementId: replacement.id,
+      reason,
+      performedBy: userId,
+    });
+    if (!superseded) {
+      return res.status(500).json({
+        error: 'The new value was recorded but the previous assumption was not superseded. Both are now live — resolve this before filing.',
+        replacementId: replacement.id,
+      });
+    }
+
+    return res.status(201).json({
+      previous: { id, assumedValue: current.assumedValue, status: superseded.status },
+      replacement,
+      reason,
+    });
+  } catch (error) {
+    handleError(res, error, 'change assumption value');
+  }
+});
+
 router.get('/assumptions/project/:projectId/summary', async (req: Request, res: Response) => {
   try {
     const summary = await assumptionRegistryService.getByProject(

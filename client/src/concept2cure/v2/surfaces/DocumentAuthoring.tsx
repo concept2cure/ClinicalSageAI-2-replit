@@ -173,6 +173,9 @@ interface AuthComment {
   created_at: string | null;
   /** Range anchor recorded at creation (authoring_comments.anchor JSONB). */
   anchor?: unknown;
+  /** Threaded replies — the server nests them under each top-level comment
+   *  (GET /documents/:id/comments), oldest first. Absent on reply rows. */
+  replies?: AuthComment[];
 }
 
 /** Runtime guard over the JSONB the server returns verbatim. */
@@ -1639,6 +1642,51 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       );
     }
   }, [activeSection, activeDocId, newComment, loadComments, fireToast]);
+
+  /* ── Reply into a comment thread ──
+     The write endpoint has accepted `parent_comment_id` and the read has
+     returned nested `replies` since the duplicate-route collapse — and the
+     rail rendered neither, so every review "thread" was a guestbook: a
+     reviewer's question could only be answered by a NEW top-level comment
+     above it. One reply box open at a time; the reply posts against the
+     THREAD's section (not the section the author happens to have open), and
+     nothing local changes until the server confirms. */
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const addReply = useCallback(
+    async (parent: AuthComment) => {
+      if (!activeDocId || !replyText.trim() || !parent.section_id) return;
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${encodeURIComponent(parent.section_id)}/comment`,
+          { body: replyText.trim(), doc_id: activeDocId, parent_comment_id: parent.id }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Reply not posted — your session isn’t authenticated.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          fireToast(
+            'Couldn’t post the reply — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'error'
+          );
+          return;
+        }
+        setReplyText('');
+        setReplyTo(null);
+        fireToast('Reply added to the thread.');
+        void loadComments(activeDocId);
+      } catch (e) {
+        fireToast(
+          'Couldn’t post the reply — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'error'
+        );
+      }
+    },
+    [activeDocId, replyText, loadComments, fireToast]
+  );
 
   /* ── Resolve / reopen a comment thread ──
      PATCH /api/authoring/comments/:id has recorded status changes with resolver
@@ -3176,6 +3224,75 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     </div>
                   )}
                   <div className="cmt-body">{c.body}</div>
+                  {/* The thread under its head: replies the server nests,
+                      oldest first, each with its own server-side attribution. */}
+                  {(c.replies?.length ?? 0) > 0 && (
+                    <div className="cmt-replies">
+                      {c.replies!.map(r => (
+                        <div key={r.id} className="cmt-reply">
+                          <div className="cmt-meta">
+                            <span className="cmt-av">
+                              {(r.author_name ?? '·')
+                                .split(' ')
+                                .map(x => x[0])
+                                .join('')
+                                .slice(0, 2)}
+                            </span>
+                            <b>{r.author_name ?? 'Unknown'}</b>
+                            <span className="cmt-when">· {relTime(r.created_at)}</span>
+                          </div>
+                          <div className="cmt-body">{r.body}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* Reply — posts into THIS thread (parent_comment_id), against
+                      the thread's own section. One box open at a time. */}
+                  {c.section_id &&
+                    (replyTo === c.id ? (
+                      <div style={{ marginTop: 6 }}>
+                        <textarea
+                          className="c2c-input"
+                          value={replyText}
+                          autoFocus
+                          onChange={e => setReplyText(e.target.value)}
+                          placeholder={`Reply to ${c.author_name ?? 'this thread'}…`}
+                          aria-label={`Reply to ${c.author_name ?? 'this thread'}`}
+                          style={{ width: '100%', minHeight: 44, resize: 'vertical', fontSize: 13 }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 4 }}>
+                          <button
+                            className="nda-open"
+                            onClick={() => {
+                              setReplyTo(null);
+                              setReplyText('');
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn primary"
+                            style={{ height: 26 }}
+                            disabled={!replyText.trim()}
+                            onClick={() => void addReply(c)}
+                          >
+                            Reply
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="nda-open"
+                        style={{ marginTop: 4 }}
+                        title="Reply into this thread"
+                        onClick={() => {
+                          setReplyTo(c.id);
+                          setReplyText('');
+                        }}
+                      >
+                        {I.messageSquare} Reply
+                      </button>
+                    ))}
                 </div>
               );
             })

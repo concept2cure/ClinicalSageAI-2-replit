@@ -19,6 +19,7 @@ import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { FireToast } from '../toast';
+import { downloadBlob } from '../download';
 
 interface BuildResult { formId?: string; missingRequired?: string[]; fields?: Record<string, unknown> | Array<unknown>; }
 
@@ -105,12 +106,7 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         note(`Couldn’t render form ${formId} — ` + detail + '.', 'error');
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `FDA-${formId}.pdf`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(`FDA-${formId}.pdf`, await res.blob());
       // Say honestly WHAT was rendered: the official FDA template, a faithful
       // reconstruction (dynamic-XFA forms have no official page to fill), or the
       // labeled draft (no template installed). A tester must never mistake a

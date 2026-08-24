@@ -149,7 +149,14 @@ export function Home({
     setDraft('');
     onNav('conversation-thread');
   };
-  const newProject = () => onNav('projects');
+  /* Open the wizard, not the (empty) portfolio behind it. Projects.tsx:675
+     already reads this flag on mount and opens the wizard; nothing in the repo
+     wrote it, so every "Start a new … project" hero CTA landed the user on a
+     list with no programs and no obvious next step. */
+  const newProject = () => {
+    try { (window as any).__C2C_NEW_PROJECT = true; } catch { /* noop */ }
+    onNav('projects');
+  };
 
   const modGroups = getSegmentModules(segment) ?? [];
 

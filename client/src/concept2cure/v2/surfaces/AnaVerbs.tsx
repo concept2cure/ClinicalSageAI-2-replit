@@ -14,6 +14,11 @@ interface RegistryEntry {
 interface RegistryPickerProps {
   value: string; onChange: (id: string) => void;
   initialSegment?: string; compact?: boolean;
+  /* The visible tab, reported up. The picker owned this state privately, so the
+     wizard's "Tailored for …" banner was computed once from the lane the user
+     arrived in and could not follow them when they switched tabs — it went on
+     naming a category they were no longer looking at. */
+  onSegmentChange?: (segment: string) => void;
 }
 interface AnaVerbBarProps {
   submissionTypeId?: string; sectionId?: string; sectionLabel?: string;
@@ -38,12 +43,16 @@ interface UsageInfo {
 }
 type StreamPhase = 'idle' | 'thinking' | 'streaming' | 'done' | 'error';
 
-export function RegistryPicker({ value, onChange, initialSegment, compact }: RegistryPickerProps) {
+export function RegistryPicker({ value, onChange, initialSegment, compact, onSegmentChange }: RegistryPickerProps) {
   const segs = ((window as any).REG_SEGMENTS || {}) as Record<string, { label: string; count: number }>;
   const cats = ((window as any).REG_CATEGORIES || {}) as Record<string, { label: string }>;
   const registry = ((window as any).GLOBAL_REGISTRY || []) as RegistryEntry[];
   const segKeys = Object.keys(segs);
-  const [seg, setSeg] = useState(initialSegment || segKeys[0] || 'pharma_biotech');
+  const [seg, setSegState] = useState(initialSegment || segKeys[0] || 'pharma_biotech');
+  const setSeg = (next: string) => {
+    setSegState(next);
+    onSegmentChange?.(next);
+  };
   const [q, setQ] = useState('');
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [agencyFilter, setAgencyFilter] = useState<string | null>(null);

@@ -78,7 +78,7 @@ export const IVD_STAGES: IvdStage[] = [
   { id: 'classification', label: 'Classification',       meta: 'Annex VIII rule engine' },
   { id: 'analytical',     label: 'Analytical validation', meta: 'LoD · LoQ · precision' },
   { id: 'clinical',       label: 'Clinical evidence',    meta: '2×2 · sensitivity · specificity' },
-  { id: 'gspr',           label: 'GSPR compliance',      meta: 'Annex I · 23 requirements' },
+  { id: 'gspr',           label: 'GSPR compliance',      meta: 'Annex I · 20 requirements' },
   { id: 'dossier',        label: 'Assemble dossier',     meta: 'Technical file · declaration' },
   { id: 'submit',         label: 'Submit',               meta: 'EUDAMED · NB review' },
 ];
@@ -101,8 +101,14 @@ export const IVD_CLINICAL: IvdClinicalEvidence[] = [
   { id: 'e-03', study: 'EGFR CDx bridging (n=180)',         tp: 70,  fp: 5,  tn: 95,  fn: 10, sensitivity: 0.875, specificity: 0.950, ppv: 0.933, npv: 0.905, accuracy: 0.917, status: 'in_review' },
 ];
 
+/* IVDR Annex I, not MDR's. This surface carried MDR's schedule — 23
+   requirements across 1–9 / 10–18 / 19–23 — on an IVD workbench, so the
+   checklist an IVD manufacturer worked through was generated from the wrong
+   regulation. IVDR (EU) 2017/746 Annex I has 20, and the boundaries below are
+   the ones stated in the MDX work order. SEE THE COMMIT MESSAGE: the total is
+   certain, the internal split is the open question. */
 export const IVD_GSPR: IvdGsprChapter[] = [
-  { key: 'I',   label: 'General requirements (GSPR 1–9)',         total: 9, compliant: 7, partiallyCompliant: 1, nonCompliant: 0, notAssessed: 1 },
-  { key: 'II',  label: 'Performance, design & manufacture (10–18)', total: 9, compliant: 5, partiallyCompliant: 2, nonCompliant: 1, notAssessed: 1 },
-  { key: 'III', label: 'Information supplied (GSPR 19–23)',        total: 5, compliant: 3, partiallyCompliant: 1, nonCompliant: 0, notAssessed: 1 },
+  { key: 'I',   label: 'General requirements (GSPR 1–8)',           total: 8, compliant: 6, partiallyCompliant: 1, nonCompliant: 0, notAssessed: 1 },
+  { key: 'II',  label: 'Performance, design & manufacture (9–13)',  total: 5, compliant: 3, partiallyCompliant: 1, nonCompliant: 1, notAssessed: 0 },
+  { key: 'III', label: 'Information supplied (GSPR 14–20)',         total: 7, compliant: 4, partiallyCompliant: 1, nonCompliant: 0, notAssessed: 2 },
 ];

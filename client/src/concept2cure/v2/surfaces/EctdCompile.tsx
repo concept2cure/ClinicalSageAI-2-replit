@@ -38,6 +38,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadText } from '../download';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -110,13 +111,7 @@ async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: un
 
 function sevTone(s: string) { return s === 'error' ? 'err' : s === 'warning' ? 'warn' : 'ok'; }
 
-function downloadXml(name: string, text: string) {
-  const blob = new Blob([text], { type: 'application/xml' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = name; document.body.appendChild(a); a.click();
-  document.body.removeChild(a); URL.revokeObjectURL(url);
-}
+const downloadXml = (name: string, text: string) => downloadText(name, text, 'application/xml');
 
 /**
  * The open program's identifier — a regulatory_programs UUID, a program code,
