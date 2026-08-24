@@ -92,7 +92,14 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'pdev', label: 'Program Development (PDEV→IND)', description: 'The PDEV → IND workflow surface. May be feature-gated.', scope: 'global', group: 'global' },
   { id: 'deep-research', label: 'Deep Research', description: 'The full-screen deep-research chat surface.', scope: 'global', group: 'global' },
   { id: 'apps', label: 'Apps', description: 'The specialist-tools launcher (precedent intelligence, biostatistics, report engine, etc.).', scope: 'global', group: 'global' },
-  { id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global' },
+  {
+    id: 'artifacts-center', label: 'Artifacts Center', description: 'The cross-project artifacts center.', scope: 'global', group: 'global',
+    // Declared because it is already CONSUMED (the surface focuses/scrolls to
+    // this artifact on mount) and PRODUCED (the shell's follow-the-work stash
+    // on artifact_version_saved) — an undeclared param the channel carries is
+    // a contract gap, not a feature.
+    params: [{ name: 'artifactId', required: false, description: 'Artifact to focus and scroll into view on arrival.' }],
+  },
 
   // ── Project-scoped tabs (require an active project) ──
   { id: 'project-home', label: 'Project Home', description: 'The active project overview / home.', scope: 'project', group: 'project' },

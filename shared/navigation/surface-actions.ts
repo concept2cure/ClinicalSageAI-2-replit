@@ -77,7 +77,7 @@ export type SurfaceActionResolution =
  * governed path is the Part 11 propose-only pipeline, never this registry.
  */
 export const GOVERNED_VERB_PATTERN =
-  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch)\b/i;
+  /\b(sign|esign|e-sign|approve|reject|submit|transmit|lock|unlock|release|revoke|delete|destroy|certify|attest|countersign|freeze|dispatch|accept)\b/i;
 
 /** Throws for an action id that names governed work. Exported for the tests. */
 export function assertUngovernedActionId(id: string): void {
@@ -434,6 +434,111 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         required: true,
         description: 'The lifecycle stage tab to open.',
         enum: ['plan', 'evidence', 'author', 'review', 'submit', 'respond', 'lifecycle'],
+      },
+    ],
+  },
+
+  // ── Risk management (ISO 14971 file) ──
+  {
+    id: 'risk.set-matrix-view',
+    surfaceId: 'risk',
+    label: 'Switch the risk matrix view',
+    description:
+      'On the risk file, switch the severity × probability matrix between the initial and residual assessments. Refused while a new-hazard or add-control form is open.',
+    params: [
+      {
+        name: 'view',
+        required: true,
+        description: 'Which assessment to show.',
+        enum: ['initial', 'residual'],
+      },
+    ],
+  },
+  {
+    id: 'risk.select-hazard',
+    surfaceId: 'risk',
+    label: 'Open a hazard',
+    description:
+      'On the risk file, open a hazard by its reference (e.g. "HZ-01") or hazard text so its severity, probability, and controls show. Resolved against the real risk file with honest misses. Accepting residual risk stays a governed human act. Refused while a form is open.',
+    params: [
+      {
+        name: 'hazard',
+        required: true,
+        description: 'The hazard reference or text as listed in the register (case-insensitive; partial text resolves when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'risk.focus-cell',
+    surfaceId: 'risk',
+    label: 'Focus a matrix cell',
+    description:
+      'On the risk file, focus a severity × probability cell of the matrix and open the hazard sitting there (the first, when several share the cell — the count is reported). An empty cell is an honest miss. Refused while a form is open.',
+    params: [
+      {
+        name: 'severity',
+        required: true,
+        description: 'The severity band, exactly as labelled on the matrix axis.',
+        enum: ['Negligible', 'Minor', 'Serious', 'Critical', 'Catastrophic'],
+      },
+      {
+        name: 'probability',
+        required: true,
+        description: 'The probability band, exactly as labelled on the matrix axis.',
+        enum: ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'],
+      },
+      {
+        name: 'view',
+        required: false,
+        description: 'Which assessment to read the cell from (defaults to the one on screen).',
+        enum: ['initial', 'residual'],
+      },
+    ],
+  },
+
+  // ── Template library ──
+  {
+    id: 'template-library.select-template',
+    surfaceId: 'template-library',
+    label: 'Select a template',
+    description:
+      'In the template library, select a template by name so its preview opens — the same click a person makes on the list. Refused while an unsaved extraction preview is on screen (selecting under it is disorienting and its Discard is unrecoverable). Note: selection re-points the render/verify/apply toolbar at the newly selected template.',
+    params: [
+      {
+        name: 'template',
+        required: true,
+        description: 'The template name as shown in the list (case-insensitive; partial names resolve when unambiguous).',
+      },
+    ],
+  },
+  {
+    id: 'template-library.open-tab',
+    surfaceId: 'template-library',
+    label: 'Open a template tab',
+    description:
+      'In the template library, open one of the selected template\'s tabs: live preview, specification, form fields, named styles, or the saved extraction report (read-only — it never starts an extraction).',
+    params: [
+      {
+        name: 'tab',
+        required: true,
+        description: 'The tab to open.',
+        enum: ['preview', 'spec', 'fields', 'styles', 'extract'],
+      },
+    ],
+  },
+
+  // ── Artifacts center ──
+  {
+    id: 'artifacts-center.focus-artifact',
+    surfaceId: 'artifacts-center',
+    label: 'Focus an artifact',
+    description:
+      'In the artifacts center, bring a named artifact into view and highlight it — the same focus the follow-the-work hand-off applies when a driven turn saves a draft. Resolved against the real gallery with honest misses.',
+    params: [
+      {
+        name: 'artifact',
+        required: true,
+        description: 'The artifact name as shown in the gallery (case-insensitive; partial names resolve when unambiguous).',
       },
     ],
   },

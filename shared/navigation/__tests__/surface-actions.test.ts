@@ -72,6 +72,9 @@ describe('the governance boundary', () => {
       // as a regex gap (freeze/dispatch were not refused); they are now.
       'submissions.freeze-sequence',
       'submissions.dispatch-sequence',
+      // Residual-risk acceptance is a persisted governed judgment (ISO 14971
+      // risk file PATCH) — flagged in wave-3 recon as the next regex gap.
+      'risk.accept-residual',
     ]) {
       expect(GOVERNED_VERB_PATTERN.test(bad), bad).toBe(true);
       expect(() => assertUngovernedActionId(bad)).toThrow(/governed/);

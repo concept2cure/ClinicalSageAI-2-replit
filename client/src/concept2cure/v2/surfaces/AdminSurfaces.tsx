@@ -6,6 +6,7 @@ import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { getSurfaceMeta } from '../registryModel';
 import { consumeNavParams } from '../navParams';
 // LIC_TIER_LEVEL is the client's one ascending tier ordering (free < standard <
@@ -2183,16 +2184,58 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
   /* Follow-the-work hand-off (Live Drive): a driven turn that just persisted a
      draft lands here with its artifactId, and the gallery brings that row into
      view, highlighted — the subscriber watches the document ARRIVE. Consumed
-     once; a stale or absent hand-off changes nothing. */
-  const [focusId] = useState<string | null>(
+     once; a stale or absent hand-off changes nothing. The setter now also
+     serves artifacts-center.focus-artifact, which drives the SAME focus
+     mechanism by name. */
+  const [focusId, setFocusId] = useState<string | null>(
     () => consumeNavParams('artifacts-center')?.artifactId ?? null,
   );
   const focusRowRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (focusId && focusRowRef.current) {
-      focusRowRef.current.scrollIntoView({ block: 'center' });
-    }
+    /* Guarded like Review's queue scroll: `scrollIntoView` is absent in jsdom
+       and some embedded webviews, and an unguarded call throws out of the
+       effect — taking the focus highlight down with it. The highlight is the
+       part that matters; the scroll is a courtesy. */
+    try {
+      if (focusId && focusRowRef.current) {
+        focusRowRef.current.scrollIntoView({ block: 'center' });
+      }
+    } catch { /* no scrollIntoView here — the row is still highlighted */ }
   }, [focusId, rows.length]);
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     artifacts-center.focus-artifact, identity-resolved). Focus/scroll only —
+     nothing on this surface mutates; downloads and exports stay human acts
+     behind their governance gate. */
+  useSurfaceActionHandlers('artifacts-center', {
+    'artifacts-center.focus-artifact': (params) => {
+      const wanted = (params.artifact ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No artifact named.' };
+      if (loading)
+        return { ok: false, reason: 'The artifact gallery is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The artifact gallery could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'No artifacts in this gallery.' };
+      const lower = wanted.toLowerCase();
+      const exact = rows.find((a) => a.name.toLowerCase() === lower);
+      const contains = exact ? [] : rows.filter((a) => a.name.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.artifact}" matches ${contains.length} artifacts — name one exactly.`
+              : `No artifact named "${params.artifact}" in the gallery.`,
+        };
+      }
+      setFocusId(match.id);
+      return { ok: true, detail: `Focused ${match.name}` };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!loading) notifySurfaceActionReady('artifacts-center');
+  }, [loading]);
 
   /* What AnA can see of this screen.
      This is the gallery of what SHE drafted, so "where is the SAP I wrote?" and

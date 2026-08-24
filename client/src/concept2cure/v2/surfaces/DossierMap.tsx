@@ -135,7 +135,11 @@ export function DossierMap({ onAsk }: SurfaceViewProps) {
       },
       availableActions: [
         'Read per-module (M1-M5) completeness and its readiness overlay',
-        'Open a module to see which CTD sections it rolls up',
+        /* Was 'Open a module to see which CTD sections it rolls up' — an
+           overclaim: no module opener exists on this surface (the section
+           chips are inert spans). The context already carries each module's
+           sections list, which is the truthful version of the same offer. */
+        'Read which CTD sections each module rolls up (listed in this context)',
       ],
     };
   }, [projectId, loading, error, empty, modules]);

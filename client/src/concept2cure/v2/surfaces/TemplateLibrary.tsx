@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
@@ -268,6 +269,62 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [flash, note] = useToast();
+
+  /* ── AnA's hands on this screen — the surface-action bus ──────────────────
+     Registered under 'template-library' (identity-mapped nav target). Both
+     handlers drive the SAME state the human's own row clicks and tab buttons
+     drive (setSel + setTab); names resolve against the REAL template store
+     with honest misses. Extraction, saving, verifying, rendering, and
+     applying stay human acts, untouched. */
+  useSurfaceActionHandlers('template-library', {
+    'template-library.select-template': (params) => {
+      /* An unsaved extraction preview carries a Save and an unrecoverable
+         Discard — moving the selection under it is disorienting. Refuse. */
+      if (extract) {
+        return { ok: false, reason: 'An unsaved extraction preview is open — save or discard it first.' };
+      }
+      const wanted = (params.template ?? '').trim();
+      if (!wanted) return { ok: false, reason: 'No template named.' };
+      if (live.loading && rows.length === 0)
+        return { ok: false, reason: 'The template store is still loading.', retry: true };
+      if (live.error && rows.length === 0)
+        return { ok: false, reason: 'The template store could not be read.' };
+      if (rows.length === 0) return { ok: false, reason: 'No templates saved yet.' };
+      const lower = wanted.toLowerCase();
+      const exact = rows.find((t) => t.name.toLowerCase() === lower);
+      const contains = exact ? [] : rows.filter((t) => t.name.toLowerCase().includes(lower));
+      const match = exact ?? (contains.length === 1 ? contains[0] : null);
+      if (!match) {
+        return {
+          ok: false,
+          reason:
+            contains.length > 1
+              ? `"${params.template}" matches ${contains.length} templates — name one exactly.`
+              : `No template named "${params.template}" in the library.`,
+        };
+      }
+      // The human's own row handler: select and land on the preview. Selection
+      // also re-points the render/verify/apply toolbar — said in the detail.
+      setSel(match.id);
+      setTab('preview');
+      return { ok: true, detail: `Selected ${match.name} — the toolbar now acts on it` };
+    },
+    'template-library.open-tab': (params) => {
+      const target = (params.tab ?? '').trim();
+      if (!['preview', 'spec', 'fields', 'styles', 'extract'].includes(target)) {
+        return { ok: false, reason: `No template tab named "${params.tab}".` };
+      }
+      if (live.loading && rows.length === 0)
+        return { ok: false, reason: 'The template store is still loading.', retry: true };
+      if (rows.length === 0 || !sel) return { ok: false, reason: 'No template is selected.' };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${target} tab` };
+    },
+  });
+  /* The ready signal for the retry contract above. */
+  useEffect(() => {
+    if (!live.loading) notifySurfaceActionReady('template-library');
+  }, [live.loading]);
 
   const startExtract = () => fileRef.current?.click();
 

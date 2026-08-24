@@ -260,3 +260,21 @@ Contract gaps recon flagged, to fix with wave 3: `accept` missing from
 GOVERNED_VERB_PATTERN; `artifactId` consumed by artifacts-center but not
 declared on its nav target; dossier-map's availableActions advertises a
 module opener that does not exist.
+
+### Wave 3 landed (2026-08-24, same day)
+
+Six more actions on three surfaces, from the wave-3 recon specs: `risk`
+(set-matrix-view / select-hazard — held through the load because the seed
+effect would clobber an early select / focus-cell over the SAME sevI×probI
+derivation the matrix dots render from, first-of-N reported honestly),
+`template-library` (select-template — refused while an unsaved extraction
+preview is up, detail says the toolbar re-points / open-tab), and
+`artifacts-center` (focus-artifact — drives the same focusId the
+follow-the-work hand-off drives; the scroll effect gained the
+jsdom/webview scrollIntoView guard the wiring test exposed). Contract
+fixes shipped with it: `accept` added to GOVERNED_VERB_PATTERN
+(risk.accept-residual pinned failing-first), `artifactId` declared on the
+artifacts-center nav target (it was consumed and produced but undeclared),
+and dossier-map's availableActions no longer advertises a module opener
+that does not exist. Registry now 27 actions across 13 surfaces. Wiring
+proof: `anaDrivesWave3.test.tsx`.
