@@ -18,14 +18,17 @@ import '../styles/project-home-v2.css';
    (parseInt of a UUID would load a different project in the same org). */
 declare global {
   interface Window {
-    /* The canonical type, not `Record<string, string>`.
-       That declaration was a lie about the channel — `ShellProject.id` is
-       `string | number` and the rest are structured optional fields, none of
-       which satisfies a string index signature. TypeScript intersects global
-       augmentations, so `shellProject.ts`'s own `Window & { C2C_PROJECT?:
-       ShellProject }` resolved to `Record<string, string> & ShellProject`, an
-       impossible type that made the shell's one writer fail to compile. One
-       declaration, one type. */
+    /* Typed by its owner, `../shellProject` (ShellProject), not re-declared as
+       a string map here.
+
+       This read `Record<string, string>`, which was harmless while nothing else
+       typed the global — but a `declare global` block MERGES, so when
+       shellProject.ts became the channel's owner and assigned a real
+       `ShellProject`, TypeScript intersected the two into
+       `Record<string, string> & ShellProject` and rejected every write: a
+       ShellProject has no string index signature. That broke the typecheck for
+       the whole repository from a file neither end of the assignment mentions,
+       which is the specific cost of declaring another module's global. */
     C2C_PROJECT?: import('../shellProject').ShellProject;
     C2C_CONVO?: Record<string, string>;
     /** cre_evidence_sources ids the user pinned in the data room as AnA context. */
@@ -1047,12 +1050,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // Selected-project identity handed off from the Projects surface. Its `id` is
   // the C2C regulatory_programs UUID, which keys the /api/c2c/projects/:id
   // read-models. 'new' (wizard transient) has no persisted record → no fetch.
-  /* Normalised to a string. `ShellProject.id` is `string | number` — the shell
-     writes whichever the store gave it — and every consumer below takes
-     `string | null`. Coercing once here is the one place that conversion
-     belongs; it used to be hidden by the global being typed
-     `Record<string, string>`, which simply asserted the number away. */
-  const pid = sel?.id && sel.id !== 'new' ? String(sel.id) : null;
+  //
+  // The `typeof === 'string'` test is the id-SPACE guard this file's header
+  // asks for, and it only became expressible once the global stopped being
+  // declared here as `Record<string, string>` and started carrying its owner's
+  // real `ShellProject` type — whose `id` is `string | number`.
+  //
+  // A NUMBER here is a `projects.id`, not a `regulatory_programs` UUID: a
+  // different id-space, and one this surface's read-models are not keyed on.
+  // Coercing it with `String(...)` would compile and then fetch
+  // /api/c2c/projects/42 — a well-formed request for a DIFFERENT project in the
+  // same organization, returning a real, plausible, wrong program with no error
+  // anywhere. That is the mirror of the hazard the header already warns about
+  // ("parseInt of a UUID would load a different project in the same org"), and
+  // it is why this resolves to null instead: no project is a state the surface
+  // renders honestly, whereas the wrong project is not.
+  const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
