@@ -23,10 +23,11 @@
  * surfaced as "requires a platform administrator"). The one-time token is shown
  * exactly once from the server's response and never persisted client-side.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
@@ -148,6 +149,48 @@ export function IdentityConsole(_props: SurfaceViewProps) {
       () => fireToast('Couldn’t copy — select and copy manually.', 'error'),
     );
   }, [fireToast]);
+
+  /* WHAT ANA SEES HERE. Above the forbidden early return — this is a hook, and
+     a hook below a conditional return runs on some renders and not others.
+     Counts and access state only: never the revealed token (a live SCIM bearer
+     credential — §11.10(d) keeps only its hash server-side), never rule CIDRs,
+     organization ids or tenant labels. Zero allowlist rules is published as
+     the count, not as "unrestricted". */
+  const anaContext = useMemo(() => {
+    if (tenantState === 'loading') {
+      return { summary: 'Enterprise identity is still loading; nothing on screen is final yet.', facts: { access: 'loading' } };
+    }
+    if (tenantState === 'forbidden') {
+      return {
+        summary:
+          'This account cannot administer enterprise identity — the SCIM token and allowlist directory requires the super_admin or platform_admin role, so nothing is listed.',
+        facts: { access: 'forbidden' },
+      };
+    }
+    if (tenantState === 'error') {
+      return {
+        summary:
+          'The SCIM tenant directory could not be read — a failed read, not an organization with no SCIM configuration.',
+        facts: { access: 'error' },
+      };
+    }
+    return {
+      summary:
+        `Enterprise identity: ${tenants.length} SCIM token(s) (${tenants.filter((t) => t.enabled).length} enabled), ` +
+        `${rules.length} allowlist rule(s), and the four SAML endpoints (metadata, initiate, callback, logout) listed.`,
+      facts: {
+        access: tenantState,
+        scimTenantCount: tenants.length,
+        scimTenantsEnabled: tenants.filter((t) => t.enabled).length,
+        allowlistRuleCount: rules.length,
+        aTokenWasJustRevealed: revealed !== null,
+      },
+      availableActions: [
+        'Issuing, rotating, disabling and revoking SCIM tokens and allowlist rules are platform-administrator acts performed on this screen',
+      ],
+    };
+  }, [tenantState, tenants, rules, revealed]);
+  usePublishSurfaceContext('identity-console', anaContext);
 
   if (tenantState === 'forbidden') {
     return (
