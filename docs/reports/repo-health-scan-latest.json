@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T04:04:00.703Z",
+  "generatedAt": "2026-08-24T04:04:37.789Z",
   "git": {
-    "sha": "5aaa05793021df5502dc0a76ba94ba0f9c3b054c",
+    "sha": "f660a0c4bb102e60a55cdadb68ac374326084730",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -18,7 +18,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 38,
-    "largeFilesByLines": 89
+    "largeFilesByLines": 90
   },
   "findings": {
     "duplicateBasenames": [
@@ -522,6 +522,26 @@
         ]
       },
       {
+        "basename": "device-classification",
+        "count": 4,
+        "paths": [
+          "server/routes/device-classification.ts",
+          "server/services/global-ri/device-classification.ts",
+          "server/services/market-specs/device-classification.ts",
+          "shared/constants/domain/device-classification.ts"
+        ]
+      },
+      {
+        "basename": "device-classification.test",
+        "count": 4,
+        "paths": [
+          "server/routes/__tests__/device-classification.test.ts",
+          "server/services/global-ri/__tests__/device-classification.test.ts",
+          "server/services/market-specs/__tests__/device-classification.test.ts",
+          "shared/constants/domain/__tests__/device-classification.test.ts"
+        ]
+      },
+      {
         "basename": "engine",
         "count": 4,
         "paths": [
@@ -758,24 +778,6 @@
           "design-system/_sync/reconciliation-2026-06-02/files/data-submissions.jsx",
           "design-system/ui_kits/mdx/data-submissions.jsx",
           "design-system/ui_kits/mdx_phase2/data-submissions.jsx"
-        ]
-      },
-      {
-        "basename": "device-classification",
-        "count": 3,
-        "paths": [
-          "server/routes/device-classification.ts",
-          "server/services/global-ri/device-classification.ts",
-          "server/services/market-specs/device-classification.ts"
-        ]
-      },
-      {
-        "basename": "device-classification.test",
-        "count": 3,
-        "paths": [
-          "server/routes/__tests__/device-classification.test.ts",
-          "server/services/global-ri/__tests__/device-classification.test.ts",
-          "server/services/market-specs/__tests__/device-classification.test.ts"
         ]
       },
       {
@@ -2649,6 +2651,10 @@
         "lines": 1533
       },
       {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1531
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1527
       }
@@ -2660,7 +2666,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 400,
       "largeByBytes": 30,
-      "largeByLines": 73
+      "largeByLines": 74
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2670,7 +2676,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 70,
+      "duplicateGroups": 72,
       "largeByBytes": 3,
       "largeByLines": 2
     },
