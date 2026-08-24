@@ -2622,7 +2622,11 @@ router.patch('/comments/:commentId', async (req: Request, res: Response) => {
       if (status === 'resolved') {
         paramCount++;
         updates.push(`resolved_at = NOW(), resolved_by = $${paramCount}`);
-        values.push(resolvedBy);
+        // The same principal convention comment CREATION records (user_name =
+        // verified email, falling back to the actor id): the rail displays
+        // this value, and "Resolved by 1" is an attribution no reader can use.
+        // Still JWT-sourced either way — never a header, never the body.
+        values.push(req.user?.email ?? resolvedBy);
       }
     }
 
