@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-24T16:41:58.366Z",
+  "generatedAt": "2026-08-24T16:55:33.115Z",
   "git": {
-    "sha": "02a80755294c5edc1376ee822ca7d27da4551d47",
+    "sha": "35bca24aa56dbc638df2ea50e13db284ae466dbe",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2154,7 +2154,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 688789
+        "bytes": 689106
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2308,7 +2308,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18503
+        "lines": 18509
       },
       {
         "file": "server/statistics-service.ts",
