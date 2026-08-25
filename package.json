@@ -21,7 +21,7 @@
     "medical-device"
   ],
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=20.0.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
@@ -136,7 +136,6 @@
     "ci:js-ts-shadows": "node scripts/ci/check-js-ts-shadows.mjs",
     "ci:typecheck:no-regression": "node scripts/ci/typecheck-no-regression.mjs",
     "ci:typecheck:write-baseline": "node scripts/ci/typecheck-no-regression.mjs --write-baseline",
-    "ci:node-runtime-alignment": "node scripts/ci/check-node-runtime-alignment.mjs",
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",

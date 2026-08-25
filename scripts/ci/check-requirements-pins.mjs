@@ -66,7 +66,7 @@ const FALLBACK_PYTHON = '3.11';
 
 /**
  * Read the Python the project declares, from `.replit`'s modules list
- * (e.g. `modules = ["bash", "nodejs-22", "python-3.11", "python3", "web"]`).
+ * (e.g. `modules = ["bash", "nodejs-20", "python-3.11", "python3", "web"]`).
  * Deriving it rather than hardcoding means upgrading Python moves this guard
  * with it instead of leaving a stale assertion behind.
  */

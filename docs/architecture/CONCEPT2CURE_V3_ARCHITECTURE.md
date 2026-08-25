@@ -130,7 +130,7 @@ CREATE POLICY rls_select ON table FOR SELECT
 ## Running Migrations
 
 ### Prerequisites
-- Node.js 22+ with `pg` and `dotenv` packages
+- Node.js 18+ with `pg` and `dotenv` packages
 - PostgreSQL client (`psql`)
 - Neon database with connection string in `.env`
 

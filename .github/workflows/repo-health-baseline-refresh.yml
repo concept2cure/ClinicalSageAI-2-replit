@@ -41,7 +41,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       # The scan uses only Node builtins (node:fs / node:path / node:child_process),
       # so no dependency install is required — keep this fast and resilient.

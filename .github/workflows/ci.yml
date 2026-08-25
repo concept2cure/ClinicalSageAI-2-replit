@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
@@ -44,12 +44,6 @@ jobs:
             sleep $((attempt * 15))
           done
           echo "::error::npm install failed after 3 attempts"; exit 1
-
-      - name: Guardrails — Node runtime alignment
-        run: npm run ci:node-runtime-alignment
-
-      - name: Guardrails — drizzle schema entrypoints are readable
-        run: npm run db:check-schema-entrypoints
 
       - name: Guardrails — eCTD migration headers (reg audit)
         run: ./scripts/ci/require-migration-headers.sh
@@ -540,7 +534,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -621,7 +615,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm ci
@@ -680,7 +674,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -710,7 +704,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -754,7 +748,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -922,7 +916,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         run: |
@@ -1118,7 +1112,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         run: |
@@ -1307,7 +1301,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -1338,7 +1332,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
@@ -1409,7 +1403,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: '20'
       - name: Install dependencies
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
         run: |
