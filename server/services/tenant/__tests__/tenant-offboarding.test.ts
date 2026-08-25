@@ -409,6 +409,8 @@ describe('purgeTenant — what it actually does', () => {
     expect(PURGE_CHILD_TABLES).not.toContain('audit_logs');
     expect(PURGE_CHILD_TABLES).not.toContain('audit_events');
     expect(PURGE_CHILD_TABLES).not.toContain('stripe_events');
+    expect(PURGE_CHILD_TABLES).toContain('module_access_requests');
+    expect(PURGE_CHILD_TABLES).toContain('project_workflows');
     for (const t of PURGE_CHILD_TABLES) expect(t).toMatch(/^[a-z_][a-z0-9_]*$/);
   });
 });
