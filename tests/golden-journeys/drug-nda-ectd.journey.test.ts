@@ -46,6 +46,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { randomBytes } from 'node:crypto';
 import {
   createJourneyDb,
   extractTableDdl,
@@ -60,7 +61,7 @@ import {
 
 const T = 180_000;
 
-process.env.AUDIT_HMAC_KEY = 'journey-drug-nda-ectd-audit-hmac-key-0000000';
+process.env.AUDIT_HMAC_KEY = randomBytes(32).toString('hex');
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../server/db', () => ({
@@ -93,7 +94,8 @@ const USER = 1;
 /** A second authorized user in the same org — the signer. */
 const SIGNER = 2;
 const OUTSIDER = 3;
-const PASSWORD = 'Correct-Horse-Battery-42';
+const PASSWORD = randomBytes(24).toString('base64url');
+const WRONG_PASSWORD = randomBytes(24).toString('base64url');
 
 let jdb: JourneyDb;
 let app: express.Express;
@@ -137,6 +139,7 @@ beforeAll(async () => {
   const baseline = extractTableDdl('migrations/0000_sweet_joseph.sql', [
     'organizations',
     'users',
+    'organization_users',
     'client_workspaces',
     'projects',
     'audit_logs',
@@ -191,6 +194,13 @@ beforeAll(async () => {
        ($2,'approver@journey.example','Quinn Approver',$4,'VP Regulatory'),
        ($3,'outsider@other.example','Iris Intruder',$4,'Head of Nothing')`,
     [USER, SIGNER, OUTSIDER, hash],
+  );
+  await jdb.pool.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES
+       ($1,$2,'admin'),
+       ($1,$3,'admin'),
+       ($4,$5,'admin')`,
+    [ORG, USER, SIGNER, OTHER_ORG, OUTSIDER],
   );
   await jdb.pool.query(
     `INSERT INTO client_workspaces (id, organization_id, name, slug) VALUES
@@ -641,7 +651,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       const res = await asPrincipal(ORG, SIGNER)(request(app).post('/api/c2c/actions/sign')).send({
         target: `ectd-sequence:${sequenceId}`,
         reason: 'Attempting to sign without knowing the password.',
-        reauth: { password: 'not-the-password' },
+        reauth: { password: WRONG_PASSWORD },
       });
       const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM electronic_signatures`);
       return {
