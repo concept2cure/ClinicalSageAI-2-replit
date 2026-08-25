@@ -73,14 +73,22 @@ export class AISentinel {
   async getConfig(organizationId: number): Promise<SentinelConfig> {
     if (this.configs.has(organizationId)) return this.configs.get(organizationId)!;
 
+    // pm_settings is one row per organization. Sentinel previously treated it
+    // as a key/value table (key/value/metadata columns), which is not the
+    // schema created by either the Drizzle baseline or the durable migration.
+    // Keep the Sentinel payload under ai_settings.sentinel so it coexists with
+    // the PM UI's tone/risk/citation settings without inventing a parallel
+    // configuration store.
     const result = await this.pool.query(
-      `SELECT metadata FROM pm_settings WHERE organization_id = $1 AND key = 'sentinel_config'`,
+      `SELECT ai_settings -> 'sentinel' AS sentinel_config
+         FROM pm_settings
+        WHERE organization_id = $1`,
       [organizationId]
     );
 
     const config: SentinelConfig =
       result.rows.length > 0
-        ? { organizationId, ...DEFAULT_SENTINEL_CONFIG, ...result.rows[0].metadata }
+        ? { organizationId, ...DEFAULT_SENTINEL_CONFIG, ...result.rows[0].sentinel_config }
         : { organizationId, ...DEFAULT_SENTINEL_CONFIG };
 
     this.configs.set(organizationId, config);
@@ -95,9 +103,14 @@ export class AISentinel {
     const merged = { ...current, ...update, organizationId };
 
     await this.pool.query(
-      `INSERT INTO pm_settings (organization_id, key, value, metadata, updated_at)
-       VALUES ($1, 'sentinel_config', 'sentinel', $2, NOW())
-       ON CONFLICT (organization_id, key) DO UPDATE SET metadata = $2, updated_at = NOW()`,
+      `INSERT INTO pm_settings (organization_id, ai_settings, updated_at)
+       VALUES ($1, json_build_object('sentinel', $2::json), NOW())
+       ON CONFLICT (organization_id) DO UPDATE SET
+         ai_settings = (
+           COALESCE(pm_settings.ai_settings::jsonb, '{}'::jsonb)
+           || jsonb_build_object('sentinel', $2::jsonb)
+         )::json,
+         updated_at = NOW()`,
       [organizationId, JSON.stringify(merged)]
     );
 
