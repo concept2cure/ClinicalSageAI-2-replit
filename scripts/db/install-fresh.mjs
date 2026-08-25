@@ -910,10 +910,14 @@ async function main() {
     }
   });
 
-  recordSchemaSource(`drizzle-kit push (${resolveDrizzleEntrypoint().path ?? 'drizzle.config.ts'})`, await snapshotPublicTables());
+  const pushedEntrypoints = resolveDrizzleEntrypoints().paths;
+  recordSchemaSource(
+    `drizzle-kit push (${pushedEntrypoints.join(', ') || 'drizzle.config.ts'})`,
+    await snapshotPublicTables(),
+  );
 
   await step('3/8 Complete schema — raw migration overlay', async () => {
-    // drizzle-kit push lays down ONLY shared/schema.ts. The core product tables
+    // drizzle-kit push lays down only the configured Drizzle schema graph. The core product tables
     // — regulatory_programs, c2c_documents / c2c_document_sections /
     // c2c_rule_packs, c2c_ana_*, the submission-ops set, and ~200 more — live
     // ONLY in the raw migrations/ tree, which drizzle's journaled migrate() does
